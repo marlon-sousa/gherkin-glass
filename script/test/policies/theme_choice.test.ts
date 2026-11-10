@@ -21,11 +21,27 @@ test("the system's choice sets no theme on the page", () => {
   assert.equal(themeAttribute("dark"), "dark");
 });
 
-test("the page's head reads the choice under the same key, before it is drawn", () => {
+test("the page's head applies the kept choice as the policy does, before the page is drawn", () => {
   const layout = readFileSync(new URL("../../../templates/layout.html", import.meta.url), "utf8");
-  const head = layout.slice(0, layout.indexOf("<link rel=\"stylesheet\""));
-  assert.ok(head.includes(`localStorage.getItem("${THEME_KEY}")`), head);
-  assert.ok(!head.includes("type=\"module\""), "the head's script is not deferred");
+  const head = layout.slice(0, layout.indexOf("<style>"));
+  const found = /<script>(.*)<\/script>/.exec(head);
+  assert.ok(found?.[1], "a classic script before the page's style");
+  const source = found[1];
+  const run = (storage: { getItem(key: string): string | null }): string | undefined => {
+    const root = { dataset: {} as { theme?: string } };
+    new Function("localStorage", "document", source)(storage, { documentElement: root });
+    return root.dataset.theme;
+  };
+  for (const kept of ["light", "dark", "system", "Dark", "", null]) {
+    const storage = { getItem: (key: string) => (key === THEME_KEY ? kept : null) };
+    assert.equal(run(storage), themeAttribute(keptChoice(kept)) ?? undefined, String(kept));
+  }
+  const blocked = {
+    getItem(): string | null {
+      throw new Error("SecurityError");
+    },
+  };
+  assert.equal(run(blocked), undefined);
 });
 
 test("no block's state can be kept under the theme's key", () => {

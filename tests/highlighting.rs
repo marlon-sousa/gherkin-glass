@@ -125,6 +125,9 @@ fn the_pages_show_the_highlighting_and_the_accents_as_the_expected_pages_do() {
     let mut pages = 0;
     for entry in read_dir(&expected).expect("the expected pages are listed") {
         let name = entry.expect("listed").file_name();
+        if !name.to_string_lossy().ends_with(".html") {
+            continue;
+        }
         let page = read(written.join(&name)).expect("the page is written");
         assert!(
             page == read(expected.join(&name)).expect("read"),

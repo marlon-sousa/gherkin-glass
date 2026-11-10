@@ -60,7 +60,7 @@ pub(crate) use tag_linking::{PatternProblem, outside_link, unknown_group, whole_
 pub(crate) use tag_naming::{name_tags, tag_index_address, tags_of};
 pub(crate) use tag_pages::{build_tag_index, build_tag_page, tag_pages_language};
 pub use step_highlighting::highlight_step;
-pub use theme_stylesheet::theme_stylesheet;
+pub(crate) use theme_stylesheet::theme_stylesheet;
 pub use themes::DEFAULT_ACCENTS;
 pub(crate) use themes::{check_accent, palette};
 pub(crate) use unnamed_blocks::unnamed_blocks;

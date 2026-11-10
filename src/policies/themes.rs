@@ -20,7 +20,7 @@ pub(crate) fn palette(theme: Theme) -> Palette {
             keyword: Colour::new(0x6a, 0x1b, 0x9a),
             parameter: Colour::new(0x14, 0x52, 0x1a),
             number: Colour::new(0x8a, 0x30, 0x00),
-            placeholder: Colour::new(0x0d, 0x47, 0xa1),
+            placeholder: Colour::new(0x00, 0x57, 0x5e),
         },
         Theme::Dark => Palette {
             background: Colour::new(0x14, 0x14, 0x14),
@@ -31,7 +31,7 @@ pub(crate) fn palette(theme: Theme) -> Palette {
             keyword: Colour::new(0xe1, 0xb3, 0xff),
             parameter: Colour::new(0x9f, 0xe0, 0xa8),
             number: Colour::new(0xff, 0xbf, 0x8a),
-            placeholder: Colour::new(0x9c, 0xca, 0xff),
+            placeholder: Colour::new(0x7f, 0xdb, 0xe0),
         },
     }
 }

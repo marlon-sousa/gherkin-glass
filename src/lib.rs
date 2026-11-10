@@ -41,3 +41,6 @@ pub use services::{InputService, PreviewService, SiteService};
 pub use policies::{DEFAULT_ACCENTS, highlight_step, make_anchors, theme_stylesheet};
 pub use ports::{ConfigReader, FeatureParser, InputCollector};
 pub use services::InputService;
+pub use policies::{DEFAULT_ACCENTS, highlight_step, make_anchors};
+pub use ports::{ConfigReader, FeatureParser, InputCollector, SiteWriter};
+pub use services::{InputService, SiteService};

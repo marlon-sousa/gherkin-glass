@@ -8,4 +8,6 @@ export interface Theme {
   /** Draws the page in `theme`, or in the system's when it is null. */
   apply(theme: "light" | "dark" | null): void;
   onChoose(handler: (choice: ThemeChoice) => void): void;
+  /** The browser showed the page again from its cache, without running its scripts again. */
+  onRestore(handler: () => void): void;
 }

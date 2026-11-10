@@ -480,6 +480,13 @@ var DomTheme = class {
       });
     }
   }
+  onRestore(handler) {
+    this.document.defaultView?.addEventListener("pageshow", (event) => {
+      if (event.persisted) {
+        handler();
+      }
+    });
+  }
   radios() {
     return [...this.document.querySelectorAll("input[name='ghg-theme']")].filter(
       (element) => element instanceof HTMLInputElement
@@ -621,9 +628,13 @@ function themeAttribute(choice) {
 
 // src/services/theme_switching.ts
 function startThemeSwitching(theme, memory2) {
-  const choice = keptChoice(memory2.get(THEME_KEY));
-  theme.show(choice);
-  theme.apply(themeAttribute(choice));
+  const showKept = () => {
+    const choice = keptChoice(memory2.get(THEME_KEY));
+    theme.show(choice);
+    theme.apply(themeAttribute(choice));
+  };
+  showKept();
+  theme.onRestore(showKept);
   theme.onChoose((chosen) => {
     theme.apply(themeAttribute(chosen));
     memory2.set(THEME_KEY, chosen);

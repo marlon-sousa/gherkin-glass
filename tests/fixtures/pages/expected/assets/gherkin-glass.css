@@ -40,6 +40,10 @@ body {
   padding: 0.5rem 1rem 0;
 }
 
+.ghg-theme input {
+  accent-color: var(--ghg-accent);
+}
+
 .ghg-theme {
   display: flex;
   flex-wrap: wrap;
@@ -393,4 +397,7 @@ figcaption {
 /* A doc string keeps its box inside the tint. */
 .ghg-from-background pre {
   background: var(--background);
+  color: var(--ghg-text);
+  background: var(--ghg-surface);
+  border: 1px solid var(--ghg-border);
 }

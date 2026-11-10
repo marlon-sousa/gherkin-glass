@@ -35,6 +35,14 @@ export class DomTheme implements Theme {
     }
   }
 
+  onRestore(handler: () => void): void {
+    this.document.defaultView?.addEventListener("pageshow", (event) => {
+      if (event.persisted) {
+        handler();
+      }
+    });
+  }
+
   private radios(): HTMLInputElement[] {
     return [...this.document.querySelectorAll("input[name='ghg-theme']")].filter(
       (element): element is HTMLInputElement => element instanceof HTMLInputElement,

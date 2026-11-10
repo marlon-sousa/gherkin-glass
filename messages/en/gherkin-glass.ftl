@@ -111,6 +111,7 @@ page-title = { $heading }, { $path }
 page-contents = Contents
 collapse-all = Collapse all
 expand-all = Expand all
+source-link = Source: { $path }
 
 ## The control every page has to choose its theme, and its three choices.
 

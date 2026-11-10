@@ -9,7 +9,7 @@ use crate::policies::palette;
 /// theme's when the reader picked dark, or picked nothing and their system
 /// prefers dark. The page's root has `data-theme="light"` or `data-theme="dark"`
 /// when the reader picked one, and no `data-theme` for the system's choice.
-pub fn theme_stylesheet(accents: &Accents) -> String {
+pub(crate) fn theme_stylesheet(accents: &Accents) -> String {
     let light = tokens(Theme::Light, accents, "  ");
     let dark = tokens(Theme::Dark, accents, "  ");
     let dark_nested = tokens(Theme::Dark, accents, "    ");
@@ -68,7 +68,7 @@ mod tests {
   --ghg-keyword: #6a1b9a;
   --ghg-parameter: #14521a;
   --ghg-number: #8a3000;
-  --ghg-placeholder: #0d47a1;
+  --ghg-placeholder: #00575e;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -83,7 +83,7 @@ mod tests {
     --ghg-keyword: #e1b3ff;
     --ghg-parameter: #9fe0a8;
     --ghg-number: #ffbf8a;
-    --ghg-placeholder: #9ccaff;
+    --ghg-placeholder: #7fdbe0;
   }
 }
 
@@ -98,7 +98,7 @@ mod tests {
   --ghg-keyword: #e1b3ff;
   --ghg-parameter: #9fe0a8;
   --ghg-number: #ffbf8a;
-  --ghg-placeholder: #9ccaff;
+  --ghg-placeholder: #7fdbe0;
 }
 "#
         );

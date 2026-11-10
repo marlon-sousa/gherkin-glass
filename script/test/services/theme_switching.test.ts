@@ -12,6 +12,7 @@ class FakeTheme implements Theme {
   shown: ThemeChoice | undefined;
   applied: "light" | "dark" | null | undefined;
   choose: (choice: ThemeChoice) => void = () => {};
+  restore: () => void = () => {};
 
   show(choice: ThemeChoice): void {
     this.shown = choice;
@@ -23,6 +24,10 @@ class FakeTheme implements Theme {
 
   onChoose(handler: (choice: ThemeChoice) => void): void {
     this.choose = handler;
+  }
+
+  onRestore(handler: () => void): void {
+    this.restore = handler;
   }
 }
 
@@ -77,5 +82,15 @@ test("when nothing can be kept the choice still holds for the page", () => {
   const theme = new FakeTheme();
   startThemeSwitching(theme, new FakeMemory(false));
   theme.choose("dark");
+  assert.equal(theme.applied, "dark");
+});
+
+test("a page shown again from the browser's cache takes the choice made since", () => {
+  const memory = new FakeMemory();
+  const theme = new FakeTheme();
+  startThemeSwitching(theme, memory);
+  memory.kept.set(THEME_KEY, "dark");
+  theme.restore();
+  assert.equal(theme.shown, "dark");
   assert.equal(theme.applied, "dark");
 });
