@@ -429,7 +429,7 @@ fn a_folder_that_cannot_be_listed_is_reported() {
     assert_eq!(problems.len(), 1);
     assert_eq!(problems[0].path, "locked");
     assert!(
-        matches!(problems[0].kind, ProblemKind::CannotBeListed { .. }),
+        matches!(problems[0].kind, ProblemKind::InputMissing),
         "{}",
         problems[0]
     );
@@ -480,7 +480,7 @@ fn an_input_folder_that_does_not_exist_is_reported() {
     assert_eq!(problems.len(), 1);
     assert_eq!(problems[0].path, input.display().to_string());
     assert!(
-        matches!(problems[0].kind, ProblemKind::CannotBeListed { .. }),
+        matches!(problems[0].kind, ProblemKind::InputMissing),
         "{}",
         problems[0]
     );

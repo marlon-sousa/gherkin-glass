@@ -55,6 +55,7 @@ pub(super) fn problems(problems: &Problems) -> String {
 
 fn input_problem(problem: &Problem) -> String {
     let message = match &problem.kind {
+        ProblemKind::InputMissing => fl!(CATALOGUE, "input-missing"),
         ProblemKind::CannotBeListed { reason } => {
             fl!(
                 CATALOGUE,

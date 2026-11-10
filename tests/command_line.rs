@@ -166,11 +166,11 @@ fn a_file_asked_for_that_cannot_be_read_stops_the_run() {
 fn the_file_is_looked_for_in_the_current_folder_only() {
     // tests/fixtures/configuration/configured/specs has no ghg.toml, and the
     // one in the folder above is not read, so the default input is missing.
+    // Rule 16 words the missing input folder.
     let output = ghg(&fixture("configured").join("specs"), &["build"]);
-    let report = report(output, 1);
-    assert!(
-        report.starts_with("features: cannot be listed: "),
-        "{report}"
+    assert_eq!(
+        report(output, 1),
+        "features: the input folder does not exist. Create it, or name another with input in ghg.toml or with --input.\n"
     );
 }
 

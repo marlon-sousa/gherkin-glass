@@ -22,6 +22,9 @@ pub struct Problem {
 /// another program's words, passed through as they are.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Error)]
 pub enum ProblemKind {
+    /// The input folder itself does not exist.
+    #[error("the input folder does not exist")]
+    InputMissing,
     #[error("cannot be listed: {reason}")]
     CannotBeListed { reason: String },
     #[error("cannot be read: {reason}")]
