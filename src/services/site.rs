@@ -1,4 +1,4 @@
-//! Service: building a site, from reading its input to writing its pages and assets.
+//! Service: building a site, from reading its input to writing its pages, its folder pages and its assets.
 
 use std::path::Path;
 use std::sync::Arc;
@@ -6,7 +6,7 @@ use std::sync::Arc;
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 
 use crate::entities::{Problem, ProblemKind, Problems, Settings, SiteAssets};
-use crate::policies::{build_page, render_page};
+use crate::policies::{build_folder_pages, build_page, render_folder_page, render_page};
 use crate::ports::SiteWriter;
 use crate::services::InputService;
 
@@ -24,18 +24,25 @@ impl SiteService {
     pub fn build(&self, settings: &Settings, output: &Path) -> Result<(), Problems> {
         let features = self.input.read(&settings.input, settings.unnamed)?;
         // Collecting into a `Vec` keeps file order, whatever order the threads finish in.
-        let pages: Vec<(String, String)> = features
+        let pages: Vec<_> = features
             .par_iter()
-            .map(|parsed| {
-                let page = build_page(parsed, &settings.pages);
-                let html = render_page(&page);
-                (page.address, html)
-            })
+            .map(|parsed| build_page(parsed, &settings.pages))
             .collect();
+        let folders = build_folder_pages(&pages, &settings.pages);
+        let mut rendered: Vec<(String, String)> = pages
+            .par_iter()
+            .map(|page| (page.address.clone(), render_page(page)))
+            .collect();
+        rendered.extend(
+            folders
+                .par_iter()
+                .map(|folder| (folder.address.clone(), render_folder_page(folder)))
+                .collect::<Vec<_>>(),
+        );
         let assets = SiteAssets::iter().filter_map(|name| {
             SiteAssets::get(&name).map(|file| (format!("assets/{name}"), file.data.into_owned()))
         });
-        let files = pages
+        let files = rendered
             .into_iter()
             .map(|(address, html)| (address, html.into_bytes()))
             .chain(assets);
@@ -131,7 +138,9 @@ mod tests {
                 "a.html",
                 "assets/gherkin-glass.css",
                 "assets/gherkin-glass.js",
-                "sub/b.html"
+                "index.html",
+                "sub/b.html",
+                "sub/index.html"
             ]
         );
         assert!(
@@ -162,6 +171,28 @@ mod tests {
         assert_eq!(
             problems.to_string(),
             "A: has the same page, A.html, as a.feature\na.story: has the same page, a.html, as a.feature\n"
+        );
+        assert!(writer.written.lock().expect("not poisoned").is_empty());
+    }
+
+    #[test]
+    fn a_feature_whose_page_is_a_folder_s_is_reported_in_any_case() {
+        let writer = Arc::new(FakeWriter::default());
+        let problems = build(vec!["INDEX.feature", "a/b/index.story"], writer.clone())
+            .expect_err("a folder's page");
+        assert_eq!(
+            problems.as_slice()[0].kind,
+            ProblemKind::SameAsFolderPage {
+                page: "INDEX.html".into(),
+                folder: None
+            }
+        );
+        assert_eq!(
+            problems.as_slice()[1].kind,
+            ProblemKind::SameAsFolderPage {
+                page: "a/b/index.html".into(),
+                folder: Some("a/b".into())
+            }
         );
         assert!(writer.written.lock().expect("not poisoned").is_empty());
     }

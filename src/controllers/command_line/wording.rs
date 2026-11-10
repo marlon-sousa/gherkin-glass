@@ -127,6 +127,15 @@ fn input_problem(problem: &Problem) -> String {
             page = page.as_str(),
             first = first.as_str()
         ),
+        ProblemKind::SameAsFolderPage { page, folder } => match folder {
+            Some(folder) => fl!(
+                CATALOGUE,
+                "same-as-folder-page",
+                page = page.as_str(),
+                folder = folder.as_str()
+            ),
+            None => fl!(CATALOGUE, "same-as-home-page", page = page.as_str()),
+        },
         ProblemKind::CannotBeWritten { reason } => {
             fl!(CATALOGUE, "cannot-be-written", reason = reason.as_str())
         }

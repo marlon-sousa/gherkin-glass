@@ -1,3 +1,4 @@
-# Pages, built with a source link, every block expanded.
+# Pages, built with a title and a source link, every block expanded.
+title = "Banking & <more>"
 source_link = "https://example.com/repo/blob/main/features/{path}#L{line}"
 output = "expected"

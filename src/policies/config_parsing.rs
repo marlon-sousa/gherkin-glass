@@ -32,7 +32,7 @@ pub(crate) fn parse_config(source: &str) -> Result<Config, Vec<ConfigProblem>> {
             })
         };
         let found = match name {
-            "input" | "output" | "source_link" => match text(value) {
+            "input" | "output" | "source_link" | "title" => match text(value) {
                 // An empty path names nothing, and would report a line with no path.
                 Some("") => Err(problem(ConfigProblemKind::Empty {
                     key: name.to_string(),
@@ -41,6 +41,7 @@ pub(crate) fn parse_config(source: &str) -> Result<Config, Vec<ConfigProblem>> {
                     match name {
                         "input" => config.input = Some(PathBuf::from(text)),
                         "output" => config.output = Some(PathBuf::from(text)),
+                        "title" => config.title = Some(text.to_string()),
                         _ => config.source_link = Some(text.to_string()),
                     }
                     Ok(())
@@ -172,7 +173,7 @@ mod tests {
     fn the_keys_of_pages_are_read_as_written() {
         let config = parse_config(
             "output = \"out\"\nsource_link = \"https://x/{path}#L{line}\"\n\
-             collapse_rules = true\ncollapse_scenarios = false\n",
+             collapse_rules = true\ncollapse_scenarios = false\ntitle = \"Banking\"\n",
         )
         .expect("valid");
         assert_eq!(config.output, Some(PathBuf::from("out")));
@@ -182,8 +183,9 @@ mod tests {
         );
         assert_eq!(config.collapse_rules, Some(true));
         assert_eq!(config.collapse_scenarios, Some(false));
+        assert_eq!(config.title.as_deref(), Some("Banking"));
         assert_eq!(
-            problems("output = 1\nsource_link = \"\"\ncollapse_rules = \"yes\"\n"),
+            problems("output = 1\nsource_link = \"\"\ncollapse_rules = \"yes\"\ntitle = \"\"\n"),
             [
                 (
                     Some(1),
@@ -203,6 +205,12 @@ mod tests {
                     ConfigProblemKind::WrongType {
                         key: "collapse_rules".into(),
                         expected: ValueType::Boolean
+                    }
+                ),
+                (
+                    Some(4),
+                    ConfigProblemKind::Empty {
+                        key: "title".into()
                     }
                 ),
             ]

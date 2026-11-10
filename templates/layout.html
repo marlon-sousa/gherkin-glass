@@ -8,6 +8,13 @@
 <script type="module" src="{{ root }}assets/gherkin-glass.js"></script>
 </head>
 <body>
+<nav class="ghg-breadcrumb" aria-label="{{ breadcrumb.label }}">
+<ol>
+{%- for crumb in breadcrumb.crumbs %}
+<li><a href="{{ crumb.address }}"{% if loop.last %} aria-current="page"{% endif %}>{{ crumb.text }}</a></li>
+{%- endfor %}
+</ol>
+</nav>
 <main>
 {% block main %}{% endblock %}
 </main>

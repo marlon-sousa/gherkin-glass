@@ -8,6 +8,7 @@ use std::collections::BTreeMap;
 use std::fs::{create_dir_all, read, read_dir, remove_dir_all, write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
+use std::str::from_utf8;
 
 fn fixtures() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures")
@@ -76,7 +77,8 @@ fn assert_same_site(config: &str, expected: &str) {
     }
 }
 
-// Rules 36 and 38 to 51: every page of the fixture, and the assets beside them.
+// Rules 36, 38 to 51 and 56 to 64: every page of the fixture, its folder
+// pages, and the assets beside them.
 
 #[test]
 fn every_feature_file_has_its_page_as_the_expected_site_shows() {
@@ -129,7 +131,7 @@ fn the_page_s_lang_is_its_file_s_language_as_a_tag() {
     assert_eq!(lang("emoji.html"), "und");
 }
 
-// Rule 37.
+// Rules 37 and 57.
 
 #[test]
 fn two_files_with_the_same_page_stop_the_build_with_the_files_that_cannot_be_read() {
@@ -143,7 +145,9 @@ fn two_files_with_the_same_page_stop_the_build_with_the_files_that_cannot_be_rea
     assert_eq!(
         String::from_utf8_lossy(&result.stderr),
         "a.story: has the same page, a.html, as a.feature.\n\
-         broken.feature:1: Unknown keyword: 'not a feature'.\n"
+         broken.feature:1: Unknown keyword: 'not a feature'.\n\
+         index.feature: has the same page, index.html, as the home page.\n\
+         sub/Index.story: has the same page, sub/Index.html, as the page of the folder sub.\n"
     );
     assert_eq!(result.status.code(), Some(1));
     assert!(!written.exists(), "nothing is written");
@@ -180,8 +184,100 @@ fn a_file_that_cannot_be_written_stops_the_build() {
     assert_eq!(report.lines().count(), 1, "{report}");
     assert!(
         report.starts_with(&format!(
-            "{given}/billing/refunds.html: cannot be written: "
+            "{given}/billing/archive/closed #1.html: cannot be written: "
         )),
         "{report}"
     );
+}
+
+// Rules 39, 58 and 64: every link within the site is relative, and reaches a
+// page, and an anchor on it when it names one.
+
+#[test]
+fn every_link_in_the_site_reaches_a_page_and_its_anchor() {
+    for site in ["expected", "expected-collapsed"] {
+        let site = fixtures().join("pages").join(site);
+        let pages = files(&site);
+        for (name, page) in &pages {
+            if !name.ends_with(".html") {
+                continue;
+            }
+            let page = String::from_utf8(page.clone()).expect("UTF-8");
+            for address in page.split(" href=\"").skip(1) {
+                let address = &address[..address.find('"').expect("closed")];
+                if address.starts_with("https://") {
+                    continue;
+                }
+                assert!(!address.starts_with('/'), "{name}: {address}");
+                let (file, anchor) = address.split_once('#').unwrap_or((address, ""));
+                let target = if file.is_empty() {
+                    name.clone()
+                } else {
+                    resolve(name, &percent_decoded(file))
+                };
+                let found = pages.get(&target);
+                assert!(found.is_some(), "{name}: {address} reaches nothing");
+                if !anchor.is_empty() {
+                    let found = String::from_utf8_lossy(found.expect("found"));
+                    assert!(
+                        found.contains(&format!(" id=\"{anchor}\"")),
+                        "{name}: {address} reaches no anchor"
+                    );
+                }
+            }
+        }
+    }
+}
+
+/// `address`, relative to the page `from`, as a path from the site's root.
+fn resolve(from: &str, address: &str) -> String {
+    let mut parts: Vec<&str> = from.split('/').collect();
+    parts.pop();
+    for part in address.split('/') {
+        match part {
+            ".." => {
+                parts.pop().expect("inside the site");
+            }
+            _ => parts.push(part),
+        }
+    }
+    parts.join("/")
+}
+
+fn percent_decoded(address: &str) -> String {
+    let bytes = address.as_bytes();
+    let mut decoded = Vec::new();
+    let mut index = 0;
+    while index < bytes.len() {
+        if bytes[index] == b'%' {
+            let hex = from_utf8(&bytes[index + 1..index + 3]).expect("ASCII");
+            decoded.push(u8::from_str_radix(hex, 16).expect("hexadecimal"));
+            index += 3;
+        } else {
+            decoded.push(bytes[index]);
+            index += 1;
+        }
+    }
+    String::from_utf8(decoded).expect("UTF-8")
+}
+
+// Rules 60 and 61.
+
+#[test]
+fn the_home_page_has_the_site_s_title_and_totals() {
+    let home = |site: &str| {
+        String::from_utf8(
+            read(fixtures().join("pages").join(site).join("index.html")).expect("read"),
+        )
+        .expect("UTF-8")
+    };
+    let titled = home("expected");
+    assert!(titled.contains("<title>Banking &#38; &#60;more&#62;</title>"));
+    assert!(titled.contains("<h1>Banking &#38; &#60;more&#62;</h1>"));
+    assert!(titled.contains(
+        "<ul class=\"ghg-totals\">\n<li>3 folders</li>\n<li>5 features</li>\n<li>3 rules</li>\n<li>7 scenarios</li>\n</ul>"
+    ));
+    let untitled = home("expected-collapsed");
+    assert!(untitled.contains("<title>Features</title>"));
+    assert!(untitled.contains("<h1>Features</h1>"));
 }

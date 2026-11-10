@@ -48,6 +48,14 @@ pub enum ProblemKind {
     /// shown as a problem's is, of the file that has it.
     #[error("has the same page, {page}, as {first}")]
     SamePage { page: String, first: String },
+    /// `page` is the file's own page, at the path of a folder's, and `folder`
+    /// that folder's path below the input folder, `None` for the input
+    /// folder's, the home page.
+    #[error("has the same page, {page}, as the page of the folder {folder:?}")]
+    SameAsFolderPage {
+        page: String,
+        folder: Option<String>,
+    },
     /// A file of the site; `reason` is the operating system's.
     #[error("cannot be written: {reason}")]
     CannotBeWritten { reason: String },

@@ -8,19 +8,7 @@
 <p class="ghg-source"><a href="{{ source.address }}">{{ source.before }}<bdi>{{ source.path }}</bdi>{{ source.after }}</a></p>
 {%- endif %}
 {%- if !page.contents.is_empty() %}
-<nav class="ghg-contents" aria-label="{{ page.words.contents }}">
-<ul>
-{%- for entry in page.contents %}
-<li><a href="#{{ entry.anchor }}">{{ entry.heading }}</a>
-{%- if !entry.entries.is_empty() %}
-<ul>
-{%- for inner in entry.entries %}
-<li><a href="#{{ inner.anchor }}">{{ inner.heading }}</a></li>
-{%- endfor %}
-</ul>
-{%- endif %}</li>
-{%- endfor %}
-</ul>
+<nav class="ghg-contents" aria-label="{{ page.words.contents }}">{% call m::contents(&page.contents, "") %}{% endcall %}
 </nav>
 {%- endif %}
 {%- if !page.blocks.is_empty() %}

@@ -165,3 +165,47 @@ figcaption {
   border-radius: 0.25rem;
   cursor: pointer;
 }
+
+/* The breadcrumb's separators are drawn, not written, so that a screen reader
+   says only the links, as the WAI-ARIA breadcrumb example does. */
+.ghg-breadcrumb {
+  max-width: 60rem;
+  margin: 0 auto;
+  padding: 1rem 1rem 0;
+}
+
+.ghg-breadcrumb ol {
+  display: flex;
+  flex-wrap: wrap;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ghg-breadcrumb li + li::before {
+  content: "";
+  display: inline-block;
+  height: 0.8em;
+  margin: 0 0.5em;
+  border-right: 0.1em solid currentColor;
+  transform: rotate(15deg);
+}
+
+.ghg-breadcrumb [aria-current="page"] {
+  font-weight: bold;
+}
+
+/* A folder page's feature: its link, then its count, the button that shows its contents. */
+.ghg-features > li {
+  margin: 0.25rem 0;
+}
+
+.ghg-feature > .ghg-toggle,
+.ghg-count {
+  display: inline;
+  margin-left: 0.5em;
+}
+
+.ghg-count {
+  color: var(--muted);
+}

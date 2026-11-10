@@ -33,3 +33,18 @@
 {%- endif %}
 </table>
 {%- endmacro -%}
+
+{%- macro contents(entries, page) %}
+<ul>
+{%- for entry in entries %}
+<li><a href="{{ page }}#{{ entry.anchor }}">{{ entry.heading }}</a>
+{%- if !entry.entries.is_empty() %}
+<ul>
+{%- for inner in entry.entries %}
+<li><a href="{{ page }}#{{ inner.anchor }}">{{ inner.heading }}</a></li>
+{%- endfor %}
+</ul>
+{%- endif %}</li>
+{%- endfor %}
+</ul>
+{%- endmacro -%}

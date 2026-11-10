@@ -33,6 +33,7 @@ pub(crate) fn resolve_settings(options: &BuildOptions, folder: &Path, config: &C
         output,
         unnamed,
         pages: PageOptions {
+            title: config.title.clone(),
             source_link: config.source_link.clone(),
             collapse_rules: config.collapse_rules.unwrap_or(false),
             collapse_scenarios: config.collapse_scenarios.unwrap_or(false),
