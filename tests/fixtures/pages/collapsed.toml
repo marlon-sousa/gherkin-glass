@@ -1,4 +1,5 @@
-# The same pages, with rules, scenarios and backgrounds starting collapsed, and no title or source link.
+# The same pages, with rules, scenarios and backgrounds starting collapsed, the folder tree hidden, and no title or source link.
 collapse_rules = true
 collapse_scenarios = true
 output = "expected-collapsed"
+show_tree = false

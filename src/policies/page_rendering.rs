@@ -2,7 +2,7 @@
 
 use askama::Template;
 
-use crate::entities::{Block, Breadcrumb, FolderPage, Page};
+use crate::entities::{Block, Breadcrumb, FolderPage, Page, PageFrame};
 use crate::policies::root_from;
 
 #[derive(Template)]
@@ -12,6 +12,7 @@ struct FeatureTemplate<'a> {
     title: &'a str,
     /// From the page back to the site's root, for the shared assets.
     root: String,
+    frame: &'a PageFrame,
     breadcrumb: &'a Breadcrumb,
     page: &'a Page,
     blocks: String,
@@ -24,6 +25,7 @@ struct FolderTemplate<'a> {
     title: &'a str,
     /// From the page back to the site's root, for the shared assets.
     root: String,
+    frame: &'a PageFrame,
     breadcrumb: &'a Breadcrumb,
     folder: &'a FolderPage,
 }
@@ -40,6 +42,7 @@ pub(crate) fn render_page(page: &Page) -> String {
         language: &page.language,
         title: &page.title,
         root: root_from(&page.address),
+        frame: &page.frame,
         breadcrumb: &page.breadcrumb,
         page,
         blocks: render_blocks(&page.blocks),
@@ -52,6 +55,7 @@ pub(crate) fn render_folder_page(folder: &FolderPage) -> String {
         language: &folder.language,
         title: &folder.title,
         root: root_from(&folder.address),
+        frame: &folder.frame,
         breadcrumb: &folder.breadcrumb,
         folder,
     };

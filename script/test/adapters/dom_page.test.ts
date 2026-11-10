@@ -91,6 +91,21 @@ test("following a contents link expands its block, but a click that opens anothe
   assert.equal(expanded(window, "refunds-after-thirty-days"), true);
 });
 
+test("following a link to an anchor of the page by its relative address, as the folder tree's are, expands its block", () => {
+  const window = open("#store-credit");
+  (window.document.querySelector(".ghg-collapse-all") as unknown as HTMLElement).click();
+  const link = window.document.createElement("a");
+  link.setAttribute("href", "../billing/refunds.html#store-credit");
+  window.document.body.append(link);
+  link.dispatchEvent(new window.MouseEvent("click", { bubbles: true, cancelable: true }));
+  assert.equal(expanded(window, "store-credit"), true);
+  // A link to another page changes nothing here.
+  (window.document.querySelector(".ghg-collapse-all") as unknown as HTMLElement).click();
+  link.setAttribute("href", "index.html#store-credit");
+  link.dispatchEvent(new window.MouseEvent("click", { bubbles: true, cancelable: true }));
+  assert.equal(expanded(window, "store-credit"), false);
+});
+
 test("the browser's storage keeps each state, and a storage that refuses keeps nothing without failing", () => {
   const window = new Window({ url: "https://example.com/" });
   const global = globalThis as unknown as { window?: unknown };

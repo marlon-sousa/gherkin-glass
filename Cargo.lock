@@ -302,6 +302,8 @@ dependencies = [
  "notify-debouncer-full",
  "rayon",
  "rust-embed",
+ "serde",
+ "serde_json",
  "thiserror 2.0.21",
  "tiny_http",
  "toml 1.2.1+spec-1.1.0",

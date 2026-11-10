@@ -6,7 +6,9 @@ use i18n_embed::LanguageLoader;
 use i18n_embed_fl::fl;
 
 use crate::entities::{FeatureEntry, FolderLink, FolderPage, FolderWords, Page, PageOptions};
-use crate::policies::{CATALOGUE, FOLDER_PAGE, breadcrumb, percent_encoded, site_title};
+use crate::policies::{
+    CATALOGUE, FOLDER_PAGE, breadcrumb, page_frame, percent_encoded, site_title,
+};
 
 /// `pages` are every feature's, in any order; the folder pages come
 /// outermost first, the home page first of all, then folder by folder.
@@ -67,6 +69,7 @@ pub(crate) fn build_folder_pages(pages: &[Page], options: &PageOptions) -> Vec<F
                     )
                 },
                 heading: folder.last().cloned().unwrap_or_else(|| title.clone()),
+                frame: page_frame(options),
                 breadcrumb: breadcrumb(&title, folder, None),
                 totals,
                 folders: subfolders,

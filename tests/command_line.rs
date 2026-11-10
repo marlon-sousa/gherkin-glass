@@ -283,7 +283,8 @@ fn every_problem_with_the_keys_of_pages_is_reported() {
         "ghg.toml:2: output must not be empty.\n\
          ghg.toml:3: source_link must be text, in quotes.\n\
          ghg.toml:4: collapse_rules must be true or false.\n\
-         ghg.toml:5: collapse_scenarios must be true or false.\n"
+         ghg.toml:5: collapse_scenarios must be true or false.\n\
+         ghg.toml:6: show_tree must be true or false.\n"
     );
 }
 

@@ -101,7 +101,10 @@ fn the_settings_start_rules_scenarios_and_backgrounds_collapsed() {
 fn the_assets_are_the_ones_built_into_ghg() {
     let expected = fixtures().join("pages/expected/assets");
     let repository = Path::new(env!("CARGO_MANIFEST_DIR")).join("assets");
-    assert_eq!(files(&expected), files(&repository));
+    let mut built = files(&expected);
+    // Rule 39: the folder tree's data is the site's own.
+    assert!(built.remove("tree.json").is_some());
+    assert_eq!(built, files(&repository));
 }
 
 #[test]
@@ -113,12 +116,19 @@ fn every_page_has_one_h1_and_a_lang_and_its_content_in_its_html() {
         let page = String::from_utf8(page).expect("UTF-8");
         assert_eq!(page.matches("<h1").count(), 1, "{name}");
         assert!(page.contains("<html lang=\""), "{name}");
-        // Rule 32: no id the page gives its own parts may be an anchor; for
-        // now every id is a block's.
-        for id in page.split(" id=\"").skip(1) {
-            let id = &id[..id.find('"').expect("closed")];
-            assert!(!id.contains('_'), "{name}: {id}");
-        }
+        // Rule 32: the ids the page gives its own parts contain `_`, and
+        // are exactly these; every other id is a block's, without one.
+        let own = ["ghg_show_tree", "ghg_tree", "ghg_main"];
+        let ids: Vec<&str> = page
+            .split(" id=\"")
+            .skip(1)
+            .map(|id| &id[..id.find('"').expect("closed")])
+            .collect();
+        assert_eq!(
+            ids.iter().filter(|id| id.contains('_')).collect::<Vec<_>>(),
+            own.iter().collect::<Vec<_>>(),
+            "{name}"
+        );
     }
 }
 
@@ -309,4 +319,72 @@ fn the_home_page_has_the_site_s_title_and_totals() {
     let untitled = home("expected-collapsed");
     assert!(untitled.contains("<title>Feature files</title>"));
     assert!(untitled.contains("<h1>Feature files</h1>"));
+}
+
+// Rules 86 to 88: the skip link, the checkbox and the tree's landmark come
+// before the breadcrumb and the content, the tree shown as configured.
+
+#[test]
+fn every_page_starts_with_the_skip_link_then_the_tree_then_the_breadcrumb() {
+    for (site, shown) in [("expected", true), ("expected-collapsed", false)] {
+        for (name, page) in files(&fixtures().join("pages").join(site)) {
+            if !name.ends_with(".html") {
+                continue;
+            }
+            let page = String::from_utf8(page).expect("UTF-8");
+            let body = page.split_once("<body>\n").expect("a body").1;
+            let checked = if shown { " checked" } else { "" };
+            let hidden = if shown { "" } else { " hidden" };
+            let start = format!(
+                "<a class=\"ghg-skip\" href=\"#ghg_main\">Skip to content</a>\n\
+                 <div class=\"ghg-options\">\n\
+                 <input type=\"checkbox\" id=\"ghg_show_tree\" class=\"ghg-show-tree\" aria-controls=\"ghg_tree\"{checked}> \
+                 <label for=\"ghg_show_tree\">Show the folder tree</label>\n\
+                 </div>\n\
+                 <div class=\"ghg-layout\">\n\
+                 <nav id=\"ghg_tree\" class=\"ghg-tree\" aria-label=\"Folder tree\"{hidden}></nav>\n\
+                 <div class=\"ghg-page\">\n\
+                 <nav class=\"ghg-breadcrumb\""
+            );
+            assert!(body.starts_with(&start), "{site}/{name}:\n{body}");
+            assert_eq!(page.matches("<main id=\"ghg_main\">").count(), 1, "{name}");
+        }
+    }
+}
+
+// Rule 89: the tree's data, whose every address reaches a page of the site,
+// and the anchor it names.
+
+#[test]
+fn every_item_of_the_tree_reaches_a_page_and_its_anchor() {
+    for site in ["expected", "expected-collapsed"] {
+        let pages = files(&fixtures().join("pages").join(site));
+        let tree = String::from_utf8(pages["assets/tree.json"].clone()).expect("UTF-8");
+        let mut reached = BTreeMap::new();
+        for address in tree.split("\"address\":\"").skip(1) {
+            let address = &address[..address.find('"').expect("closed")];
+            let (file, anchor) = address.split_once('#').unwrap_or((address, ""));
+            let found = pages.get(&percent_decoded(file));
+            assert!(found.is_some(), "{site}: {address} reaches nothing");
+            if !anchor.is_empty() {
+                let found = String::from_utf8_lossy(found.expect("found"));
+                assert!(
+                    found.contains(&format!(" id=\"{anchor}\"")),
+                    "{site}: {address} reaches no anchor"
+                );
+            }
+            reached.insert(percent_decoded(file), ());
+        }
+        // Every page of the site has its item.
+        let html: Vec<_> = pages
+            .keys()
+            .filter(|name| name.ends_with(".html"))
+            .collect();
+        assert_eq!(reached.keys().collect::<Vec<_>>(), html, "{site}");
+        assert!(
+            tree.starts_with("[{\"text\":\""),
+            "{site}: the home page first"
+        );
+        assert!(tree.ends_with("]\n"));
+    }
 }

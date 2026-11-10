@@ -14,4 +14,5 @@ pub(crate) struct Config {
     pub(crate) collapse_rules: Option<bool>,
     pub(crate) collapse_scenarios: Option<bool>,
     pub(crate) title: Option<String>,
+    pub(crate) show_tree: Option<bool>,
 }

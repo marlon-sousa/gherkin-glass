@@ -169,3 +169,10 @@ serve-cannot-watch = ghg serve cannot watch { $path } for changes: { $reason }
 
 serve-not-found = Nothing is at this address in the site.
 serve-wrong-method = ghg serve answers only GET and HEAD requests.
+
+## Before every page's content: the link past the folder tree, the checkbox
+## that shows or hides it, and the name of its landmark.
+
+skip-to-content = Skip to content
+show-folder-tree = Show the folder tree
+folder-tree = Folder tree

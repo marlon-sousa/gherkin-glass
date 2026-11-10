@@ -48,12 +48,13 @@ pub(crate) fn parse_config(source: &str) -> Result<Config, Vec<ConfigProblem>> {
                 }
                 None => Err(wrong_type(ValueType::Text)),
             },
-            "allow_unnamed" | "collapse_rules" | "collapse_scenarios" => {
+            "allow_unnamed" | "collapse_rules" | "collapse_scenarios" | "show_tree" => {
                 match value.get_ref().as_bool() {
                     Some(set) => {
                         *match name {
                             "allow_unnamed" => &mut config.allow_unnamed,
                             "collapse_rules" => &mut config.collapse_rules,
+                            "show_tree" => &mut config.show_tree,
                             _ => &mut config.collapse_scenarios,
                         } = Some(set);
                         Ok(())
@@ -173,7 +174,8 @@ mod tests {
     fn the_keys_of_pages_are_read_as_written() {
         let config = parse_config(
             "output = \"out\"\nsource_link = \"https://x/{path}#L{line}\"\n\
-             collapse_rules = true\ncollapse_scenarios = false\ntitle = \"Banking\"\n",
+             collapse_rules = true\ncollapse_scenarios = false\ntitle = \"Banking\"\n\
+             show_tree = false\n",
         )
         .expect("valid");
         assert_eq!(config.output, Some(PathBuf::from("out")));
@@ -184,6 +186,7 @@ mod tests {
         assert_eq!(config.collapse_rules, Some(true));
         assert_eq!(config.collapse_scenarios, Some(false));
         assert_eq!(config.title.as_deref(), Some("Banking"));
+        assert_eq!(config.show_tree, Some(false));
         assert_eq!(
             problems("output = 1\nsource_link = \"\"\ncollapse_rules = \"yes\"\ntitle = \"\"\n"),
             [
