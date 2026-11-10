@@ -1,0 +1,2 @@
+# Text needs quotes in TOML.
+input = my-features
