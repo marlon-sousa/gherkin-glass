@@ -24,6 +24,7 @@ Agreed so far:
 - [Installing through cargo](#installing-through-cargo), issue [#18](https://github.com/marlon-sousa/gherkin-glass/issues/18).
 - [Releases](#releases), issue [#16](https://github.com/marlon-sousa/gherkin-glass/issues/16).
 - [The GitHub Action](#the-github-action), issue [#17](https://github.com/marlon-sousa/gherkin-glass/issues/17).
+- [The project's own site](#the-projects-own-site), issue [#19](https://github.com/marlon-sousa/gherkin-glass/issues/19).
 
 The other features planned for the first version are the [issues](https://github.com/marlon-sousa/gherkin-glass/issues) labelled `feature`. Each adds its own keys and options to "The command line and its configuration" as it is built.
 
@@ -513,3 +514,19 @@ When the action stops, it says why in one sentence, which the workflow's log sho
 ### The action's version
 
 177. When a release's tag is a version of 1.0 or later without a pre-release part, such as `v1.2.0`, and no other tag of the repository is a newer such version of the same major version, the release workflow moves the tag of that major version, such as `v1`, to the released commit, once the GitHub release is made. So `uses: marlon-sousa/gherkin-glass@v1` runs the action of the newest 1.x release, which installs that release by default, as rule 170 says. A pre-release, a release before 1.0, and a release older than another of its major version move no tag; before 1.0, the action is used by a release's own tag, such as `@v0.1.0`. Checked by `.github/release/test-action-tag.sh`, with lists of tags it holds, which the release workflow runs.
+
+## The project's own site
+
+The repository's GitHub Pages site, at <https://marlon-sousa.github.io/gherkin-glass/>, shows what gherkin-glass produces, so that anyone can see its pages, and try their reader options and their accessibility, before downloading it. These rules are the repository's promises rather than the command's: what the site holds, and how each release adds to it. Their test is `tests/project_site.rs`, and the files it checks are in `site/`.
+
+Each release's site is built once the release is published: the release workflow ([#16](https://github.com/marlon-sousa/gherkin-glass/issues/16)) calls `.github/workflows/site.yml` with the release's tag, which builds the site with the project's own action ([#17](https://github.com/marlon-sousa/gherkin-glass/issues/17)) and `build: true`, so that every release also exercises the action and the binary it publishes. The build is a versioned build ([#12](https://github.com/marlon-sousa/gherkin-glass/issues/12)) named after the tag, such as `v0.1.0`, whose links are all relative, so the site needs no setting for being served below `/gherkin-glass/`.
+
+### What it holds
+
+178. The site's input is the example suite of `site/features/`, at its root, and each folder directly under `tests/fixtures/` in a folder of its own, `fixtures/<name>/`, so that the home page links the example suite's folders and features and the `fixtures` folder, whose page links each fixture. The fixtures left out are named in `site/fixtures-left-out`, each after a comment saying why: those whose build is meant to fail, and those whose cases are runs of the command line rather than pages. Every other fixture is shown, so a new fixture is shown unless it is named there. `site/assemble-input.sh` writes the input, and every file of it is read with no problem. Fixtures: `site/features` and `tests/fixtures`.
+179. The example suite shows every construct the pages show: folders within folders; a feature in a language other than English; tags on features, rules, scenarios and examples blocks; descriptions of features, rules and scenarios; a feature's and a rule's background; scenario outlines with several examples blocks, named and unnamed; data tables, with an escaped `|` in a cell; and doc strings with and without a media type, in both delimiters, with an escaped delimiter. Fixture: `site/features`.
+
+### How a release adds to it
+
+180. The site is published from the `gh-pages` branch of the repository. The first release creates it, holding only a `.nojekyll` file, so that GitHub Pages serves every file as it is, those whose names start with `_` included, rather than through Jekyll. The maintainer sets Pages once, under the repository's Settings, Pages: source "Deploy from a branch", branch `gh-pages`, folder root. Fixture: created by the test, in a repository of its own.
+181. Each release adds one commit to `gh-pages`, holding only its own version's folder and the versions page, `index.html`, so every earlier version stays exactly as it was published. A build that changed anything else publishes nothing and fails, naming what changed. Publishing a version again replaces its folder, and adds no commit when the build is the same. A version whose name is not a single folder name, such as one that is empty, starts with a dot or holds a `/`, is refused. Fixture: created by the test, in a repository of its own.
