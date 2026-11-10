@@ -2,7 +2,9 @@
 //! against releases served from memory.
 //!
 //! The scripts run in bash, with curl, tar, unzip and sha256sum or shasum,
-//! which every Linux and macOS machine has; the tests run there only.
+//! and the tests make the Windows archive with zip, which every Linux and
+//! macOS machine has or can install; the tests run there only. On macOS they
+//! run the system's own bash, /bin/bash, the oldest the action meets.
 #![cfg(unix)]
 
 use std::collections::HashMap;
@@ -18,6 +20,14 @@ use std::thread;
 
 const REPOSITORY: &str = "marlon-sousa/gherkin-glass";
 const LINUX: &str = "x86_64-unknown-linux-musl";
+
+fn bash() -> Command {
+    Command::new(if cfg!(target_os = "macos") {
+        "/bin/bash"
+    } else {
+        "bash"
+    })
+}
 
 fn root() -> &'static Path {
     Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -107,12 +117,23 @@ impl FakeGitHub {
         self.files.lock().unwrap().insert(target, body);
     }
 
-    /// Lists `tags` as releases, on pages of `per_page`.
+    /// Lists `tags` as releases, on pages of `per_page`, as GitHub's API
+    /// does: a tag ending in ` draft` is a draft release of the tag before it.
     fn list_releases(&self, tags: &[&str], per_page: usize) {
         for (index, page) in tags.chunks(per_page).enumerate() {
             let listing: Vec<String> = page
                 .iter()
-                .map(|tag| format!("{{\"tag_name\": \"{tag}\", \"draft\": false}}"))
+                .map(|tag| {
+                    let (tag, draft) = match tag.strip_suffix(" draft") {
+                        Some(tag) => (tag, true),
+                        None => (*tag, false),
+                    };
+                    format!(
+                        "{{\"tag_name\":\"{tag}\",\"name\":\"{tag}\",\"draft\":{draft},\
+                         \"body\":\"Not \\\"tag_name\\\": \\\"v1.99.0\\\"\",\
+                         \"assets\":[{{\"name\":\"SHA256SUMS\"}}]}}"
+                    )
+                })
                 .collect();
             self.serve(
                 format!(
@@ -219,7 +240,7 @@ impl Runner {
 
     /// Runs install.sh with the inputs `version` and `build`.
     fn install(&self, github: &FakeGitHub, version: &str, build: &str) -> Output {
-        run(Command::new("bash")
+        run(bash()
             .arg(root().join("action/install.sh"))
             .args([&github.address, &github.address])
             .env_clear()
@@ -291,7 +312,9 @@ fn installs_the_newest_release_of_the_actions_major_version_by_default() {
     let github = FakeGitHub::start();
     github.list_releases(
         &[
+            "v10.0.0",
             "v2.0.0",
+            "v1.12.0 draft",
             "v1.11.0-rc.1",
             "v1.9.3",
             "v1",
@@ -301,7 +324,14 @@ fn installs_the_newest_release_of_the_actions_major_version_by_default() {
         ],
         3,
     );
-    for version in ["1.10.0", "1.9.3", "2.0.0", "1.11.0-rc.1"] {
+    for version in [
+        "10.0.0",
+        "1.12.0",
+        "1.10.0",
+        "1.9.3",
+        "2.0.0",
+        "1.11.0-rc.1",
+    ] {
         github.release(version, LINUX, None);
     }
     let runner = Runner::new("1.2.0");
@@ -314,7 +344,7 @@ fn installs_the_newest_release_of_the_actions_major_version_by_default() {
 #[test]
 fn before_1_0_the_newest_release_of_the_actions_minor_version() {
     let github = FakeGitHub::start();
-    github.list_releases(&["v0.2.0", "v0.1.4", "v0.1.0", "v1.0.0"], 100);
+    github.list_releases(&["v0.10.0", "v0.2.0", "v0.1.4", "v0.1.0", "v1.0.0"], 100);
     github.release("0.1.4", LINUX, None);
     let runner = Runner::new("0.1.0");
     assert_eq!(
@@ -359,6 +389,14 @@ fn a_version_that_names_no_release_fails() {
         runner.install(&github, "latest", "false"),
         "version must be a version of ghg, such as 1.2.0.",
     );
+    for version in ["01.2.0", "1.2", "1.2.0+build", "1.2.0-..", "1.2.0 "] {
+        let runner = Runner::new("1.0.0");
+        fails(
+            &runner,
+            runner.install(&github, version, "false"),
+            "version must be a version of ghg, such as 1.2.0.",
+        );
+    }
     let runner = Runner::new("1.0.0");
     fails(
         &runner,
@@ -465,11 +503,14 @@ fn build_is_true_or_false() {
 /// Runs build.sh with the real ghg in the action's fixture, with `options`
 /// as the environment action.yml gives it.
 fn build(options: &[(&str, &str)]) -> Output {
-    let mut command = Command::new("bash");
+    let mut command = bash();
     command
         .arg(root().join("action/build.sh"))
         .current_dir(root().join("tests/fixtures/action"))
-        .env("GHG_BIN", env!("CARGO_BIN_EXE_ghg"));
+        .env_clear()
+        .env("PATH", std::env::var_os("PATH").unwrap_or_default())
+        .env("GHG_BIN", env!("CARGO_BIN_EXE_ghg"))
+        .env("GHG_OPTIONS", "config input");
     for (name, value) in options {
         command.env(name, value);
     }
@@ -481,6 +522,8 @@ fn build_runs_ghg_build_with_the_configuration_when_no_option_is_given() {
     for options in [
         &[][..],
         &[("GHG_OPTION_INPUT", ""), ("GHG_OPTION_CONFIG", "")],
+        // Only the options GHG_OPTIONS names are passed.
+        &[("GHG_OPTION_OUTPUT", "site")],
     ] {
         let output = build(options);
         assert_eq!(output.status.code(), Some(0), "{}", text(&output.stderr));

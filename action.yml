@@ -6,9 +6,9 @@ author: marlon-sousa
 #
 # Besides version and build, every input is an option of ghg build of the
 # same name, and every option of ghg build that sets how a site is built is an
-# input: a test in src/entities/invocation.rs fails when they differ. Each
-# such input is passed to the build step as GHG_OPTION_ and its name in
-# capitals, with _ for -.
+# input: a test in src/entities/invocation.rs fails when they differ. The
+# build step names them all in GHG_OPTIONS, and passes each as GHG_OPTION_ and
+# its name in capitals, with _ for -.
 
 inputs:
   version:
@@ -47,6 +47,7 @@ runs:
       env:
         GHG_BIN: ${{ steps.install.outputs.bin }}
         GHG_ACTION_PATH: ${{ github.action_path }}
+        GHG_OPTIONS: config input
         GHG_OPTION_CONFIG: ${{ inputs.config }}
         GHG_OPTION_INPUT: ${{ inputs.input }}
       run: bash "$GHG_ACTION_PATH/action/build.sh"

@@ -143,16 +143,19 @@ mod tests {
     #[test]
     fn every_option_of_ghg_build_is_an_input_of_the_action_and_nothing_else_is() {
         let action = action();
-        let inputs: BTreeSet<String> = action["inputs"]
+        let mut inputs: BTreeSet<String> = action["inputs"]
             .as_hash()
             .expect("action.yml has inputs")
             .keys()
             .map(|key| key.as_str().expect("an input's name").to_string())
-            .filter(|name| !OWN_INPUTS.contains(&name.as_str()))
             .collect();
+        for own in OWN_INPUTS {
+            assert!(inputs.remove(own), "action.yml has the input {own}");
+        }
         assert_eq!(inputs, options());
     }
 
+    // docs/BEHAVIOUR.md, "The GitHub Action", rule 43.
     #[test]
     fn the_build_step_passes_every_option_input_and_nothing_else() {
         let action = action();
@@ -177,6 +180,13 @@ mod tests {
             })
             .filter(|(key, _)| key.starts_with("GHG_OPTION_"))
             .collect();
+        let named: BTreeSet<String> = build["env"]["GHG_OPTIONS"]
+            .as_str()
+            .expect("the build step names its options")
+            .split_whitespace()
+            .map(str::to_string)
+            .collect();
+        assert_eq!(named, options());
         let expected: BTreeSet<(String, String)> = options()
             .into_iter()
             .map(|name| {
@@ -187,6 +197,18 @@ mod tests {
             })
             .collect();
         assert_eq!(passed, expected);
+    }
+
+    #[test]
+    fn the_help_names_every_option() {
+        let help = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/messages/en/gherkin-glass.ftl"
+        ));
+        for option in BuildOption::ALL {
+            let named = format!("  --{} <", option.name());
+            assert!(help.contains(&named), "the help names --{}", option.name());
+        }
     }
 
     #[test]
