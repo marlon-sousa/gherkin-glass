@@ -8,7 +8,7 @@
 // GHG names another ghg binary than target/debug/ghg.
 
 import { spawn } from "node:child_process";
-import { appendFileSync, cpSync, mkdtempSync, rmSync } from "node:fs";
+import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -23,12 +23,18 @@ const folder = mkdtempSync(join(tmpdir(), "ghg-reload-"));
 cpSync("tests/fixtures/serve/reload", folder, { recursive: true });
 const feature = join(folder, "features/many-scenarios.feature");
 
-const server = spawn(ghg, ["serve", "--watch", "--port", "0"], { cwd: folder });
-const firstLine = await new Promise((done) =>
-  createInterface({ input: server.stdout }).once("line", done),
-);
-const address = /^The site is served at (\S+)\. /.exec(firstLine)?.[1];
-assert.ok(address, firstLine);
+// ghg serve --watch at `port`, and the address it prints.
+async function serve(port) {
+  const server = spawn(ghg, ["serve", "--watch", "--port", String(port)], { cwd: folder });
+  const firstLine = await new Promise((done) =>
+    createInterface({ input: server.stdout }).once("line", done),
+  );
+  const address = /^The site is served at (\S+)\. /.exec(firstLine)?.[1];
+  assert.ok(address, firstLine);
+  return { server, address };
+}
+
+let { server, address } = await serve(0);
 
 const browser = await chromium.launch();
 let build = 1;
@@ -37,10 +43,8 @@ try {
   const page = await browser.newPage({ viewport: { width: 800, height: 600 } });
   const heading = (n) => `scenario-number-${n}`;
 
-  // Changes a feature, then waits for the page of the next version.
-  async function rebuild() {
-    build += 1;
-    appendFileSync(feature, "\n");
+  // Waits for the page of version `build`.
+  async function reloaded() {
     await page.waitForFunction(
       (number) =>
         document.querySelector('script[src*="/__ghg/reload.js"]')?.src.endsWith(`build=${number}`),
@@ -49,6 +53,13 @@ try {
     );
     await page.waitForLoadState("load");
     await page.waitForTimeout(200);
+  }
+
+  // Changes a feature, then waits for the page of the next version.
+  async function rebuild(change = (text) => `${text}\n`) {
+    build += 1;
+    writeFileSync(feature, change(readFileSync(feature, "utf8")));
+    await reloaded();
   }
 
   const where = () =>
@@ -61,13 +72,14 @@ try {
 
   await page.goto(`${address}many-scenarios.html`);
 
-  // Focus inside a block, in the window: the heading before it.
+  // Focus in the window wins over the scroll: heading 4's button is focused
+  // in the middle of the window, while heading 3's top is above it.
   await page.evaluate((id) => {
-    const target = document.getElementById(id).parentElement.querySelector("button, a, [tabindex]") ??
-      document.getElementById(id);
-    target.scrollIntoView();
-    target.focus();
+    const button = document.querySelector(`#${id} button`);
+    button.focus({ preventScroll: true });
+    document.getElementById(id).scrollIntoView({ block: "center" });
   }, heading(4));
+  assert.ok((await topOf(heading(3))) < 0, "focus case, heading 3 above the window");
   await rebuild();
   assert.equal((await where()).focused, heading(4), "focus case");
   assert.equal(await topOf(heading(4)), 0, "focus case, scrolled to the heading");
@@ -88,6 +100,22 @@ try {
   });
   await rebuild();
   assert.equal((await where()).scrollY, 0, "top case");
+
+  assert.equal((await where()).focused, "BODY", "top case, nothing focused");
+
+  // A heading the page no longer has: the page opens as any page does.
+  await page.evaluate((id) => document.getElementById(id).scrollIntoView(), heading(5));
+  await rebuild((text) => text.replace("Scenario number 5", "Scenario renamed"));
+  assert.equal((await where()).focused, "BODY", "renamed case, nothing focused");
+
+  // While ghg serve does not answer, the script keeps asking.
+  const port = new URL(address).port;
+  server.kill();
+  await new Promise((done) => server.once("exit", done));
+  await page.waitForTimeout(2500);
+  ({ server, address } = await serve(port));
+  build = 1;
+  await reloaded();
 
   console.log("The reload keeps the reader's heading, in every case.");
 } finally {

@@ -12,7 +12,7 @@ use crate::entities::{
 
 use crate::ports::{ChangeWatcher, ConfigReader, PreviewServer, SiteRecorder};
 use crate::services::settings::CONFIG_FILE;
-use crate::services::{ConfigProblems, SettingsService, SiteService};
+use crate::services::{ConfigProblems, InputService, SettingsService, SiteService};
 
 /// The address ghg serve listens on unless `--host` names another.
 const DEFAULT_HOST: &str = "127.0.0.1";
@@ -56,12 +56,12 @@ pub(crate) trait PreviewEvents {
 }
 
 impl PreviewService {
-    /// `on_disk` writes the site into its output folder, and `in_memory`
-    /// writes it into `memory`.
+    /// `on_disk` writes the site into its output folder; under `--watch`,
+    /// `input` is built into `memory`.
     pub fn new(
         config_reader: Arc<dyn ConfigReader>,
         on_disk: SiteService,
-        in_memory: SiteService,
+        input: InputService,
         memory: Arc<dyn SiteRecorder>,
         server: Arc<dyn PreviewServer>,
         watcher: Arc<dyn ChangeWatcher>,
@@ -69,7 +69,7 @@ impl PreviewService {
         PreviewService {
             settings: SettingsService::new(config_reader),
             on_disk,
-            in_memory,
+            in_memory: SiteService::new(input, memory.clone()),
             memory,
             server,
             watcher,
@@ -88,16 +88,9 @@ impl PreviewService {
             .settings
             .load(&options.build)
             .map_err(ServeFailure::Config)?;
-        let site = if options.no_build {
-            ServedSite::Folder(settings.output.clone())
-        } else if options.watch {
-            self.build_in_memory(&settings)
-                .map_err(ServeFailure::Input)?
-        } else {
-            self.build_into_output(&settings)
-                .map_err(ServeFailure::Input)?
-        };
-        let changes = if options.watch {
+        // Watching starts before the first build, so that a change made
+        // during it is not missed; what stops the build is said first.
+        let changes = options.watch.then(|| {
             let config = options
                 .build
                 .config
@@ -107,10 +100,18 @@ impl PreviewService {
                 Watched::Folder(settings.input.clone()),
                 Watched::File(config),
             ];
-            Some(self.watcher.watch(&watched).map_err(ServeFailure::Watch)?)
+            self.watcher.watch(&watched)
+        });
+        let site = if options.no_build {
+            ServedSite::Folder(settings.output.clone())
+        } else if options.watch {
+            self.build_in_memory(&settings)
+                .map_err(ServeFailure::Input)?
         } else {
-            None
+            self.build_into_output(&settings)
+                .map_err(ServeFailure::Input)?
         };
+        let changes = changes.transpose().map_err(ServeFailure::Watch)?;
         let preview = Arc::new(Preview::new(options.watch, site));
         let host = options.host.as_deref().unwrap_or(DEFAULT_HOST);
         let port = options.port.unwrap_or(DEFAULT_PORT);
@@ -177,12 +178,11 @@ mod tests {
     use std::time::{Duration, Instant};
 
     use super::*;
-    use crate::adapters::MemorySite;
     use crate::entities::{
         Changes, CollectedInput, ParseFailure, Problem, ProblemKind, RawFeature,
     };
-    use crate::ports::{FeatureParser, InputCollector};
-    use crate::services::InputService;
+    use crate::ports::{FeatureParser, InputCollector, SiteWriter};
+    use std::collections::BTreeMap;
 
     /// No configuration file.
     struct NoFile;
@@ -307,10 +307,35 @@ mod tests {
         }
     }
 
-    /// A build of `input`, written nowhere: it has no features.
+    /// Keeps what is written until it is taken.
+    #[derive(Default)]
+    struct Recorder {
+        files: Mutex<BTreeMap<String, Vec<u8>>>,
+    }
+
+    impl SiteWriter for Recorder {
+        fn write(&self, _: &Path, file: &str, contents: &[u8]) -> IoResult<()> {
+            self.files
+                .lock()
+                .unwrap_or_else(PoisonError::into_inner)
+                .insert(file.to_string(), contents.to_vec());
+            Ok(())
+        }
+    }
+
+    impl SiteRecorder for Recorder {
+        fn take(&self) -> BTreeMap<String, Vec<u8>> {
+            std::mem::take(&mut *self.files.lock().unwrap_or_else(PoisonError::into_inner))
+        }
+    }
+
+    /// Builds of `input`, into a recorder of their own.
     fn site(input: &Arc<Input>) -> SiteService {
-        let memory = Arc::new(MemorySite::default());
-        SiteService::new(InputService::new(input.clone(), input.clone()), memory)
+        SiteService::new(reading(input), Arc::new(Recorder::default()))
+    }
+
+    fn reading(input: &Arc<Input>) -> InputService {
+        InputService::new(input.clone(), input.clone())
     }
 
     fn words() -> ServerWords {
@@ -325,11 +350,16 @@ mod tests {
         let input = Arc::new(Input::default());
         let server = Arc::new(Server::default());
         let watcher = Arc::new(Watcher::default());
+        // A file left from an earlier build, which no version may serve.
+        let recorder = Arc::new(Recorder::default());
+        recorder
+            .write(Path::new("site"), "stale.html", b"")
+            .expect("written");
         let service = PreviewService::new(
             Arc::new(NoFile),
             site(&input),
-            site(&input),
-            Arc::new(MemorySite::default()),
+            reading(&input),
+            recorder,
             server.clone(),
             watcher.clone(),
         );
@@ -357,6 +387,15 @@ mod tests {
             assert_eq!((host.as_str(), port), ("127.0.0.1", 0));
             assert!(preview.watching);
             assert_eq!(preview.current().number, 1);
+            let ServedSite::Memory(files) = &preview.current().site else {
+                panic!("a site in memory");
+            };
+            assert!(
+                files.contains_key("assets/gherkin-glass.js"),
+                "{:?}",
+                files.keys()
+            );
+            assert!(!files.contains_key("stale.html"));
 
             sender.send(()).expect("sent");
             assert_eq!(events.wait_for(2)[1], "rebuilt");
@@ -387,8 +426,8 @@ mod tests {
         let service = PreviewService::new(
             Arc::new(NoFile),
             site(&input),
-            site(&input),
-            Arc::new(MemorySite::default()),
+            reading(&input),
+            Arc::new(Recorder::default()),
             server.clone(),
             Arc::new(Watcher::default()),
         );
@@ -417,8 +456,8 @@ mod tests {
         let service = PreviewService::new(
             Arc::new(NoFile),
             site(&input),
-            site(&input),
-            Arc::new(MemorySite::default()),
+            reading(&input),
+            Arc::new(Recorder::default()),
             server.clone(),
             watcher.clone(),
         );

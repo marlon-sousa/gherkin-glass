@@ -162,7 +162,7 @@ fn serve_site() -> Serving {
     )
 }
 
-// Serving: rules 36 to 40.
+// Serving: rules 56 to 60.
 
 #[test]
 fn it_says_where_it_listens_on_127_0_0_1() {
@@ -292,7 +292,7 @@ fn it_builds_into_the_output_folder_and_serves_it() {
     assert_eq!(get(&serving.address, "/__ghg/build").status, 404);
 }
 
-// What it answers: rules 41 to 44.
+// What it answers: rules 61 to 64.
 
 #[test]
 fn a_file_is_served_exactly_with_its_type() {
@@ -395,7 +395,7 @@ fn nothing_else_is_served() {
     );
 }
 
-// Watching and reloading: rules 45 to 50.
+// Watching and reloading: rules 65 to 70; tests/browser/reload.mjs checks 71 and 72.
 
 #[test]
 fn watch_and_no_build_are_a_mistake_together() {
@@ -458,9 +458,23 @@ fn watching_rebuilds_on_a_change_and_keeps_the_last_site_that_built() {
     });
     assert_eq!(get(&address, "/withdraw.html").status, 404);
 
-    write(folder.join("features/broken.feature"), "").expect("written");
+    write(folder.join("ghg.toml"), "inputs = \"features\"\n").expect("written");
     let mut stderr = BufReader::new(serving.child.stderr.take().expect("piped"));
     let mut report = String::new();
+    stderr.read_line(&mut report).expect("a line");
+    assert_eq!(report, "ghg.toml:1: ghg has no setting named inputs.\n");
+    report.clear();
+    stderr.read_line(&mut report).expect("a line");
+    assert_eq!(
+        report,
+        "The site was not rebuilt, so the last site that built is still served.\n"
+    );
+    assert_eq!(build(), "4");
+    write(folder.join("ghg.toml"), "input = \"features\"\n").expect("written");
+    eventually("a rebuild after ghg.toml was mended", || build() == "5");
+
+    write(folder.join("features/broken.feature"), "").expect("written");
+    report.clear();
     stderr.read_line(&mut report).expect("a line");
     assert!(report.starts_with("broken.feature:"), "{report}");
     report.clear();
@@ -469,7 +483,7 @@ fn watching_rebuilds_on_a_change_and_keeps_the_last_site_that_built() {
         report,
         "The site was not rebuilt, so the last site that built is still served.\n"
     );
-    assert_eq!(build(), "4");
+    assert_eq!(build(), "5");
     assert_eq!(get(&address, "/assets/gherkin-glass.css").status, 200);
 }
 

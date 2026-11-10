@@ -13,12 +13,11 @@ use gherkin_glass::{
 fn main() -> ExitCode {
     let config_reader = Arc::new(ConfigFileReader);
     let input = InputService::new(Arc::new(InputWalker), Arc::new(GherkinParser));
-    let memory = Arc::new(MemorySite::default());
     let preview = PreviewService::new(
         config_reader.clone(),
         SiteService::new(input.clone(), Arc::new(SiteFiles)),
-        SiteService::new(input.clone(), memory.clone()),
-        memory,
+        input.clone(),
+        Arc::new(MemorySite::default()),
         Arc::new(HttpPreviewServer),
         Arc::new(FileWatcher),
     );

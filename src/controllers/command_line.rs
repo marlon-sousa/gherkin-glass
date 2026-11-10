@@ -147,13 +147,29 @@ mod tests {
     use std::path::{Path, PathBuf};
 
     use super::*;
-    use crate::adapters::MemorySite;
     use crate::entities::{
         Changes, CollectedInput, ListenFailure, ParseFailure, Preview, ProblemKind, RawFeature,
         WatchFailure, Watched,
     };
-    use crate::ports::{ChangeWatcher, FeatureParser, InputCollector, PreviewServer, SiteWriter};
+    use crate::ports::{
+        ChangeWatcher, FeatureParser, InputCollector, PreviewServer, SiteRecorder, SiteWriter,
+    };
     use crate::services::{InputService, ServeFailure};
+
+    /// Keeps nothing; the parser fails every file before anything is written.
+    struct NoRecorder;
+
+    impl SiteWriter for NoRecorder {
+        fn write(&self, _output: &Path, _file: &str, _contents: &[u8]) -> IoResult<()> {
+            Ok(())
+        }
+    }
+
+    impl SiteRecorder for NoRecorder {
+        fn take(&self) -> BTreeMap<String, Vec<u8>> {
+            BTreeMap::new()
+        }
+    }
 
     /// Writes nothing; the parser fails every file before anything is written.
     struct NoWriter;
@@ -214,8 +230,8 @@ mod tests {
         let preview = PreviewService::new(
             files.clone(),
             site(),
-            site(),
-            Arc::new(MemorySite::default()),
+            input.clone(),
+            Arc::new(NoRecorder),
             Arc::new(PortTaken),
             Arc::new(NoWatching),
         );
@@ -305,6 +321,32 @@ mod tests {
             wording::serve_failure(&failure),
             "ghg serve cannot listen at 203.0.113.1, port 8000: no such address"
         );
+    }
+
+    #[derive(Default)]
+    struct Said(std::sync::Mutex<String>);
+
+    impl Terminal for Said {
+        fn say(&self, text: &str) {
+            self.0.lock().expect("lock").push_str(text);
+        }
+        fn warn(&self, _: &str) {}
+    }
+
+    #[test]
+    fn the_address_that_means_every_network_is_printed_as_this_machine_s() {
+        for (listening, printed) in [
+            ("0.0.0.0:8000", "http://127.0.0.1:8000/"),
+            ("[::]:8000", "http://[::1]:8000/"),
+            ("192.0.2.1:80", "http://192.0.2.1:80/"),
+        ] {
+            let said = Said::default();
+            Events(&said).listening(listening.parse().expect("an address"));
+            assert_eq!(
+                *said.0.lock().expect("lock"),
+                format!("The site is served at {printed}. Press Control+C to stop.\n")
+            );
+        }
     }
 
     #[test]
