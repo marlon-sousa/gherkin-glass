@@ -52,10 +52,11 @@ const noSite = [
   "pages/expected",
   "pages/expected-collapsed",
   "serve/site",
-  "accessibility",
+  "accessibility/failing",
 ];
 
-// The rules the check fails on: WCAG 2.2 A and AA, and the enhanced contrast of AAA.
+// The rules the check fails on: WCAG 2.2 A and AA, and the enhanced contrast
+// of AAA, leaving out the rules axe-core tags experimental or deprecated.
 const tags = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 const extraRules = ["color-contrast-enhanced"];
 
@@ -103,6 +104,7 @@ async function violations(page) {
     async ({ tags, extraRules }) => {
       const rules = window.axe
         .getRules(tags)
+        .filter((rule) => !rule.tags.includes("experimental") && !rule.tags.includes("deprecated"))
         .map((rule) => rule.ruleId)
         .concat(extraRules);
       const results = await window.axe.run(document, {
@@ -123,11 +125,11 @@ const describeFocus = (page) =>
   page.evaluate(() => {
     const element = document.activeElement;
     if (!element || element === document.body) return "nothing";
-    return element.dataset.ghgCheck ?? "an element the page did not have when it loaded";
+    return element.dataset.ghgCheck ?? "an element the check did not list as focusable";
   });
 
-// Tab from the start of the page reaches every link and button the page
-// shows, each once, in the order of the page, then leaves the page.
+// Tab from the start of the page reaches every link, button and other control
+// the page shows, each once, in the order of the page, then leaves the page.
 async function keyboardProblems(page) {
   const expected = await page.evaluate(() => {
     const focusable = [
@@ -158,11 +160,12 @@ async function keyboardProblems(page) {
 }
 
 // Enter and Space on a block's button each turn it over, and Enter on
-// "Collapse all" and "Expand all" acts as a click does.
+// "Collapse all" and "Expand all" acts as a click does. Returns null for a
+// page without a block, where there is nothing to press.
 async function buttonProblems(page) {
   const problems = [];
   const button = page.locator(".ghg-toggle").first();
-  if ((await button.count()) === 0) return problems;
+  if ((await button.count()) === 0) return null;
   const state = () => button.getAttribute("aria-expanded");
   const before = await state();
   await button.focus();
@@ -180,7 +183,10 @@ async function buttonProblems(page) {
     ["Expand all", "true"],
   ]) {
     const control = page.getByRole("button", { name, exact: true });
-    if ((await control.count()) === 0) continue;
+    if ((await control.count()) === 0) {
+      problems.push(`keyboard: the page has blocks and no "${name}" button`);
+      continue;
+    }
     await control.focus();
     await page.keyboard.press("Enter");
     const states = await page.locator(".ghg-toggle").evaluateAll((buttons) =>
@@ -201,19 +207,22 @@ export async function checkSite(browser, folder) {
     .sort();
   const { server, address } = await serve(["--no-build", "--output", folder, "--port", "0"], folder);
   const problems = [];
+  let pressed = 0;
   try {
     for (const scheme of schemes) {
       const context = await browser.newContext({ colorScheme: scheme });
       const page = await context.newPage();
-      // A storage of its own for every page, so that what one page's
-      // buttons remember never changes how another starts.
       for (const path of pages) {
         await page.goto(addressOf(address, path));
         await page.emulateMedia({ colorScheme: scheme });
         for (const line of await violations(page)) problems.push(`${path}, ${scheme}: ${line}`);
         if (scheme === "light") {
           for (const line of await keyboardProblems(page)) problems.push(`${path}: ${line}`);
-          for (const line of await buttonProblems(page)) problems.push(`${path}: ${line}`);
+          const found = await buttonProblems(page);
+          if (found !== null) pressed += 1;
+          for (const line of found ?? []) problems.push(`${path}: ${line}`);
+          // What the buttons remembered is forgotten, so that it never
+          // changes how another page starts.
           await page.evaluate(() => localStorage.clear());
         }
       }
@@ -222,7 +231,7 @@ export async function checkSite(browser, folder) {
   } finally {
     await stop(server);
   }
-  return { pages: pages.length, problems };
+  return { pages: pages.length, pressed, problems };
 }
 
 async function main() {
@@ -231,25 +240,34 @@ async function main() {
   const output = mkdtempSync(join(tmpdir(), "ghg-accessibility-"));
   const failures = [];
   let checked = 0;
+  let pressed = 0;
   try {
     for (const [index, each] of builds.entries()) {
       const site = join(output, String(index));
       build(each, site);
-      const { pages, problems } = await checkSite(browser, site);
-      checked += pages;
       const name = [each.folder, ...each.args].join(" ");
+      const result = await checkSite(browser, site);
+      if (result.pages === 0) failures.push(`${name}: the site has no page`);
+      checked += result.pages;
+      pressed += result.pressed;
+      const { problems } = result;
       for (const problem of problems) failures.push(`${name}: ${problem}`);
     }
-    // The check must fail on a page that breaks its rules, in either scheme.
+    if (pressed === 0) failures.push("no page had a block whose buttons the check could press");
+    // The check must fail on a page that breaks each of its rules.
     const { problems } = await checkSite(browser, join(fixtures, "accessibility/failing"));
-    const found = (rule) => problems.some((line) => line.includes(rule));
-    for (const [rule, what] of [
-      ["light: color-contrast-enhanced", "enhanced contrast, in the light scheme"],
-      ["dark: color-contrast", "contrast, in the dark scheme"],
-      ["light: image-alt", "a WCAG 2 A rule"],
-      ["keyboard: Tab reached", "the keyboard order"],
+    const found = (start) => problems.some((line) => line.startsWith(`index.html${start}`));
+    for (const [start, what] of [
+      [", light: color-contrast-enhanced: .aa-only:", "enhanced contrast, in the light scheme"],
+      [", dark: color-contrast: .dark-only:", "contrast, in the dark scheme"],
+      [", light: image-alt:", "a WCAG 2 A rule"],
+      [": keyboard: Tab reached", "the keyboard order"],
+      [": keyboard: the first block's button", "a block's button that Space does not turn over"],
     ]) {
-      if (!found(rule)) failures.push(`tests/fixtures/accessibility/failing: the check did not find ${what}`);
+      if (!found(start)) failures.push(`tests/fixtures/accessibility/failing: the check did not find ${what}`);
+    }
+    if (found(", light: color-contrast: .dark-only:")) {
+      failures.push("tests/fixtures/accessibility/failing: the dark scheme's contrast failed in the light scheme");
     }
   } finally {
     await browser.close();

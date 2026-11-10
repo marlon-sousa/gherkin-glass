@@ -95,7 +95,7 @@ fn check() -> Result<(), String> {
         "gherkin-glass",
     ])?;
     check_script()?;
-    check_browser()
+    browser_checks()
 }
 
 fn check_script() -> Result<(), String> {
@@ -114,6 +114,11 @@ fn check_script() -> Result<(), String> {
 
 fn check_browser() -> Result<(), String> {
     npm(&["ci", "--no-audit", "--no-fund"])?;
+    browser_checks()
+}
+
+/// The browser check, once the Node packages are installed.
+fn browser_checks() -> Result<(), String> {
     // Headless Chromium alone, and on CI the system's libraries it needs, which
     // Playwright installs with the runner's sudo.
     let mut install = vec!["exec", "--", "playwright", "install", "--only-shell"];

@@ -21,7 +21,17 @@
 <p class="aa-only">Text with too little contrast for AAA in the light scheme.</p>
 <p class="dark-only">Text with too little contrast in the dark scheme.</p>
 <img src="missing.png" width="10" height="10">
+<h2><span class="ghg-toggle" role="button" tabindex="0" aria-expanded="true">A block whose button Space does not turn over</span></h2>
 <p><a href="#first">Reached second by Tab</a> <a href="#second" tabindex="1">Reached first by Tab</a></p>
 </main>
+<script>
+  // Enter turns the block over, as a button does; Space does nothing, as a button must not.
+  const toggle = document.querySelector(".ghg-toggle");
+  toggle.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      toggle.setAttribute("aria-expanded", String(toggle.getAttribute("aria-expanded") !== "true"));
+    }
+  });
+</script>
 </body>
 </html>
