@@ -17,6 +17,7 @@ Ports and adapters. The pure part of gherkin-glass, which decides what the site 
 - **`assets/`**, the files the binary embeds and writes into every site: the stylesheet, and the script compiled from `script/`.
 - **`messages/`**, the Fluent catalogue of gherkin-glass's own interface text, one folder per language, embedded in the binary, and **`i18n.toml`** at the crate's root, which tells the `fl!` macro where the catalogue is and which language it checks against (see "Interface text").
 - **`action.yml`** and **`action/`**, the GitHub Action that installs `ghg` and builds a site with it ([#17](https://github.com/marlon-sousa/gherkin-glass/issues/17)): a composite action whose steps run the bash scripts in `action/`, each saying its role in a comment on its first lines, as a module does.
+- **`site/`**, the project's own site ([#19](https://github.com/marlon-sousa/gherkin-glass/issues/19)): the example suite it shows, the list of fixtures it leaves out, and the scripts that gather its input and publish each release to the `gh-pages` branch, which `.github/workflows/site.yml` runs.
 - **`tests/`**, the crate's integration tests, and `tests/fixtures/`, the feature files every rule of BEHAVIOUR.md is checked against.
 
 ## Module roles

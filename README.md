@@ -6,7 +6,7 @@ gherkin-glass turns a folder of feature files into a static website: a page for 
 
 ## Status
 
-Planning. Nothing is released yet. What the first version will do is tracked in the [issues](https://github.com/marlon-sousa/gherkin-glass/issues), and what is agreed is written in [docs/BEHAVIOUR.md](docs/BEHAVIOUR.md) before it is built.
+Planning. Nothing is released yet. What the first version will do is tracked in the [issues](https://github.com/marlon-sousa/gherkin-glass/issues), and what is agreed is written in [docs/BEHAVIOUR.md](docs/BEHAVIOUR.md) before it is built. Once the first release is published, [the project's own site](https://marlon-sousa.github.io/gherkin-glass/) shows what each release makes of an example suite and of the test fixtures.
 
 ## Goals
 

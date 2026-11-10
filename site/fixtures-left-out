@@ -1,0 +1,9 @@
+# The fixtures under tests/fixtures/ that the project's site does not show,
+# one folder name per line, each after a comment saying why. Every other
+# fixture is shown: docs/BEHAVIOUR.md, "The project's own site".
+
+# Its build is meant to fail.
+unreadable
+
+# Its cases are runs of the command line, each with its own ghg.toml, not pages.
+configuration
