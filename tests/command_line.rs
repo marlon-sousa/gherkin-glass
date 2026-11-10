@@ -94,6 +94,7 @@ fn help_lists_the_commands_and_options() {
             "--input <folder>: ",
             "--output <folder>: ",
             "--title <text>: ",
+            "--version-name <name>: ",
         ] {
             assert!(help.contains(expected), "{expected:?} in:\n{help}");
         }

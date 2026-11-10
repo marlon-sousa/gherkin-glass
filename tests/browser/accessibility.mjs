@@ -41,6 +41,7 @@ const builds = [
   { folder: "configuration/unnamed-allowed", args: ["--config", "allowed.toml"] },
   { folder: "serve/built", args: [] },
   { folder: "serve/reload", args: [] },
+  { folder: "versions/suite", args: ["--version-name", "v1.0.0"] },
 ];
 
 // The fixtures that make no site: those whose build is meant to fail, and
@@ -66,6 +67,8 @@ const noSite = [
   "tags/expected",
   "serve/site",
   "accessibility/failing",
+  "versions/bad-name",
+  "versions/broken",
 ];
 
 // The rules the check fails on: WCAG 2.2 A and AA, and the enhanced contrast

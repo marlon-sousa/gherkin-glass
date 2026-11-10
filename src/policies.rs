@@ -28,6 +28,8 @@ mod tag_pages;
 mod theme_stylesheet;
 mod themes;
 mod unnamed_blocks;
+mod version_order;
+mod versions_page;
 
 pub use anchor_rule::make_anchors;
 pub(crate) use anchor_rule::{anchor_of, unique};
@@ -63,3 +65,5 @@ pub(crate) use theme_stylesheet::theme_stylesheet;
 pub use themes::DEFAULT_ACCENTS;
 pub(crate) use themes::{check_accent, palette};
 pub(crate) use unnamed_blocks::unnamed_blocks;
+pub(crate) use version_order::order_versions;
+pub(crate) use versions_page::{ASSETS, VERSIONS_PAGE, render_versions_page};

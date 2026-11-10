@@ -6,7 +6,7 @@ use toml::Spanned;
 use toml::de::{DeTable, DeValue};
 
 use crate::entities::{
-    Colour, Config, ConfigProblem, ConfigProblemKind, TagLink, Theme, ValueType,
+    Colour, Config, ConfigProblem, ConfigProblemKind, TagLink, Theme, ValueType, VersionName,
 };
 use crate::policies::{PatternProblem, check_accent, unknown_group, whole_tag_pattern};
 
@@ -45,11 +45,20 @@ pub(crate) fn parse_config(source: &str) -> Result<Config, Vec<ConfigProblem>> {
             })
         };
         let found = match name {
-            "input" | "output" | "source_link" | "title" => match text(value) {
+            "input" | "output" | "source_link" | "title" | "version_name" => match text(value) {
                 // An empty path names nothing, and would report a line with no path.
                 Some("") => Err(problem(ConfigProblemKind::Empty {
                     key: name.to_string(),
                 })),
+                Some(text) if name == "version_name" => match VersionName::new(text) {
+                    Some(version) => {
+                        config.version_name = Some(version);
+                        Ok(())
+                    }
+                    None => Err(problem(ConfigProblemKind::InvalidVersionName {
+                        name: text.to_string(),
+                    })),
+                },
                 Some(text) => {
                     match name {
                         "input" => config.input = Some(PathBuf::from(text)),
@@ -61,15 +70,20 @@ pub(crate) fn parse_config(source: &str) -> Result<Config, Vec<ConfigProblem>> {
                 }
                 None => Err(wrong_type(ValueType::Text)),
             },
-            "allow_unnamed" | "collapse_rules" | "collapse_scenarios" | "show_tree"
-            | "inline_backgrounds" => match value.get_ref().as_bool() {
+            "allow_unnamed"
+            | "collapse_rules"
+            | "collapse_scenarios"
+            | "show_tree"
+            | "inline_backgrounds"
+            | "replace_existing_version" => match value.get_ref().as_bool() {
                 Some(set) => {
                     *match name {
                         "allow_unnamed" => &mut config.allow_unnamed,
                         "collapse_rules" => &mut config.collapse_rules,
                         "show_tree" => &mut config.show_tree,
                         "collapse_scenarios" => &mut config.collapse_scenarios,
-                        _ => &mut config.inline_backgrounds,
+                        "inline_backgrounds" => &mut config.inline_backgrounds,
+                        _ => &mut config.replace_existing_version,
                     } = Some(set);
                     Ok(())
                 }
@@ -463,5 +477,64 @@ mod tests {
         let found = problems("input = \"a\"\ninput = \"b\"\n");
         assert_eq!(found[0].0, Some(2));
         assert!(matches!(found[0].1, ConfigProblemKind::Syntax { .. }));
+    }
+
+    #[test]
+    fn the_version_settings_are_read() {
+        let config = parse_config("version_name = \"v1.2.0\"\nreplace_existing_version = false\n")
+            .expect("valid");
+        assert_eq!(config.version_name, VersionName::new("v1.2.0"));
+        assert_eq!(config.replace_existing_version, Some(false));
+        assert_eq!(config.allow_unnamed, None);
+    }
+
+    #[test]
+    fn a_version_name_must_be_one_folder_name() {
+        assert_eq!(
+            problems("version_name = \"\"\nversion_name2 = 1\n\n[x]\n"),
+            [
+                (
+                    Some(1),
+                    ConfigProblemKind::Empty {
+                        key: "version_name".into()
+                    }
+                ),
+                (
+                    Some(2),
+                    ConfigProblemKind::UnknownKey {
+                        key: "version_name2".into()
+                    }
+                ),
+                (Some(4), ConfigProblemKind::UnknownKey { key: "x".into() }),
+            ]
+        );
+        assert_eq!(
+            problems("version_name = \"../v1\"\n"),
+            [(
+                Some(1),
+                ConfigProblemKind::InvalidVersionName {
+                    name: "../v1".into()
+                }
+            )]
+        );
+        assert_eq!(
+            problems("version_name = 1.0\nreplace_existing_version = \"yes\"\n"),
+            [
+                (
+                    Some(1),
+                    ConfigProblemKind::WrongType {
+                        key: "version_name".into(),
+                        expected: ValueType::Text
+                    }
+                ),
+                (
+                    Some(2),
+                    ConfigProblemKind::WrongType {
+                        key: "replace_existing_version".into(),
+                        expected: ValueType::Boolean
+                    }
+                ),
+            ]
+        );
     }
 }

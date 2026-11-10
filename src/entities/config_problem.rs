@@ -24,6 +24,9 @@ pub(crate) enum ConfigProblemKind {
     UnknownKey { key: String },
     #[error("{key} is empty")]
     Empty { key: String },
+    /// `name` is the text `version_name` was given.
+    #[error("{name} cannot be a version name")]
+    InvalidVersionName { name: String },
     #[error("{key} is not {expected:?}")]
     WrongType { key: String, expected: ValueType },
     #[error("{key} reaches {} hundredths", shortfall.hundredths)]

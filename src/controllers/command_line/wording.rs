@@ -3,8 +3,8 @@
 use i18n_embed_fl::fl;
 
 use crate::entities::{
-    AccentShortfall, ArgumentProblem, ConfigProblemKind, ListenFailure, Problem, ProblemKind,
-    Problems, Theme, UnnamedBlock, ValueType,
+    AccentShortfall, ArgumentProblem, ConfigProblemKind, ListenFailure, OutputProblem,
+    OutputProblemKind, Problem, ProblemKind, Problems, Theme, UnnamedBlock, ValueType,
 };
 use crate::policies::CATALOGUE;
 use crate::services::{ConfigProblems, RebuildFailure, ServeFailure};
@@ -40,6 +40,7 @@ pub(super) fn argument_problem(problem: &ArgumentProblem) -> String {
             fl!(CATALOGUE, "not-a-port", value = value.as_str())
         }
         ArgumentProblem::WatchWithoutBuild => fl!(CATALOGUE, "watch-without-build"),
+        ArgumentProblem::InvalidVersionName { name } => invalid_version_name(name),
     }
 }
 
@@ -49,6 +50,7 @@ pub(super) fn serve_failure(failure: &ServeFailure) -> String {
     match failure {
         ServeFailure::Config(problems) => config_problems(problems),
         ServeFailure::Input(found) => problems(found),
+        ServeFailure::Output(problem) => output_problem(problem),
         ServeFailure::Listen {
             port,
             failure: ListenFailure::PortTaken,
@@ -162,6 +164,7 @@ fn config_message(kind: &ConfigProblemKind) -> String {
             fl!(CATALOGUE, "config-unknown-key", key = key.as_str())
         }
         ConfigProblemKind::Empty { key } => fl!(CATALOGUE, "config-empty", key = key.as_str()),
+        ConfigProblemKind::InvalidVersionName { name } => invalid_version_name(name),
         ConfigProblemKind::WrongType {
             key,
             expected: ValueType::Text,
@@ -228,6 +231,50 @@ fn too_little_contrast(key: &str, shortfall: &AccentShortfall) -> String {
     }
 }
 
+fn invalid_version_name(name: &str) -> String {
+    fl!(CATALOGUE, "invalid-version-name", name = name)
+}
+
+/// The report of docs/BEHAVIOUR.md, rule 38 and "Versions", rules 123 to 125.
+pub(super) fn output_problem(problem: &OutputProblem) -> String {
+    let version = problem.version.as_ref();
+    let output = problem.output.to_string_lossy();
+    // Joined with `/` on every system, as rule 125 says.
+    let folder = match version {
+        Some(name) => format!("{output}/{name}"),
+        None => output.into_owned(),
+    };
+    let message = match &problem.kind {
+        OutputProblemKind::AlreadyBuilt => match version {
+            Some(name) => fl!(CATALOGUE, "version-already-built", name = name.as_str()),
+            None => fl!(CATALOGUE, "site-already-built"),
+        },
+        OutputProblemKind::HoldsVersions => fl!(CATALOGUE, "site-holds-versions"),
+        OutputProblemKind::HoldsSite => fl!(CATALOGUE, "version-holds-site"),
+        OutputProblemKind::NotASite => fl!(CATALOGUE, "site-not-a-site"),
+        OutputProblemKind::NotAVersion => fl!(CATALOGUE, "version-not-a-version"),
+        OutputProblemKind::OtherCapitals => fl!(CATALOGUE, "version-other-capitals"),
+        OutputProblemKind::CannotBeRead { reason } => {
+            fl!(CATALOGUE, "output-cannot-be-read", reason = reason.as_str())
+        }
+        OutputProblemKind::CannotBeWritten { reason } => {
+            fl!(
+                CATALOGUE,
+                "output-cannot-be-written",
+                reason = reason.as_str()
+            )
+        }
+        OutputProblemKind::CannotBeListed { reason } => {
+            fl!(
+                CATALOGUE,
+                "output-cannot-be-listed",
+                reason = reason.as_str()
+            )
+        }
+    };
+    line(&folder, None, message)
+}
+
 /// The line number is passed as text, so that Fluent never groups its digits.
 fn line(path: &str, line: Option<usize>, message: String) -> String {
     let text = match line {
@@ -241,4 +288,50 @@ fn line(path: &str, line: Option<usize>, message: String) -> String {
         None => fl!(CATALOGUE, "problem", path = path, message = message),
     };
     text + "\n"
+}
+
+#[cfg(test)]
+mod tests {
+    use std::path::PathBuf;
+
+    use super::*;
+    use crate::entities::VersionName;
+
+    fn version(version: Option<&str>, kind: OutputProblemKind) -> String {
+        output_problem(&OutputProblem {
+            output: PathBuf::from("site/out"),
+            version: version.map(|name| VersionName::new(name).expect("a version name")),
+            kind,
+        })
+    }
+
+    #[test]
+    fn an_output_problem_names_the_output_folder_or_the_version_s() {
+        use OutputProblemKind::*;
+        let reason = || "denied".to_string();
+        assert_eq!(
+            version(Some("v1"), AlreadyBuilt),
+            "site/out/v1: the version v1 is already built, and replace_existing_version is false.\n"
+        );
+        assert_eq!(
+            version(Some("v1"), NotAVersion),
+            "site/out/v1: this is not a version ghg built, so it is left as it is.\n"
+        );
+        assert_eq!(
+            version(Some("v1"), OtherCapitals),
+            "site/out/v1: a folder whose name differs from this one only in its capitals is in its place, so it is left as it is.\n"
+        );
+        assert_eq!(
+            version(Some("v1"), CannotBeRead { reason: reason() }),
+            "site/out/v1: cannot be read: denied\n"
+        );
+        assert_eq!(
+            version(Some("v1"), CannotBeWritten { reason: reason() }),
+            "site/out/v1: cannot be written: denied\n"
+        );
+        assert_eq!(
+            version(None, CannotBeListed { reason: reason() }),
+            "site/out: cannot be listed: denied\n"
+        );
+    }
 }

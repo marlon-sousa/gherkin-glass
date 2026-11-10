@@ -29,10 +29,16 @@ pub(crate) fn resolve_settings(options: &BuildOptions, folder: &Path, config: &C
         Some(false) => Unnamed::Refused,
         Some(true) | None => Unnamed::Allowed,
     };
+    let version = options
+        .version_name
+        .clone()
+        .or_else(|| config.version_name.clone());
     Settings {
         input,
         output,
         unnamed,
+        version,
+        replace: config.replace_existing_version.unwrap_or(true),
         pages: PageOptions {
             title: options.title.clone().or_else(|| config.title.clone()),
             source_link: config.source_link.clone(),
@@ -59,6 +65,7 @@ pub(crate) fn config_folder(config: &Path) -> PathBuf {
 mod tests {
     use super::*;
     use crate::entities::Colour;
+    use crate::entities::VersionName;
 
     fn input(options: (Option<&str>, Option<&str>), file: &str, set: Option<&str>) -> PathBuf {
         let options = BuildOptions {
@@ -197,6 +204,34 @@ mod tests {
                 light,
                 dark: DEFAULT_ACCENTS.dark
             }
+        );
+    }
+
+    #[test]
+    fn the_version_name_option_wins_and_builds_are_replaced_by_default() {
+        let name = |text: &str| VersionName::new(text).expect("a version name");
+        let settings = |option: Option<&str>, set: Option<&str>, replace| {
+            let options = BuildOptions {
+                version_name: option.map(name),
+                ..BuildOptions::default()
+            };
+            let config = Config {
+                version_name: set.map(name),
+                replace_existing_version: replace,
+                ..Config::default()
+            };
+            let settings = resolve_settings(&options, Path::new(""), &config);
+            (settings.version, settings.replace)
+        };
+        assert_eq!(settings(None, None, Some(false)), (None, false));
+        assert_eq!(settings(None, None, None), (None, true));
+        assert_eq!(
+            settings(None, Some("main"), None),
+            (Some(name("main")), true)
+        );
+        assert_eq!(
+            settings(Some("v2"), Some("main"), Some(false)),
+            (Some(name("v2")), false)
         );
     }
 }

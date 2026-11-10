@@ -219,36 +219,146 @@ fn two_files_with_the_same_page_stop_the_build_with_the_files_that_cannot_be_rea
 // Rule 38.
 
 #[test]
-fn the_output_folder_is_written_over_and_nothing_else_is_deleted() {
-    let written = output("written-over");
-    create_dir_all(written.join("billing")).expect("made");
-    write(written.join("kept.txt"), "kept").expect("written");
-    write(written.join("billing/refunds.html"), "old").expect("written");
+fn an_earlier_build_is_replaced_and_nothing_of_it_is_left() {
+    let written = output("replaced");
     let arguments = ["--output", written.to_str().expect("UTF-8")];
-    let result = build(&fixtures().join("pages"), &arguments);
-    assert_eq!(result.status.code(), Some(0));
-    assert_eq!(read(written.join("kept.txt")).expect("kept"), b"kept");
-    let expected = read(fixtures().join("pages/expected/billing/refunds.html")).expect("read");
     assert_eq!(
-        read(written.join("billing/refunds.html")).expect("read"),
-        expected
+        build(&fixtures().join("pages"), &arguments).status.code(),
+        Some(0)
     );
+    write(written.join("billing/old.html"), "old").expect("written");
+    let result = build(&fixtures().join("pages"), &arguments);
+    assert_eq!(String::from_utf8_lossy(&result.stderr), "");
+    assert_eq!(result.status.code(), Some(0));
+    assert_eq!(files(&written), files(&fixtures().join("pages/expected")));
 }
 
 #[test]
-fn a_file_that_cannot_be_written_stops_the_build() {
-    // A file where the output folder should be cannot be written into.
+fn an_earlier_build_is_kept_when_replace_existing_version_is_false() {
+    let written = output("kept-build");
+    let given = written.to_str().expect("UTF-8");
+    assert_eq!(
+        build(&fixtures().join("pages"), &["--output", given])
+            .status
+            .code(),
+        Some(0)
+    );
+    let result = build(
+        &fixtures().join("pages"),
+        &["--output", given, "--config", "keep.toml"],
+    );
+    assert_eq!(
+        String::from_utf8_lossy(&result.stderr),
+        format!("{given}: a site is already built here, and replace_existing_version is false.\n")
+    );
+    assert_eq!(result.status.code(), Some(1));
+    assert_eq!(files(&written), files(&fixtures().join("pages/expected")));
+}
+
+#[test]
+fn an_empty_output_folder_is_used() {
+    let written = output("empty-output");
+    create_dir_all(&written).expect("made");
+    let result = build(
+        &fixtures().join("pages"),
+        &["--output", written.to_str().expect("UTF-8")],
+    );
+    assert_eq!(result.status.code(), Some(0));
+    assert_eq!(files(&written), files(&fixtures().join("pages/expected")));
+}
+
+#[cfg(unix)]
+#[test]
+fn a_link_in_the_output_folder_s_place_is_never_followed() {
+    use std::os::unix::fs::symlink;
+    let target = output("link-target");
+    create_dir_all(&target).expect("made");
+    let written = output("link-output");
+    symlink(&target, &written).expect("linked");
+    let given = written.to_str().expect("UTF-8");
+    let result = build(&fixtures().join("pages"), &["--output", given]);
+    assert_eq!(result.status.code(), Some(1));
+    assert!(
+        String::from_utf8_lossy(&result.stderr)
+            .starts_with(&format!("{given}: this is not a site ghg built")),
+    );
+    assert!(files(&target).is_empty());
+}
+
+#[test]
+fn an_output_folder_with_other_files_is_left_as_it_is() {
+    let written = output("other-files");
+    create_dir_all(&written).expect("made");
+    write(written.join("kept.txt"), "kept").expect("written");
+    let given = written.to_str().expect("UTF-8");
+    let result = build(&fixtures().join("pages"), &["--output", given]);
+    assert_eq!(
+        String::from_utf8_lossy(&result.stderr),
+        format!(
+            "{given}: this is not a site ghg built, so it is left as it is. Build into an empty or new folder.\n"
+        )
+    );
+    assert_eq!(result.status.code(), Some(1));
+    assert_eq!(files(&written).keys().collect::<Vec<_>>(), ["kept.txt"]);
+}
+
+#[test]
+fn an_output_folder_holding_versions_is_left_as_it_is() {
+    let written = output("holding-versions");
+    create_dir_all(written.join("main")).expect("made");
+    write(
+        written.join("main/ghg-version.json"),
+        "{\"version\": \"main\"}\n",
+    )
+    .expect("written");
+    let given = written.to_str().expect("UTF-8");
+    let result = build(&fixtures().join("pages"), &["--output", given]);
+    assert_eq!(
+        String::from_utf8_lossy(&result.stderr),
+        format!(
+            "{given}: the output folder holds versions of a site, so build with a version name, or into another folder.\n"
+        )
+    );
+    assert_eq!(result.status.code(), Some(1));
+}
+
+#[test]
+fn a_file_in_the_output_folder_s_place_is_left_as_it_is() {
     let written = output("not-a-folder");
     write(&written, "a file").expect("written");
     let given = written.to_str().expect("UTF-8");
     let result = build(&fixtures().join("pages"), &["--output", given]);
     let report = String::from_utf8_lossy(&result.stderr).into_owned();
     assert_eq!(result.status.code(), Some(1));
+    assert!(
+        report.starts_with(&format!("{given}: this is not a site ghg built")),
+        "{report}"
+    );
+}
+
+#[cfg(unix)]
+#[test]
+fn an_output_folder_that_cannot_be_written_stops_the_build() {
+    use std::fs::{Permissions, set_permissions};
+    use std::os::unix::fs::PermissionsExt;
+    // An earlier build in a folder that cannot be written into cannot be
+    // emptied. Root writes anywhere, so there the build succeeds, and the
+    // service's own tests check a file that cannot be written.
+    let written = output("cannot-be-written");
+    create_dir_all(&written).expect("made");
+    write(written.join("ghg-site.json"), "{\"site\": true}\n").expect("written");
+    set_permissions(&written, Permissions::from_mode(0o500)).expect("set");
+    let given = written.to_str().expect("UTF-8");
+    let result = build(&fixtures().join("pages"), &["--output", given]);
+    set_permissions(&written, Permissions::from_mode(0o700)).expect("set");
+    if result.status.code() == Some(0) {
+        return;
+    }
+    let report = String::from_utf8_lossy(&result.stderr).into_owned();
+    assert_eq!(result.status.code(), Some(1));
     assert_eq!(report.lines().count(), 1, "{report}");
     assert!(
-        report.starts_with(&format!(
-            "{given}/billing/archive/closed #1.html: cannot be written: "
-        )),
+        report.starts_with(&format!("{given}: cannot be written: ")),
         "{report}"
     );
 }
