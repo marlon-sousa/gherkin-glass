@@ -1,0 +1,32 @@
+# A mistake in each table of tag_links.
+
+[[tag_links]]
+pattern = '@issue-(\d+'
+address = "https://x/$1"
+text = "Issue $1"
+
+[[tag_links]]
+pattern = '@issue-(\d+)'
+address = "https://x/$2"
+text = "Issue $1a"
+
+[[tag_links]]
+pattern = 7
+colour = "red"
+text = ""
+
+[[tag_links]]
+
+[[tag_links]]
+pattern = '@(x'
+address = "a"
+
+[[tag_links]]
+pattern = '@x'
+address = "https://x/$1"
+text = 3
+
+[[tag_links]]
+pattern = '@(a{1000}){1000}'
+address = "https://x/"
+text = "Big"

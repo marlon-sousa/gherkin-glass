@@ -60,6 +60,9 @@ pub enum ProblemKind {
         page: String,
         folder: Option<String>,
     },
+    /// `page` is the file's page, in the folder that holds the tag pages.
+    #[error("has its page, {page}, in the folder tags")]
+    InTagsFolder { page: String },
     /// A file of the site; `reason` is the operating system's.
     #[error("cannot be written: {reason}")]
     CannotBeWritten { reason: String },

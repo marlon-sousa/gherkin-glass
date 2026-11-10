@@ -301,6 +301,8 @@ dependencies = [
  "mime_guess",
  "notify-debouncer-full",
  "rayon",
+ "regex-automata",
+ "regex-syntax",
  "rust-embed",
  "serde",
  "serde_json",

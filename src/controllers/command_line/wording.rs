@@ -142,6 +142,9 @@ fn input_problem(problem: &Problem) -> String {
             ),
             None => fl!(CATALOGUE, "same-as-home-page", page = page.as_str()),
         },
+        ProblemKind::InTagsFolder { page } => {
+            fl!(CATALOGUE, "in-tags-folder", page = page.as_str())
+        }
         ProblemKind::CannotBeWritten { reason } => {
             fl!(CATALOGUE, "cannot-be-written", reason = reason.as_str())
         }
@@ -167,6 +170,25 @@ fn config_message(kind: &ConfigProblemKind) -> String {
             key,
             expected: ValueType::Boolean,
         } => fl!(CATALOGUE, "config-not-boolean", key = key.as_str()),
+        ConfigProblemKind::NotTableList => fl!(CATALOGUE, "config-not-table-list"),
+        ConfigProblemKind::Missing { key } => {
+            fl!(CATALOGUE, "config-missing", key = key.as_str())
+        }
+        ConfigProblemKind::NotRegex { key, reason } => fl!(
+            CATALOGUE,
+            "config-not-regex",
+            key = key.as_str(),
+            reason = reason.as_str()
+        ),
+        ConfigProblemKind::RegexTooLarge { key } => {
+            fl!(CATALOGUE, "config-regex-too-large", key = key.as_str())
+        }
+        ConfigProblemKind::UnknownGroup { key, group } => fl!(
+            CATALOGUE,
+            "config-unknown-group",
+            key = key.as_str(),
+            group = group.as_str()
+        ),
     }
 }
 

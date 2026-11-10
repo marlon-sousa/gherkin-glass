@@ -7,7 +7,7 @@ use i18n_embed_fl::fl;
 
 use crate::entities::{FeatureEntry, FolderLink, FolderPage, FolderWords, Page, PageOptions};
 use crate::policies::{
-    CATALOGUE, FOLDER_PAGE, breadcrumb, page_frame, percent_encoded, site_title,
+    CATALOGUE, FOLDER_PAGE, breadcrumb, page_frame, percent_encoded, site_title, tag_index_address,
 };
 
 /// `pages` are every feature's, in any order; the folder pages come
@@ -72,6 +72,10 @@ pub(crate) fn build_folder_pages(pages: &[Page], options: &PageOptions) -> Vec<F
                 frame: page_frame(options),
                 breadcrumb: breadcrumb(&title, folder, None),
                 totals,
+                tags: folder.is_empty().then(|| FolderLink {
+                    address: percent_encoded(&tag_index_address()),
+                    name: fl!(CATALOGUE, "tag-index-title"),
+                }),
                 folders: subfolders,
                 features: features
                     .into_iter()
@@ -127,7 +131,7 @@ mod tests {
     use gherkin::{Feature, GherkinEnv};
 
     use super::*;
-    use crate::entities::ParsedFeature;
+    use crate::entities::{ParsedFeature, TagNames};
     use crate::policies::build_page;
 
     fn site(files: &[(&str, &str)]) -> Vec<FolderPage> {
@@ -142,7 +146,7 @@ mod tests {
                     "en".to_string(),
                     BTreeMap::new(),
                 );
-                build_page(&parsed, &options)
+                build_page(&parsed, &options, &TagNames::default())
             })
             .collect();
         build_folder_pages(&pages, &options)

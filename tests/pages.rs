@@ -421,10 +421,10 @@ fn every_item_of_the_tree_reaches_a_page_and_its_anchor() {
             }
             reached.insert(percent_decoded(file), ());
         }
-        // Every page of the site has its item.
+        // Every page of the site has its item, but the tag pages, which the home page links.
         let html: Vec<_> = pages
             .keys()
-            .filter(|name| name.ends_with(".html"))
+            .filter(|name| name.ends_with(".html") && !name.starts_with("tags/"))
             .collect();
         assert_eq!(reached.keys().collect::<Vec<_>>(), html, "{site}");
         assert!(

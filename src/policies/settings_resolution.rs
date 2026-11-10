@@ -39,6 +39,7 @@ pub(crate) fn resolve_settings(options: &BuildOptions, folder: &Path, config: &C
             collapse_scenarios: config.collapse_scenarios.unwrap_or(false),
             show_tree: config.show_tree.unwrap_or(true),
             inline_backgrounds: config.inline_backgrounds.unwrap_or(true),
+            tag_links: config.tag_links.clone().unwrap_or_default(),
         },
     }
 }

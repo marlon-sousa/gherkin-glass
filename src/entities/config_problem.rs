@@ -24,6 +24,19 @@ pub(crate) enum ConfigProblemKind {
     Empty { key: String },
     #[error("{key} is not {expected:?}")]
     WrongType { key: String, expected: ValueType },
+    #[error("tag_links is not a list of tables")]
+    NotTableList,
+    /// A key a table of `tag_links` needs.
+    #[error("{key} is missing")]
+    Missing { key: String },
+    /// `reason` is the `regex` crate's.
+    #[error("{key} is not a regular expression: {reason}")]
+    NotRegex { key: String, reason: String },
+    #[error("{key} is too large")]
+    RegexTooLarge { key: String },
+    /// `group` is a number or a name, as the replacement writes it.
+    #[error("{key} names no group {group}")]
+    UnknownGroup { key: String, group: String },
 }
 
 /// The kinds of value a key takes.

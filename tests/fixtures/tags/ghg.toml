@@ -1,0 +1,26 @@
+# Tags linked to other sites; the expected site is built with this file.
+output = "expected"
+title = "Tagged suite"
+
+[[tag_links]]
+pattern = '@issue-(\d+)'
+address = "https://github.com/owner/repo/issues/$1"
+text = "Issue $1 on GitHub"
+
+# Never reached by this fixture's tags, all @issue-<digits>, which the
+# pattern before it matches first.
+[[tag_links]]
+pattern = '@issue-(?<id>.+)'
+address = "https://example.com/other/${id}"
+text = "Other $id"
+
+# @later matches, but its text comes out empty, so it has no such link.
+[[tag_links]]
+pattern = '@later(.*)'
+address = "https://example.com/later/$1"
+text = "$1"
+
+[[tag_links]]
+pattern = '@ticket:(?<id>.+)'
+address = "https://example.com/tickets/${id}?view=$$full"
+text = "Ticket ${id}"

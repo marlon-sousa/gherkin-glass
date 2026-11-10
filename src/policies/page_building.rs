@@ -8,25 +8,30 @@ use i18n_embed_fl::fl;
 use crate::entities::{
     Anchors, BackgroundsOption, Block, BlockKind, ContentsEntry, DocStringView, FromBackground,
     Page, PageOptions, PageWords, Paragraph, ParsedFeature, SourceLink, StepView, TableView,
+    TagNames, TagView,
 };
 use crate::policies::{
-    CATALOGUE, breadcrumb, make_anchors, page_address, page_frame, page_language, percent_encoded,
-    site_title,
+    CATALOGUE, breadcrumb, make_anchors, outside_link, page_address, page_frame, page_language,
+    percent_encoded, root_from, site_title,
 };
 
 /// Stands for the file's path in the words of the source link, to find where
 /// the path goes; no message of the catalogue holds it.
 const PATH_MARK: &str = "\u{0}";
 
-pub(crate) fn build_page(parsed: &ParsedFeature, options: &PageOptions) -> Page {
+/// `tags` names every tag of the site.
+pub(crate) fn build_page(parsed: &ParsedFeature, options: &PageOptions, tags: &TagNames) -> Page {
     let feature = &parsed.feature;
     let anchors = make_anchors(feature);
     let path = slash_path(&parsed.path);
+    let address = page_address(&parsed.path);
     let heading = heading(&feature.keyword, &feature.name);
     let builder = Builder {
         parsed,
         anchors: &anchors,
         options,
+        tags,
+        root: root_from(&address),
     };
     let mut blocks = Vec::new();
     if let Some(background) = &feature.background {
@@ -58,7 +63,6 @@ pub(crate) fn build_page(parsed: &ParsedFeature, options: &PageOptions) -> Page 
         inline: options.inline_backgrounds,
         enabled: any_background_steps(&blocks),
     });
-    let address = page_address(&parsed.path);
     let mut parts: Vec<String> = address.split('/').map(str::to_string).collect();
     let file = parts.pop().unwrap_or_default();
     Page {
@@ -74,7 +78,7 @@ pub(crate) fn build_page(parsed: &ParsedFeature, options: &PageOptions) -> Page 
         ),
         heading,
         path: path.clone(),
-        tags: tags(&feature.tags),
+        tags: builder.tags(&feature.tags),
         description: description(feature.description.as_deref()),
         source: options
             .source_link
@@ -95,6 +99,9 @@ struct Builder<'a> {
     parsed: &'a ParsedFeature,
     anchors: &'a Anchors,
     options: &'a PageOptions,
+    tags: &'a TagNames,
+    /// From the page back to the site's root.
+    root: String,
 }
 
 impl Builder<'_> {
@@ -144,7 +151,7 @@ impl Builder<'_> {
         }));
         blocks.extend(rule.scenarios.iter().map(|s| self.scenario(s, 3, &from)));
         Block {
-            tags: tags(&rule.tags),
+            tags: self.tags(&rule.tags),
             description: description(rule.description.as_deref()),
             blocks,
             ..block(
@@ -169,7 +176,7 @@ impl Builder<'_> {
             })
             .collect();
         Block {
-            tags: tags(&scenario.tags),
+            tags: self.tags(&scenario.tags),
             description: description(scenario.description.as_deref()),
             backgrounds,
             steps: self.steps(&scenario.steps),
@@ -190,7 +197,7 @@ impl Builder<'_> {
 
     fn examples(&self, examples: &Examples, level: u8) -> Block {
         Block {
-            tags: tags(&examples.tags),
+            tags: self.tags(&examples.tags),
             description: description(examples.description.as_deref()),
             table: examples.table.as_ref().map(table),
             ..block(
@@ -201,6 +208,20 @@ impl Builder<'_> {
                 false,
             )
         }
+    }
+
+    /// Each with its `@`, linked to its page and to the first of `tag_links` that matches it.
+    fn tags(&self, tags: &[String]) -> Vec<TagView> {
+        tags.iter()
+            .map(|tag| {
+                let text = format!("@{tag}");
+                TagView {
+                    address: percent_encoded(&format!("{}{}", self.root, self.tags.address(&text))),
+                    outside: outside_link(&text, &self.options.tag_links),
+                    text,
+                }
+            })
+            .collect()
     }
 
     fn steps(&self, steps: &[Step]) -> Vec<StepView> {
@@ -251,10 +272,6 @@ fn heading(keyword: &str, name: &str) -> String {
     } else {
         format!("{keyword}: {name}")
     }
-}
-
-fn tags(tags: &[String]) -> Vec<String> {
-    tags.iter().map(|tag| format!("@{tag}")).collect()
 }
 
 /// One paragraph of the description's lines, or none: the `gherkin` crate
@@ -337,6 +354,8 @@ mod tests {
     use gherkin::{Feature, GherkinEnv};
 
     use super::*;
+    use crate::entities::{OutsideLink, TagLink};
+    use crate::policies::{name_tags, tags_of, whole_tag_pattern};
 
     fn page(text: &str, options: &PageOptions) -> Page {
         let feature = Feature::parse(text, GherkinEnv::default()).expect("parses");
@@ -346,7 +365,8 @@ mod tests {
             "en".to_string(),
             BTreeMap::new(),
         );
-        build_page(&parsed, options)
+        let tags = name_tags(&tags_of(std::slice::from_ref(&parsed)));
+        build_page(&parsed, options, &tags)
     }
 
     const FEATURE: &str = "\
@@ -370,6 +390,7 @@ Feature: Refunds
     Scenario Outline: Inside
       Given <n>
 
+      @in-rule
       Examples:
         | n |
         | 1 |
@@ -418,7 +439,14 @@ Feature: Refunds
     #[test]
     fn the_description_is_a_paragraph_that_keeps_its_lines() {
         let page = page(FEATURE, &PageOptions::default());
-        assert_eq!(page.tags, ["@billing"]);
+        assert_eq!(
+            page.tags,
+            [TagView {
+                text: "@billing".into(),
+                address: "../tags/billing.html".into(),
+                outside: None,
+            }]
+        );
         assert_eq!(
             page.description,
             [vec![
@@ -578,5 +606,36 @@ Feature: Refunds
             &PageOptions::default(),
         );
         assert_eq!(none.backgrounds_option, None);
+    }
+
+    #[test]
+    fn every_tag_links_its_page_and_the_first_outside_link_that_matches() {
+        let options = PageOptions {
+            tag_links: vec![TagLink {
+                source: "@in-(.+)".into(),
+                pattern: whole_tag_pattern("@in-(.+)").expect("valid"),
+                address: "https://x/$1".into(),
+                text: "In $1".into(),
+            }],
+            ..PageOptions::default()
+        };
+        let page = page(FEATURE, &options);
+        assert_eq!(page.tags[0].outside, None);
+        let rule = &page.blocks[2];
+        let views: Vec<_> = [&page.tags, &page.blocks[1].tags, &rule.tags]
+            .into_iter()
+            .flatten()
+            .collect();
+        assert_eq!(views.len(), 1);
+        let examples = &rule.blocks[1].blocks[0];
+        let tag = &examples.tags[0];
+        assert_eq!(tag.address, "../tags/in-rule.html");
+        assert_eq!(
+            tag.outside,
+            Some(OutsideLink {
+                address: "https://x/rule".into(),
+                text: "In rule".into(),
+            })
+        );
     }
 }

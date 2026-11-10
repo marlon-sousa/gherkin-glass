@@ -25,6 +25,9 @@ pub use entities::{
     Anchors, Burst, Changes, CollectedInput, ListenFailure, PageOptions, ParseFailure,
     ParsedFeature, Preview, Problem, ProblemKind, Problems, RawFeature, ServedSite, ServerWords,
     Settings, Unnamed, UnnamedBlock, Version, WatchFailure, Watched,
+    Anchors, Changes, CollectedInput, ListenFailure, PageOptions, ParseFailure, ParsedFeature,
+    Preview, Problem, ProblemKind, Problems, RawFeature, ServedSite, ServerWords, Settings,
+    TagLink, Unnamed, UnnamedBlock, Version, WatchFailure, Watched,
 };
 pub use policies::make_anchors;
 pub use ports::{

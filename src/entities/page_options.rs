@@ -1,8 +1,10 @@
 //! Entity: the settings that shape every page of a site.
 
+use crate::entities::TagLink;
+
 /// The defaults are the configuration's: the catalogue's title, no source
-/// link, every block expanded, the folder tree shown, and backgrounds shown
-/// inside each scenario.
+/// link, every block expanded, the folder tree shown, backgrounds shown
+/// inside each scenario, and no tag linked to another site.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PageOptions {
     /// The site's title; `None` for the catalogue's default.
@@ -16,6 +18,8 @@ pub struct PageOptions {
     pub show_tree: bool,
     /// Whether the page is written with each scenario showing its backgrounds' steps, or linking to them.
     pub inline_backgrounds: bool,
+    /// In the order of the configuration, the first that matches a tag winning.
+    pub tag_links: Vec<TagLink>,
 }
 
 impl Default for PageOptions {
@@ -27,6 +31,7 @@ impl Default for PageOptions {
             collapse_scenarios: false,
             show_tree: true,
             inline_backgrounds: true,
+            tag_links: Vec::new(),
         }
     }
 }

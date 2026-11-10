@@ -19,6 +19,9 @@ mod problem;
 mod raw_feature;
 mod settings;
 mod site_assets;
+mod tag_link;
+mod tag_names;
+mod tag_page;
 mod tree_item;
 mod unnamed;
 mod watch;
@@ -33,8 +36,8 @@ pub(crate) use folder_page::{FeatureEntry, FolderLink, FolderPage, FolderWords};
 pub(crate) use invocation::{ArgumentProblem, BuildOptions, Invocation, ServeOptions};
 pub use listen_failure::ListenFailure;
 pub(crate) use page::{
-    BackgroundsOption, Block, BlockKind, ContentsEntry, DocStringView, FromBackground, Page,
-    PageWords, Paragraph, SourceLink, StepView, TableView,
+    BackgroundsOption, Block, BlockKind, ContentsEntry, DocStringView, FromBackground, OutsideLink,
+    Page, PageWords, Paragraph, SourceLink, StepView, TableView, TagView,
 };
 pub(crate) use page_frame::PageFrame;
 pub use page_options::PageOptions;
@@ -45,6 +48,9 @@ pub use problem::{Problem, ProblemKind, Problems, UnnamedBlock};
 pub use raw_feature::RawFeature;
 pub use settings::Settings;
 pub(crate) use site_assets::SiteAssets;
+pub use tag_link::TagLink;
+pub(crate) use tag_names::{TAGS_FOLDER, TagNames};
+pub(crate) use tag_page::{TagFeature, TagIndex, TagIndexEntry, TagPage, TagScenario};
 pub(crate) use tree_item::TreeItem;
 pub use unnamed::Unnamed;
 pub use watch::{Burst, Changes, WatchFailure, Watched};

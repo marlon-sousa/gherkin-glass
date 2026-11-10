@@ -16,6 +16,8 @@ pub(crate) struct FolderPage {
     pub(crate) breadcrumb: Breadcrumb,
     /// Only the home page's.
     pub(crate) totals: Vec<String>,
+    /// Only the home page's: the link to the index of every tag.
+    pub(crate) tags: Option<FolderLink>,
     pub(crate) folders: Vec<FolderLink>,
     pub(crate) features: Vec<FeatureEntry>,
     pub(crate) words: FolderWords,

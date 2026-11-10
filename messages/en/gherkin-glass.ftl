@@ -80,6 +80,10 @@ same-as-home-page = has the same page, { $page }, as the home page.
 ## is its own page, and $first the earlier folder's path below the input folder.
 
 same-folder-page = has the same page, { $page }, as the folder { $first }.
+## A feature file whose page would be in the folder of the tag pages. $page
+## is that page's path in the site; tags is the folder's name, never translated.
+
+in-tags-folder = has its page, { $page }, in the folder tags, which holds the tag pages.
 
 ## A file of the site that cannot be written. $reason is the operating
 ## system's words.
@@ -94,6 +98,11 @@ config-unknown-key = ghg has no setting named { $key }.
 config-not-text = { $key } must be text, in quotes.
 config-not-boolean = { $key } must be true or false.
 config-empty = { $key } must not be empty.
+config-not-table-list = tag_links must be a list of tables, each written [[tag_links]].
+config-missing = { $key } is missing.
+config-not-regex = { $key } is not a regular expression: { $reason }
+config-regex-too-large = { $key } is too large a regular expression.
+config-unknown-group = { $key } names the group { $group }, which the pattern does not have.
 
 ## A feature's page. $heading is the feature's keyword and name, and $path
 ## the feature file's path below the input folder, both as written.
@@ -183,3 +192,18 @@ folder-tree = Folder tree
 from-background = From the background:
 from-rule-background = From the rule's background:
 inline-backgrounds = Show backgrounds inside each scenario
+## The tag pages. $tag is a tag as written, with its @, $scenario a
+## scenario's heading, and $count a number of scenarios.
+
+tag-index-title = Tags
+tag-index-entry = { $tag }, { $count ->
+    [0] no scenarios
+    [one] one scenario
+   *[other] { $count } scenarios
+}
+tag-index-empty = No feature file has a tag.
+tag-page-title = Tag { $tag }
+tag-no-scenario = None of its scenarios carries the tag.
+tag-through-examples = { $scenario }, through its examples
+tag-through-rule = { $scenario }, through its rule
+tag-through-feature = { $scenario }, through its feature

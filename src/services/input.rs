@@ -6,7 +6,7 @@ use std::sync::Arc;
 
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 
-use crate::entities::{ParsedFeature, Problem, ProblemKind, Problems, Unnamed};
+use crate::entities::{ParsedFeature, Problem, ProblemKind, Problems, TAGS_FOLDER, Unnamed};
 use crate::policies::{
     FOLDER_PAGE, correct_doc_strings, correct_step_keywords, file_language, page_address,
     unnamed_blocks,
@@ -38,6 +38,7 @@ impl InputService {
         let collected = self.collector.collect(input);
         let mut problems = collected.problems;
         problems.extend(same_pages(input, &collected.paths));
+        problems.extend(pages_in_tags_folder(input, &collected.paths));
         // Collecting into a `Vec` keeps file order, whatever order the threads finish in.
         let results: Vec<_> = collected
             .paths
@@ -159,6 +160,20 @@ fn same_pages(input: &Path, paths: &[PathBuf]) -> Vec<Problem> {
         }
     }
     problems
+}
+
+/// Every file whose page would be in the folder of the tag pages, its name
+/// compared without regard to case, as `same_pages` compares.
+fn pages_in_tags_folder(input: &Path, paths: &[PathBuf]) -> Vec<Problem> {
+    paths
+        .iter()
+        .filter_map(|path| {
+            let page = page_address(path.strip_prefix(input).unwrap_or(path));
+            let (folder, _) = page.split_once('/')?;
+            (folder.to_lowercase() == TAGS_FOLDER)
+                .then(|| Problem::new(input, path, None, ProblemKind::InTagsFolder { page }))
+        })
+        .collect()
 }
 
 #[cfg(test)]
