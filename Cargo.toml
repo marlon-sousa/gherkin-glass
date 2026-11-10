@@ -9,3 +9,8 @@ description = "An accessible static viewer for Gherkin feature files"
 repository = "https://github.com/marlon-sousa/gherkin-glass"
 license = "MIT OR Apache-2.0"
 readme = "README.md"
+
+[dependencies]
+gherkin = "0.16.0"
+ignore = "0.4.34"
+rayon = "1.12.0"

@@ -1,0 +1,3 @@
+# A rule that is not valid, and a valid one, which still applies.
+a{b
+left-out.feature

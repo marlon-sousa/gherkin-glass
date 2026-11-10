@@ -1,0 +1,3 @@
+# Read files ending in .story here, except one.
+!*.story
+left-out.story

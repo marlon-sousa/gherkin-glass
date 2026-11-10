@@ -1,0 +1,2 @@
+# The nearest .ghg-ignore decides: this brings back what sub/.ghg-ignore leaves out.
+!read-again.feature
