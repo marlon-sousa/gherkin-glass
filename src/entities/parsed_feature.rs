@@ -12,8 +12,7 @@ pub struct ParsedFeature {
     /// As the `gherkin` crate reads it, except that every doc string is
     /// corrected as docs/BEHAVIOUR.md, "Doc strings", says.
     pub feature: Feature,
-    /// Keyed by the byte offset at which the doc string's step starts, since
-    /// the crate's `Step` has no room for it.
+    /// Keyed by the byte offset at which the doc string's step starts.
     media_types: BTreeMap<usize, String>,
 }
 

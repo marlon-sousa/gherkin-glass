@@ -1,5 +1,7 @@
 //! Port: every seam between the build and the world.
 
-mod driven;
+mod feature_parser;
+mod input_collector;
 
-pub use driven::{FeatureParser, InputCollector};
+pub use feature_parser::FeatureParser;
+pub use input_collector::InputCollector;

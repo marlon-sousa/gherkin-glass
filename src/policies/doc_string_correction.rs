@@ -1,10 +1,4 @@
 //! Policy: a feature's doc strings corrected from its source, as docs/BEHAVIOUR.md, "Doc strings", says.
-//!
-//! The `gherkin` crate returns a doc string with its media type glued to the
-//! content, a line break before and after it and its escapes kept, and takes
-//! the indentation away by the least indented line rather than by the
-//! delimiter. It gives no position for the doc string itself, so it is found
-//! after the end of its step, which the crate does give.
 
 use std::collections::BTreeMap;
 
@@ -12,10 +6,7 @@ use gherkin::{Feature, Step};
 
 use crate::entities::DocString;
 
-/// Corrects every doc string of `feature` in place, from the `source` it was
-/// parsed from, and returns their media types by the byte offset at which
-/// their step starts. `None` if `source` is not what `feature` was parsed
-/// from.
+/// The media types, by the byte offset of their step; `None` if `source` is not what `feature` was parsed from.
 pub(crate) fn correct_doc_strings(
     feature: &mut Feature,
     source: &str,
@@ -63,12 +54,7 @@ fn steps_mut(feature: &mut Feature) -> impl Iterator<Item = &mut Step> {
         .chain(rule_steps)
 }
 
-/// Reads the doc string of the step that ends at byte `step_end` of `source`.
-///
-/// The crate's grammar puts only blank lines and comments between a step and
-/// its doc string, and ends the doc string at the next occurrence of its
-/// delimiter; the same is done here. Returns `None` if no doc string follows,
-/// which cannot happen for a step the crate gave a doc string to.
+/// The `gherkin` crate 0.16.0 gives no position for a doc string, only blank lines and comments between it and its step.
 fn read_doc_string(source: &str, step_end: usize) -> Option<DocString> {
     // The rest of the step's line, then line after line until the delimiter.
     let mut line_start = source.get(step_end..)?.find('\n')? + step_end + 1;
@@ -126,11 +112,7 @@ fn read_doc_string(source: &str, step_end: usize) -> Option<DocString> {
     })
 }
 
-/// Where the doc string opened before byte `from` closes, the way the
-/// crate's grammar finds it: at the next occurrence of `delimiter`, except
-/// that from a `#` anywhere in a line, with any spaces and tabs before it,
-/// the rest of the line is passed over, delimiter or not, provided the line
-/// ends with a line break.
+/// As the `gherkin` crate 0.16.0's grammar finds it, which passes over the rest of a line from a `#` that a line break ends.
 fn closing_delimiter(source: &str, from: usize, delimiter: &str) -> Option<usize> {
     let mut at = from;
     while at < source.len() {

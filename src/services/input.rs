@@ -114,7 +114,8 @@ mod tests {
 
     #[test]
     fn the_problems_of_collecting_and_parsing_are_reported_together_sorted() {
-        // docs/BEHAVIOUR.md, rules 14 and 15.
+        // How the service combines the collector's problems with the parser's;
+        // the messages are the fakes' own.
         let locked = Problem::new(
             Path::new("in"),
             Path::new("in/locked"),

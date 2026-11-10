@@ -1,8 +1,11 @@
 //! docs/BEHAVIOUR.md, "Reading the input", checked against the fixtures.
 
-use std::fs;
+#[cfg(unix)]
+use std::fs::{Permissions, set_permissions};
+use std::fs::{copy, create_dir_all, read_dir, read_to_string, remove_dir_all, write};
+#[cfg(unix)]
+use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
-
 use std::sync::Arc;
 
 use gherkin::Step;
@@ -41,20 +44,20 @@ fn paths(features: &[ParsedFeature]) -> Vec<String> {
 /// A folder of its own under the target directory, emptied first.
 fn scratch(name: &str) -> PathBuf {
     let folder = Path::new(env!("CARGO_TARGET_TMPDIR")).join(name);
-    let _ = fs::remove_dir_all(&folder);
-    fs::create_dir_all(&folder).expect("the scratch folder is made");
+    let _ = remove_dir_all(&folder);
+    create_dir_all(&folder).expect("the scratch folder is made");
     folder
 }
 
 fn copy_folder(from: &Path, to: &Path) {
-    fs::create_dir_all(to).expect("the folder is made");
-    for entry in fs::read_dir(from).expect("the fixture is listed") {
+    create_dir_all(to).expect("the folder is made");
+    for entry in read_dir(from).expect("the fixture is listed") {
         let entry = entry.expect("the fixture is listed");
         let target = to.join(entry.file_name());
         if entry.file_type().expect("the entry has a type").is_dir() {
             copy_folder(&entry.path(), &target);
         } else {
-            fs::copy(entry.path(), target).expect("the file is copied");
+            copy(entry.path(), target).expect("the file is copied");
         }
     }
 }
@@ -93,10 +96,10 @@ fn the_ignore_files_of_the_folders_above_the_input_have_no_effect() {
     // Rule 4. The input sits in a git repository with a .gitignore, an .ignore
     // and an exclude file above it, each of which would leave everything out.
     let root = scratch("ignore-files-above");
-    fs::create_dir_all(root.join(".git/info")).expect("the git folder is made");
-    fs::write(root.join(".git/info/exclude"), "*.feature\n").expect("written");
-    fs::write(root.join(".gitignore"), "*.feature\n").expect("written");
-    fs::write(root.join(".ignore"), "*.feature\n").expect("written");
+    create_dir_all(root.join(".git/info")).expect("the git folder is made");
+    write(root.join(".git/info/exclude"), "*.feature\n").expect("written");
+    write(root.join(".gitignore"), "*.feature\n").expect("written");
+    write(root.join(".ignore"), "*.feature\n").expect("written");
     let input = root.join("input");
     copy_folder(&fixture("input-files"), &input);
 
@@ -107,8 +110,8 @@ fn the_ignore_files_of_the_folders_above_the_input_have_no_effect() {
 fn a_ghg_ignore_file_is_never_read_as_a_feature() {
     // Rule 3, last point: `!.*` reads hidden files again, but not this one.
     let input = scratch("ghg-ignore-not-a-feature");
-    fs::write(input.join(".ghg-ignore"), "!.*\n").expect("written");
-    fs::copy(
+    write(input.join(".ghg-ignore"), "!.*\n").expect("written");
+    copy(
         fixture("input-files/read.feature"),
         input.join(".hidden.feature"),
     )
@@ -125,10 +128,10 @@ fn symbolic_links_are_not_followed() {
 
     let root = scratch("symbolic-links");
     let input = root.join("input");
-    fs::create_dir_all(&input).expect("the input is made");
+    create_dir_all(&input).expect("the input is made");
     let elsewhere = root.join("elsewhere");
     copy_folder(&fixture("input-files/sub"), &elsewhere);
-    fs::copy(
+    copy(
         fixture("input-files/read.feature"),
         input.join("read.feature"),
     )
@@ -328,9 +331,9 @@ fn doc_strings_are_read_as_the_author_wrote_them() {
 fn doc_strings_read_the_same_with_carriage_returns() {
     // Rule 13.
     let input = scratch("doc-strings-crlf");
-    let source = fs::read_to_string(fixture("doc-strings/doc-strings.feature")).expect("read");
+    let source = read_to_string(fixture("doc-strings/doc-strings.feature")).expect("read");
     let crlf = source.replace("\r\n", "\n").replace('\n', "\r\n");
-    fs::write(input.join("doc-strings.feature"), crlf).expect("written");
+    write(input.join("doc-strings.feature"), crlf).expect("written");
 
     assert_eq!(doc_strings(&input), expected_doc_strings());
 }
@@ -360,9 +363,9 @@ fn a_folder_sorts_by_its_name_before_its_contents() {
     // Rule 15: `a/` comes before `a-b.feature`, folder by folder, although `/`
     // sorts after `-` as a character.
     let input = scratch("sorted-by-folder");
-    fs::create_dir_all(input.join("a")).expect("made");
-    fs::write(input.join("a/x.feature"), "Nothing\n").expect("written");
-    fs::write(input.join("a-b.feature"), "Nothing\n").expect("written");
+    create_dir_all(input.join("a")).expect("made");
+    write(input.join("a/x.feature"), "Nothing\n").expect("written");
+    write(input.join("a-b.feature"), "Nothing\n").expect("written");
 
     let problems = read_input(&input).expect_err("cannot be read");
     let paths: Vec<_> = problems
@@ -371,6 +374,96 @@ fn a_folder_sorts_by_its_name_before_its_contents() {
         .map(|problem| problem.path.as_str())
         .collect();
     assert_eq!(paths, ["a/x.feature", "a-b.feature"]);
+}
+
+/// Makes `path` unreadable, and says whether it worked: it does not for root.
+#[cfg(unix)]
+fn lock(path: &Path) -> bool {
+    set_permissions(path, Permissions::from_mode(0o000)).expect("the mode is set");
+    let locked = read_dir(path).is_err() && read_to_string(path).is_err();
+    if !locked {
+        eprintln!(
+            "skipped: {} can still be read, as it can by root",
+            path.display()
+        );
+    }
+    locked
+}
+
+#[cfg(unix)]
+fn unlock(path: &Path, mode: u32) {
+    set_permissions(path, Permissions::from_mode(mode)).expect("the mode is set");
+}
+
+#[cfg(unix)]
+#[test]
+fn a_folder_that_cannot_be_listed_is_reported() {
+    // Rule 14.
+    let input = scratch("locked-folder");
+    create_dir_all(input.join("locked")).expect("made");
+    copy(
+        fixture("input-files/read.feature"),
+        input.join("read.feature"),
+    )
+    .expect("copied");
+    if !lock(&input.join("locked")) {
+        unlock(&input.join("locked"), 0o755);
+        return;
+    }
+    let problems = read_input(&input);
+    unlock(&input.join("locked"), 0o755);
+
+    let problems = problems.expect_err("cannot be read");
+    let problems = problems.as_slice();
+    assert_eq!(problems.len(), 1);
+    assert_eq!(problems[0].path, "locked");
+    assert!(
+        problems[0].message.starts_with("cannot be listed: "),
+        "{}",
+        problems[0]
+    );
+}
+
+#[cfg(unix)]
+#[test]
+fn a_ghg_ignore_file_or_a_feature_file_that_cannot_be_opened_is_reported() {
+    // Rules 14 and 16.
+    let input = scratch("locked-files");
+    write(input.join(".ghg-ignore"), "drafts/\n").expect("written");
+    copy(
+        fixture("input-files/read.feature"),
+        input.join("read.feature"),
+    )
+    .expect("copied");
+    let locked = lock(&input.join(".ghg-ignore")) && lock(&input.join("read.feature"));
+    if !locked {
+        unlock(&input.join(".ghg-ignore"), 0o644);
+        unlock(&input.join("read.feature"), 0o644);
+        return;
+    }
+    let problems = read_input(&input);
+    unlock(&input.join(".ghg-ignore"), 0o644);
+    unlock(&input.join("read.feature"), 0o644);
+
+    let problems = problems.expect_err("cannot be read");
+    let lines: Vec<_> = problems
+        .as_slice()
+        .iter()
+        .map(|problem| {
+            (
+                problem.path.as_str(),
+                problem.line,
+                problem.message.split(':').next(),
+            )
+        })
+        .collect();
+    assert_eq!(
+        lines,
+        [
+            (".ghg-ignore", None, Some("cannot be read")),
+            ("read.feature", None, Some("cannot be read")),
+        ]
+    );
 }
 
 #[test]

@@ -1,9 +1,4 @@
 //! Policy: which paths of the input are read, as docs/BEHAVIOUR.md, "Which files are read", says.
-//!
-//! Only the `ignore` crate's gitignore matcher is used, not its `WalkBuilder`:
-//! the walker reads `.gitignore`, `.ignore`, git's exclude files and the
-//! ignore files above the input unless each is turned off, and takes its
-//! lowest-precedence rules only from a file on disk.
 
 use std::path::Path;
 
@@ -130,6 +125,12 @@ mod tests {
         let everything = selection(&[("in", "!.*\n!*\n")]);
         assert!(everything.is_left_out(Path::new("in/.ghg-ignore"), false));
         assert!(!everything.is_left_out(Path::new("in/.hidden.feature"), false));
+    }
+
+    #[test]
+    fn a_folder_named_like_a_ghg_ignore_file_follows_the_rules() {
+        let selection = selection(&[("in", "!.ghg-ignore/\n")]);
+        assert!(!selection.is_left_out(Path::new("in/.ghg-ignore"), true));
     }
 
     #[test]
