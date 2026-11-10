@@ -82,12 +82,7 @@ impl ChangeWatcher for FileWatcher {
                 .watch(folder, RecursiveMode::Recursive)
                 .map_err(failure(folder))?;
         }
-        // Watching a folder already watched with its subfolders, but alone,
-        // would stop the subfolders being watched on macOS and Windows.
-        for (parent, _) in &files {
-            if folders.iter().any(|folder| parent.starts_with(folder)) {
-                continue;
-            }
+        for parent in alone(&folders, &files) {
             debouncer
                 .watch(parent, RecursiveMode::NonRecursive)
                 .map_err(failure(parent))?;
@@ -99,9 +94,38 @@ impl ChangeWatcher for FileWatcher {
     }
 }
 
+/// The files' folders to watch without their subfolders: those not already
+/// watched with them. Watching one again alone would stop its subfolders
+/// being watched on macOS and Windows.
+fn alone<'a>(folders: &[PathBuf], files: &'a [(PathBuf, PathBuf)]) -> Vec<&'a PathBuf> {
+    files
+        .iter()
+        .map(|(parent, _)| parent)
+        .filter(|parent| !folders.iter().any(|folder| parent.starts_with(folder)))
+        .collect()
+}
+
 fn canonical(path: &Path) -> Result<PathBuf, WatchFailure> {
     path.canonicalize().map_err(|error| WatchFailure {
         path: path.to_path_buf(),
         reason: error.to_string(),
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_folder_watched_with_its_subfolders_is_never_watched_alone() {
+        let folders = [PathBuf::from("/p/features")];
+        let file = |parent: &str| {
+            (
+                PathBuf::from(parent),
+                PathBuf::from(parent).join("ghg.toml"),
+            )
+        };
+        let files = [file("/p"), file("/p/features"), file("/p/features/sub")];
+        assert_eq!(alone(&folders, &files), [&PathBuf::from("/p")]);
+    }
 }

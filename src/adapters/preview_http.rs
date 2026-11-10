@@ -2,7 +2,7 @@
 
 use std::fs::read;
 use std::io::ErrorKind;
-use std::net::{SocketAddr, TcpListener, TcpStream, ToSocketAddrs};
+use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, TcpListener, TcpStream};
 use std::sync::Arc;
 use std::thread::spawn;
 use std::time::Duration;
@@ -30,15 +30,25 @@ impl PreviewServer for HttpPreviewServer {
         preview: Arc<Preview>,
         words: ServerWords,
     ) -> Result<SocketAddr, ListenFailure> {
-        if port != 0 && someone_listens(host, port) {
-            return Err(ListenFailure::PortTaken);
+        let bind = || {
+            TcpListener::bind((host, port)).map_err(|error| match error.kind() {
+                ErrorKind::AddrInUse => ListenFailure::PortTaken,
+                _ => ListenFailure::Other {
+                    reason: error.to_string(),
+                },
+            })
+        };
+        let mut listener = bind()?;
+        // Only once binding shows the address is this machine's, and with
+        // the port free again, so that the probe cannot reach ghg itself.
+        if port != 0 {
+            let bound = listener.local_addr().ok();
+            drop(listener);
+            if bound.is_some_and(someone_listens) {
+                return Err(ListenFailure::PortTaken);
+            }
+            listener = bind()?;
         }
-        let listener = TcpListener::bind((host, port)).map_err(|error| match error.kind() {
-            ErrorKind::AddrInUse => ListenFailure::PortTaken,
-            _ => ListenFailure::Other {
-                reason: error.to_string(),
-            },
-        })?;
         let address = listener
             .local_addr()
             .map_err(|error| ListenFailure::Other {
@@ -63,17 +73,19 @@ impl PreviewServer for HttpPreviewServer {
     }
 }
 
-/// Whether another server already answers at `host` and `port`. Binding
-/// alone does not tell: on macOS and the BSDs, the `SO_REUSEADDR` the
-/// standard library sets lets a socket bind `127.0.0.1` at a port another
-/// listens at on `0.0.0.0`, and Windows allows the same.
-fn someone_listens(host: &str, port: u16) -> bool {
-    let Ok(addresses) = (host, port).to_socket_addrs() else {
-        return false;
-    };
-    addresses
-        .into_iter()
-        .any(|address| TcpStream::connect_timeout(&address, Duration::from_millis(250)).is_ok())
+/// Whether another server already answers at `address`, one of this
+/// machine's. Binding alone does not tell: on macOS and the BSDs, the
+/// `SO_REUSEADDR` the standard library sets lets a socket bind `127.0.0.1`
+/// at a port another listens at on `0.0.0.0`, and Windows allows the same.
+fn someone_listens(mut address: SocketAddr) -> bool {
+    // Windows refuses a connection to the address that means every network.
+    if address.ip().is_unspecified() {
+        address.set_ip(match address {
+            SocketAddr::V4(_) => IpAddr::V4(Ipv4Addr::LOCALHOST),
+            SocketAddr::V6(_) => IpAddr::V6(Ipv6Addr::LOCALHOST),
+        });
+    }
+    TcpStream::connect_timeout(&address, Duration::from_millis(250)).is_ok()
 }
 
 /// What a request is answered with, before it is sent.
