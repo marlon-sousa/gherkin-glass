@@ -34,6 +34,20 @@ body {
   line-height: 1.5;
 }
 
+.ghg-header {
+  max-width: 60rem;
+  margin: 0 auto;
+  padding: 0.5rem 1rem 0;
+}
+
+.ghg-theme {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  margin: 0;
+  border: 1px solid var(--ghg-border);
+}
+
 main {
   max-width: 60rem;
   margin: 0 auto;

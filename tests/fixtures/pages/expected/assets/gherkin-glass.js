@@ -452,6 +452,43 @@ var FetchedTree = class {
     }
   }
 };
+// src/adapters/dom_theme.ts
+var DomTheme = class {
+  document;
+  constructor(document2) {
+    this.document = document2;
+  }
+  show(choice) {
+    for (const radio of this.radios()) {
+      radio.checked = radio.value === choice;
+    }
+  }
+  apply(theme) {
+    const root = this.document.documentElement;
+    if (theme === null) {
+      delete root.dataset.theme;
+    } else {
+      root.dataset.theme = theme;
+    }
+  }
+  onChoose(handler) {
+    for (const radio of this.radios()) {
+      radio.addEventListener("change", () => {
+        if (radio.checked && isChoice(radio.value)) {
+          handler(radio.value);
+        }
+      });
+    }
+  }
+  radios() {
+    return [...this.document.querySelectorAll("input[name='ghg-theme']")].filter(
+      (element) => element instanceof HTMLInputElement
+    );
+  }
+};
+function isChoice(value) {
+  return value === "system" || value === "light" || value === "dark";
+}
 
 // src/adapters/local_memory.ts
 var LocalMemory = class {
@@ -526,6 +563,8 @@ function startState(configured, kept) {
 // src/services/collapsing.ts
 function startCollapsing(page2, memory2, pagePath) {
   const blocks = page2.blocks();
+function startCollapsing(page, memory2, pagePath) {
+  const blocks = page.blocks();
   const set = (block, expanded) => {
     block.setExpanded(expanded);
     memory2.set(memoryKey(pagePath, block.anchor), remembered(expanded));
@@ -571,6 +610,26 @@ async function startFolderTree(source, toggle, view, memory2, place) {
   view.onToggle((address, expanded) => memory2.set(itemKey(place.sitePath, address), rememberedExpanded(expanded)));
 }
 
+// src/policies/theme_choice.ts
+var THEME_KEY = "gherkin-glass:theme";
+function keptChoice(kept) {
+  return kept === "light" || kept === "dark" ? kept : "system";
+}
+function themeAttribute(choice) {
+  return choice === "system" ? null : choice;
+}
+
+// src/services/theme_switching.ts
+function startThemeSwitching(theme, memory2) {
+  const choice = keptChoice(memory2.get(THEME_KEY));
+  theme.show(choice);
+  theme.apply(themeAttribute(choice));
+  theme.onChoose((chosen) => {
+    theme.apply(themeAttribute(chosen));
+    memory2.set(THEME_KEY, chosen);
+  });
+}
+
 // src/main.ts
 var memory = new LocalMemory();
 startCollapsing(new DomPage(document), memory, document.location.pathname);
@@ -586,3 +645,5 @@ var backgrounds = DomBackgrounds.of(document);
 if (backgrounds !== null) {
   startBackgrounds(backgrounds, memory, siteRoot(import.meta.url));
 }
+startThemeSwitching(new DomTheme(document), memory);
+startCollapsing(new DomPage(document), memory, document.location.pathname);

@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Feature: A story without scenarios, stories/read.story</title>
+<script>try{var t=localStorage.getItem("gherkin-glass:theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}</script>
 <style>
 :root,
 :root[data-theme="light"] {
@@ -69,6 +70,15 @@
 </ol>
 </nav>
 <main id="ghg_main">
+<header class="ghg-header">
+<fieldset class="ghg-theme">
+<legend>Theme</legend>
+<label><input type="radio" name="ghg-theme" value="system" checked> System</label>
+<label><input type="radio" name="ghg-theme" value="light"> Light</label>
+<label><input type="radio" name="ghg-theme" value="dark"> Dark</label>
+</fieldset>
+</header>
+<main>
 <h1>Feature: A story without scenarios</h1>
 <p class="ghg-source"><a href="https://example.com/repo/blob/main/features/stories/read.story#L1">Source: <bdi>stories/read.story</bdi></a></p>
 </main>

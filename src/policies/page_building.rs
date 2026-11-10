@@ -91,6 +91,10 @@ pub(crate) fn build_page(parsed: &ParsedFeature, options: &PageOptions, tags: &T
             contents: fl!(CATALOGUE, "page-contents"),
             collapse_all: fl!(CATALOGUE, "collapse-all"),
             expand_all: fl!(CATALOGUE, "expand-all"),
+            theme: fl!(CATALOGUE, "theme"),
+            theme_system: fl!(CATALOGUE, "theme-system"),
+            theme_light: fl!(CATALOGUE, "theme-light"),
+            theme_dark: fl!(CATALOGUE, "theme-dark"),
         },
         backgrounds_option,
     }

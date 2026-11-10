@@ -111,6 +111,13 @@ page-title = { $heading }, { $path }
 page-contents = Contents
 collapse-all = Collapse all
 expand-all = Expand all
+
+## The control every page has to choose its theme, and its three choices.
+
+theme = Theme
+theme-system = System
+theme-light = Light
+theme-dark = Dark
 source-link = Source: { $path }
 
 ## The name of every page's breadcrumb, a navigation landmark.
