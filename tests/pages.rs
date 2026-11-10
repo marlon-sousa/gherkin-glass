@@ -59,7 +59,14 @@ fn assert_same_site(config: &str, expected: &str) {
             written.to_str().expect("UTF-8"),
         ],
     );
-    assert_eq!(String::from_utf8_lossy(&result.stderr), "");
+    // Rule 17: collapsed.toml gives no title.
+    let hint = if config == "collapsed.toml" {
+        "The site has no title, so its home page is called Feature files. \
+         Set title in ghg.toml, or give --title.\n"
+    } else {
+        ""
+    };
+    assert_eq!(String::from_utf8_lossy(&result.stderr), hint);
     assert_eq!(result.status.code(), Some(0));
     let expected = files(&fixtures().join("pages").join(expected));
     let written = files(&written);
@@ -262,6 +269,29 @@ fn percent_decoded(address: &str) -> String {
 }
 
 // Rules 60 and 61.
+// Rules 22 and 81: --title wins over the file's title.
+
+#[test]
+fn the_title_option_wins_over_the_configuration_s() {
+    let written = output("titled");
+    let result = build(
+        &fixtures().join("pages"),
+        &[
+            "--title",
+            "Given",
+            "--output",
+            written.to_str().expect("UTF-8"),
+        ],
+    );
+    assert_eq!(String::from_utf8_lossy(&result.stderr), "");
+    let home = String::from_utf8(read(written.join("index.html")).expect("read")).expect("UTF-8");
+    assert!(home.contains("<h1>Given</h1>"), "{home}");
+    let page = String::from_utf8(read(written.join("billing/refunds.html")).expect("read"))
+        .expect("UTF-8");
+    assert!(page.contains("<li><a href=\"../index.html\">Given</a></li>"));
+}
+
+// Rules 81 and 82.
 
 #[test]
 fn the_home_page_has_the_site_s_title_and_totals() {

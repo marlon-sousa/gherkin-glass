@@ -16,6 +16,7 @@ help =
       --config <file>: the configuration file to read, instead of ghg.toml in the current folder.
       --input <folder>: the folder of feature files to read, instead of the configuration's input.
       --output <folder>: the folder to write the site into, instead of the configuration's output.
+      --title <text>: the site's title, instead of the configuration's title.
 
     Options of ghg serve only:
       --host <address>: the address to listen on, instead of 127.0.0.1.
@@ -126,6 +127,11 @@ breadcrumb = Breadcrumb
 ## $site the site's title, the configuration's or default-title.
 
 default-title = Feature files
+
+## What ghg build adds, once the site is written, when neither the command
+## line nor ghg.toml gives the site a title. title is a key, never translated.
+
+no-title = The site has no title, so its home page is called Feature files. Set title in ghg.toml, or give --title.
 folder-page-title = { $folder }, { $site }
 folders = Folders
 features = Features

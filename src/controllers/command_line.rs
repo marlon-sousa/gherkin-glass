@@ -82,6 +82,10 @@ impl CommandLine {
             Err(problems) => return Reply::failure(1, wording::config_problems(&problems)),
         };
         match self.site.build(&settings, &settings.output) {
+            Ok(_) if settings.pages.title.is_none() => Reply {
+                stderr: lines(fl!(CATALOGUE, "no-title")),
+                ..Reply::success(String::new())
+            },
             Ok(_) => Reply::success(String::new()),
             Err(problems) => Reply::failure(1, wording::problems(&problems)),
         }
