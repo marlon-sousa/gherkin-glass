@@ -7,8 +7,9 @@ What gherkin-glass promises, in terms a test can observe. Each section is writte
 Agreed so far:
 
 - [Reading the input](#reading-the-input), issue [#3](https://github.com/marlon-sousa/gherkin-glass/issues/3).
+- [The command line and its configuration](#the-command-line-and-its-configuration), issue [#11](https://github.com/marlon-sousa/gherkin-glass/issues/11).
 
-The other features planned for the first version are the [issues](https://github.com/marlon-sousa/gherkin-glass/issues) labelled `feature`. The command line that starts a build, and the input folder it reads, are agreed in [#11](https://github.com/marlon-sousa/gherkin-glass/issues/11).
+The other features planned for the first version are the [issues](https://github.com/marlon-sousa/gherkin-glass/issues) labelled `feature`. Each adds its own keys and options to "The command line and its configuration" as it is built.
 
 ## Reading the input
 
@@ -47,4 +48,35 @@ A doc string is the text between two delimiter lines, `"""` or three backticks, 
 
 14. A file that cannot be read fails the build: a feature file that cannot be parsed, such as an empty file or one with only comments, or that cannot be read, such as one that is not UTF-8; a `.ghg-ignore` file with a rule that is not valid, whose other rules still apply; and a folder of the input that cannot be listed, the input folder itself included. There is no option to carry on without it. Fixture: `tests/fixtures/unreadable`.
 15. Every such file is reported before the build stops, not only the first. The report has one line per problem, sorted by path, folder by folder, so that a folder's contents stay together, and then by line. Names are compared by their character codes, so capital letters come before small ones. The report is the same on every run. Fixture: `tests/fixtures/unreadable`.
-16. Each line reads `<path>:<line>: <message>`, where the path is relative to the input folder, with `/` between folders on every system, the line is where the parser stopped, or the file's last line when it stopped past the end, and the message is the parser's. When the parser has no message of its own, only the list of what it expected, the message is `Syntax error.` A problem with no line, such as a file that cannot be read, reads `<path>: <message>`. A problem with the input folder itself shows its path as it was given. Fixture: `tests/fixtures/unreadable`.
+16. Each line reads `<path>:<line>: <message>`, where the path is relative to the input folder, with `/` between folders on every system, the line is where the parser stopped, or the file's last line when it stopped past the end, and the message is the parser's. When the parser has no message of its own, only the list of what it expected, the message is `Syntax error.` A problem with no line, such as a file that cannot be read, reads `<path>: <message>`. A file that cannot be read has the message `cannot be read: <reason>`, a folder that cannot be listed `cannot be listed: <reason>`, a file that changed while it was being read `changed while it was being read`, and a `.ghg-ignore` rule that is not valid the `ignore` crate's message, where the reason is the operating system's words. A problem with the input folder itself shows its path as it was given. Fixture: `tests/fixtures/unreadable`.
+
+## The command line and its configuration
+
+The command is `ghg`. How it builds a site is set by a configuration file, `ghg.toml`, kept with the feature files, and by options on the command line, which override it, so that a site builds the same way locally and in CI. Every sentence it prints is gherkin-glass's own interface text, except the messages of the libraries and the operating system it passes on, which are named where they appear.
+
+### Commands
+
+17. `ghg build` reads the input, as [Reading the input](#reading-the-input) describes. When every file can be read, it prints nothing and exits with status 0. It writes nothing yet: writing the site is agreed in [#4](https://github.com/marlon-sousa/gherkin-glass/issues/4), and is added to this rule when it is built. Fixture: `tests/fixtures/configuration/default`.
+18. `ghg --help`, or `-h`, prints the commands and their options to standard output and exits with status 0, as it does after a command, such as `ghg build --help`. `ghg --version`, or `-V`, prints `ghg` and its version, such as `ghg 0.1.0`, the same way. Fixture: `tests/fixtures/configuration/default`.
+19. A mistake on the command line stops the run before anything is read. It prints one sentence to standard error, naming what was typed wrong when something was, and exits with status 2. The mistakes are: no command; a command ghg does not have; an option the command does not have; an option without its value, or with an empty one, such as `--input=`; a value given to an option that takes none, such as `--help=yes`; an option given more than once; and an argument the command does not take. Fixture: `tests/fixtures/configuration/default`.
+20. When the configuration file or the input stops a build, the report goes to standard error, one line per problem, nothing goes to standard output, and the status is 1. A configuration file with a problem stops the run before the input is read. Fixtures: `tests/fixtures/configuration/mistaken` and `tests/fixtures/unreadable`.
+
+### The options of ghg build
+
+An option's value follows it, as `--input specs`, or is joined to it by `=`, as `--input=specs`. Paths on the command line are relative to the current folder.
+
+21. `--config <file>` reads that configuration file instead of `ghg.toml` in the current folder. A file given this way that cannot be read, because it does not exist or for any other reason, stops the run with `<file>: cannot be read: <reason>`, the file shown as it was given and the reason in the operating system's words. Fixture: `tests/fixtures/configuration/configured`.
+22. `--input <folder>` reads that folder as the input, whatever the configuration file's `input` says. Fixture: `tests/fixtures/configuration/configured`.
+
+### The configuration file
+
+23. Without `--config`, the configuration file is `ghg.toml` in the current folder, and only there: the folders above are not searched. When there is none, every setting takes its default, and that is not a problem. A `ghg.toml` that is there but cannot be read, such as a folder of that name or a file that is not UTF-8, stops the run with `ghg.toml: cannot be read: <reason>`, as rule 21 describes. Fixture: `tests/fixtures/configuration/configured`.
+24. The file is written in [TOML](https://toml.io/). Paths in it, and the defaults of the keys that take a path, are relative to the folder the file is in, whichever folder ghg runs from. Without a file, the defaults are relative to the current folder. It may set these keys, and the features that need more add them here as they are built:
+
+    | Key | Takes | Default | What it sets |
+    | --- | --- | --- | --- |
+    | `input` | text | `features` | The input folder, the folder of feature files to read. |
+
+    Fixture: `tests/fixtures/configuration/configured`.
+25. A setting given on the command line wins over the file's key of the same meaning, and the file's key wins over the default. Fixture: `tests/fixtures/configuration/configured`.
+26. A key the file may not set, a table among them, or a value of the wrong type, is never ignored: it stops the run. Every such problem in the file is reported, sorted by line, each as `<file>:<line>: <message>`, the file shown as given and the line that of the key, or for a wrong type that of its value. An unknown key reads `ghg has no setting named <key>.`, a key that takes text and was given something else `<key> must be text, in quotes.`, and a path given as empty text `<key> must not be empty.` A file that is not valid TOML, such as one with a key given twice or text without quotes, is reported once, at the line where the [`toml`](https://crates.io/crates/toml) crate stopped, with that crate's message. Fixtures: `tests/fixtures/configuration/mistaken`, `tests/fixtures/configuration/empty-input` and `tests/fixtures/configuration/not-toml`.
