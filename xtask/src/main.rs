@@ -1,5 +1,6 @@
 //! Composition root: `cargo xtask build` and `cargo xtask check`, the commands contributors and CI run.
 
+use std::env::consts::EXE_SUFFIX;
 use std::env::{args, var_os};
 use std::fs::{read, read_to_string};
 use std::path::{Path, PathBuf};
@@ -10,8 +11,15 @@ Usage: cargo xtask <command>
 
 Commands:
   build: builds the pages' script from script/ into assets/gherkin-glass.js, writes the fixtures' expected sites again, then builds the release binary.
-  check: runs every check a pull request runs: formatting, lints, the tests on both Rust versions, and the script check.
-  check-script: type-checks and tests the script, and checks that assets/gherkin-glass.js is what it compiles to.";
+  check: runs every check a pull request runs: formatting, lints, the tests on both Rust versions, the script check and the browser check.
+  check-script: type-checks and tests the script, and checks that assets/gherkin-glass.js is what it compiles to.
+  check-browser: builds ghg, installs the browser, and checks every fixture's site in it: accessibility, the keyboard, and the reload of ghg serve --watch.";
+
+/// The browser checks, run with Node from the repository's root.
+const BROWSER_CHECKS: [&str; 2] = [
+    "tests/browser/accessibility.mjs",
+    "tests/browser/reload.mjs",
+];
 
 /// The compiled script, committed so that building the crate needs no Node.
 const SCRIPT: &str = "assets/gherkin-glass.js";
@@ -22,6 +30,7 @@ fn main() -> ExitCode {
         Some("build") => build(),
         Some("check") => check(),
         Some("check-script") => check_script(),
+        Some("check-browser") => check_browser(),
         Some("--help" | "-h") => {
             println!("{USAGE}");
             Ok(())
@@ -85,13 +94,13 @@ fn check() -> Result<(), String> {
         "--package",
         "gherkin-glass",
     ])?;
-    check_script()
+    check_script()?;
+    check_browser()
 }
 
 fn check_script() -> Result<(), String> {
     prepare_script()?;
-    let target = var_os("CARGO_TARGET_DIR").map_or_else(|| root().join("target"), PathBuf::from);
-    let compiled = target.join("xtask/gherkin-glass.js");
+    let compiled = target().join("xtask/gherkin-glass.js");
     bundle(&compiled)?;
     let read_file =
         |path: &Path| read(path).map_err(|error| format!("{}: {error}", path.display()));
@@ -99,6 +108,27 @@ fn check_script() -> Result<(), String> {
         return Err(format!(
             "{SCRIPT} is not what script/ compiles to. Run cargo xtask build, and commit {SCRIPT}."
         ));
+    }
+    Ok(())
+}
+
+fn check_browser() -> Result<(), String> {
+    npm(&["ci", "--no-audit", "--no-fund"])?;
+    // Headless Chromium alone, and on CI the system's libraries it needs, which
+    // Playwright installs with the runner's sudo.
+    let mut install = vec!["exec", "--", "playwright", "install", "--only-shell"];
+    if var_os("CI").is_some() && cfg!(target_os = "linux") {
+        install.push("--with-deps");
+    }
+    install.push("chromium");
+    npm(&install)?;
+    cargo(&["build", "--locked", "--package", "gherkin-glass"])?;
+    let ghg = target().join(format!("debug/ghg{EXE_SUFFIX}"));
+    for check in BROWSER_CHECKS {
+        run(Command::new("node")
+            .arg(check)
+            .env("GHG", &ghg)
+            .current_dir(root()))?;
     }
     Ok(())
 }
@@ -148,6 +178,11 @@ fn minimum_rust() -> Result<String, String> {
         .and_then(|rest| rest.strip_suffix('"'))
         .map(str::to_string)
         .ok_or_else(|| format!("{}: no rust-version", manifest.display()))
+}
+
+/// Cargo's target folder, `CARGO_TARGET_DIR` when it is set, relative to the repository's root.
+fn target() -> PathBuf {
+    var_os("CARGO_TARGET_DIR").map_or_else(|| root().join("target"), |folder| root().join(folder))
 }
 
 /// The repository's root, the folder above this crate's.

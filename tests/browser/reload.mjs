@@ -2,23 +2,20 @@
 // Playwright: ghg serve --watch serves a copy of tests/fixtures/serve/reload,
 // a feature changes, and the page must reload at the reader's heading.
 //
-// Run from the repository's root, after cargo build, with Playwright
-// installed where Node finds it:
+// Run from the repository's root, after cargo build and npm ci in script/,
+// with Playwright's Chromium installed:
 //   node tests/browser/reload.mjs
-// GHG names another ghg binary than target/debug/ghg.
+// cargo xtask check-browser does all of it. GHG names another ghg binary than
+// target/debug/ghg.
 
 import { spawn } from "node:child_process";
 import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { join } from "node:path";
 import { createInterface } from "node:readline";
 import assert from "node:assert/strict";
+import { chromium, ghg } from "./support.mjs";
 
-const require = createRequire(import.meta.url);
-const { chromium } = require("playwright");
-
-const ghg = resolve(process.env.GHG ?? "target/debug/ghg");
 const folder = mkdtempSync(join(tmpdir(), "ghg-reload-"));
 cpSync("tests/fixtures/serve/reload", folder, { recursive: true });
 const feature = join(folder, "features/many-scenarios.feature");
