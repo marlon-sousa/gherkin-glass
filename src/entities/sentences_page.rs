@@ -1,0 +1,74 @@
+//! Entity: the page of step sentences, as its template shows it, every text in it as written or worded.
+
+use crate::entities::{Breadcrumb, PageFrame};
+
+/// Every `String` is text, escaped when it is rendered.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct SentencesPage {
+    pub(crate) frame: PageFrame,
+    pub(crate) breadcrumb: Breadcrumb,
+    /// The `lang` of the page.
+    pub(crate) language: String,
+    pub(crate) title: String,
+    pub(crate) heading: String,
+    pub(crate) groups: Vec<GroupView>,
+    /// Shown only when there is no group.
+    pub(crate) no_steps: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct GroupView {
+    /// The kind of step, such as `Given`.
+    pub(crate) heading: String,
+    pub(crate) sentences: Vec<SentenceView>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct SentenceView {
+    pub(crate) text: String,
+    /// The `lang` of the sentence's heading, when it differs from the page's.
+    pub(crate) language: Option<String>,
+    /// Such as `Used once.`
+    pub(crate) uses_count: String,
+    pub(crate) uses: Vec<UseView>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct UseView {
+    /// Relative to the site's root, where the page of step sentences is, its
+    /// path percent-encoded.
+    pub(crate) address: String,
+    /// The `lang` of the feature's own text, when it differs from the page's.
+    pub(crate) language: Option<String>,
+    /// The link's words, around the block's heading and the file's path.
+    pub(crate) link: Vec<Piece>,
+    /// The item's words, around the link and the values; empty when the step has none.
+    pub(crate) item: Vec<Piece>,
+    pub(crate) heading: String,
+    pub(crate) path: String,
+    /// As written.
+    pub(crate) values: Vec<String>,
+    /// Between two values, such as `, `.
+    pub(crate) separator: String,
+}
+
+/// A part of a message: words of the catalogue, or the place of one of the
+/// message's placeholders, by its number.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) enum Piece {
+    Words(String),
+    Placeholder(usize),
+}
+
+impl Piece {
+    pub(crate) fn words(&self) -> Option<&str> {
+        match self {
+            Piece::Words(words) => Some(words),
+            Piece::Placeholder(_) => None,
+        }
+    }
+
+    pub(crate) fn is_placeholder(&self, number: usize) -> bool {
+        *self == Piece::Placeholder(number)
+    }
+}

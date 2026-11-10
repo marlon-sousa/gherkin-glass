@@ -201,7 +201,7 @@ fn the_page_s_lang_is_its_file_s_language_as_a_tag() {
     assert_eq!(lang("emoji.html"), "und");
 }
 
-// Rules 37 and 78.
+// Rules 37, 78 and 142.
 
 #[test]
 fn two_files_with_the_same_page_stop_the_build_with_the_files_that_cannot_be_read() {
@@ -217,6 +217,7 @@ fn two_files_with_the_same_page_stop_the_build_with_the_files_that_cannot_be_rea
         "a.story: has the same page, a.html, as a.feature.\n\
          broken.feature:1: Unknown keyword: 'not a feature'.\n\
          index.feature: has the same page, index.html, as the home page.\n\
+         steps.feature: has the same page, steps.html, as the step sentences.\n\
          sub/Index.story: has the same page, sub/Index.html, as the page of the folder sub.\n"
     );
     assert_eq!(result.status.code(), Some(1));
@@ -545,10 +546,13 @@ fn every_item_of_the_tree_reaches_a_page_and_its_anchor() {
             }
             reached.insert(percent_decoded(file), ());
         }
-        // Every page of the site has its item, but the tag pages, which the home page links.
+        // Every page of the site has its item, but the tag pages and the page
+        // of step sentences, which the home page links.
         let html: Vec<_> = pages
             .keys()
-            .filter(|name| name.ends_with(".html") && !name.starts_with("tags/"))
+            .filter(|name| {
+                name.ends_with(".html") && !name.starts_with("tags/") && *name != "steps.html"
+            })
             .collect();
         assert_eq!(reached.keys().collect::<Vec<_>>(), html, "{site}");
         assert!(

@@ -86,6 +86,11 @@ same-folder-page = has the same page, { $page }, as the folder { $first }.
 
 in-tags-folder = has its page, { $page }, in the folder tags, which holds the tag pages.
 
+## A feature file whose page would be the page of step sentences. $page is
+## that page's path in the site.
+
+reserved-page = has the same page, { $page }, as the step sentences.
+
 ## A file of the site that cannot be written. $reason is the operating
 ## system's words.
 
@@ -268,3 +273,22 @@ examples-as-scenarios = Examples as scenarios: { $name }
 example-scenario-name = { $name } ({ $values })
 example-value = { $column }: { $value }
 example-values-separator = {", "}
+
+## The page of step sentences. $site is the site's title; $count is how many steps use a sentence;
+## $heading is the heading of a step's block, and $path its feature file's
+## path below the input folder, both as written; $link is the link that
+## reads them, and $values the step's values, as written.
+
+sentences-title = Step sentences
+sentences-page-title = Step sentences, { $site }
+sentences-given = Given
+sentences-when = When
+sentences-then = Then
+sentences-none = No feature has a step.
+sentence-uses = { $count ->
+    [one] Used once.
+   *[other] Used { $count } times.
+}
+sentence-use = { $heading }, { $path }
+sentence-use-values = { $link }, with { $values }
+sentence-values-separator = {", "}

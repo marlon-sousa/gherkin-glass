@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Step sentences, Highlighting</title>
+<script>try{var t=localStorage.getItem("gherkin-glass:theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}</script>
+<style>
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+  --ghg-background: #ffffff;
+  --ghg-surface: #f2f2f2;
+  --ghg-text: #1a1a1a;
+  --ghg-muted: #474747;
+  --ghg-border: #757575;
+  --ghg-accent: #5a1e8c;
+  --ghg-keyword: #6a1b9a;
+  --ghg-parameter: #14521a;
+  --ghg-number: #8a3000;
+  --ghg-placeholder: #00575e;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ghg-background: #141414;
+    --ghg-surface: #222222;
+    --ghg-text: #ececec;
+    --ghg-muted: #c4c4c4;
+    --ghg-border: #8f8f8f;
+    --ghg-accent: #ffcc88;
+    --ghg-keyword: #e1b3ff;
+    --ghg-parameter: #9fe0a8;
+    --ghg-number: #ffbf8a;
+    --ghg-placeholder: #7fdbe0;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ghg-background: #141414;
+  --ghg-surface: #222222;
+  --ghg-text: #ececec;
+  --ghg-muted: #c4c4c4;
+  --ghg-border: #8f8f8f;
+  --ghg-accent: #ffcc88;
+  --ghg-keyword: #e1b3ff;
+  --ghg-parameter: #9fe0a8;
+  --ghg-number: #ffbf8a;
+  --ghg-placeholder: #7fdbe0;
+}
+</style>
+<link rel="stylesheet" href="assets/gherkin-glass.css">
+<script type="module" src="assets/gherkin-glass.js"></script>
+</head>
+<body>
+<a class="ghg-skip" href="#ghg_main">Skip to content</a>
+<div class="ghg-options">
+<input type="checkbox" id="ghg_show_tree" class="ghg-show-tree" aria-controls="ghg_tree" checked> <label for="ghg_show_tree">Show the folder tree</label>
+<fieldset class="ghg-theme">
+<legend>Theme</legend>
+<label><input type="radio" name="ghg-theme" value="system" checked> System</label>
+<label><input type="radio" name="ghg-theme" value="light"> Light</label>
+<label><input type="radio" name="ghg-theme" value="dark"> Dark</label>
+</fieldset>
+</div>
+<div class="ghg-layout">
+<nav id="ghg_tree" class="ghg-tree" aria-label="Folder tree"></nav>
+<div class="ghg-page">
+<nav class="ghg-breadcrumb" aria-label="Breadcrumb">
+<ol>
+<li><a href="index.html">Highlighting</a></li>
+<li><a href="steps.html" aria-current="page">Step sentences</a></li>
+</ol>
+</nav>
+<main id="ghg_main">
+<h1>Step sentences</h1>
+<h2>Given</h2>
+<h3>&#34;…&#34; in &#34;…&#34; and &#60;unknown&#62;</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="highlighting.html#placeholders"><bdi>Scenario Outline: Placeholders</bdi>, <bdi>highlighting.feature</bdi></a>, with <bdi>&#60;amount&#62;</bdi>, <bdi>&#34;&#60;currency&#62; 3&#34;</bdi></li>
+</ul>
+<h3>2 &#34;…&#34;</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="highlighting.html#in-a-rule"><bdi>Scenario: In a rule</bdi>, <bdi>highlighting.feature</bdi></a>, with <bdi>&#34;items&#34;</bdi></li>
+</ul>
+<h3>&#60;amount&#62; is plain here</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="highlighting.html#not-an-outline"><bdi>Scenario: Not an outline</bdi>, <bdi>highlighting.feature</bdi></a></li>
+</ul>
+<h3>an account with 100 and a &#34;…&#34; note</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="highlighting.html#background"><bdi>Background</bdi>, <bdi>highlighting.feature</bdi></a>, with <bdi>&#34;&#60;amount&#62;&#34;</bdi></li>
+</ul>
+<h3>the customer&#39;s &#39;name&#39; is plain</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="highlighting.html#parameters"><bdi>Scenario: Parameters</bdi>, <bdi>highlighting.feature</bdi></a></li>
+</ul>
+<h3 lang="pt">uma conta com 100 reais</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="destaque.html#saque"><bdi lang="pt">Cenário: Saque</bdi>, <bdi>destaque.feature</bdi></a></li>
+</ul>
+<h2>When</h2>
+<h3>a &#34;lone quote stays plain</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="highlighting.html#parameters"><bdi>Scenario: Parameters</bdi>, <bdi>highlighting.feature</bdi></a></li>
+</ul>
+<h3 lang="pt">o cliente saca 20</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="destaque.html#saque"><bdi lang="pt">Cenário: Saque</bdi>, <bdi>destaque.feature</bdi></a></li>
+</ul>
+<h3>the customer asks for &#60; 5 &#62;</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="highlighting.html#placeholders"><bdi>Scenario Outline: Placeholders</bdi>, <bdi>highlighting.feature</bdi></a></li>
+</ul>
+<h3>the customer types &#34;…&#34;</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="highlighting.html#parameters"><bdi>Scenario: Parameters</bdi>, <bdi>highlighting.feature</bdi></a>, with <bdi>&#34;a \&#34;quoted\&#34; word&#34;</bdi></li>
+</ul>
+<h3>the customer types &#34;…&#34; and &#34;…&#34;</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="highlighting.html#parameters"><bdi>Scenario: Parameters</bdi>, <bdi>highlighting.feature</bdi></a>, with <bdi>&#34;hello 42&#34;</bdi>, <bdi>&#34;&#34;</bdi></li>
+</ul>
+<h2>Then</h2>
+<h3>R2D2 is 3rd in v1.2, 2.x, x_1 and item-4</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="highlighting.html#numbers"><bdi>Scenario: Numbers</bdi>, <bdi>highlighting.feature</bdi></a></li>
+</ul>
+<h3>the balance is -3.5, then 1.000,50 or $7 on 2026-11-10.</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="highlighting.html#numbers"><bdi>Scenario: Numbers</bdi>, <bdi>highlighting.feature</bdi></a></li>
+</ul>
+<h3>the quote in &#34;…&#34; closes after b</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="highlighting.html#numbers"><bdi>Scenario: Numbers</bdi>, <bdi>highlighting.feature</bdi></a>, with <bdi>&#34;a\\&#34; b&#34;</bdi></li>
+</ul>
+</main>
+</div>
+</div>
+</body>
+</html>

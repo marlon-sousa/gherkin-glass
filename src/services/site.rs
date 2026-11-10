@@ -1,4 +1,4 @@
-//! Service: building a site, from reading its input to writing its pages, its folder pages, its folder tree's data and its assets.
+//! Service: building a site, from reading its input to writing its pages, its folder pages, its page of step sentences, its folder tree's data and its assets.
 
 use std::path::Path;
 use std::sync::Arc;
@@ -7,9 +7,10 @@ use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 
 use crate::entities::{Problem, ProblemKind, Problems, Settings, SiteAssets};
 use crate::policies::{
-    build_folder_pages, build_folder_tree, build_page, build_tag_index, build_tag_page, name_tags,
-    render_folder_page, render_folder_tree, render_page, render_tag_index, render_tag_page,
-    tag_index_address, tags_of,
+    SENTENCES_PAGE, build_folder_pages, build_folder_tree, build_page, build_sentences_page,
+    build_tag_index, build_tag_page, find_step_sentences, make_anchors, name_tags,
+    render_folder_page, render_folder_tree, render_page, render_sentences_page, render_tag_index,
+    render_tag_page, tag_index_address, tags_of,
 };
 use crate::ports::SiteWriter;
 use crate::services::InputService;
@@ -57,6 +58,19 @@ impl SiteService {
                 .map(|folder| (folder.address.clone(), render_folder_page(folder)))
                 .collect::<Vec<_>>(),
         );
+        let anchors: Vec<_> = features
+            .iter()
+            .map(|parsed| make_anchors(&parsed.feature))
+            .collect();
+        let sentences = find_step_sentences(features.iter().zip(&anchors));
+        rendered.push((
+            SENTENCES_PAGE.to_string(),
+            render_sentences_page(&build_sentences_page(
+                &features,
+                &sentences,
+                &settings.pages,
+            )),
+        ));
         rendered.push((
             TREE_DATA.to_string(),
             render_folder_tree(&build_folder_tree(&folders)),
@@ -189,6 +203,7 @@ mod tests {
                 "assets/gherkin-glass.js",
                 "assets/tree.json",
                 "index.html",
+                "steps.html",
                 "sub/b.html",
                 "sub/index.html",
                 "tags/index.html"
@@ -225,6 +240,27 @@ mod tests {
         assert_eq!(
             problems.to_string(),
             "Tags/a.feature: has its page, Tags/a.html, in the folder tags\n"
+        );
+        assert!(writer.written.lock().expect("not poisoned").is_empty());
+    }
+
+    #[test]
+    fn a_file_whose_page_is_the_page_of_step_sentences_is_reported() {
+        let writer = Arc::new(FakeWriter::default());
+        let problems = build(
+            vec![
+                "Steps.feature",
+                "a.feature",
+                "steps.feature",
+                "sub/steps.feature",
+            ],
+            writer.clone(),
+        )
+        .expect_err("the same page");
+        assert_eq!(
+            problems.to_string(),
+            "Steps.feature: has the same page, steps.html, as the step sentences\n\
+             steps.feature: has the same page, steps.html, as the step sentences\n"
         );
         assert!(writer.written.lock().expect("not poisoned").is_empty());
     }

@@ -1,9 +1,9 @@
-//! Policy: a page's HTML, a feature's or a folder's, rendered from its askama templates.
+//! Policy: a page's HTML, a feature's, a folder's or the step sentences', rendered from its askama templates.
 
 use askama::Template;
 
 use crate::entities::{
-    Block, Breadcrumb, FolderPage, Page, PageFrame, StepPart, TagIndex, TagPage,
+    Block, Breadcrumb, FolderPage, Page, PageFrame, SentencesPage, StepPart, TagIndex, TagPage,
 };
 use crate::policies::{root_from, tag_index_address, tag_pages_language};
 
@@ -30,6 +30,18 @@ struct FolderTemplate<'a> {
     frame: &'a PageFrame,
     breadcrumb: &'a Breadcrumb,
     folder: &'a FolderPage,
+}
+
+/// At the site's root, so the shared assets are beside it.
+#[derive(Template)]
+#[template(path = "steps.html")]
+struct SentencesTemplate<'a> {
+    language: &'a str,
+    title: &'a str,
+    root: &'a str,
+    frame: &'a PageFrame,
+    breadcrumb: &'a Breadcrumb,
+    page: &'a SentencesPage,
 }
 
 #[derive(Template)]
@@ -104,6 +116,18 @@ pub(crate) fn render_folder_page(folder: &FolderPage) -> String {
         frame: &folder.frame,
         breadcrumb: &folder.breadcrumb,
         folder,
+    };
+    with_final_line_break(render(&template))
+}
+
+pub(crate) fn render_sentences_page(page: &SentencesPage) -> String {
+    let template = SentencesTemplate {
+        language: &page.language,
+        title: &page.title,
+        root: "",
+        frame: &page.frame,
+        breadcrumb: &page.breadcrumb,
+        page,
     };
     with_final_line_break(render(&template))
 }

@@ -282,6 +282,7 @@ fn a_versioned_build_replaces_its_version_and_writes_the_versions_page() {
             "assets",
             "ghg-version.json",
             "index.html",
+            "steps.html",
             "tags",
             "withdraw.html"
         ]

@@ -135,6 +135,9 @@ fn input_problem(problem: &Problem) -> String {
             page = page.as_str(),
             first = first.as_str()
         ),
+        ProblemKind::ReservedPage { page } => {
+            fl!(CATALOGUE, "reserved-page", page = page.as_str())
+        }
         ProblemKind::SameAsFolderPage { page, folder } => match folder {
             Some(folder) => fl!(
                 CATALOGUE,

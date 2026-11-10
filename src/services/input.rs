@@ -8,8 +8,8 @@ use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 
 use crate::entities::{ParsedFeature, Problem, ProblemKind, Problems, TAGS_FOLDER, Unnamed};
 use crate::policies::{
-    FOLDER_PAGE, correct_doc_strings, correct_step_keywords, file_language, page_address,
-    unnamed_blocks,
+    FOLDER_PAGE, SENTENCES_PAGE, correct_doc_strings, correct_step_keywords, file_language,
+    page_address, unnamed_blocks,
 };
 use crate::ports::{FeatureParser, InputCollector};
 
@@ -95,8 +95,9 @@ impl InputService {
 }
 
 /// Every file whose page, compared without regard to case, since some file
-/// systems do not, is a folder's page, or one an earlier file in path order
-/// already has; and every folder whose page an earlier folder has.
+/// systems do not, is a folder's page or the page of step sentences, or one
+/// an earlier file in path order already has; and every folder whose page an
+/// earlier folder has.
 fn same_pages(input: &Path, paths: &[PathBuf]) -> Vec<Problem> {
     let mut first: BTreeMap<String, &Path> = BTreeMap::new();
     let mut folders: BTreeMap<String, String> = BTreeMap::new();
@@ -132,6 +133,17 @@ fn same_pages(input: &Path, paths: &[PathBuf]) -> Vec<Problem> {
             Some((folder, file)) => (Some(folder.to_string()), file),
             None => (None, page.as_str()),
         };
+        if page.to_lowercase() == SENTENCES_PAGE {
+            problems.push(Problem::new(
+                input,
+                path,
+                None,
+                ProblemKind::ReservedPage {
+                    page: SENTENCES_PAGE.to_string(),
+                },
+            ));
+            continue;
+        }
         if file.to_lowercase() == FOLDER_PAGE {
             problems.push(Problem::new(
                 input,

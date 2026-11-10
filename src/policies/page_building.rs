@@ -427,7 +427,7 @@ fn isolated(text: &str) -> Vec<HeadingPart> {
 }
 
 /// The keyword as written, then `: ` and the name, or the keyword alone.
-fn heading(keyword: &str, name: &str) -> String {
+pub(crate) fn heading(keyword: &str, name: &str) -> String {
     let keyword = keyword.trim();
     let name = name.trim();
     if name.is_empty() {

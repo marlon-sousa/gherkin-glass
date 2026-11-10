@@ -7,7 +7,8 @@ use i18n_embed_fl::fl;
 
 use crate::entities::{FeatureEntry, FolderLink, FolderPage, FolderWords, Page, PageOptions};
 use crate::policies::{
-    CATALOGUE, FOLDER_PAGE, breadcrumb, page_frame, percent_encoded, site_title, tag_index_address,
+    CATALOGUE, FOLDER_PAGE, SENTENCES_PAGE, breadcrumb, page_frame, percent_encoded, site_title,
+    tag_index_address,
 };
 
 /// `pages` are every feature's, in any order; the folder pages come
@@ -75,6 +76,10 @@ pub(crate) fn build_folder_pages(pages: &[Page], options: &PageOptions) -> Vec<F
                 tags: folder.is_empty().then(|| FolderLink {
                     address: percent_encoded(&tag_index_address()),
                     name: fl!(CATALOGUE, "tag-index-title"),
+                }),
+                sentences: folder.is_empty().then(|| FolderLink {
+                    address: SENTENCES_PAGE.to_string(),
+                    name: fl!(CATALOGUE, "sentences-title"),
                 }),
                 folders: subfolders,
                 features: features
