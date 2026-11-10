@@ -1,0 +1,31 @@
+name: Pull request
+
+# The checks of the process, CONTRIBUTING.md, "Checks": every pull request
+# names an issue, and every commit message keeps the convention. They run on
+# every pull request, whatever its base, so each layer of a stack is checked.
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+
+concurrency:
+  group: pull-request-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  has-issue:
+    name: names an open issue
+    runs-on: ubuntu-latest
+    steps:
+      - uses: itinera-dev/actions/pr-has-issue@v1
+
+  commit-messages:
+    name: commit messages keep the convention
+    runs-on: ubuntu-latest
+    steps:
+      - uses: itinera-dev/actions/commit-messages@v1
