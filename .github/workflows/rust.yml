@@ -86,3 +86,13 @@ jobs:
         with:
           node-version-file: script/.node-version
       - run: cargo xtask check-browser
+
+  action:
+    # The GitHub Action's scripts run on macOS too, with its own bash, tar and
+    # shasum, docs/BEHAVIOUR.md, "The GitHub Action".
+    name: the action's scripts, on macOS
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: rustup toolchain install
+      - run: cargo test --locked --test action

@@ -1,0 +1,52 @@
+name: gherkin-glass
+description: Installs ghg, the accessible static viewer for Gherkin feature files, and builds a site with it when asked.
+author: marlon-sousa
+
+# docs/BEHAVIOUR.md, "The GitHub Action", says what this action does.
+#
+# Besides version and build, every input is an option of ghg build of the
+# same name, and every option of ghg build that sets how a site is built is an
+# input: a test in src/entities/invocation.rs fails when they differ. Each
+# such input is passed to the build step as GHG_OPTION_ and its name in
+# capitals, with _ for -.
+
+inputs:
+  version:
+    description: The release of ghg to install, such as 1.2.0. By default, the newest release compatible with this action's own version.
+    required: false
+    default: ""
+  build:
+    description: true to run ghg build after installing it, in the workspace folder.
+    required: false
+    default: "false"
+  config:
+    description: The --config option of ghg build, the configuration file to read. Left out when empty.
+    required: false
+    default: ""
+  input:
+    description: The --input option of ghg build, the folder of feature files to read. Left out when empty.
+    required: false
+    default: ""
+
+runs:
+  using: composite
+  steps:
+    - name: Install ghg
+      id: install
+      shell: bash
+      env:
+        GHG_VERSION: ${{ inputs.version }}
+        GHG_BUILD: ${{ inputs.build }}
+        GHG_ACTION_PATH: ${{ github.action_path }}
+        GHG_TOKEN: ${{ github.token }}
+      run: bash "$GHG_ACTION_PATH/action/install.sh" https://api.github.com https://github.com
+
+    - name: Build the site with ghg
+      if: inputs.build == 'true'
+      shell: bash
+      env:
+        GHG_BIN: ${{ steps.install.outputs.bin }}
+        GHG_ACTION_PATH: ${{ github.action_path }}
+        GHG_OPTION_CONFIG: ${{ inputs.config }}
+        GHG_OPTION_INPUT: ${{ inputs.input }}
+      run: bash "$GHG_ACTION_PATH/action/build.sh"

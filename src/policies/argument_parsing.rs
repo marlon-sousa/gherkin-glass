@@ -5,7 +5,9 @@ use std::path::PathBuf;
 
 use lexopt::{Arg, Error, Parser};
 
-use crate::entities::{ArgumentProblem, Invocation, ServeOptions, VersionName};
+use crate::entities::{
+    ArgumentProblem, BuildOption, BuildOptions, Invocation, ServeOptions, VersionName,
+};
 
 /// The arguments after the command's own name.
 pub(crate) fn parse_arguments(
@@ -55,16 +57,17 @@ fn parse_options(
 ) -> Result<ServeOptions, Answer> {
     let mut options = ServeOptions::default();
     while let Some(argument) = parser.next().map_err(|error| problem(error, command))? {
+        if let Arg::Long(name) = argument
+            && let Some(option) = BuildOption::named(name)
+        {
+            build_slot(&mut options.build, option).fill(parser, command)?;
+            continue;
+        }
         let slot = match argument {
             Arg::Short('h') => return Err(Answer::Now(Box::new(Invocation::Help))),
             Arg::Long("help") => return Err(answer(parser, "--help", Invocation::Help)),
             Arg::Short('V') => return Err(Answer::Now(Box::new(Invocation::Version))),
             Arg::Long("version") => return Err(answer(parser, "--version", Invocation::Version)),
-            Arg::Long("config") => Slot::Path(&mut options.build.config, "--config"),
-            Arg::Long("input") => Slot::Path(&mut options.build.input, "--input"),
-            Arg::Long("output") => Slot::Path(&mut options.build.output, "--output"),
-            Arg::Long("title") => Slot::Text(&mut options.build.title, "--title"),
-            Arg::Long("version-name") => Slot::Version(&mut options.build.version_name),
             Arg::Long("host") if serving => Slot::Host(&mut options.host),
             Arg::Long("port") if serving => Slot::Port(&mut options.port),
             Arg::Long("no-build") if serving => Slot::Flag(&mut options.no_build, "--no-build"),
@@ -81,6 +84,17 @@ fn parse_options(
         slot.fill(parser, command)?;
     }
     Ok(options)
+}
+
+/// Where the value of an option of `ghg build` goes.
+fn build_slot(options: &mut BuildOptions, option: BuildOption) -> Slot<'_> {
+    match option {
+        BuildOption::Config => Slot::Path(&mut options.config, option.option()),
+        BuildOption::Input => Slot::Path(&mut options.input, option.option()),
+        BuildOption::Output => Slot::Path(&mut options.output, option.option()),
+        BuildOption::Title => Slot::Text(&mut options.title, option.option()),
+        BuildOption::VersionName => Slot::Version(&mut options.version_name),
+    }
 }
 
 /// Where an option's value goes.

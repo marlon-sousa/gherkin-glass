@@ -63,3 +63,6 @@ bin-dir = "{ bin }{ binary-ext }"
 [package.metadata.binstall.overrides.x86_64-pc-windows-msvc]
 pkg-url = "{ repo }/releases/download/v{ version }/ghg-v{ version }-{ target }.zip"
 pkg-fmt = "zip"
+
+[dev-dependencies]
+yaml-rust2 = "0.13.0"
