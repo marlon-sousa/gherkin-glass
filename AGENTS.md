@@ -30,4 +30,6 @@ The toolchain is pinned in `rust-toolchain.toml`. Running `rustup toolchain inst
 
 `cargo run` builds the command and runs it.
 
+The pages' script is TypeScript, in `script/`, compiled into `assets/gherkin-glass.js`, which is committed, so plain `cargo build` and `cargo test` need no Node. Changing the script needs Node, at the version `script/.node-version` pins: `cargo xtask build` installs the Node packages from the lockfile, type-checks, tests and compiles the script, and builds the release binary with it; commit the compiled script with its sources. `cargo xtask check` runs every check above and the script check, as CI does.
+
 The commit messages can be checked before pushing with the `commit-messages` action of [itinera-dev/actions](https://github.com/itinera-dev/actions), which needs Python 3.11 or later. With a clone of it in the shell variable `ACTIONS`, run `PYTHONPATH="$ACTIONS" python3 "$ACTIONS/commit-messages/main.py" origin/main..HEAD` in this repository.

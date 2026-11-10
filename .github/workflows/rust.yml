@@ -61,3 +61,14 @@ jobs:
           rustup toolchain install "$msrv" --profile minimal
           echo "MSRV=$msrv" >> "$GITHUB_ENV"
       - run: cargo "+$MSRV" test --locked
+
+  script:
+    name: cargo xtask check-script
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: rustup toolchain install
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: script/.node-version
+      - run: cargo xtask check-script
