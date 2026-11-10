@@ -10,6 +10,10 @@ repository = "https://github.com/marlon-sousa/gherkin-glass"
 license = "MIT OR Apache-2.0"
 readme = "README.md"
 
+[[bin]]
+name = "ghg"
+path = "src/main.rs"
+
 [dependencies]
 gherkin = "0.16.0"
 ignore = "0.4.34"
