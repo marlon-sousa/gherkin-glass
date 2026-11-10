@@ -1,0 +1,122 @@
+[
+  {
+    "kind": "feature",
+    "name": "Withdraw cash",
+    "feature": null,
+    "rule": null,
+    "steps": ["the customer has an account"],
+    "tags": ["@banking", "@cash"],
+    "page": "banking/withdraw.html",
+    "anchor": ""
+  },
+  {
+    "kind": "scenario",
+    "name": "Withdraw within the balance",
+    "feature": "Withdraw cash",
+    "rule": null,
+    "steps": ["the balance is 100", "the customer withdraws 40", "the receipt says"],
+    "tags": ["@smoke"],
+    "page": "banking/withdraw.html",
+    "anchor": "withdraw-within-the-balance"
+  },
+  {
+    "kind": "scenario-outline",
+    "name": "Withdraw an amount",
+    "feature": "Withdraw cash",
+    "rule": null,
+    "steps": ["the customer withdraws <amount>", "the balance is <balance>"],
+    "tags": ["@regression", "@slow"],
+    "page": "banking/withdraw.html",
+    "anchor": "withdraw-an-amount"
+  },
+  {
+    "kind": "rule",
+    "name": "The daily limit applies",
+    "feature": "Withdraw cash",
+    "rule": null,
+    "steps": ["the daily limit is 500"],
+    "tags": ["@limits"],
+    "page": "banking/withdraw.html",
+    "anchor": "the-daily-limit-applies"
+  },
+  {
+    "kind": "scenario",
+    "name": "Withdraw over the limit",
+    "feature": "Withdraw cash",
+    "rule": "The daily limit applies",
+    "steps": ["the customer withdraws 600", "the withdrawal is refused"],
+    "tags": [],
+    "page": "banking/withdraw.html",
+    "anchor": "withdraw-over-the-limit"
+  },
+  {
+    "kind": "scenario",
+    "name": "",
+    "feature": "Withdraw cash",
+    "rule": "The daily limit applies",
+    "steps": ["the customer withdraws 500", "the withdrawal is accepted"],
+    "tags": [],
+    "page": "banking/withdraw.html",
+    "anchor": "scenario"
+  },
+  {
+    "kind": "feature",
+    "name": "Saque em conta poupança",
+    "feature": null,
+    "rule": null,
+    "steps": [],
+    "tags": [],
+    "page": "saque.html",
+    "anchor": ""
+  },
+  {
+    "kind": "scenario",
+    "name": "Saque com saldo",
+    "feature": "Saque em conta poupança",
+    "rule": null,
+    "steps": ["que o saldo é 100", "o cliente saca 40", "o saldo é 60"],
+    "tags": [],
+    "page": "saque.html",
+    "anchor": "saque-com-saldo"
+  },
+  {
+    "kind": "feature",
+    "name": "",
+    "feature": null,
+    "rule": null,
+    "steps": [],
+    "tags": [],
+    "page": "unnamed.html",
+    "anchor": ""
+  },
+  {
+    "kind": "rule",
+    "name": "",
+    "feature": "",
+    "rule": null,
+    "steps": [],
+    "tags": [],
+    "page": "unnamed.html",
+    "anchor": "rule"
+  },
+  {
+    "kind": "scenario-outline",
+    "name": "Pay <amount>",
+    "feature": "",
+    "rule": "",
+    "steps": ["the customer pays <amount>"],
+    "tags": ["@tagged", "@paid"],
+    "page": "unnamed.html",
+    "anchor": "pay-amount"
+  },
+  {
+    "kind": "rule",
+    "name": "Nothing yet",
+    "feature": "",
+    "rule": null,
+    "steps": [],
+    "tags": [],
+    "page": "unnamed.html",
+    "anchor": "nothing-yet"
+  }
+]

@@ -31,6 +31,11 @@
 {%- endfor %}
 </ol>
 </nav>
+<form class="ghg-search" role="search" data-root="{{ root }}" data-shown="{{ frame.search.shown }}" data-loading="{{ frame.search.loading }}" data-failed="{{ frame.search.failed }}" data-none="{{ frame.search.none }}" data-count="{{ frame.search.count }}" data-count-limited="{{ frame.search.count_limited }}" data-no-name="{{ frame.search.no_name }}" data-feature="{{ frame.search.feature }}" data-rule="{{ frame.search.rule }}" data-scenario="{{ frame.search.scenario }}" data-scenario-in-rule="{{ frame.search.scenario_in_rule }}" data-scenario-outline="{{ frame.search.scenario_outline }}" data-scenario-outline-in-rule="{{ frame.search.scenario_outline_in_rule }}">
+<label>{{ frame.search.label }} <input type="search" class="ghg-search-field" autocomplete="off" spellcheck="false" enterkeyhint="search"></label>
+<p class="ghg-search-status" role="status"></p>
+<ol class="ghg-search-results" hidden></ol>
+</form>
 <main id="ghg_main">
 {% block main %}{% endblock %}
 </main>

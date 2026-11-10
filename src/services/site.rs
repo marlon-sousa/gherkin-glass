@@ -3,20 +3,28 @@
 use std::path::Path;
 use std::sync::Arc;
 
-use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
+use rayon::prelude::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
 
-use crate::entities::{Problem, ProblemKind, Problems, Settings, SiteAssets};
+use crate::entities::{BuiltSite, Problem, ProblemKind, Problems, Settings, SiteAssets};
 use crate::policies::{
-    SENTENCES_PAGE, build_folder_pages, build_folder_tree, build_page, build_sentences_page,
-    build_tag_index, build_tag_page, find_step_sentences, make_anchors, name_tags,
-    render_folder_page, render_folder_tree, render_page, render_sentences_page, render_tag_index,
-    render_tag_page, tag_index_address, tags_of,
+    LARGE_SEARCH_DOCUMENTS, SENTENCES_PAGE, build_folder_pages, build_folder_tree, build_page,
+    build_sentences_page, build_tag_index, build_tag_page, find_step_sentences, make_anchors,
+    name_tags, render_folder_page, render_folder_tree, render_page, render_sentences_page,
+    render_tag_index, render_tag_page, search_documents, search_json, tag_index_address, tags_of,
 };
 use crate::ports::SiteWriter;
 use crate::services::InputService;
 
 /// Beside the assets, where the pages' script fetches it from.
 const TREE_DATA: &str = "assets/tree.json";
+const SEARCH_DOCUMENTS: &str = "assets/search.json";
+
+/// Every file of a site, each a `/`-joined path below the output folder with
+/// its contents, and what the build has to say of them.
+pub(crate) struct SiteFiles {
+    pub(crate) files: Vec<(String, Vec<u8>)>,
+    pub(crate) built: BuiltSite,
+}
 
 pub struct SiteService {
     input: InputService,
@@ -31,21 +39,26 @@ impl SiteService {
     /// Writes into `output`, any folder, over what is there, and only once the
     /// whole input is read. Whether a folder on disk may be written into is
     /// [`crate::OutputService`]'s to decide, as docs/BEHAVIOUR.md, rule 38, says.
-    pub fn build(&self, settings: &Settings, output: &Path) -> Result<(), Problems> {
-        let files = self.files(settings)?;
-        self.write(output, files)
+    pub fn build(&self, settings: &Settings, output: &Path) -> Result<BuiltSite, Problems> {
+        let site = self.files(settings)?;
+        self.write(output, site.files)?;
+        Ok(site.built)
     }
 
-    /// Every file of the site, each a `/`-joined path below the output
-    /// folder with its contents, pages first, in file order. Nothing is written.
-    pub(crate) fn files(&self, settings: &Settings) -> Result<Vec<(String, Vec<u8>)>, Problems> {
+    /// Every file of the site, pages first, in file order. Nothing is written.
+    pub(crate) fn files(&self, settings: &Settings) -> Result<SiteFiles, Problems> {
         let features = self.input.read(&settings.input, settings.unnamed)?;
         let tags = tags_of(&features);
         let names = name_tags(&tags);
+        let anchors: Vec<_> = features
+            .iter()
+            .map(|parsed| make_anchors(&parsed.feature))
+            .collect();
         // Collecting into a `Vec` keeps file order, whatever order the threads finish in.
         let pages: Vec<_> = features
             .par_iter()
-            .map(|parsed| build_page(parsed, &settings.pages, &names))
+            .zip(&anchors[..])
+            .map(|(parsed, anchors)| build_page(parsed, anchors, &settings.pages, &names))
             .collect();
         let folders = build_folder_pages(&pages, &settings.pages);
         let mut rendered: Vec<(String, String)> = pages
@@ -58,10 +71,6 @@ impl SiteService {
                 .map(|folder| (folder.address.clone(), render_folder_page(folder)))
                 .collect::<Vec<_>>(),
         );
-        let anchors: Vec<_> = features
-            .iter()
-            .map(|parsed| make_anchors(&parsed.feature))
-            .collect();
         let sentences = find_step_sentences(features.iter().zip(&anchors));
         rendered.push((
             SENTENCES_PAGE.to_string(),
@@ -87,11 +96,20 @@ impl SiteService {
                 })
                 .collect::<Vec<_>>(),
         );
-        Ok(rendered
-            .into_iter()
-            .map(|(address, html)| (address, html.into_bytes()))
-            .chain(assets())
-            .collect())
+        let search = search_json(&search_documents(features.iter().zip(&anchors)));
+        let built = BuiltSite {
+            large_search_documents: Some(search.len())
+                .filter(|&size| size > LARGE_SEARCH_DOCUMENTS),
+        };
+        rendered.push((SEARCH_DOCUMENTS.to_string(), search));
+        Ok(SiteFiles {
+            files: rendered
+                .into_iter()
+                .map(|(address, html)| (address, html.into_bytes()))
+                .chain(assets())
+                .collect(),
+            built,
+        })
     }
 
     /// Writes `files` into `output`, stopping at the first that cannot be written.
@@ -176,7 +194,7 @@ mod tests {
         }
     }
 
-    fn build(paths: Vec<&'static str>, writer: Arc<FakeWriter>) -> Result<(), Problems> {
+    fn build(paths: Vec<&'static str>, writer: Arc<FakeWriter>) -> Result<BuiltSite, Problems> {
         let input = InputService::new(Arc::new(FakeCollector(paths)), Arc::new(FakeParser));
         let settings = Settings {
             input: PathBuf::from("in"),
@@ -201,6 +219,7 @@ mod tests {
                 "a.html",
                 "assets/gherkin-glass.css",
                 "assets/gherkin-glass.js",
+                "assets/search.json",
                 "assets/tree.json",
                 "index.html",
                 "steps.html",
@@ -214,6 +233,17 @@ mod tests {
                 .values()
                 .all(|output| output == Path::new("elsewhere"))
         );
+    }
+
+    #[test]
+    fn only_search_documents_above_the_size_are_reported() {
+        let built = build(vec!["a.feature"], Arc::default()).expect("built");
+        assert_eq!(built.large_search_documents, None);
+        // The feature's name is its path, and its page's address almost the same.
+        let long: &'static str = String::leak("a".repeat(LARGE_SEARCH_DOCUMENTS / 2));
+        let built = build(vec![long], Arc::default()).expect("built");
+        let size = built.large_search_documents.expect("reported");
+        assert!(size > LARGE_SEARCH_DOCUMENTS);
     }
 
     #[test]

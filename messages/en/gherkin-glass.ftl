@@ -96,6 +96,11 @@ reserved-page = has the same page, { $page }, as the step sentences.
 
 cannot-be-written = cannot be written: { $reason }
 
+## A warning after a build that succeeded. $size is the size of the search
+## documents in millions of bytes, with one decimal, such as 6.3.
+
+search-documents-large = The search documents are { $size } MB, larger than the 5 MB above which search can be slow to start, mostly on phones.
+
 ## What is wrong with the configuration file. $reason is the operating
 ## system's words, and $key a key as the file writes it.
 
@@ -292,3 +297,23 @@ sentence-uses = { $count ->
 sentence-use = { $heading }, { $path }
 sentence-use-values = { $link }, with { $values }
 sentence-values-separator = {", "}
+
+## The search box on every page. The script puts what it found in place of
+## each placeholder that is not $shown: $count is a number of results, and
+## $name, $feature and $rule the names of a block, its feature and its rule.
+
+search-label = Search features, rules and scenarios
+search-loading = Loading search.
+search-failed = Search could not be loaded.
+search-none = No results.
+search-count = Results: { $count }.
+search-count-limited = Results: { $count }. The first { $shown } are listed.
+# Stands in for the name of a block, a feature or a rule that has none, in
+# the place of $name, $feature or $rule in the messages below.
+search-no-name = no name
+search-result-feature = { $name }, feature
+search-result-rule = { $name }, rule in { $feature }
+search-result-scenario = { $name }, scenario in { $feature }
+search-result-scenario-in-rule = { $name }, scenario in { $rule }, { $feature }
+search-result-scenario-outline = { $name }, scenario outline in { $feature }
+search-result-scenario-outline-in-rule = { $name }, scenario outline in { $rule }, { $feature }

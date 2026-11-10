@@ -6,8 +6,8 @@ use std::path::Path;
 use std::sync::Arc;
 
 use crate::entities::{
-    BuildFailure, BuildFolder, FolderState, Marker, OutputProblem, OutputProblemKind, Problem,
-    ProblemKind, Problems, Settings, VersionList, VersionName,
+    BuildFailure, BuildFolder, BuiltSite, FolderState, Marker, OutputProblem, OutputProblemKind,
+    Problem, ProblemKind, Problems, Settings, VersionList, VersionName,
 };
 use crate::policies::{ASSETS, VERSIONS_PAGE, order_versions, render_versions_page};
 use crate::ports::OutputFolders;
@@ -29,7 +29,7 @@ impl OutputService {
         &self,
         site: &SiteService,
         settings: &Settings,
-    ) -> Result<(), BuildFailure> {
+    ) -> Result<BuiltSite, BuildFailure> {
         match &settings.version {
             Some(version) => self.build_version(site, settings, version),
             None => self.build_site(site, settings),
@@ -43,13 +43,13 @@ impl OutputService {
         &self,
         site: &SiteService,
         settings: &Settings,
-    ) -> Result<(), BuildFailure> {
+    ) -> Result<BuiltSite, BuildFailure> {
         let output = &settings.output;
         let folder = self.check_site(output, settings.replace)?;
-        let files = site.files(settings)?;
+        let site_files = site.files(settings)?;
         self.make_room(output, &folder)?;
-        site.write(output, files)?;
-        Ok(())
+        site.write(output, site_files.files)?;
+        Ok(site_files.built)
     }
 
     /// Builds the version `version` of the site into its folder in
@@ -61,12 +61,12 @@ impl OutputService {
         site: &SiteService,
         settings: &Settings,
         version: &VersionName,
-    ) -> Result<(), BuildFailure> {
+    ) -> Result<BuiltSite, BuildFailure> {
         let output = &settings.output;
         let folder = self.check(output, version, settings.replace)?;
-        let files = site.files(settings)?;
+        let site_files = site.files(settings)?;
         self.make_room(output, &folder)?;
-        site.write(folder.path(), files)?;
+        site.write(folder.path(), site_files.files)?;
         let page = render_versions_page(&self.versions(output)?, &settings.pages);
         // What is at the page's place and its assets' is the versions page's own.
         for place in [VERSIONS_PAGE, ASSETS] {
@@ -82,7 +82,7 @@ impl OutputService {
         }
         let root = once((VERSIONS_PAGE.to_string(), page.into_bytes())).chain(assets());
         site.write(output, root)?;
-        Ok(())
+        Ok(site_files.built)
     }
 
     /// The output folder a site without versions is written into, once
@@ -441,7 +441,7 @@ mod tests {
         files: Vec<&'static str>,
         folders: Arc<FakeFolders>,
         writer: Arc<FakeWriter>,
-    ) -> Result<(), BuildFailure> {
+    ) -> Result<BuiltSite, BuildFailure> {
         let input = InputService::new(Arc::new(FakeCollector(files)), Arc::new(FakeParser));
         let site = SiteService::new(input, writer);
         let settings = Settings {
@@ -459,7 +459,7 @@ mod tests {
         files: Vec<&'static str>,
         folders: Arc<FakeFolders>,
         writer: Arc<FakeWriter>,
-    ) -> Result<(), BuildFailure> {
+    ) -> Result<BuiltSite, BuildFailure> {
         let input = InputService::new(Arc::new(FakeCollector(files)), Arc::new(FakeParser));
         let site = SiteService::new(input, writer);
         let settings = Settings {
