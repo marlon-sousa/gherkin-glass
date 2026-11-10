@@ -10,7 +10,7 @@ Ports and adapters. The pure part of gherkin-glass, which decides what the site 
 
 ## The repository
 
-- **One crate**, `gherkin-glass`: a library, `src/lib.rs`, and the binary built on it, `src/main.rs`, installed as `ghg` ([#18](https://github.com/marlon-sousa/gherkin-glass/issues/18)). Nothing in it is heavy enough to earn a crate of its own.
+- **One crate**, `gherkin-glass`: a library, `src/lib.rs`, and the binaries built on it: `ghg`, from `src/main.rs`, and the cargo plugin `cargo-ghg`, which runs the same code as `cargo ghg` ([#18](https://github.com/marlon-sousa/gherkin-glass/issues/18)). Nothing in it is heavy enough to earn a crate of its own.
 - **`xtask/`**, the crate behind `cargo xtask build` and `cargo xtask check` ([#4](https://github.com/marlon-sousa/gherkin-glass/issues/4)). It orchestrates the build and is never shipped.
 - **`templates/`**, the askama templates, at the place askama looks by default. They are the views: everything a page says is placed here, except the folder tree, which the script builds from shared data ([#7](https://github.com/marlon-sousa/gherkin-glass/issues/7)).
 - **`script/`**, the TypeScript of the pages' behaviour, an npm package with its own `package.json` and lockfile. Its compiled output is committed, so building the crate needs no Node ([#4](https://github.com/marlon-sousa/gherkin-glass/issues/4)).
@@ -92,7 +92,7 @@ The feature's own text is never interface text: it is shown as written in the fi
 
 ## The pages' script
 
-The TypeScript in `script/` follows the same roles, each file declaring its role in a header comment. It uses no framework and no runtime dependencies.
+The TypeScript in `script/` follows the same roles, each file declaring its role in a header comment. It uses no framework, and one runtime dependency only: [MiniSearch](https://www.npmjs.com/package/minisearch), bundled into the script, which runs search ([#15](https://github.com/marlon-sousa/gherkin-glass/issues/15)).
 
 - **The views are the templates.** Everything a page says, its headings, anchors, links and text, is in the HTML the templates write. The script adds behaviour to it, and never writes content, with one agreed exception: the folder tree, built from the site's shared tree data ([#7](https://github.com/marlon-sousa/gherkin-glass/issues/7)).
 - **Adapters** are the parts that touch the DOM or the browser's storage: the disclosure buttons, the tree, the reader options, the theme switch. Each sits behind a small interface in `ports/`.
@@ -109,7 +109,7 @@ Cheapest first:
 1. **Policy tests**, pure and in memory: the anchor rule, doc string corrections, page addresses, contrast, the state a block starts in.
 2. **Service tests** with fake ports: a whole build from an input held in memory, checking what would be written and every problem reported.
 3. **Golden fixture tests**: each fixture under `tests/fixtures/` built into a site, and its pages compared with the expected HTML committed beside it, which shows the rules of BEHAVIOUR.md the fixture covers.
-4. **The browser check** ([#2](https://github.com/marlon-sousa/gherkin-glass/issues/2)): every fixture's site served over HTTP, as a reader would get it, and each page opened with Playwright, checked with axe-core in each theme, and driven with the keyboard.
+4. **The browser check** ([#2](https://github.com/marlon-sousa/gherkin-glass/issues/2)): every fixture's site served with `ghg serve --no-build` ([#26](https://github.com/marlon-sousa/gherkin-glass/issues/26)), as a reader would get it, and each page opened with Playwright, checked with axe-core in each theme, and driven with the keyboard.
 5. **The script's own tests**, of its policies and adapters, in `script/test/`.
 
 `cargo xtask check` runs all of them, and CI runs the same command.
