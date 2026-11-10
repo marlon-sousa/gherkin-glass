@@ -1,0 +1,7 @@
+# The toolchain every contributor, cloud session and CI job builds with.
+# The minimum Rust version promised to users is rust-version in Cargo.toml,
+# checked by its own CI job.
+[toolchain]
+channel = "1.97"
+components = ["clippy", "rustfmt", "rust-src"]
+profile = "minimal"
