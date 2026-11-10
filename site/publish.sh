@@ -25,9 +25,14 @@ usage() {
 
 open() {
   local folder=$1
-  if git ls-remote --exit-code --heads origin gh-pages >/dev/null; then
-    git fetch --depth=1 origin gh-pages
+  local found=0
+  git ls-remote --exit-code origin refs/heads/gh-pages >/dev/null || found=$?
+  if [ "$found" -eq 0 ]; then
+    git fetch --depth=1 origin refs/heads/gh-pages
     git worktree add -B gh-pages "$folder" FETCH_HEAD
+  elif [ "$found" -ne 2 ]; then
+    echo "origin cannot be asked whether it has a gh-pages branch." >&2
+    exit 1
   else
     git worktree add --orphan -b gh-pages "$folder"
     # GitHub Pages runs Jekyll on a branch unless this file is there, and
@@ -53,6 +58,8 @@ publish() {
     exit 1
   fi
 
+  # The push is made from the checkout, whose credentials a worktree may not see.
+  local checkout=$PWD
   cd "$folder"
   git add --all -- "$version" "$versions_page"
   if [ -e .nojekyll ]; then
@@ -73,7 +80,7 @@ publish() {
   git -c user.name="github-actions[bot]" \
     -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
     commit --quiet -m "site: $version"
-  git push origin gh-pages
+  git -C "$checkout" push origin gh-pages
 }
 
 case "${1-}" in

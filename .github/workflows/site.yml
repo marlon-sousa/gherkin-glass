@@ -18,7 +18,10 @@ on:
 permissions:
   contents: write
 
-# One release at a time adds its folder, so that two never race to push.
+# One release at a time adds its folder, so that two never race to push. GitHub
+# keeps one waiting run per group and cancels an older one waiting, so a
+# release whose run is cancelled this way is published by running it again.
+# The calling job must not use this group itself, or the two wait on each other.
 concurrency:
   group: gh-pages
   cancel-in-progress: false

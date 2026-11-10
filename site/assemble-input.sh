@@ -24,14 +24,14 @@ if [ -e "$site/features/fixtures" ]; then
   exit 1
 fi
 
-# The names in fixtures-left-out, without comments and blank lines.
-left_out=$(sed -e 's/#.*//' -e 's/[[:space:]]*$//' -e '/^$/d' "$site/fixtures-left-out")
-for name in $left_out; do
-  if [ ! -d "$fixtures/$name" ]; then
+# The names in fixtures-left-out, without comments, blank lines and spaces.
+left_out=$(sed -e 's/#.*//' -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e '/^$/d' "$site/fixtures-left-out")
+while IFS= read -r name; do
+  if [ -n "$name" ] && [ ! -d "$fixtures/$name" ]; then
     echo "site/fixtures-left-out: $name is not a folder of tests/fixtures." >&2
     exit 1
   fi
-done
+done <<<"$left_out"
 
 mkdir -p "$destination/fixtures"
 cp -R "$site/features/." "$destination/"

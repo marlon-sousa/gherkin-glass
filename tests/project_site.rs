@@ -59,7 +59,7 @@ fn every_fixture_left_out_exists_and_says_why() {
         if line.starts_with('#') {
             said_why = true;
         } else if line.is_empty() {
-            continue;
+            said_why = false;
         } else {
             assert!(said_why, "a comment says why {line} is left out");
             assert!(fixture_folders().contains(line), "{line} is a fixture");
@@ -158,7 +158,7 @@ fn the_example_suite_shows_every_construct() {
         );
         show(
             "a language other than English",
-            feature.keyword != "Feature",
+            !["Feature", "Business Need", "Ability"].contains(&feature.keyword.as_str()),
         );
         show("a feature's tags", !feature.tags.is_empty());
         show("a feature's description", non_empty(&feature.description));
@@ -261,6 +261,10 @@ fn git(folder: &Path, arguments: &[&str]) -> Output {
         .current_dir(folder)
         .env("GIT_CONFIG_GLOBAL", "/dev/null")
         .env("GIT_CONFIG_NOSYSTEM", "1")
+        .env_remove("GIT_DIR")
+        .env_remove("GIT_WORK_TREE")
+        .env_remove("GIT_INDEX_FILE")
+        .env_remove("GIT_COMMON_DIR")
         .output()
         .expect("git runs")
 }
@@ -282,6 +286,10 @@ fn publish(folder: &Path, arguments: &[&str]) -> Output {
         .current_dir(folder)
         .env("GIT_CONFIG_GLOBAL", "/dev/null")
         .env("GIT_CONFIG_NOSYSTEM", "1")
+        .env_remove("GIT_DIR")
+        .env_remove("GIT_WORK_TREE")
+        .env_remove("GIT_INDEX_FILE")
+        .env_remove("GIT_COMMON_DIR")
         .output()
         .expect("the script runs")
 }
@@ -341,11 +349,12 @@ fn each_release_adds_only_its_own_folder_and_the_versions_page() {
     checkout(&remote, &first);
     let pages = folder.join("first-pages");
     publish_ok(&first, &["open", pages.to_str().unwrap()]);
-    assert_eq!(
-        read_dir(&pages).unwrap().count(),
-        2,
-        ".git and .nojekyll only"
-    );
+    let mut names: Vec<_> = read_dir(&pages)
+        .unwrap()
+        .map(|entry| entry.unwrap().file_name().into_string().unwrap())
+        .collect();
+    names.sort();
+    assert_eq!(names, [".git", ".nojekyll"]);
     create_dir_all(pages.join("v0.1.0")).unwrap();
     write(pages.join("v0.1.0/index.html"), "0.1.0\n").unwrap();
     write(pages.join("index.html"), "v0.1.0\n").unwrap();
@@ -393,6 +402,16 @@ fn each_release_adds_only_its_own_folder_and_the_versions_page() {
     // Publishing the same build again adds no commit.
     publish_ok(&second, &["publish", pages.to_str().unwrap(), "v0.2.0"]);
     assert_eq!(commits(&remote), 2);
+
+    // Publishing a version again replaces its folder, removals included.
+    create_dir_all(pages.join("v0.2.0/more")).unwrap();
+    write(pages.join("v0.2.0/more/page.html"), "more\n").unwrap();
+    publish_ok(&second, &["publish", pages.to_str().unwrap(), "v0.2.0"]);
+    assert_eq!(commits(&remote), 3);
+    remove_dir_all(pages.join("v0.2.0/more")).unwrap();
+    publish_ok(&second, &["publish", pages.to_str().unwrap(), "v0.2.0"]);
+    assert_eq!(commits(&remote), 4);
+    assert_eq!(published(&remote), after_second);
 
     // A name that is not one folder is refused.
     for version in ["", ".", "..", ".hidden", "a/b"] {
