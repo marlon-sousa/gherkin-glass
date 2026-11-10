@@ -1,0 +1,7 @@
+feat(pages): a page for every feature
+
+The body is never part of the notes.
+
+Added: A page for every feature file.
+Added: An anchor for every scenario.
+Refs #4

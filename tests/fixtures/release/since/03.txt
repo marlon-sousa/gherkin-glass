@@ -1,0 +1,5 @@
+fix(anchors): keep a mark after a letter
+
+Fixed: A combining mark after a letter stays in the anchor.
+Changed: An anchor keeps the marks inside a word.
+Refs #5

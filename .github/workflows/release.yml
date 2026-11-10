@@ -1,0 +1,182 @@
+name: Release
+
+# docs/BEHAVIOUR.md, "Releases". Pushing a tag v<version> releases that
+# version: the gate, the checks of rust.yml, the five builds, the archives and
+# their checksums, crates.io, then the GitHub release, each waiting for the
+# jobs before it. On a pull request that changes how releases are made, the
+# same builds, archives and checks run, and nothing is published.
+
+on:
+  push:
+    tags: ["v*"]
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+    paths:
+      - .github/workflows/release.yml
+      - .github/release/**
+      - tests/fixtures/release/**
+      - cliff.toml
+      - Cargo.toml
+      - Cargo.lock
+      - rust-toolchain.toml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  # A release, once started, is never cut short by another run.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  CARGO_TERM_COLOR: always
+  # The tag being released, or on a pull request the tag the version in
+  # Cargo.toml would have, so that the archives are named as a release names them.
+  TAG: ${{ github.event_name == 'push' && github.ref_name || '' }}
+
+jobs:
+  gate:
+    name: release gate
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - run: rustup toolchain install
+      - run: .github/release/gate.sh "$TAG" "$GITHUB_SHA"
+
+  ci:
+    name: checks
+    needs: gate
+    uses: ./.github/workflows/rust.yml
+
+  release-tools:
+    name: release notes and gate, against their fixtures
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: rustup toolchain install
+      - run: pip install git-cliff==2.14.2
+      - run: .github/release/test-notes.sh
+      - run: .github/release/test-gate.sh
+
+  build:
+    name: build for ${{ matrix.target }}
+    needs: release-tools
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-musl
+            runner: ubuntu-latest
+          - target: aarch64-unknown-linux-musl
+            runner: ubuntu-24.04-arm
+          - target: aarch64-apple-darwin
+            runner: macos-latest
+          # Built on Apple silicon, the runners GitHub keeps providing.
+          - target: x86_64-apple-darwin
+            runner: macos-latest
+          - target: x86_64-pc-windows-msvc
+            runner: windows-latest
+            # Links the C runtime into the binary, so that it needs no Visual C++ runtime installed.
+            rustflags: -C target-feature=+crt-static
+    runs-on: ${{ matrix.runner }}
+    defaults:
+      run:
+        shell: bash
+    env:
+      RUSTFLAGS: ${{ matrix.rustflags }}
+    steps:
+      - uses: actions/checkout@v7
+      - run: rustup toolchain install
+      - run: rustup target add ${{ matrix.target }}
+      - if: runner.os == 'Windows'
+        run: rustup component add llvm-tools
+      - name: Name the tag on a pull request
+        if: github.event_name == 'pull_request'
+        run: echo "TAG=v$(.github/release/version.sh)" >> "$GITHUB_ENV"
+      - run: cargo build --release --locked --bins --target ${{ matrix.target }}
+      - name: Check each binary needs nothing installed
+        run: |
+          ext=""
+          if [ "$RUNNER_OS" = Windows ]; then ext=.exe; fi
+          for bin in $(.github/release/binaries.sh); do
+            .github/release/check-binary.sh "target/${{ matrix.target }}/release/$bin$ext" ${{ matrix.target }}
+          done
+      - run: .github/release/pack.sh "$TAG" ${{ matrix.target }} dist
+      - run: .github/release/check-archive.sh dist/ghg-"$TAG"-${{ matrix.target }}.* "$TAG" ${{ matrix.target }}
+      - uses: actions/upload-artifact@v7
+        with:
+          name: archive-${{ matrix.target }}
+          path: dist/
+          if-no-files-found: error
+
+  archives:
+    name: archives, checksums and cargo binstall
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: rustup toolchain install
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: archive-*
+          path: dist/
+          merge-multiple: true
+      - name: Name the tag on a pull request
+        if: github.event_name == 'pull_request'
+        run: echo "TAG=v$(.github/release/version.sh)" >> "$GITHUB_ENV"
+      - run: .github/release/check-binstall.sh "$TAG" dist
+      - name: Write the checksums
+        working-directory: dist
+        run: |
+          sha256sum -- ghg-* > SHA256SUMS
+          cat SHA256SUMS
+      - uses: actions/upload-artifact@v7
+        with:
+          name: release-assets
+          path: dist/
+          if-no-files-found: error
+
+  package:
+    name: crate packages
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: rustup toolchain install
+      - run: cargo publish --dry-run --locked
+
+  publish:
+    name: crates.io
+    if: github.event_name == 'push'
+    needs: [ci, archives]
+    runs-on: ubuntu-latest
+    environment: crates-io
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - run: rustup toolchain install
+      - uses: itinera-dev/actions/publish-crates@v1
+
+  release:
+    name: GitHub release
+    if: github.event_name == 'push'
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          name: release-assets
+          path: dist/
+      - uses: itinera-dev/actions/create-release@v1
+        with:
+          assets: dist/

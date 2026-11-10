@@ -1,0 +1,5 @@
+feat(config)!: drop a key
+
+Removed: The output key, replaced by --output.
+Added: A search box on every page.
+Closes #12
