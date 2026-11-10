@@ -23,7 +23,7 @@ if [ "$format" = zip ]; then
     # 7-Zip ends its lines in a carriage return on Windows, and may list the
     # archive itself, by the path it was given, among what it holds.
     held=$(7z l -ba -slt "$archive" | tr -d '\r' | sed -n 's/^Path = //p' \
-        | grep -vxF -e "$archive" -e "${archive//\//\\}" | LC_ALL=C sort)
+        | { grep -vxF -e "$archive" -e "${archive//\//\\}" || true; } | LC_ALL=C sort)
 else
     held=$(tar -tzf "$archive" | LC_ALL=C sort)
 fi

@@ -48,9 +48,10 @@ echo "$name for $target needs nothing installed."
 
 host=$(rustc -vV | sed -n 's/^host: //p' | tr -d '\r')
 # A static Linux binary runs on a Linux host of the same architecture.
+runnable=no
 case $target in
-    *-linux-musl) runnable=$([ "$host" = "${target%%-*}-unknown-linux-gnu" ] || [ "$host" = "$target" ] && echo yes) ;;
-    *) runnable=$([ "$host" = "$target" ] && echo yes) ;;
+    *-linux-musl) if [ "$host" = "${target%%-*}-unknown-linux-gnu" ] || [ "$host" = "$target" ]; then runnable=yes; fi ;;
+    *) if [ "$host" = "$target" ]; then runnable=yes; fi ;;
 esac
 if [ "${name%.exe}" = ghg ] && [ "$runnable" = yes ]; then
     printed=$("$binary" --version | tr -d '\r')
