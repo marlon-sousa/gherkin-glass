@@ -33,7 +33,7 @@ export class DomPage implements Page {
     this.document = document;
     const byElement = new Map<Element, DomBlock>();
     for (const element of document.querySelectorAll(".ghg-block")) {
-      const heading = element.querySelector<HTMLElement>(":scope > :is(h2, h3, h4)");
+      const heading = element.querySelector<HTMLElement>(":scope > :is(h2, h3, h4, h5)");
       const button = heading?.querySelector<HTMLButtonElement>(":scope > button.ghg-toggle");
       const content = element.querySelector<HTMLElement>(":scope > .ghg-content");
       if (!heading || !button || !content) {

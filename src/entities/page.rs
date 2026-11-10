@@ -96,14 +96,17 @@ pub(crate) struct ContentsEntry {
     pub(crate) entries: Vec<ContentsEntry>,
 }
 
-/// A background, rule, scenario or examples block, with its heading and what is under it.
+/// A background, rule, scenario or examples block, or an outline's examples
+/// as scenarios, with its heading and what is under it.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct Block {
     pub(crate) kind: BlockKind,
-    /// From 2 to 4.
+    /// From 2 to 5.
     pub(crate) level: u8,
+    /// The `id` of its heading: a block's anchor, or for the examples as
+    /// scenarios an `id` of the page's own, with a `_`.
     pub(crate) anchor: String,
-    pub(crate) heading: String,
+    pub(crate) heading_parts: Vec<HeadingPart>,
     pub(crate) collapsed: bool,
     pub(crate) tags: Vec<TagView>,
     pub(crate) description: Vec<Paragraph>,
@@ -112,8 +115,17 @@ pub(crate) struct Block {
     pub(crate) steps: Vec<StepView>,
     /// An examples block's.
     pub(crate) table: Option<TableView>,
-    /// A rule's background and scenarios, or an outline's examples blocks.
+    /// A rule's background and scenarios, an outline's examples blocks and
+    /// its examples as scenarios, or the scenarios those are.
     pub(crate) blocks: Vec<Block>,
+}
+
+/// A part of a heading; feature text inside gherkin-glass's own words is
+/// isolated, with `<bdi>`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct HeadingPart {
+    pub(crate) text: String,
+    pub(crate) isolated: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -122,6 +134,7 @@ pub(crate) enum BlockKind {
     Rule,
     Scenario,
     Examples,
+    ExamplesAsScenarios,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -172,6 +185,15 @@ impl Page {
     }
 }
 
+impl Block {
+    pub(crate) fn heading(&self) -> String {
+        self.heading_parts
+            .iter()
+            .map(|part| part.text.as_str())
+            .collect()
+    }
+}
+
 impl BlockKind {
     /// The class the stylesheet and the script know the block by.
     pub(crate) fn class(self) -> &'static str {
@@ -180,6 +202,7 @@ impl BlockKind {
             BlockKind::Rule => "ghg-rule",
             BlockKind::Scenario => "ghg-scenario",
             BlockKind::Examples => "ghg-examples",
+            BlockKind::ExamplesAsScenarios => "ghg-examples-as-scenarios",
         }
     }
 }

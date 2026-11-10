@@ -55,8 +55,8 @@ pub use listen_failure::ListenFailure;
 pub use marker::Marker;
 pub use output_problem::{OutputProblem, OutputProblemKind};
 pub(crate) use page::{
-    BackgroundsOption, Block, BlockKind, ContentsEntry, DocStringView, FromBackground, OutsideLink,
-    Page, PageWords, Paragraph, SourceLink, StepView, TableView, TagView,
+    BackgroundsOption, Block, BlockKind, ContentsEntry, DocStringView, FromBackground, HeadingPart,
+    OutsideLink, Page, PageWords, Paragraph, SourceLink, StepView, TableView, TagView,
 };
 pub(crate) use page_frame::PageFrame;
 pub use page_options::PageOptions;

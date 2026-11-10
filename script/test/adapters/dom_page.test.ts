@@ -38,14 +38,32 @@ test("every block of the page is found, with the blocks it is inside", () => {
     ["refund-count-items", null],
     ["cheap", "refund-count-items"],
     ["examples", "refund-count-items"],
+    ["refund-count-items_scenarios", "refund-count-items"],
+    ["refund-count-items-row-1", "refund-count-items_scenarios"],
     ["refunds-after-thirty-days", null],
     ["an-old-order", "refunds-after-thirty-days"],
     ["store-credit", "refunds-after-thirty-days"],
     ["refund-again-count-times", "refunds-after-thirty-days"],
     ["again", "refund-again-count-times"],
+    ["refund-again-count-times_scenarios", "refund-again-count-times"],
+    ["refund-again-count-times-row-1", "refund-again-count-times_scenarios"],
     ["rule", null],
     ["refund-a-refund", "rule"],
   ]);
+});
+
+test("an outline's examples as scenarios start collapsed, and a link to a row's scenario expands them", () => {
+  const window = open();
+  assert.equal(expanded(window, "refund-again-count-times_scenarios"), false);
+  assert.equal(content(window, "refund-again-count-times_scenarios").hasAttribute("hidden"), true);
+  (window.document.querySelector(".ghg-collapse-all") as unknown as HTMLElement).click();
+  const link = window.document.createElement("a");
+  link.setAttribute("href", "#refund-again-count-times-row-1");
+  window.document.body.appendChild(link);
+  link.dispatchEvent(new window.MouseEvent("click", { bubbles: true, cancelable: true }));
+  for (const anchor of ["refunds-after-thirty-days", "refund-again-count-times", "refund-again-count-times_scenarios", "refund-again-count-times-row-1"]) {
+    assert.equal(expanded(window, anchor), true, anchor);
+  }
 });
 
 test("pressing a button hides its block's content and says so, and pressing it again shows it", () => {

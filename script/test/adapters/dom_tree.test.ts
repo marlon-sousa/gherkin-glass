@@ -168,7 +168,7 @@ test("data that cannot be fetched, or is no tree, gives nothing to build", async
   assert.equal(await new FetchedTree(at, answer(200, "{}") as typeof fetch).load(), null);
   assert.equal(await new FetchedTree(at, answer(200, "not json") as typeof fetch).load(), null);
   assert.equal(await new FetchedTree(at, (() => Promise.reject(new Error("offline"))) as typeof fetch).load(), null);
-  assert.equal((await new FetchedTree(at, answer(200, DATA) as typeof fetch).load())?.length, 6);
+  assert.equal((await new FetchedTree(at, answer(200, DATA) as typeof fetch).load())?.length, 7);
 });
 
 test("a page that is not below the site's root links the items from the root itself", async () => {

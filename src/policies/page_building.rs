@@ -7,17 +7,21 @@ use i18n_embed_fl::fl;
 
 use crate::entities::{
     Anchors, BackgroundsOption, Block, BlockKind, ContentsEntry, DocStringView, FromBackground,
-    Page, PageOptions, PageWords, Paragraph, ParsedFeature, SourceLink, StepView, TableView,
-    TagNames, TagView,
+    HeadingPart, Page, PageOptions, PageWords, Paragraph, ParsedFeature, SourceLink, StepView,
+    TableView, TagNames, TagView,
 };
 use crate::policies::{
-    CATALOGUE, breadcrumb, highlight_step, make_anchors, outside_link, page_address, page_frame,
-    page_language, percent_encoded, root_from, site_title,
+    CATALOGUE, ExampleRow, breadcrumb, example_rows, highlight_step, make_anchors, outside_link,
+    page_address, page_frame, page_language, percent_encoded, root_from, site_title,
 };
 
 /// Stands for the file's path in the words of the source link, to find where
 /// the path goes; no message of the catalogue holds it.
 const PATH_MARK: &str = "\u{0}";
+
+/// Stand for feature text in a heading's words, to find where it goes; no
+/// message of the catalogue holds them.
+const TEXT_MARKS: [&str; 2] = ["\u{1}", "\u{2}"];
 
 /// `tags` names every tag of the site.
 pub(crate) fn build_page(parsed: &ParsedFeature, options: &PageOptions, tags: &TagNames) -> Page {
@@ -184,6 +188,7 @@ impl Builder<'_> {
                 .examples
                 .iter()
                 .map(|examples| self.examples(examples, level + 1))
+                .chain(self.examples_as_scenarios(scenario, level + 1))
                 .collect(),
             ..block(
                 BlockKind::Scenario,
@@ -208,6 +213,99 @@ impl Builder<'_> {
                 false,
             )
         }
+    }
+
+    fn examples_as_scenarios(&self, outline: &Scenario, level: u8) -> Option<Block> {
+        let rows = example_rows(outline);
+        if rows.is_empty() {
+            return None;
+        }
+        let outline_anchor = self.anchors.scenario(outline).unwrap_or_default();
+        let words = fl!(CATALOGUE, "examples-as-scenarios", name = TEXT_MARKS[0]);
+        let blocks = rows
+            .iter()
+            .enumerate()
+            .map(|(index, row)| self.example_scenario(outline, index + 1, row, level + 1))
+            .collect();
+        Some(Block {
+            blocks,
+            ..worded_block(
+                BlockKind::ExamplesAsScenarios,
+                level,
+                Some(&format!("{outline_anchor}_scenarios")),
+                worded_parts(&words, &[isolated(outline_name(outline))]),
+                true,
+            )
+        })
+    }
+
+    fn example_scenario(
+        &self,
+        outline: &Scenario,
+        number: usize,
+        row: &ExampleRow<'_>,
+        level: u8,
+    ) -> Block {
+        let value_words = fl!(
+            CATALOGUE,
+            "example-value",
+            column = TEXT_MARKS[0],
+            value = TEXT_MARKS[1]
+        );
+        let separator = fl!(CATALOGUE, "example-values-separator");
+        let mut values = Vec::new();
+        for (index, (column, value)) in row.cells().enumerate() {
+            if index > 0 {
+                values.push(plain(&separator));
+            }
+            values.extend(worded_parts(
+                &value_words,
+                &[isolated(column), isolated(value)],
+            ));
+        }
+        let words = fl!(
+            CATALOGUE,
+            "example-scenario-name",
+            name = TEXT_MARKS[0],
+            values = TEXT_MARKS[1]
+        );
+        Block {
+            steps: self.filled_steps(&outline.steps, row),
+            ..worded_block(
+                BlockKind::Scenario,
+                level,
+                self.anchors.row(outline, number),
+                worded_parts(&words, &[isolated(outline_name(outline)), values]),
+                self.options.collapse_scenarios,
+            )
+        }
+    }
+
+    /// A produced scenario holds no placeholders, so none is highlighted.
+    fn filled_steps(&self, steps: &[Step], row: &ExampleRow<'_>) -> Vec<StepView> {
+        steps
+            .iter()
+            .map(|step| {
+                let filled = Step {
+                    value: row.fill(&step.value),
+                    ..step.clone()
+                };
+                let mut view = table_free_view(&filled);
+                view.table = step.table.as_ref().map(|written| {
+                    let mut view = table(written);
+                    view.header
+                        .iter_mut()
+                        .chain(view.rows.iter_mut().flatten())
+                        .for_each(|cell| *cell = row.fill(cell));
+                    view
+                });
+                view.doc_string = step.docstring.as_ref().map(|content| DocStringView {
+                    media_type: self.parsed.media_type(step).map(|text| row.fill(text)),
+                    content: row.fill(content),
+                });
+                view
+            })
+            .collect()
     }
 
     /// Each with its `@`, linked to its page and to the first of `tag_links` that matches it.
@@ -241,6 +339,16 @@ impl Builder<'_> {
     }
 }
 
+/// A step's keyword and highlighted text, without its data table or doc string.
+fn table_free_view(step: &Step) -> StepView {
+    StepView {
+        keyword: step.keyword.clone(),
+        parts: highlight_step(step, None).parts,
+        table: None,
+        doc_string: None,
+    }
+}
+
 fn block(
     kind: BlockKind,
     level: u8,
@@ -248,12 +356,22 @@ fn block(
     heading: String,
     collapsed: bool,
 ) -> Block {
+    worded_block(kind, level, anchor, vec![plain(&heading)], collapsed)
+}
+
+fn worded_block(
+    kind: BlockKind,
+    level: u8,
+    anchor: Option<&str>,
+    heading_parts: Vec<HeadingPart>,
+    collapsed: bool,
+) -> Block {
     Block {
         kind,
         level,
         // `make_anchors` gives every block of the feature an anchor.
         anchor: anchor.unwrap_or_default().to_string(),
-        heading,
+        heading_parts,
         collapsed,
         tags: Vec::new(),
         description: Vec::new(),
@@ -262,6 +380,50 @@ fn block(
         table: None,
         blocks: Vec::new(),
     }
+}
+
+/// The outline's name, or its keyword as written when it has none.
+fn outline_name(outline: &Scenario) -> &str {
+    match outline.name.trim() {
+        "" => outline.keyword.trim(),
+        name => name,
+    }
+}
+
+/// `words`, worded with `TEXT_MARKS` in place of `texts`, in parts, each
+/// mark replaced by its text's parts.
+fn worded_parts(words: &str, texts: &[Vec<HeadingPart>]) -> Vec<HeadingPart> {
+    debug_assert!(texts.len() <= TEXT_MARKS.len());
+    let mut parts = Vec::new();
+    let mut rest = words;
+    while let Some((at, index)) = TEXT_MARKS
+        .iter()
+        .take(texts.len())
+        .enumerate()
+        .filter_map(|(index, mark)| rest.find(mark).map(|at| (at, index)))
+        .min()
+    {
+        parts.push(plain(&rest[..at]));
+        parts.extend(texts[index].iter().cloned());
+        rest = &rest[at + TEXT_MARKS[index].len()..];
+    }
+    parts.push(plain(rest));
+    parts.retain(|part| !part.text.is_empty());
+    parts
+}
+
+fn plain(text: &str) -> HeadingPart {
+    HeadingPart {
+        text: text.to_string(),
+        isolated: false,
+    }
+}
+
+fn isolated(text: &str) -> Vec<HeadingPart> {
+    vec![HeadingPart {
+        text: text.to_string(),
+        isolated: true,
+    }]
 }
 
 /// The keyword as written, then `: ` and the name, or the keyword alone.
@@ -313,7 +475,7 @@ fn contents(blocks: &[Block]) -> Vec<ContentsEntry> {
         .filter(|block| matches!(block.kind, BlockKind::Rule | BlockKind::Scenario))
         .map(|block| ContentsEntry {
             anchor: block.anchor.clone(),
-            heading: block.heading.clone(),
+            heading: block.heading(),
             entries: match block.kind {
                 BlockKind::Rule => contents(&block.blocks),
                 _ => Vec::new(),
@@ -409,14 +571,14 @@ Feature: Refunds
         let top: Vec<_> = page
             .blocks
             .iter()
-            .map(|b| (b.level, b.heading.as_str(), b.anchor.as_str()))
+            .map(|b| (b.level, b.heading(), b.anchor.as_str()))
             .collect();
         assert_eq!(
             top,
             [
-                (2, "Background", "background"),
-                (2, "Scenario: Outside", "outside"),
-                (2, "Rule: R", "r"),
+                (2, "Background".to_string(), "background"),
+                (2, "Scenario: Outside".to_string(), "outside"),
+                (2, "Rule: R".to_string(), "r"),
             ]
         );
         let rule = &page.blocks[2];
@@ -427,13 +589,95 @@ Feature: Refunds
             .collect();
         assert_eq!(inside, [(3, "in-the-rule"), (3, "inside")]);
         let examples = &rule.blocks[1].blocks[0];
-        assert_eq!((examples.level, examples.heading.as_str()), (4, "Examples"));
+        assert_eq!(
+            (examples.level, examples.heading().as_str()),
+            (4, "Examples")
+        );
         assert_eq!(
             examples.table,
             Some(TableView {
                 header: vec!["n".into()],
                 rows: vec![vec!["1".into()]],
             })
+        );
+    }
+
+    #[test]
+    fn an_outline_shows_its_rows_as_scenarios_in_a_collapsed_block() {
+        let page = page(FEATURE, &PageOptions::default());
+        let outline = &page.blocks[2].blocks[1];
+        let section = &outline.blocks[1];
+        assert_eq!(
+            (
+                section.kind,
+                section.level,
+                section.anchor.as_str(),
+                section.heading().as_str(),
+                section.collapsed
+            ),
+            (
+                BlockKind::ExamplesAsScenarios,
+                4,
+                "inside_scenarios",
+                "Examples as scenarios: Inside",
+                true
+            )
+        );
+        let row = &section.blocks[0];
+        assert_eq!(
+            (row.level, row.anchor.as_str(), row.heading().as_str()),
+            (5, "inside-row-1", "Inside (n: 1)")
+        );
+        assert_eq!(row.steps[0].parts, [StepPart::Number("1".into())]);
+        let isolated: Vec<_> = section
+            .heading_parts
+            .iter()
+            .map(|part| (part.text.as_str(), part.isolated))
+            .collect();
+        assert_eq!(
+            isolated,
+            [("Examples as scenarios: ", false), ("Inside", true)]
+        );
+        let isolated: Vec<_> = row
+            .heading_parts
+            .iter()
+            .map(|part| (part.text.as_str(), part.isolated))
+            .collect();
+        assert_eq!(
+            isolated,
+            [
+                ("Inside", true),
+                (" (", false),
+                ("n", true),
+                (": ", false),
+                ("1", true),
+                (")", false)
+            ]
+        );
+        let scenarios = PageOptions {
+            collapse_scenarios: true,
+            ..PageOptions::default()
+        };
+        let page = self::page(FEATURE, &scenarios);
+        assert!(page.blocks[2].blocks[1].blocks[1].blocks[0].collapsed);
+    }
+
+    #[test]
+    fn worded_parts_put_each_text_where_its_mark_is_whatever_the_order() {
+        let words = format!("{}, then {}.", TEXT_MARKS[1], TEXT_MARKS[0]);
+        let parts = worded_parts(&words, &[isolated("a\u{1}"), isolated("b")]);
+        let parts: Vec<_> = parts
+            .iter()
+            .map(|part| (part.text.as_str(), part.isolated))
+            .collect();
+        assert_eq!(
+            parts,
+            [
+                ("b", true),
+                (", then ", false),
+                ("a\u{1}", true),
+                (".", false)
+            ]
         );
     }
 

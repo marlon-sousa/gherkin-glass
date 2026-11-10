@@ -98,7 +98,7 @@ pub(crate) fn build_tag_page(
                                 percent_encoded(&page_address),
                                 scenario.anchor
                             ),
-                            heading: scenario.heading.clone(),
+                            heading: scenario.heading(),
                             before,
                             after,
                         }
@@ -167,7 +167,7 @@ fn carriers<'a>(page: &'a Page, tag: &str) -> Vec<(&'a Block, Through)> {
                     }
                 }
             }
-            BlockKind::Background | BlockKind::Examples => {}
+            BlockKind::Background | BlockKind::Examples | BlockKind::ExamplesAsScenarios => {}
         }
     }
     found

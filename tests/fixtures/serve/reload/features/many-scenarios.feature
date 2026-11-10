@@ -255,3 +255,11 @@ Feature: Many scenarios to keep a place in
     Given step 28 of scenario 8
     Given step 29 of scenario 8
     Given step 30 of scenario 8
+
+  Scenario Outline: An outline at the end, whose rows start hidden
+    Given step <n> of the outline
+
+    Examples:
+      | n |
+      | 1 |
+      | 2 |

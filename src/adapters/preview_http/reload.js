@@ -14,9 +14,12 @@ function inWindow(element) {
 }
 
 // The last heading with an id at or before the focused element, when it is
-// in the window, or else the last whose top is at or above the window's top.
+// in the window, or else the last whose top is at or above the window's top;
+// a heading inside a collapsed block is not drawn, and never counts.
 function headingTheReaderIsIn() {
-  const headings = [...document.querySelectorAll(HEADINGS)];
+  const headings = [...document.querySelectorAll(HEADINGS)].filter(
+    (heading) => heading.getClientRects().length > 0,
+  );
   const focused = document.activeElement;
   if (
     focused &&
