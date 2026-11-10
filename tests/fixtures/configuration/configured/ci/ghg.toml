@@ -1,0 +1,2 @@
+# Relative to this file's folder, so the features folder beside ci.
+input = "../features"

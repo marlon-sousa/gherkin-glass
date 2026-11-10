@@ -6,6 +6,7 @@ use std::fs::{copy, create_dir_all, read_dir, read_to_string, remove_dir_all, wr
 #[cfg(unix)]
 use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
+use std::process::Command;
 use std::sync::Arc;
 
 use gherkin::Step;
@@ -344,9 +345,17 @@ fn doc_strings_read_the_same_with_carriage_returns() {
 
 #[test]
 fn every_file_that_cannot_be_read_is_reported_sorted_by_path() {
-    let problems = read_input(&fixture("unreadable")).expect_err("the input cannot be read");
+    // The report as `ghg build` prints it, in the catalogue's words.
+    let output = Command::new(env!("CARGO_BIN_EXE_ghg"))
+        .arg("build")
+        .arg("--input")
+        .arg(fixture("unreadable"))
+        .output()
+        .expect("the command runs");
+    assert_eq!(output.status.code(), Some(1));
+    assert_eq!(output.stdout, b"");
     assert_eq!(
-        problems.to_string(),
+        String::from_utf8(output.stderr).expect("the report is UTF-8"),
         [
             "empty.feature:1: Syntax error.",
             "folder/.ghg-ignore:2: error parsing glob 'a{b': unclosed alternate group; missing '}' (maybe escape '{' with '[{]'?)",
