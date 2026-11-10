@@ -6,7 +6,7 @@ The manual for anyone, human or agent, changing gherkin-glass. [CONTRIBUTING.md]
 
 - [docs/BEHAVIOUR.md](docs/BEHAVIOUR.md): what the tool promises. Code does what it says, no more and no less.
 - [docs/design/](docs/design/): the design notes, for why things are as they are.
-- The issue the work belongs to, with its comments: the decisions taken there bind the work.
+- The issue the work belongs to. Once it is agreed, its body holds every decision and binds the work; its comments are only the history of how they were reached. While it is still being agreed, read its comments too.
 
 ## Rules
 
