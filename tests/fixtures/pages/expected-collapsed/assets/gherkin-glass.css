@@ -100,7 +100,7 @@ h1, h2, h3, h4 {
 
 /* After `all: inherit`, which would take the heading's outline. */
 .ghg-toggle:focus-visible {
-  outline: 3px solid var(--focus);
+  outline: 3px solid var(--ghg-accent);
   outline-offset: 2px;
 }
 
