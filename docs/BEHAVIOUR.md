@@ -8,6 +8,7 @@ Agreed so far:
 
 - [Reading the input](#reading-the-input), issue [#3](https://github.com/marlon-sousa/gherkin-glass/issues/3).
 - [The command line and its configuration](#the-command-line-and-its-configuration), issue [#11](https://github.com/marlon-sousa/gherkin-glass/issues/11).
+- [Anchors](#anchors), issue [#5](https://github.com/marlon-sousa/gherkin-glass/issues/5).
 
 The other features planned for the first version are the [issues](https://github.com/marlon-sousa/gherkin-glass/issues) labelled `feature`. Each adds its own keys and options to "The command line and its configuration" as it is built.
 
@@ -76,7 +77,29 @@ An option's value follows it, as `--input specs`, or is joined to it by `=`, as 
     | Key | Takes | Default | What it sets |
     | --- | --- | --- | --- |
     | `input` | text | `features` | The input folder, the folder of feature files to read. |
+    | `allow_unnamed` | `true` or `false` | `true` | Whether features, rules and scenarios may have no name, as [Anchors](#anchors), rule 35, describes. |
 
     Fixture: `tests/fixtures/configuration/configured`.
 25. A setting given on the command line wins over the file's key of the same meaning, and the file's key wins over the default. Fixture: `tests/fixtures/configuration/configured`.
-26. A key the file may not set, a table among them, or a value of the wrong type, is never ignored: it stops the run. Every such problem in the file is reported, sorted by line, each as `<file>:<line>: <message>`, the file shown as given and the line that of the key, or for a wrong type that of its value. An unknown key reads `ghg has no setting named <key>.`, a key that takes text and was given something else `<key> must be text, in quotes.`, and a path given as empty text `<key> must not be empty.` A file that is not valid TOML, such as one with a key given twice or text without quotes, is reported once, at the line where the [`toml`](https://crates.io/crates/toml) crate stopped, with that crate's message. Fixtures: `tests/fixtures/configuration/mistaken`, `tests/fixtures/configuration/empty-input` and `tests/fixtures/configuration/not-toml`.
+26. A key the file may not set, a table among them, or a value of the wrong type, is never ignored: it stops the run. Every such problem in the file is reported, sorted by line, each as `<file>:<line>: <message>`, the file shown as given and the line that of the key, or for a wrong type that of its value. An unknown key reads `ghg has no setting named <key>.`, a key that takes text and was given something else `<key> must be text, in quotes.`, a key that takes `true` or `false` and was given something else `<key> must be true or false.`, and a path given as empty text `<key> must not be empty.` A file that is not valid TOML, such as one with a key given twice or text without quotes, is reported once, at the line where the [`toml`](https://crates.io/crates/toml) crate stopped, with that crate's message. Fixtures: `tests/fixtures/configuration/mistaken`, `tests/fixtures/configuration/not-boolean`, `tests/fixtures/configuration/empty-input` and `tests/fixtures/configuration/not-toml`.
+
+## Anchors
+
+Every scenario, scenario outline, rule, background and examples block of a feature has an anchor, made from its name by the rule below, and so does every scenario an outline produces from a row of its examples ([#13](https://github.com/marlon-sousa/gherkin-glass/issues/13)). A scenario outline is any scenario with examples, whatever its keyword. A link to a block keeps working as long as its file and its name do. The anchor is the `id` of the block's heading on its feature's page, once pages are written ([#4](https://github.com/marlon-sousa/gherkin-glass/issues/4)); until then, the build makes the anchors and the fixture's test checks them.
+
+The rule is part of what is promised: changing it is a major version ([CONTRIBUTING.md](../CONTRIBUTING.md), "Releases").
+
+### The anchor rule
+
+27. The name is normalised to Unicode NFC and lower-cased. Fixture: `tests/fixtures/anchors`.
+28. Apostrophes, `'` and `’`, are removed. Fixture: `tests/fixtures/anchors`.
+29. Every run of characters other than letters and digits becomes one `-`, and there is no `-` at either end. Letters and digits are the characters Unicode gives the Alphabetic or Numeric property, and the marks that combine with them, such as Devanagari's virama, so that a word of any script stays whole. Fixture: `tests/fixtures/anchors`.
+30. Letters outside a to z, such as `ã` or `ç`, are kept, not transliterated or percent-encoded: "Saque em conta poupança" becomes `saque-em-conta-poupança`. A browser reaches such an anchor whether a link writes it plainly or percent-encoded, as in `#saque-em-conta-poupan%C3%A7a`, the form an address bar shows. Fixture: `tests/fixtures/anchors`, which has a feature in Portuguese.
+31. A block with no name takes the keyword written in the file instead, made into an anchor by rules 27 to 29, such as `background`, `contexto` or `esquema-do-cenário`. So does a block whose name leaves nothing after rule 29, such as `???`. When the keyword leaves nothing too, as the emoji keywords of Gherkin's `em` language do, the anchor is the block's kind in English: `background`, `rule`, `scenario`, `scenario-outline` or `examples`. Fixture: `tests/fixtures/anchors`.
+32. Anchors are unique on a page. Taking the blocks in file order, each takes the anchor rules 27 to 31 make, or, when an earlier block already has it, the first of that anchor followed by `-2`, `-3` and so on that no earlier block has. So an unnamed rule's background, after the feature's, is `background-2`. Fixture: `tests/fixtures/anchors`.
+33. A scenario produced from a row of an outline's examples takes the outline's anchor, then `-row-`, then the row's number, counted from 1 across all the outline's examples blocks in file order, without their header rows, such as `withdraw-cash-row-3`. These anchors are made after every other anchor on the page, in file order, and one that an earlier anchor already has is made unique as rule 32 says. Fixture: `tests/fixtures/anchors`.
+34. A feature has no anchor of its own: it is the page.
+
+### Blocks without a name
+
+35. Backgrounds and examples blocks may always be unnamed. Features, rules and scenarios, outlines included, may be unnamed while `allow_unnamed` is `true`, its default. When it is `false`, each unnamed feature, rule, scenario and scenario outline is a problem that stops the build, reported with the problems of [Files that cannot be read](#files-that-cannot-be-read), sorted with them, as rules 15 and 16 describe, at the line of its keyword. The messages are `The feature has no name, and allow_unnamed is false.`, and the same with `rule`, `scenario` or `scenario outline` in place of `feature`. Fixtures: `tests/fixtures/configuration/unnamed` and `tests/fixtures/configuration/unnamed-allowed`.
