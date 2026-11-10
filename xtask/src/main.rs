@@ -1,6 +1,6 @@
 //! Composition root: `cargo xtask build` and `cargo xtask check`, the commands contributors and CI run.
 
-use std::env::args;
+use std::env::{args, var_os};
 use std::fs::{read, read_to_string};
 use std::path::{Path, PathBuf};
 use std::process::{Command, ExitCode};
@@ -9,7 +9,7 @@ const USAGE: &str = "\
 Usage: cargo xtask <command>
 
 Commands:
-  build: builds the pages' script from script/ into assets/gherkin-glass.js, then the release binary.
+  build: builds the pages' script from script/ into assets/gherkin-glass.js, writes the fixtures' expected sites again, then builds the release binary.
   check: runs every check a pull request runs: formatting, lints, the tests on both Rust versions, and the script check.
   check-script: type-checks and tests the script, and checks that assets/gherkin-glass.js is what it compiles to.";
 
@@ -40,6 +40,21 @@ fn main() -> ExitCode {
 fn build() -> Result<(), String> {
     prepare_script()?;
     bundle(&root().join(SCRIPT))?;
+    // The expected sites of tests/fixtures/pages hold the assets as built.
+    for config in ["ghg.toml", "collapsed.toml"] {
+        let config = format!("tests/fixtures/pages/{config}");
+        cargo(&[
+            "run",
+            "--quiet",
+            "--locked",
+            "--package",
+            "gherkin-glass",
+            "--",
+            "build",
+            "--config",
+            &config,
+        ])?;
+    }
     cargo(&[
         "build",
         "--release",
@@ -75,7 +90,8 @@ fn check() -> Result<(), String> {
 
 fn check_script() -> Result<(), String> {
     prepare_script()?;
-    let compiled = root().join("target/xtask/gherkin-glass.js");
+    let target = var_os("CARGO_TARGET_DIR").map_or_else(|| root().join("target"), PathBuf::from);
+    let compiled = target.join("xtask/gherkin-glass.js");
     bundle(&compiled)?;
     let read_file =
         |path: &Path| read(path).map_err(|error| format!("{}: {error}", path.display()));

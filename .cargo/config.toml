@@ -1,4 +1,3 @@
-# `cargo xtask build` and `cargo xtask check`, the matklad/cargo-xtask pattern:
-# a program of the repository, with nothing to install (issue #4).
+# `cargo xtask build` and `cargo xtask check`, run by the xtask crate.
 [alias]
 xtask = "run --quiet --package xtask --"
