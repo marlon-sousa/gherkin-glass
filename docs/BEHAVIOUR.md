@@ -85,20 +85,20 @@ An option's value follows it, as `--input specs`, or is joined to it by `=`, as 
 
 ## Anchors
 
-Every scenario, scenario outline, rule, background and examples block of a feature has an anchor, made from its name by the rule below, and so does every scenario an outline produces from a row of its examples ([#13](https://github.com/marlon-sousa/gherkin-glass/issues/13)). A scenario outline is any scenario with examples, whatever its keyword. A link to a block keeps working as long as its file and its name do. The anchor is the `id` of the block's heading on its feature's page, once pages are written ([#4](https://github.com/marlon-sousa/gherkin-glass/issues/4)); until then, the build makes the anchors and the fixture's test checks them.
+Every scenario, scenario outline, rule, background and examples block of a feature has an anchor, made from its name by the rule below, and so does every scenario an outline produces from a row of its examples ([#13](https://github.com/marlon-sousa/gherkin-glass/issues/13)). A scenario outline is any scenario with examples, whatever its keyword. A link to a block keeps working as long as its file, its name and the blocks before it on its page that share its anchor stay as they are; an outline's rows keep theirs as long as the rows before them do. The anchor will be the `id` of the block's heading on its feature's page once pages are written ([#4](https://github.com/marlon-sousa/gherkin-glass/issues/4)); until then, nothing a build writes shows the anchors, and the fixture's test checks the anchors gherkin-glass makes for each feature.
 
 The rule is part of what is promised: changing it is a major version ([CONTRIBUTING.md](../CONTRIBUTING.md), "Releases").
 
 ### The anchor rule
 
-27. The name is normalised to Unicode NFC and lower-cased. Fixture: `tests/fixtures/anchors`.
+27. The name is normalised to Unicode NFC and lower-cased, and the anchor is in NFC. Fixture: `tests/fixtures/anchors`.
 28. Apostrophes, `'` and `’`, are removed. Fixture: `tests/fixtures/anchors`.
-29. Every run of characters other than letters and digits becomes one `-`, and there is no `-` at either end. Letters and digits are the characters Unicode gives the Alphabetic or Numeric property, and the marks that combine with them, such as Devanagari's virama, so that a word of any script stays whole. Fixture: `tests/fixtures/anchors`.
-30. Letters outside a to z, such as `ã` or `ç`, are kept, not transliterated or percent-encoded: "Saque em conta poupança" becomes `saque-em-conta-poupança`. A browser reaches such an anchor whether a link writes it plainly or percent-encoded, as in `#saque-em-conta-poupan%C3%A7a`, the form an address bar shows. Fixture: `tests/fixtures/anchors`, which has a feature in Portuguese.
+29. Every run of characters other than letters and digits becomes one `-`, and there is no `-` at either end. Letters and digits are the characters Unicode gives the Alphabetic or Numeric property. A combining mark, such as Devanagari's virama, stays when it follows a letter, a digit or another mark that stays, and so does a zero width joiner or non-joiner between one that stays and a letter or digit, as Persian writes inside words; anywhere else, such as the variation selector after an emoji, it is a gap like any other character. Fixture: `tests/fixtures/anchors`.
+30. Letters outside a to z, such as `ã` or `ç`, are kept, not transliterated or percent-encoded: "Saque em conta poupança" becomes `saque-em-conta-poupança`. Fixture: `tests/fixtures/anchors`, which has a feature in Portuguese.
 31. A block with no name takes the keyword written in the file instead, made into an anchor by rules 27 to 29, such as `background`, `contexto` or `esquema-do-cenário`. So does a block whose name leaves nothing after rule 29, such as `???`. When the keyword leaves nothing too, as the emoji keywords of Gherkin's `em` language do, the anchor is the block's kind in English: `background`, `rule`, `scenario`, `scenario-outline` or `examples`. Fixture: `tests/fixtures/anchors`.
 32. Anchors are unique on a page. Taking the blocks in file order, each takes the anchor rules 27 to 31 make, or, when an earlier block already has it, the first of that anchor followed by `-2`, `-3` and so on that no earlier block has. So an unnamed rule's background, after the feature's, is `background-2`. Fixture: `tests/fixtures/anchors`.
 33. A scenario produced from a row of an outline's examples takes the outline's anchor, then `-row-`, then the row's number, counted from 1 across all the outline's examples blocks in file order, without their header rows, such as `withdraw-cash-row-3`. These anchors are made after every other anchor on the page, in file order, and one that an earlier anchor already has is made unique as rule 32 says. Fixture: `tests/fixtures/anchors`.
-34. A feature has no anchor of its own: it is the page.
+34. A feature has no anchor of its own: it is the page. Fixture: `tests/fixtures/anchors`, where a scenario named as its feature takes the anchor unnumbered.
 
 ### Blocks without a name
 
