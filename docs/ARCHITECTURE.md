@@ -15,6 +15,7 @@ Ports and adapters. The pure part of gherkin-glass, which decides what the site 
 - **`templates/`**, the askama templates, at the place askama looks by default. They are the views: everything a page says is written here, except the folder tree, which the script builds from shared data ([#7](https://github.com/marlon-sousa/gherkin-glass/issues/7)).
 - **`script/`**, the TypeScript of the pages' behaviour, an npm package with its own `package.json` and lockfile. Its compiled output is committed, so building the crate needs no Node ([#4](https://github.com/marlon-sousa/gherkin-glass/issues/4)).
 - **`assets/`**, the files the binary embeds and writes into every site: the stylesheet, and the script compiled from `script/`.
+- **`messages/`**, the Fluent catalogue of gherkin-glass's own interface text, one folder per language, embedded in the binary (see "Interface text").
 - **`tests/`**, the crate's integration tests, and `tests/fixtures/`, the feature files every rule of BEHAVIOUR.md is checked against.
 
 ## Module roles
@@ -72,6 +73,20 @@ No dependency injection framework. Every collaborator is received through a cons
 - **Synchronous throughout.** gherkin-glass reads, computes and writes, then exits; it needs no async runtime. `rayon` runs the steps that may be parallel, parsing and rendering ([#3](https://github.com/marlon-sousa/gherkin-glass/issues/3)), and nothing else.
 - **Errors** are `thiserror` types in the library and `anyhow` only in the binary. Every message a person reads must make sense spoken by a screen reader: a path, a line and a sentence, never a dump of a type ([#3](https://github.com/marlon-sousa/gherkin-glass/issues/3)).
 - **Page addresses always use `/`**, on every platform, including Windows. Turning a file's path into a page's address is a policy that takes the path's parts, not the platform's separator, so every platform's answer is tested on every platform.
+
+## Interface text
+
+gherkin-glass's own words, such as "Collapse all", "Skip to content", "From the background:", the tree's labels and every message on the command line, are in English only for now, but are written so that translating them later changes no code ([#4](https://github.com/marlon-sousa/gherkin-glass/issues/4)).
+
+- **The catalogue is in [Fluent](https://projectfluent.org/)**: one `.ftl` file per language, `messages/en/gherkin-glass.ftl` for English, the only language for now. A translation is a new file beside it, which translators can work on in Weblate, whose documentation lists Fluent as a supported format since its version 4.8.
+- **It is loaded with [`i18n-embed`](https://crates.io/crates/i18n-embed)**, with its `fluent-system` feature, which embeds the files in the binary, **and read with the `fl!` macro of [`i18n-embed-fl`](https://crates.io/crates/i18n-embed-fl)**, which checks at compile time that every message used exists, with the arguments it names, so a missing message is a build error and not a broken page. Both are MIT; the same approach is used by the `age` encryption tool.
+- **Every interface string comes from the catalogue, by its id.** Templates receive their text from Rust code that uses `fl!`, and none of the templates, the Rust code or the script writes interface text inline.
+- **A message is a whole sentence with named placeholders**, such as `{ $count } scenarios` in Fluent's syntax, never pieces joined together, since word order differs between languages.
+- **Counts are plural forms of one message**, chosen by the number, never a word with an `s` added, since languages have different plural rules.
+- **The script receives its messages from the page**, written by the template, so that the script itself holds no words.
+- **The parser's own messages are passed through as they are**, since they are the `gherkin` crate's, not ours.
+
+The feature's own text is never interface text: it is shown as written in the file, in the file's language.
 
 ## The pages' script
 
