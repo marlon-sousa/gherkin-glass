@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Checks a built binary against docs/BEHAVIOUR.md, "Releases", rule 40: it
 # needs nothing installed beyond what every system of its kind has. When it
-# was built for the machine running the check, it is also run.
+# is ghg and the machine running the check can run it, `ghg --version` is run
+# too, and must print ghg and the version.
 # Usage: check-binary.sh <binary> <target>
 set -euo pipefail
 
@@ -45,6 +46,18 @@ case $target in
 esac
 echo "$name for $target needs nothing installed."
 
-if [ "$(rustc -vV | sed -n 's/^host: //p' | tr -d '\r')" = "$target" ]; then
-    "$binary" --version
+host=$(rustc -vV | sed -n 's/^host: //p' | tr -d '\r')
+# A static Linux binary runs on a Linux host of the same architecture.
+case $target in
+    *-linux-musl) runnable=$([ "$host" = "${target%%-*}-unknown-linux-gnu" ] || [ "$host" = "$target" ] && echo yes) ;;
+    *) runnable=$([ "$host" = "$target" ] && echo yes) ;;
+esac
+if [ "${name%.exe}" = ghg ] && [ "$runnable" = yes ]; then
+    printed=$("$binary" --version | tr -d '\r')
+    version=$("$(dirname "$0")/version.sh")
+    if [ "$printed" != "ghg $version" ]; then
+        echo "ghg --version printed \"$printed\", not \"ghg $version\"." >&2
+        exit 1
+    fi
+    echo "ghg --version printed $printed."
 fi

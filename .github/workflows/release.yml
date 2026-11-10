@@ -1,10 +1,11 @@
 name: Release
 
 # docs/BEHAVIOUR.md, "Releases". Pushing a tag v<version> releases that
-# version: the gate, the checks of rust.yml, the five builds, the archives and
-# their checksums, crates.io, then the GitHub release, each waiting for the
-# jobs before it. On a pull request that changes how releases are made, the
-# same builds, archives and checks run, and nothing is published.
+# version. The gate and the checks of rust.yml run beside the release tools'
+# own tests, the five builds and the archives; crates.io waits for all of
+# them, and the GitHub release for crates.io. On a pull request that changes
+# how releases are made, the tests, builds and archives run, the crate is
+# packed, and nothing is published.
 
 on:
   push:
@@ -19,6 +20,9 @@ on:
       - Cargo.toml
       - Cargo.lock
       - rust-toolchain.toml
+      - build.rs
+      - .cargo/**
+      - src/bin/**
 
 permissions:
   contents: read
@@ -60,6 +64,7 @@ jobs:
       - run: pip install git-cliff==2.14.2
       - run: .github/release/test-notes.sh
       - run: .github/release/test-gate.sh
+      - run: .github/release/test-check-archive.sh
 
   build:
     name: build for ${{ matrix.target }}
@@ -79,20 +84,19 @@ jobs:
             runner: macos-latest
           - target: x86_64-pc-windows-msvc
             runner: windows-latest
-            # Links the C runtime into the binary, so that it needs no Visual C++ runtime installed.
-            rustflags: -C target-feature=+crt-static
     runs-on: ${{ matrix.runner }}
     defaults:
       run:
         shell: bash
-    env:
-      RUSTFLAGS: ${{ matrix.rustflags }}
     steps:
       - uses: actions/checkout@v7
       - run: rustup toolchain install
       - run: rustup target add ${{ matrix.target }}
       - if: runner.os == 'Windows'
         run: rustup component add llvm-tools
+      - name: Link the C runtime into the Windows binaries
+        if: runner.os == 'Windows'
+        run: echo "RUSTFLAGS=-C target-feature=+crt-static" >> "$GITHUB_ENV"
       - name: Name the tag on a pull request
         if: github.event_name == 'pull_request'
         run: echo "TAG=v$(.github/release/version.sh)" >> "$GITHUB_ENV"
@@ -133,6 +137,8 @@ jobs:
         run: |
           sha256sum -- ghg-* > SHA256SUMS
           cat SHA256SUMS
+          sha256sum --check --strict SHA256SUMS
+          test "$(wc -l < SHA256SUMS)" -eq "$(printf '%s\n' ghg-* | wc -l)"
       - uses: actions/upload-artifact@v7
         with:
           name: release-assets

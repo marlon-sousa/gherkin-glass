@@ -20,7 +20,10 @@ fi
 
 expected=$({ .github/release/binaries.sh | sed "s/\$/$ext/"; printf 'LICENSE-APACHE\nLICENSE-MIT\n'; } | LC_ALL=C sort)
 if [ "$format" = zip ]; then
-    held=$(7z l -ba -slt "$archive" | sed -n 's/^Path = //p' | LC_ALL=C sort)
+    # 7-Zip ends its lines in a carriage return on Windows, and may list the
+    # archive itself, by the path it was given, among what it holds.
+    held=$(7z l -ba -slt "$archive" | tr -d '\r' | sed -n 's/^Path = //p' \
+        | grep -vxF -e "$archive" -e "${archive//\//\\}" | LC_ALL=C sort)
 else
     held=$(tar -tzf "$archive" | LC_ALL=C sort)
 fi

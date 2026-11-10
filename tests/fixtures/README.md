@@ -23,6 +23,6 @@ Each folder here is the input of one build, and is checked against the rules of 
 
 The cargo plugin, `cargo ghg`, is run over the `configuration` folders too, and checked to behave exactly as `ghg` does there.
 
-- `release`: the release tools, not a build. `before` and `since` hold commit messages, made into a throwaway repository with a tag between them, and `notes.md` the section git-cliff must write from them. `changelogs` holds the changelogs the release gate is tried with: one with notes for the version, one without its section, and one whose section is empty.
+- `release`: the release tools, not a build. `before`, `since` and `later` hold commit messages, made into a throwaway repository with the tag `v0.1.0` after `before` and `v0.2.0` after `since`; `notes.md` is the section git-cliff must write for `v0.2.0`, and `notes-later.md`, with only a `Fixed` section, the one for the commits after it. `changelogs` holds the changelogs the release gate is tried with: one with notes for the version, one without its section, and one whose section is empty.
 
 Some files here are left out of git by the fixture's own `.gitignore`, on purpose, and were added with `git add --force`.
