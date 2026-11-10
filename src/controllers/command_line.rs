@@ -54,7 +54,7 @@ impl CommandLine {
             Ok(settings) => settings,
             Err(problems) => return Reply::failure(1, wording::config_problems(&problems)),
         };
-        match self.input.read(&settings.input) {
+        match self.input.read(&settings.input, settings.unnamed) {
             Ok(_) => Reply::success(String::new()),
             Err(problems) => Reply::failure(1, wording::problems(&problems)),
         }

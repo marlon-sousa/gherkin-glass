@@ -45,10 +45,19 @@ input-cannot-be-read = cannot be read: { $reason }
 input-syntax-error = Syntax error.
 input-changed = changed while it was being read
 
+## A block of a feature with no name, while the configuration's
+## allow_unnamed is false. allow_unnamed is a key, never translated.
+
+unnamed-feature = The feature has no name, and allow_unnamed is false.
+unnamed-rule = The rule has no name, and allow_unnamed is false.
+unnamed-scenario = The scenario has no name, and allow_unnamed is false.
+unnamed-scenario-outline = The scenario outline has no name, and allow_unnamed is false.
+
 ## What is wrong with the configuration file. $reason is the operating
 ## system's words, and $key a key as the file writes it.
 
 config-cannot-be-read = cannot be read: { $reason }
 config-unknown-key = ghg has no setting named { $key }.
 config-not-text = { $key } must be text, in quotes.
+config-not-boolean = { $key } must be true or false.
 config-empty = { $key } must not be empty.

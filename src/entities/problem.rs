@@ -1,4 +1,4 @@
-//! Entity: the problems that stop a build, each a thing of the input that cannot be read.
+//! Entity: the problems that stop a build, each a thing of the input that cannot be read or is not allowed.
 
 use std::cmp::Ordering;
 use std::fmt::{Display, Formatter, Result as FmtResult};
@@ -7,7 +7,7 @@ use std::path::{Component, Path};
 use thiserror::Error;
 
 /// One thing that cannot be read: a feature file, a `.ghg-ignore` file or a
-/// folder of the input.
+/// folder of the input; or a block of a feature that needs a name.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Problem {
     /// Relative to the input folder, with `/` between folders; the input
@@ -38,6 +38,19 @@ pub enum ProblemKind {
     /// The file changed between its parse and the read of its source.
     #[error("changed while it was being read")]
     Changed,
+    /// Only while `allow_unnamed` is `false`.
+    #[error("unnamed {block:?}")]
+    Unnamed { block: UnnamedBlock },
+}
+
+/// The blocks that need a name while `allow_unnamed` is `false`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub enum UnnamedBlock {
+    Feature,
+    Rule,
+    Scenario,
+    /// A scenario with examples.
+    ScenarioOutline,
 }
 
 impl Problem {

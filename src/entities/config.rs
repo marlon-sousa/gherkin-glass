@@ -6,4 +6,5 @@ use std::path::PathBuf;
 pub(crate) struct Config {
     /// Relative to the configuration file's folder; `None` when the file does not set it.
     pub(crate) input: Option<PathBuf>,
+    pub(crate) allow_unnamed: Option<bool>,
 }

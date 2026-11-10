@@ -207,3 +207,34 @@ fn the_file_given_is_shown_as_it_was_given() {
     let report = report(output, 1);
     assert!(report.starts_with("mistaken/ghg.toml:3: "), "{report}");
 }
+
+#[test]
+fn allow_unnamed_must_be_true_or_false() {
+    let output = ghg(&fixture("not-boolean"), &["build"]);
+    assert_eq!(
+        report(output, 1),
+        "ghg.toml:1: allow_unnamed must be true or false.\n"
+    );
+}
+
+// Anchors: rule 35.
+
+#[test]
+fn unnamed_blocks_stop_the_build_when_allow_unnamed_is_false() {
+    let output = ghg(&fixture("unnamed"), &["build"]);
+    assert_eq!(
+        report(output, 1),
+        "unnamed.feature:1: The feature has no name, and allow_unnamed is false.\n\
+         unnamed.feature:6: The scenario has no name, and allow_unnamed is false.\n\
+         unnamed.feature:9: The scenario outline has no name, and allow_unnamed is false.\n\
+         unnamed.feature:16: The rule has no name, and allow_unnamed is false.\n"
+    );
+}
+
+#[test]
+fn unnamed_blocks_are_allowed_by_default_and_when_allow_unnamed_is_true() {
+    let folder = fixture("unnamed-allowed");
+    assert_eq!(report(ghg(&folder, &["build"]), 0), "");
+    let output = ghg(&folder, &["build", "--config", "allowed.toml"]);
+    assert_eq!(report(output, 0), "");
+}

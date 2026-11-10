@@ -3,7 +3,7 @@
 use i18n_embed_fl::fl;
 
 use crate::entities::{
-    ArgumentProblem, ConfigProblemKind, Problem, ProblemKind, Problems, ValueType,
+    ArgumentProblem, ConfigProblemKind, Problem, ProblemKind, Problems, UnnamedBlock, ValueType,
 };
 use crate::policies::CATALOGUE;
 use crate::services::ConfigProblems;
@@ -69,6 +69,12 @@ fn input_problem(problem: &Problem) -> String {
         ProblemKind::Parser { message } => message.clone(),
         ProblemKind::Syntax => fl!(CATALOGUE, "input-syntax-error"),
         ProblemKind::Changed => fl!(CATALOGUE, "input-changed"),
+        ProblemKind::Unnamed { block } => match block {
+            UnnamedBlock::Feature => fl!(CATALOGUE, "unnamed-feature"),
+            UnnamedBlock::Rule => fl!(CATALOGUE, "unnamed-rule"),
+            UnnamedBlock::Scenario => fl!(CATALOGUE, "unnamed-scenario"),
+            UnnamedBlock::ScenarioOutline => fl!(CATALOGUE, "unnamed-scenario-outline"),
+        },
     };
     line(&problem.path, problem.line, message)
 }
@@ -87,6 +93,10 @@ fn config_message(kind: &ConfigProblemKind) -> String {
             key,
             expected: ValueType::Text,
         } => fl!(CATALOGUE, "config-not-text", key = key.as_str()),
+        ConfigProblemKind::WrongType {
+            key,
+            expected: ValueType::Boolean,
+        } => fl!(CATALOGUE, "config-not-boolean", key = key.as_str()),
     }
 }
 

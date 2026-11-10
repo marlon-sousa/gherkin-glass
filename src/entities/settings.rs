@@ -2,7 +2,10 @@
 
 use std::path::PathBuf;
 
+use crate::entities::Unnamed;
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct Settings {
     pub(crate) input: PathBuf,
+    pub(crate) unnamed: Unnamed,
 }

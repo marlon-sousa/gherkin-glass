@@ -5,8 +5,8 @@ use std::sync::Arc;
 
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 
-use crate::entities::{ParsedFeature, Problem, ProblemKind, Problems};
-use crate::policies::correct_doc_strings;
+use crate::entities::{ParsedFeature, Problem, ProblemKind, Problems, Unnamed};
+use crate::policies::{correct_doc_strings, unnamed_blocks};
 use crate::ports::{FeatureParser, InputCollector};
 
 pub struct InputService {
@@ -19,22 +19,23 @@ impl InputService {
         InputService { collector, parser }
     }
 
-    /// The features under `input`, sorted by path, or every problem found,
-    /// those met while collecting and those of every file parsed.
-    pub fn read(&self, input: &Path) -> Result<Vec<ParsedFeature>, Problems> {
+    /// The features under `input`, sorted by path, or every problem found:
+    /// those met while collecting, those of every file parsed, and, when
+    /// `unnamed` is refused, every block that needs a name and has none.
+    pub fn read(&self, input: &Path, unnamed: Unnamed) -> Result<Vec<ParsedFeature>, Problems> {
         let collected = self.collector.collect(input);
         let mut problems = collected.problems;
         // Collecting into a `Vec` keeps file order, whatever order the threads finish in.
         let results: Vec<_> = collected
             .paths
             .par_iter()
-            .map(|path| self.parse(input, path))
+            .map(|path| self.parse(input, path, unnamed))
             .collect();
         let mut features = Vec::with_capacity(results.len());
         for result in results {
             match result {
                 Ok(feature) => features.push(feature),
-                Err(problem) => problems.push(problem),
+                Err(found) => problems.extend(found),
             }
         }
         if problems.is_empty() {
@@ -44,15 +45,29 @@ impl InputService {
         }
     }
 
-    fn parse(&self, input: &Path, path: &Path) -> Result<ParsedFeature, Problem> {
+    fn parse(
+        &self,
+        input: &Path,
+        path: &Path,
+        unnamed: Unnamed,
+    ) -> Result<ParsedFeature, Vec<Problem>> {
         let problem = |line, kind| Problem::new(input, path, line, kind);
         let mut raw = self
             .parser
             .parse(path)
-            .map_err(|failure| problem(failure.line, failure.kind))?;
+            .map_err(|failure| vec![problem(failure.line, failure.kind)])?;
         // Only a file changed between the parse and the read of its source fails here.
         let media_types = correct_doc_strings(&mut raw.feature, &raw.source)
-            .ok_or_else(|| problem(None, ProblemKind::Changed))?;
+            .ok_or_else(|| vec![problem(None, ProblemKind::Changed)])?;
+        if unnamed == Unnamed::Refused {
+            let found: Vec<_> = unnamed_blocks(&raw.feature)
+                .into_iter()
+                .map(|(line, block)| problem(Some(line), ProblemKind::Unnamed { block }))
+                .collect();
+            if !found.is_empty() {
+                return Err(found);
+            }
+        }
         let relative = path.strip_prefix(input).unwrap_or(path).to_path_buf();
         Ok(ParsedFeature::new(relative, raw.feature, media_types))
     }
@@ -101,6 +116,15 @@ mod tests {
         problems: Vec<Problem>,
         texts: &[(&str, &str)],
     ) -> Result<Vec<ParsedFeature>, Problems> {
+        read_with(paths, problems, texts, Unnamed::Allowed)
+    }
+
+    fn read_with(
+        paths: &[&str],
+        problems: Vec<Problem>,
+        texts: &[(&str, &str)],
+        unnamed: Unnamed,
+    ) -> Result<Vec<ParsedFeature>, Problems> {
         let collector = FakeCollector(CollectedInput {
             paths: paths.iter().map(PathBuf::from).collect(),
             problems,
@@ -111,7 +135,7 @@ mod tests {
                 .map(|(path, text)| (PathBuf::from(path), text.to_string()))
                 .collect(),
         );
-        InputService::new(Arc::new(collector), Arc::new(parser)).read(Path::new("in"))
+        InputService::new(Arc::new(collector), Arc::new(parser)).read(Path::new("in"), unnamed)
     }
 
     #[test]
@@ -141,6 +165,29 @@ mod tests {
              c.feature:1: Syntax error.\n\
              locked: cannot be listed: permission denied\n"
         );
+    }
+
+    #[test]
+    fn refused_unnamed_blocks_are_reported_with_the_files_that_cannot_be_read() {
+        let texts = [
+            (
+                "in/a.feature",
+                "Feature:\n  Scenario: S\n    Given x\n  Scenario:\n    Given y\n",
+            ),
+            ("in/b.feature", "nothing\n"),
+            ("in/c.feature", "Feature: C\n"),
+        ];
+        let paths = ["in/a.feature", "in/b.feature", "in/c.feature"];
+        let problems =
+            read_with(&paths, Vec::new(), &texts, Unnamed::Refused).expect_err("problems");
+        assert_eq!(
+            problems.to_string(),
+            "a.feature:1: unnamed Feature\n\
+             a.feature:4: unnamed Scenario\n\
+             b.feature:1: Syntax error.\n"
+        );
+        let features = read_with(&paths[..1], Vec::new(), &texts, Unnamed::Allowed);
+        assert_eq!(features.expect("allowed").len(), 1);
     }
 
     #[test]

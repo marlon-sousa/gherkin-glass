@@ -2,7 +2,7 @@
 
 use std::path::{Path, PathBuf};
 
-use crate::entities::{BuildOptions, Config, Settings};
+use crate::entities::{BuildOptions, Config, Settings, Unnamed};
 
 /// The input folder when neither the command line nor the file names one,
 /// relative to the configuration file's folder.
@@ -17,7 +17,11 @@ pub(crate) fn resolve_settings(options: &BuildOptions, folder: &Path, config: &C
         (None, Some(input)) => folder.join(input),
         (None, None) => folder.join(DEFAULT_INPUT),
     };
-    Settings { input }
+    let unnamed = match config.allow_unnamed {
+        Some(false) => Unnamed::Refused,
+        Some(true) | None => Unnamed::Allowed,
+    };
+    Settings { input, unnamed }
 }
 
 /// The folder a configuration file's relative paths start from: an empty
@@ -37,6 +41,7 @@ mod tests {
         };
         let config = Config {
             input: set.map(PathBuf::from),
+            ..Config::default()
         };
         resolve_settings(&options, &config_folder(Path::new(file)), &config).input
     }
@@ -73,5 +78,19 @@ mod tests {
             input((Some(file), Some("x")), file, Some("specs")),
             PathBuf::from("x")
         );
+    }
+
+    #[test]
+    fn unnamed_blocks_are_allowed_unless_the_file_says_otherwise() {
+        let unnamed = |allow_unnamed| {
+            let config = Config {
+                allow_unnamed,
+                ..Config::default()
+            };
+            resolve_settings(&BuildOptions::default(), Path::new(""), &config).unnamed
+        };
+        assert_eq!(unnamed(None), Unnamed::Allowed);
+        assert_eq!(unnamed(Some(true)), Unnamed::Allowed);
+        assert_eq!(unnamed(Some(false)), Unnamed::Refused);
     }
 }
