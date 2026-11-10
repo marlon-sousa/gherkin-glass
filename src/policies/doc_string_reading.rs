@@ -1,18 +1,12 @@
-//! Doc strings, read again from the source as the author wrote them.
+//! Policy: a doc string read again from the source, as docs/BEHAVIOUR.md, "Doc strings", says.
 //!
-//! docs/BEHAVIOUR.md, "Doc strings". The `gherkin` crate returns a doc string
-//! with its media type glued to the content, a line break before and after
-//! it, and its escapes kept, and it takes the indentation away by the least
-//! indented line rather than by the delimiter. The crate gives no position for
-//! the doc string itself, so it is found in the source after the end of its
-//! step, which the crate does give.
+//! The `gherkin` crate returns a doc string with its media type glued to the
+//! content, a line break before and after it and its escapes kept, and takes
+//! the indentation away by the least indented line rather than by the
+//! delimiter. It gives no position for the doc string itself, so it is found
+//! after the end of its step, which the crate does give.
 
-/// A doc string's media type and content.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct DocString {
-    pub(crate) media_type: Option<String>,
-    pub(crate) content: String,
-}
+use crate::entities::DocString;
 
 /// Reads the doc string of the step that ends at byte `step_end` of `source`.
 ///
@@ -20,7 +14,7 @@ pub(crate) struct DocString {
 /// its doc string, and ends the doc string at the next occurrence of its
 /// delimiter; the same is done here. Returns `None` if no doc string follows,
 /// which cannot happen for a step the crate gave a doc string to.
-pub(crate) fn read(source: &str, step_end: usize) -> Option<DocString> {
+pub(crate) fn read_doc_string(source: &str, step_end: usize) -> Option<DocString> {
     // The rest of the step's line, then line after line until the delimiter.
     let mut line_start = source.get(step_end..)?.find('\n')? + step_end + 1;
     let (indent, delimiter, after_open) = loop {
@@ -119,7 +113,7 @@ mod tests {
 
     fn doc_string(source: &str) -> DocString {
         let step_end = source.find("step").expect("a step") + "step".len();
-        read(source, step_end).expect("a doc string")
+        read_doc_string(source, step_end).expect("a doc string")
     }
 
     #[test]
@@ -146,6 +140,9 @@ mod tests {
     #[test]
     fn no_doc_string_after_the_step() {
         let source = "    Given a step\n    When another\n";
-        assert_eq!(read(source, source.find("step").unwrap() + 4), None);
+        assert_eq!(
+            read_doc_string(source, source.find("step").unwrap() + 4),
+            None
+        );
     }
 }

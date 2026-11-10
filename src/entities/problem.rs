@@ -1,18 +1,19 @@
-//! The problems that stop a build: files that cannot be read.
+//! Entity: the problems that stop a build, each a thing of the input that cannot be read.
 
-use std::fmt;
+use std::cmp::Ordering;
+use std::fmt::{Display, Formatter, Result as FmtResult};
 use std::path::{Component, Path};
+
+use thiserror::Error;
 
 /// One thing that cannot be read: a feature file, a `.ghg-ignore` file or a
 /// folder of the input.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Problem {
-    /// The path relative to the input folder, with `/` between folders. The
-    /// input folder itself is shown as it was given.
+    /// Relative to the input folder, with `/` between folders; the input
+    /// folder itself is shown as it was given.
     pub path: String,
-    /// The line the problem is on, when there is one.
     pub line: Option<usize>,
-    /// What is wrong, in the parser's words when the parser found it.
     pub message: String,
 }
 
@@ -31,9 +32,9 @@ impl Problem {
     }
 }
 
-/// Problems sort by path, folder by folder, then by line and message.
+/// Folder by folder, so that a folder's contents stay together, then by line.
 impl Ord for Problem {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+    fn cmp(&self, other: &Self) -> Ordering {
         self.path
             .split('/')
             .cmp(other.path.split('/'))
@@ -43,13 +44,13 @@ impl Ord for Problem {
 }
 
 impl PartialOrd for Problem {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
-impl fmt::Display for Problem {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl Display for Problem {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         match self.line {
             Some(line) => write!(f, "{}:{}: {}", self.path, line, self.message),
             None => write!(f, "{}: {}", self.path, self.message),
@@ -57,9 +58,9 @@ impl fmt::Display for Problem {
     }
 }
 
-/// Every problem of one build, sorted by path and then by line, so that the
-/// report is the same on every run.
-#[derive(Debug, Clone, PartialEq, Eq)]
+/// Every problem of one build, sorted, so that the report is the same on every
+/// run. Its display is the report, one line per problem.
+#[derive(Debug, Clone, PartialEq, Eq, Error)]
 pub struct Problems(Vec<Problem>);
 
 impl Problems {
@@ -68,15 +69,13 @@ impl Problems {
         Problems(problems)
     }
 
-    /// The problems, in the order they are reported.
     pub fn as_slice(&self) -> &[Problem] {
         &self.0
     }
 }
 
-/// The report: one line per problem.
-impl fmt::Display for Problems {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl Display for Problems {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         for problem in &self.0 {
             writeln!(f, "{problem}")?;
         }
@@ -84,8 +83,7 @@ impl fmt::Display for Problems {
     }
 }
 
-/// `path` relative to `input`, with `/` between its parts on every system.
-pub(crate) fn display_path(input: &Path, path: &Path) -> String {
+fn display_path(input: &Path, path: &Path) -> String {
     let relative = path.strip_prefix(input).unwrap_or(path);
     let parts: Vec<_> = relative
         .components()
@@ -116,7 +114,7 @@ mod tests {
     #[test]
     fn problems_are_sorted_whatever_order_they_come_in() {
         // docs/BEHAVIOUR.md, rule 15: the threads that parse may finish in
-        // any order, so the report sorts what they found.
+        // any order.
         let sorted = vec![
             problem("a/x.feature", None),
             problem("a/x.feature", Some(2)),
@@ -128,5 +126,15 @@ mod tests {
         shuffled.reverse();
         shuffled.swap(0, 2);
         assert_eq!(Problems::new(shuffled).as_slice(), sorted.as_slice());
+    }
+
+    #[test]
+    fn the_input_folder_itself_is_shown_as_given() {
+        let input = Path::new("features/");
+        assert_eq!(Problem::new(input, input, None, "gone").path, "features/");
+        assert_eq!(
+            Problem::new(input, &input.join("a").join("b.feature"), None, "x").path,
+            "a/b.feature"
+        );
     }
 }

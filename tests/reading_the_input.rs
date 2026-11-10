@@ -3,8 +3,15 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
+use std::sync::Arc;
+
 use gherkin::Step;
-use gherkin_glass::{ParsedFeature, read_input};
+use gherkin_glass::{FileSystem, GherkinParser, InputService, ParsedFeature, Problems};
+
+/// The service as the command will wire it, over the real file system.
+fn read_input(input: &Path) -> Result<Vec<ParsedFeature>, Problems> {
+    InputService::new(Arc::new(FileSystem), Arc::new(GherkinParser)).read(input)
+}
 
 fn fixture(name: &str) -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR"))
