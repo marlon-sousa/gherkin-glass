@@ -48,7 +48,7 @@ A doc string is the text between two delimiter lines, `"""` or three backticks, 
 
 14. A file that cannot be read fails the build: a feature file that cannot be parsed, such as an empty file or one with only comments, or that cannot be read, such as one that is not UTF-8; a `.ghg-ignore` file with a rule that is not valid, whose other rules still apply; and a folder of the input that cannot be listed, the input folder itself included. There is no option to carry on without it. Fixture: `tests/fixtures/unreadable`.
 15. Every such file is reported before the build stops, not only the first. The report has one line per problem, sorted by path, folder by folder, so that a folder's contents stay together, and then by line. Names are compared by their character codes, so capital letters come before small ones. The report is the same on every run. Fixture: `tests/fixtures/unreadable`.
-16. Each line reads `<path>:<line>: <message>`, where the path is relative to the input folder, with `/` between folders on every system, the line is where the parser stopped, or the file's last line when it stopped past the end, and the message is the parser's. When the parser has no message of its own, only the list of what it expected, the message is `Syntax error.` A problem with no line, such as a file that cannot be read, reads `<path>: <message>`. A file that cannot be read has the message `cannot be read: <reason>`, a folder that cannot be listed `cannot be listed: <reason>`, a file that changed while it was being read `changed while it was being read`, and a `.ghg-ignore` rule that is not valid the `ignore` crate's message, where the reason is the operating system's words. A problem with the input folder itself shows its path as it was given. Fixture: `tests/fixtures/unreadable`.
+16. Each line reads `<path>:<line>: <message>`, where the path is relative to the input folder, with `/` between folders on every system, the line is where the parser stopped, or the file's last line when it stopped past the end, and the message is the parser's. When the parser has no message of its own, only the list of what it expected, the message is `Syntax error.` A problem with no line, such as a file that cannot be read, reads `<path>: <message>`. A file that cannot be read has the message `cannot be read: <reason>`, a folder that cannot be listed `cannot be listed: <reason>`, a file that changed while it was being read `changed while it was being read`, and a `.ghg-ignore` rule that is not valid the `ignore` crate's message, where the reason is the operating system's words. A problem with the input folder itself shows its path as it was given, and an input folder that does not exist, the default `features` among them, reads `<path>: the input folder does not exist. Create it, or name another with input in ghg.toml or with --input.` Fixture: `tests/fixtures/unreadable`.
 
 ## The command line and its configuration
 
@@ -75,7 +75,7 @@ An option's value follows it, as `--input specs`, or is joined to it by `=`, as 
 
     | Key | Takes | Default | What it sets |
     | --- | --- | --- | --- |
-    | `input` | text | `features` | The input folder, the folder of feature files to read. |
+    | `input` | text | `features` | The input folder, the folder of feature files to read. It must exist, as rule 16 says. |
 
     Fixture: `tests/fixtures/configuration/configured`.
 25. A setting given on the command line wins over the file's key of the same meaning, and the file's key wins over the default. Fixture: `tests/fixtures/configuration/configured`.

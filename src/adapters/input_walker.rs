@@ -1,6 +1,7 @@
 //! Adapter: the input collector port, walking the input folder on disk with its `.ghg-ignore` files.
 
 use std::fs::{read_dir, read_to_string};
+use std::io::ErrorKind;
 use std::path::{Path, PathBuf};
 
 use crate::entities::{CollectedInput, Problem, ProblemKind};
@@ -72,13 +73,14 @@ impl Walk<'_> {
         match listing {
             Ok(entries) => Some(entries),
             Err(error) => {
-                self.problem(
-                    folder,
-                    None,
+                let kind = if folder == self.input && error.kind() == ErrorKind::NotFound {
+                    ProblemKind::InputMissing
+                } else {
                     ProblemKind::CannotBeListed {
                         reason: error.to_string(),
-                    },
-                );
+                    }
+                };
+                self.problem(folder, None, kind);
                 None
             }
         }

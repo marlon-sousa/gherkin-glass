@@ -40,6 +40,7 @@ problem-with-line = { $path }:{ $line }: { $message }
 ## What is wrong with a file or folder of the input. Every $reason is the
 ## operating system's or a library's words.
 
+input-missing = the input folder does not exist. Create it, or name another with input in ghg.toml or with --input.
 input-cannot-be-listed = cannot be listed: { $reason }
 input-cannot-be-read = cannot be read: { $reason }
 input-syntax-error = Syntax error.
