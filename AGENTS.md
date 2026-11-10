@@ -20,4 +20,13 @@ The manual for anyone, human or agent, changing gherkin-glass. [CONTRIBUTING.md]
 
 ## Building and testing
 
-The commands to build, test and check the project are listed here once the project has code.
+The toolchain is pinned in `rust-toolchain.toml`. Running `rustup toolchain install` in the repository installs it with its components; this needs rustup 1.28 or later. Before pushing, run the checks a pull request runs, from the repository's root:
+
+- `cargo fmt --check`, the formatting;
+- `cargo clippy --all-targets --locked -- -D warnings`, the lints, with every warning an error;
+- `cargo test --locked`, the tests;
+- the tests again with the minimum supported Rust version, the one `rust-version` names in `Cargo.toml`, 1.88 today: first `rustup toolchain install 1.88 --profile minimal`, then `cargo +1.88 test --locked`.
+
+`cargo run` builds the command and runs it.
+
+The commit messages can be checked before pushing with the `commit-messages` action of [itinera-dev/actions](https://github.com/itinera-dev/actions), which needs Python 3.11 or later. With a clone of it in the shell variable `ACTIONS`, run `PYTHONPATH="$ACTIONS" python3 "$ACTIONS/commit-messages/main.py" origin/main..HEAD` in this repository.
