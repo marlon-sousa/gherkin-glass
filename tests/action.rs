@@ -305,7 +305,7 @@ fn fails(runner: &Runner, output: Output, message: &str) {
     );
 }
 
-// Installing: rules 36 to 40.
+// Installing: rules 129 to 133.
 
 #[test]
 fn installs_the_newest_release_of_the_actions_major_version_by_default() {
@@ -484,7 +484,7 @@ fn an_installed_version_is_kept_in_the_tool_cache_and_not_downloaded_again() {
     assert_eq!(runner.path_entries().len(), 2);
 }
 
-// Building: rules 41 and 42.
+// Building: rules 134 and 135.
 
 #[test]
 fn build_is_true_or_false() {
@@ -500,51 +500,95 @@ fn build_is_true_or_false() {
     assert!(github.requests.lock().unwrap().is_empty());
 }
 
-/// Runs build.sh with the real ghg in the action's fixture, with `options`
-/// as the environment action.yml gives it.
-fn build(options: &[(&str, &str)]) -> Output {
+/// A copy of `from` at `to`, folders and files.
+fn copy(from: &Path, to: &Path) {
+    create_dir_all(to).unwrap();
+    for entry in fs::read_dir(from).unwrap() {
+        let entry = entry.unwrap();
+        let target = to.join(entry.file_name());
+        if entry.file_type().unwrap().is_dir() {
+            copy(&entry.path(), &target);
+        } else {
+            fs::copy(entry.path(), target).unwrap();
+        }
+    }
+}
+
+/// Runs build.sh with the real ghg in a copy of the action's fixture, with
+/// `options` as the environment action.yml gives it, and returns the copy.
+fn build(options: &[(&str, &str)]) -> (Output, PathBuf) {
+    let workspace = scratch("workspace");
+    copy(&root().join("tests/fixtures/action"), &workspace);
     let mut command = bash();
     command
         .arg(root().join("action/build.sh"))
-        .current_dir(root().join("tests/fixtures/action"))
+        .current_dir(&workspace)
         .env_clear()
         .env("PATH", std::env::var_os("PATH").unwrap_or_default())
         .env("GHG_BIN", env!("CARGO_BIN_EXE_ghg"))
-        .env("GHG_OPTIONS", "config input");
+        .env("GHG_OPTIONS", "config input output title version-name");
     for (name, value) in options {
         command.env(name, value);
     }
-    run(&mut command)
+    (run(&mut command), workspace)
+}
+
+fn built(output: &Output) {
+    assert_eq!(output.status.code(), Some(0), "{}", text(&output.stderr));
+    assert_eq!(text(&output.stdout), "");
 }
 
 #[test]
 fn build_runs_ghg_build_with_the_configuration_when_no_option_is_given() {
     for options in [
         &[][..],
-        &[("GHG_OPTION_INPUT", ""), ("GHG_OPTION_CONFIG", "")],
+        &[
+            ("GHG_OPTION_CONFIG", ""),
+            ("GHG_OPTION_INPUT", ""),
+            ("GHG_OPTION_OUTPUT", ""),
+            ("GHG_OPTION_TITLE", ""),
+            ("GHG_OPTION_VERSION_NAME", ""),
+        ],
         // Only the options GHG_OPTIONS names are passed.
-        &[("GHG_OPTION_OUTPUT", "site")],
+        &[("GHG_OPTION_PORT", "9")],
     ] {
-        let output = build(options);
-        assert_eq!(output.status.code(), Some(0), "{}", text(&output.stderr));
-        assert_eq!(text(&output.stdout), "");
+        let (output, workspace) = build(options);
+        built(&output);
+        assert!(workspace.join("site/read.html").is_file());
     }
 }
 
 #[test]
 fn each_option_input_is_passed_to_ghg_build() {
-    let output = build(&[("GHG_OPTION_INPUT", "features"), ("GHG_OPTION_CONFIG", "")]);
+    let (output, _) = build(&[("GHG_OPTION_INPUT", "features"), ("GHG_OPTION_CONFIG", "")]);
     assert_eq!(output.status.code(), Some(1));
     assert!(
         text(&output.stderr).starts_with("broken.feature:1: "),
         "{}",
         text(&output.stderr)
     );
-    let output = build(&[("GHG_OPTION_CONFIG", "missing.toml")]);
+
+    let (output, _) = build(&[("GHG_OPTION_CONFIG", "missing.toml")]);
     assert_eq!(output.status.code(), Some(1));
     assert!(
         text(&output.stderr).starts_with("missing.toml: cannot be read: "),
         "{}",
         text(&output.stderr)
     );
+
+    let (output, workspace) = build(&[
+        ("GHG_OPTION_OUTPUT", "public"),
+        ("GHG_OPTION_TITLE", "The action's suite"),
+    ]);
+    built(&output);
+    assert!(!workspace.join("site").exists());
+    let home = fs::read_to_string(workspace.join("public/index.html")).unwrap();
+    assert!(
+        home.contains("<title>The action&#39;s suite</title>"),
+        "{home}"
+    );
+
+    let (output, workspace) = build(&[("GHG_OPTION_VERSION_NAME", "v1.0.0")]);
+    built(&output);
+    assert!(workspace.join("site/v1.0.0/read.html").is_file());
 }

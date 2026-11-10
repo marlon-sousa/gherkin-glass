@@ -27,6 +27,18 @@ inputs:
     description: The --input option of ghg build, the folder of feature files to read. Left out when empty.
     required: false
     default: ""
+  output:
+    description: The --output option of ghg build, the folder the site is written into. Left out when empty.
+    required: false
+    default: ""
+  title:
+    description: The --title option of ghg build, the site's title. Left out when empty.
+    required: false
+    default: ""
+  version-name:
+    description: The --version-name option of ghg build, the version of the suite the site is built as. Left out when empty.
+    required: false
+    default: ""
 
 runs:
   using: composite
@@ -47,7 +59,10 @@ runs:
       env:
         GHG_BIN: ${{ steps.install.outputs.bin }}
         GHG_ACTION_PATH: ${{ github.action_path }}
-        GHG_OPTIONS: config input
+        GHG_OPTIONS: config input output title version-name
         GHG_OPTION_CONFIG: ${{ inputs.config }}
         GHG_OPTION_INPUT: ${{ inputs.input }}
+        GHG_OPTION_OUTPUT: ${{ inputs.output }}
+        GHG_OPTION_TITLE: ${{ inputs.title }}
+        GHG_OPTION_VERSION_NAME: ${{ inputs.version-name }}
       run: bash "$GHG_ACTION_PATH/action/build.sh"

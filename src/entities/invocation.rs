@@ -139,7 +139,7 @@ mod tests {
             .collect()
     }
 
-    // docs/BEHAVIOUR.md, "The GitHub Action", rule 43.
+    // docs/BEHAVIOUR.md, "The GitHub Action", rule 136.
     #[test]
     fn every_option_of_ghg_build_is_an_input_of_the_action_and_nothing_else_is() {
         let action = action();
@@ -155,7 +155,7 @@ mod tests {
         assert_eq!(inputs, options());
     }
 
-    // docs/BEHAVIOUR.md, "The GitHub Action", rule 43.
+    // docs/BEHAVIOUR.md, "The GitHub Action", rule 136.
     #[test]
     fn the_build_step_passes_every_option_input_and_nothing_else() {
         let action = action();
