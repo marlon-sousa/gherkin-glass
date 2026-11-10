@@ -92,7 +92,7 @@ The feature's own text is never interface text: it is shown as written in the fi
 
 ## The pages' script
 
-The TypeScript in `script/` follows the same roles, each file declaring its role in a header comment. It uses no framework and no runtime dependencies.
+The TypeScript in `script/` follows the same roles, each file declaring its role in a header comment. It uses no framework, and one runtime dependency only: [MiniSearch](https://www.npmjs.com/package/minisearch), bundled into the script, which runs search ([#15](https://github.com/marlon-sousa/gherkin-glass/issues/15)).
 
 - **The views are the templates.** Everything a page says, its headings, anchors, links and text, is in the HTML the templates write. The script adds behaviour to it, and never writes content, with one agreed exception: the folder tree, built from the site's shared tree data ([#7](https://github.com/marlon-sousa/gherkin-glass/issues/7)).
 - **Adapters** are the parts that touch the DOM or the browser's storage: the disclosure buttons, the tree, the reader options, the theme switch. Each sits behind a small interface in `ports/`.
