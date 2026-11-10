@@ -100,6 +100,7 @@ The TypeScript in `script/` follows the same roles, each file declaring its role
 - **`src/main.ts`** is the composition root, as `main.rs` is for the crate.
 - **Sources live in `script/src/`, and tests in `script/test/`**, a tree that mirrors it, so a test of `src/adapters/tree.ts` is `test/adapters/tree.test.ts`.
 - **What `script/` compiles to is one ES module.** Sites are served over HTTP, never opened from disk ([#26](https://github.com/marlon-sousa/gherkin-glass/issues/26), [design note 0026](design/0026-sites-are-served.md)), so the script may be a module and may fetch. The data the pages share, such as the folder tree's ([#7](https://github.com/marlon-sousa/gherkin-glass/issues/7)), is JSON written for each site and fetched by the script, at an address resolved against the script's own, such as `new URL("tree.json", import.meta.url)`, so that it works from a page at any depth and on a site served below a path such as GitHub Pages' `/<repository>/`.
+- **The reload script `ghg serve --watch` adds to each page is not part of any site.** It is a few lines of plain JavaScript beside the server's adapter, `src/adapters/preview_http/reload.js`, embedded with `include_str!`, so that it needs no build step.
 - **A reader option that cannot act is disabled**, and says so to a screen reader, rather than acting and then refusing.
 
 ## Tests

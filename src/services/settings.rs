@@ -9,8 +9,9 @@ use crate::policies::{config_folder, parse_config, resolve_settings};
 use crate::ports::ConfigReader;
 
 /// The configuration file looked for in the current folder.
-const CONFIG_FILE: &str = "ghg.toml";
+pub(crate) const CONFIG_FILE: &str = "ghg.toml";
 
+#[derive(Clone)]
 pub(crate) struct SettingsService {
     reader: Arc<dyn ConfigReader>,
 }

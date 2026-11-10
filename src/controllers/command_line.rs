@@ -3,21 +3,28 @@
 mod wording;
 
 use std::ffi::OsString;
+use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
 use std::sync::Arc;
 
 use i18n_embed_fl::fl;
 
-use crate::entities::{BuildOptions, Invocation};
+use crate::entities::{BuildOptions, Invocation, ServeOptions, ServerWords};
 use crate::policies::{CATALOGUE, parse_arguments};
-use crate::ports::ConfigReader;
-use crate::services::{SettingsService, SiteService};
+use crate::ports::{ConfigReader, Terminal};
+use crate::services::{
+    PreviewEvents, PreviewService, RebuildFailure, SettingsService, SiteService,
+};
 
 pub struct CommandLine {
     settings: SettingsService,
     site: SiteService,
+    preview: PreviewService,
+    terminal: Arc<dyn Terminal>,
 }
 
-/// What a run prints, and the status it exits with.
+/// What a run prints when it ends, and the status it exits with. A command
+/// that keeps running, `ghg serve`, says what happens meanwhile through the
+/// terminal it was given.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Reply {
     pub stdout: String,
@@ -28,10 +35,17 @@ pub struct Reply {
 }
 
 impl CommandLine {
-    pub fn new(config_reader: Arc<dyn ConfigReader>, site: SiteService) -> Self {
+    pub fn new(
+        config_reader: Arc<dyn ConfigReader>,
+        site: SiteService,
+        preview: PreviewService,
+        terminal: Arc<dyn Terminal>,
+    ) -> Self {
         CommandLine {
             settings: SettingsService::new(config_reader),
             site,
+            preview,
+            terminal,
         }
     }
 
@@ -46,6 +60,19 @@ impl CommandLine {
                 version = env!("CARGO_PKG_VERSION")
             )),
             Ok(Invocation::Build(options)) => self.build(&options),
+            Ok(Invocation::Serve(options)) => self.serve(&options),
+        }
+    }
+
+    fn serve(&self, options: &ServeOptions) -> Reply {
+        let words = ServerWords {
+            not_found: fl!(CATALOGUE, "serve-not-found"),
+            wrong_method: fl!(CATALOGUE, "serve-wrong-method"),
+        };
+        let events = Events(self.terminal.as_ref());
+        match self.preview.serve(options, words, &events) {
+            Ok(()) => Reply::success(String::new()),
+            Err(failure) => Reply::failure(1, wording::serve_failure(&failure)),
         }
     }
 
@@ -79,6 +106,32 @@ impl Reply {
     }
 }
 
+/// ghg serve's events, worded for the terminal.
+struct Events<'a>(&'a dyn Terminal);
+
+impl PreviewEvents for Events<'_> {
+    fn listening(&self, mut address: SocketAddr) {
+        // A browser cannot open the address that means every network.
+        if address.ip().is_unspecified() {
+            address.set_ip(match address {
+                SocketAddr::V4(_) => IpAddr::V4(Ipv4Addr::LOCALHOST),
+                SocketAddr::V6(_) => IpAddr::V6(Ipv6Addr::LOCALHOST),
+            });
+        }
+        let address = format!("http://{address}/");
+        self.0
+            .say(&lines(fl!(CATALOGUE, "serve-listening", address = address)));
+    }
+
+    fn rebuilt(&self) {
+        self.0.say(&lines(fl!(CATALOGUE, "serve-rebuilt")));
+    }
+
+    fn not_rebuilt(&self, failure: &RebuildFailure) {
+        self.0.warn(&wording::rebuild_failure(failure));
+    }
+}
+
 /// Text ending in a line break, unless it is empty.
 fn lines(mut text: String) -> String {
     if !text.is_empty() && !text.ends_with('\n') {
@@ -94,9 +147,13 @@ mod tests {
     use std::path::{Path, PathBuf};
 
     use super::*;
-    use crate::entities::{CollectedInput, ParseFailure, ProblemKind, RawFeature};
-    use crate::ports::{FeatureParser, InputCollector, SiteWriter};
-    use crate::services::InputService;
+    use crate::adapters::MemorySite;
+    use crate::entities::{
+        Changes, CollectedInput, ListenFailure, ParseFailure, Preview, ProblemKind, RawFeature,
+        WatchFailure, Watched,
+    };
+    use crate::ports::{ChangeWatcher, FeatureParser, InputCollector, PreviewServer, SiteWriter};
+    use crate::services::{InputService, ServeFailure};
 
     /// Writes nothing; the parser fails every file before anything is written.
     struct NoWriter;
@@ -151,9 +208,124 @@ mod tests {
             .iter()
             .map(|(path, text)| (PathBuf::from(path), text.to_string()))
             .collect();
+        let files: Arc<FakeFiles> = Arc::new(FakeFiles(files));
         let input = InputService::new(Arc::new(FakeCollector), Arc::new(FailingParser));
-        let site = SiteService::new(input, Arc::new(NoWriter));
-        CommandLine::new(Arc::new(FakeFiles(files)), site).run(arguments.iter().map(OsString::from))
+        let site = || SiteService::new(input.clone(), Arc::new(NoWriter));
+        let preview = PreviewService::new(
+            files.clone(),
+            site(),
+            site(),
+            Arc::new(MemorySite::default()),
+            Arc::new(PortTaken),
+            Arc::new(NoWatching),
+        );
+        CommandLine::new(files, site(), preview, Arc::new(Silent))
+            .run(arguments.iter().map(OsString::from))
+    }
+
+    /// Every port is taken.
+    struct PortTaken;
+
+    impl PreviewServer for PortTaken {
+        fn start(
+            &self,
+            _: &str,
+            _: u16,
+            _: Arc<Preview>,
+            _: ServerWords,
+        ) -> Result<SocketAddr, ListenFailure> {
+            Err(ListenFailure::PortTaken)
+        }
+    }
+
+    struct NoWatching;
+
+    impl ChangeWatcher for NoWatching {
+        fn watch(&self, watched: &[Watched]) -> Result<Changes, WatchFailure> {
+            Err(WatchFailure {
+                path: match &watched[0] {
+                    Watched::Folder(path) | Watched::File(path) => path.clone(),
+                },
+                reason: "no watching here".into(),
+            })
+        }
+    }
+
+    struct Silent;
+
+    impl Terminal for Silent {
+        fn say(&self, _: &str) {}
+        fn warn(&self, _: &str) {}
+    }
+
+    #[test]
+    fn serve_reads_the_configuration_and_builds_as_build_does() {
+        let file = [("ghg.toml", "input = \"specs\"\n")];
+        assert_eq!(
+            run(&file, &["serve"]).stderr,
+            "a.feature:1: read in specs\n"
+        );
+        let reply = run(&[("ghg.toml", "inputs = 1\n")], &["serve", "--no-build"]);
+        assert_eq!(
+            reply.stderr,
+            "ghg.toml:1: ghg has no setting named inputs.\n"
+        );
+        assert_eq!(reply.status, 1);
+    }
+
+    #[test]
+    fn serve_names_the_port_it_cannot_listen_at() {
+        let reply = run(&[], &["serve", "--no-build", "--port", "8123"]);
+        assert_eq!(
+            reply.stderr,
+            "Port 8123 is already in use. Choose another with --port.\n"
+        );
+        assert_eq!(reply.stdout, "");
+        assert_eq!(reply.status, 1);
+    }
+
+    #[test]
+    fn serve_names_what_it_cannot_watch_and_where_it_cannot_listen() {
+        let failure = ServeFailure::Watch(WatchFailure {
+            path: PathBuf::from("features"),
+            reason: "too many folders".into(),
+        });
+        assert_eq!(
+            wording::serve_failure(&failure),
+            "ghg serve cannot watch features for changes: too many folders"
+        );
+        let failure = ServeFailure::Listen {
+            host: "203.0.113.1".into(),
+            port: 8000,
+            failure: ListenFailure::Other {
+                reason: "no such address".into(),
+            },
+        };
+        assert_eq!(
+            wording::serve_failure(&failure),
+            "ghg serve cannot listen at 203.0.113.1, port 8000: no such address"
+        );
+    }
+
+    #[test]
+    fn serve_mistakes_are_named() {
+        let reply = run(&[], &["serve", "--port", "80a"]);
+        assert_eq!(
+            reply.stderr,
+            "The option --port needs a whole number from 0 to 65535, not 80a.\n"
+        );
+        assert_eq!(reply.status, 2);
+        let reply = run(&[], &["serve", "--watch", "--no-build"]);
+        assert_eq!(
+            reply.stderr,
+            "The options --watch and --no-build cannot be used together.\n"
+        );
+        assert_eq!(reply.status, 2);
+        let reply = run(&[], &["build", "--watch"]);
+        assert_eq!(
+            reply.stderr,
+            "ghg build has no option --watch. ghg --help lists the options.\n"
+        );
     }
 
     #[test]

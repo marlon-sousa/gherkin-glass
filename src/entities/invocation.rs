@@ -7,6 +7,7 @@ pub(crate) enum Invocation {
     Help,
     Version,
     Build(BuildOptions),
+    Serve(ServeOptions),
 }
 
 /// The options of `ghg build`, each `None` when not given.
@@ -17,6 +18,16 @@ pub(crate) struct BuildOptions {
     pub(crate) output: Option<PathBuf>,
 }
 
+/// The options of `ghg serve`: those of `ghg build`, and how it serves.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub(crate) struct ServeOptions {
+    pub(crate) build: BuildOptions,
+    pub(crate) host: Option<String>,
+    pub(crate) port: Option<u16>,
+    pub(crate) no_build: bool,
+    pub(crate) watch: bool,
+}
+
 /// A mistake on the command line. Each `String` is what was typed, shown
 /// as it was typed, an option with its dashes.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -25,7 +36,7 @@ pub(crate) enum ArgumentProblem {
     UnknownCommand {
         name: String,
     },
-    /// `command` is `ghg` or `ghg build`.
+    /// `command` is `ghg`, `ghg build` or `ghg serve`.
     UnknownOption {
         command: String,
         option: String,
@@ -43,4 +54,8 @@ pub(crate) enum ArgumentProblem {
         command: String,
         argument: String,
     },
+    NotAPort {
+        value: String,
+    },
+    WatchWithoutBuild,
 }

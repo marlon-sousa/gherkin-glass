@@ -12,6 +12,7 @@ use crate::policies::{
 };
 use crate::ports::{FeatureParser, InputCollector};
 
+#[derive(Clone)]
 pub struct InputService {
     collector: Arc<dyn InputCollector>,
     parser: Arc<dyn FeatureParser>,
