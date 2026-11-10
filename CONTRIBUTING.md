@@ -38,6 +38,7 @@ We work trunk-based: small pull requests straight to `main`, no long-lived branc
 - **Name the issue.** Every pull request names an open issue of this repository: `Closes #N` when it finishes the issue, `Refs #N` when it contributes to it. A check refuses a pull request that names none.
 - **Stack large changes.** A change too large for one pull request becomes a stack: a chain of pull requests, each building on the one before, reviewed and merged in order. Each says `Refs #N`, and the last says `Closes #N`. See "Stacked pull requests" below.
 - **Keep it focused.** One thing per pull request, described in plain prose: what changed and why.
+- **Merge without squashing.** Pull requests merge with a merge commit or a rebase, never squashed, because a squash folds every commit's message into one, and the release notes are built from each commit's changelog trailers.
 
 ### Stacked pull requests
 
@@ -63,6 +64,8 @@ Added: every scenario has a heading with a stable anchor.
 
 The trailers are `Added`, `Changed`, `Fixed` and `Removed`. A feature or fix that changes nothing a user can see says `Changelog: none` instead.
 
+Each entry is one line. [git-cliff](https://git-cliff.org/) gathers the entries of every commit since the last release, with the template in `cliff.toml`, and the commit message check refuses an entry git-cliff would not read whole.
+
 ## Checks
 
 Every pull request runs:
@@ -74,9 +77,36 @@ Every pull request runs:
 
 ## Releases
 
-Versions follow [Semantic Versioning](https://semver.org/). The addresses of pages, the anchor rule, the command line and the configuration keys are part of what is promised, so changing any of them in a way that breaks an existing site or command is a major version.
+Versions follow [Semantic Versioning](https://semver.org/). The addresses of pages, the anchor rule, the command line, the configuration keys and the names of the release archives are part of what is promised, so changing any of them in a way that breaks an existing site, command or installation is a major version. [docs/BEHAVIOUR.md](docs/BEHAVIOUR.md), "Releases", says what a release holds.
 
-A maintainer releases by pushing a tag, such as `v0.1.0`. The release workflow then builds the binaries, for Linux (x86-64 and ARM64), macOS (Intel and Apple silicon) and Windows (x86-64), with their checksums, writes the release notes from the changelog trailers, and attaches everything to the GitHub release.
+### Preparing a release
+
+A release starts as a pull request, titled "Release <version>", whose commit `chore(release): release <version>`:
+
+1. raises the version in `Cargo.toml`, and in `Cargo.lock` with `cargo update --workspace`;
+2. writes the version's section at the top of `CHANGELOG.md`, starting from what `git cliff --unreleased --tag v<version> --strip all` prints, which is the heading `## [<version>]` and the entries of the commits since the last release;
+3. reconciles those entries, since a commit's entries cannot change once it merges: entries a later commit made untrue become one that says what the release holds, entries that say the same thing merge, and a change a user meets that carries no entry gets one.
+
+The template is written for git-cliff 2.14.2, which installs with `cargo install git-cliff --version 2.14.2 --locked` or `pip install git-cliff==2.14.2`.
+
+### Tagging it
+
+Once the pull request has merged, a maintainer runs `cargo publish --dry-run --locked` at `main`'s merge commit, then tags that commit and pushes the tag, such as `git tag -a v0.1.0 <commit> -m "gherkin-glass 0.1.0"` and `git push origin v0.1.0`. Only maintainers push tags.
+
+The release workflow, `.github/workflows/release.yml`, then runs these jobs, each waiting for those it needs:
+
+1. **release gate** refuses the tag unless it is `v` and the version in `Cargo.toml`, its commit is on `main`, and `CHANGELOG.md` has notes for the version;
+2. **checks** runs the checks of every pull request again on the tagged commit, since their run on `main` after a merge blocks nothing;
+3. **builds**, one for each platform: Linux on x86-64 and ARM64, statically linked with musl; macOS on Apple silicon and on Intel, both built on Apple silicon; and Windows on x86-64, with the C runtime linked in. Each checks its binaries need nothing installed, packs them with the licence files, and checks the archive;
+4. **archives** checks there is one archive for each platform where `cargo binstall` looks for it, and writes `SHA256SUMS`;
+5. **crates.io**, in the `crates-io` environment, publishes the crate with the `publish-crates` action of [itinera-dev/actions](https://github.com/itinera-dev/actions), through crates.io's trusted publishing, unless that version is there already;
+6. **GitHub release** creates the release with the `create-release` action of itinera-dev/actions, with the version's section of `CHANGELOG.md` as its notes, a pre-release for a version such as `0.2.0-rc.1`, and the archives and `SHA256SUMS` attached.
+
+A pull request that changes how releases are made runs the same builds, archives and checks, and packs the crate, without publishing anything.
+
+### Trusted publishing
+
+crates.io trusts only `release.yml` in this repository, running in the `crates-io` environment, so no token is stored anywhere. crates.io sets up trusted publishing only for a crate that already exists, so the first version may have to be published by hand: a maintainer logged in with `cargo login` runs `cargo publish --locked` at the commit to be tagged, before pushing its tag, then sets up the trusted publisher. The workflow's publish job then finds that version on crates.io and leaves it as it is. If a release stops after publishing, a maintainer re-runs the workflow's failed jobs.
 
 The repository's own GitHub Pages site shows the fixtures as the latest release renders them, so anyone can see what gherkin-glass produces before downloading it.
 
