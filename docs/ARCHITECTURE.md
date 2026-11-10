@@ -10,7 +10,7 @@ Ports and adapters. The pure part of gherkin-glass, which decides what the site 
 
 ## The repository
 
-- **One crate**, `gherkin-glass`: a library, `src/lib.rs`, and the binary built on it, `src/main.rs`. Nothing in it is heavy enough to earn a crate of its own.
+- **One crate**, `gherkin-glass`: a library, `src/lib.rs`, and the binary built on it, `src/main.rs`, installed as `ghg` ([#18](https://github.com/marlon-sousa/gherkin-glass/issues/18)). Nothing in it is heavy enough to earn a crate of its own.
 - **`xtask/`**, the crate behind `cargo xtask build` and `cargo xtask check` ([#4](https://github.com/marlon-sousa/gherkin-glass/issues/4)). It orchestrates the build and is never shipped.
 - **`templates/`**, the askama templates, at the place askama looks by default. They are the views: everything a page says is placed here, except the folder tree, which the script builds from shared data ([#7](https://github.com/marlon-sousa/gherkin-glass/issues/7)).
 - **`script/`**, the TypeScript of the pages' behaviour, an npm package with its own `package.json` and lockfile. Its compiled output is committed, so building the crate needs no Node ([#4](https://github.com/marlon-sousa/gherkin-glass/issues/4)).
@@ -58,7 +58,7 @@ The service that builds a site runs these steps; the controller behind the comma
 A comment says only what the code cannot:
 
 - the module's role line;
-- a measured fact, with what it was measured against, such as "Chromium, through Playwright, blocks an ES module on a `file://` page";
+- a measured fact, with what it was measured against, such as "Chromium, through Playwright, fails a `fetch` from a `file://` page";
 - an invariant or a hazard the code does not enforce itself;
 - what an absent value, an error or a rejection carries.
 
@@ -99,7 +99,7 @@ The TypeScript in `script/` follows the same roles, each file declaring its role
 - **Policies** are the pure parts: which state a block starts in, given the configured default and what the reader chose before; how a remembered choice is keyed by page and anchor.
 - **`src/main.ts`** is the composition root, as `main.rs` is for the crate.
 - **Sources live in `script/src/`, and tests in `script/test/`**, a tree that mirrors it, so a test of `src/adapters/tree.ts` is `test/adapters/tree.test.ts`.
-- **What `script/` compiles to is one classic script**, not an ES module, so that a site opened from disk still runs it ([#4](https://github.com/marlon-sousa/gherkin-glass/issues/4)). The folder tree's data is a second classic script, written for each site ([#7](https://github.com/marlon-sousa/gherkin-glass/issues/7)).
+- **What `script/` compiles to is one ES module.** Sites are served over HTTP, never opened from disk ([#26](https://github.com/marlon-sousa/gherkin-glass/issues/26), [design note 0026](design/0026-sites-are-served.md)), so the script may be a module and may fetch. The data the pages share, such as the folder tree's ([#7](https://github.com/marlon-sousa/gherkin-glass/issues/7)), is JSON written for each site and fetched by the script, at an address resolved against the script's own, such as `new URL("tree.json", import.meta.url)`, so that it works from a page at any depth and on a site served below a path such as GitHub Pages' `/<repository>/`.
 - **A reader option that cannot act is disabled**, and says so to a screen reader, rather than acting and then refusing.
 
 ## Tests
@@ -109,7 +109,7 @@ Cheapest first:
 1. **Policy tests**, pure and in memory: the anchor rule, doc string corrections, page addresses, contrast, the state a block starts in.
 2. **Service tests** with fake ports: a whole build from an input held in memory, checking what would be written and every problem reported.
 3. **Golden fixture tests**: each fixture under `tests/fixtures/` built into a site, and its pages compared with the expected HTML committed beside it, which shows the rules of BEHAVIOUR.md the fixture covers.
-4. **The browser check** ([#2](https://github.com/marlon-sousa/gherkin-glass/issues/2)): every fixture page opened with Playwright, checked with axe-core in each theme, and driven with the keyboard.
+4. **The browser check** ([#2](https://github.com/marlon-sousa/gherkin-glass/issues/2)): every fixture's site served over HTTP, as a reader would get it, and each page opened with Playwright, checked with axe-core in each theme, and driven with the keyboard.
 5. **The script's own tests**, of its policies and adapters, in `script/test/`.
 
 `cargo xtask check` runs all of them, and CI runs the same command.
