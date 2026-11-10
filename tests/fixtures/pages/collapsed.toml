@@ -1,0 +1,4 @@
+# The same pages, with rules, scenarios and backgrounds starting collapsed, and no source link.
+collapse_rules = true
+collapse_scenarios = true
+output = "expected-collapsed"

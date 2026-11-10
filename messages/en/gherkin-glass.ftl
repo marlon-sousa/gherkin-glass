@@ -9,11 +9,12 @@ help =
     Usage: ghg <command> [options]
 
     Commands:
-      build: reads the feature files, and reports every one that cannot be read.
+      build: reads the feature files and writes the site, or reports every file that cannot be read.
 
     Options of ghg build:
       --config <file>: the configuration file to read, instead of ghg.toml in the current folder.
       --input <folder>: the folder of feature files to read, instead of the configuration's input.
+      --output <folder>: the folder to write the site into, instead of the configuration's output.
 
     Other options:
       --help, -h: prints this help.
@@ -54,6 +55,16 @@ unnamed-rule = The rule has no name, and allow_unnamed is false.
 unnamed-scenario = The scenario has no name, and allow_unnamed is false.
 unnamed-scenario-outline = The scenario outline has no name, and allow_unnamed is false.
 
+## Two feature files whose pages would have the same path. $page is that
+## path in the site, and $first the input path of the file that has it.
+
+same-page = has the same page, { $page }, as { $first }.
+
+## A file of the site that cannot be written. $reason is the operating
+## system's words.
+
+cannot-be-written = cannot be written: { $reason }
+
 ## What is wrong with the configuration file. $reason is the operating
 ## system's words, and $key a key as the file writes it.
 
@@ -62,3 +73,12 @@ config-unknown-key = ghg has no setting named { $key }.
 config-not-text = { $key } must be text, in quotes.
 config-not-boolean = { $key } must be true or false.
 config-empty = { $key } must not be empty.
+
+## A feature's page. $heading is the feature's keyword and name, and $path
+## the feature file's path below the input folder, both as written.
+
+page-title = { $heading }, { $path }
+page-contents = Contents
+collapse-all = Collapse all
+expand-all = Expand all
+source-link = Source: { $path }

@@ -23,40 +23,52 @@ pub(crate) fn parse_config(source: &str) -> Result<Config, Vec<ConfigProblem>> {
     let mut problems = Vec::new();
     for (key, value) in table.get_ref() {
         let name = key.get_ref().as_ref();
-        match name {
-            "input" => match text(value) {
+        let at = line(value.span().start);
+        let problem = |kind| ConfigProblem { line: at, kind };
+        let wrong_type = |expected| {
+            problem(ConfigProblemKind::WrongType {
+                key: name.to_string(),
+                expected,
+            })
+        };
+        let found = match name {
+            "input" | "output" | "source_link" => match text(value) {
                 // An empty path names nothing, and would report a line with no path.
-                Some("") => problems.push(ConfigProblem {
-                    line: line(value.span().start),
-                    kind: ConfigProblemKind::Empty {
-                        key: name.to_string(),
-                    },
-                }),
-                Some(text) => config.input = Some(PathBuf::from(text)),
-                None => problems.push(ConfigProblem {
-                    line: line(value.span().start),
-                    kind: ConfigProblemKind::WrongType {
-                        key: name.to_string(),
-                        expected: ValueType::Text,
-                    },
-                }),
+                Some("") => Err(problem(ConfigProblemKind::Empty {
+                    key: name.to_string(),
+                })),
+                Some(text) => {
+                    match name {
+                        "input" => config.input = Some(PathBuf::from(text)),
+                        "output" => config.output = Some(PathBuf::from(text)),
+                        _ => config.source_link = Some(text.to_string()),
+                    }
+                    Ok(())
+                }
+                None => Err(wrong_type(ValueType::Text)),
             },
-            "allow_unnamed" => match value.get_ref().as_bool() {
-                Some(allow) => config.allow_unnamed = Some(allow),
-                None => problems.push(ConfigProblem {
-                    line: line(value.span().start),
-                    kind: ConfigProblemKind::WrongType {
-                        key: name.to_string(),
-                        expected: ValueType::Boolean,
-                    },
-                }),
-            },
-            _ => problems.push(ConfigProblem {
+            "allow_unnamed" | "collapse_rules" | "collapse_scenarios" => {
+                match value.get_ref().as_bool() {
+                    Some(set) => {
+                        *match name {
+                            "allow_unnamed" => &mut config.allow_unnamed,
+                            "collapse_rules" => &mut config.collapse_rules,
+                            _ => &mut config.collapse_scenarios,
+                        } = Some(set);
+                        Ok(())
+                    }
+                    None => Err(wrong_type(ValueType::Boolean)),
+                }
+            }
+            _ => Err(ConfigProblem {
                 line: line(key.span().start),
                 kind: ConfigProblemKind::UnknownKey {
                     key: name.to_string(),
                 },
             }),
+        };
+        if let Err(found) = found {
+            problems.push(found);
         }
     }
     if problems.is_empty() {
@@ -153,6 +165,47 @@ mod tests {
                     expected: ValueType::Boolean
                 }
             )]
+        );
+    }
+
+    #[test]
+    fn the_keys_of_pages_are_read_as_written() {
+        let config = parse_config(
+            "output = \"out\"\nsource_link = \"https://x/{path}#L{line}\"\n\
+             collapse_rules = true\ncollapse_scenarios = false\n",
+        )
+        .expect("valid");
+        assert_eq!(config.output, Some(PathBuf::from("out")));
+        assert_eq!(
+            config.source_link.as_deref(),
+            Some("https://x/{path}#L{line}")
+        );
+        assert_eq!(config.collapse_rules, Some(true));
+        assert_eq!(config.collapse_scenarios, Some(false));
+        assert_eq!(
+            problems("output = 1\nsource_link = \"\"\ncollapse_rules = \"yes\"\n"),
+            [
+                (
+                    Some(1),
+                    ConfigProblemKind::WrongType {
+                        key: "output".into(),
+                        expected: ValueType::Text
+                    }
+                ),
+                (
+                    Some(2),
+                    ConfigProblemKind::Empty {
+                        key: "source_link".into()
+                    }
+                ),
+                (
+                    Some(3),
+                    ConfigProblemKind::WrongType {
+                        key: "collapse_rules".into(),
+                        expected: ValueType::Boolean
+                    }
+                ),
+            ]
         );
     }
 

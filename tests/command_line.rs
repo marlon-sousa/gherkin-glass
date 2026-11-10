@@ -1,8 +1,9 @@
 //! docs/BEHAVIOUR.md, "The command line and its configuration", checked by running `ghg`.
 
-use std::fs::{create_dir_all, remove_dir_all};
+use std::fs::{copy, create_dir_all, read_dir, read_to_string, remove_dir_all};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 fn fixture(name: &str) -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -10,13 +11,43 @@ fn fixture(name: &str) -> PathBuf {
         .join(name)
 }
 
-/// `ghg` with `arguments`, run in `folder`.
+/// `ghg` with `arguments`, run in `folder`. A folder of the fixtures is run
+/// in a copy of them, so that the site a build writes stays out of the
+/// repository.
 fn ghg(folder: &Path, arguments: &[&str]) -> Output {
+    let folder = in_a_copy(folder);
     Command::new(env!("CARGO_BIN_EXE_ghg"))
         .args(arguments)
         .current_dir(folder)
         .output()
         .expect("the command runs")
+}
+
+fn in_a_copy(folder: &Path) -> PathBuf {
+    static COPIES: AtomicUsize = AtomicUsize::new(0);
+    let fixtures = fixture("");
+    let Ok(inside) = folder.strip_prefix(&fixtures) else {
+        return folder.to_path_buf();
+    };
+    let copy = Path::new(env!("CARGO_TARGET_TMPDIR"))
+        .join("configuration")
+        .join(COPIES.fetch_add(1, Ordering::SeqCst).to_string());
+    let _ = remove_dir_all(&copy);
+    copy_folder(&fixtures, &copy);
+    copy.join(inside)
+}
+
+fn copy_folder(from: &Path, to: &Path) {
+    create_dir_all(to).expect("the folder is made");
+    for entry in read_dir(from).expect("the fixture is listed") {
+        let entry = entry.expect("the fixture is listed");
+        let path = entry.path();
+        if path.is_dir() {
+            copy_folder(&path, &to.join(entry.file_name()));
+        } else {
+            copy(&path, to.join(entry.file_name())).expect("the file is copied");
+        }
+    }
 }
 
 fn text(bytes: Vec<u8>) -> String {
@@ -51,6 +82,7 @@ fn help_lists_the_commands_and_options() {
             "build: ",
             "--config <file>: ",
             "--input <folder>: ",
+            "--output <folder>: ",
         ] {
             assert!(help.contains(expected), "{expected:?} in:\n{help}");
         }
@@ -105,7 +137,7 @@ fn each_mistake_on_the_command_line_is_one_sentence_and_status_2() {
     }
 }
 
-// The configuration file: rules 21 to 26.
+// The configuration file: rules 21 to 26, with the output of rule 38.
 
 #[test]
 fn the_file_s_input_is_read_relative_to_its_folder() {
@@ -140,6 +172,34 @@ fn a_ghg_toml_that_cannot_be_read_stops_the_run() {
     let report = report(ghg(&folder, &["build"]), 1);
     assert!(report.starts_with("ghg.toml: cannot be read: "), "{report}");
     assert_eq!(report.lines().count(), 1);
+}
+
+#[test]
+fn the_site_is_written_into_the_output_folder_the_option_or_the_file_names() {
+    // configured/ghg.toml sets no output, so its site is beside it, in site.
+    let folder = in_a_copy(&fixture("configured"));
+    let run = |arguments: &[&str]| {
+        Command::new(env!("CARGO_BIN_EXE_ghg"))
+            .args(arguments)
+            .current_dir(&folder)
+            .output()
+            .expect("the command runs")
+    };
+    assert_eq!(report(run(&["build"]), 0), "");
+    assert!(folder.join("site/read.html").is_file());
+    assert!(folder.join("site/assets/gherkin-glass.css").is_file());
+    assert_eq!(report(run(&["build", "--output", "elsewhere"]), 0), "");
+    assert!(folder.join("elsewhere/read.html").is_file());
+    // ci/ghg.toml's output, out, is relative to its own folder; its input
+    // is broken, so --input names the good one.
+    let output = run(&["build", "--config", "ci/ghg.toml", "--input", "specs"]);
+    assert_eq!(report(output, 0), "");
+    let page = read_to_string(folder.join("ci/out/read.html")).expect("the page is written");
+    // Rule 47: ci/ghg.toml's source_link.
+    assert!(
+        page.contains(r#"<a href="https://example.com/blob/main/specs/read.feature#L1">"#),
+        "{page}"
+    );
 }
 
 #[test]

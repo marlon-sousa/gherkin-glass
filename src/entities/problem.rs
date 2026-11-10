@@ -44,6 +44,13 @@ pub enum ProblemKind {
     /// Only while `allow_unnamed` is `false`.
     #[error("unnamed {block:?}")]
     Unnamed { block: UnnamedBlock },
+    /// `page` is the address both files would have, and `first` the path,
+    /// shown as a problem's is, of the file that has it.
+    #[error("has the same page, {page}, as {first}")]
+    SamePage { page: String, first: String },
+    /// A file of the site; `reason` is the operating system's.
+    #[error("cannot be written: {reason}")]
+    CannotBeWritten { reason: String },
 }
 
 /// The blocks that need a name while `allow_unnamed` is `false`.
@@ -57,6 +64,22 @@ pub enum UnnamedBlock {
 }
 
 impl Problem {
+    /// A problem with a file of the site, whose path is the output folder as
+    /// it was given, followed by the file's path in it.
+    pub(crate) fn of_site(output: &Path, file: &str, kind: ProblemKind) -> Self {
+        let output = output.display().to_string();
+        let path = if output.is_empty() || output.ends_with('/') {
+            format!("{output}{file}")
+        } else {
+            format!("{output}/{file}")
+        };
+        Problem {
+            path,
+            line: None,
+            kind,
+        }
+    }
+
     pub(crate) fn new(input: &Path, path: &Path, line: Option<usize>, kind: ProblemKind) -> Self {
         Problem {
             path: display_path(input, path),

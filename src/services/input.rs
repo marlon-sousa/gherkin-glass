@@ -6,7 +6,7 @@ use std::sync::Arc;
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 
 use crate::entities::{ParsedFeature, Problem, ProblemKind, Problems, Unnamed};
-use crate::policies::{correct_doc_strings, unnamed_blocks};
+use crate::policies::{correct_doc_strings, file_language, unnamed_blocks};
 use crate::ports::{FeatureParser, InputCollector};
 
 pub struct InputService {
@@ -69,7 +69,13 @@ impl InputService {
             }
         }
         let relative = path.strip_prefix(input).unwrap_or(path).to_path_buf();
-        Ok(ParsedFeature::new(relative, raw.feature, media_types))
+        let language = file_language(&raw.source);
+        Ok(ParsedFeature::new(
+            relative,
+            raw.feature,
+            language,
+            media_types,
+        ))
     }
 }
 

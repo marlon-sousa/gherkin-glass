@@ -1,2 +1,5 @@
 # Relative to this file's folder, so the features folder beside ci.
 input = "../features"
+# Relative to this file's folder too, so ci/out.
+output = "out"
+source_link = "https://example.com/blob/main/specs/{path}#L{line}"

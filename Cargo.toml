@@ -15,6 +15,7 @@ name = "ghg"
 path = "src/main.rs"
 
 [dependencies]
+askama = "0.16.1"
 gherkin = "0.16.0"
 i18n-embed = { version = "0.16.0", features = ["fluent-system"] }
 i18n-embed-fl = "0.10.1"

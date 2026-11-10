@@ -76,6 +76,15 @@ fn input_problem(problem: &Problem) -> String {
             UnnamedBlock::Scenario => fl!(CATALOGUE, "unnamed-scenario"),
             UnnamedBlock::ScenarioOutline => fl!(CATALOGUE, "unnamed-scenario-outline"),
         },
+        ProblemKind::SamePage { page, first } => fl!(
+            CATALOGUE,
+            "same-page",
+            page = page.as_str(),
+            first = first.as_str()
+        ),
+        ProblemKind::CannotBeWritten { reason } => {
+            fl!(CATALOGUE, "cannot-be-written", reason = reason.as_str())
+        }
     };
     line(&problem.path, problem.line, message)
 }

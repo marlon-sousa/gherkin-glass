@@ -10,11 +10,11 @@ use i18n_embed_fl::fl;
 use crate::entities::{BuildOptions, Invocation};
 use crate::policies::{CATALOGUE, parse_arguments};
 use crate::ports::ConfigReader;
-use crate::services::{InputService, SettingsService};
+use crate::services::{SettingsService, SiteService};
 
 pub struct CommandLine {
     settings: SettingsService,
-    input: InputService,
+    site: SiteService,
 }
 
 /// What a run prints, and the status it exits with.
@@ -28,10 +28,10 @@ pub struct Reply {
 }
 
 impl CommandLine {
-    pub fn new(config_reader: Arc<dyn ConfigReader>, input: InputService) -> Self {
+    pub fn new(config_reader: Arc<dyn ConfigReader>, site: SiteService) -> Self {
         CommandLine {
             settings: SettingsService::new(config_reader),
-            input,
+            site,
         }
     }
 
@@ -54,7 +54,7 @@ impl CommandLine {
             Ok(settings) => settings,
             Err(problems) => return Reply::failure(1, wording::config_problems(&problems)),
         };
-        match self.input.read(&settings.input, settings.unnamed) {
+        match self.site.build(&settings, &settings.output) {
             Ok(_) => Reply::success(String::new()),
             Err(problems) => Reply::failure(1, wording::problems(&problems)),
         }
@@ -95,7 +95,17 @@ mod tests {
 
     use super::*;
     use crate::entities::{CollectedInput, ParseFailure, ProblemKind, RawFeature};
-    use crate::ports::{FeatureParser, InputCollector};
+    use crate::ports::{FeatureParser, InputCollector, SiteWriter};
+    use crate::services::InputService;
+
+    /// Writes nothing; the parser fails every file before anything is written.
+    struct NoWriter;
+
+    impl SiteWriter for NoWriter {
+        fn write(&self, _output: &Path, _file: &str, _contents: &[u8]) -> IoResult<()> {
+            Ok(())
+        }
+    }
 
     /// Files held in memory; any other path is not found.
     struct FakeFiles(BTreeMap<PathBuf, String>);
@@ -142,8 +152,8 @@ mod tests {
             .map(|(path, text)| (PathBuf::from(path), text.to_string()))
             .collect();
         let input = InputService::new(Arc::new(FakeCollector), Arc::new(FailingParser));
-        CommandLine::new(Arc::new(FakeFiles(files)), input)
-            .run(arguments.iter().map(OsString::from))
+        let site = SiteService::new(input, Arc::new(NoWriter));
+        CommandLine::new(Arc::new(FakeFiles(files)), site).run(arguments.iter().map(OsString::from))
     }
 
     #[test]
