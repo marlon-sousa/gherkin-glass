@@ -33,8 +33,18 @@ Please do not open a pull request for a feature before its issue is agreed and i
 We work trunk-based: small pull requests straight to `main`, no long-lived branches.
 
 - **Name the issue.** Every pull request names an open issue of this repository: `Closes #N` when it finishes the issue, `Refs #N` when it contributes to it. A check refuses a pull request that names none.
-- **Stack large changes.** A change too large for one pull request becomes a chain of pull requests, each building on the one before, reviewed and merged in order. Each says `Refs #N`, and the last says `Closes #N`.
+- **Stack large changes.** A change too large for one pull request becomes a stack: a chain of pull requests, each building on the one before, reviewed and merged in order. Each says `Refs #N`, and the last says `Closes #N`. See "Stacked pull requests" below.
 - **Keep it focused.** One thing per pull request, described in plain prose: what changed and why.
+
+### Stacked pull requests
+
+A stack is a chain of pull requests, declared to GitHub as a stack so that it shows and merges as one (GitHub's stacked pull requests, the same ones the `gh stack` extension makes). Neither the `gh stack` extension nor anything else needs to be installed: the REST API does all of it.
+
+1. **Chain the branches.** The bottom layer's base is `main`; each layer above has the branch of the layer below as its base, such as `gh api repos/OWNER/REPO/pulls -f base=<branch below> -f head=<branch>`.
+2. **Declare the stack.** Once at least two layers exist, `POST /repos/OWNER/REPO/stacks` with the pull request numbers from bottom to top, `{"pull_requests": [12, 13]}`. A layer added later is appended with `POST /repos/OWNER/REPO/stacks/<stack number>/add`, giving only the new numbers, bottom to top. `GET /repos/OWNER/REPO/stacks?pull_request=<number>` finds the stack a pull request belongs to.
+3. **Say where each layer sits.** Each description says its place, such as "2 of 3", and what the layers below it already do.
+4. **Merge bottom up.** A layer is merged only after the layers below it.
+5. **Fix forward.** A change to a lower layer is merged up into the layers above it, never by rewriting their history.
 
 ### Commit messages
 
