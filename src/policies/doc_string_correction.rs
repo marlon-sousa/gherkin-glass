@@ -26,7 +26,7 @@ pub(crate) fn correct_doc_strings(
 }
 
 /// Of its background, its scenarios, and its rules' backgrounds and scenarios.
-fn steps_mut(feature: &mut Feature) -> impl Iterator<Item = &mut Step> {
+pub(super) fn steps_mut(feature: &mut Feature) -> impl Iterator<Item = &mut Step> {
     let Feature {
         background,
         scenarios,

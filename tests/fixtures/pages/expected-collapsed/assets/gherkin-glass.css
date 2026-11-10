@@ -76,6 +76,20 @@ h1, h2, h3, h4 {
   transform: rotate(90deg);
 }
 
+/* After `all: inherit`, which would take the heading's outline. */
+.ghg-toggle:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* Forced colours would make every border of the marker opaque, a box in either state. */
+@media (forced-colors: active) {
+  .ghg-toggle::before {
+    forced-color-adjust: none;
+    border-color: transparent transparent transparent ButtonText;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .ghg-toggle::before {
     transition: none;

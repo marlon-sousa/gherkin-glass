@@ -31,5 +31,11 @@ mod tests {
         assert_eq!(page_language("em"), "und");
         assert_eq!(page_language("gj"), "gu");
         assert_eq!(page_language("am"), "hy");
+        assert_eq!(page_language("bm"), "ms");
+        assert_eq!(page_language("lu"), "lb");
+        assert_eq!(page_language("en-old"), "ang");
+        assert_eq!(page_language("en-lol"), "en");
+        assert_eq!(page_language("en-tx"), "en");
+        assert_eq!(page_language("en-pirate"), "en-pirate");
     }
 }

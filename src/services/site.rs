@@ -1,13 +1,12 @@
 //! Service: building a site, from reading its input to writing its pages and assets.
 
-use std::collections::BTreeMap;
 use std::path::Path;
 use std::sync::Arc;
 
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 
-use crate::entities::{ParsedFeature, Problem, ProblemKind, Problems, Settings, SiteAssets};
-use crate::policies::{build_page, page_address, render_page};
+use crate::entities::{Problem, ProblemKind, Problems, Settings, SiteAssets};
+use crate::policies::{build_page, render_page};
 use crate::ports::SiteWriter;
 use crate::services::InputService;
 
@@ -21,13 +20,9 @@ impl SiteService {
         SiteService { input, writer }
     }
 
-    /// Reads `settings.input` and writes the site into `output`, any folder,
-    /// over what is there, deleting nothing. Nothing is written when the input
-    /// has a problem; a file that cannot be written stops the writing, and
-    /// leaves the files written before it.
+    /// Writes into `output`, any folder, over what is there, and only once the whole input is read.
     pub fn build(&self, settings: &Settings, output: &Path) -> Result<(), Problems> {
         let features = self.input.read(&settings.input, settings.unnamed)?;
-        same_pages(&settings.input, &features)?;
         // Collecting into a `Vec` keeps file order, whatever order the threads finish in.
         let pages: Vec<(String, String)> = features
             .par_iter()
@@ -58,35 +53,6 @@ impl SiteService {
                 })?;
         }
         Ok(())
-    }
-}
-
-/// Every file whose page another file, before it in path order, already has.
-fn same_pages(input: &Path, features: &[ParsedFeature]) -> Result<(), Problems> {
-    let mut first: BTreeMap<String, &Path> = BTreeMap::new();
-    let mut problems = Vec::new();
-    for parsed in features {
-        let page = page_address(&parsed.path);
-        match first.get(&page) {
-            Some(earlier) => problems.push(Problem::new(
-                input,
-                &input.join(&parsed.path),
-                None,
-                ProblemKind::SamePage {
-                    page,
-                    first: Problem::new(input, &input.join(earlier), None, ProblemKind::Changed)
-                        .path,
-                },
-            )),
-            None => {
-                first.insert(page, &parsed.path);
-            }
-        }
-    }
-    if problems.is_empty() {
-        Ok(())
-    } else {
-        Err(Problems::new(problems))
     }
 }
 
@@ -192,10 +158,10 @@ mod tests {
     fn files_with_the_same_page_are_reported_and_nothing_is_written() {
         let writer = Arc::new(FakeWriter::default());
         let problems =
-            build(vec!["a.feature", "a.story", "b"], writer.clone()).expect_err("the same page");
+            build(vec!["a.feature", "a.story", "A"], writer.clone()).expect_err("the same page");
         assert_eq!(
             problems.to_string(),
-            "a.story: has the same page, a.html, as a.feature\n"
+            "A: has the same page, A.html, as a.feature\na.story: has the same page, a.html, as a.feature\n"
         );
         assert!(writer.written.lock().expect("not poisoned").is_empty());
     }

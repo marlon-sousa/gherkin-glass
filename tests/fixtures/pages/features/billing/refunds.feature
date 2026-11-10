@@ -20,6 +20,7 @@ Feature: Refunds & <returns>
       """
     And a note is kept
       """
+
       Refunded in full.
         Indented.
       """

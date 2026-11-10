@@ -2,7 +2,7 @@
 
 use std::cmp::Ordering;
 use std::fmt::{Display, Formatter, Result as FmtResult};
-use std::path::{Component, Path};
+use std::path::{Component, MAIN_SEPARATOR, Path};
 
 use thiserror::Error;
 
@@ -68,7 +68,7 @@ impl Problem {
     /// it was given, followed by the file's path in it.
     pub(crate) fn of_site(output: &Path, file: &str, kind: ProblemKind) -> Self {
         let output = output.display().to_string();
-        let path = if output.is_empty() || output.ends_with('/') {
+        let path = if output.is_empty() || output.ends_with(['/', MAIN_SEPARATOR]) {
             format!("{output}{file}")
         } else {
             format!("{output}/{file}")
@@ -78,6 +78,11 @@ impl Problem {
             line: None,
             kind,
         }
+    }
+
+    /// `path` as a problem shows it: relative to `input`, with `/` between folders.
+    pub(crate) fn shown_path(input: &Path, path: &Path) -> String {
+        display_path(input, path)
     }
 
     pub(crate) fn new(input: &Path, path: &Path, line: Option<usize>, kind: ProblemKind) -> Self {

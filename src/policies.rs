@@ -1,4 +1,4 @@
-//! Policy: the pure decisions of reading the input, of how a build is run, and of the anchors.
+//! Policy: the pure decisions of reading the input, of how a build is run, of the anchors, and of the pages.
 
 mod anchor_rule;
 mod argument_parsing;
@@ -12,6 +12,7 @@ mod page_building;
 mod page_language;
 mod page_rendering;
 mod settings_resolution;
+mod step_keyword_correction;
 mod unnamed_blocks;
 
 pub use anchor_rule::make_anchors;
@@ -26,4 +27,5 @@ pub(crate) use page_building::build_page;
 pub(crate) use page_language::page_language;
 pub(crate) use page_rendering::render_page;
 pub(crate) use settings_resolution::{config_folder, resolve_settings};
+pub(crate) use step_keyword_correction::correct_step_keywords;
 pub(crate) use unnamed_blocks::unnamed_blocks;

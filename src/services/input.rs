@@ -1,12 +1,15 @@
 //! Service: reading the input, the collect and parse steps of a build.
 
-use std::path::Path;
+use std::collections::BTreeMap;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 
 use crate::entities::{ParsedFeature, Problem, ProblemKind, Problems, Unnamed};
-use crate::policies::{correct_doc_strings, file_language, unnamed_blocks};
+use crate::policies::{
+    correct_doc_strings, correct_step_keywords, file_language, page_address, unnamed_blocks,
+};
 use crate::ports::{FeatureParser, InputCollector};
 
 pub struct InputService {
@@ -20,11 +23,13 @@ impl InputService {
     }
 
     /// The features under `input`, sorted by path, or every problem found:
-    /// those met while collecting, those of every file parsed, and, when
-    /// `unnamed` is refused, every block that needs a name and has none.
+    /// those met while collecting, the files whose page another has, those
+    /// of every file parsed, and, when `unnamed` is refused, every block
+    /// that needs a name and has none.
     pub fn read(&self, input: &Path, unnamed: Unnamed) -> Result<Vec<ParsedFeature>, Problems> {
         let collected = self.collector.collect(input);
         let mut problems = collected.problems;
+        problems.extend(same_pages(input, &collected.paths));
         // Collecting into a `Vec` keeps file order, whatever order the threads finish in.
         let results: Vec<_> = collected
             .paths
@@ -69,6 +74,7 @@ impl InputService {
             }
         }
         let relative = path.strip_prefix(input).unwrap_or(path).to_path_buf();
+        correct_step_keywords(&mut raw.feature, &raw.source);
         let language = file_language(&raw.source);
         Ok(ParsedFeature::new(
             relative,
@@ -77,6 +83,32 @@ impl InputService {
             media_types,
         ))
     }
+}
+
+/// Every file whose page, compared without regard to case, since some file
+/// systems do not, an earlier file in path order already has.
+fn same_pages(input: &Path, paths: &[PathBuf]) -> Vec<Problem> {
+    let mut first: BTreeMap<String, &Path> = BTreeMap::new();
+    let mut problems = Vec::new();
+    for path in paths {
+        let relative = path.strip_prefix(input).unwrap_or(path);
+        let page = page_address(relative);
+        match first.get(&page.to_lowercase()) {
+            Some(earlier) => problems.push(Problem::new(
+                input,
+                path,
+                None,
+                ProblemKind::SamePage {
+                    page,
+                    first: Problem::shown_path(input, earlier),
+                },
+            )),
+            None => {
+                first.insert(page.to_lowercase(), path);
+            }
+        }
+    }
+    problems
 }
 
 #[cfg(test)]

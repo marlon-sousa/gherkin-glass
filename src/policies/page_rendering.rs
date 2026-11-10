@@ -13,7 +13,6 @@ struct FeatureTemplate<'a> {
     /// From the page back to the site's root, for the shared assets.
     root: String,
     page: &'a Page,
-    /// Rendered already, since a block holds blocks.
     blocks: String,
 }
 

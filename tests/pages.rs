@@ -125,22 +125,25 @@ fn the_page_s_lang_is_its_file_s_language_as_a_tag() {
             .to_string()
     };
     assert_eq!(lang("billing/refunds.html"), "en");
-    assert_eq!(lang("em-portugues.html"), "pt");
+    assert_eq!(lang("saque em conta poupança.html"), "pt");
     assert_eq!(lang("emoji.html"), "und");
 }
 
 // Rule 37.
 
 #[test]
-fn two_files_with_the_same_page_stop_the_build() {
+fn two_files_with_the_same_page_stop_the_build_with_the_files_that_cannot_be_read() {
     let written = output("same-page");
     let result = build(
         &fixtures().join("same-page"),
         &["--input", ".", "--output", written.to_str().expect("UTF-8")],
     );
+    // Names that differ only in case cannot share a folder in a checkout on
+    // every system, so the service's own tests check them.
     assert_eq!(
         String::from_utf8_lossy(&result.stderr),
-        "a.story: has the same page, a.html, as a.feature.\n"
+        "a.story: has the same page, a.html, as a.feature.\n\
+         broken.feature:1: Unknown keyword: 'not a feature'.\n"
     );
     assert_eq!(result.status.code(), Some(1));
     assert!(!written.exists(), "nothing is written");
