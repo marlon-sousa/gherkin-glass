@@ -22,7 +22,7 @@ Please do not open a pull request for a feature before its issue is agreed and i
 ## The documents
 
 - **[docs/BEHAVIOUR.md](docs/BEHAVIOUR.md)** is what the tool promises, in terms a test can observe: the command line, the configuration, the pages and their addresses, the anchor rule, the reader options and the accessibility guarantees. A feature is written here, in a pull request of its own, before it is built. When we say "the spec", we mean this document.
-- **[docs/design/](docs/design/)** holds short design notes, `NNNN-title.md`, written only when a decision is not obvious from the code, such as how a reader option works without JavaScript. Each says what was decided, what else was considered and why.
+- **[docs/design/](docs/design/)** holds short design notes, `NNNN-title.md`, written only when a decision is not obvious from the code, such as how a collapsed block stays reachable by heading. Each says what was decided, what else was considered and why.
 
 ## Fixtures
 
