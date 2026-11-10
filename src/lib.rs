@@ -6,6 +6,9 @@
 //! the third; [`SiteService`] runs the whole build, writing each feature's
 //! page; [`PreviewService`] previews a site, built and served; and
 //! [`CommandLine`] is the `ghg` command, configured by `ghg.toml`.
+//! the third, as [`highlight_step`] splits a step into the parts its highlighting
+//! tells apart; [`theme_stylesheet`] writes the themes' colours, part of the
+//! fourth; and [`CommandLine`] is the `ghg` command, configured by `ghg.toml`.
 
 #![warn(unreachable_pub)]
 
@@ -32,3 +35,9 @@ pub use ports::{
     SiteWriter, Terminal,
 };
 pub use services::{InputService, PreviewService, SiteService};
+    Accents, Anchors, CollectedInput, Colour, HighlightedStep, ParseFailure, ParsedFeature,
+    Problem, ProblemKind, Problems, RawFeature, StepPart, Unnamed, UnnamedBlock,
+};
+pub use policies::{DEFAULT_ACCENTS, highlight_step, make_anchors, theme_stylesheet};
+pub use ports::{ConfigReader, FeatureParser, InputCollector};
+pub use services::InputService;

@@ -326,3 +326,33 @@ fn unnamed_blocks_are_allowed_by_default_and_when_allow_unnamed_is_true() {
     let output = ghg(&folder, &["build", "--config", "allowed.toml"]);
     assert_eq!(report(output, 0), NO_TITLE);
 }
+
+// Highlighting and themes: rules 45 and 46.
+
+#[test]
+fn accents_that_reach_7_to_1_build() {
+    let output = ghg(&fixture("accents"), &["build"]);
+    assert_eq!(report(output, 0), "");
+}
+
+#[test]
+fn an_accent_must_be_a_colour_in_hexadecimal() {
+    let output = ghg(&fixture("not-colour"), &["build"]);
+    assert_eq!(
+        report(output, 1),
+        "ghg.toml:1: accent_light must be a colour in hexadecimal, in quotes, such as \"#0b4f9c\".\n\
+         ghg.toml:2: accent_dark must be a colour in hexadecimal, in quotes, such as \"#0b4f9c\".\n"
+    );
+}
+
+#[test]
+fn an_accent_short_of_7_to_1_names_the_colour_the_theme_and_the_ratio() {
+    let output = ghg(&fixture("faint-accents"), &["build"]);
+    assert_eq!(
+        report(output, 1),
+        "ghg.toml:2: accent_light is #8cc4ff, which reaches only 1.63:1 against the light \
+         theme's background #f2f2f2. It needs at least 7:1.\n\
+         ghg.toml:4: accent_dark is #0b4f9c, which reaches only 1.97:1 against the dark \
+         theme's background #222222. It needs at least 7:1.\n"
+    );
+}

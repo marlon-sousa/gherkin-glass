@@ -5,6 +5,8 @@ use std::path::PathBuf;
 use crate::entities::TagLink;
 
 /// Each value is `None` when the file does not set it.
+use crate::entities::Colour;
+
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub(crate) struct Config {
     /// Relative to the configuration file's folder.
@@ -19,4 +21,6 @@ pub(crate) struct Config {
     pub(crate) show_tree: Option<bool>,
     pub(crate) inline_backgrounds: Option<bool>,
     pub(crate) tag_links: Option<Vec<TagLink>>,
+    pub(crate) accent_light: Option<Colour>,
+    pub(crate) accent_dark: Option<Colour>,
 }

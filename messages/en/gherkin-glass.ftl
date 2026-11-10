@@ -207,3 +207,11 @@ tag-no-scenario = None of its scenarios carries the tag.
 tag-through-examples = { $scenario }, through its examples
 tag-through-rule = { $scenario }, through its rule
 tag-through-feature = { $scenario }, through its feature
+config-not-colour = { $key } must be a colour in hexadecimal, in quotes, such as "#0b4f9c".
+
+## An accent colour that does not reach 7:1 against one of its theme's
+## backgrounds. $colour and $background are colours in hexadecimal, such as
+## #0b4f9c, and $ratio is the ratio reached, rounded down, such as 4.47.
+
+config-accent-light-contrast = { $key } is { $colour }, which reaches only { $ratio }:1 against the light theme's background { $background }. It needs at least 7:1.
+config-accent-dark-contrast = { $key } is { $colour }, which reaches only { $ratio }:1 against the dark theme's background { $background }. It needs at least 7:1.

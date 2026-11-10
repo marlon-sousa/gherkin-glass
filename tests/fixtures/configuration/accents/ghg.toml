@@ -1,0 +1,3 @@
+# Both accents, one in capitals and one with three digits.
+accent_light = "#5A1E8C"
+accent_dark = "#fc8"

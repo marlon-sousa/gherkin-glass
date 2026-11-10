@@ -1,0 +1,4 @@
+# Each accent is the other theme's default.
+accent_light = "#8cc4ff"
+
+accent_dark = "#0b4f9c"

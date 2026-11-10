@@ -2,6 +2,8 @@
 
 use thiserror::Error;
 
+use crate::entities::AccentShortfall;
+
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) struct ConfigProblem {
     pub(crate) line: Option<usize>,
@@ -37,6 +39,11 @@ pub(crate) enum ConfigProblemKind {
     /// `group` is a number or a name, as the replacement writes it.
     #[error("{key} names no group {group}")]
     UnknownGroup { key: String, group: String },
+    #[error("{key} reaches {} hundredths", shortfall.hundredths)]
+    TooLittleContrast {
+        key: String,
+        shortfall: AccentShortfall,
+    },
 }
 
 /// The kinds of value a key takes.
@@ -44,4 +51,6 @@ pub(crate) enum ConfigProblemKind {
 pub(crate) enum ValueType {
     Text,
     Boolean,
+    /// Text naming a colour, such as `"#0b4f9c"`.
+    Colour,
 }

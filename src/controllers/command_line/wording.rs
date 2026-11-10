@@ -4,6 +4,7 @@ use i18n_embed_fl::fl;
 
 use crate::entities::{
     ArgumentProblem, ConfigProblemKind, ListenFailure, Problem, ProblemKind, Problems,
+    AccentShortfall, ArgumentProblem, ConfigProblemKind, Problem, ProblemKind, Problems, Theme,
     UnnamedBlock, ValueType,
 };
 use crate::policies::CATALOGUE;
@@ -188,6 +189,41 @@ fn config_message(kind: &ConfigProblemKind) -> String {
             "config-unknown-group",
             key = key.as_str(),
             group = group.as_str()
+        ConfigProblemKind::WrongType {
+            key,
+            expected: ValueType::Colour,
+        } => fl!(CATALOGUE, "config-not-colour", key = key.as_str()),
+        ConfigProblemKind::TooLittleContrast { key, shortfall } => {
+            too_little_contrast(key, shortfall)
+        }
+    }
+}
+
+/// The colours and the ratio are passed as text, so that Fluent never formats them.
+fn too_little_contrast(key: &str, shortfall: &AccentShortfall) -> String {
+    let colour = shortfall.accent.to_string();
+    let background = shortfall.background.to_string();
+    let ratio = format!(
+        "{}.{:02}",
+        shortfall.hundredths / 100,
+        shortfall.hundredths % 100
+    );
+    match shortfall.theme {
+        Theme::Light => fl!(
+            CATALOGUE,
+            "config-accent-light-contrast",
+            key = key,
+            colour = colour,
+            ratio = ratio,
+            background = background
+        ),
+        Theme::Dark => fl!(
+            CATALOGUE,
+            "config-accent-dark-contrast",
+            key = key,
+            colour = colour,
+            ratio = ratio,
+            background = background
         ),
     }
 }

@@ -1,9 +1,11 @@
 //! Policy: the pure decisions of reading the input, of how a build is run, of the anchors, of the pages, the folder pages and the folder tree, and of which changes ghg serve rebuilds for.
+//! Policy: the pure decisions of reading the input, of how a build is run, of the anchors, and of highlighting and themes.
 
 mod anchor_rule;
 mod argument_parsing;
 mod breadcrumb_trail;
 mod config_parsing;
+mod contrast;
 mod doc_string_correction;
 mod file_language;
 mod file_selection;
@@ -23,6 +25,9 @@ mod step_keyword_correction;
 mod tag_linking;
 mod tag_naming;
 mod tag_pages;
+mod step_highlighting;
+mod theme_stylesheet;
+mod themes;
 mod unnamed_blocks;
 
 pub use anchor_rule::make_anchors;
@@ -30,6 +35,9 @@ pub(crate) use anchor_rule::{anchor_of, unique};
 pub(crate) use argument_parsing::parse_arguments;
 pub(crate) use breadcrumb_trail::breadcrumb;
 pub(crate) use config_parsing::parse_config;
+#[cfg(test)]
+pub(crate) use contrast::PART_CONTRAST;
+pub(crate) use contrast::{TEXT_CONTRAST, contrast_ratio, hundredths};
 pub(crate) use doc_string_correction::correct_doc_strings;
 pub(crate) use file_language::file_language;
 pub(crate) use file_selection::{FileSelection, IGNORE_FILE, parse_rules};
@@ -51,4 +59,8 @@ pub(crate) use step_keyword_correction::correct_step_keywords;
 pub(crate) use tag_linking::{PatternProblem, outside_link, unknown_group, whole_tag_pattern};
 pub(crate) use tag_naming::{name_tags, tag_index_address, tags_of};
 pub(crate) use tag_pages::{build_tag_index, build_tag_page, tag_pages_language};
+pub use step_highlighting::highlight_step;
+pub use theme_stylesheet::theme_stylesheet;
+pub use themes::DEFAULT_ACCENTS;
+pub(crate) use themes::{check_accent, palette};
 pub(crate) use unnamed_blocks::unnamed_blocks;
