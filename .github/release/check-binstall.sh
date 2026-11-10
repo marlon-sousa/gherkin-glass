@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Checks the archives of a release, and what Cargo.toml tells cargo binstall
-# about them, against docs/BEHAVIOUR.md, "Releases", rules 37 and 44: there is
+# about them, against docs/BEHAVIOUR.md, "Releases", rules 130 and 137: there is
 # one archive for each of the five targets, and for each target the address
 # [package.metadata.binstall] gives is that archive's on the release of the
 # tag, with every binary at the archive's root.

@@ -96,7 +96,7 @@ Once the pull request has merged, a maintainer runs `cargo publish --dry-run --l
 The release workflow, `.github/workflows/release.yml`, then runs these jobs. Publishing to crates.io waits for all the others before it, and the GitHub release waits for crates.io:
 
 1. **release gate** refuses the tag unless it is `v` and the version in `Cargo.toml`, its commit is on `main`, and `CHANGELOG.md` has notes for the version;
-2. **checks** runs the checks of `.github/workflows/rust.yml`, the formatting, the lints and the tests, again on the tagged commit, since their run on `main` after a merge blocks nothing;
+2. **checks** runs every check of `.github/workflows/rust.yml`, the formatting, the lints, the tests, the script's checks and the browser check, again on the tagged commit, since their run on `main` after a merge blocks nothing;
 3. **release tools** tries the release gate, the changelog template and the archive check against their fixtures;
 4. **builds**, one for each platform: Linux on x86-64 and ARM64, statically linked with musl; macOS on Apple silicon and on Intel, both built on Apple silicon; and Windows on x86-64, with the C runtime linked in. Each checks its binaries need nothing installed, packs them with the licence files, and checks the archive;
 5. **archives** checks there is one archive for each platform where `cargo binstall` looks for it, and writes `SHA256SUMS` and checks the archives against it;

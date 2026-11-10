@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Checks a built binary against docs/BEHAVIOUR.md, "Releases", rule 40: it
+# Checks a built binary against docs/BEHAVIOUR.md, "Releases", rule 133: it
 # needs nothing installed beyond what every system of its kind has. When it
 # is ghg and the machine running the check can run it, `ghg --version` is run
 # too, and must print ghg and the version.

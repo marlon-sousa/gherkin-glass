@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Refuses a tag that may not become a release, as docs/BEHAVIOUR.md,
-# "Releases", rule 36, says: the tag must be "v" and the version in
+# "Releases", rule 129, says: the tag must be "v" and the version in
 # Cargo.toml, its commit must be on main, and CHANGELOG.md must have notes for
 # the version. Every reason is reported, not only the first.
 # Usage: gate.sh <tag> <commit>

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Checks a release archive against docs/BEHAVIOUR.md, "Releases", rules 37
-# and 38: its name, and that it holds every binary the package declares and
+# Checks a release archive against docs/BEHAVIOUR.md, "Releases", rules 130
+# and 131: its name, and that it holds every binary the package declares and
 # the licence files at its root, and nothing else.
 # Usage: check-archive.sh <archive> <tag> <target>
 # Run from the repository's root.

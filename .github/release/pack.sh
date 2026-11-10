@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Packs the binaries built for one target into its release archive, named and
-# filled as docs/BEHAVIOUR.md, "Releases", rules 37 and 38, say.
+# filled as docs/BEHAVIOUR.md, "Releases", rules 130 and 131, say.
 # Usage: pack.sh <tag> <target> <folder to write the archive in>
 # Run from the repository's root, after cargo build --release --target <target>.
 set -euo pipefail

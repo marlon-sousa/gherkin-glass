@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Checks check-archive.sh against docs/BEHAVIOUR.md, "Releases", rules 37 and
-# 38, with archives the test makes: one named and filled as the rules say,
+# Checks check-archive.sh against docs/BEHAVIOUR.md, "Releases", rules 130 and
+# 131, with archives the test makes: one named and filled as the rules say,
 # which must pass, and others that break them, which must fail.
 # Needs cargo, jq and tar. Run from the repository's root.
 set -euo pipefail
