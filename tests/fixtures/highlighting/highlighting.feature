@@ -12,7 +12,8 @@ Feature: Highlighting
 
   Scenario: Numbers
     Then the balance is -3.5, then 1.000,50 or $7 on 2026-11-10.
-    And R2D2 is 3rd in v1.2, x_1 and item-4
+    And R2D2 is 3rd in v1.2, 2.x, x_1 and item-4
+    And the quote in "a\\" b" closes after b
 
   Scenario: Not an outline
     Given <amount> is plain here
@@ -24,3 +25,8 @@ Feature: Highlighting
     Examples:
       | amount | currency |
       | 10     | EUR      |
+
+  Rule: Steps inside a rule
+
+    Scenario: In a rule
+      Given 2 "items"

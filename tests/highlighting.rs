@@ -32,7 +32,16 @@ fn steps(path: &str) -> Vec<String> {
     for step in feature.background.iter().flat_map(|found| &found.steps) {
         add(step, None);
     }
-    for scenario in &feature.scenarios {
+    let rules = feature.rules.iter();
+    let backgrounds = rules.clone().filter_map(|rule| rule.background.as_ref());
+    let scenarios = feature
+        .scenarios
+        .iter()
+        .chain(rules.flat_map(|rule| &rule.scenarios));
+    for step in backgrounds.flat_map(|found| &found.steps) {
+        add(step, None);
+    }
+    for scenario in scenarios {
         for step in &scenario.steps {
             add(step, Some(scenario));
         }
@@ -70,11 +79,13 @@ fn every_part_highlighting_finds_and_nothing_else() {
             r#"{*} the customer's 'name' is plain"#,
             // Rule 40.
             "{Then} the balance is {#-3.5}, then {#1.000,50} or ${#7} on {#2026}-{#11}-{#10}.",
-            "{And} R2D2 is 3rd in v1.2, x_1 and item-{#4}",
+            "{And} R2D2 is 3rd in v1.2, 2.x, x_1 and item-{#4}",
+            r#"{And} the quote in {"a\\" b"} closes after b"#,
             "{Given} <amount> is plain here",
             // Rule 39.
             r#"{Given} {<amount>} in {"{<currency>} 3"} and <unknown>"#,
             "{When} the customer asks for < {#5} >",
+            r#"{Given} {#2} {"items"}"#,
         ]
     );
 }

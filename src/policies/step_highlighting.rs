@@ -3,6 +3,7 @@
 use std::collections::HashSet;
 
 use gherkin::{Scenario, Step};
+use unicode_normalization::char::is_combining_mark;
 
 use crate::entities::{HighlightedStep, StepPart};
 
@@ -63,30 +64,26 @@ impl Parts {
     }
 }
 
-/// Rule 39: the end, past its closing quote, of a quoted parameter opening at `at`.
+/// Rule 38: the end, past its closing quote, of a quoted parameter opening at `at`.
 fn parameter_end(chars: &[char], at: usize) -> Option<usize> {
-    if chars[at] != '"' || (at > 0 && chars[at - 1] == '\\') {
+    let quote = |index: usize| chars[index] == '"' && (index == 0 || chars[index - 1] != '\\');
+    if !quote(at) {
         return None;
     }
-    let mut index = at + 1;
-    while index < chars.len() {
-        match chars[index] {
-            '\\' => index += 2,
-            '"' => return Some(index + 1),
-            _ => index += 1,
-        }
-    }
-    None
+    (at + 1..chars.len())
+        .find(|&index| quote(index))
+        .map(|index| index + 1)
 }
 
-/// Rule 40: the end, past its `>`, of a placeholder naming one of `columns`, opening at `at`.
+/// Rule 39: the end, past its `>`, of a placeholder naming one of `columns`, opening at `at`.
 fn placeholder_end(chars: &[char], at: usize, columns: &HashSet<&str>) -> Option<usize> {
     if chars[at] != '<' {
         return None;
     }
     let close = at + 1 + chars[at + 1..].iter().position(|&c| c == '<' || c == '>')?;
     let name: String = chars[at + 1..close].iter().collect();
-    (chars[close] == '>' && columns.contains(name.as_str())).then_some(close + 1)
+    (chars[close] == '>' && !name.is_empty() && columns.contains(name.as_str()))
+        .then_some(close + 1)
 }
 
 fn placeholders_in(chars: &[char], columns: &HashSet<&str>) -> Vec<StepPart> {
@@ -104,7 +101,7 @@ fn placeholders_in(chars: &[char], columns: &HashSet<&str>) -> Vec<StepPart> {
     parts.0
 }
 
-/// Rule 41: the end of a number starting at `at`, which stands apart from any word.
+/// Rule 40: the end of a number starting at `at`, which stands apart from any word.
 fn number_end(chars: &[char], at: usize) -> Option<usize> {
     if at > 0 && in_word(chars[at - 1]) {
         return None;
@@ -121,11 +118,15 @@ fn number_end(chars: &[char], at: usize) -> Option<usize> {
             index += 1;
         }
         let separator = chars.get(index).is_some_and(|&c| c == '.' || c == ',');
-        if separator && chars.get(index + 1).is_some_and(char::is_ascii_digit) {
-            index += 1;
-        } else {
+        let after = chars.get(index + 1).copied();
+        if !separator || !after.is_some_and(in_word) {
             break;
         }
+        // A point or comma between a digit and a letter makes one word, such as `2.x`.
+        if !after.is_some_and(|c| c.is_ascii_digit()) {
+            return None;
+        }
+        index += 1;
     }
     (!chars.get(index).copied().is_some_and(in_word)).then_some(index)
 }
@@ -151,7 +152,7 @@ fn word_end(chars: &[char], at: usize) -> usize {
 }
 
 fn in_word(c: char) -> bool {
-    c.is_alphanumeric() || c == '_'
+    c.is_alphanumeric() || is_combining_mark(c) || c == '_'
 }
 
 #[cfg(test)]
@@ -161,8 +162,8 @@ mod tests {
     use super::*;
     use StepPart::{Number, Parameter, Placeholder, Plain};
 
-    /// The steps of the first scenario of a feature whose first scenario has
-    /// `steps` and, when `columns` is not empty, examples with those columns.
+    /// The parts of `step`, as the only step of a scenario with examples whose
+    /// columns are `columns`, or of one without examples when there are none.
     fn highlight(step: &str, columns: &[&str]) -> Vec<StepPart> {
         let mut source = format!("Feature: F\n  Scenario: S\n    Given {step}\n");
         if !columns.is_empty() {
@@ -254,6 +255,10 @@ mod tests {
             ]
         );
         assert_eq!(highlight("٣ apples", &[]), [plain("٣ apples")]);
+        assert_eq!(
+            highlight("2.x, 10.5.x, 1,a and e\u{301}5 or 5\u{301}", &[]),
+            [plain("2.x, 10.5.x, 1,a and e\u{301}5 or 5\u{301}")]
+        );
     }
 
     #[test]
@@ -272,6 +277,7 @@ mod tests {
                 plain(" >"),
             ]
         );
+        assert_eq!(highlight("<> and <x>", &["", "x"])[0], plain("<> and "));
         assert_eq!(
             highlight("<a<amount>>", &["amount"]),
             [plain("<a"), Placeholder("<amount>".into()), plain(">")]
@@ -307,6 +313,34 @@ mod tests {
         assert_eq!(
             highlight_step(&scenario.steps[0], Some(scenario)).parts,
             [plain("<amount>")]
+        );
+    }
+
+    #[test]
+    fn a_word_with_a_point_or_a_mark_in_it_has_no_number() {
+        assert_eq!(
+            highlight("2.x, 10.5.x, 1,a and e\u{301}5 or 5\u{301}", &[]),
+            [plain("2.x, 10.5.x, 1,a and e\u{301}5 or 5\u{301}")]
+        );
+    }
+
+    #[test]
+    fn a_quote_after_a_backslash_never_closes_a_parameter() {
+        assert_eq!(
+            highlight(r#"x "a\\" b" c"#, &[]),
+            [
+                plain("x "),
+                Parameter(vec![plain(r#""a\\" b""#)]),
+                plain(" c")
+            ]
+        );
+    }
+
+    #[test]
+    fn an_empty_name_is_no_placeholder() {
+        assert_eq!(
+            highlight("<> and <x>", &["", "x"]),
+            [plain("<> and "), Placeholder("<x>".into())]
         );
     }
 }

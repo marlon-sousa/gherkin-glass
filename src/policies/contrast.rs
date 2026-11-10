@@ -58,7 +58,7 @@ mod tests {
     }
 
     #[test]
-    fn known_ratios_agree_with_wcag_s_own_examples() {
+    fn known_greys_reach_their_well_known_ratios_on_white() {
         // #767676 on white is the lightest grey that reaches 4.5:1, and #595959 7:1.
         assert_eq!(
             hundredths(contrast_ratio(Colour::new(0x76, 0x76, 0x76), WHITE)),
