@@ -1,5 +1,4 @@
-// The service of src/services/collapsing.ts, with fake ports shaped as
-// tests/fixtures/pages/expected/billing/refunds.html is: docs/BEHAVIOUR.md, rules 51 to 55.
+// The service of src/services/collapsing.ts, with fake ports: docs/BEHAVIOUR.md, rules 51 to 55.
 
 import assert from "node:assert/strict";
 import { test } from "node:test";

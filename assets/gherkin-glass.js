@@ -28,9 +28,9 @@ var DomPage = class {
     const byElement = /* @__PURE__ */ new Map();
     for (const element of document2.querySelectorAll(".ghg-block")) {
       const heading = element.querySelector(":scope > :is(h2, h3, h4)");
-      const button = heading?.querySelector(":scope > .ghg-toggle");
+      const button = heading?.querySelector(":scope > button.ghg-toggle");
       const content = element.querySelector(":scope > .ghg-content");
-      if (!(heading instanceof HTMLElement && button instanceof HTMLButtonElement && content instanceof HTMLElement)) {
+      if (!heading || !button || !content) {
         continue;
       }
       const around = element.parentElement?.closest(".ghg-block");
@@ -66,7 +66,11 @@ var DomPage = class {
       }
     });
     this.document.addEventListener("click", (event) => {
-      const link = event.target instanceof Element ? event.target.closest("a[href^='#']") : null;
+      if (event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) {
+        return;
+      }
+      const target = event.target;
+      const link = typeof target?.closest === "function" ? target.closest("a[href^='#']") : null;
       const anchor = link ? anchorOf(link.getAttribute("href") ?? "") : null;
       if (anchor !== null) {
         handler(anchor);

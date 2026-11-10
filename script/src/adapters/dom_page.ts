@@ -33,10 +33,10 @@ export class DomPage implements Page {
     this.document = document;
     const byElement = new Map<Element, DomBlock>();
     for (const element of document.querySelectorAll(".ghg-block")) {
-      const heading = element.querySelector(":scope > :is(h2, h3, h4)");
-      const button = heading?.querySelector(":scope > .ghg-toggle");
-      const content = element.querySelector(":scope > .ghg-content");
-      if (!(heading instanceof HTMLElement && button instanceof HTMLButtonElement && content instanceof HTMLElement)) {
+      const heading = element.querySelector<HTMLElement>(":scope > :is(h2, h3, h4)");
+      const button = heading?.querySelector<HTMLButtonElement>(":scope > button.ghg-toggle");
+      const content = element.querySelector<HTMLElement>(":scope > .ghg-content");
+      if (!heading || !button || !content) {
         continue;
       }
       const around = element.parentElement?.closest(".ghg-block");
@@ -79,7 +79,12 @@ export class DomPage implements Page {
     });
     // A link to the anchor already in the address changes nothing, so it is caught as it is followed.
     this.document.addEventListener("click", (event) => {
-      const link = event.target instanceof Element ? event.target.closest("a[href^='#']") : null;
+      // A click that opens another tab or window, or that a script stopped, changes nothing here.
+      if (event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) {
+        return;
+      }
+      const target = event.target as Element | null;
+      const link = typeof target?.closest === "function" ? target.closest("a[href^='#']") : null;
       const anchor = link ? anchorOf(link.getAttribute("href") ?? "") : null;
       if (anchor !== null) {
         handler(anchor);

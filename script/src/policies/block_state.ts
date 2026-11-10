@@ -3,12 +3,10 @@
 const EXPANDED = "expanded";
 const COLLAPSED = "collapsed";
 
-/** The key a block's remembered state is kept under, by page and anchor. */
 export function memoryKey(pagePath: string, anchor: string): string {
   return `gherkin-glass:${pagePath}#${anchor}`;
 }
 
-/** What is kept for a block's state. */
 export function remembered(expanded: boolean): string {
   return expanded ? EXPANDED : COLLAPSED;
 }

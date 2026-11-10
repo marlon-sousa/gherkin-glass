@@ -25,6 +25,7 @@ in the way it was paid.</p>
 <li><a href="#refunds-after-thirty-days">Rule: Refunds after thirty days</a>
 <ul>
 <li><a href="#store-credit">Example: Store credit</a></li>
+<li><a href="#refund-again-count-times">Scenario Outline: Refund again &#60;count&#62; times</a></li>
 </ul></li>
 <li><a href="#rule">Rule</a>
 <ul>
@@ -136,6 +137,27 @@ Refunded in full.
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">Then </span>store credit is given</li>
 </ol>
+</div>
+</div>
+<div class="ghg-block ghg-scenario">
+<h3 id="refund-again-count-times"><button type="button" class="ghg-toggle" aria-expanded="false">Scenario Outline: Refund again &#60;count&#62; times</button></h3>
+<div class="ghg-content" hidden>
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>&#60;count&#62; refunds</li>
+</ol>
+<div class="ghg-block ghg-examples">
+<h4 id="again"><button type="button" class="ghg-toggle" aria-expanded="true">Examples: Again</button></h4>
+<div class="ghg-content">
+<table class="ghg-table">
+<thead>
+<tr><th scope="col">count</th></tr>
+</thead>
+<tbody>
+<tr><td>2</td></tr>
+</tbody>
+</table>
+</div>
+</div>
 </div>
 </div>
 </div>

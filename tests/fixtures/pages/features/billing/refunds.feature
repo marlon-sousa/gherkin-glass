@@ -48,6 +48,13 @@ Feature: Refunds & <returns>
     Example: Store credit
       Then store credit is given
 
+    Scenario Outline: Refund again <count> times
+      Given <count> refunds
+
+      Examples: Again
+        | count |
+        | 2     |
+
   Rule:
     Scenario: Refund a refund
       Then it is refused
