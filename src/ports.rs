@@ -2,4 +2,4 @@
 
 mod driven;
 
-pub use driven::{FeatureParser, InputFolder};
+pub use driven::{FeatureParser, InputCollector};

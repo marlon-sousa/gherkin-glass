@@ -1,4 +1,4 @@
-//! Policy: a doc string read again from the source, as docs/BEHAVIOUR.md, "Doc strings", says.
+//! Policy: a feature's doc strings corrected from its source, as docs/BEHAVIOUR.md, "Doc strings", says.
 //!
 //! The `gherkin` crate returns a doc string with its media type glued to the
 //! content, a line break before and after it and its escapes kept, and takes
@@ -6,7 +6,62 @@
 //! delimiter. It gives no position for the doc string itself, so it is found
 //! after the end of its step, which the crate does give.
 
+use std::collections::BTreeMap;
+
+use gherkin::{Feature, Step};
+
 use crate::entities::DocString;
+
+/// Corrects every doc string of `feature` in place, from the `source` it was
+/// parsed from, and returns their media types by the byte offset at which
+/// their step starts. `None` if `source` is not what `feature` was parsed
+/// from.
+pub(crate) fn correct_doc_strings(
+    feature: &mut Feature,
+    source: &str,
+) -> Option<BTreeMap<usize, String>> {
+    let mut media_types = BTreeMap::new();
+    for step in steps_mut(feature) {
+        if step.docstring.is_none() {
+            continue;
+        }
+        let read = read_doc_string(source, step.span.end)?;
+        if let Some(media_type) = read.media_type {
+            media_types.insert(step.span.start, media_type);
+        }
+        step.docstring = Some(read.content);
+    }
+    Some(media_types)
+}
+
+/// Of its background, its scenarios, and its rules' backgrounds and scenarios.
+fn steps_mut(feature: &mut Feature) -> impl Iterator<Item = &mut Step> {
+    let Feature {
+        background,
+        scenarios,
+        rules,
+        ..
+    } = feature;
+    let rule_steps = rules.iter_mut().flat_map(|rule| {
+        rule.background
+            .iter_mut()
+            .flat_map(|background| &mut background.steps)
+            .chain(
+                rule.scenarios
+                    .iter_mut()
+                    .flat_map(|scenario| &mut scenario.steps),
+            )
+    });
+    background
+        .iter_mut()
+        .flat_map(|background| &mut background.steps)
+        .chain(
+            scenarios
+                .iter_mut()
+                .flat_map(|scenario| &mut scenario.steps),
+        )
+        .chain(rule_steps)
+}
 
 /// Reads the doc string of the step that ends at byte `step_end` of `source`.
 ///
@@ -14,7 +69,7 @@ use crate::entities::DocString;
 /// its doc string, and ends the doc string at the next occurrence of its
 /// delimiter; the same is done here. Returns `None` if no doc string follows,
 /// which cannot happen for a step the crate gave a doc string to.
-pub(crate) fn read_doc_string(source: &str, step_end: usize) -> Option<DocString> {
+fn read_doc_string(source: &str, step_end: usize) -> Option<DocString> {
     // The rest of the step's line, then line after line until the delimiter.
     let mut line_start = source.get(step_end..)?.find('\n')? + step_end + 1;
     let (indent, delimiter, after_open) = loop {

@@ -1,15 +1,9 @@
-//! Port: parsing one feature file, which reads it from the input.
-//!
-//! The file is read by the parser rather than through the input folder port
-//! because the `gherkin` crate gives its error messages only when it reads
-//! the file itself.
+//! Port: reading one feature file and parsing it.
 
 use std::path::Path;
 
-use gherkin::Feature;
-
-use crate::entities::ParseFailure;
+use crate::entities::{ParseFailure, RawFeature};
 
 pub trait FeatureParser: Send + Sync {
-    fn parse(&self, path: &Path) -> Result<Feature, ParseFailure>;
+    fn parse(&self, path: &Path) -> Result<RawFeature, ParseFailure>;
 }

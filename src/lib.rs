@@ -12,7 +12,7 @@ mod policies;
 mod ports;
 mod services;
 
-pub use adapters::{FileSystem, GherkinParser};
-pub use entities::{EntryKind, FolderEntry, ParseFailure, ParsedFeature, Problem, Problems};
-pub use ports::{FeatureParser, InputFolder};
+pub use adapters::{GherkinParser, InputWalker};
+pub use entities::{CollectedInput, ParseFailure, ParsedFeature, Problem, Problems, RawFeature};
+pub use ports::{FeatureParser, InputCollector};
 pub use services::InputService;

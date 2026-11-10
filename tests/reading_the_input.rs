@@ -6,11 +6,11 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use gherkin::Step;
-use gherkin_glass::{FileSystem, GherkinParser, InputService, ParsedFeature, Problems};
+use gherkin_glass::{GherkinParser, InputService, InputWalker, ParsedFeature, Problems};
 
 /// The service as the command will wire it, over the real file system.
 fn read_input(input: &Path) -> Result<Vec<ParsedFeature>, Problems> {
-    InputService::new(Arc::new(FileSystem), Arc::new(GherkinParser)).read(input)
+    InputService::new(Arc::new(InputWalker), Arc::new(GherkinParser)).read(input)
 }
 
 fn fixture(name: &str) -> PathBuf {
