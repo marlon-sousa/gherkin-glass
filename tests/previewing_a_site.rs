@@ -270,8 +270,25 @@ fn a_build_that_stops_serves_nothing() {
 }
 
 #[test]
-fn it_builds_before_it_serves() {
-    let serving = serve(&fixture("built"), &["--port", "0"]);
+fn it_builds_into_the_output_folder_and_serves_it() {
+    let folder = built_copy("serve-build");
+    let serving = serve(&folder, &["--port", "0"]);
+    let page = get(&serving.address, "/withdraw.html");
+    assert_eq!(page.status, 200);
+    assert_eq!(
+        page.header("Content-Type"),
+        Some("text/html; charset=utf-8")
+    );
+    assert_eq!(
+        page.body,
+        read(folder.join("site/withdraw.html")).expect("written")
+    );
+    assert!(!page.text().contains("__ghg"));
+    let script = get(&serving.address, "/assets/gherkin-glass.js");
+    assert_eq!(
+        script.header("Content-Type"),
+        Some("text/javascript; charset=utf-8")
+    );
     assert_eq!(get(&serving.address, "/__ghg/build").status, 404);
 }
 
@@ -398,6 +415,14 @@ fn watching_rebuilds_on_a_change_and_keeps_the_last_site_that_built() {
     let address = serving.address.clone();
     let build = || get(&address, "/__ghg/build").text();
     assert_eq!(build(), "1");
+    let page = get(&address, "/withdraw.html").text();
+    assert!(
+        page.ends_with(
+            "<script type=\"module\" src=\"/__ghg/reload.js?build=1\"></script></body>\n</html>\n"
+        ),
+        "{page}"
+    );
+    assert_eq!(page.matches("__ghg").count(), 1);
     let script = get(&address, "/__ghg/reload.js?build=1");
     assert_eq!(script.status, 200);
     assert_eq!(
@@ -410,6 +435,9 @@ fn watching_rebuilds_on_a_change_and_keeps_the_last_site_that_built() {
     let source = read_to_string(&feature).expect("read");
     write(&feature, source.replace("20", "30")).expect("written");
     eventually("a rebuild after a feature changed", || build() == "2");
+    let page = get(&address, "/withdraw.html").text();
+    assert!(page.contains("withdraws 30"), "{page}");
+    assert!(page.contains("/__ghg/reload.js?build=2"), "{page}");
     let mut line = String::new();
     serving.stdout.read_line(&mut line).expect("a line");
     assert_eq!(line, "The site was rebuilt.\n");
@@ -428,6 +456,7 @@ fn watching_rebuilds_on_a_change_and_keeps_the_last_site_that_built() {
     eventually("a rebuild after a .ghg-ignore file changed", || {
         build() == "4"
     });
+    assert_eq!(get(&address, "/withdraw.html").status, 404);
 
     write(folder.join("features/broken.feature"), "").expect("written");
     let mut stderr = BufReader::new(serving.child.stderr.take().expect("piped"));
@@ -441,6 +470,7 @@ fn watching_rebuilds_on_a_change_and_keeps_the_last_site_that_built() {
         "The site was not rebuilt, so the last site that built is still served.\n"
     );
     assert_eq!(build(), "4");
+    assert_eq!(get(&address, "/assets/gherkin-glass.css").status, 200);
 }
 
 #[test]
@@ -448,6 +478,7 @@ fn watching_never_writes_the_output_folder() {
     let folder = built_copy("serve-watch-writes-nothing");
     let serving = serve(&folder, &["--watch", "--port", "0"]);
     assert_eq!(get(&serving.address, "/__ghg/build").text(), "1");
+    assert_eq!(get(&serving.address, "/withdraw.html").status, 200);
     assert!(!folder.join("site").exists());
 }
 
