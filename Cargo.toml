@@ -9,14 +9,28 @@ description = "An accessible static viewer for Gherkin feature files"
 repository = "https://github.com/marlon-sousa/gherkin-glass"
 license = "MIT OR Apache-2.0"
 readme = "README.md"
+# What `cargo run` runs, of the two binaries below.
+default-run = "ghg"
+keywords = ["gherkin", "cucumber", "bdd", "accessibility", "cargo-subcommand"]
+categories = ["command-line-utilities", "development-tools::cargo-plugins", "development-tools::testing"]
+# What crates.io receives: what builds the binaries, with the licences and the
+# README it shows. The tests and their fixtures, the script's sources and
+# xtask stay in the repository.
+include = ["/src/", "/templates/", "/assets/", "/messages/", "/i18n.toml", "/README.md", "/LICENSE-APACHE", "/LICENSE-MIT"]
 
 [workspace]
 # The crate behind cargo xtask, never shipped.
 members = ["xtask"]
 
+# Two binaries running the same code, as docs/BEHAVIOUR.md, "Installing
+# through cargo", says: the command, and the cargo plugin run as `cargo ghg`.
 [[bin]]
 name = "ghg"
 path = "src/main.rs"
+
+[[bin]]
+name = "cargo-ghg"
+path = "src/cargo_ghg.rs"
 
 [dependencies]
 askama = "0.16.1"

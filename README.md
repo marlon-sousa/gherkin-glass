@@ -16,6 +16,10 @@ Planning. Nothing is released yet. What the first version will do is tracked in 
 - **Every Gherkin construct.** Rules, backgrounds, scenario outlines and their examples, data tables, doc strings, tags, descriptions, and every spoken language Gherkin supports.
 - **One file to install.** A single binary, configured by a TOML file, that also runs as a GitHub Action.
 
+## Installing through cargo
+
+Once it is released, a Rust project can install gherkin-glass from [crates.io](https://crates.io/) with `cargo install gherkin-glass`. That installs two commands: `ghg`, and `cargo-ghg`, which lets cargo run it as `cargo ghg`, beside `cargo test`. Both do the same, so `cargo ghg build` is `ghg build`.
+
 ## How it is built
 
 gherkin-glass is written in Rust, with the [`gherkin`](https://crates.io/crates/gherkin) parser from cucumber-rs.
