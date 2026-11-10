@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Funcionalidade: Destaque, destaque.feature</title>
+<style>
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+  --ghg-background: #ffffff;
+  --ghg-surface: #f2f2f2;
+  --ghg-text: #1a1a1a;
+  --ghg-muted: #474747;
+  --ghg-border: #757575;
+  --ghg-accent: #5a1e8c;
+  --ghg-keyword: #6a1b9a;
+  --ghg-parameter: #14521a;
+  --ghg-number: #8a3000;
+  --ghg-placeholder: #0d47a1;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ghg-background: #141414;
+    --ghg-surface: #222222;
+    --ghg-text: #ececec;
+    --ghg-muted: #c4c4c4;
+    --ghg-border: #8f8f8f;
+    --ghg-accent: #ffcc88;
+    --ghg-keyword: #e1b3ff;
+    --ghg-parameter: #9fe0a8;
+    --ghg-number: #ffbf8a;
+    --ghg-placeholder: #9ccaff;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ghg-background: #141414;
+  --ghg-surface: #222222;
+  --ghg-text: #ececec;
+  --ghg-muted: #c4c4c4;
+  --ghg-border: #8f8f8f;
+  --ghg-accent: #ffcc88;
+  --ghg-keyword: #e1b3ff;
+  --ghg-parameter: #9fe0a8;
+  --ghg-number: #ffbf8a;
+  --ghg-placeholder: #9ccaff;
+}
+</style>
+<link rel="stylesheet" href="assets/gherkin-glass.css">
+<script type="module" src="assets/gherkin-glass.js"></script>
+</head>
+<body>
+<main>
+<h1>Funcionalidade: Destaque</h1>
+<nav class="ghg-contents" aria-label="Contents">
+<ul>
+<li><a href="#saque">Cenário: Saque</a></li>
+</ul>
+</nav>
+<div class="ghg-controls">
+<button type="button" class="ghg-collapse-all">Collapse all</button>
+<button type="button" class="ghg-expand-all">Expand all</button>
+</div>
+<div class="ghg-block ghg-scenario">
+<h2 id="saque"><button type="button" class="ghg-toggle" aria-expanded="true">Cenário: Saque</button></h2>
+<div class="ghg-content">
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Dado </span>uma conta com <span class="ghg-number">100</span> reais</li>
+<li><span class="ghg-keyword">Quando </span>o cliente saca <span class="ghg-number">20</span></li>
+</ol>
+</div>
+</div>
+</main>
+</body>
+</html>

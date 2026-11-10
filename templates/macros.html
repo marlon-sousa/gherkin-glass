@@ -70,4 +70,20 @@
 
 {%- macro outside_link(link) -%}
 <a class="ghg-tag-link" href="{{ link.address }}">{{ link.text }}</a>
+{%- macro step_parts(parts) -%}
+{%- for part in parts.iter() -%}
+{%- match part -%}
+{%- when StepPart::Plain(text) -%}{{ text }}
+{%- when StepPart::Number(text) -%}<span class="ghg-number">{{ text }}</span>
+{%- when StepPart::Placeholder(text) -%}<span class="ghg-placeholder">{{ text }}</span>
+{%- when StepPart::Parameter(inner) -%}<span class="ghg-parameter">
+{%- for part in inner.iter() -%}
+{%- match part -%}
+{%- when StepPart::Placeholder(text) -%}<span class="ghg-placeholder">{{ text }}</span>
+{%- when _ -%}{{ part.text() }}
+{%- endmatch -%}
+{%- endfor -%}
+</span>
+{%- endmatch -%}
+{%- endfor -%}
 {%- endmacro -%}

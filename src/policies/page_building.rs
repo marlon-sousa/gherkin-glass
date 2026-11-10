@@ -14,6 +14,7 @@ use crate::policies::{
     CATALOGUE, breadcrumb, make_anchors, outside_link, page_address, page_frame, page_language,
     percent_encoded, root_from, site_title,
 };
+use crate::policies::{CATALOGUE, highlight_step, make_anchors, page_address, page_language};
 
 /// Stands for the file's path in the words of the source link, to find where
 /// the path goes; no message of the catalogue holds it.
@@ -107,7 +108,7 @@ struct Builder<'a> {
 impl Builder<'_> {
     fn background(&self, background: &Background, level: u8) -> Block {
         Block {
-            steps: self.steps(&background.steps),
+            steps: self.steps(&background.steps, None),
             description: description(background.description.as_deref()),
             ..block(
                 BlockKind::Background,
@@ -180,6 +181,7 @@ impl Builder<'_> {
             description: description(scenario.description.as_deref()),
             backgrounds,
             steps: self.steps(&scenario.steps),
+            steps: self.steps(&scenario.steps, Some(scenario)),
             blocks: scenario
                 .examples
                 .iter()
@@ -225,11 +227,13 @@ impl Builder<'_> {
     }
 
     fn steps(&self, steps: &[Step]) -> Vec<StepView> {
+    /// `scenario` holds the steps, or is `None` for a background's.
+    fn steps(&self, steps: &[Step], scenario: Option<&Scenario>) -> Vec<StepView> {
         steps
             .iter()
             .map(|step| StepView {
                 keyword: step.keyword.clone(),
-                text: step.value.clone(),
+                parts: highlight_step(step, scenario).parts,
                 table: step.table.as_ref().map(table),
                 doc_string: step.docstring.as_ref().map(|content| DocStringView {
                     media_type: self.parsed.media_type(step).map(str::to_string),

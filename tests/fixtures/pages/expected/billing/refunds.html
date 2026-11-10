@@ -4,6 +4,52 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Feature: Refunds &#38; &#60;returns&#62;, billing/refunds.feature</title>
+<style>
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+  --ghg-background: #ffffff;
+  --ghg-surface: #f2f2f2;
+  --ghg-text: #1a1a1a;
+  --ghg-muted: #474747;
+  --ghg-border: #757575;
+  --ghg-accent: #0b4f9c;
+  --ghg-keyword: #6a1b9a;
+  --ghg-parameter: #14521a;
+  --ghg-number: #8a3000;
+  --ghg-placeholder: #0d47a1;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ghg-background: #141414;
+    --ghg-surface: #222222;
+    --ghg-text: #ececec;
+    --ghg-muted: #c4c4c4;
+    --ghg-border: #8f8f8f;
+    --ghg-accent: #8cc4ff;
+    --ghg-keyword: #e1b3ff;
+    --ghg-parameter: #9fe0a8;
+    --ghg-number: #ffbf8a;
+    --ghg-placeholder: #9ccaff;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ghg-background: #141414;
+  --ghg-surface: #222222;
+  --ghg-text: #ececec;
+  --ghg-muted: #c4c4c4;
+  --ghg-border: #8f8f8f;
+  --ghg-accent: #8cc4ff;
+  --ghg-keyword: #e1b3ff;
+  --ghg-parameter: #9fe0a8;
+  --ghg-number: #ffbf8a;
+  --ghg-placeholder: #9ccaff;
+}
+</style>
 <link rel="stylesheet" href="../assets/gherkin-glass.css">
 <script type="module" src="../assets/gherkin-glass.js"></script>
 </head>
@@ -57,7 +103,7 @@ in the way it was paid.</p>
 <h2 id="background"><button type="button" class="ghg-toggle" aria-expanded="true">Background</button></h2>
 <div class="ghg-content">
 <ol class="ghg-steps">
-<li><span class="ghg-keyword">Given </span>a customer named &#34;Ana&#34;</li>
+<li><span class="ghg-keyword">Given </span>a customer named <span class="ghg-parameter">&#34;Ana&#34;</span></li>
 </ol>
 </div>
 </div>
@@ -111,8 +157,8 @@ Refunded in full.
 </ol>
 </div>
 <ol class="ghg-steps">
-<li><span class="ghg-keyword">Given </span>&#60;count&#62; items</li>
-<li><span class="ghg-keyword">Then </span>the total is &#60;total&#62;</li>
+<li><span class="ghg-keyword">Given </span><span class="ghg-placeholder">&#60;count&#62;</span> items</li>
+<li><span class="ghg-keyword">Then </span>the total is <span class="ghg-placeholder">&#60;total&#62;</span></li>
 </ol>
 <div class="ghg-block ghg-examples">
 <h3 id="cheap"><button type="button" class="ghg-toggle" aria-expanded="true">Examples: Cheap</button></h3>

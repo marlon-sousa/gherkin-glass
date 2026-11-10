@@ -1,6 +1,7 @@
 //! Entity: a feature's page, as its template shows it, every text in it as written or worded.
 
 use crate::entities::{Breadcrumb, PageFrame};
+use crate::entities::StepPart;
 
 /// One page of the site. Every `String` is text, escaped when it is rendered.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -128,7 +129,8 @@ pub(crate) enum BlockKind {
 pub(crate) struct StepView {
     /// As written, with the space after it when the language has one.
     pub(crate) keyword: String,
-    pub(crate) text: String,
+    /// The text after the keyword, in the parts its highlighting tells apart.
+    pub(crate) parts: Vec<StepPart>,
     pub(crate) table: Option<TableView>,
     pub(crate) doc_string: Option<DocStringView>,
 }

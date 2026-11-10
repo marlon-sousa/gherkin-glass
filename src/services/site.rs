@@ -11,6 +11,8 @@ use crate::policies::{
     render_folder_page, render_folder_tree, render_page, render_tag_index, render_tag_page,
     tag_index_address, tags_of,
 };
+use crate::entities::{ParsedFeature, Problem, ProblemKind, Problems, Settings, SiteAssets};
+use crate::policies::{build_page, page_address, render_page, theme_stylesheet};
 use crate::ports::SiteWriter;
 use crate::services::InputService;
 
@@ -32,6 +34,8 @@ impl SiteService {
         let features = self.input.read(&settings.input, settings.unnamed)?;
         let tags = tags_of(&features);
         let names = name_tags(&tags);
+        same_pages(&settings.input, &features)?;
+        let theme = theme_stylesheet(&settings.accents);
         // Collecting into a `Vec` keeps file order, whatever order the threads finish in.
         let pages: Vec<_> = features
             .par_iter()
@@ -41,6 +45,11 @@ impl SiteService {
         let mut rendered: Vec<(String, String)> = pages
             .par_iter()
             .map(|page| (page.address.clone(), render_page(page)))
+            .map(|parsed| {
+                let page = build_page(parsed, &settings.pages);
+                let html = render_page(&page, &theme);
+                (page.address, html)
+            })
             .collect();
         rendered.extend(
             folders

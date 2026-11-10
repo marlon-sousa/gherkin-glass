@@ -21,6 +21,8 @@ pub(crate) struct Palette {
     /// The background of the parts set apart from the page, such as tables and doc strings.
     pub(crate) surface: Colour,
     pub(crate) text: Colour,
+    /// For text that is less prominent, such as tags, which still reaches 7:1.
+    pub(crate) muted: Colour,
     /// Lines that separate parts, which carry no text.
     pub(crate) border: Colour,
     pub(crate) keyword: Colour,
@@ -37,9 +39,10 @@ impl Palette {
 
     /// Every colour text is written in, apart from the accent.
     #[cfg(test)]
-    pub(crate) fn text_colours(&self) -> [Colour; 5] {
+    pub(crate) fn text_colours(&self) -> [Colour; 6] {
         [
             self.text,
+            self.muted,
             self.keyword,
             self.parameter,
             self.number,

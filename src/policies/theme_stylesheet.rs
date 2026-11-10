@@ -23,10 +23,11 @@ pub fn theme_stylesheet(accents: &Accents) -> String {
 
 fn tokens(theme: Theme, accents: &Accents, indent: &str) -> String {
     let palette = palette(theme);
-    let colours: [(&str, Colour); 9] = [
+    let colours: [(&str, Colour); 10] = [
         ("background", palette.background),
         ("surface", palette.surface),
         ("text", palette.text),
+        ("muted", palette.muted),
         ("border", palette.border),
         ("accent", accents.of(theme)),
         ("keyword", palette.keyword),
@@ -61,6 +62,7 @@ mod tests {
   --ghg-background: #ffffff;
   --ghg-surface: #f2f2f2;
   --ghg-text: #1a1a1a;
+  --ghg-muted: #474747;
   --ghg-border: #757575;
   --ghg-accent: #000080;
   --ghg-keyword: #6a1b9a;
@@ -75,6 +77,7 @@ mod tests {
     --ghg-background: #141414;
     --ghg-surface: #222222;
     --ghg-text: #ececec;
+    --ghg-muted: #c4c4c4;
     --ghg-border: #8f8f8f;
     --ghg-accent: #ffff80;
     --ghg-keyword: #e1b3ff;
@@ -89,6 +92,7 @@ mod tests {
   --ghg-background: #141414;
   --ghg-surface: #222222;
   --ghg-text: #ececec;
+  --ghg-muted: #c4c4c4;
   --ghg-border: #8f8f8f;
   --ghg-accent: #ffff80;
   --ghg-keyword: #e1b3ff;
