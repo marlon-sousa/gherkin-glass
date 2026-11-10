@@ -69,7 +69,7 @@ Every pull request runs:
 
 - the issue check and the commit message check, from [itinera-dev/actions](https://github.com/itinera-dev/actions);
 - `cargo fmt --check`, `cargo clippy` with warnings as errors, and `cargo test`;
-- the accessibility check: the fixtures are built into a site, every page is opened in a browser and checked with axe-core, and the skip link, the folder tree and the reader options are tried with the keyboard alone.
+- the accessibility check: the fixtures are built into a site and served over HTTP, every page is opened in a browser and checked with axe-core, and the skip link, the folder tree and the reader options are tried with the keyboard alone.
 
 ## Releases
 
