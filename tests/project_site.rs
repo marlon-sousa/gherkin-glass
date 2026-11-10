@@ -358,13 +358,23 @@ fn each_release_adds_only_its_own_folder_and_the_versions_page() {
     create_dir_all(pages.join("v0.1.0")).unwrap();
     write(pages.join("v0.1.0/index.html"), "0.1.0\n").unwrap();
     write(pages.join("index.html"), "v0.1.0\n").unwrap();
+    create_dir_all(pages.join("assets")).unwrap();
+    write(pages.join("assets/versions.css"), "a {}\n").unwrap();
     publish_ok(&first, &["publish", pages.to_str().unwrap(), "v0.1.0"]);
     let after_first = published(&remote);
     let files: Vec<_> = after_first
         .iter()
         .map(|line| line.split('\t').nth(1).unwrap())
         .collect();
-    assert_eq!(files, [".nojekyll", "index.html", "v0.1.0/index.html"]);
+    assert_eq!(
+        files,
+        [
+            ".nojekyll",
+            "assets/versions.css",
+            "index.html",
+            "v0.1.0/index.html"
+        ]
+    );
     assert_eq!(commits(&remote), 1);
 
     // A later release that changed an earlier version publishes nothing.
@@ -375,6 +385,7 @@ fn each_release_adds_only_its_own_folder_and_the_versions_page() {
     create_dir_all(pages.join("v0.2.0")).unwrap();
     write(pages.join("v0.2.0/index.html"), "0.2.0\n").unwrap();
     write(pages.join("index.html"), "v0.2.0\nv0.1.0\n").unwrap();
+    write(pages.join("assets/versions.css"), "b {}\n").unwrap();
     write(pages.join("v0.1.0/index.html"), "changed\n").unwrap();
     let output = publish(&second, &["publish", pages.to_str().unwrap(), "v0.2.0"]);
     assert_eq!(output.status.code(), Some(1));
@@ -414,7 +425,7 @@ fn each_release_adds_only_its_own_folder_and_the_versions_page() {
     assert_eq!(published(&remote), after_second);
 
     // A name that is not one folder is refused.
-    for version in ["", ".", "..", ".hidden", "a/b"] {
+    for version in ["", ".", "..", ".hidden", "a/b", "index.html", "assets"] {
         let output = publish(&second, &["publish", pages.to_str().unwrap(), version]);
         assert_eq!(output.status.code(), Some(1), "{version:?}");
     }
