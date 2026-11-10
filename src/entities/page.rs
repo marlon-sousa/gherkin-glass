@@ -22,6 +22,34 @@ pub(crate) struct Page {
     pub(crate) contents: Vec<ContentsEntry>,
     pub(crate) blocks: Vec<Block>,
     pub(crate) words: PageWords,
+    /// The checkbox that switches how scenarios show their backgrounds, on a
+    /// page with a background.
+    pub(crate) backgrounds_option: Option<BackgroundsOption>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct BackgroundsOption {
+    pub(crate) label: String,
+    /// Whether the page is written with each scenario showing its backgrounds' steps.
+    pub(crate) inline: bool,
+    /// Whether a scenario starts with a background's steps, so that the checkbox can act.
+    pub(crate) enabled: bool,
+}
+
+/// A background whose steps a scenario starts with: shown inline as a list of
+/// them, or linked, as a link to the background.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct FromBackground {
+    /// The `id` of the introduction, which names the list of steps: the
+    /// scenario's anchor, `_background_` and the background's place, from 1.
+    pub(crate) id: String,
+    /// "From the background:" or "From the rule's background:".
+    pub(crate) introduction: String,
+    pub(crate) anchor: String,
+    pub(crate) heading: String,
+    pub(crate) steps: Vec<StepView>,
+    /// Whether the page is written showing the steps rather than the link.
+    pub(crate) inline: bool,
 }
 
 /// gherkin-glass's own words on a page, from the interface text catalogue.
@@ -63,6 +91,8 @@ pub(crate) struct Block {
     pub(crate) collapsed: bool,
     pub(crate) tags: Vec<String>,
     pub(crate) description: Vec<Paragraph>,
+    /// A scenario's: the feature's background, then its rule's.
+    pub(crate) backgrounds: Vec<FromBackground>,
     pub(crate) steps: Vec<StepView>,
     /// An examples block's.
     pub(crate) table: Option<TableView>,

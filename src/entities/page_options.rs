@@ -1,7 +1,8 @@
 //! Entity: the settings that shape every page of a site.
 
 /// The defaults are the configuration's: the catalogue's title, no source
-/// link, every block expanded, and the folder tree shown.
+/// link, every block expanded, the folder tree shown, and backgrounds shown
+/// inside each scenario.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PageOptions {
     /// The site's title; `None` for the catalogue's default.
@@ -13,6 +14,8 @@ pub struct PageOptions {
     pub collapse_scenarios: bool,
     /// Whether the folder tree is shown when a reader first opens the site.
     pub show_tree: bool,
+    /// Whether the page is written with each scenario showing its backgrounds' steps, or linking to them.
+    pub inline_backgrounds: bool,
 }
 
 impl Default for PageOptions {
@@ -23,6 +26,7 @@ impl Default for PageOptions {
             collapse_rules: false,
             collapse_scenarios: false,
             show_tree: true,
+            inline_backgrounds: true,
         }
     }
 }

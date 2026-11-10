@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Funcionalidade: Só a regra tem contexto, regra.feature</title>
+<link rel="stylesheet" href="assets/gherkin-glass.css">
+<script type="module" src="assets/gherkin-glass.js"></script>
+</head>
+<body>
+<a class="ghg-skip" href="#ghg_main">Skip to content</a>
+<div class="ghg-options">
+<input type="checkbox" id="ghg_show_tree" class="ghg-show-tree" aria-controls="ghg_tree" checked> <label for="ghg_show_tree">Show the folder tree</label>
+</div>
+<div class="ghg-layout">
+<nav id="ghg_tree" class="ghg-tree" aria-label="Folder tree"></nav>
+<div class="ghg-page">
+<nav class="ghg-breadcrumb" aria-label="Breadcrumb">
+<ol>
+<li><a href="index.html">Backgrounds</a></li>
+<li><a href="regra.html" aria-current="page">Funcionalidade: Só a regra tem contexto</a></li>
+</ol>
+</nav>
+<main id="ghg_main">
+<h1>Funcionalidade: Só a regra tem contexto</h1>
+<nav class="ghg-contents" aria-label="Contents">
+<ul>
+<li><a href="#fora-da-regra">Cenário: Fora da regra</a></li>
+<li><a href="#com-contexto">Regra: Com contexto</a>
+<ul>
+<li><a href="#dentro-da-regra">Cenário: Dentro da regra</a></li>
+</ul></li>
+</ul>
+</nav>
+<div class="ghg-controls">
+<button type="button" class="ghg-collapse-all">Collapse all</button>
+<button type="button" class="ghg-expand-all">Expand all</button>
+<label class="ghg-option"><input type="checkbox" class="ghg-inline-backgrounds" autocomplete="off" checked> Show backgrounds inside each scenario</label>
+</div>
+<div class="ghg-block ghg-scenario">
+<h2 id="fora-da-regra"><button type="button" class="ghg-toggle" aria-expanded="true">Cenário: Fora da regra</button></h2>
+<div class="ghg-content">
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Então </span>nada muda</li>
+</ol>
+</div>
+</div>
+<div class="ghg-block ghg-rule">
+<h2 id="com-contexto"><button type="button" class="ghg-toggle" aria-expanded="true">Regra: Com contexto</button></h2>
+<div class="ghg-content">
+<div class="ghg-block ghg-background">
+<h3 id="contexto"><button type="button" class="ghg-toggle" aria-expanded="true">Contexto</button></h3>
+<div class="ghg-content">
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Dado </span>um cliente</li>
+</ol>
+</div>
+</div>
+<div class="ghg-block ghg-scenario">
+<h3 id="dentro-da-regra"><button type="button" class="ghg-toggle" aria-expanded="true">Cenário: Dentro da regra</button></h3>
+<div class="ghg-content">
+<div class="ghg-from-background">
+<p id="dentro-da-regra_background_1">From the rule&#39;s background:<span class="ghg-linked" hidden> <a href="#contexto">Contexto</a></span></p>
+<ol class="ghg-steps ghg-inline" aria-labelledby="dentro-da-regra_background_1">
+<li><span class="ghg-keyword">Dado </span>um cliente</li>
+</ol>
+</div>
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Então </span>algo muda</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</div>
+</body>
+</html>

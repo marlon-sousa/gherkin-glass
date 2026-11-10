@@ -49,9 +49,14 @@ fn main() -> ExitCode {
 fn build() -> Result<(), String> {
     prepare_script()?;
     bundle(&root().join(SCRIPT))?;
-    // The expected sites of tests/fixtures/pages hold the assets as built.
-    for config in ["ghg.toml", "collapsed.toml"] {
-        let config = format!("tests/fixtures/pages/{config}");
+    // The expected sites of the fixtures hold the assets as built.
+    for config in [
+        "pages/ghg.toml",
+        "pages/collapsed.toml",
+        "backgrounds/ghg.toml",
+        "backgrounds/linked.toml",
+    ] {
+        let config = format!("tests/fixtures/{config}");
         cargo(&[
             "run",
             "--quiet",

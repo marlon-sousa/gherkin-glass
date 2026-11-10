@@ -1,5 +1,42 @@
 // Compiled from script/ by cargo xtask build. Do not edit: change script/src and build again.
 
+// src/adapters/dom_backgrounds.ts
+var DomBackgrounds = class _DomBackgrounds {
+  checkbox;
+  document;
+  constructor(document2, checkbox) {
+    this.document = document2;
+    this.checkbox = checkbox;
+  }
+  /** Null on a page without the checkbox, where no scenario starts with a background's steps. */
+  static of(document2) {
+    const checkbox = document2.querySelector("input.ghg-inline-backgrounds");
+    return checkbox ? new _DomBackgrounds(document2, checkbox) : null;
+  }
+  writtenInline() {
+    return this.checkbox.defaultChecked;
+  }
+  setInline(inline) {
+    this.checkbox.checked = inline;
+    for (const steps of this.document.querySelectorAll(".ghg-from-background > .ghg-inline")) {
+      steps.hidden = !inline;
+    }
+    for (const link of this.document.querySelectorAll(".ghg-from-background .ghg-linked")) {
+      link.hidden = inline;
+    }
+  }
+  onSwitch(handler) {
+    this.checkbox.addEventListener("change", () => handler(this.checkbox.checked));
+  }
+  onReturn(handler) {
+    this.document.defaultView?.addEventListener("pageshow", (event) => {
+      if (event.persisted) {
+        handler();
+      }
+    });
+  }
+};
+
 // src/adapters/dom_page.ts
 var DomBlock = class {
   anchor;
@@ -433,6 +470,40 @@ var LocalMemory = class {
   }
 };
 
+// src/policies/background_form.ts
+var INLINE = "inline";
+var LINKED = "linked";
+function siteRoot(scriptAddress) {
+  return new URL("..", scriptAddress).pathname;
+}
+function formKey(siteRoot2) {
+  return `gherkin-glass:${siteRoot2}:backgrounds`;
+}
+function rememberedForm(inline) {
+  return inline ? INLINE : LINKED;
+}
+function startForm(configured, kept) {
+  if (kept === INLINE) {
+    return true;
+  }
+  if (kept === LINKED) {
+    return false;
+  }
+  return configured;
+}
+
+// src/services/backgrounds.ts
+function startBackgrounds(backgrounds2, memory2, siteRoot2) {
+  const key = formKey(siteRoot2);
+  const show = () => backgrounds2.setInline(startForm(backgrounds2.writtenInline(), memory2.get(key)));
+  show();
+  backgrounds2.onSwitch((inline) => {
+    backgrounds2.setInline(inline);
+    memory2.set(key, rememberedForm(inline));
+  });
+  backgrounds2.onReturn(show);
+}
+
 // src/policies/block_state.ts
 var EXPANDED2 = "expanded";
 var COLLAPSED2 = "collapsed";
@@ -511,3 +582,7 @@ void startFolderTree(new FetchedTree(new URL("tree.json", import.meta.url)), new
   page,
   narrow: window.matchMedia(NARROW).matches
 });
+var backgrounds = DomBackgrounds.of(document);
+if (backgrounds !== null) {
+  startBackgrounds(backgrounds, memory, siteRoot(import.meta.url));
+}

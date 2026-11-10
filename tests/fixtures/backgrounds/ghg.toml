@@ -1,0 +1,3 @@
+# Backgrounds shown inside each scenario, the default.
+output = "expected"
+title = "Backgrounds"
