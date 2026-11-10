@@ -5,6 +5,7 @@ The manual for anyone, human or agent, changing gherkin-glass. [CONTRIBUTING.md]
 ## What to read
 
 - [docs/BEHAVIOUR.md](docs/BEHAVIOUR.md): what the tool promises. Code does what it says, no more and no less.
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): how the code is organised and written, before writing any.
 - [docs/design/](docs/design/): the design notes, for why things are as they are.
 - The issue the work belongs to. Once it is agreed, its body holds every decision and binds the work; its comments are only the history of how they were reached. While it is still being agreed, read its comments too.
 
@@ -12,7 +13,7 @@ The manual for anyone, human or agent, changing gherkin-glass. [CONTRIBUTING.md]
 
 1. **No code before its behaviour.** Work on a feature starts only once its issue is agreed and its behaviour is in docs/BEHAVIOUR.md. If the behaviour is missing, or the code would need to do something the document does not say, stop and raise it in the issue.
 2. **Every rule has a fixture.** A rule added to or changed in docs/BEHAVIOUR.md comes with a fixture under `tests/fixtures/` and a test that checks it, in the same pull request as the code that makes it pass.
-3. **Accessibility is behaviour.** A page that fails the accessibility check is a failing test, never a warning to skip. Colour and highlighting never carry meaning alone. JavaScript is assumed and drives the interactive parts, but the content is always in the page's HTML, never built by a script, so that headings, anchors and links exist as the page loads.
+3. **Accessibility is behaviour.** A page that fails the accessibility check is a failing test, never a warning to skip. Colour and highlighting never carry meaning alone. JavaScript is assumed and drives the interactive parts, but the content is always in the page's HTML, never built by a script, so that headings, anchors and links exist as the page loads. The one exception is the folder tree, which the script builds from shared data, since everything it links to is also reachable from the folder pages ([#7](https://github.com/marlon-sousa/gherkin-glass/issues/7)).
 4. **Addresses are promises.** Never change how a page's path or an anchor is made without a major version, agreed in an issue.
 5. **Small pull requests.** One thing each, naming its issue with `Closes #N` or `Refs #N`, with commit messages as CONTRIBUTING.md describes. Work too large for one is a stack, declared to GitHub through the REST API as CONTRIBUTING.md, "Stacked pull requests", describes, without installing `gh stack`.
 6. **Write for a screen reader.** Issues, pull requests, comments and documents use headings, lists, prose and simple tables, never ASCII art.
