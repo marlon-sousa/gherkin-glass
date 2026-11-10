@@ -1,5 +1,3 @@
-//! The command runs, and prints its name and version.
-
 use std::process::Command;
 
 #[test]
