@@ -2,7 +2,7 @@
 
 A static viewer for Gherkin `.feature` files that anyone can read, with or without a screen reader.
 
-gherkin-glass turns a folder of feature files into a static website: a page for every feature, a heading and a stable link for every scenario, an index for every tag, and a page for every folder. The content is in the HTML of each page, and a stylesheet and scripts shared by every page, written once with the site, style the pages and drive their interactive parts. It needs no server, so it can be hosted anywhere, GitHub Pages included. It ships as a single binary for Linux, macOS and Windows.
+gherkin-glass turns a folder of feature files into a static website: a page for every feature, a heading and a stable link for every scenario, an index for every tag, and a page for every folder. The content is in the HTML of each page, and a stylesheet, a script and the data they share, written once with the site, style the pages and drive their interactive parts. The site is meant to be served: any static web server or host serves it, GitHub Pages included, and a planned `ghg serve` command ([#26](https://github.com/marlon-sousa/gherkin-glass/issues/26)) will preview it on your own machine. Opening its pages straight from disk is not supported. It ships as a single binary for Linux, macOS and Windows.
 
 ## Status
 
