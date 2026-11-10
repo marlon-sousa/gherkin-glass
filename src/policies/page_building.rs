@@ -47,6 +47,7 @@ pub(crate) fn build_page(parsed: &ParsedFeature, options: &PageOptions) -> Page 
             path = path.as_str()
         ),
         heading,
+        path: path.clone(),
         tags: tags(&feature.tags),
         description: description(feature.description.as_deref()),
         source: options

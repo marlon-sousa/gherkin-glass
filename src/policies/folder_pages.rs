@@ -20,7 +20,6 @@ pub(crate) fn build_folder_pages(pages: &[Page], options: &PageOptions) -> Vec<F
             (parts, file, page)
         })
         .collect();
-    // Every folder above a feature, and the input folder itself.
     let mut folders: BTreeSet<Vec<String>> = BTreeSet::from([Vec::new()]);
     for (parts, _, _) in &located {
         for depth in 1..=parts.len() {
@@ -44,7 +43,7 @@ pub(crate) fn build_folder_pages(pages: &[Page], options: &PageOptions) -> Vec<F
                 .filter(|(parts, _, _)| parts == folder)
                 .map(|(_, file, page)| (file, *page))
                 .collect();
-            features.sort_by(|a, b| a.0.cmp(b.0));
+            features.sort_by(|a, b| file_name(a.1).cmp(file_name(b.1)));
             let totals = if folder.is_empty() {
                 totals(pages, folders.len() - 1)
             } else {
@@ -82,6 +81,10 @@ pub(crate) fn build_folder_pages(pages: &[Page], options: &PageOptions) -> Vec<F
             }
         })
         .collect()
+}
+
+fn file_name(page: &Page) -> &str {
+    page.path.rsplit('/').next().unwrap_or_default()
 }
 
 fn feature_entry(file: &str, page: &Page) -> FeatureEntry {
@@ -169,8 +172,11 @@ Feature: Counted
         let addresses: Vec<_> = site.iter().map(|page| page.address.as_str()).collect();
         assert_eq!(addresses, ["index.html", "b/index.html", "b/c/index.html"]);
         let b = &site[1];
-        assert_eq!((b.heading.as_str(), b.title.as_str()), ("b", "b, Features"));
-        assert_eq!(site[2].title, "b/c, Features");
+        assert_eq!(
+            (b.heading.as_str(), b.title.as_str()),
+            ("b", "b, Feature files")
+        );
+        assert_eq!(site[2].title, "b/c, Feature files");
         assert!(b.features.is_empty());
         assert_eq!(b.folders[0].address, "c/index.html");
         assert!(b.totals.is_empty());
@@ -190,6 +196,14 @@ Feature: Counted
         assert_eq!(folders, ["W", "y"]);
         let features: Vec<_> = home.features.iter().map(|f| f.address.as_str()).collect();
         assert_eq!(features, ["Z.html", "a.html", "b.html"]);
+        // By the files' names, not the pages'.
+        let site = super::tests::site(&[("a.c.feature", "Feature: C\n"), ("a.b", "Feature: B\n")]);
+        let features: Vec<_> = site[0]
+            .features
+            .iter()
+            .map(|f| f.address.as_str())
+            .collect();
+        assert_eq!(features, ["a.html", "a.c.html"]);
     }
 
     #[test]

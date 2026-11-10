@@ -75,6 +75,11 @@ same-page = has the same page, { $page }, as { $first }.
 same-as-folder-page = has the same page, { $page }, as the page of the folder { $folder }.
 same-as-home-page = has the same page, { $page }, as the home page.
 
+## A folder whose page differs from an earlier folder's only in case. $page
+## is its own page, and $first the earlier folder's path below the input folder.
+
+same-folder-page = has the same page, { $page }, as the folder { $first }.
+
 ## A file of the site that cannot be written. $reason is the operating
 ## system's words.
 
@@ -120,7 +125,7 @@ breadcrumb = Breadcrumb
 ## A folder's page. $folder is the folder's path below the input folder, and
 ## $site the site's title, the configuration's or default-title.
 
-default-title = Features
+default-title = Feature files
 folder-page-title = { $folder }, { $site }
 folders = Folders
 features = Features

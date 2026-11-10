@@ -7,6 +7,8 @@ use crate::entities::Breadcrumb;
 pub(crate) struct Page {
     /// Relative to the site's root, with `/` between folders.
     pub(crate) address: String,
+    /// The feature file's, below the input folder, with `/` between folders.
+    pub(crate) path: String,
     /// The `lang` of the page.
     pub(crate) language: String,
     pub(crate) title: String,

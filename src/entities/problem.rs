@@ -48,10 +48,14 @@ pub enum ProblemKind {
     /// shown as a problem's is, of the file that has it.
     #[error("has the same page, {page}, as {first}")]
     SamePage { page: String, first: String },
+    /// A folder whose page's address differs from an earlier folder's only
+    /// in case; `page` is its own, and `first` that folder's path.
+    #[error("has the same page, {page}, as the folder {first}")]
+    SameFolderPage { page: String, first: String },
     /// `page` is the file's own page, at the path of a folder's, and `folder`
     /// that folder's path below the input folder, `None` for the input
     /// folder's, the home page.
-    #[error("has the same page, {page}, as the page of the folder {folder:?}")]
+    #[error("has the same page, {page}, as a folder's page")]
     SameAsFolderPage {
         page: String,
         folder: Option<String>,

@@ -1,4 +1,4 @@
-//! Policy: the address of a feature file's page, relative to the site's root, and how a link holds it.
+//! Policy: the address of a feature file's page, relative to the site's root.
 
 use std::path::{Component, Path};
 
@@ -37,19 +37,6 @@ pub(crate) fn root_from(address: &str) -> String {
     "../".repeat(address.matches('/').count())
 }
 
-/// `path` with every byte but an ASCII letter, a digit, `-`, `.`, `_`, `~`
-/// and `/` percent-encoded, as a link's address holds it.
-pub(crate) fn percent_encoded(path: &str) -> String {
-    path.bytes()
-        .map(|byte| match byte {
-            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'.' | b'_' | b'~' | b'/' => {
-                char::from(byte).to_string()
-            }
-            _ => format!("%{byte:02X}"),
-        })
-        .collect()
-}
-
 #[cfg(test)]
 mod tests {
     use std::path::PathBuf;
@@ -74,14 +61,6 @@ mod tests {
     fn a_name_without_an_extension_gets_one() {
         assert_eq!(page_address(Path::new("README")), "README.html");
         assert_eq!(page_address(Path::new(".feature")), ".feature.html");
-    }
-
-    #[test]
-    fn a_link_s_address_keeps_only_unreserved_bytes_and_slashes() {
-        assert_eq!(
-            percent_encoded("a b/ç?#%.html"),
-            "a%20b/%C3%A7%3F%23%25.html"
-        );
     }
 
     #[test]

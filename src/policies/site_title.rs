@@ -18,7 +18,7 @@ mod tests {
 
     #[test]
     fn the_configured_title_wins_over_the_default() {
-        assert_eq!(site_title(&PageOptions::default()), "Features");
+        assert_eq!(site_title(&PageOptions::default()), "Feature files");
         let options = PageOptions {
             title: Some("Banking".into()),
             ..PageOptions::default()

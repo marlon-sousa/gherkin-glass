@@ -176,6 +176,29 @@ mod tests {
     }
 
     #[test]
+    fn an_empty_input_still_has_its_home_page() {
+        let writer = Arc::new(FakeWriter::default());
+        build(Vec::new(), writer.clone()).expect("built");
+        let written = writer.written.lock().expect("not poisoned");
+        assert!(written.contains_key("index.html"));
+    }
+
+    #[test]
+    fn a_folder_whose_page_differs_only_in_case_is_reported_once() {
+        let writer = Arc::new(FakeWriter::default());
+        let problems = build(
+            vec!["A/x.feature", "a/y.feature", "a/z.feature", "a/b/w.feature"],
+            writer.clone(),
+        )
+        .expect_err("the same folder page");
+        assert_eq!(
+            problems.to_string(),
+            "a: has the same page, a/index.html, as the folder A\n"
+        );
+        assert!(writer.written.lock().expect("not poisoned").is_empty());
+    }
+
+    #[test]
     fn a_feature_whose_page_is_a_folder_s_is_reported_in_any_case() {
         let writer = Arc::new(FakeWriter::default());
         let problems = build(vec!["INDEX.feature", "a/b/index.story"], writer.clone())

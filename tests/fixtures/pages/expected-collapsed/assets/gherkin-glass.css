@@ -195,7 +195,6 @@ figcaption {
   font-weight: bold;
 }
 
-/* A folder page's feature: its link, then its count, the button that shows its contents. */
 .ghg-features > li {
   margin: 0.25rem 0;
 }
