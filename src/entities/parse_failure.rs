@@ -2,9 +2,11 @@
 
 use thiserror::Error;
 
+use crate::entities::ProblemKind;
+
 #[derive(Debug, Clone, PartialEq, Eq, Error)]
-#[error("{message}")]
+#[error("{kind}")]
 pub struct ParseFailure {
     pub line: Option<usize>,
-    pub message: String,
+    pub kind: ProblemKind,
 }

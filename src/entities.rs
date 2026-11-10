@@ -11,5 +11,5 @@ pub use collected_input::CollectedInput;
 pub(crate) use doc_string::DocString;
 pub use parse_failure::ParseFailure;
 pub use parsed_feature::ParsedFeature;
-pub use problem::{Problem, Problems};
+pub use problem::{Problem, ProblemKind, Problems};
 pub use raw_feature::RawFeature;

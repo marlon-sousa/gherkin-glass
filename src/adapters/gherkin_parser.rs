@@ -1,11 +1,12 @@
 //! Adapter: the feature parser port over the `gherkin` crate.
 
 use std::fs::read_to_string;
+use std::io::Error as IoError;
 use std::path::Path;
 
 use gherkin::{EnvError, Feature, GherkinEnv, ParseFileError};
 
-use crate::entities::{ParseFailure, RawFeature};
+use crate::entities::{ParseFailure, ProblemKind, RawFeature};
 use crate::ports::FeatureParser;
 
 #[derive(Debug, Default, Clone, Copy)]
@@ -13,9 +14,11 @@ pub struct GherkinParser;
 
 impl FeatureParser for GherkinParser {
     fn parse(&self, path: &Path) -> Result<RawFeature, ParseFailure> {
-        let cannot_be_read = |error| ParseFailure {
+        let cannot_be_read = |error: IoError| ParseFailure {
             line: None,
-            message: format!("cannot be read: {error}"),
+            kind: ProblemKind::CannotBeRead {
+                reason: error.to_string(),
+            },
         };
         let source = read_to_string(path).map_err(cannot_be_read)?;
         // `parse_path` reads the file again, but only it returns the crate's
@@ -30,15 +33,15 @@ impl FeatureParser for GherkinParser {
                 } => ParseFailure {
                     line: parser_line(&parse_error.to_string())
                         .map(|line| line.min(source.lines().count().max(1))),
-                    message: match error {
+                    kind: match error {
                         // The crate keeps the line break after an unknown keyword.
-                        Some(EnvError::UnknownKeyword(keyword)) => {
-                            format!("Unknown keyword: '{}'.", keyword.trim_end())
-                        }
-                        Some(error) => error.to_string(),
-                        // The crate's own message lists what it expected, in an
-                        // order that changes from run to run.
-                        None => "Syntax error.".to_string(),
+                        Some(EnvError::UnknownKeyword(keyword)) => ProblemKind::Parser {
+                            message: format!("Unknown keyword: '{}'.", keyword.trim_end()),
+                        },
+                        Some(error) => ProblemKind::Parser {
+                            message: error.to_string(),
+                        },
+                        None => ProblemKind::Syntax,
                     },
                 },
             })?;

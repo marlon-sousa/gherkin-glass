@@ -14,20 +14,38 @@ pub struct Problem {
     /// folder itself is shown as it was given.
     pub path: String,
     pub line: Option<usize>,
-    pub message: String,
+    pub kind: ProblemKind,
+}
+
+/// What is wrong. The words a person reads come from the interface text
+/// catalogue; the `#[error]` text is for developers. Every `String` here is
+/// another program's words, passed through as they are.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Error)]
+pub enum ProblemKind {
+    #[error("cannot be listed: {reason}")]
+    CannotBeListed { reason: String },
+    #[error("cannot be read: {reason}")]
+    CannotBeRead { reason: String },
+    /// `reason` is the `ignore` crate's.
+    #[error("{reason}")]
+    InvalidRule { reason: String },
+    /// `message` is the `gherkin` crate's.
+    #[error("{message}")]
+    Parser { message: String },
+    /// The parser named only what it expected, in an order that changes from run to run.
+    #[error("Syntax error.")]
+    Syntax,
+    /// The file changed between its parse and the read of its source.
+    #[error("changed while it was being read")]
+    Changed,
 }
 
 impl Problem {
-    pub(crate) fn new(
-        input: &Path,
-        path: &Path,
-        line: Option<usize>,
-        message: impl Into<String>,
-    ) -> Self {
+    pub(crate) fn new(input: &Path, path: &Path, line: Option<usize>, kind: ProblemKind) -> Self {
         Problem {
             path: display_path(input, path),
             line,
-            message: message.into(),
+            kind,
         }
     }
 }
@@ -39,7 +57,7 @@ impl Ord for Problem {
             .split('/')
             .cmp(other.path.split('/'))
             .then(self.line.cmp(&other.line))
-            .then(self.message.cmp(&other.message))
+            .then(self.kind.cmp(&other.kind))
     }
 }
 
@@ -52,8 +70,8 @@ impl PartialOrd for Problem {
 impl Display for Problem {
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         match self.line {
-            Some(line) => write!(f, "{}:{}: {}", self.path, line, self.message),
-            None => write!(f, "{}: {}", self.path, self.message),
+            Some(line) => write!(f, "{}:{}: {}", self.path, line, self.kind),
+            None => write!(f, "{}: {}", self.path, self.kind),
         }
     }
 }
@@ -107,7 +125,7 @@ mod tests {
         Problem {
             path: path.to_string(),
             line,
-            message: "wrong".to_string(),
+            kind: ProblemKind::Syntax,
         }
     }
 
@@ -131,9 +149,18 @@ mod tests {
     #[test]
     fn the_input_folder_itself_is_shown_as_given() {
         let input = Path::new("features/");
-        assert_eq!(Problem::new(input, input, None, "gone").path, "features/");
         assert_eq!(
-            Problem::new(input, &input.join("a").join("b.feature"), None, "x").path,
+            Problem::new(input, input, None, ProblemKind::Changed).path,
+            "features/"
+        );
+        assert_eq!(
+            Problem::new(
+                input,
+                &input.join("a").join("b.feature"),
+                None,
+                ProblemKind::Changed
+            )
+            .path,
             "a/b.feature"
         );
     }

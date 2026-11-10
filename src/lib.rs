@@ -13,6 +13,8 @@ mod ports;
 mod services;
 
 pub use adapters::{GherkinParser, InputWalker};
-pub use entities::{CollectedInput, ParseFailure, ParsedFeature, Problem, Problems, RawFeature};
+pub use entities::{
+    CollectedInput, ParseFailure, ParsedFeature, Problem, ProblemKind, Problems, RawFeature,
+};
 pub use ports::{FeatureParser, InputCollector};
 pub use services::InputService;

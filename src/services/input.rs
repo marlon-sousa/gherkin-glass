@@ -5,7 +5,7 @@ use std::sync::Arc;
 
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 
-use crate::entities::{ParsedFeature, Problem, Problems};
+use crate::entities::{ParsedFeature, Problem, ProblemKind, Problems};
 use crate::policies::correct_doc_strings;
 use crate::ports::{FeatureParser, InputCollector};
 
@@ -45,14 +45,14 @@ impl InputService {
     }
 
     fn parse(&self, input: &Path, path: &Path) -> Result<ParsedFeature, Problem> {
-        let problem = |line, message: String| Problem::new(input, path, line, message);
+        let problem = |line, kind| Problem::new(input, path, line, kind);
         let mut raw = self
             .parser
             .parse(path)
-            .map_err(|failure| problem(failure.line, failure.message))?;
+            .map_err(|failure| problem(failure.line, failure.kind))?;
         // Only a file changed between the parse and the read of its source fails here.
         let media_types = correct_doc_strings(&mut raw.feature, &raw.source)
-            .ok_or_else(|| problem(None, "changed while it was being read".to_string()))?;
+            .ok_or_else(|| problem(None, ProblemKind::Changed))?;
         let relative = path.strip_prefix(input).unwrap_or(path).to_path_buf();
         Ok(ParsedFeature::new(relative, raw.feature, media_types))
     }
@@ -83,12 +83,14 @@ mod tests {
         fn parse(&self, path: &Path) -> Result<RawFeature, ParseFailure> {
             let source = self.0.get(path).cloned().ok_or_else(|| ParseFailure {
                 line: None,
-                message: "cannot be read: permission denied".to_string(),
+                kind: ProblemKind::CannotBeRead {
+                    reason: "permission denied".to_string(),
+                },
             })?;
             let feature =
                 Feature::parse(&source, GherkinEnv::default()).map_err(|_| ParseFailure {
                     line: Some(1),
-                    message: "Syntax error.".to_string(),
+                    kind: ProblemKind::Syntax,
                 })?;
             Ok(RawFeature { feature, source })
         }
@@ -120,7 +122,9 @@ mod tests {
             Path::new("in"),
             Path::new("in/locked"),
             None,
-            "cannot be listed: permission denied",
+            ProblemKind::CannotBeListed {
+                reason: "permission denied".to_string(),
+            },
         );
         let problems = read(
             &["in/a.feature", "in/b.feature", "in/c.feature"],

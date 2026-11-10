@@ -9,7 +9,9 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use gherkin::Step;
-use gherkin_glass::{GherkinParser, InputService, InputWalker, ParsedFeature, Problems};
+use gherkin_glass::{
+    GherkinParser, InputService, InputWalker, ParsedFeature, ProblemKind, Problems,
+};
 
 /// The service as the command will wire it, over the real file system.
 fn read_input(input: &Path) -> Result<Vec<ParsedFeature>, Problems> {
@@ -418,7 +420,7 @@ fn a_folder_that_cannot_be_listed_is_reported() {
     assert_eq!(problems.len(), 1);
     assert_eq!(problems[0].path, "locked");
     assert!(
-        problems[0].message.starts_with("cannot be listed: "),
+        matches!(problems[0].kind, ProblemKind::CannotBeListed { .. }),
         "{}",
         problems[0]
     );
@@ -446,23 +448,17 @@ fn a_ghg_ignore_file_or_a_feature_file_that_cannot_be_opened_is_reported() {
     unlock(&input.join("read.feature"), 0o644);
 
     let problems = problems.expect_err("cannot be read");
-    let lines: Vec<_> = problems
+    let found: Vec<_> = problems
         .as_slice()
         .iter()
         .map(|problem| {
-            (
-                problem.path.as_str(),
-                problem.line,
-                problem.message.split(':').next(),
-            )
+            let unreadable = matches!(problem.kind, ProblemKind::CannotBeRead { .. });
+            (problem.path.as_str(), problem.line, unreadable)
         })
         .collect();
     assert_eq!(
-        lines,
-        [
-            (".ghg-ignore", None, Some("cannot be read")),
-            ("read.feature", None, Some("cannot be read")),
-        ]
+        found,
+        [(".ghg-ignore", None, true), ("read.feature", None, true)]
     );
 }
 
@@ -475,7 +471,7 @@ fn an_input_folder_that_does_not_exist_is_reported() {
     assert_eq!(problems.len(), 1);
     assert_eq!(problems[0].path, input.display().to_string());
     assert!(
-        problems[0].message.starts_with("cannot be listed: "),
+        matches!(problems[0].kind, ProblemKind::CannotBeListed { .. }),
         "{}",
         problems[0]
     );

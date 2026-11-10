@@ -3,7 +3,7 @@
 use std::fs::{read_dir, read_to_string};
 use std::path::{Path, PathBuf};
 
-use crate::entities::{CollectedInput, Problem};
+use crate::entities::{CollectedInput, Problem, ProblemKind};
 use crate::policies::{FileSelection, IGNORE_FILE, parse_rules};
 use crate::ports::InputCollector;
 
@@ -72,7 +72,13 @@ impl Walk<'_> {
         match listing {
             Ok(entries) => Some(entries),
             Err(error) => {
-                self.problem(folder, None, format!("cannot be listed: {error}"));
+                self.problem(
+                    folder,
+                    None,
+                    ProblemKind::CannotBeListed {
+                        reason: error.to_string(),
+                    },
+                );
                 None
             }
         }
@@ -84,21 +90,27 @@ impl Walk<'_> {
         let text = match read_to_string(&path) {
             Ok(text) => text,
             Err(error) => {
-                self.problem(&path, None, format!("cannot be read: {error}"));
+                self.problem(
+                    &path,
+                    None,
+                    ProblemKind::CannotBeRead {
+                        reason: error.to_string(),
+                    },
+                );
                 return false;
             }
         };
         let parsed = parse_rules(folder, &path, &text);
-        for (line, message) in parsed.invalid {
-            self.problem(&path, line, message);
+        for (line, reason) in parsed.invalid {
+            self.problem(&path, line, ProblemKind::InvalidRule { reason });
         }
         self.selection.enter(parsed.rules);
         true
     }
 
-    fn problem(&mut self, path: &Path, line: Option<usize>, message: String) {
+    fn problem(&mut self, path: &Path, line: Option<usize>, kind: ProblemKind) {
         self.found
             .problems
-            .push(Problem::new(self.input, path, line, message));
+            .push(Problem::new(self.input, path, line, kind));
     }
 }
