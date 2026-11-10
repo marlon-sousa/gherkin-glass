@@ -25,6 +25,6 @@ Each folder here is the input of one build, and is checked against the rules of 
 
 The cargo plugin, `cargo ghg`, is run over the `configuration` folders too, and checked to behave exactly as `ghg` does there.
 
-The example suite of the project's own site, `site/features/`, is checked the same way, against "The project's own site".
+The example suite of the project's own site, `project-site/features/`, is checked the same way, against "The project's own site".
 
 Some files here are left out of git by the fixture's own `.gitignore`, on purpose, and were added with `git add --force`.

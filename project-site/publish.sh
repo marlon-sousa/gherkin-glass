@@ -4,10 +4,10 @@
 # site". Run from inside the repository's checkout, whose origin is GitHub.
 #
 # Usage:
-#   site/publish.sh open <folder>
+#   project-site/publish.sh open <folder>
 #     Checks out the gh-pages branch into <folder>, a new git worktree,
 #     creating the branch, with only a .nojekyll file, when origin has none.
-#   site/publish.sh publish <folder> <version>
+#   project-site/publish.sh publish <folder> <version>
 #     After ghg has built <version> into <folder>, commits <version>/, the
 #     versions page and its assets/, and pushes gh-pages to origin. It fails, committing
 #     nothing, when anything else in <folder> has changed.
@@ -20,7 +20,7 @@ versions_page=index.html
 versions_assets=assets
 
 usage() {
-  echo "Usage: site/publish.sh open <folder> | site/publish.sh publish <folder> <version>" >&2
+  echo "Usage: project-site/publish.sh open <folder> | project-site/publish.sh publish <folder> <version>" >&2
   exit 2
 }
 

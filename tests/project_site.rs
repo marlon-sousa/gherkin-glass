@@ -1,4 +1,4 @@
-//! docs/BEHAVIOUR.md, "The project's own site", checked against `site/`.
+//! docs/BEHAVIOUR.md, "The project's own site", checked against `project-site/`.
 
 use std::collections::BTreeSet;
 use std::fs::{create_dir_all, read_dir, read_to_string, remove_dir_all, write};
@@ -29,10 +29,10 @@ fn scratch(name: &str) -> PathBuf {
     folder
 }
 
-/// The names in `site/fixtures-left-out`, without comments and blank lines.
+/// The names in `project-site/fixtures-left-out`, without comments and blank lines.
 fn fixtures_left_out() -> BTreeSet<String> {
-    read_to_string(repository().join("site/fixtures-left-out"))
-        .expect("site/fixtures-left-out is read")
+    read_to_string(repository().join("project-site/fixtures-left-out"))
+        .expect("project-site/fixtures-left-out is read")
         .lines()
         .map(|line| line.split('#').next().unwrap_or("").trim().to_string())
         .filter(|name| !name.is_empty())
@@ -49,11 +49,11 @@ fn fixture_folders() -> BTreeSet<String> {
         .collect()
 }
 
-// What it holds: rules 36 and 37.
+// What it holds: rules 129 and 130.
 
 #[test]
 fn every_fixture_left_out_exists_and_says_why() {
-    let text = read_to_string(repository().join("site/fixtures-left-out")).unwrap();
+    let text = read_to_string(repository().join("project-site/fixtures-left-out")).unwrap();
     let mut said_why = false;
     for line in text.lines().map(str::trim) {
         if line.starts_with('#') {
@@ -84,14 +84,14 @@ fn every_fixture_the_site_shows_reads_with_no_problem() {
 #[test]
 fn the_input_holds_the_example_suite_and_the_fixtures_and_reads_with_no_problem() {
     let input = scratch("input").join("input");
-    let output = Command::new(repository().join("site/assemble-input.sh"))
+    let output = Command::new(repository().join("project-site/assemble-input.sh"))
         .arg(&input)
         .output()
         .expect("the script runs");
     assert!(output.status.success(), "{}", text(&output.stderr));
 
     let paths: BTreeSet<PathBuf> = read(&input).into_iter().map(|parsed| parsed.path).collect();
-    let mut expected: BTreeSet<PathBuf> = read(&repository().join("site/features"))
+    let mut expected: BTreeSet<PathBuf> = read(&repository().join("project-site/features"))
         .into_iter()
         .map(|parsed| parsed.path)
         .collect();
@@ -110,7 +110,7 @@ fn the_input_holds_the_example_suite_and_the_fixtures_and_reads_with_no_problem(
 #[test]
 fn the_input_is_never_written_over_an_existing_folder() {
     let existing = scratch("existing");
-    let output = Command::new(repository().join("site/assemble-input.sh"))
+    let output = Command::new(repository().join("project-site/assemble-input.sh"))
         .arg(&existing)
         .output()
         .expect("the script runs");
@@ -141,7 +141,7 @@ fn non_empty(text: &Option<String>) -> bool {
 
 #[test]
 fn the_example_suite_shows_every_construct() {
-    let suite = repository().join("site/features");
+    let suite = repository().join("project-site/features");
     let features = read(&suite);
     let mut shown = BTreeSet::new();
     let mut show = |construct: &'static str, here: bool| {
@@ -246,7 +246,7 @@ fn the_example_suite_shows_every_construct() {
     );
 }
 
-// How a release adds to it: rules 38 and 39.
+// How a release adds to it: rules 131 and 132.
 
 fn text(bytes: &[u8]) -> String {
     String::from_utf8_lossy(bytes).into_owned()
@@ -279,9 +279,9 @@ fn git_ok(folder: &Path, arguments: &[&str]) -> String {
     text(&output.stdout)
 }
 
-/// `site/publish.sh` with `arguments`, run in the checkout `folder`.
+/// `project-site/publish.sh` with `arguments`, run in the checkout `folder`.
 fn publish(folder: &Path, arguments: &[&str]) -> Output {
-    Command::new(repository().join("site/publish.sh"))
+    Command::new(repository().join("project-site/publish.sh"))
         .args(arguments)
         .current_dir(folder)
         .env("GIT_CONFIG_GLOBAL", "/dev/null")
@@ -428,5 +428,64 @@ fn each_release_adds_only_its_own_folder_and_the_versions_page() {
     for version in ["", ".", "..", ".hidden", "a/b", "index.html", "assets"] {
         let output = publish(&second, &["publish", pages.to_str().unwrap(), version]);
         assert_eq!(output.status.code(), Some(1), "{version:?}");
+    }
+}
+
+/// `ghg build` of the site's input, versioned as `version`, into `pages`.
+fn build_site(input: &Path, pages: &Path, version: &str) {
+    let output = Command::new(env!("CARGO_BIN_EXE_ghg"))
+        .args(["build", "--title", "gherkin-glass examples", "--input"])
+        .arg(input)
+        .arg("--output")
+        .arg(pages)
+        .args(["--version-name", version])
+        .current_dir(input)
+        .output()
+        .expect("ghg runs");
+    assert!(output.status.success(), "{}", text(&output.stderr));
+}
+
+#[cfg(unix)]
+#[test]
+fn a_release_publishes_what_ghg_builds_and_keeps_the_earlier_ones() {
+    let folder = scratch("release");
+    let remote = folder.join("remote.git");
+    git_ok(&folder, &["init", "--quiet", "--bare", "remote.git"]);
+    let input = folder.join("input");
+    let assembled = Command::new(repository().join("project-site/assemble-input.sh"))
+        .arg(&input)
+        .output()
+        .expect("the script runs");
+    assert!(assembled.status.success(), "{}", text(&assembled.stderr));
+
+    let mut before = Vec::new();
+    for version in ["v0.1.0", "v0.2.0"] {
+        let checked_out = folder.join(format!("checkout-{version}"));
+        checkout(&remote, &checked_out);
+        let pages = folder.join(format!("pages-{version}"));
+        publish_ok(&checked_out, &["open", pages.to_str().unwrap()]);
+        build_site(&input, &pages, version);
+        publish_ok(&checked_out, &["publish", pages.to_str().unwrap(), version]);
+        let after = published(&remote);
+        for line in before
+            .iter()
+            .filter(|line: &&String| line.contains("\tv0.1.0/"))
+        {
+            assert!(after.contains(line), "{line} stays as it was");
+        }
+        before = after;
+    }
+    assert_eq!(commits(&remote), 2);
+    for page in [
+        "index.html",
+        "v0.1.0/index.html",
+        "v0.2.0/fixtures/index.html",
+    ] {
+        assert!(
+            before
+                .iter()
+                .any(|line| line.ends_with(&format!("\t{page}"))),
+            "{page} is published"
+        );
     }
 }
