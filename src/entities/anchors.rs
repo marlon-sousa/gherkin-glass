@@ -4,8 +4,8 @@ use std::collections::BTreeMap;
 
 use gherkin::{Background, Examples, Rule, Scenario};
 
-/// Each block's anchor is found by the byte offset at which the block starts,
-/// so only the blocks of the feature the anchors were made from have one.
+/// Each block's anchor is found by the byte offset at which the block starts:
+/// a block of another feature at the same offset gets this feature's anchor.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct Anchors {
     blocks: BTreeMap<usize, String>,

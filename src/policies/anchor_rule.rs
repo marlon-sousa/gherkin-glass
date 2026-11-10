@@ -2,7 +2,7 @@
 
 use std::collections::HashSet;
 
-use gherkin::{Feature, Scenario};
+use gherkin::{Background, Feature, Scenario};
 use unicode_normalization::UnicodeNormalization;
 use unicode_normalization::char::is_combining_mark;
 
@@ -103,7 +103,7 @@ fn add_scenarios<'a>(
 }
 
 impl<'a> Block<'a> {
-    fn background(background: &'a gherkin::Background) -> Self {
+    fn background(background: &'a Background) -> Self {
         Block {
             start: background.span.start,
             name: &background.name,
@@ -154,21 +154,40 @@ pub(crate) fn anchor_of(text: &str) -> String {
         .to_lowercase()
         .nfc()
         .collect();
+    let characters: Vec<char> = lower
+        .chars()
+        .filter(|c| !matches!(c, '\'' | '\u{2019}'))
+        .collect();
     let mut anchor = String::with_capacity(lower.len());
-    let mut gap = false;
-    for character in lower.chars().filter(|c| !matches!(c, '\'' | '\u{2019}')) {
-        // A mark that combines with a letter, such as Devanagari's virama, is part of it.
-        if character.is_alphanumeric() || is_combining_mark(character) {
-            if gap && !anchor.is_empty() {
+    // Whether the last character looked at was kept, so that a mark or a joiner may follow it.
+    let mut joined = false;
+    for (index, &character) in characters.iter().enumerate() {
+        let keep = if character.is_alphanumeric() {
+            if !joined && !anchor.is_empty() {
                 anchor.push('-');
             }
-            gap = false;
-            anchor.push(character);
+            true
+        } else if is_combining_mark(character) {
+            joined
+        } else if is_joiner(character) {
+            joined
+                && characters
+                    .get(index + 1)
+                    .is_some_and(|c| c.is_alphanumeric())
         } else {
-            gap = true;
+            false
+        };
+        if keep {
+            anchor.push(character);
         }
+        joined = keep;
     }
     anchor
+}
+
+/// The zero width non-joiner and joiner, which Persian and the scripts of India write inside words.
+fn is_joiner(character: char) -> bool {
+    matches!(character, '\u{200c}' | '\u{200d}')
 }
 
 #[cfg(test)]
@@ -207,6 +226,17 @@ mod tests {
         assert_eq!(anchor_of("E\u{301}TAPE"), "\u{e9}tape");
         assert_eq!(anchor_of("Straße"), "straße");
         assert_eq!(anchor_of("हिन्दी में"), "हिन्दी-में");
+        assert_eq!(anchor_of("می\u{200c}خواهم"), "می\u{200c}خواهم");
+    }
+
+    #[test]
+    fn a_mark_or_joiner_with_no_letter_before_it_is_a_gap() {
+        // An emoji followed by the variation selector U+FE0F, as phones type it.
+        assert_eq!(anchor_of("\u{2764}\u{fe0f} love"), "love");
+        assert_eq!(anchor_of("\u{2764}\u{fe0f}"), "");
+        assert_eq!(anchor_of("a \u{301}b"), "a-b");
+        assert_eq!(anchor_of("a\u{200d} b"), "a-b");
+        assert_eq!(anchor_of("\u{200c}a"), "a");
     }
 
     #[test]

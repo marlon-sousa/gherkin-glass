@@ -105,6 +105,19 @@ fn every_block_and_outline_row_has_an_anchor_made_by_the_rule() {
             // Rule 30: letters outside a to z are kept.
             (43, "étape-spéciale"),
             (44, "scenario-2"),
+            // Rule 34: the feature's own name is not taken.
+            (47, "anchors"),
+            // Rule 27: written with a combining accent, made in NFC.
+            (50, "\u{e9}tape-finale"),
+            // Rule 29: marks and joiners stay inside words, and a variation
+            // selector after an emoji is a gap.
+            (53, "हिन्दी-में"),
+            (56, "love"),
+            (59, "می\u{200c}خواهم"),
+            // Rule 33: examples with only a header, or no table, have no rows.
+            (62, "headers-only"),
+            (65, "examples-2"),
+            (68, "no-table"),
             // Rule 33: rows count across examples blocks, after every other
             // anchor, and the second repeats the scenario on line 33.
             (21, "withdraw-cash-row-1"),
@@ -134,6 +147,13 @@ fn a_keyword_that_leaves_nothing_gives_the_block_s_kind_in_english() {
     // Rule 31: the emoji language's keywords are not letters.
     assert_eq!(
         anchors("emoji.feature"),
-        expected(&[(4, "scenario"), (7, "scenario-2")])
+        expected(&[
+            (4, "background"),
+            (7, "scenario"),
+            (10, "scenario-2"),
+            (13, "scenario-outline"),
+            (16, "examples"),
+            (13, "scenario-outline-row-1"),
+        ])
     );
 }

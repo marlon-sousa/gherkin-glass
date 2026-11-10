@@ -43,3 +43,26 @@ Feature: Anchors
   Rule: Étape SPÉCIALE
     Scenario: Scenario
       Given a name like the keyword
+
+    Scenario: Anchors
+      Given the feature's own name, which has no anchor
+
+    Scenario: ÉTAPE FINALE
+      Given a name written with a combining accent
+
+    Scenario: हिन्दी में
+      Given a name in Devanagari, with its virama
+
+    Scenario: ❤️ love
+      Given an emoji with its variation selector
+
+    Scenario: می‌خواهم
+      Given a Persian word with its zero width non-joiner
+
+    Scenario Outline: Headers only
+      Given <n>
+
+      Examples:
+        | n |
+
+      Examples: No table
