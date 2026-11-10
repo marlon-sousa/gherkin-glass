@@ -4,5 +4,5 @@
 //! agreed in issue #11 and written in docs/BEHAVIOUR.md before it is built.
 
 fn main() {
-    println!("{} {}", env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
+    println!("ghg {}", env!("CARGO_PKG_VERSION"));
 }
