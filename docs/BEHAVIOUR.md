@@ -11,6 +11,7 @@ Agreed so far:
 - [Anchors](#anchors), issue [#5](https://github.com/marlon-sousa/gherkin-glass/issues/5).
 - [Pages](#pages), issue [#4](https://github.com/marlon-sousa/gherkin-glass/issues/4).
 - [Previewing a site](#previewing-a-site), issue [#26](https://github.com/marlon-sousa/gherkin-glass/issues/26).
+- [Accessibility](#accessibility), issue [#2](https://github.com/marlon-sousa/gherkin-glass/issues/2).
 
 The other features planned for the first version are the [issues](https://github.com/marlon-sousa/gherkin-glass/issues) labelled `feature`. Each adds its own keys and options to "The command line and its configuration" as it is built.
 
@@ -181,3 +182,16 @@ Each feature file becomes one page of the site, which a screen reader can move t
 70. With `--watch`, the path `/__ghg/build` answers the number of the version being served, as plain text, and `/__ghg/reload.js` answers the reload script. Without `--watch`, both are paths of the site like any other. Fixture: `tests/fixtures/serve/built`.
 71. The reload script asks `/__ghg/build` once a second, and reloads the page when the number differs from its page's. While ghg serve does not answer, it keeps asking. Fixture: `tests/fixtures/serve/reload`, in the browser, by `tests/browser/reload.mjs`.
 72. Before reloading, it remembers the heading the reader was in: when an element of the page has focus and some of it is in the window, the last heading with an `id` at or before that element in the page, and otherwise the last heading with an `id` whose top is at or above the top of the window. After the reload, if the page still has a heading with that `id`, it scrolls the heading to the top of the window and moves focus to it, so that a sighted reader keeps their place and a screen reader resumes there rather than at the top. A focused element scrolled out of the window, such as the heading focused by the last reload after the reader scrolled on with the mouse, does not count. When there is no such heading, the page opens as any page does. The script says nothing of its own, so it has no interface text. Fixture: `tests/fixtures/serve/reload`, in the browser, by `tests/browser/reload.mjs`.
+
+## Accessibility
+
+Every page gherkin-glass writes is meant to be read and used by everyone: with a screen reader, with the keyboard alone, and in a light or a dark colour scheme. The browser check holds every page to the rules below on every pull request, and a page that breaks one fails it, as a failing test does ([AGENTS.md](../AGENTS.md), rule 3).
+
+The check builds every fixture whose build makes a site, each with `--output` naming a folder of its own, serves the site with `ghg serve --no-build`, as rule 57 describes, so that it is checked as a reader gets it, and opens each of its pages in Chromium, with Playwright. Every rule below is checked on every one of those pages, and on `tests/fixtures/accessibility/failing`, a page that breaks each rule, which the check must find. A feature file or configuration file under `tests/fixtures/` that is in neither a fixture the check builds nor one it names as making no site fails the check, so that no new fixture is left out of it.
+
+### The rules checked
+
+73. Every page passes [axe-core](https://www.npmjs.com/package/axe-core) 4.14.0 with every rule tagged `wcag2a`, `wcag2aa`, `wcag21a`, `wcag21aa` or `wcag22aa`, which are WCAG 2.2 at levels A and AA, and with `color-contrast-enhanced`, the contrast of 7 to 1 that level AAA asks for, which axe-core leaves off unless asked. The other criteria of level AAA are followed where reasonable, but not checked. Fixtures: every fixture whose build makes a site, and `tests/fixtures/accessibility/failing`.
+74. Every page passes rule 73 twice: once with the browser's colour scheme light, and once dark, as `prefers-color-scheme` reads them. The themes a reader can pick on the page are checked the same way, each once, from when they are built ([#10](https://github.com/marlon-sousa/gherkin-glass/issues/10)). Fixtures: every fixture whose build makes a site, and `tests/fixtures/accessibility/failing`, whose contrast fails in the dark scheme only.
+75. From the start of a page as it loads, Tab moves focus to every link and button the page shows, each once, in the order they come in the page, and the next Tab leaves the page. Nothing the page hides, such as the content of a collapsed block, is reached. Fixtures: every fixture whose build makes a site, and `tests/fixtures/accessibility/failing`, whose links are reached out of order.
+76. Enter and Space on a block's button each collapse or expand it, as rule 52 describes, and Enter on "Collapse all" and on "Expand all" acts as rule 53 describes. Fixtures: every fixture whose build makes a site and has a block.
