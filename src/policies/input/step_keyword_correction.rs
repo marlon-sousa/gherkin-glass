@@ -2,7 +2,7 @@
 
 use gherkin::Feature;
 
-use crate::policies::doc_string_correction::steps_mut;
+use super::doc_string_correction::steps_mut;
 
 /// A keyword the file follows with a space or a tab gets it back; the
 /// keywords of most languages, such as `Given `, already end with one.

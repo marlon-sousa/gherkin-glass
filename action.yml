@@ -6,7 +6,7 @@ author: marlon-sousa
 #
 # Besides version and build, every input is an option of ghg build of the
 # same name, and every option of ghg build that sets how a site is built is an
-# input: a test in src/policies/argument_parsing/tests/action_inputs.rs fails
+# input: a test in src/policies/configuration/argument_parsing/tests/action_inputs.rs fails
 # when they differ. The build step names them all in GHG_OPTIONS, and passes
 # each as GHG_OPTION_ and its name in capitals, with _ for -.
 
