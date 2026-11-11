@@ -26,7 +26,7 @@ Every pull request is reviewed by an independent reviewer before it is opened, o
 1. Every behaviour the change adds, against docs/BEHAVIOUR.md, and every rule added or changed there, against rule 2 above.
 2. Every page the change touches, against rule 3 above, and every page path and anchor, against rule 4 above.
 3. `lib.rs`, against docs/ARCHITECTURE.md, "Folders and files", rules 1 and 2: it exports the two entry points and nothing else. Every new bare `pub` other than the two entry points is a finding, against rule 2.
-4. Every file the change adds or makes longer: its lines before its test module, against docs/ARCHITECTURE.md, "Folders and files", rule 7, and the lines of its test module, against rule 5 of that section. Past either limit, the reviewer says what the file holds and proposes the private submodules it splits into.
+4. Every file the change adds or makes longer, against docs/ARCHITECTURE.md, "Folders and files", rules 5 and 7: what it holds, its lines before its test module and the lines of its test module. The limits are guides for judgement, not gates. A file with several responsibilities splits at any length. Past a limit, the reviewer says what the file holds and whether it still holds one thing well, and if not, proposes the private submodules it splits into.
 5. Every new module: its role line, its folder and its name, against docs/ARCHITECTURE.md, "Module roles" and "Folders and files".
 6. Every test the change adds or moves: a test in `tests/` reaches the code only through the entry points or a binary, and a unit test is in the module whose code decides what it checks, against docs/ARCHITECTURE.md, "Folders and files", rule 5.
 7. Every comment and doc comment, against docs/ARCHITECTURE.md, "Comments".
