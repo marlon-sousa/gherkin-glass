@@ -152,7 +152,7 @@ fn answer(request: Request, preview: &Preview, words: &ServerWords) {
 
 fn choose(url: &str, preview: &Preview, words: &ServerWords) -> Answer {
     let not_found = || Answer::text(404, &words.not_found);
-    match route(url, preview.watching) {
+    match route(url, preview.mode) {
         Route::NotFound => not_found(),
         Route::BuildNumber => Answer::ok(
             "text/plain; charset=utf-8".into(),
@@ -170,7 +170,7 @@ fn choose(url: &str, preview: &Preview, words: &ServerWords) -> Answer {
             match find(&version, &address) {
                 Found::File(body) => {
                     let content_type = content_type(&address);
-                    let body = if preview.watching && is_html(&content_type) {
+                    let body = if preview.mode.watches() && is_html(&content_type) {
                         add_reload_script(&body, version.number)
                     } else {
                         body
@@ -232,6 +232,7 @@ mod tests {
     use std::collections::BTreeMap;
 
     use super::*;
+    use crate::entities::ServeMode;
 
     fn words() -> ServerWords {
         ServerWords {
@@ -240,19 +241,19 @@ mod tests {
         }
     }
 
-    fn memory(watching: bool) -> Preview {
+    fn memory(mode: ServeMode) -> Preview {
         let files = BTreeMap::from([
             ("a/index.html".to_string(), b"<p>a</p></body>".to_vec()),
             ("a/s.js".to_string(), b"</body>".to_vec()),
         ]);
-        let preview = Preview::new(watching, ServedSite::Memory(BTreeMap::new()));
+        let preview = Preview::new(mode, ServedSite::Memory(BTreeMap::new()));
         preview.replace(ServedSite::Memory(files));
         preview
     }
 
     #[test]
     fn under_watch_a_page_has_the_script_of_its_version_and_nothing_else_does() {
-        let preview = memory(true);
+        let preview = memory(ServeMode::Watch);
         let page = choose("/a/", &preview, &words());
         assert_eq!(page.status, 200);
         assert_eq!(
@@ -268,14 +269,14 @@ mod tests {
 
     #[test]
     fn without_watch_a_page_is_as_built() {
-        let preview = memory(false);
+        let preview = memory(ServeMode::Build);
         assert_eq!(choose("/a/", &preview, &words()).body, b"<p>a</p></body>");
         assert_eq!(choose("/__ghg/build", &preview, &words()).status, 404);
     }
 
     #[test]
     fn a_folder_in_memory_is_redirected_and_a_missing_file_is_not_found() {
-        let preview = memory(true);
+        let preview = memory(ServeMode::Watch);
         let folder = choose("/a?x", &preview, &words());
         assert_eq!(folder.status, 301);
         assert_eq!(folder.location.as_deref(), Some("/a/?x"));
