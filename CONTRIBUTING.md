@@ -24,6 +24,7 @@ Please do not open a pull request for a feature before its issue is agreed and i
 ## The documents
 
 - **[docs/BEHAVIOUR.md](docs/BEHAVIOUR.md)** is what the tool promises, in terms a test can observe: the command line, the configuration, the pages and their addresses, the anchor rule, the reader options and the accessibility guarantees. A feature is written here, in a pull request of its own, before it is built. When we say "the spec", we mean this document.
+- **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** is how the code is organised and written: the module roles, the folder and visibility conventions, what a comment may say, and the test tiers.
 - **[docs/design/](docs/design/)** holds short design notes, `NNNN-title.md`, written only when a decision is not obvious from the code, such as how a collapsed block stays reachable by heading. Each says what was decided, what else was considered and why.
 
 ## Fixtures
@@ -68,7 +69,7 @@ Every pull request runs:
 
 - the issue check and the commit message check, from [itinera-dev/actions](https://github.com/itinera-dev/actions);
 - `cargo fmt --check`, `cargo clippy` with warnings as errors, and `cargo test`;
-- the accessibility check: the fixtures are built into a site, every page is opened in a browser and checked with axe-core, and the skip link, the folder tree and the reader options are tried with the keyboard alone.
+- the accessibility check: the fixtures are built into a site and served over HTTP, every page is opened in a browser and checked with axe-core, and the skip link, the folder tree and the reader options are tried with the keyboard alone.
 
 ## Releases
 
