@@ -7,8 +7,9 @@ use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 
 use crate::entities::{Problem, ProblemKind, Problems, Settings, SiteAssets};
 use crate::policies::{
-    build_folder_pages, build_folder_tree, build_page, render_folder_page, render_folder_tree,
-    render_page,
+    build_folder_pages, build_folder_tree, build_page, build_tag_index, build_tag_page, name_tags,
+    render_folder_page, render_folder_tree, render_page, render_tag_index, render_tag_page,
+    tag_index_address, tags_of,
 };
 use crate::ports::SiteWriter;
 use crate::services::InputService;
@@ -29,10 +30,12 @@ impl SiteService {
     /// Writes into `output`, any folder, over what is there, and only once the whole input is read.
     pub fn build(&self, settings: &Settings, output: &Path) -> Result<(), Problems> {
         let features = self.input.read(&settings.input, settings.unnamed)?;
+        let tags = tags_of(&features);
+        let names = name_tags(&tags);
         // Collecting into a `Vec` keeps file order, whatever order the threads finish in.
         let pages: Vec<_> = features
             .par_iter()
-            .map(|parsed| build_page(parsed, &settings.pages))
+            .map(|parsed| build_page(parsed, &settings.pages, &names))
             .collect();
         let folders = build_folder_pages(&pages, &settings.pages);
         let mut rendered: Vec<(String, String)> = pages
@@ -49,6 +52,18 @@ impl SiteService {
             TREE_DATA.to_string(),
             render_folder_tree(&build_folder_tree(&folders)),
         ));
+        rendered.push((
+            tag_index_address(),
+            render_tag_index(&build_tag_index(&tags, &pages, &names, &settings.pages)),
+        ));
+        rendered.extend(
+            tags.par_iter()
+                .map(|tag| {
+                    let page = build_tag_page(tag, &pages, &names, &settings.pages);
+                    (page.address.clone(), render_tag_page(&page))
+                })
+                .collect::<Vec<_>>(),
+        );
         let assets = SiteAssets::iter().filter_map(|name| {
             SiteAssets::get(&name).map(|file| (format!("assets/{name}"), file.data.into_owned()))
         });
@@ -151,7 +166,8 @@ mod tests {
                 "assets/tree.json",
                 "index.html",
                 "sub/b.html",
-                "sub/index.html"
+                "sub/index.html",
+                "tags/index.html"
             ]
         );
         assert!(
@@ -172,6 +188,21 @@ mod tests {
             problems.to_string(),
             "elsewhere/sub/b.html: cannot be written: disk full\n"
         );
+    }
+
+    #[test]
+    fn a_page_in_the_folder_of_the_tag_pages_is_reported_and_nothing_is_written() {
+        let writer = Arc::new(FakeWriter::default());
+        let problems = build(
+            vec!["Tags/a.feature", "tags.feature", "b/tags/c.feature"],
+            writer.clone(),
+        )
+        .expect_err("in the tags folder");
+        assert_eq!(
+            problems.to_string(),
+            "Tags/a.feature: has its page, Tags/a.html, in the folder tags\n"
+        );
+        assert!(writer.written.lock().expect("not poisoned").is_empty());
     }
 
     #[test]

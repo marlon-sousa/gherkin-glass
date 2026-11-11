@@ -2,6 +2,8 @@
 
 use std::path::PathBuf;
 
+use crate::entities::TagLink;
+
 /// Each value is `None` when the file does not set it.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub(crate) struct Config {
@@ -16,4 +18,5 @@ pub(crate) struct Config {
     pub(crate) title: Option<String>,
     pub(crate) show_tree: Option<bool>,
     pub(crate) inline_backgrounds: Option<bool>,
+    pub(crate) tag_links: Option<Vec<TagLink>>,
 }

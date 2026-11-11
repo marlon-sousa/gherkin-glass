@@ -5,7 +5,11 @@ use std::path::PathBuf;
 use toml::Spanned;
 use toml::de::{DeTable, DeValue};
 
-use crate::entities::{Config, ConfigProblem, ConfigProblemKind, ValueType};
+use crate::entities::{Config, ConfigProblem, ConfigProblemKind, TagLink, ValueType};
+use crate::policies::{PatternProblem, unknown_group, whole_tag_pattern};
+
+/// The keys of a table of `tag_links`, all needed.
+const TAG_LINK_KEYS: [&str; 3] = ["pattern", "address", "text"];
 
 /// The values `source` sets, or every problem in it, sorted by line. A file
 /// that is not TOML has one problem, where the `toml` crate stopped.
@@ -24,6 +28,13 @@ pub(crate) fn parse_config(source: &str) -> Result<Config, Vec<ConfigProblem>> {
     for (key, value) in table.get_ref() {
         let name = key.get_ref().as_ref();
         let at = line(value.span().start);
+        if name == "tag_links" {
+            match tag_links(source, value) {
+                Ok(links) => config.tag_links = Some(links),
+                Err(found) => problems.extend(found),
+            }
+            continue;
+        }
         let problem = |kind| ConfigProblem { line: at, kind };
         let wrong_type = |expected| {
             problem(ConfigProblemKind::WrongType {
@@ -77,6 +88,126 @@ pub(crate) fn parse_config(source: &str) -> Result<Config, Vec<ConfigProblem>> {
         Ok(config)
     } else {
         problems.sort();
+        Err(problems)
+    }
+}
+
+/// Every table of `tag_links`, or every problem in them.
+fn tag_links(
+    source: &str,
+    value: &Spanned<DeValue<'_>>,
+) -> Result<Vec<TagLink>, Vec<ConfigProblem>> {
+    let line = |offset: usize| Some(line_of(source, offset));
+    let not_list = || {
+        vec![ConfigProblem {
+            line: line(value.span().start),
+            kind: ConfigProblemKind::NotTableList,
+        }]
+    };
+    let tables: Vec<_> = value
+        .get_ref()
+        .as_array()
+        .ok_or_else(not_list)?
+        .iter()
+        .map(|entry| {
+            entry
+                .get_ref()
+                .as_table()
+                .map(|table| (entry.span().start, table))
+        })
+        .collect::<Option<_>>()
+        .ok_or_else(not_list)?;
+    let mut links = Vec::new();
+    let mut problems = Vec::new();
+    for (start, table) in tables {
+        let mut found: [Option<(&str, usize)>; 3] = [None; 3];
+        for (key, value) in table {
+            let name = key.get_ref().as_ref();
+            let full = format!("tag_links.{name}");
+            let at = line(value.span().start);
+            let Some(slot) = TAG_LINK_KEYS.iter().position(|known| *known == name) else {
+                problems.push(ConfigProblem {
+                    line: line(key.span().start),
+                    kind: ConfigProblemKind::UnknownKey { key: full },
+                });
+                continue;
+            };
+            match text(value) {
+                Some("") => problems.push(ConfigProblem {
+                    line: at,
+                    kind: ConfigProblemKind::Empty { key: full },
+                }),
+                Some(text) => found[slot] = Some((text, value.span().start)),
+                None => problems.push(ConfigProblem {
+                    line: at,
+                    kind: ConfigProblemKind::WrongType {
+                        key: full,
+                        expected: ValueType::Text,
+                    },
+                }),
+            }
+        }
+        for key in TAG_LINK_KEYS {
+            if !table.iter().any(|(name, _)| name.get_ref().as_ref() == key) {
+                problems.push(ConfigProblem {
+                    line: line(start),
+                    kind: ConfigProblemKind::Missing {
+                        key: format!("tag_links.{key}"),
+                    },
+                });
+            }
+        }
+        let [pattern, address, text] = found;
+        let compiled = pattern.and_then(|(pattern, at)| match whole_tag_pattern(pattern) {
+            Ok(compiled) => Some(compiled),
+            Err(reason) => {
+                problems.push(ConfigProblem {
+                    line: line(at),
+                    kind: match reason {
+                        PatternProblem::TooLarge => ConfigProblemKind::RegexTooLarge {
+                            key: "tag_links.pattern".to_string(),
+                        },
+                        PatternProblem::Syntax(reason) => ConfigProblemKind::NotRegex {
+                            key: "tag_links.pattern".to_string(),
+                            reason,
+                        },
+                    },
+                });
+                None
+            }
+        });
+        let Some(compiled) = compiled else {
+            continue;
+        };
+        let mut sound = true;
+        for (key, given) in [("address", address), ("text", text)] {
+            if let Some((replacement, at)) = given
+                && let Some(group) = unknown_group(replacement, &compiled)
+            {
+                sound = false;
+                problems.push(ConfigProblem {
+                    line: line(at),
+                    kind: ConfigProblemKind::UnknownGroup {
+                        key: format!("tag_links.{key}"),
+                        group,
+                    },
+                });
+            }
+        }
+        if let (true, Some((pattern, _)), Some((address, _)), Some((text, _))) =
+            (sound, pattern, address, text)
+        {
+            links.push(TagLink {
+                source: pattern.to_string(),
+                pattern: compiled,
+                address: address.to_string(),
+                text: text.to_string(),
+            });
+        }
+    }
+    if problems.is_empty() {
+        Ok(links)
+    } else {
         Err(problems)
     }
 }

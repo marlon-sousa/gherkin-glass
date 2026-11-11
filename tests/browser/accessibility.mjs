@@ -30,6 +30,7 @@ const builds = [
   { folder: "pages", args: ["--config", "collapsed.toml"] },
   { folder: "backgrounds", args: ["--config", "ghg.toml"] },
   { folder: "backgrounds", args: ["--config", "linked.toml"] },
+  { folder: "tags", args: ["--config", "ghg.toml"] },
   { folder: "configuration/default", args: [] },
   { folder: "configuration/configured", args: [] },
   { folder: "configuration/configured/nested", args: [] },
@@ -44,10 +45,12 @@ const builds = [
 const noSite = [
   "unreadable",
   "same-page",
+  "tags-folder",
   "configuration/configured/ci",
   "configuration/empty-input",
   "configuration/mistaken",
   "configuration/mistaken-pages",
+  "configuration/mistaken-tags",
   "configuration/not-boolean",
   "configuration/not-toml",
   "configuration/unnamed",
@@ -55,6 +58,7 @@ const noSite = [
   "pages/expected-collapsed",
   "backgrounds/expected",
   "backgrounds/expected-linked",
+  "tags/expected",
   "serve/site",
   "accessibility/failing",
 ];

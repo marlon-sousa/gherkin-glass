@@ -20,9 +20,13 @@ mod rebuild_choice;
 mod settings_resolution;
 mod site_title;
 mod step_keyword_correction;
+mod tag_linking;
+mod tag_naming;
+mod tag_pages;
 mod unnamed_blocks;
 
 pub use anchor_rule::make_anchors;
+pub(crate) use anchor_rule::{anchor_of, unique};
 pub(crate) use argument_parsing::parse_arguments;
 pub(crate) use breadcrumb_trail::breadcrumb;
 pub(crate) use config_parsing::parse_config;
@@ -37,9 +41,14 @@ pub(crate) use page_address::{FOLDER_PAGE, page_address, root_from};
 pub(crate) use page_building::build_page;
 pub(crate) use page_frame::page_frame;
 pub(crate) use page_language::page_language;
-pub(crate) use page_rendering::{render_folder_page, render_page};
+pub(crate) use page_rendering::{
+    render_folder_page, render_page, render_tag_index, render_tag_page,
+};
 pub(crate) use rebuild_choice::{Read, calls_for_rebuild, remembered};
 pub(crate) use settings_resolution::{config_folder, resolve_settings};
 pub(crate) use site_title::site_title;
 pub(crate) use step_keyword_correction::correct_step_keywords;
+pub(crate) use tag_linking::{PatternProblem, outside_link, unknown_group, whole_tag_pattern};
+pub(crate) use tag_naming::{name_tags, tag_index_address, tags_of};
+pub(crate) use tag_pages::{build_tag_index, build_tag_page, tag_pages_language};
 pub(crate) use unnamed_blocks::unnamed_blocks;

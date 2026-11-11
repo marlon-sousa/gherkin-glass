@@ -134,7 +134,7 @@ impl Kind {
 }
 
 /// Rule 32: `anchor`, or the first of it followed by `-2`, `-3` and so on that is not taken.
-fn unique(anchor: String, taken: &mut HashSet<String>) -> String {
+pub(crate) fn unique(anchor: String, taken: &mut HashSet<String>) -> String {
     let mut candidate = anchor.clone();
     let mut number = 2;
     while taken.contains(&candidate) {

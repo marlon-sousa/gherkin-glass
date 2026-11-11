@@ -16,7 +16,7 @@ pub(crate) struct Page {
     pub(crate) heading: String,
     pub(crate) frame: PageFrame,
     pub(crate) breadcrumb: Breadcrumb,
-    pub(crate) tags: Vec<String>,
+    pub(crate) tags: Vec<TagView>,
     pub(crate) description: Vec<Paragraph>,
     pub(crate) source: Option<SourceLink>,
     pub(crate) contents: Vec<ContentsEntry>,
@@ -60,6 +60,22 @@ pub(crate) struct PageWords {
     pub(crate) expand_all: String,
 }
 
+/// A tag as written, with its `@`, linked to its tag's page.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct TagView {
+    pub(crate) text: String,
+    /// Relative to the page that shows the tag, and percent-encoded.
+    pub(crate) address: String,
+    pub(crate) outside: Option<OutsideLink>,
+}
+
+/// A tag's link to another site, from the configuration's `tag_links`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct OutsideLink {
+    pub(crate) address: String,
+    pub(crate) text: String,
+}
+
 /// The lines of one paragraph of a description.
 pub(crate) type Paragraph = Vec<String>;
 
@@ -89,7 +105,7 @@ pub(crate) struct Block {
     pub(crate) anchor: String,
     pub(crate) heading: String,
     pub(crate) collapsed: bool,
-    pub(crate) tags: Vec<String>,
+    pub(crate) tags: Vec<TagView>,
     pub(crate) description: Vec<Paragraph>,
     /// A scenario's: the feature's background, then its rule's.
     pub(crate) backgrounds: Vec<FromBackground>,

@@ -2,8 +2,8 @@
 
 use askama::Template;
 
-use crate::entities::{Block, Breadcrumb, FolderPage, Page, PageFrame};
-use crate::policies::root_from;
+use crate::entities::{Block, Breadcrumb, FolderPage, Page, PageFrame, TagIndex, TagPage};
+use crate::policies::{root_from, tag_index_address, tag_pages_language};
 
 #[derive(Template)]
 #[template(path = "feature.html")]
@@ -35,6 +35,50 @@ struct FolderTemplate<'a> {
 struct BlockTemplate<'a> {
     block: &'a Block,
     blocks: String,
+}
+
+#[derive(Template)]
+#[template(path = "tag_index.html")]
+struct TagIndexTemplate<'a> {
+    language: &'a str,
+    title: &'a str,
+    root: String,
+    frame: &'a PageFrame,
+    breadcrumb: &'a Breadcrumb,
+    index: &'a TagIndex,
+}
+
+#[derive(Template)]
+#[template(path = "tag_page.html")]
+struct TagPageTemplate<'a> {
+    language: &'a str,
+    title: &'a str,
+    root: String,
+    frame: &'a PageFrame,
+    breadcrumb: &'a Breadcrumb,
+    page: &'a TagPage,
+}
+
+pub(crate) fn render_tag_index(index: &TagIndex) -> String {
+    with_final_line_break(render(&TagIndexTemplate {
+        language: &tag_pages_language(),
+        title: &index.title,
+        root: root_from(&tag_index_address()),
+        frame: &index.frame,
+        breadcrumb: &index.breadcrumb,
+        index,
+    }))
+}
+
+pub(crate) fn render_tag_page(page: &TagPage) -> String {
+    with_final_line_break(render(&TagPageTemplate {
+        language: &tag_pages_language(),
+        title: &page.title,
+        root: root_from(&page.address),
+        frame: &page.frame,
+        breadcrumb: &page.breadcrumb,
+        page,
+    }))
 }
 
 pub(crate) fn render_page(page: &Page) -> String {

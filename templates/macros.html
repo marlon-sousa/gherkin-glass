@@ -2,7 +2,7 @@
 {%- if !tags.is_empty() %}
 <ul class="ghg-tags">
 {%- for tag in tags %}
-<li>{{ tag }}</li>
+<li><a href="{{ tag.address }}">{{ tag.text }}</a>{% if let Some(outside) = tag.outside %} {% call outside_link(outside) %}{% endcall %}{% endif %}</li>
 {%- endfor %}
 </ul>
 {%- endif -%}
@@ -66,4 +66,8 @@
 {%- endif %}</li>
 {%- endfor %}
 </ol>
+{%- endmacro -%}
+
+{%- macro outside_link(link) -%}
+<a class="ghg-tag-link" href="{{ link.address }}">{{ link.text }}</a>
 {%- endmacro -%}
