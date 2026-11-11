@@ -1,0 +1,53 @@
+name: Site
+
+# The project's own site, docs/BEHAVIOUR.md, "The project's own site". The
+# release workflow calls this once a release is published, with the release's
+# tag as version, from a job that grants contents: write, since a called
+# workflow cannot have more permissions than its caller. It builds the site of
+# that version with the project's own action and the released binary, and adds
+# it to the gh-pages branch.
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: The tag of the published release, such as v0.1.0.
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+# One release at a time adds its folder, so that two never race to push. GitHub
+# keeps one waiting run per group and cancels an older one waiting, so a
+# release whose run is cancelled this way is published by running it again.
+# The calling job must not use this group itself, or the two wait on each other.
+concurrency:
+  group: gh-pages
+  cancel-in-progress: false
+
+jobs:
+  site:
+    name: add the release to the site
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.version }}
+      - name: Open the gh-pages branch
+        run: project-site/publish.sh open "$RUNNER_TEMP/pages"
+      - name: Gather the example suite and the fixtures
+        run: project-site/assemble-input.sh "$RUNNER_TEMP/input"
+      - name: Build the site with the project's own action
+        uses: ./
+        with:
+          version: ${{ inputs.version }}
+          build: true
+          title: gherkin-glass examples
+          input: ${{ runner.temp }}/input
+          output: ${{ runner.temp }}/pages
+          version-name: ${{ inputs.version }}
+      - name: Publish the version's folder and the versions page
+        run: project-site/publish.sh publish "$RUNNER_TEMP/pages" "$VERSION"
+        env:
+          VERSION: ${{ inputs.version }}

@@ -1,0 +1,30 @@
+# The fixtures under tests/fixtures/ that the project's site does not show,
+# one folder name per line, each after a comment saying why. Every other
+# fixture is shown: docs/BEHAVIOUR.md, "The project's own site".
+
+# Its build is meant to fail.
+unreadable
+
+# Its build is meant to fail.
+same-page
+
+# Its build is meant to fail.
+tags-folder
+
+# Its cases are runs of the command line, each with its own ghg.toml, not pages.
+configuration
+
+# Its cases are runs of ghg serve, and one of them is a site already built.
+serve
+
+# Its cases are versioned builds into output folders it holds, and one of them fails.
+versions
+
+# It is a site built to fail the accessibility check, not an input.
+accessibility
+
+# Its cases are runs of the GitHub Action, and one of its folders fails.
+action
+
+# It holds the release tools' own fixtures, not an input.
+release

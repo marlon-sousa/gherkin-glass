@@ -109,7 +109,7 @@ A pull request that changes how releases are made runs the same builds, archives
 
 crates.io trusts only `release.yml` in this repository, running in the `crates-io` environment, so no token is stored anywhere. Since crates.io checks only the workflow's file name and the environment, and a pull request runs its own copy of the workflow, the `crates-io` environment must accept deployments only from tags `v*`: a maintainer sets this once, in the repository's settings, under Environments, as a deployment tag rule. crates.io sets up trusted publishing only for a crate that already exists, so the first version may have to be published by hand: a maintainer logged in with `cargo login` runs `cargo publish --locked` at the commit to be tagged, before pushing its tag, then sets up the trusted publisher. The workflow's publish job then finds that version on crates.io and leaves it as it is. If a release stops after publishing, a maintainer re-runs the workflow's failed jobs.
 
-The repository's own GitHub Pages site shows the fixtures as the latest release renders them, so anyone can see what gherkin-glass produces before downloading it.
+The repository's own GitHub Pages site shows an example suite and the fixtures as each release renders them, one folder per version, so anyone can see what gherkin-glass produces before downloading it. Each release adds its own version's folder to the `gh-pages` branch and leaves the earlier ones as they were ([docs/BEHAVIOUR.md](docs/BEHAVIOUR.md), "The project's own site"). Pages is set once, under the repository's Settings, Pages: source "Deploy from a branch", branch `gh-pages`, folder root.
 
 ## Writing style
 
