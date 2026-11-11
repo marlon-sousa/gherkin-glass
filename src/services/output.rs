@@ -39,9 +39,8 @@ impl OutputService {
         }
     }
 
-    /// Builds a site without versions into `settings.output`, as
-    /// docs/BEHAVIOUR.md, rule 38, says. The output folder is emptied only
-    /// once the input has been read without a problem.
+    /// Builds a site without versions into `settings.output`. The output
+    /// folder is emptied only once the input has been read without a problem.
     pub(crate) fn build_site(
         &self,
         site: &SiteService,
@@ -56,9 +55,8 @@ impl OutputService {
     }
 
     /// Builds the version `version` of the site into its folder in
-    /// `settings.output`, then writes the versions page, as docs/BEHAVIOUR.md,
-    /// "Versions", says. The version's folder is emptied only once the input
-    /// has been read without a problem.
+    /// `settings.output`, then writes the versions page. The version's folder
+    /// is emptied only once the input has been read without a problem.
     pub(crate) fn build_version(
         &self,
         site: &SiteService,
@@ -89,7 +87,7 @@ impl OutputService {
     }
 
     /// The output folder a site without versions is written into, once
-    /// nothing stops it, as docs/BEHAVIOUR.md, rule 38, says. Nothing is written.
+    /// nothing stops it. Nothing is written.
     pub(crate) fn check_site(
         &self,
         output: &Path,
@@ -115,8 +113,8 @@ impl OutputService {
         Ok(BuildFolder::new(output, Marker::Site))
     }
 
-    /// The folder the version `name` is written into, once nothing stops it,
-    /// as docs/BEHAVIOUR.md, rules 123 and 124, say. Nothing is written.
+    /// The folder the version `name` is written into, once nothing stops it.
+    /// Nothing is written.
     pub(crate) fn check(
         &self,
         output: &Path,

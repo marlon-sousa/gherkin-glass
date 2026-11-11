@@ -13,7 +13,7 @@ const NUMBERED_DEVICES: [&str; 2] = ["com", "lpt"];
 pub(crate) struct VersionName(String);
 
 impl VersionName {
-    /// `None` when `name` cannot be a version name, as docs/BEHAVIOUR.md, rule 121, says.
+    /// `None` when `name` cannot be a version name.
     pub(crate) fn new(name: &str) -> Option<Self> {
         let allowed = |c: char| c.is_ascii_alphanumeric() || matches!(c, '.' | '-' | '_' | '+');
         let starts_well = name.starts_with(|c: char| c.is_ascii_alphanumeric());

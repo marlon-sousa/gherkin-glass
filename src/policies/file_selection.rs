@@ -1,4 +1,4 @@
-//! Policy: which paths of the input are read, as docs/BEHAVIOUR.md, "Which files are read", says.
+//! Policy: which paths of the input are read.
 
 use std::path::Path;
 

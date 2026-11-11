@@ -1,4 +1,4 @@
-// Port: the documents search reads, as docs/BEHAVIOUR.md, "Search", describes them.
+// Port: the documents search reads, one for each feature, rule and scenario.
 
 export interface SearchDocument {
   readonly kind: "feature" | "rule" | "scenario" | "scenario-outline";

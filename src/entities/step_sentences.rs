@@ -19,7 +19,7 @@ pub(crate) struct StepSentences {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct SentenceGroup {
     pub(crate) kind: StepKind,
-    /// Sorted as docs/BEHAVIOUR.md, rule 138, says.
+    /// Sorted by their text lower-cased, then by their character codes.
     pub(crate) sentences: Vec<Sentence>,
 }
 

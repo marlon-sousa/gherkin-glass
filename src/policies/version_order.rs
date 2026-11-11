@@ -6,9 +6,10 @@ use semver::Version;
 
 use crate::entities::{VersionList, VersionName};
 
-/// Sorts `names` as docs/BEHAVIOUR.md, rules 127 and 128, say. Names compare
-/// by their bytes, which for the characters a version name may hold is by
-/// their character codes.
+/// Sorts `names` into development versions, by name, and releases and pre-releases,
+/// newest first by Semantic Versioning's precedence, then by name. Names compare by
+/// their bytes, which for the characters a version name may hold is by their
+/// character codes.
 pub(crate) fn order_versions(names: impl IntoIterator<Item = VersionName>) -> VersionList {
     let mut list = VersionList::default();
     let mut releases = Vec::new();

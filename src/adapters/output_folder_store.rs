@@ -10,10 +10,10 @@ use std::path::Path;
 use crate::entities::{FolderState, Marker, VersionName};
 use crate::ports::OutputFolders;
 
-/// The marker in every version's folder, docs/BEHAVIOUR.md, rule 122.
+/// The marker in every version's folder.
 pub(crate) const VERSION_MARKER: &str = "ghg-version.json";
 
-/// The marker in an output folder holding a site without versions, rule 38.
+/// The marker in an output folder holding a site without versions.
 pub(crate) const SITE_MARKER: &str = "ghg-site.json";
 
 #[derive(Debug, Default, Clone, Copy)]

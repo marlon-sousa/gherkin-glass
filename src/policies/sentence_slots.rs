@@ -1,4 +1,4 @@
-//! Policy: a step's sentence, with its quoted values and outline placeholders as slots, as docs/BEHAVIOUR.md, "What a sentence is", says.
+//! Policy: a step's sentence, with its quoted values and outline placeholders as slots.
 
 use unicode_normalization::UnicodeNormalization;
 

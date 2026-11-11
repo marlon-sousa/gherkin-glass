@@ -1,4 +1,4 @@
-//! Policy: a feature's doc strings corrected from its source, as docs/BEHAVIOUR.md, "Doc strings", says.
+//! Policy: a feature's doc strings corrected from its source, with the content and the media type the source gives them.
 
 use std::collections::BTreeMap;
 

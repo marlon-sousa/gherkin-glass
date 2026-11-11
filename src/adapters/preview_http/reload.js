@@ -1,5 +1,6 @@
-// Adapter: the reload script ghg serve adds to every page under --watch,
-// docs/BEHAVIOUR.md, "Reloading". It says nothing of its own.
+// Adapter: the reload script ghg serve adds to every page under --watch. It
+// reloads the page once the site is built again, back at the heading the reader
+// was in, and says nothing of its own.
 
 const POLL_EVERY = 1000;
 const REMEMBERED = "ghg-serve-reload-heading";

@@ -1,4 +1,4 @@
-//! Policy: the index of every tag and each tag's page, built from the site's feature pages, as docs/BEHAVIOUR.md, "Tags", rules 102 to 105, say.
+//! Policy: the index of every tag and each tag's page, built from the site's feature pages.
 
 use std::slice::from_ref;
 
@@ -23,7 +23,7 @@ pub(crate) fn tag_pages_language() -> String {
     CATALOGUE.current_language().to_string()
 }
 
-/// `tags` is every tag of the site in the order of rule 102, and `pages` every feature's page in the order of rule 15.
+/// `tags` is every tag of the site in tag order, and `pages` every feature's page in path order.
 pub(crate) fn build_tag_index(
     tags: &[String],
     pages: &[Page],
