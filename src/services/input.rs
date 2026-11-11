@@ -3,6 +3,7 @@
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
+use rayon::iter::Either;
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 
 use crate::entities::{ParsedFeature, Problem, ProblemKind, Problems, Unnamed};
@@ -41,18 +42,12 @@ impl InputService {
         let mut problems = collected.problems;
         problems.extend(page_collisions(input, &collected.paths));
         // Collecting into a `Vec` keeps file order, whatever order the threads finish in.
-        let results: Vec<_> = collected
+        let (failed, features): (Vec<_>, Vec<_>) = collected
             .paths
             .par_iter()
             .map(|path| self.parse(input, path, unnamed))
-            .collect();
-        let mut features = Vec::with_capacity(results.len());
-        for result in results {
-            match result {
-                Ok(feature) => features.push(feature),
-                Err(found) => problems.extend(found),
-            }
-        }
+            .partition_map(Either::from);
+        problems.extend(failed.into_iter().flatten());
         if problems.is_empty() {
             Ok(features)
         } else {
