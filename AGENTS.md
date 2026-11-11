@@ -20,6 +20,7 @@ The manual for anyone, human or agent, changing gherkin-glass. [CONTRIBUTING.md]
 6. **Write for a screen reader.** Issues, pull requests, comments and documents use headings, lists, prose and simple tables, never ASCII art.
 7. **Mark agent comments.** A comment an agent writes on GitHub says it is an agent's.
 8. **Check a library before ruling it in or out.** Before saying that a crate or a package can or cannot do something, read its source or its documentation at the version we would use. Look for its override and extension points, not only its defaults. The issue or pull request says what was checked: the file and line, or the documentation page.
+9. **The plain crate before its internals.** A crate's public face, such as `regex`, comes before the crates it is built from, such as `regex-automata` and `regex-syntax`. The internals are used only where the plain crate cannot do what is needed, and the pull request says why, naming the file and line of the plain crate's source, as rule 8 asks.
 
 ## Reviewing a change
 
@@ -37,7 +38,10 @@ Every pull request is reviewed by an independent reviewer before it is opened, o
 10. Every statement of docs/ARCHITECTURE.md the change makes untrue, which the change updates itself.
 11. The commit messages and the description, against CONTRIBUTING.md and rule 5 above. For a layer of a stack, its branch sits on the current tip of the layer below and holds no merge of a lower branch, as CONTRIBUTING.md, "Stacked pull requests", rule 5, says.
 12. Every claim that a library can or cannot do something, against rule 8 above: it names the source it was checked against.
-13. The checks under "Building and testing", run at the reviewed revision, without changing the checkout the author works in.
+13. Every module the change adds or moves, against docs/ARCHITECTURE.md, "Folders and files", rules 4 and 9: it is in its role's folder, in the folder of the area it serves when its role has areas, and the area's module says what the area covers and re-exports its face.
+14. Every error the change adds, moves or raises, against docs/ARCHITECTURE.md, "How the code runs": it is in `errors/`, named with `Error`, `Errors` or `ErrorKind`; its `Display` is the sentence a person reads, unless it is a part worded by the error that holds it, from functions in its own `impl` or in `errors.rs` that call `fl!`, with no `#[error]` text for developers only; its context is put in with `map_err`; `#[from]` is only for an error that carries nothing more; and a cause kept whole stays reachable as `#[source]`.
+15. Every crate the change adds or uses in a new way, against rule 9 above: a crate's internals only where the plain crate cannot do the job, with the source that shows it.
+16. The checks under "Building and testing", run at the reviewed revision, without changing the checkout the author works in.
 
 A pull request that changes what a page says or how it behaves carries a manual check with a screen reader in its description, as checkboxes, one per check, with the findings written on the unticked items, such as the screen reader's version and what was expected and heard.
 
