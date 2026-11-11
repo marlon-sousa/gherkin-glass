@@ -42,6 +42,7 @@ fn parse_build(parser: &mut Parser) -> Result<Invocation, ArgumentProblem> {
             Arg::Long("version") => return flag(parser, "--version", Invocation::Version),
             Arg::Long("config") => (&mut options.config, "--config"),
             Arg::Long("input") => (&mut options.input, "--input"),
+            Arg::Long("output") => (&mut options.output, "--output"),
             Arg::Value(value) => {
                 return Err(ArgumentProblem::UnexpectedArgument {
                     command: COMMAND.to_string(),
@@ -137,7 +138,25 @@ mod tests {
         Invocation::Build(BuildOptions {
             config: config.map(PathBuf::from),
             input: input.map(PathBuf::from),
+            output: None,
         })
+    }
+
+    #[test]
+    fn build_takes_an_output_folder() {
+        assert_eq!(
+            parse(&["build", "--output=out"]),
+            Ok(Invocation::Build(BuildOptions {
+                output: Some(PathBuf::from("out")),
+                ..BuildOptions::default()
+            }))
+        );
+        assert_eq!(
+            parse(&["build", "--output", "a", "--output", "b"]),
+            Err(ArgumentProblem::RepeatedOption {
+                option: "--output".into()
+            })
+        );
     }
 
     #[test]

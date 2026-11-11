@@ -14,6 +14,7 @@ pub(crate) enum Invocation {
 pub(crate) struct BuildOptions {
     pub(crate) config: Option<PathBuf>,
     pub(crate) input: Option<PathBuf>,
+    pub(crate) output: Option<PathBuf>,
 }
 
 /// A mistake on the command line. Each `String` is what was typed, shown

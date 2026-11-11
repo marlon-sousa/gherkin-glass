@@ -1,0 +1,30 @@
+{%- import "macros.html" as m -%}
+<div class="ghg-block {{ block.kind.class() }}">
+<h{{ block.level }} id="{{ block.anchor }}"><button type="button" class="ghg-toggle" aria-expanded="{{ !block.collapsed }}">{{ block.heading }}</button></h{{ block.level }}>
+<div class="ghg-content"{% if block.collapsed %} hidden{% endif %}>
+{%- call m::tags(block.tags) %}{% endcall %}
+{%- call m::description(block.description) %}{% endcall %}
+{%- if !block.steps.is_empty() %}
+<ol class="ghg-steps">
+{%- for step in block.steps %}
+<li><span class="ghg-keyword">{{ step.keyword }}</span>{{ step.text }}
+{%- if let Some(table) = step.table %}{% call m::table(table) %}{% endcall %}{% endif %}
+{%- if let Some(doc) = step.doc_string %}
+{%- if let Some(media_type) = doc.media_type %}
+<figure class="ghg-doc-string">
+<figcaption>{{ media_type }}</figcaption>
+<pre>{% if doc.content.starts_with('\n') %}{{ "\n" }}{% endif %}{{ doc.content }}</pre>
+</figure>
+{%- else %}
+<pre class="ghg-doc-string">{% if doc.content.starts_with('\n') %}{{ "\n" }}{% endif %}{{ doc.content }}</pre>
+{%- endif %}
+{%- endif %}</li>
+{%- endfor %}
+</ol>
+{%- endif %}
+{%- if let Some(table) = block.table %}{% call m::table(table) %}{% endcall %}{% endif %}
+{%- if !blocks.is_empty() %}
+{{ blocks|safe }}
+{%- endif %}
+</div>
+</div>

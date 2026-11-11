@@ -1,0 +1,3 @@
+# Pages, built with a source link, every block expanded.
+source_link = "https://example.com/repo/blob/main/features/{path}#L{line}"
+output = "expected"

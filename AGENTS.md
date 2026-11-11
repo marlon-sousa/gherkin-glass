@@ -24,10 +24,12 @@ The manual for anyone, human or agent, changing gherkin-glass. [CONTRIBUTING.md]
 The toolchain is pinned in `rust-toolchain.toml`. Running `rustup toolchain install` in the repository installs it with its components; this needs rustup 1.28 or later. Before pushing, run the checks a pull request runs, from the repository's root:
 
 - `cargo fmt --check`, the formatting;
-- `cargo clippy --all-targets --locked -- -D warnings`, the lints, with every warning an error;
+- `cargo clippy --workspace --all-targets --locked -- -D warnings`, the lints, with every warning an error;
 - `cargo test --locked`, the tests;
 - the tests again with the minimum supported Rust version, the one `rust-version` names in `Cargo.toml`, 1.88 today: first `rustup toolchain install 1.88 --profile minimal`, then `cargo +1.88 test --locked`.
 
 `cargo run` builds the command and runs it.
+
+The pages' script is TypeScript, in `script/`, compiled into `assets/gherkin-glass.js`, which is committed, so plain `cargo build` and `cargo test` need no Node. Changing the script needs Node, at the version `script/.node-version` pins: `cargo xtask build` installs the Node packages from the lockfile, type-checks, tests and compiles the script, writes the fixtures' expected sites again with it, as tests/fixtures/README.md describes, and builds the release binary; commit the compiled script and the expected sites with the sources. `cargo xtask check` runs every check above and the script check, as CI does.
 
 The commit messages can be checked before pushing with the `commit-messages` action of [itinera-dev/actions](https://github.com/itinera-dev/actions), which needs Python 3.11 or later. With a clone of it in the shell variable `ACTIONS`, run `PYTHONPATH="$ACTIONS" python3 "$ACTIONS/commit-messages/main.py" origin/main..HEAD` in this repository.

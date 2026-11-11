@@ -12,6 +12,9 @@ pub struct ParsedFeature {
     /// As the `gherkin` crate reads it, except that every doc string is
     /// corrected as docs/BEHAVIOUR.md, "Doc strings", says.
     pub feature: Feature,
+    /// As Gherkin names it, such as `en` or `pt`, given by the file's
+    /// `# language:` line, and `en` without one.
+    pub language: String,
     /// Keyed by the byte offset at which the doc string's step starts.
     media_types: BTreeMap<usize, String>,
 }
@@ -20,11 +23,13 @@ impl ParsedFeature {
     pub(crate) fn new(
         path: PathBuf,
         feature: Feature,
+        language: String,
         media_types: BTreeMap<usize, String>,
     ) -> Self {
         ParsedFeature {
             path,
             feature,
+            language,
             media_types,
         }
     }

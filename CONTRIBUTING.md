@@ -69,6 +69,7 @@ Every pull request runs:
 
 - the issue check and the commit message check, from [itinera-dev/actions](https://github.com/itinera-dev/actions);
 - `cargo fmt --check`, `cargo clippy` with warnings as errors, and `cargo test`;
+- the script check, `cargo xtask check-script`: the pages' script, in TypeScript under `script/`, is type-checked, tested and compiled again, and the check fails if the compiled script differs from the committed `assets/gherkin-glass.js`;
 - the accessibility check: the fixtures are built into a site and served over HTTP, every page is opened in a browser and checked with axe-core, and the skip link, the folder tree and the reader options are tried with the keyboard alone.
 
 ## Releases

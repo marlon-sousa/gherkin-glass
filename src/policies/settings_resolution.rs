@@ -2,26 +2,42 @@
 
 use std::path::{Path, PathBuf};
 
-use crate::entities::{BuildOptions, Config, Settings, Unnamed};
+use crate::entities::{BuildOptions, Config, PageOptions, Settings, Unnamed};
 
 /// The input folder when neither the command line nor the file names one,
 /// relative to the configuration file's folder.
 pub(crate) const DEFAULT_INPUT: &str = "features";
 
+/// The output folder when neither the command line nor the file names one,
+/// relative to the configuration file's folder.
+pub(crate) const DEFAULT_OUTPUT: &str = "site";
+
 /// `folder` is the configuration file's folder, the current folder when the
 /// file is `ghg.toml` there or there is none; paths from the command line are
 /// kept as given, relative to the current folder.
 pub(crate) fn resolve_settings(options: &BuildOptions, folder: &Path, config: &Config) -> Settings {
-    let input = match (&options.input, &config.input) {
-        (Some(input), _) => input.clone(),
-        (None, Some(input)) => folder.join(input),
-        (None, None) => folder.join(DEFAULT_INPUT),
+    let path = |option: &Option<PathBuf>, set: &Option<PathBuf>, default: &str| match (option, set)
+    {
+        (Some(given), _) => given.clone(),
+        (None, Some(set)) => folder.join(set),
+        (None, None) => folder.join(default),
     };
+    let input = path(&options.input, &config.input, DEFAULT_INPUT);
+    let output = path(&options.output, &config.output, DEFAULT_OUTPUT);
     let unnamed = match config.allow_unnamed {
         Some(false) => Unnamed::Refused,
         Some(true) | None => Unnamed::Allowed,
     };
-    Settings { input, unnamed }
+    Settings {
+        input,
+        output,
+        unnamed,
+        pages: PageOptions {
+            source_link: config.source_link.clone(),
+            collapse_rules: config.collapse_rules.unwrap_or(false),
+            collapse_scenarios: config.collapse_scenarios.unwrap_or(false),
+        },
+    }
 }
 
 /// The folder a configuration file's relative paths start from: an empty
@@ -38,6 +54,7 @@ mod tests {
         let options = BuildOptions {
             config: options.0.map(PathBuf::from),
             input: options.1.map(PathBuf::from),
+            ..BuildOptions::default()
         };
         let config = Config {
             input: set.map(PathBuf::from),
@@ -78,6 +95,40 @@ mod tests {
             input((Some(file), Some("x")), file, Some("specs")),
             PathBuf::from("x")
         );
+    }
+
+    #[test]
+    fn the_output_resolves_as_the_input_does() {
+        let resolve = |output: Option<&str>, set: Option<&str>| {
+            let options = BuildOptions {
+                output: output.map(PathBuf::from),
+                ..BuildOptions::default()
+            };
+            let config = Config {
+                output: set.map(PathBuf::from),
+                ..Config::default()
+            };
+            resolve_settings(&options, Path::new("ci"), &config).output
+        };
+        assert_eq!(resolve(None, None), Path::new("ci").join("site"));
+        assert_eq!(resolve(None, Some("out")), Path::new("ci").join("out"));
+        assert_eq!(resolve(Some("x"), Some("out")), PathBuf::from("x"));
+    }
+
+    #[test]
+    fn pages_start_expanded_without_a_source_link_unless_the_file_says_otherwise() {
+        let pages = |config: Config| {
+            resolve_settings(&BuildOptions::default(), Path::new(""), &config).pages
+        };
+        assert_eq!(pages(Config::default()), PageOptions::default());
+        let set = pages(Config {
+            source_link: Some("https://x/{path}".into()),
+            collapse_rules: Some(true),
+            collapse_scenarios: Some(true),
+            ..Config::default()
+        });
+        assert_eq!(set.source_link.as_deref(), Some("https://x/{path}"));
+        assert!(set.collapse_rules && set.collapse_scenarios);
     }
 
     #[test]
