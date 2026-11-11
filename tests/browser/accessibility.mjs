@@ -202,6 +202,39 @@ async function buttonProblems(page) {
   return problems;
 }
 
+// The folder tree is built once its data is fetched: the check waits for it,
+// or for the checkbox to be disabled, before it counts what Tab reaches. A
+// page without the tree's landmark, such as accessibility/failing's, has
+// nothing to wait for.
+const treeBuilt = (page) =>
+  page.waitForFunction(() => {
+    const landmark = document.querySelector("nav.ghg-tree");
+    return (
+      !landmark ||
+      landmark.querySelector('[role="tree"]') !== null ||
+      document.querySelector("input.ghg-show-tree")?.disabled === true
+    );
+  });
+
+// Down from the tree's Tab stop moves the focus to the next item, and Up back,
+// as rule 91 describes. Returns null for a page whose tree is not shown.
+async function treeProblems(page) {
+  const stop = page.locator('nav.ghg-tree [role="treeitem"][tabindex="0"]');
+  if ((await stop.count()) === 0 || !(await stop.isVisible())) return null;
+  const focusedText = () => page.evaluate(() => document.activeElement?.textContent ?? "");
+  await stop.focus();
+  const start = await focusedText();
+  await page.keyboard.press("ArrowDown");
+  const down = await focusedText();
+  await page.keyboard.press("ArrowUp");
+  const up = await focusedText();
+  const last = (await page.locator('nav.ghg-tree [role="treeitem"]:visible').count()) === 1;
+  if ((!last && down === start) || up !== start) {
+    return [`keyboard: the folder tree went from ${JSON.stringify(start)} to ${JSON.stringify(down)} with Down, then ${JSON.stringify(up)} with Up`];
+  }
+  return [];
+}
+
 // Checks every page of the site in `folder`, served with ghg serve
 // --no-build, and returns the problems, one line each, with the page's path.
 export async function checkSite(browser, folder) {
@@ -211,6 +244,7 @@ export async function checkSite(browser, folder) {
   const { server, address } = await serve(["--no-build", "--output", folder, "--port", "0"], folder);
   const problems = [];
   let pressed = 0;
+  let trees = 0;
   try {
     for (const scheme of schemes) {
       const context = await browser.newContext({ colorScheme: scheme });
@@ -218,12 +252,16 @@ export async function checkSite(browser, folder) {
       for (const path of pages) {
         await page.goto(addressOf(address, path));
         await page.emulateMedia({ colorScheme: scheme });
+        await treeBuilt(page);
         for (const line of await violations(page)) problems.push(`${path}, ${scheme}: ${line}`);
         if (scheme === "light") {
           for (const line of await keyboardProblems(page)) problems.push(`${path}: ${line}`);
           const found = await buttonProblems(page);
           if (found !== null) pressed += 1;
           for (const line of found ?? []) problems.push(`${path}: ${line}`);
+          const tree = await treeProblems(page);
+          if (tree !== null) trees += 1;
+          for (const line of tree ?? []) problems.push(`${path}: ${line}`);
           // What the buttons remembered is forgotten, so that it never
           // changes how another page starts.
           await page.evaluate(() => localStorage.clear());
@@ -234,7 +272,7 @@ export async function checkSite(browser, folder) {
   } finally {
     await stop(server);
   }
-  return { pages: pages.length, pressed, problems };
+  return { pages: pages.length, pressed, trees, problems };
 }
 
 async function main() {
@@ -244,6 +282,7 @@ async function main() {
   const failures = [];
   let checked = 0;
   let pressed = 0;
+  let trees = 0;
   try {
     for (const [index, each] of builds.entries()) {
       const site = join(output, String(index));
@@ -253,10 +292,12 @@ async function main() {
       if (result.pages === 0) failures.push(`${name}: the site has no page`);
       checked += result.pages;
       pressed += result.pressed;
+      trees += result.trees;
       const { problems } = result;
       for (const problem of problems) failures.push(`${name}: ${problem}`);
     }
     if (pressed === 0) failures.push("no page had a block whose buttons the check could press");
+    if (trees === 0) failures.push("no page showed a folder tree the check could move through");
     // The check must fail on a page that breaks each of its rules.
     const { problems } = await checkSite(browser, join(fixtures, "accessibility/failing"));
     const found = (start) => problems.some((line) => line.startsWith(`index.html${start}`));

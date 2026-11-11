@@ -94,12 +94,24 @@ export class DomPage implements Page {
         return;
       }
       const target = event.target as Element | null;
-      const link = typeof target?.closest === "function" ? target.closest("a[href^='#']") : null;
-      const anchor = link ? anchorOf(link.getAttribute("href") ?? "") : null;
+      const link = typeof target?.closest === "function" ? target.closest<HTMLAnchorElement>("a[href]") : null;
+      const anchor = link ? this.anchorOnPage(link) : null;
       if (anchor !== null) {
         handler(anchor);
       }
     });
+  }
+
+  /** The anchor a link leads to on this very page, such as the folder tree's, whatever its address is relative to. */
+  private anchorOnPage(link: HTMLAnchorElement): string | null {
+    let address: URL;
+    try {
+      address = new URL(link.getAttribute("href") ?? "", this.document.location.href);
+    } catch {
+      return null;
+    }
+    const here = this.document.location;
+    return address.origin === here.origin && address.pathname === here.pathname ? anchorOf(address.hash) : null;
   }
 
   private onClick(selector: string, handler: () => void): void {

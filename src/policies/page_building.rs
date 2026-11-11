@@ -10,7 +10,8 @@ use crate::entities::{
     Paragraph, ParsedFeature, SourceLink, StepView, TableView,
 };
 use crate::policies::{
-    CATALOGUE, breadcrumb, make_anchors, page_address, page_language, percent_encoded, site_title,
+    CATALOGUE, breadcrumb, make_anchors, page_address, page_frame, page_language, percent_encoded,
+    site_title,
 };
 
 /// Stands for the file's path in the words of the source link, to find where
@@ -37,6 +38,7 @@ pub(crate) fn build_page(parsed: &ParsedFeature, options: &PageOptions) -> Page 
     let mut parts: Vec<String> = address.split('/').map(str::to_string).collect();
     let file = parts.pop().unwrap_or_default();
     Page {
+        frame: page_frame(options),
         breadcrumb: breadcrumb(&site_title(options), &parts, Some((&heading, &file))),
         address,
         language: page_language(&parsed.language).to_string(),

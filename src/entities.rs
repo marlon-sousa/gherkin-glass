@@ -10,6 +10,7 @@ mod folder_page;
 mod invocation;
 mod listen_failure;
 mod page;
+mod page_frame;
 mod page_options;
 mod parse_failure;
 mod parsed_feature;
@@ -18,6 +19,7 @@ mod problem;
 mod raw_feature;
 mod settings;
 mod site_assets;
+mod tree_item;
 mod unnamed;
 mod watch;
 
@@ -34,6 +36,7 @@ pub(crate) use page::{
     Block, BlockKind, ContentsEntry, DocStringView, Page, PageWords, Paragraph, SourceLink,
     StepView, TableView,
 };
+pub(crate) use page_frame::PageFrame;
 pub use page_options::PageOptions;
 pub use parse_failure::ParseFailure;
 pub use parsed_feature::ParsedFeature;
@@ -42,5 +45,6 @@ pub use problem::{Problem, ProblemKind, Problems, UnnamedBlock};
 pub use raw_feature::RawFeature;
 pub use settings::Settings;
 pub(crate) use site_assets::SiteAssets;
+pub(crate) use tree_item::TreeItem;
 pub use unnamed::Unnamed;
 pub use watch::{Burst, Changes, WatchFailure, Watched};

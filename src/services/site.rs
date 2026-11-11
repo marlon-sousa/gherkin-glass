@@ -1,4 +1,4 @@
-//! Service: building a site, from reading its input to writing its pages, its folder pages and its assets.
+//! Service: building a site, from reading its input to writing its pages, its folder pages, its folder tree's data and its assets.
 
 use std::path::Path;
 use std::sync::Arc;
@@ -6,9 +6,15 @@ use std::sync::Arc;
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 
 use crate::entities::{Problem, ProblemKind, Problems, Settings, SiteAssets};
-use crate::policies::{build_folder_pages, build_page, render_folder_page, render_page};
+use crate::policies::{
+    build_folder_pages, build_folder_tree, build_page, render_folder_page, render_folder_tree,
+    render_page,
+};
 use crate::ports::SiteWriter;
 use crate::services::InputService;
+
+/// Beside the assets, where the pages' script fetches it from.
+const TREE_DATA: &str = "assets/tree.json";
 
 pub struct SiteService {
     input: InputService,
@@ -39,6 +45,10 @@ impl SiteService {
                 .map(|folder| (folder.address.clone(), render_folder_page(folder)))
                 .collect::<Vec<_>>(),
         );
+        rendered.push((
+            TREE_DATA.to_string(),
+            render_folder_tree(&build_folder_tree(&folders)),
+        ));
         let assets = SiteAssets::iter().filter_map(|name| {
             SiteAssets::get(&name).map(|file| (format!("assets/{name}"), file.data.into_owned()))
         });
@@ -138,6 +148,7 @@ mod tests {
                 "a.html",
                 "assets/gherkin-glass.css",
                 "assets/gherkin-glass.js",
+                "assets/tree.json",
                 "index.html",
                 "sub/b.html",
                 "sub/index.html"

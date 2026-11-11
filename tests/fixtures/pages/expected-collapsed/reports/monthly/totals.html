@@ -8,6 +8,13 @@
 <script type="module" src="../../assets/gherkin-glass.js"></script>
 </head>
 <body>
+<a class="ghg-skip" href="#ghg_main">Skip to content</a>
+<div class="ghg-options">
+<input type="checkbox" id="ghg_show_tree" class="ghg-show-tree" aria-controls="ghg_tree"> <label for="ghg_show_tree">Show the folder tree</label>
+</div>
+<div class="ghg-layout">
+<nav id="ghg_tree" class="ghg-tree" aria-label="Folder tree" hidden></nav>
+<div class="ghg-page">
 <nav class="ghg-breadcrumb" aria-label="Breadcrumb">
 <ol>
 <li><a href="../../index.html">Feature files</a></li>
@@ -16,7 +23,7 @@
 <li><a href="totals.html" aria-current="page">Feature: Monthly totals</a></li>
 </ol>
 </nav>
-<main>
+<main id="ghg_main">
 <h1>Feature: Monthly totals</h1>
 <nav class="ghg-contents" aria-label="Contents">
 <ul>
@@ -36,5 +43,7 @@
 </div>
 </div>
 </main>
+</div>
+</div>
 </body>
 </html>

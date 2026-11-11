@@ -208,3 +208,130 @@ figcaption {
 .ghg-count {
   color: var(--muted);
 }
+
+/* The skip link is out of sight until it has the focus. */
+.ghg-skip {
+  position: absolute;
+  left: 0.5rem;
+  top: -100rem;
+  z-index: 1;
+  padding: 0.5rem 1rem;
+  background: var(--background);
+  color: var(--link);
+}
+
+.ghg-skip:focus {
+  top: 0.5rem;
+}
+
+.ghg-options {
+  padding: 0.5rem 1rem 0;
+}
+
+/* The folder tree beside the content, or above it on a window narrower than
+   48em, the width script/src/policies/tree_state.ts's NARROW names too. */
+.ghg-layout {
+  display: flex;
+  align-items: flex-start;
+}
+
+.ghg-tree {
+  flex: 0 0 18rem;
+  box-sizing: border-box;
+  position: sticky;
+  top: 0;
+  max-height: 100vh;
+  overflow: auto;
+  padding: 1rem;
+  border-right: 1px solid var(--rule);
+}
+
+.ghg-tree[hidden] {
+  display: none;
+}
+
+.ghg-page {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+@media not all and (min-width: 48em) {
+  .ghg-layout {
+    display: block;
+  }
+
+  .ghg-tree {
+    position: static;
+    max-height: none;
+    border-right: none;
+    border-bottom: 1px solid var(--rule);
+  }
+}
+
+.ghg-treeview,
+.ghg-treeview ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ghg-treeview ul {
+  padding-left: 1rem;
+}
+
+/* An item without a marker starts where the text of one with a marker does. */
+.ghg-treeview [role="treeitem"] {
+  display: block;
+  padding: 0.125rem 0.25rem 0.125rem 1.75rem;
+  text-decoration: none;
+}
+
+.ghg-treeview [role="treeitem"]:hover {
+  text-decoration: underline;
+}
+
+.ghg-treeview [role="treeitem"][aria-owns] {
+  padding-left: 0.25rem;
+}
+
+.ghg-treeview [aria-current="page"] {
+  font-weight: bold;
+}
+
+.ghg-marker {
+  display: inline-block;
+  /* At least 24 by 24 pixels, as WCAG 2.2's target size asks. */
+  width: 1.5rem;
+  min-height: 1.5rem;
+  text-align: center;
+  cursor: pointer;
+}
+
+.ghg-marker::before {
+  content: "";
+  display: inline-block;
+  width: 0;
+  height: 0;
+  vertical-align: middle;
+  border-style: solid;
+  border-width: 0.4em 0 0.4em 0.6em;
+  border-color: transparent transparent transparent currentColor;
+  transition: transform 0.1s;
+}
+
+[aria-expanded="true"] > .ghg-marker::before {
+  transform: rotate(90deg);
+}
+
+@media (forced-colors: active) {
+  .ghg-marker::before {
+    forced-color-adjust: none;
+    border-color: transparent transparent transparent LinkText;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ghg-marker::before {
+    transition: none;
+  }
+}

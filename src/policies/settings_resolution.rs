@@ -37,6 +37,7 @@ pub(crate) fn resolve_settings(options: &BuildOptions, folder: &Path, config: &C
             source_link: config.source_link.clone(),
             collapse_rules: config.collapse_rules.unwrap_or(false),
             collapse_scenarios: config.collapse_scenarios.unwrap_or(false),
+            show_tree: config.show_tree.unwrap_or(true),
         },
     }
 }
@@ -146,10 +147,13 @@ mod tests {
             source_link: Some("https://x/{path}".into()),
             collapse_rules: Some(true),
             collapse_scenarios: Some(true),
+            show_tree: Some(false),
             ..Config::default()
         });
         assert_eq!(set.source_link.as_deref(), Some("https://x/{path}"));
         assert!(set.collapse_rules && set.collapse_scenarios);
+        assert!(!set.show_tree);
+        assert!(pages(Config::default()).show_tree);
     }
 
     #[test]
