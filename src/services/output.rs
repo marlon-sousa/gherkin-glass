@@ -10,9 +10,9 @@ use crate::entities::{
     OutputProblemKind, Problem, ProblemKind, Problems, Settings, SiteAddress, SiteFile,
     VersionList, VersionName,
 };
-use crate::policies::{VERSIONS_PAGE, order_versions, render_versions_page};
+use crate::policies::{VERSIONS_PAGE, assets, order_versions, render_versions_page};
 use crate::ports::OutputFolders;
-use crate::services::{SiteService, assets};
+use crate::services::SiteService;
 
 #[derive(Clone)]
 pub(crate) struct OutputService {
