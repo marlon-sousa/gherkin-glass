@@ -367,8 +367,9 @@ fn the_home_page_has_the_site_s_title_and_totals() {
     assert!(untitled.contains("<h1>Feature files</h1>"));
 }
 
-// Rules 86 to 88: the skip link, the checkbox and the tree's landmark come
-// before the breadcrumb and the content, the tree shown as configured.
+// Rules 86 to 88 and 114: the skip link, the checkbox, the Theme control and
+// the tree's landmark come before the breadcrumb and the content, the tree
+// shown as configured.
 
 #[test]
 fn every_page_starts_with_the_skip_link_then_the_tree_then_the_breadcrumb() {
@@ -386,6 +387,12 @@ fn every_page_starts_with_the_skip_link_then_the_tree_then_the_breadcrumb() {
                  <div class=\"ghg-options\">\n\
                  <input type=\"checkbox\" id=\"ghg_show_tree\" class=\"ghg-show-tree\" aria-controls=\"ghg_tree\"{checked}> \
                  <label for=\"ghg_show_tree\">Show the folder tree</label>\n\
+                 <fieldset class=\"ghg-theme\">\n\
+                 <legend>Theme</legend>\n\
+                 <label><input type=\"radio\" name=\"ghg-theme\" value=\"system\" checked> System</label>\n\
+                 <label><input type=\"radio\" name=\"ghg-theme\" value=\"light\"> Light</label>\n\
+                 <label><input type=\"radio\" name=\"ghg-theme\" value=\"dark\"> Dark</label>\n\
+                 </fieldset>\n\
                  </div>\n\
                  <div class=\"ghg-layout\">\n\
                  <nav id=\"ghg_tree\" class=\"ghg-tree\" aria-label=\"Folder tree\"{hidden}></nav>\n\

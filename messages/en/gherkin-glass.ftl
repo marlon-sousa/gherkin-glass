@@ -98,6 +98,14 @@ config-unknown-key = ghg has no setting named { $key }.
 config-not-text = { $key } must be text, in quotes.
 config-not-boolean = { $key } must be true or false.
 config-empty = { $key } must not be empty.
+config-not-colour = { $key } must be a colour in hexadecimal, in quotes, such as "#0b4f9c".
+
+## An accent colour that does not reach 7:1 against one of its theme's
+## backgrounds. $colour and $background are colours in hexadecimal, such as
+## #0b4f9c, and $ratio is the ratio reached, rounded down, such as 4.47.
+
+config-accent-light-contrast = { $key } is { $colour }, which reaches only { $ratio }:1 against the light theme's background { $background }. It needs at least 7:1.
+config-accent-dark-contrast = { $key } is { $colour }, which reaches only { $ratio }:1 against the dark theme's background { $background }. It needs at least 7:1.
 config-not-table-list = tag_links must be a list of tables, each written [[tag_links]].
 config-missing = { $key } is missing.
 config-not-regex = { $key } is not a regular expression: { $reason }
@@ -113,6 +121,12 @@ collapse-all = Collapse all
 expand-all = Expand all
 source-link = Source: { $path }
 
+## The control every page has to choose its theme, and its three choices.
+
+theme = Theme
+theme-system = System
+theme-light = Light
+theme-dark = Dark
 ## The name of every page's breadcrumb, a navigation landmark.
 
 breadcrumb = Breadcrumb

@@ -3,7 +3,7 @@
 use i18n_embed_fl::fl;
 
 use crate::entities::{PageFrame, PageOptions};
-use crate::policies::CATALOGUE;
+use crate::policies::{CATALOGUE, theme_stylesheet};
 
 pub(crate) fn page_frame(options: &PageOptions) -> PageFrame {
     PageFrame {
@@ -11,6 +11,11 @@ pub(crate) fn page_frame(options: &PageOptions) -> PageFrame {
         show_tree: fl!(CATALOGUE, "show-folder-tree"),
         tree: fl!(CATALOGUE, "folder-tree"),
         tree_shown: options.show_tree,
+        theme: fl!(CATALOGUE, "theme"),
+        theme_system: fl!(CATALOGUE, "theme-system"),
+        theme_light: fl!(CATALOGUE, "theme-light"),
+        theme_dark: fl!(CATALOGUE, "theme-dark"),
+        theme_style: theme_stylesheet(&options.accents),
     }
 }
 

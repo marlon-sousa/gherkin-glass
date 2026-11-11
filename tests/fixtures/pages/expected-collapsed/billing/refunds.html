@@ -4,6 +4,53 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Feature: Refunds &#38; &#60;returns&#62;, billing/refunds.feature</title>
+<script>try{var t=localStorage.getItem("gherkin-glass:theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}</script>
+<style>
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+  --ghg-background: #ffffff;
+  --ghg-surface: #f2f2f2;
+  --ghg-text: #1a1a1a;
+  --ghg-muted: #474747;
+  --ghg-border: #757575;
+  --ghg-accent: #0b4f9c;
+  --ghg-keyword: #6a1b9a;
+  --ghg-parameter: #14521a;
+  --ghg-number: #8a3000;
+  --ghg-placeholder: #00575e;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ghg-background: #141414;
+    --ghg-surface: #222222;
+    --ghg-text: #ececec;
+    --ghg-muted: #c4c4c4;
+    --ghg-border: #8f8f8f;
+    --ghg-accent: #8cc4ff;
+    --ghg-keyword: #e1b3ff;
+    --ghg-parameter: #9fe0a8;
+    --ghg-number: #ffbf8a;
+    --ghg-placeholder: #7fdbe0;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ghg-background: #141414;
+  --ghg-surface: #222222;
+  --ghg-text: #ececec;
+  --ghg-muted: #c4c4c4;
+  --ghg-border: #8f8f8f;
+  --ghg-accent: #8cc4ff;
+  --ghg-keyword: #e1b3ff;
+  --ghg-parameter: #9fe0a8;
+  --ghg-number: #ffbf8a;
+  --ghg-placeholder: #7fdbe0;
+}
+</style>
 <link rel="stylesheet" href="../assets/gherkin-glass.css">
 <script type="module" src="../assets/gherkin-glass.js"></script>
 </head>
@@ -11,6 +58,12 @@
 <a class="ghg-skip" href="#ghg_main">Skip to content</a>
 <div class="ghg-options">
 <input type="checkbox" id="ghg_show_tree" class="ghg-show-tree" aria-controls="ghg_tree"> <label for="ghg_show_tree">Show the folder tree</label>
+<fieldset class="ghg-theme">
+<legend>Theme</legend>
+<label><input type="radio" name="ghg-theme" value="system" checked> System</label>
+<label><input type="radio" name="ghg-theme" value="light"> Light</label>
+<label><input type="radio" name="ghg-theme" value="dark"> Dark</label>
+</fieldset>
 </div>
 <div class="ghg-layout">
 <nav id="ghg_tree" class="ghg-tree" aria-label="Folder tree" hidden></nav>
@@ -56,7 +109,7 @@ in the way it was paid.</p>
 <h2 id="background"><button type="button" class="ghg-toggle" aria-expanded="false">Background</button></h2>
 <div class="ghg-content" hidden>
 <ol class="ghg-steps">
-<li><span class="ghg-keyword">Given </span>a customer named &#34;Ana&#34;</li>
+<li><span class="ghg-keyword">Given </span>a customer named <span class="ghg-parameter">&#34;Ana&#34;</span></li>
 </ol>
 </div>
 </div>
@@ -69,7 +122,7 @@ in the way it was paid.</p>
 <div class="ghg-from-background">
 <p id="refund-a-card-payment_background_1">From the background:<span class="ghg-linked" hidden> <a href="#background">Background</a></span></p>
 <ol class="ghg-steps ghg-inline" aria-labelledby="refund-a-card-payment_background_1">
-<li><span class="ghg-keyword">Given </span>a customer named &#34;Ana&#34;</li>
+<li><span class="ghg-keyword">Given </span>a customer named <span class="ghg-parameter">&#34;Ana&#34;</span></li>
 </ol>
 </div>
 <ol class="ghg-steps">
@@ -106,12 +159,12 @@ Refunded in full.
 <div class="ghg-from-background">
 <p id="refund-count-items_background_1">From the background:<span class="ghg-linked" hidden> <a href="#background">Background</a></span></p>
 <ol class="ghg-steps ghg-inline" aria-labelledby="refund-count-items_background_1">
-<li><span class="ghg-keyword">Given </span>a customer named &#34;Ana&#34;</li>
+<li><span class="ghg-keyword">Given </span>a customer named <span class="ghg-parameter">&#34;Ana&#34;</span></li>
 </ol>
 </div>
 <ol class="ghg-steps">
-<li><span class="ghg-keyword">Given </span>&#60;count&#62; items</li>
-<li><span class="ghg-keyword">Then </span>the total is &#60;total&#62;</li>
+<li><span class="ghg-keyword">Given </span><span class="ghg-placeholder">&#60;count&#62;</span> items</li>
+<li><span class="ghg-keyword">Then </span>the total is <span class="ghg-placeholder">&#60;total&#62;</span></li>
 </ol>
 <div class="ghg-block ghg-examples">
 <h3 id="cheap"><button type="button" class="ghg-toggle" aria-expanded="true">Examples: Cheap</button></h3>
@@ -164,7 +217,7 @@ Refunded in full.
 <div class="ghg-from-background">
 <p id="store-credit_background_1">From the background:<span class="ghg-linked" hidden> <a href="#background">Background</a></span></p>
 <ol class="ghg-steps ghg-inline" aria-labelledby="store-credit_background_1">
-<li><span class="ghg-keyword">Given </span>a customer named &#34;Ana&#34;</li>
+<li><span class="ghg-keyword">Given </span>a customer named <span class="ghg-parameter">&#34;Ana&#34;</span></li>
 </ol>
 </div>
 <div class="ghg-from-background">
@@ -184,7 +237,7 @@ Refunded in full.
 <div class="ghg-from-background">
 <p id="refund-again-count-times_background_1">From the background:<span class="ghg-linked" hidden> <a href="#background">Background</a></span></p>
 <ol class="ghg-steps ghg-inline" aria-labelledby="refund-again-count-times_background_1">
-<li><span class="ghg-keyword">Given </span>a customer named &#34;Ana&#34;</li>
+<li><span class="ghg-keyword">Given </span>a customer named <span class="ghg-parameter">&#34;Ana&#34;</span></li>
 </ol>
 </div>
 <div class="ghg-from-background">
@@ -194,7 +247,7 @@ Refunded in full.
 </ol>
 </div>
 <ol class="ghg-steps">
-<li><span class="ghg-keyword">Given </span>&#60;count&#62; refunds</li>
+<li><span class="ghg-keyword">Given </span><span class="ghg-placeholder">&#60;count&#62;</span> refunds</li>
 </ol>
 <div class="ghg-block ghg-examples">
 <h4 id="again"><button type="button" class="ghg-toggle" aria-expanded="true">Examples: Again</button></h4>
@@ -222,7 +275,7 @@ Refunded in full.
 <div class="ghg-from-background">
 <p id="refund-a-refund_background_1">From the background:<span class="ghg-linked" hidden> <a href="#background">Background</a></span></p>
 <ol class="ghg-steps ghg-inline" aria-labelledby="refund-a-refund_background_1">
-<li><span class="ghg-keyword">Given </span>a customer named &#34;Ana&#34;</li>
+<li><span class="ghg-keyword">Given </span>a customer named <span class="ghg-parameter">&#34;Ana&#34;</span></li>
 </ol>
 </div>
 <ol class="ghg-steps">

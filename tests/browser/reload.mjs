@@ -65,7 +65,8 @@ try {
       scrollY: Math.round(scrollY),
     }));
   const topOf = (id) =>
-    page.evaluate((id) => Math.round(document.getElementById(id).getBoundingClientRect().top), id);
+    // `+ 0` turns the -0 of a top a fraction of a pixel above the window into 0.
+    page.evaluate((id) => Math.round(document.getElementById(id).getBoundingClientRect().top) + 0, id);
 
   await page.goto(`${address}many-scenarios.html`);
 

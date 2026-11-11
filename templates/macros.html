@@ -34,6 +34,24 @@
 </table>
 {%- endmacro -%}
 
+{%- macro step_parts(parts) -%}
+{%- for part in parts.iter() -%}
+{%- match part -%}
+{%- when StepPart::Plain(text) -%}{{ text }}
+{%- when StepPart::Number(text) -%}<span class="ghg-number">{{ text }}</span>
+{%- when StepPart::Placeholder(text) -%}<span class="ghg-placeholder">{{ text }}</span>
+{%- when StepPart::Parameter(inner) -%}<span class="ghg-parameter">
+{%- for part in inner.iter() -%}
+{%- match part -%}
+{%- when StepPart::Placeholder(text) -%}<span class="ghg-placeholder">{{ text }}</span>
+{%- when _ -%}{{ part.text() }}
+{%- endmatch -%}
+{%- endfor -%}
+</span>
+{%- endmatch -%}
+{%- endfor -%}
+{%- endmacro -%}
+
 {%- macro contents(entries, page) %}
 <ul>
 {%- for entry in entries %}
@@ -52,7 +70,7 @@
 {%- macro steps(steps, introduction, shown) %}
 <ol class="ghg-steps{% if !introduction.is_empty() %} ghg-inline" aria-labelledby="{{ introduction }}{% endif %}"{% if !shown %} hidden{% endif %}>
 {%- for step in steps.iter() %}
-<li><span class="ghg-keyword">{{ step.keyword }}</span>{{ step.text }}
+<li><span class="ghg-keyword">{{ step.keyword }}</span>{% call step_parts(step.parts) %}{% endcall %}
 {%- if let Some(table) = step.table %}{% call table(table) %}{% endcall %}{% endif %}
 {%- if let Some(doc) = step.doc_string %}
 {%- if let Some(media_type) = doc.media_type %}

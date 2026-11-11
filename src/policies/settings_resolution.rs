@@ -2,7 +2,8 @@
 
 use std::path::{Path, PathBuf};
 
-use crate::entities::{BuildOptions, Config, PageOptions, Settings, Unnamed};
+use crate::entities::{Accents, BuildOptions, Config, PageOptions, Settings, Unnamed};
+use crate::policies::DEFAULT_ACCENTS;
 
 /// The input folder when neither the command line nor the file names one,
 /// relative to the configuration file's folder.
@@ -40,6 +41,10 @@ pub(crate) fn resolve_settings(options: &BuildOptions, folder: &Path, config: &C
             show_tree: config.show_tree.unwrap_or(true),
             inline_backgrounds: config.inline_backgrounds.unwrap_or(true),
             tag_links: config.tag_links.clone().unwrap_or_default(),
+            accents: Accents {
+                light: config.accent_light.unwrap_or(DEFAULT_ACCENTS.light),
+                dark: config.accent_dark.unwrap_or(DEFAULT_ACCENTS.dark),
+            },
         },
     }
 }
@@ -53,6 +58,7 @@ pub(crate) fn config_folder(config: &Path) -> PathBuf {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::entities::Colour;
 
     fn input(options: (Option<&str>, Option<&str>), file: &str, set: Option<&str>) -> PathBuf {
         let options = BuildOptions {
@@ -173,5 +179,24 @@ mod tests {
         assert_eq!(unnamed(None), Unnamed::Allowed);
         assert_eq!(unnamed(Some(true)), Unnamed::Allowed);
         assert_eq!(unnamed(Some(false)), Unnamed::Refused);
+    }
+
+    #[test]
+    fn each_accent_the_file_does_not_set_takes_its_default() {
+        let light = Colour::new(0, 0, 0x80);
+        let config = Config {
+            accent_light: Some(light),
+            ..Config::default()
+        };
+        let accents = resolve_settings(&BuildOptions::default(), Path::new(""), &config)
+            .pages
+            .accents;
+        assert_eq!(
+            accents,
+            Accents {
+                light,
+                dark: DEFAULT_ACCENTS.dark
+            }
+        );
     }
 }

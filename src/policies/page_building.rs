@@ -11,8 +11,8 @@ use crate::entities::{
     TagNames, TagView,
 };
 use crate::policies::{
-    CATALOGUE, breadcrumb, make_anchors, outside_link, page_address, page_frame, page_language,
-    percent_encoded, root_from, site_title,
+    CATALOGUE, breadcrumb, highlight_step, make_anchors, outside_link, page_address, page_frame,
+    page_language, percent_encoded, root_from, site_title,
 };
 
 /// Stands for the file's path in the words of the source link, to find where
@@ -107,7 +107,7 @@ struct Builder<'a> {
 impl Builder<'_> {
     fn background(&self, background: &Background, level: u8) -> Block {
         Block {
-            steps: self.steps(&background.steps),
+            steps: self.steps(&background.steps, None),
             description: description(background.description.as_deref()),
             ..block(
                 BlockKind::Background,
@@ -135,7 +135,7 @@ impl Builder<'_> {
                 .unwrap_or_default()
                 .to_string(),
             heading: heading(&background.keyword, &background.name),
-            steps: self.steps(&background.steps),
+            steps: self.steps(&background.steps, None),
             inline: self.options.inline_backgrounds,
         })
     }
@@ -179,7 +179,7 @@ impl Builder<'_> {
             tags: self.tags(&scenario.tags),
             description: description(scenario.description.as_deref()),
             backgrounds,
-            steps: self.steps(&scenario.steps),
+            steps: self.steps(&scenario.steps, Some(scenario)),
             blocks: scenario
                 .examples
                 .iter()
@@ -224,12 +224,13 @@ impl Builder<'_> {
             .collect()
     }
 
-    fn steps(&self, steps: &[Step]) -> Vec<StepView> {
+    /// `scenario` holds the steps, or is `None` for a background's.
+    fn steps(&self, steps: &[Step], scenario: Option<&Scenario>) -> Vec<StepView> {
         steps
             .iter()
             .map(|step| StepView {
                 keyword: step.keyword.clone(),
-                text: step.value.clone(),
+                parts: highlight_step(step, scenario).parts,
                 table: step.table.as_ref().map(table),
                 doc_string: step.docstring.as_ref().map(|content| DocStringView {
                     media_type: self.parsed.media_type(step).map(str::to_string),
@@ -354,7 +355,7 @@ mod tests {
     use gherkin::{Feature, GherkinEnv};
 
     use super::*;
-    use crate::entities::{OutsideLink, TagLink};
+    use crate::entities::{OutsideLink, StepPart, TagLink};
     use crate::policies::{name_tags, tags_of, whole_tag_pattern};
 
     fn page(text: &str, options: &PageOptions) -> Page {
@@ -536,7 +537,10 @@ Feature: Refunds
                         from.introduction.as_str(),
                         from.anchor.as_str(),
                         from.heading.as_str(),
-                        from.steps[0].text.as_str(),
+                        match from.steps[0].parts.as_slice() {
+                            [StepPart::Plain(text)] => text.as_str(),
+                            other => panic!("{other:?}"),
+                        },
                         from.inline,
                     )
                 })

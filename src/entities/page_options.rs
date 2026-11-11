@@ -1,10 +1,10 @@
 //! Entity: the settings that shape every page of a site.
 
-use crate::entities::TagLink;
+use crate::entities::{Accents, TagLink};
 
 /// The defaults are the configuration's: the catalogue's title, no source
 /// link, every block expanded, the folder tree shown, backgrounds shown
-/// inside each scenario, and no tag linked to another site.
+/// inside each scenario, no tag linked to another site, and the default accents.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PageOptions {
     /// The site's title; `None` for the catalogue's default.
@@ -20,6 +20,7 @@ pub struct PageOptions {
     pub inline_backgrounds: bool,
     /// In the order of the configuration, the first that matches a tag winning.
     pub tag_links: Vec<TagLink>,
+    pub accents: Accents,
 }
 
 impl Default for PageOptions {
@@ -32,6 +33,7 @@ impl Default for PageOptions {
             show_tree: true,
             inline_backgrounds: true,
             tag_links: Vec::new(),
+            accents: Accents::DEFAULT,
         }
     }
 }

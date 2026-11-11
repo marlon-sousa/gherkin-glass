@@ -2,6 +2,8 @@
 
 use thiserror::Error;
 
+use crate::entities::AccentShortfall;
+
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) struct ConfigProblem {
     pub(crate) line: Option<usize>,
@@ -24,6 +26,11 @@ pub(crate) enum ConfigProblemKind {
     Empty { key: String },
     #[error("{key} is not {expected:?}")]
     WrongType { key: String, expected: ValueType },
+    #[error("{key} reaches {} hundredths", shortfall.hundredths)]
+    TooLittleContrast {
+        key: String,
+        shortfall: AccentShortfall,
+    },
     #[error("tag_links is not a list of tables")]
     NotTableList,
     /// A key a table of `tag_links` needs.
@@ -44,4 +51,6 @@ pub(crate) enum ConfigProblemKind {
 pub(crate) enum ValueType {
     Text,
     Boolean,
+    /// Text naming a colour, such as `"#0b4f9c"`.
+    Colour,
 }

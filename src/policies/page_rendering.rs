@@ -2,7 +2,9 @@
 
 use askama::Template;
 
-use crate::entities::{Block, Breadcrumb, FolderPage, Page, PageFrame, TagIndex, TagPage};
+use crate::entities::{
+    Block, Breadcrumb, FolderPage, Page, PageFrame, StepPart, TagIndex, TagPage,
+};
 use crate::policies::{root_from, tag_index_address, tag_pages_language};
 
 #[derive(Template)]

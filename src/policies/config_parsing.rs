@@ -5,8 +5,10 @@ use std::path::PathBuf;
 use toml::Spanned;
 use toml::de::{DeTable, DeValue};
 
-use crate::entities::{Config, ConfigProblem, ConfigProblemKind, TagLink, ValueType};
-use crate::policies::{PatternProblem, unknown_group, whole_tag_pattern};
+use crate::entities::{
+    Colour, Config, ConfigProblem, ConfigProblemKind, TagLink, Theme, ValueType,
+};
+use crate::policies::{PatternProblem, check_accent, unknown_group, whole_tag_pattern};
 
 /// The keys of a table of `tag_links`, all needed.
 const TAG_LINK_KEYS: [&str; 3] = ["pattern", "address", "text"];
@@ -73,6 +75,29 @@ pub(crate) fn parse_config(source: &str) -> Result<Config, Vec<ConfigProblem>> {
                 }
                 None => Err(wrong_type(ValueType::Boolean)),
             },
+            "accent_light" | "accent_dark" => {
+                let theme = if name == "accent_light" {
+                    Theme::Light
+                } else {
+                    Theme::Dark
+                };
+                match text(value).and_then(Colour::from_hex) {
+                    Some(colour) => match check_accent(theme, colour) {
+                        None => {
+                            *match theme {
+                                Theme::Light => &mut config.accent_light,
+                                Theme::Dark => &mut config.accent_dark,
+                            } = Some(colour);
+                            Ok(())
+                        }
+                        Some(shortfall) => Err(problem(ConfigProblemKind::TooLittleContrast {
+                            key: name.to_string(),
+                            shortfall,
+                        })),
+                    },
+                    None => Err(wrong_type(ValueType::Colour)),
+                }
+            }
             _ => Err(ConfigProblem {
                 line: line(key.span().start),
                 kind: ConfigProblemKind::UnknownKey {
@@ -298,6 +323,52 @@ mod tests {
                     expected: ValueType::Boolean
                 }
             )]
+        );
+    }
+
+    #[test]
+    fn an_accent_is_a_colour_in_hexadecimal() {
+        assert_eq!(
+            parse_config("accent_light = \"#000080\"\naccent_dark = \"#FF8\"\n")
+                .map(|config| (config.accent_light, config.accent_dark)),
+            Ok((
+                Some(Colour::new(0, 0, 0x80)),
+                Some(Colour::new(0xff, 0xff, 0x88))
+            ))
+        );
+        for value in ["\"navy\"", "\"000080\"", "128", "\"\""] {
+            assert_eq!(
+                problems(&format!("\naccent_dark = {value}\n")),
+                [(
+                    Some(2),
+                    ConfigProblemKind::WrongType {
+                        key: "accent_dark".into(),
+                        expected: ValueType::Colour
+                    }
+                )],
+                "{value}"
+            );
+        }
+    }
+
+    #[test]
+    fn an_accent_short_of_7_to_1_in_its_theme_is_a_problem() {
+        let found = problems("accent_light = \"#8cc4ff\"\n\naccent_dark = \"#0b4f9c\"\n");
+        let shortfalls: Vec<_> = found
+            .iter()
+            .map(|(line, kind)| match kind {
+                ConfigProblemKind::TooLittleContrast { key, shortfall } => {
+                    (*line, key.as_str(), shortfall.theme, shortfall.hundredths)
+                }
+                other => panic!("{other:?}"),
+            })
+            .collect();
+        assert_eq!(
+            shortfalls,
+            [
+                (Some(1), "accent_light", Theme::Light, 163),
+                (Some(3), "accent_dark", Theme::Dark, 197),
+            ]
         );
     }
 

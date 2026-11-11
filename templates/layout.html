@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{{ title }}</title>
+<script>try{var t=localStorage.getItem("gherkin-glass:theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}</script>
+<style>
+{{ frame.theme_style|safe }}</style>
 <link rel="stylesheet" href="{{ root }}assets/gherkin-glass.css">
 <script type="module" src="{{ root }}assets/gherkin-glass.js"></script>
 </head>
@@ -11,6 +14,12 @@
 <a class="ghg-skip" href="#ghg_main">{{ frame.skip_link }}</a>
 <div class="ghg-options">
 <input type="checkbox" id="ghg_show_tree" class="ghg-show-tree" aria-controls="ghg_tree"{% if frame.tree_shown %} checked{% endif %}> <label for="ghg_show_tree">{{ frame.show_tree }}</label>
+<fieldset class="ghg-theme">
+<legend>{{ frame.theme }}</legend>
+<label><input type="radio" name="ghg-theme" value="system" checked> {{ frame.theme_system }}</label>
+<label><input type="radio" name="ghg-theme" value="light"> {{ frame.theme_light }}</label>
+<label><input type="radio" name="ghg-theme" value="dark"> {{ frame.theme_dark }}</label>
+</fieldset>
 </div>
 <div class="ghg-layout">
 <nav id="ghg_tree" class="ghg-tree" aria-label="{{ frame.tree }}"{% if !frame.tree_shown %} hidden{% endif %}></nav>

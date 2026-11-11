@@ -4,6 +4,53 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Feature: Transfers, both.feature</title>
+<script>try{var t=localStorage.getItem("gherkin-glass:theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}</script>
+<style>
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+  --ghg-background: #ffffff;
+  --ghg-surface: #f2f2f2;
+  --ghg-text: #1a1a1a;
+  --ghg-muted: #474747;
+  --ghg-border: #757575;
+  --ghg-accent: #0b4f9c;
+  --ghg-keyword: #6a1b9a;
+  --ghg-parameter: #14521a;
+  --ghg-number: #8a3000;
+  --ghg-placeholder: #00575e;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ghg-background: #141414;
+    --ghg-surface: #222222;
+    --ghg-text: #ececec;
+    --ghg-muted: #c4c4c4;
+    --ghg-border: #8f8f8f;
+    --ghg-accent: #8cc4ff;
+    --ghg-keyword: #e1b3ff;
+    --ghg-parameter: #9fe0a8;
+    --ghg-number: #ffbf8a;
+    --ghg-placeholder: #7fdbe0;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ghg-background: #141414;
+  --ghg-surface: #222222;
+  --ghg-text: #ececec;
+  --ghg-muted: #c4c4c4;
+  --ghg-border: #8f8f8f;
+  --ghg-accent: #8cc4ff;
+  --ghg-keyword: #e1b3ff;
+  --ghg-parameter: #9fe0a8;
+  --ghg-number: #ffbf8a;
+  --ghg-placeholder: #7fdbe0;
+}
+</style>
 <link rel="stylesheet" href="assets/gherkin-glass.css">
 <script type="module" src="assets/gherkin-glass.js"></script>
 </head>
@@ -11,6 +58,12 @@
 <a class="ghg-skip" href="#ghg_main">Skip to content</a>
 <div class="ghg-options">
 <input type="checkbox" id="ghg_show_tree" class="ghg-show-tree" aria-controls="ghg_tree" checked> <label for="ghg_show_tree">Show the folder tree</label>
+<fieldset class="ghg-theme">
+<legend>Theme</legend>
+<label><input type="radio" name="ghg-theme" value="system" checked> System</label>
+<label><input type="radio" name="ghg-theme" value="light"> Light</label>
+<label><input type="radio" name="ghg-theme" value="dark"> Dark</label>
+</fieldset>
 </div>
 <div class="ghg-layout">
 <nav id="ghg_tree" class="ghg-tree" aria-label="Folder tree"></nav>
@@ -85,8 +138,8 @@
 </ol>
 </div>
 <ol class="ghg-steps">
-<li><span class="ghg-keyword">When </span>10 is moved</li>
-<li><span class="ghg-keyword">Then </span>the balance is 90</li>
+<li><span class="ghg-keyword">When </span><span class="ghg-number">10</span> is moved</li>
+<li><span class="ghg-keyword">Then </span>the balance is <span class="ghg-number">90</span></li>
 </ol>
 </div>
 </div>
@@ -97,7 +150,7 @@
 <h3 id="over-the-limit"><button type="button" class="ghg-toggle" aria-expanded="true">Background: Over the limit</button></h3>
 <div class="ghg-content">
 <ol class="ghg-steps">
-<li><span class="ghg-keyword">Given </span>a limit of 50</li>
+<li><span class="ghg-keyword">Given </span>a limit of <span class="ghg-number">50</span></li>
 </ol>
 </div>
 </div>
@@ -126,11 +179,11 @@
 <div class="ghg-from-background">
 <p id="move-amount_background_2">From the rule&#39;s background:<span class="ghg-linked" hidden> <a href="#over-the-limit">Background: Over the limit</a></span></p>
 <ol class="ghg-steps ghg-inline" aria-labelledby="move-amount_background_2">
-<li><span class="ghg-keyword">Given </span>a limit of 50</li>
+<li><span class="ghg-keyword">Given </span>a limit of <span class="ghg-number">50</span></li>
 </ol>
 </div>
 <ol class="ghg-steps">
-<li><span class="ghg-keyword">When </span>&#60;amount&#62; is moved</li>
+<li><span class="ghg-keyword">When </span><span class="ghg-placeholder">&#60;amount&#62;</span> is moved</li>
 </ol>
 <div class="ghg-block ghg-examples">
 <h4 id="examples"><button type="button" class="ghg-toggle" aria-expanded="true">Examples</button></h4>
