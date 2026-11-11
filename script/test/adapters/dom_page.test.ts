@@ -111,7 +111,7 @@ test("the browser's storage keeps each state, and a storage that refuses keeps n
   }
 });
 
-// A folder page: tests/fixtures/pages/expected/billing/index.html, docs/BEHAVIOUR.md, rule 63.
+// A folder page: tests/fixtures/pages/expected/billing/index.html, docs/BEHAVIOUR.md, rule 84.
 
 const FOLDER = new URL("../../../tests/fixtures/pages/expected/billing/index.html", import.meta.url);
 

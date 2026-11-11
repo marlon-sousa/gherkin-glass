@@ -84,7 +84,7 @@ fn assert_same_site(config: &str, expected: &str) {
     }
 }
 
-// Rules 36, 38 to 51 and 56 to 64: every page of the fixture, its folder
+// Rules 36, 38 to 51 and 77 to 85: every page of the fixture, its folder
 // pages, and the assets beside them.
 
 #[test]
@@ -138,7 +138,7 @@ fn the_page_s_lang_is_its_file_s_language_as_a_tag() {
     assert_eq!(lang("emoji.html"), "und");
 }
 
-// Rules 37 and 57.
+// Rules 37 and 78.
 
 #[test]
 fn two_files_with_the_same_page_stop_the_build_with_the_files_that_cannot_be_read() {
@@ -197,7 +197,7 @@ fn a_file_that_cannot_be_written_stops_the_build() {
     );
 }
 
-// Rules 39, 58 and 64: every link within the site is relative, and reaches a
+// Rules 39, 79 and 85: every link within the site is relative, and reaches a
 // page, and an anchor on it when it names one.
 
 #[test]
@@ -268,7 +268,6 @@ fn percent_decoded(address: &str) -> String {
     String::from_utf8(decoded).expect("UTF-8")
 }
 
-// Rules 60 and 61.
 // Rules 22 and 81: --title wins over the file's title.
 
 #[test]

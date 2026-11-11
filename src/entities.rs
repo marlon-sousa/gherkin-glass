@@ -27,10 +27,9 @@ pub use collected_input::CollectedInput;
 pub(crate) use config::Config;
 pub(crate) use config_problem::{ConfigProblem, ConfigProblemKind, ValueType};
 pub(crate) use doc_string::DocString;
+pub(crate) use folder_page::{FeatureEntry, FolderLink, FolderPage, FolderWords};
 pub(crate) use invocation::{ArgumentProblem, BuildOptions, Invocation, ServeOptions};
 pub use listen_failure::ListenFailure;
-pub(crate) use folder_page::{FeatureEntry, FolderLink, FolderPage, FolderWords};
-pub(crate) use invocation::{ArgumentProblem, BuildOptions, Invocation};
 pub(crate) use page::{
     Block, BlockKind, ContentsEntry, DocStringView, Page, PageWords, Paragraph, SourceLink,
     StepView, TableView,

@@ -104,21 +104,6 @@ collapse-all = Collapse all
 expand-all = Expand all
 source-link = Source: { $path }
 
-## ghg serve. $address is the address to open in a browser, $host an
-## address to listen on as it was given, $port a port number, $path a
-## path, and $reason the operating system's or a library's words.
-
-serve-listening = The site is served at { $address }. Press Control+C to stop.
-serve-rebuilt = The site was rebuilt.
-serve-not-rebuilt = The site was not rebuilt, so the last site that built is still served.
-serve-port-taken = Port { $port } is already in use. Choose another with --port.
-serve-cannot-listen = ghg serve cannot listen at { $host }, port { $port }: { $reason }
-serve-cannot-watch = ghg serve cannot watch { $path } for changes: { $reason }
-
-## What ghg serve answers a browser with, as plain text.
-
-serve-not-found = Nothing is at this address in the site.
-serve-wrong-method = ghg serve answers only GET and HEAD requests.
 ## The name of every page's breadcrumb, a navigation landmark.
 
 breadcrumb = Breadcrumb
@@ -168,3 +153,19 @@ feature-scenarios =
         [one] { $count } scenario of { $feature }
        *[other] { $count } scenarios of { $feature }
     }
+
+## ghg serve. $address is the address to open in a browser, $host an
+## address to listen on as it was given, $port a port number, $path a
+## path, and $reason the operating system's or a library's words.
+
+serve-listening = The site is served at { $address }. Press Control+C to stop.
+serve-rebuilt = The site was rebuilt.
+serve-not-rebuilt = The site was not rebuilt, so the last site that built is still served.
+serve-port-taken = Port { $port } is already in use. Choose another with --port.
+serve-cannot-listen = ghg serve cannot listen at { $host }, port { $port }: { $reason }
+serve-cannot-watch = ghg serve cannot watch { $path } for changes: { $reason }
+
+## What ghg serve answers a browser with, as plain text.
+
+serve-not-found = Nothing is at this address in the site.
+serve-wrong-method = ghg serve answers only GET and HEAD requests.

@@ -1,5 +1,4 @@
-//! Policy: the pure decisions of reading the input, of how a build is run, of the anchors, of the pages, and of which changes ghg serve rebuilds for.
-//! Policy: the pure decisions of reading the input, of how a build is run, of the anchors, and of the pages and folder pages.
+//! Policy: the pure decisions of reading the input, of how a build is run, of the anchors, of the pages and folder pages, and of which changes ghg serve rebuilds for.
 
 mod anchor_rule;
 mod argument_parsing;
@@ -34,9 +33,8 @@ pub(crate) use link_address::percent_encoded;
 pub(crate) use page_address::{FOLDER_PAGE, page_address, root_from};
 pub(crate) use page_building::build_page;
 pub(crate) use page_language::page_language;
-pub(crate) use page_rendering::render_page;
-pub(crate) use rebuild_choice::{Read, calls_for_rebuild, remembered};
 pub(crate) use page_rendering::{render_folder_page, render_page};
+pub(crate) use rebuild_choice::{Read, calls_for_rebuild, remembered};
 pub(crate) use settings_resolution::{config_folder, resolve_settings};
 pub(crate) use site_title::site_title;
 pub(crate) use step_keyword_correction::correct_step_keywords;
