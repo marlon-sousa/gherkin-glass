@@ -25,13 +25,13 @@ Every pull request is reviewed by an independent reviewer before it is opened, o
 
 1. Every behaviour the change adds, against docs/BEHAVIOUR.md, and every rule added or changed there, against rule 2 above.
 2. Every page the change touches, against rule 3 above, and every page path and anchor, against rule 4 above.
-3. `lib.rs`, against docs/ARCHITECTURE.md, "Folders and files", rules 1 and 2: it exports the two entry points and nothing else. Every new bare `pub` elsewhere is a finding.
-4. Every file the change adds or makes longer: its lines before its test module, against rule 7 of that same section, and the lines of its test module, against its rule 5. Past either limit, the reviewer says what the file holds and proposes the private submodules it splits into.
-5. Every new module: its role line, its folder and its name, against "Module roles" and "Folders and files".
-6. Every test the change adds or moves: a test in `tests/` reaches the code only through the entry points or a binary, and a unit test is in the module whose code decides what it checks.
-7. Every comment and doc comment, against "Comments".
+3. `lib.rs`, against docs/ARCHITECTURE.md, "Folders and files", rules 1 and 2: it exports the two entry points and nothing else. Every new bare `pub` other than the two entry points is a finding, against rule 2.
+4. Every file the change adds or makes longer: its lines before its test module, against docs/ARCHITECTURE.md, "Folders and files", rule 7, and the lines of its test module, against rule 5 of that section. Past either limit, the reviewer says what the file holds and proposes the private submodules it splits into.
+5. Every new module: its role line, its folder and its name, against docs/ARCHITECTURE.md, "Module roles" and "Folders and files".
+6. Every test the change adds or moves: a test in `tests/` reaches the code only through the entry points or a binary, and a unit test is in the module whose code decides what it checks, against docs/ARCHITECTURE.md, "Folders and files", rule 5.
+7. Every comment and doc comment, against docs/ARCHITECTURE.md, "Comments".
 8. Every statement of docs/ARCHITECTURE.md the change makes untrue, which the change updates itself.
-9. The commit messages and the description, against CONTRIBUTING.md and rule 5 above. For a layer of a stack, its branch sits on the current tip of the layer below and holds no merge of a lower branch, as CONTRIBUTING.md, "Stacked pull requests", says.
+9. The commit messages and the description, against CONTRIBUTING.md and rule 5 above. For a layer of a stack, its branch sits on the current tip of the layer below and holds no merge of a lower branch, as CONTRIBUTING.md, "Stacked pull requests", rule 5, says.
 10. The checks under "Building and testing", run at the reviewed revision, without changing the checkout the author works in.
 
 The report lists findings, each marked blocking or not, with its `file:line` and a fix, then a verdict: approve, or changes needed. A finding the author rejects goes back to the reviewer with the reason, and a blocking one closes only when the reviewer agrees or the maintainer decides.
