@@ -22,3 +22,9 @@ versions
 
 # It is a site built to fail the accessibility check, not an input.
 accessibility
+
+# Its cases are runs of the GitHub Action, and one of its folders fails.
+action
+
+# It holds the release tools' own fixtures, not an input.
+release

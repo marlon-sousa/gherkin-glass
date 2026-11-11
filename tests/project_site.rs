@@ -49,7 +49,7 @@ fn fixture_folders() -> BTreeSet<String> {
         .collect()
 }
 
-// What it holds: rules 129 and 130.
+// What it holds: rules 178 and 179.
 
 #[test]
 fn every_fixture_left_out_exists_and_says_why() {
@@ -246,7 +246,7 @@ fn the_example_suite_shows_every_construct() {
     );
 }
 
-// How a release adds to it: rules 131 and 132.
+// How a release adds to it: rules 180 and 181.
 
 fn text(bytes: &[u8]) -> String {
     String::from_utf8_lossy(bytes).into_owned()

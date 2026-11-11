@@ -214,3 +214,15 @@ jobs:
             exit 1
           fi
           echo "$major now names $TAG."
+
+  site:
+    # docs/BEHAVIOUR.md, "The project's own site": the release's own version
+    # of the site, added to the gh-pages branch.
+    name: the project's own site
+    if: github.event_name == 'push'
+    needs: release
+    permissions:
+      contents: write
+    uses: ./.github/workflows/site.yml
+    with:
+      version: ${{ github.ref_name }}

@@ -195,6 +195,7 @@ const NOT_PUBLISHED: &[&str] = &[
     ".github/",
     "action/",
     "docs/",
+    "project-site/",
     "script/",
     "tests/",
     "xtask/",
