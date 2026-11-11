@@ -6,8 +6,8 @@
     reason = "a test file's helpers are test code, which clippy.toml lets panic"
 )]
 
-use std::collections::BTreeSet;
-use std::fs::{create_dir_all, read_dir, read_to_string, remove_dir_all, write};
+use std::collections::{BTreeMap, BTreeSet};
+use std::fs::{create_dir_all, read, read_dir, read_to_string, remove_dir_all, write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 
@@ -60,6 +60,24 @@ fn feature_files(folder: &Path) -> BTreeSet<PathBuf> {
                 .is_some_and(|extension| extension == "feature")
             {
                 found.insert(path);
+            }
+        }
+    }
+    found
+}
+
+/// Every file below `folder`, by its `/`-joined path in it.
+fn files(folder: &Path) -> BTreeMap<String, Vec<u8>> {
+    let mut found = BTreeMap::new();
+    let mut folders = vec![(folder.to_path_buf(), String::new())];
+    while let Some((path, prefix)) = folders.pop() {
+        for entry in read_dir(&path).expect("the folder is listed") {
+            let entry = entry.expect("the folder is listed");
+            let name = format!("{prefix}{}", entry.file_name().to_string_lossy());
+            if entry.path().is_dir() {
+                folders.push((entry.path(), format!("{name}/")));
+            } else {
+                found.insert(name, read(entry.path()).expect("the file is read"));
             }
         }
     }
@@ -187,6 +205,37 @@ fn steps(feature: &Feature) -> impl Iterator<Item = &Step> {
 
 fn non_empty(text: &Option<String>) -> bool {
     text.as_deref().is_some_and(|text| !text.trim().is_empty())
+}
+
+// Rule 179: the example suite's site, the same as its committed copy byte
+// for byte, so that a change to any page shows in review. `cargo xtask build`
+// writes the copy again.
+
+#[test]
+fn the_example_suite_s_site_is_its_committed_copy() {
+    let written = scratch("example-site").join("site");
+    let result = Command::new(env!("CARGO_BIN_EXE_ghg"))
+        .args(["build", "--config"])
+        .arg(repository().join("project-site/ghg.toml"))
+        .arg("--output")
+        .arg(&written)
+        .output()
+        .expect("ghg runs");
+    assert_eq!(text(&result.stderr), "");
+    assert_eq!(result.status.code(), Some(0));
+    let expected = files(&repository().join("project-site/expected"));
+    let written = files(&written);
+    assert_eq!(
+        written.keys().collect::<Vec<_>>(),
+        expected.keys().collect::<Vec<_>>(),
+        "the files written"
+    );
+    for (name, contents) in &expected {
+        assert!(
+            written[name] == *contents,
+            "{name} differs from project-site/expected; cargo xtask build writes it again"
+        );
+    }
 }
 
 #[test]
