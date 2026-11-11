@@ -192,6 +192,7 @@ fn only_one_ghg_is_dropped() {
 /// placed here or in Cargo.toml's `include`.
 const NOT_PUBLISHED: &[&str] = &[
     ".cargo/",
+    ".claude/",
     ".github/",
     "action/",
     "docs/",

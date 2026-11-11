@@ -18,6 +18,7 @@ Ports and adapters. The pure part of gherkin-glass, which decides what the site 
 - **`messages/`**, the Fluent catalogue of gherkin-glass's own interface text, one folder per language, embedded in the binary, and **`i18n.toml`** at the crate's root, which tells the `fl!` macro where the catalogue is and which language it checks against (see "Interface text").
 - **`action.yml`** and **`action/`**, the GitHub Action that installs `ghg` and builds a site with it ([#17](https://github.com/marlon-sousa/gherkin-glass/issues/17)): a composite action whose steps run the bash scripts in `action/`, each saying its role in a comment on its first lines, as a module does.
 - **`project-site/`**, the project's own site ([#19](https://github.com/marlon-sousa/gherkin-glass/issues/19)): the example suite it shows, the list of fixtures it leaves out, and the scripts that gather its input and publish each release to the `gh-pages` branch, which `.github/workflows/site.yml` runs.
+- **`.claude/skills/`**, the procedures an agent follows to review a change, write a commit, follow a stack and keep this document true. They add no rule of their own: each points at the rules it follows.
 - **`tests/`**, the crate's integration tests, and `tests/fixtures/`, the feature files every rule of BEHAVIOUR.md is checked against.
 
 ## Module roles
@@ -55,6 +56,23 @@ The service that builds a site runs these steps; the controller behind the comma
 5. **Unit tests live with the code**, in a `#[cfg(test)] mod tests` at the bottom of the file whose code decides what they check, where they can see private items without exporting them. A test module that grows long, past about 150 lines as a guide, is a file of its own: `#[cfg(test)] mod tests;` at the bottom of `module.rs`, with the tests in `module/tests.rs`. The tests in `tests/` reach the code only through the two entry points or by running a binary, as `tests/command_line.rs` does; a test that needs an internal type is a unit test.
 6. **Import a symbol, then use it by its bare name**: `use askama::Template;` then `#[derive(Template)]`, never `askama::Template` written inline. A type's own associated items, such as `Feature::parse_path`, and `crate::` or `super::` paths a macro needs, are the import-then-use pattern already and stay as they are.
 7. **A file holds one thing, and its length is a signal.** A file holding two things or more, at any length, keeps one and moves each other to a private submodule of its own, in the file's `module/` folder. A file past about 200 lines, counting its code and its documentation but not its test module, is the signal to look for the seams it splits along. The limit is a guide for the reviewer's judgement, not a gate, and no check counts lines: a file past it may stay when it holds one thing well, such as one whose lines all belong to one type, with its own `impl` blocks and the private helpers only it uses, or one a little past the limit that otherwise fits well, while a short file with several responsibilities splits.
+8. **Every module is a file of its own.** Inline `mod` blocks are only for tests.
+9. **A module with submodules decides its public face**: its submodules are private, and it re-exports what the rest of the crate uses, so that a path names one module level, such as `crate::policies::make_anchors`.
+10. **Helpers that the tests of several modules share** live in a test-only module of their own, such as `#[cfg(test)] pub(crate) mod fixtures;`, never copied from one test module to another.
+
+## Writing the code
+
+- **Formatting is plain `rustfmt`**, with no configuration file.
+- **Nothing panics while a build or a server runs.** Every failure is a value, a `Result` or a problem reported. Clippy denies `unwrap_used`, `expect_used`, `panic`, `indexing_slicing`, `todo` and `unimplemented` outside tests, and `clippy.toml` allows them in tests. An exception that cannot fail, such as a regular expression written in the code, says so with `#[expect(clippy::expect_used, reason = "…")]`.
+- **`#![forbid(unsafe_code)]`** is in the crate's root and in `xtask`'s.
+- **Reuse before writing.** Look first at the standard library and the APIs already at hand, then at the crates already depended on, then at well-known crates. Write it ourselves only when none fits, or when a crate would replace only a couple of lines. A crate is judged by what it replaces across the code, not only by its first use.
+- **Derive what a derive produces.** Error types derive with `thiserror`, with `#[from]` instead of a hand-written `From`. `Debug`, `Clone`, `Copy`, `Default`, `PartialEq`, `Eq`, `Hash` and the orderings derive from the standard library. `Display`, `From`, `Into`, `AsRef` and a plain `new` that only assigns every field derive with [`derive_more`](https://crates.io/crates/derive_more) whenever it produces the same code, and the dependency is added with the first impl it replaces. An impl is written by hand only when it needs logic.
+- **Types hold every constraint they can.** An enum for a closed set of values, never a string or a `bool` standing for one; a newtype for an identifier or a value with rules of its own. A doc comment stating a constraint that the type could enforce means the type is wrong.
+- **A struct with one field is a tuple struct** only while all of its code is derived. Once it has a method or a hand-written impl, its field has a name, so code reads `self.path`, never `self.0`. A newtype never derives `Deref`, which is for smart pointers.
+- **A chain of iterator adapters reads as a sentence of names**, such as `.filter(is_feature_file).map(page_address)`, and the details live in the functions it names. A closure in a chain is one call, one method call or one field read, such as `|step| &step.value`; a closure that compares, negates, matches, computes or builds a value becomes a named function.
+- **Iterating to get a result uses adapters, not a `for` loop.** A search is `find`, `find_map`, `position`, `any` or `all`; a check of every item that fails on the first bad one is `try_for_each`; building a value is `count`, `sum`, `fold` or `collect`. A `for` loop stays only when its body acts on each item, such as writing a file or asserting in a test.
+- **Every line does something.** No line that changes nothing, such as a conversion to the type a value already has.
+- **Platforms diverge by size.** A `#[cfg]` on one line or one function is fine; a whole module that would be gated is an adapter of its own, behind the port the domain already has, chosen in the composition root. An answer per platform that is a value, not a call to the world, is a policy taking the platform's name, such as `std::env::consts::OS`, so that every platform's answer is tested on every platform.
 
 ## Comments
 
@@ -67,9 +85,17 @@ A comment says only what the code cannot:
 
 One sentence, where it applies, once. Why a decision was taken, what else was considered and what came before belong in the issue and the pull request, which keep them, not in the code. A field, a function or a test whose name already says what it is gets no doc comment.
 
+- A measured fact names the program and its version, never a date.
+- A fact appears once in the repository; a second place that needs it says "see" with a path.
+- No `TODO` comments, and no bold.
+
 ## Dependencies between parts
 
 No dependency injection framework. Every collaborator is received through a constructor, as a trait object or a generic, and only the composition root names the concrete adapters. Nothing else constructs its own collaborators. Tests hand in fakes written for the purpose, such as an input held in memory and an output that records what was written.
+
+- **A controller holds each service behind a trait**, a driving port, named after the service with `Api`, such as `SiteApi` implemented by `SiteService`, so that the controller's tests hand in fake services. Only the composition root names the concrete service.
+- **A service earns its place**: it coordinates at least two of a port, an entity and a policy for a named use case. A single pass-through gets no service, and its caller calls the target directly.
+- A pure function never gets a trait around it only to be faked.
 
 ## How the code runs
 
@@ -121,7 +147,9 @@ Cheapest first:
 
 How a Rust test is written:
 
-- **A test's name states the rule it checks.**
+- **A test's name states the rule it checks**, as a sentence, such as `a_feature_in_portuguese_keeps_its_keywords`.
+- **A setup that three or more tests of one module start the same way** becomes a helper of those tests, named for what it makes; when the tests go on differently, the helper makes only the part they share.
+- **Policies over arbitrary text have property tests**, with [`proptest`](https://crates.io/crates/proptest), such as the anchor rule and step highlighting never panicking on any input.
 - **A rule checked on several inputs is one parametrised test**, written with [`rstest`](https://crates.io/crates/rstest), with a named case per input, such as `#[case::a_rule_s_background("rule-background.feature")]`, never a run of asserts or a loop over a table. Each case's name says what its input is. A loop over every value of a closed set, such as every step kind, stays a loop, so that a new value is checked without a new case.
 
 ## What a contributor needs
