@@ -5,7 +5,7 @@ use std::io::ErrorKind;
 use std::path::{Path, PathBuf};
 
 use crate::entities::{CollectedInput, Problem, ProblemKind};
-use crate::policies::{FileSelection, IGNORE_FILE, parse_rules};
+use crate::policies::{FileSelection, IGNORE_FILE, InvalidRule, parse_rules};
 use crate::ports::InputCollector;
 
 #[derive(Debug, Default, Clone, Copy)]
@@ -103,7 +103,7 @@ impl Walk<'_> {
             }
         };
         let parsed = parse_rules(folder, &path, &text);
-        for (line, reason) in parsed.invalid {
+        for InvalidRule { line, reason } in parsed.invalid {
             self.problem(&path, line, ProblemKind::InvalidRule { reason });
         }
         self.selection.enter(parsed.rules);

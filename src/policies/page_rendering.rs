@@ -5,7 +5,7 @@ use askama::Template;
 use crate::entities::{
     Block, Breadcrumb, FolderPage, Page, PageFrame, SentencesPage, StepPart, TagIndex, TagPage,
 };
-use crate::policies::{root_from, tag_index_address, tag_pages_language};
+use crate::policies::{tag_index_address, tag_pages_language};
 
 #[derive(Template)]
 #[template(path = "feature.html")]
@@ -77,7 +77,7 @@ pub(crate) fn render_tag_index(index: &TagIndex) -> String {
     with_final_line_break(render(&TagIndexTemplate {
         language: &tag_pages_language(),
         title: &index.title,
-        root: root_from(&tag_index_address()),
+        root: tag_index_address().root(),
         frame: &index.frame,
         breadcrumb: &index.breadcrumb,
         index,
@@ -88,7 +88,7 @@ pub(crate) fn render_tag_page(page: &TagPage) -> String {
     with_final_line_break(render(&TagPageTemplate {
         language: &tag_pages_language(),
         title: &page.title,
-        root: root_from(&page.address),
+        root: page.address.root(),
         frame: &page.frame,
         breadcrumb: &page.breadcrumb,
         page,
@@ -99,7 +99,7 @@ pub(crate) fn render_page(page: &Page) -> String {
     let template = FeatureTemplate {
         language: &page.language,
         title: &page.title,
-        root: root_from(&page.address),
+        root: page.address.root(),
         frame: &page.frame,
         breadcrumb: &page.breadcrumb,
         page,
@@ -112,7 +112,7 @@ pub(crate) fn render_folder_page(folder: &FolderPage) -> String {
     let template = FolderTemplate {
         language: &folder.language,
         title: &folder.title,
-        root: root_from(&folder.address),
+        root: folder.address.root(),
         frame: &folder.frame,
         breadcrumb: &folder.breadcrumb,
         folder,

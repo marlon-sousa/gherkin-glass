@@ -7,12 +7,10 @@ use i18n_embed::LanguageLoader;
 use i18n_embed_fl::fl;
 
 use crate::entities::{
-    GroupView, PageOptions, ParsedFeature, Piece, SentenceUse, SentenceView, SentencesPage,
-    StepKind, StepSentences, UseView,
+    GroupView, LinkAddress, PageOptions, ParsedFeature, Piece, SentenceUse, SentenceView,
+    SentencesPage, StepKind, StepSentences, UseView,
 };
-use crate::policies::{
-    CATALOGUE, breadcrumb, page_address, page_frame, page_language, percent_encoded, site_title,
-};
+use crate::policies::{CATALOGUE, breadcrumb, page_address, page_frame, page_language, site_title};
 
 /// The page's address, at the site's root.
 pub(crate) const SENTENCES_PAGE: &str = "steps.html";
@@ -90,11 +88,7 @@ fn use_view(found: &SentenceUse, language: Option<String>) -> UseView {
         ))
     };
     UseView {
-        address: format!(
-            "{}#{}",
-            percent_encoded(&page_address(&found.path)),
-            found.anchor
-        ),
+        address: LinkAddress::to(page_address(&found.path).as_str()).at(&found.anchor),
         language,
         link: pieces(&link),
         item,

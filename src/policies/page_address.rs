@@ -2,12 +2,14 @@
 
 use std::path::{Component, Path};
 
+use crate::entities::SiteAddress;
+
 /// A folder's page, in its folder of the site.
 pub(crate) const FOLDER_PAGE: &str = "index.html";
 
 /// `path` is relative to the input folder. Its parts are joined by `/`, and
 /// its last extension is replaced by `html`, or `.html` added when it has none.
-pub(crate) fn page_address(path: &Path) -> String {
+pub(crate) fn page_address(path: &Path) -> SiteAddress {
     let parts: Vec<String> = path
         .components()
         .filter_map(|part| match part {
@@ -16,56 +18,32 @@ pub(crate) fn page_address(path: &Path) -> String {
         })
         .collect();
     let Some((name, folders)) = parts.split_last() else {
-        return String::new();
+        return SiteAddress::default();
     };
     let page = match name.rfind('.') {
         // A name that starts with its only dot, such as `.feature`, has no extension.
         Some(dot) if dot > 0 => format!("{}.html", &name[..dot]),
         _ => format!("{name}.html"),
     };
-    folders
-        .iter()
-        .map(String::as_str)
-        .chain([page.as_str()])
-        .collect::<Vec<_>>()
-        .join("/")
-}
-
-/// The relative address from the page at `address` back to the site's root,
-/// such as `../` for a page one folder down, and empty for a page at the root.
-pub(crate) fn root_from(address: &str) -> String {
-    "../".repeat(address.matches('/').count())
+    SiteAddress::of(folders, &page)
 }
 
 #[cfg(test)]
 mod tests {
     use std::path::PathBuf;
 
+    use rstest::rstest;
+
     use super::*;
 
-    #[test]
-    fn the_last_extension_becomes_html() {
-        assert_eq!(page_address(Path::new("refunds.feature")), "refunds.html");
-        assert_eq!(
-            page_address(&PathBuf::from_iter(["billing", "refunds.feature"])),
-            "billing/refunds.html"
-        );
-        assert_eq!(
-            page_address(&PathBuf::from_iter(["stories", "read.story"])),
-            "stories/read.html"
-        );
-        assert_eq!(page_address(Path::new("a.b.feature")), "a.b.html");
-    }
-
-    #[test]
-    fn a_name_without_an_extension_gets_one() {
-        assert_eq!(page_address(Path::new("README")), "README.html");
-        assert_eq!(page_address(Path::new(".feature")), ".feature.html");
-    }
-
-    #[test]
-    fn the_root_is_one_step_up_for_each_folder() {
-        assert_eq!(root_from("a.html"), "");
-        assert_eq!(root_from("billing/refunds/a.html"), "../../");
+    #[rstest]
+    #[case::the_last_extension_becomes_html(&["refunds.feature"], "refunds.html")]
+    #[case::folders_are_joined_by_slashes(&["billing", "refunds.feature"], "billing/refunds.html")]
+    #[case::any_extension(&["stories", "read.story"], "stories/read.html")]
+    #[case::only_the_last_extension(&["a.b.feature"], "a.b.html")]
+    #[case::a_name_without_an_extension_gets_one(&["README"], "README.html")]
+    #[case::a_leading_dot_is_no_extension(&[".feature"], ".feature.html")]
+    fn a_feature_file_s_page_is_its_path_ending_in_html(#[case] path: &[&str], #[case] page: &str) {
+        assert_eq!(page_address(&PathBuf::from_iter(path)).as_str(), page);
     }
 }

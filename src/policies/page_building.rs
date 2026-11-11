@@ -7,12 +7,13 @@ use i18n_embed_fl::fl;
 
 use crate::entities::{
     Anchored, AnchoredFeature, AnchoredRule, AnchoredScenario, BackgroundsOption, Block, BlockKind,
-    ContentsEntry, DocStringView, FromBackground, HeadingLevel, HeadingPart, Page, PageOptions,
-    PageWords, Paragraph, ParsedFeature, SourceLink, StepView, TableView, TagNames, TagView,
+    ContentsEntry, DocStringView, FromBackground, HeadingLevel, HeadingPart, LinkAddress, Page,
+    PageOptions, PageWords, Paragraph, ParsedFeature, SourceLink, StepView, TableView, TagNames,
+    TagView, percent_encoded,
 };
 use crate::policies::{
     CATALOGUE, ExampleRow, breadcrumb, example_rows, highlight_step, outside_link, page_address,
-    page_frame, page_language, percent_encoded, root_from, site_title,
+    page_frame, page_language, site_title,
 };
 
 /// Stands for the file's path in the words of the source link, to find where
@@ -38,7 +39,7 @@ pub(crate) fn build_page(
         parsed,
         options,
         tags,
-        root: root_from(&address),
+        root: address.root(),
     };
     let mut blocks = Vec::new();
     if let Some(background) = &anchored.background {
@@ -70,11 +71,14 @@ pub(crate) fn build_page(
         inline: options.inline_backgrounds,
         enabled: any_background_steps(&blocks),
     });
-    let mut parts: Vec<String> = address.split('/').map(str::to_string).collect();
-    let file = parts.pop().unwrap_or_default();
+    let folders: Vec<String> = address.folders().into_iter().map(str::to_string).collect();
     Page {
         frame: page_frame(options),
-        breadcrumb: breadcrumb(&site_title(options), &parts, Some((&heading, &file))),
+        breadcrumb: breadcrumb(
+            &site_title(options),
+            &folders,
+            Some((&heading, address.file())),
+        ),
         address,
         language: page_language(&parsed.language).to_string(),
         title: fl!(
@@ -330,7 +334,7 @@ impl Builder<'_> {
             .map(|tag| {
                 let text = format!("@{tag}");
                 TagView {
-                    address: percent_encoded(&format!("{}{}", self.root, self.tags.address(&text))),
+                    address: LinkAddress::to(&format!("{}{}", self.root, self.tags.address(&text))),
                     outside: outside_link(&text, &self.options.tag_links),
                     text,
                 }
@@ -580,7 +584,7 @@ Feature: Refunds
             page.title,
             "Feature: Refunds, billing/saque em conta.feature"
         );
-        assert_eq!(page.address, "billing/saque em conta.html");
+        assert_eq!(page.address.as_str(), "billing/saque em conta.html");
         let top: Vec<_> = page
             .blocks
             .iter()
@@ -705,7 +709,7 @@ Feature: Refunds
             page.tags,
             [TagView {
                 text: "@billing".into(),
-                address: "../tags/billing.html".into(),
+                address: LinkAddress::to("../tags/billing.html"),
                 outside: None,
             }]
         );
@@ -894,7 +898,7 @@ Feature: Refunds
         assert_eq!(views.len(), 1);
         let examples = &rule.blocks[1].blocks[0];
         let tag = &examples.tags[0];
-        assert_eq!(tag.address, "../tags/in-rule.html");
+        assert_eq!(tag.address.to_string(), "../tags/in-rule.html");
         assert_eq!(
             tag.outside,
             Some(OutsideLink {

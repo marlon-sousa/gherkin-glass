@@ -2,6 +2,8 @@
 
 use std::collections::BTreeMap;
 
+use crate::entities::SiteAddress;
+
 /// The folder of the site that holds the tag pages and their index.
 pub(crate) const TAGS_FOLDER: &str = "tags";
 
@@ -20,8 +22,8 @@ impl TagNames {
         self.names.get(tag).map(String::as_str).unwrap_or_default()
     }
 
-    /// Relative to the site's root, such as `tags/slow.html`.
-    pub(crate) fn address(&self, tag: &str) -> String {
-        format!("{TAGS_FOLDER}/{}.html", self.name(tag))
+    /// Such as `tags/slow.html`.
+    pub(crate) fn address(&self, tag: &str) -> SiteAddress {
+        SiteAddress::of(&[TAGS_FOLDER], &format!("{}.html", self.name(tag)))
     }
 }

@@ -8,8 +8,7 @@ use regex_automata::{Input, PatternID};
 use regex_syntax::hir::{Hir, Look};
 use regex_syntax::{Error as SyntaxError, ParserBuilder};
 
-use crate::entities::{OutsideLink, TagLink};
-use crate::policies::percent_encoded;
+use crate::entities::{OutsideLink, TagLink, percent_encoded};
 
 /// Why a pattern cannot be used.
 #[derive(Debug, Clone, PartialEq, Eq)]

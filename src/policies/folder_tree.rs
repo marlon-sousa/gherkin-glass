@@ -2,8 +2,8 @@
 
 use std::collections::BTreeMap;
 
-use crate::entities::{ContentsEntry, FolderPage, TreeItem};
-use crate::policies::{FOLDER_PAGE, percent_encoded};
+use crate::entities::{ContentsEntry, FolderPage, LinkAddress, TreeItem};
+use crate::policies::FOLDER_PAGE;
 
 /// `folders` are every folder page, the home page among them. The home
 /// page's item comes first, then the input folder's, as its page lists them.
@@ -17,7 +17,7 @@ pub(crate) fn build_folder_tree(folders: &[FolderPage]) -> Vec<TreeItem> {
     };
     let mut items = vec![TreeItem {
         text: home.heading.clone(),
-        address: FOLDER_PAGE.to_string(),
+        address: LinkAddress::to(FOLDER_PAGE),
         lang: None,
         items: Vec::new(),
     }];
@@ -31,18 +31,18 @@ fn folder_items(by_address: &BTreeMap<&str, &FolderPage>, folder: &str) -> Vec<T
     let Some(page) = by_address.get(format!("{folder}{FOLDER_PAGE}").as_str()) else {
         return Vec::new();
     };
-    let encoded = percent_encoded(folder);
+    let encoded = LinkAddress::to(folder);
     let subfolders = page.folders.iter().map(|subfolder| {
         let inner = format!("{folder}{}/", subfolder.name);
         TreeItem {
             text: subfolder.name.clone(),
-            address: format!("{encoded}{}", subfolder.address),
+            address: encoded.then(&subfolder.address),
             lang: None,
             items: folder_items(by_address, &inner),
         }
     });
     let features = page.features.iter().map(|feature| {
-        let address = format!("{encoded}{}", feature.address);
+        let address = encoded.then(&feature.address);
         TreeItem {
             text: feature.heading.clone(),
             lang: Some(feature.language.clone()),
@@ -53,12 +53,12 @@ fn folder_items(by_address: &BTreeMap<&str, &FolderPage>, folder: &str) -> Vec<T
     subfolders.chain(features).collect()
 }
 
-fn block_items(contents: &[ContentsEntry], page: &str) -> Vec<TreeItem> {
+fn block_items(contents: &[ContentsEntry], page: &LinkAddress) -> Vec<TreeItem> {
     contents
         .iter()
         .map(|entry| TreeItem {
             text: entry.heading.clone(),
-            address: format!("{page}#{}", entry.anchor),
+            address: page.at(&entry.anchor),
             lang: None,
             items: block_items(&entry.entries, page),
         })
@@ -165,6 +165,6 @@ mod tests {
     fn an_empty_input_has_only_the_home_page() {
         let items = tree(&[]);
         assert_eq!(items.len(), 1);
-        assert_eq!(items[0].address, "index.html");
+        assert_eq!(items[0].address.to_string(), "index.html");
     }
 }

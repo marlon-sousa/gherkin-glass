@@ -1,6 +1,6 @@
 //! Entity: the page of step sentences, as its template shows it, every text in it as written or worded.
 
-use crate::entities::{Breadcrumb, PageFrame};
+use crate::entities::{Breadcrumb, LinkAddress, PageFrame};
 
 /// Every `String` is text, escaped when it is rendered.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -35,9 +35,8 @@ pub(crate) struct SentenceView {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct UseView {
-    /// Relative to the site's root, where the page of step sentences is, its
-    /// path percent-encoded.
-    pub(crate) address: String,
+    /// Relative to the site's root, where the page of step sentences is.
+    pub(crate) address: LinkAddress,
     /// The `lang` of the feature's own text, when it differs from the page's.
     pub(crate) language: Option<String>,
     /// The link's words, around the block's heading and the file's path.

@@ -1,6 +1,6 @@
 //! Entity: the name of a version of the suite, always one folder name.
 
-use std::fmt::{Display, Formatter, Result as FmtResult};
+use derive_more::Display;
 
 /// Names the versions page itself uses, compared ignoring capitals.
 const RESERVED: [&str; 2] = ["assets", "index.html"];
@@ -9,7 +9,7 @@ const RESERVED: [&str; 2] = ["assets", "index.html"];
 const DEVICES: [&str; 4] = ["con", "prn", "aux", "nul"];
 const NUMBERED_DEVICES: [&str; 2] = ["com", "lpt"];
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Display)]
 pub(crate) struct VersionName(String);
 
 impl VersionName {
@@ -27,12 +27,6 @@ impl VersionName {
 
     pub(crate) fn as_str(&self) -> &str {
         &self.0
-    }
-}
-
-impl Display for VersionName {
-    fn fmt(&self, formatter: &mut Formatter<'_>) -> FmtResult {
-        formatter.write_str(&self.0)
     }
 }
 

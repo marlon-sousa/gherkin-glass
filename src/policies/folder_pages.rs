@@ -5,24 +5,18 @@ use std::collections::BTreeSet;
 use i18n_embed::LanguageLoader;
 use i18n_embed_fl::fl;
 
-use crate::entities::{FeatureEntry, FolderLink, FolderPage, FolderWords, Page, PageOptions};
+use crate::entities::{
+    FeatureEntry, FolderLink, FolderPage, FolderWords, LinkAddress, Page, PageOptions, SiteAddress,
+};
 use crate::policies::{
-    CATALOGUE, FOLDER_PAGE, SENTENCES_PAGE, breadcrumb, page_frame, percent_encoded, site_title,
-    tag_index_address,
+    CATALOGUE, FOLDER_PAGE, SENTENCES_PAGE, breadcrumb, page_frame, site_title, tag_index_address,
 };
 
 /// `pages` are every feature's, in any order; the folder pages come
 /// outermost first, the home page first of all, then folder by folder.
 pub(crate) fn build_folder_pages(pages: &[Page], options: &PageOptions) -> Vec<FolderPage> {
     let title = site_title(options);
-    let located: Vec<(Vec<String>, String, &Page)> = pages
-        .iter()
-        .map(|page| {
-            let mut parts: Vec<String> = page.address.split('/').map(str::to_string).collect();
-            let file = parts.pop().unwrap_or_default();
-            (parts, file, page)
-        })
-        .collect();
+    let located: Vec<(Vec<String>, String, &Page)> = pages.iter().map(located).collect();
     let mut folders: BTreeSet<Vec<String>> = BTreeSet::from([Vec::new()]);
     for (parts, _, _) in &located {
         for depth in 1..=parts.len() {
@@ -37,7 +31,7 @@ pub(crate) fn build_folder_pages(pages: &[Page], options: &PageOptions) -> Vec<F
                 .filter(|other| other.len() == folder.len() + 1 && other.starts_with(folder))
                 .filter_map(|other| other.last())
                 .map(|name| FolderLink {
-                    address: format!("{}/{FOLDER_PAGE}", percent_encoded(name)),
+                    address: LinkAddress::to(&format!("{name}/{FOLDER_PAGE}")),
                     name: name.clone(),
                 })
                 .collect();
@@ -53,11 +47,7 @@ pub(crate) fn build_folder_pages(pages: &[Page], options: &PageOptions) -> Vec<F
                 Vec::new()
             };
             FolderPage {
-                address: if folder.is_empty() {
-                    FOLDER_PAGE.to_string()
-                } else {
-                    format!("{}/{FOLDER_PAGE}", folder.join("/"))
-                },
+                address: SiteAddress::of(folder, FOLDER_PAGE),
                 language: CATALOGUE.current_language().to_string(),
                 title: if folder.is_empty() {
                     title.clone()
@@ -74,11 +64,11 @@ pub(crate) fn build_folder_pages(pages: &[Page], options: &PageOptions) -> Vec<F
                 breadcrumb: breadcrumb(&title, folder, None),
                 totals,
                 tags: folder.is_empty().then(|| FolderLink {
-                    address: percent_encoded(&tag_index_address()),
+                    address: LinkAddress::to(tag_index_address().as_str()),
                     name: fl!(CATALOGUE, "tag-index-title"),
                 }),
                 sentences: folder.is_empty().then(|| FolderLink {
-                    address: SENTENCES_PAGE.to_string(),
+                    address: LinkAddress::to(SENTENCES_PAGE),
                     name: fl!(CATALOGUE, "sentences-title"),
                 }),
                 folders: subfolders,
@@ -95,6 +85,19 @@ pub(crate) fn build_folder_pages(pages: &[Page], options: &PageOptions) -> Vec<F
         .collect()
 }
 
+/// The page's folders, from the outermost, its file's name, and the page.
+fn located(page: &Page) -> (Vec<String>, String, &Page) {
+    (
+        page.address
+            .folders()
+            .into_iter()
+            .map(str::to_string)
+            .collect(),
+        page.address.file().to_string(),
+        page,
+    )
+}
+
 fn file_name(page: &Page) -> &str {
     page.path.rsplit('/').next().unwrap_or_default()
 }
@@ -102,7 +105,7 @@ fn file_name(page: &Page) -> &str {
 fn feature_entry(file: &str, page: &Page) -> FeatureEntry {
     let count = page.scenario_count();
     FeatureEntry {
-        address: percent_encoded(file),
+        address: LinkAddress::to(file),
         language: page.language.clone(),
         heading: page.heading.clone(),
         scenarios: fl!(CATALOGUE, "scenario-count", count = count),
@@ -191,7 +194,7 @@ Feature: Counted
         );
         assert_eq!(site[2].title, "b/c, Feature files");
         assert!(b.features.is_empty());
-        assert_eq!(b.folders[0].address, "c/index.html");
+        assert_eq!(b.folders[0].address.to_string(), "c/index.html");
         assert!(b.totals.is_empty());
     }
 
@@ -207,14 +210,18 @@ Feature: Counted
         let home = &site[0];
         let folders: Vec<_> = home.folders.iter().map(|f| f.name.as_str()).collect();
         assert_eq!(folders, ["W", "y"]);
-        let features: Vec<_> = home.features.iter().map(|f| f.address.as_str()).collect();
+        let features: Vec<_> = home
+            .features
+            .iter()
+            .map(|f| f.address.to_string())
+            .collect();
         assert_eq!(features, ["Z.html", "a.html", "b.html"]);
         // By the files' names, not the pages'.
         let site = super::tests::site(&[("a.c.feature", "Feature: C\n"), ("a.b", "Feature: B\n")]);
         let features: Vec<_> = site[0]
             .features
             .iter()
-            .map(|f| f.address.as_str())
+            .map(|f| f.address.to_string())
             .collect();
         assert_eq!(features, ["a.html", "a.c.html"]);
     }

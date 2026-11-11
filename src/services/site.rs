@@ -5,7 +5,9 @@ use std::sync::Arc;
 
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 
-use crate::entities::{BuiltSite, Problem, ProblemKind, Problems, Settings, SiteAssets};
+use crate::entities::{
+    ASSETS, BuiltSite, Problem, ProblemKind, Problems, Settings, SiteAddress, SiteAssets, SiteFile,
+};
 use crate::policies::{
     LARGE_SEARCH_DOCUMENTS, SENTENCES_PAGE, anchor_feature, build_folder_pages, build_folder_tree,
     build_page, build_sentences_page, build_tag_index, build_tag_page, find_step_sentences,
@@ -15,14 +17,13 @@ use crate::policies::{
 use crate::ports::SiteWriter;
 use crate::services::InputService;
 
-/// Beside the assets, where the pages' script fetches it from.
-const TREE_DATA: &str = "assets/tree.json";
-const SEARCH_DOCUMENTS: &str = "assets/search.json";
+/// In the folder of the assets, where the pages' script fetches them from.
+const TREE_DATA: &str = "tree.json";
+const SEARCH_DOCUMENTS: &str = "search.json";
 
-/// Every file of a site, each a `/`-joined path below the output folder with
-/// its contents, and what the build has to say of them.
+/// Every file of a site, and what the build has to say of them.
 pub(crate) struct SiteFiles {
-    pub(crate) files: Vec<(String, Vec<u8>)>,
+    pub(crate) files: Vec<SiteFile>,
     pub(crate) built: BuiltSite,
 }
 
@@ -57,38 +58,38 @@ impl SiteService {
             .map(|feature| build_page(feature, &settings.pages, &names))
             .collect();
         let folders = build_folder_pages(&pages, &settings.pages);
-        let mut rendered: Vec<(String, String)> = pages
+        let mut files: Vec<SiteFile> = pages
             .par_iter()
-            .map(|page| (page.address.clone(), render_page(page)))
+            .map(|page| SiteFile::text(page.address.clone(), render_page(page)))
             .collect();
-        rendered.extend(
+        files.extend(
             folders
                 .par_iter()
-                .map(|folder| (folder.address.clone(), render_folder_page(folder)))
+                .map(|folder| SiteFile::text(folder.address.clone(), render_folder_page(folder)))
                 .collect::<Vec<_>>(),
         );
         let sentences = find_step_sentences(&anchored);
-        rendered.push((
-            SENTENCES_PAGE.to_string(),
+        files.push(SiteFile::text(
+            SiteAddress::at_root(SENTENCES_PAGE),
             render_sentences_page(&build_sentences_page(
                 &features,
                 &sentences,
                 &settings.pages,
             )),
         ));
-        rendered.push((
-            TREE_DATA.to_string(),
+        files.push(SiteFile::text(
+            asset(TREE_DATA),
             render_folder_tree(&build_folder_tree(&folders)),
         ));
-        rendered.push((
+        files.push(SiteFile::text(
             tag_index_address(),
             render_tag_index(&build_tag_index(&tags, &pages, &names, &settings.pages)),
         ));
-        rendered.extend(
+        files.extend(
             tags.par_iter()
                 .map(|tag| {
                     let page = build_tag_page(tag, &pages, &names, &settings.pages);
-                    (page.address.clone(), render_tag_page(&page))
+                    SiteFile::text(page.address.clone(), render_tag_page(&page))
                 })
                 .collect::<Vec<_>>(),
         );
@@ -97,30 +98,25 @@ impl SiteService {
             large_search_documents: Some(search.len())
                 .filter(|&size| size > LARGE_SEARCH_DOCUMENTS),
         };
-        rendered.push((SEARCH_DOCUMENTS.to_string(), search));
-        Ok(SiteFiles {
-            files: rendered
-                .into_iter()
-                .map(|(address, html)| (address, html.into_bytes()))
-                .chain(assets())
-                .collect(),
-            built,
-        })
+        files.push(SiteFile::text(asset(SEARCH_DOCUMENTS), search));
+        files.extend(assets());
+        Ok(SiteFiles { files, built })
     }
 
     /// Writes `files` into `output`, stopping at the first that cannot be written.
     pub(crate) fn write(
         &self,
         output: &Path,
-        files: impl IntoIterator<Item = (String, Vec<u8>)>,
+        files: impl IntoIterator<Item = SiteFile>,
     ) -> Result<(), Problems> {
-        for (file, contents) in files {
+        for file in files {
+            let address = file.address.as_str();
             self.writer
-                .write(output, &file, &contents)
+                .write(output, address, &file.contents)
                 .map_err(|error| {
                     Problems::new(vec![Problem::of_site(
                         output,
-                        &file,
+                        address,
                         ProblemKind::CannotBeWritten {
                             reason: error.to_string(),
                         },
@@ -131,11 +127,19 @@ impl SiteService {
     }
 }
 
-/// The assets every site has, each at its path below the output folder.
-pub(crate) fn assets() -> impl Iterator<Item = (String, Vec<u8>)> {
+/// The assets every site has.
+pub(crate) fn assets() -> impl Iterator<Item = SiteFile> {
     SiteAssets::iter().filter_map(|name| {
-        SiteAssets::get(&name).map(|file| (format!("assets/{name}"), file.data.into_owned()))
+        SiteAssets::get(&name).map(|file| SiteFile {
+            address: asset(&name),
+            contents: file.data.into_owned(),
+        })
     })
+}
+
+/// The address of the file named `name` in the folder of the assets.
+fn asset(name: &str) -> SiteAddress {
+    SiteAddress::of(&[ASSETS], name)
 }
 
 #[cfg(test)]
