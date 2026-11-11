@@ -1,6 +1,11 @@
 //! Installing through cargo, checked by running `cargo ghg` through cargo itself, and
 //! `cargo-ghg` by itself, beside `ghg`.
 
+#![expect(
+    clippy::expect_used,
+    reason = "a test file's helpers are test code, which clippy.toml lets panic"
+)]
+
 use std::env::{join_paths, split_paths, var_os};
 use std::ffi::OsStr;
 use std::fs::{copy, create_dir_all, read_dir, remove_dir_all};
@@ -208,6 +213,8 @@ const NOT_PUBLISHED: &[&str] = &[
     "CLAUDE.md",
     "CONTRIBUTING.md",
     "cliff.toml",
+    "clippy.toml",
+    "deny.toml",
     "rust-toolchain.toml",
 ];
 

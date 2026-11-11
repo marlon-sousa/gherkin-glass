@@ -111,7 +111,7 @@ fn same_pages(input: &Path, paths: &[PathBuf]) -> Vec<Problem> {
         let page = page_address(relative);
         let parts: Vec<&str> = page.split('/').collect();
         for depth in 1..parts.len() {
-            let folder = parts[..depth].join("/");
+            let folder = parts.get(..depth).unwrap_or_default().join("/");
             match folders.get(&folder.to_lowercase()) {
                 Some(earlier) if *earlier != folder => {
                     let problem = Problem::new(

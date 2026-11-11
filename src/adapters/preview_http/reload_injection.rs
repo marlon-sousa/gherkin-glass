@@ -13,9 +13,10 @@ pub(super) fn add_reload_script(page: &[u8], build: u64) -> Vec<u8> {
         .rposition(|window| window.eq_ignore_ascii_case(b"</body>"))
         .unwrap_or(page.len());
     let mut added = Vec::with_capacity(page.len() + element.len());
-    added.extend_from_slice(&page[..at]);
+    let (head, tail) = page.split_at(at);
+    added.extend_from_slice(head);
     added.extend_from_slice(element.as_bytes());
-    added.extend_from_slice(&page[at..]);
+    added.extend_from_slice(tail);
     added
 }
 

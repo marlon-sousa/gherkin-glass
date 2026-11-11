@@ -11,6 +11,10 @@ use rust_embed::RustEmbed;
 struct Catalogue;
 
 /// Read with `fl!(CATALOGUE, "message-id", argument = value)`.
+#[expect(
+    clippy::expect_used,
+    reason = "the English catalogue is embedded and valid"
+)]
 pub(crate) static CATALOGUE: LazyLock<FluentLanguageLoader> = LazyLock::new(|| {
     let loader: FluentLanguageLoader = fluent_language_loader!();
     loader

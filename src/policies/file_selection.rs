@@ -28,6 +28,7 @@ pub(crate) struct ParsedRules {
 }
 
 impl FileSelection {
+    #[expect(clippy::expect_used, reason = "the default rules are valid")]
     pub(crate) fn new(input: &Path) -> Self {
         let mut builder = GitignoreBuilder::new(input);
         for rule in DEFAULT_RULES {

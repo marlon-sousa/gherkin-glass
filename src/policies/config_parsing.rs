@@ -164,7 +164,11 @@ fn tag_links(
             let name = key.get_ref().as_ref();
             let full = format!("tag_links.{name}");
             let at = line(value.span().start);
-            let Some(slot) = TAG_LINK_KEYS.iter().position(|known| *known == name) else {
+            let Some((entry, _)) = found
+                .iter_mut()
+                .zip(TAG_LINK_KEYS)
+                .find(|(_, known)| *known == name)
+            else {
                 problems.push(ConfigProblem {
                     line: line(key.span().start),
                     kind: ConfigProblemKind::UnknownKey { key: full },
@@ -176,7 +180,7 @@ fn tag_links(
                     line: at,
                     kind: ConfigProblemKind::Empty { key: full },
                 }),
-                Some(text) => found[slot] = Some((text, value.span().start)),
+                Some(text) => *entry = Some((text, value.span().start)),
                 None => problems.push(ConfigProblem {
                     line: at,
                     kind: ConfigProblemKind::WrongType {

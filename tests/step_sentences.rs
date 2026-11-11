@@ -4,6 +4,11 @@
 //! fixture's folder, writes the page again after a change, to be read before
 //! it is committed.
 
+#![expect(
+    clippy::expect_used,
+    reason = "a test file's helpers are test code, which clippy.toml lets panic"
+)]
+
 use std::fs::{read_dir, read_to_string, remove_dir_all};
 use std::path::Path;
 use std::process::Command;

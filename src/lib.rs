@@ -3,8 +3,6 @@
 //! This library is not a stable API. It exists so that the two binaries, `ghg` and the cargo
 //! plugin `cargo-ghg`, share their code: use gherkin-glass through the `ghg` command.
 
-#![warn(unreachable_pub)]
-
 mod adapters;
 mod composition_root;
 mod controllers;

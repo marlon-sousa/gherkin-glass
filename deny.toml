@@ -1,0 +1,38 @@
+# What `cargo deny check` allows of the dependencies: their licences, the
+# advisories against them, duplicate versions, and where they come from.
+
+[graph]
+all-features = true
+
+[advisories]
+version = 2
+ignore = [
+    # basic-toml is unmaintained, with no safe upgrade. Only askama's and the fl!
+    # macro's code reads TOML with it, while the crate is compiled.
+    { id = "RUSTSEC-2026-0374", reason = "read only at compile time, by askama and i18n-config, with no upgrade" },
+]
+
+[licenses]
+version = 2
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Unicode-3.0",
+    "Zlib",
+]
+unused-allowed-license = "allow"
+exceptions = [
+    # The file watcher of `ghg serve --watch`.
+    { crate = "notify", allow = ["CC0-1.0"] },
+]
+
+[bans]
+multiple-versions = "warn"
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]

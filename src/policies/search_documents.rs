@@ -73,6 +73,10 @@ pub(crate) fn search_documents<'a>(
     documents
 }
 
+#[expect(
+    clippy::expect_used,
+    reason = "documents are strings and lists of strings, which always serialise"
+)]
 pub(crate) fn search_json(documents: &[SearchDocument]) -> String {
     serde_json::to_string(documents).expect("documents are strings and lists of strings")
 }

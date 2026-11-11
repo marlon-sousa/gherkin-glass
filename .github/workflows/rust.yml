@@ -1,9 +1,10 @@
 name: Rust
 
-# Formatting, lints, tests, the script check and the browser check,
-# CONTRIBUTING.md, "Checks". They run with the toolchain pinned in
-# rust-toolchain.toml, and the tests run again with the minimum supported Rust
-# version, rust-version in Cargo.toml.
+# Formatting, lints, tests, the documentation, the dependencies, the package,
+# the script check and the browser check: the checks `cargo xtask check`
+# runs, which xtask's tests keep the same. They run with the toolchain pinned
+# in rust-toolchain.toml, and the tests run again with the minimum supported
+# Rust version, rust-version in Cargo.toml.
 
 on:
   pull_request:
@@ -32,15 +33,15 @@ jobs:
     name: cargo fmt
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: rustup toolchain install
-      - run: cargo fmt --check
+      - run: cargo fmt --all --check
 
   clippy:
     name: cargo clippy
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: rustup toolchain install
       - run: cargo clippy --workspace --all-targets --locked -- -D warnings
 
@@ -48,30 +49,61 @@ jobs:
     name: cargo test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: rustup toolchain install
-      - run: cargo test --locked
+      - run: cargo test --workspace --locked
+
+  doc:
+    name: cargo doc
+    runs-on: ubuntu-latest
+    env:
+      # A broken link in a doc comment fails.
+      RUSTDOCFLAGS: -D warnings
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - run: rustup toolchain install
+      - run: cargo doc --workspace --no-deps --document-private-items --locked
+
+  deny:
+    name: cargo deny
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: taiki-e/install-action@ab6895351a88b908e96a4697860d4ffea5e57dbe # v2.87.27
+        with:
+          tool: cargo-deny@0.20.2
+      - run: cargo deny check
+
+  package:
+    # The crate built from its package alone, as crates.io receives it, so that
+    # a file the package leaves out or a dependency it cannot resolve fails.
+    name: cargo publish --dry-run
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - run: rustup toolchain install
+      - run: cargo publish --dry-run --locked --allow-dirty
 
   msrv:
     name: cargo test, minimum supported Rust
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Install the version rust-version names
         run: |
           msrv=$(sed -n 's/^rust-version = "\(.*\)"$/\1/p' Cargo.toml)
           test -n "$msrv"
           rustup toolchain install "$msrv" --profile minimal
           echo "MSRV=$msrv" >> "$GITHUB_ENV"
-      - run: cargo "+$MSRV" test --locked
+      - run: cargo "+$MSRV" test --locked --package gherkin-glass
 
   script:
     name: cargo xtask check-script
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: rustup toolchain install
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
         with:
           node-version-file: script/.node-version
       - run: cargo xtask check-script
@@ -80,9 +112,9 @@ jobs:
     name: cargo xtask check-browser
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: rustup toolchain install
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
         with:
           node-version-file: script/.node-version
       - run: cargo xtask check-browser
@@ -93,6 +125,6 @@ jobs:
     name: the action's scripts, on macOS
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: rustup toolchain install
       - run: cargo test --locked --test action

@@ -6,6 +6,12 @@
 //! do `tests/fixtures/backgrounds/ghg.toml` and `linked.toml` for
 //! "Backgrounds".
 
+#![expect(
+    clippy::expect_used,
+    clippy::indexing_slicing,
+    reason = "a test file's helpers are test code, which clippy.toml lets panic"
+)]
+
 use std::collections::BTreeMap;
 use std::fs::{create_dir_all, read, read_dir, remove_dir_all, write};
 use std::path::{Path, PathBuf};

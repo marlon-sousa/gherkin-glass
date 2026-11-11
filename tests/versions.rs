@@ -1,5 +1,10 @@
 //! Versions, checked by running `ghg`.
 
+#![expect(
+    clippy::expect_used,
+    reason = "a test file's helpers are test code, which clippy.toml lets panic"
+)]
+
 use std::fs::{copy, create_dir_all, read_dir, read_to_string, remove_dir_all, remove_file, write};
 use std::path::{Path, PathBuf};
 use std::process::Command;

@@ -8,3 +8,6 @@ description = "cargo xtask build and cargo xtask check, for gherkin-glass's cont
 license = "MIT OR Apache-2.0"
 
 [dependencies]
+
+[lints]
+workspace = true

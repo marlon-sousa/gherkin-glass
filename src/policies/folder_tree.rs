@@ -66,6 +66,7 @@ fn block_items(contents: &[ContentsEntry], page: &str) -> Vec<TreeItem> {
 }
 
 /// One line, ending in a line break.
+#[expect(clippy::expect_used, reason = "strings and lists always serialise")]
 pub(crate) fn render_folder_tree(items: &[TreeItem]) -> String {
     let mut json = serde_json::to_string(items).expect("strings and lists always serialise");
     json.push('\n');

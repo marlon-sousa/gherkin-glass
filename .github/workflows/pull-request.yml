@@ -1,8 +1,9 @@
 name: Pull request
 
-# The checks of the process, CONTRIBUTING.md, "Checks": every pull request
-# names an issue, and every commit message keeps the convention. They run on
-# every pull request, whatever its base, so each layer of a stack is checked.
+# The checks of the process: every pull request names an issue, closes none
+# of another repository, and has no unticked checkbox in its description, and
+# every commit message keeps the convention. They run on every pull request,
+# whatever its base, so each layer of a stack is checked.
 
 on:
   pull_request:
@@ -22,10 +23,34 @@ jobs:
     name: names an open issue
     runs-on: ubuntu-latest
     steps:
-      - uses: itinera-dev/actions/pr-has-issue@v1
+      - uses: itinera-dev/actions/pr-has-issue@d49d88f6b15f4d4c344503e9e3304a449ee3ebe8 # v1.11.0
 
   commit-messages:
     name: commit messages keep the convention
     runs-on: ubuntu-latest
     steps:
-      - uses: itinera-dev/actions/commit-messages@v1
+      - uses: itinera-dev/actions/commit-messages@d49d88f6b15f4d4c344503e9e3304a449ee3ebe8 # v1.11.0
+
+  no-cross-repo-closing:
+    name: closes no issue of another repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: itinera-dev/actions/no-cross-repo-closing@d49d88f6b15f4d4c344503e9e3304a449ee3ebe8 # v1.11.0
+
+  checkboxes:
+    # A manual check, such as the one with a screen reader, is a list of
+    # checkboxes in the description, so the pull request cannot merge while one
+    # is unticked. "edited" runs it again when a box is ticked.
+    name: no unticked checkbox in the description
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail on an unticked checkbox
+        env:
+          # Passed in the environment, never written into the script, so that
+          # the description cannot run as shell.
+          BODY: ${{ github.event.pull_request.body }}
+        run: |
+          if printf '%s\n' "$BODY" | grep -En '^[[:space:]]*[-*+] \[ \]'; then
+            echo "Tick every checkbox of the description before merging."
+            exit 1
+          fi
