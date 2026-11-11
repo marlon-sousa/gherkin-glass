@@ -51,11 +51,11 @@ path = "src/cargo_ghg.rs"
 
 [dependencies]
 askama = "0.16.1"
+clap = { version = "4.6.7", default-features = false, features = ["std", "derive", "error-context"] }
 gherkin = "0.16.0"
 i18n-embed = { version = "0.16.0", features = ["fluent-system"] }
 i18n-embed-fl = "0.10.1"
 ignore = "0.4.34"
-lexopt = "0.3.2"
 mime_guess = { version = "2.0.5", default-features = false }
 notify-debouncer-full = "0.7.0"
 rayon = "1.12.0"

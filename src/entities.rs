@@ -63,9 +63,7 @@ pub(crate) use folder_page::{FeatureEntry, FolderLink, FolderPage, FolderWords};
 pub(crate) use folder_state::FolderState;
 pub(crate) use heading_level::HeadingLevel;
 pub(crate) use highlighted_step::{HighlightedStep, StepPart};
-pub(crate) use invocation::{
-    ArgumentProblem, BuildOption, BuildOptions, Invocation, ServeMode, ServeOptions,
-};
+pub(crate) use invocation::{ArgumentProblem, BuildOptions, Invocation, ServeMode, ServeOptions};
 pub(crate) use link_address::{LinkAddress, percent_encoded};
 pub(crate) use listen_failure::ListenFailure;
 pub(crate) use marker::Marker;
