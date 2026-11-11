@@ -208,6 +208,9 @@ jobs:
             echo "$TAG moves no tag of the action."
             exit 0
           fi
-          git tag --force "$major" "$GITHUB_SHA"
-          git push --force origin "refs/tags/$major"
+          git tag --force "$major" "$TAG^{commit}"
+          if ! git push --force origin "refs/tags/$major"; then
+            echo "::error::$major cannot be moved. Move it by hand with: git push --force origin $TAG^{commit}:refs/tags/$major"
+            exit 1
+          fi
           echo "$major now names $TAG."

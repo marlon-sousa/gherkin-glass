@@ -188,19 +188,19 @@ fn only_one_ghg_is_dropped() {
 /// that the published crate leaves them out. `script/` is the source of
 /// `assets/gherkin-glass.js`, which is committed, `xtask/` a crate of its
 /// own, and `action.yml` with `action/` the GitHub Action. A file git tracks
-/// anywhere else must be published: a new folder fails the test until it is placed here or
-/// in Cargo.toml's `include`.
+/// anywhere else must be published: a new folder fails the test until it is
+/// placed here or in Cargo.toml's `include`.
 const NOT_PUBLISHED: &[&str] = &[
     ".cargo/",
-    "action/",
     ".github/",
+    "action/",
     "docs/",
     "script/",
     "tests/",
     "xtask/",
     ".gitattributes",
-    "action.yml",
     ".gitignore",
+    "action.yml",
     "AGENTS.md",
     "CHANGELOG.md",
     "CLAUDE.md",
