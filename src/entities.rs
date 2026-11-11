@@ -74,7 +74,6 @@ pub use theme::Accents;
 pub(crate) use theme::{Palette, Theme};
 pub(crate) use tree_item::TreeItem;
 pub use unnamed::Unnamed;
-pub use watch::{Burst, Changes, WatchFailure, Watched};
 pub use version_list::VersionList;
 pub use version_name::VersionName;
-pub use watch::{Changes, WatchFailure, Watched};
+pub use watch::{Burst, Changes, WatchFailure, Watched};

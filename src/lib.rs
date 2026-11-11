@@ -24,15 +24,11 @@ pub use adapters::{
 };
 pub use controllers::{CommandLine, Reply};
 pub use entities::{
-    Accents, Anchors, Burst, Changes, CollectedInput, Colour, HighlightedStep, ListenFailure,
+    Accents, Anchors, BuildFailure, BuildFolder, Burst, Changes, CollectedInput, Colour,
+    FolderState, HighlightedStep, ListenFailure, Marker, OutputProblem, OutputProblemKind,
     PageOptions, ParseFailure, ParsedFeature, Preview, Problem, ProblemKind, Problems, RawFeature,
     ServedSite, ServerWords, Settings, StepPart, TagLink, Unnamed, UnnamedBlock, Version,
-    WatchFailure, Watched,
-    Accents, Anchors, BuildFailure, BuildFolder, Changes, CollectedInput, Colour, FolderState,
-    HighlightedStep, ListenFailure, Marker, OutputProblem, OutputProblemKind, PageOptions,
-    ParseFailure, ParsedFeature, Preview, Problem, ProblemKind, Problems, RawFeature, ServedSite,
-    ServerWords, Settings, StepPart, TagLink, Unnamed, UnnamedBlock, Version, VersionList,
-    VersionName, WatchFailure, Watched,
+    VersionList, VersionName, WatchFailure, Watched,
 };
 pub use policies::{DEFAULT_ACCENTS, highlight_step, make_anchors};
 pub use ports::{

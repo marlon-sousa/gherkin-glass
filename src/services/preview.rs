@@ -6,10 +6,8 @@ use std::sync::Arc;
 use std::thread::park;
 
 use crate::entities::{
-    Burst, Changes, ListenFailure, Preview, Problems, ServeOptions, ServedSite, ServerWords,
-    Settings, WatchFailure, Watched,
-    BuildFailure, ListenFailure, OutputProblem, Preview, Problems, ServeOptions, ServedSite,
-    ServerWords, Settings, WatchFailure, Watched,
+    BuildFailure, Burst, Changes, ListenFailure, OutputProblem, Preview, Problems, ServeOptions,
+    ServedSite, ServerWords, Settings, WatchFailure, Watched,
 };
 
 use crate::policies::{Read, calls_for_rebuild, remembered};
@@ -85,10 +83,9 @@ impl PreviewService {
         PreviewService {
             settings: SettingsService::new(config_reader),
             on_disk,
+            output,
             in_memory: SiteService::new(input.clone(), memory.clone()),
             input,
-            output,
-            in_memory: SiteService::new(input, memory.clone()),
             memory,
             server,
             watcher,
