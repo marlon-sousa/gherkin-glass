@@ -260,42 +260,6 @@ mod tests {
     }
 
     #[test]
-    fn a_page_in_the_folder_of_the_tag_pages_is_reported_and_nothing_is_written() {
-        let writer = Arc::new(FakeWriter::default());
-        let problems = build(
-            vec!["Tags/a.feature", "tags.feature", "b/tags/c.feature"],
-            writer.clone(),
-        )
-        .expect_err("in the tags folder");
-        assert_eq!(
-            problems.to_string(),
-            "Tags/a.feature: has its page, Tags/a.html, in the folder tags\n"
-        );
-        assert!(writer.written.lock().expect("not poisoned").is_empty());
-    }
-
-    #[test]
-    fn a_file_whose_page_is_the_page_of_step_sentences_is_reported() {
-        let writer = Arc::new(FakeWriter::default());
-        let problems = build(
-            vec![
-                "Steps.feature",
-                "a.feature",
-                "steps.feature",
-                "sub/steps.feature",
-            ],
-            writer.clone(),
-        )
-        .expect_err("the same page");
-        assert_eq!(
-            problems.to_string(),
-            "Steps.feature: has the same page, steps.html, as the step sentences\n\
-             steps.feature: has the same page, steps.html, as the step sentences\n"
-        );
-        assert!(writer.written.lock().expect("not poisoned").is_empty());
-    }
-
-    #[test]
     fn files_with_the_same_page_are_reported_and_nothing_is_written() {
         let writer = Arc::new(FakeWriter::default());
         let problems =
@@ -313,42 +277,5 @@ mod tests {
         build(Vec::new(), writer.clone()).expect("built");
         let written = writer.written.lock().expect("not poisoned");
         assert!(written.contains_key("index.html"));
-    }
-
-    #[test]
-    fn a_folder_whose_page_differs_only_in_case_is_reported_once() {
-        let writer = Arc::new(FakeWriter::default());
-        let problems = build(
-            vec!["A/x.feature", "a/y.feature", "a/z.feature", "a/b/w.feature"],
-            writer.clone(),
-        )
-        .expect_err("the same folder page");
-        assert_eq!(
-            problems.to_string(),
-            "a: has the same page, a/index.html, as the folder A\n"
-        );
-        assert!(writer.written.lock().expect("not poisoned").is_empty());
-    }
-
-    #[test]
-    fn a_feature_whose_page_is_a_folder_s_is_reported_in_any_case() {
-        let writer = Arc::new(FakeWriter::default());
-        let problems = build(vec!["INDEX.feature", "a/b/index.story"], writer.clone())
-            .expect_err("a folder's page");
-        assert_eq!(
-            problems.as_slice()[0].kind,
-            ProblemKind::SameAsFolderPage {
-                page: "INDEX.html".into(),
-                folder: None
-            }
-        );
-        assert_eq!(
-            problems.as_slice()[1].kind,
-            ProblemKind::SameAsFolderPage {
-                page: "a/b/index.html".into(),
-                folder: Some("a/b".into())
-            }
-        );
-        assert!(writer.written.lock().expect("not poisoned").is_empty());
     }
 }

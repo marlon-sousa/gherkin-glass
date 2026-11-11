@@ -15,6 +15,7 @@ mod folder_tree;
 mod interface_text;
 mod page_address;
 mod page_building;
+mod page_collisions;
 mod page_frame;
 mod page_language;
 mod page_rendering;
@@ -55,6 +56,7 @@ pub(crate) use folder_tree::{build_folder_tree, render_folder_tree};
 pub(crate) use interface_text::CATALOGUE;
 pub(crate) use page_address::{FOLDER_PAGE, page_address};
 pub(crate) use page_building::{build_page, heading};
+pub(crate) use page_collisions::page_collisions;
 pub(crate) use page_frame::page_frame;
 pub(crate) use page_language::page_language;
 pub(crate) use page_rendering::{
