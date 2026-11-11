@@ -1,6 +1,5 @@
 //! Previewing a site, checked by running `ghg serve` and asking it over HTTP.
 
-use std::fs::{copy, create_dir_all, read, read_to_string, remove_dir_all, rename, write};
 #![expect(
     clippy::expect_used,
     clippy::panic,
@@ -8,7 +7,7 @@ use std::fs::{copy, create_dir_all, read, read_to_string, remove_dir_all, rename
     reason = "a test file's helpers are test code, which clippy.toml lets panic"
 )]
 
-use std::fs::{copy, create_dir_all, read, read_to_string, remove_dir_all, write};
+use std::fs::{copy, create_dir_all, read, read_to_string, remove_dir_all, rename, write};
 use std::io::{BufRead, BufReader, Read, Write};
 use std::net::{TcpListener, TcpStream};
 use std::path::{Path, PathBuf};
