@@ -3,9 +3,8 @@
 use i18n_embed_fl::fl;
 
 use crate::entities::{
-    ArgumentProblem, ConfigProblemKind, ListenFailure, Problem, ProblemKind, Problems,
-    AccentShortfall, ArgumentProblem, ConfigProblemKind, Problem, ProblemKind, Problems, Theme,
-    UnnamedBlock, ValueType,
+    AccentShortfall, ArgumentProblem, ConfigProblemKind, ListenFailure, Problem, ProblemKind,
+    Problems, Theme, UnnamedBlock, ValueType,
 };
 use crate::policies::CATALOGUE;
 use crate::services::{ConfigProblems, RebuildFailure, ServeFailure};
@@ -189,6 +188,7 @@ fn config_message(kind: &ConfigProblemKind) -> String {
             "config-unknown-group",
             key = key.as_str(),
             group = group.as_str()
+        ),
         ConfigProblemKind::WrongType {
             key,
             expected: ValueType::Colour,

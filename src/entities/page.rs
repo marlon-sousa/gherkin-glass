@@ -1,7 +1,6 @@
 //! Entity: a feature's page, as its template shows it, every text in it as written or worded.
 
-use crate::entities::{Breadcrumb, PageFrame};
-use crate::entities::StepPart;
+use crate::entities::{Breadcrumb, PageFrame, StepPart};
 
 /// One page of the site. Every `String` is text, escaped when it is rendered.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -59,10 +58,6 @@ pub(crate) struct PageWords {
     pub(crate) contents: String,
     pub(crate) collapse_all: String,
     pub(crate) expand_all: String,
-    pub(crate) theme: String,
-    pub(crate) theme_system: String,
-    pub(crate) theme_light: String,
-    pub(crate) theme_dark: String,
 }
 
 /// A tag as written, with its `@`, linked to its tag's page.

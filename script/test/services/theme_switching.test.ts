@@ -1,4 +1,4 @@
-// The service of src/services/theme_switching.ts, with fake ports: docs/BEHAVIOUR.md, rules 61 and 62.
+// The service of src/services/theme_switching.ts, with fake ports: docs/BEHAVIOUR.md, rules 114 and 115.
 
 import assert from "node:assert/strict";
 import { test } from "node:test";

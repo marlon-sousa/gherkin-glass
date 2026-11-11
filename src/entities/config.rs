@@ -2,11 +2,9 @@
 
 use std::path::PathBuf;
 
-use crate::entities::TagLink;
+use crate::entities::{Colour, TagLink};
 
 /// Each value is `None` when the file does not set it.
-use crate::entities::Colour;
-
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub(crate) struct Config {
     /// Relative to the configuration file's folder.
@@ -17,10 +15,10 @@ pub(crate) struct Config {
     pub(crate) source_link: Option<String>,
     pub(crate) collapse_rules: Option<bool>,
     pub(crate) collapse_scenarios: Option<bool>,
+    pub(crate) accent_light: Option<Colour>,
+    pub(crate) accent_dark: Option<Colour>,
     pub(crate) title: Option<String>,
     pub(crate) show_tree: Option<bool>,
     pub(crate) inline_backgrounds: Option<bool>,
     pub(crate) tag_links: Option<Vec<TagLink>>,
-    pub(crate) accent_light: Option<Colour>,
-    pub(crate) accent_dark: Option<Colour>,
 }

@@ -59,6 +59,12 @@ pub struct Accents {
 }
 
 impl Accents {
+    /// The accents when the configuration sets none, each reaching 7:1 in its theme.
+    pub const DEFAULT: Accents = Accents {
+        light: Colour::new(0x0b, 0x4f, 0x9c),
+        dark: Colour::new(0x8c, 0xc4, 0xff),
+    };
+
     pub(crate) fn of(&self, theme: Theme) -> Colour {
         match theme {
             Theme::Light => self.light,

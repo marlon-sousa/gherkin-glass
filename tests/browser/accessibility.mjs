@@ -1,7 +1,8 @@
 // docs/BEHAVIOUR.md, "Accessibility", checked in Chromium with Playwright and
 // axe-core: every fixture that builds is built into a site, served with
 // ghg serve --no-build, and each page is checked with axe-core in the light
-// and the dark colour scheme, then driven with the keyboard.
+// and the dark colour scheme and in each theme a reader can pick, then driven
+// with the keyboard.
 //
 // Run from the repository's root, after cargo build and npm ci in script/,
 // with Playwright's Chromium installed:
@@ -31,8 +32,10 @@ const builds = [
   { folder: "backgrounds", args: ["--config", "ghg.toml"] },
   { folder: "backgrounds", args: ["--config", "linked.toml"] },
   { folder: "tags", args: ["--config", "ghg.toml"] },
+  { folder: "highlighting", args: ["--config", "ghg.toml"] },
   { folder: "configuration/default", args: [] },
   { folder: "configuration/configured", args: [] },
+  { folder: "configuration/accents", args: [] },
   { folder: "configuration/configured/nested", args: [] },
   { folder: "configuration/unnamed-allowed", args: [] },
   { folder: "configuration/unnamed-allowed", args: ["--config", "allowed.toml"] },
@@ -48,10 +51,12 @@ const noSite = [
   "tags-folder",
   "configuration/configured/ci",
   "configuration/empty-input",
+  "configuration/faint-accents",
   "configuration/mistaken",
   "configuration/mistaken-pages",
   "configuration/mistaken-tags",
   "configuration/not-boolean",
+  "configuration/not-colour",
   "configuration/not-toml",
   "configuration/unnamed",
   "pages/expected",
@@ -68,7 +73,14 @@ const noSite = [
 const tags = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 const extraRules = ["color-contrast-enhanced"];
 
-const schemes = ["light", "dark"];
+// The browser's colour scheme, light and dark, and each theme a reader can
+// pick on the page, Light and Dark, each picked once, in the other scheme.
+const passes = [
+  { name: "light", scheme: "light" },
+  { name: "dark", scheme: "dark" },
+  { name: "the Dark theme", scheme: "light", theme: "dark" },
+  { name: "the Light theme", scheme: "dark", theme: "light" },
+];
 
 // The files of `folder`, below it, with `/` between folders.
 function filesOf(folder) {
@@ -147,7 +159,12 @@ async function keyboardProblems(page) {
     ].filter(
       (element) =>
         !element.disabled && element.tabIndex >= 0 && element.checkVisibility({ visibilityProperty: true }),
-    );
+    ).filter((element) => {
+      // A group of radio buttons is one Tab stop: its chosen button, or its first when none is.
+      if (!(element instanceof HTMLInputElement) || element.type !== "radio" || !element.name) return true;
+      const group = [...document.querySelectorAll(`input[type="radio"][name="${CSS.escape(element.name)}"]`)];
+      return element.checked || (!group.some((radio) => radio.checked) && group[0] === element);
+    });
     return focusable.map((element, index) => {
       const name = `${element.tagName.toLowerCase()} ${index + 1}, "${element.textContent.trim().slice(0, 60)}"`;
       element.dataset.ghgCheck = name;
@@ -254,15 +271,29 @@ export async function checkSite(browser, folder) {
   let pressed = 0;
   let trees = 0;
   try {
-    for (const scheme of schemes) {
+    for (const { name, scheme, theme } of passes) {
       const context = await browser.newContext({ colorScheme: scheme });
+      if (theme !== undefined) {
+        // As if the reader had picked the theme on an earlier page.
+        await context.addInitScript((picked) => {
+          try {
+            localStorage.setItem("gherkin-glass:theme", picked);
+          } catch {
+            // A document without storage, such as the first blank page.
+          }
+        }, theme);
+      }
       const page = await context.newPage();
       for (const path of pages) {
         await page.goto(addressOf(address, path));
         await page.emulateMedia({ colorScheme: scheme });
         await treeBuilt(page);
-        for (const line of await violations(page)) problems.push(`${path}, ${scheme}: ${line}`);
-        if (scheme === "light") {
+        if (theme !== undefined) {
+          const shown = await page.evaluate(() => document.documentElement.dataset.theme);
+          if (shown !== theme) problems.push(`${path}, ${name}: the page shows the theme ${shown}`);
+        }
+        for (const line of await violations(page)) problems.push(`${path}, ${name}: ${line}`);
+        if (name === "light") {
           for (const line of await keyboardProblems(page)) problems.push(`${path}: ${line}`);
           const found = await buttonProblems(page);
           if (found !== null) pressed += 1;

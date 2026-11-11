@@ -327,7 +327,7 @@ fn unnamed_blocks_are_allowed_by_default_and_when_allow_unnamed_is_true() {
     assert_eq!(report(output, 0), NO_TITLE);
 }
 
-// Highlighting and themes: rules 45 and 46.
+// Highlighting and themes: rules 118 and 119.
 
 #[test]
 fn accents_that_reach_7_to_1_build() {

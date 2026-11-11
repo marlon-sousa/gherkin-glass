@@ -1,5 +1,4 @@
-//! Policy: the pure decisions of reading the input, of how a build is run, of the anchors, of the pages, the folder pages and the folder tree, and of which changes ghg serve rebuilds for.
-//! Policy: the pure decisions of reading the input, of how a build is run, of the anchors, and of highlighting and themes.
+//! Policy: the pure decisions of reading the input, of how a build is run, of the anchors, of the pages, the folder pages and the folder tree, of which changes ghg serve rebuilds for, and of highlighting and themes.
 
 mod anchor_rule;
 mod argument_parsing;
@@ -21,11 +20,11 @@ mod page_rendering;
 mod rebuild_choice;
 mod settings_resolution;
 mod site_title;
+mod step_highlighting;
 mod step_keyword_correction;
 mod tag_linking;
 mod tag_naming;
 mod tag_pages;
-mod step_highlighting;
 mod theme_stylesheet;
 mod themes;
 mod unnamed_blocks;
@@ -55,11 +54,11 @@ pub(crate) use page_rendering::{
 pub(crate) use rebuild_choice::{Read, calls_for_rebuild, remembered};
 pub(crate) use settings_resolution::{config_folder, resolve_settings};
 pub(crate) use site_title::site_title;
+pub use step_highlighting::highlight_step;
 pub(crate) use step_keyword_correction::correct_step_keywords;
 pub(crate) use tag_linking::{PatternProblem, outside_link, unknown_group, whole_tag_pattern};
 pub(crate) use tag_naming::{name_tags, tag_index_address, tags_of};
 pub(crate) use tag_pages::{build_tag_index, build_tag_page, tag_pages_language};
-pub use step_highlighting::highlight_step;
 pub(crate) use theme_stylesheet::theme_stylesheet;
 pub use themes::DEFAULT_ACCENTS;
 pub(crate) use themes::{check_accent, palette};

@@ -436,7 +436,10 @@ fn watching_rebuilds_on_a_change_and_keeps_the_last_site_that_built() {
     write(&feature, source.replace("20", "30")).expect("written");
     eventually("a rebuild after a feature changed", || build() == "2");
     let page = get(&address, "/withdraw.html").text();
-    assert!(page.contains("withdraws 30"), "{page}");
+    assert!(
+        page.contains("withdraws <span class=\"ghg-number\">30</span>"),
+        "{page}"
+    );
     assert!(page.contains("/__ghg/reload.js?build=2"), "{page}");
     let mut line = String::new();
     serving.stdout.read_line(&mut line).expect("a line");

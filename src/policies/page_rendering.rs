@@ -2,10 +2,10 @@
 
 use askama::Template;
 
-use crate::entities::{Block, Breadcrumb, FolderPage, Page, PageFrame, TagIndex, TagPage};
+use crate::entities::{
+    Block, Breadcrumb, FolderPage, Page, PageFrame, StepPart, TagIndex, TagPage,
+};
 use crate::policies::{root_from, tag_index_address, tag_pages_language};
-use crate::entities::{Block, Page, StepPart};
-use crate::policies::root_from;
 
 #[derive(Template)]
 #[template(path = "feature.html")]
@@ -16,8 +16,6 @@ struct FeatureTemplate<'a> {
     root: String,
     frame: &'a PageFrame,
     breadcrumb: &'a Breadcrumb,
-    /// The stylesheet of the themes' colours, written into the page's head.
-    theme: &'a str,
     page: &'a Page,
     blocks: String,
 }
@@ -86,15 +84,12 @@ pub(crate) fn render_tag_page(page: &TagPage) -> String {
 }
 
 pub(crate) fn render_page(page: &Page) -> String {
-/// `theme` is the stylesheet of the themes' colours, from [`theme_stylesheet`](crate::policies::theme_stylesheet).
-pub(crate) fn render_page(page: &Page, theme: &str) -> String {
     let template = FeatureTemplate {
         language: &page.language,
         title: &page.title,
         root: root_from(&page.address),
         frame: &page.frame,
         breadcrumb: &page.breadcrumb,
-        theme,
         page,
         blocks: render_blocks(&page.blocks),
     };

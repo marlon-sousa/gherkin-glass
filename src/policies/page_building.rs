@@ -11,10 +11,9 @@ use crate::entities::{
     TagNames, TagView,
 };
 use crate::policies::{
-    CATALOGUE, breadcrumb, make_anchors, outside_link, page_address, page_frame, page_language,
-    percent_encoded, root_from, site_title,
+    CATALOGUE, breadcrumb, highlight_step, make_anchors, outside_link, page_address, page_frame,
+    page_language, percent_encoded, root_from, site_title,
 };
-use crate::policies::{CATALOGUE, highlight_step, make_anchors, page_address, page_language};
 
 /// Stands for the file's path in the words of the source link, to find where
 /// the path goes; no message of the catalogue holds it.
@@ -91,10 +90,6 @@ pub(crate) fn build_page(parsed: &ParsedFeature, options: &PageOptions, tags: &T
             contents: fl!(CATALOGUE, "page-contents"),
             collapse_all: fl!(CATALOGUE, "collapse-all"),
             expand_all: fl!(CATALOGUE, "expand-all"),
-            theme: fl!(CATALOGUE, "theme"),
-            theme_system: fl!(CATALOGUE, "theme-system"),
-            theme_light: fl!(CATALOGUE, "theme-light"),
-            theme_dark: fl!(CATALOGUE, "theme-dark"),
         },
         backgrounds_option,
     }
@@ -140,7 +135,7 @@ impl Builder<'_> {
                 .unwrap_or_default()
                 .to_string(),
             heading: heading(&background.keyword, &background.name),
-            steps: self.steps(&background.steps),
+            steps: self.steps(&background.steps, None),
             inline: self.options.inline_backgrounds,
         })
     }
@@ -184,7 +179,6 @@ impl Builder<'_> {
             tags: self.tags(&scenario.tags),
             description: description(scenario.description.as_deref()),
             backgrounds,
-            steps: self.steps(&scenario.steps),
             steps: self.steps(&scenario.steps, Some(scenario)),
             blocks: scenario
                 .examples
@@ -230,7 +224,6 @@ impl Builder<'_> {
             .collect()
     }
 
-    fn steps(&self, steps: &[Step]) -> Vec<StepView> {
     /// `scenario` holds the steps, or is `None` for a background's.
     fn steps(&self, steps: &[Step], scenario: Option<&Scenario>) -> Vec<StepView> {
         steps
@@ -362,7 +355,7 @@ mod tests {
     use gherkin::{Feature, GherkinEnv};
 
     use super::*;
-    use crate::entities::{OutsideLink, TagLink};
+    use crate::entities::{OutsideLink, StepPart, TagLink};
     use crate::policies::{name_tags, tags_of, whole_tag_pattern};
 
     fn page(text: &str, options: &PageOptions) -> Page {
@@ -544,7 +537,10 @@ Feature: Refunds
                         from.introduction.as_str(),
                         from.anchor.as_str(),
                         from.heading.as_str(),
-                        from.steps[0].text.as_str(),
+                        match from.steps[0].parts.as_slice() {
+                            [StepPart::Plain(text)] => text.as_str(),
+                            other => panic!("{other:?}"),
+                        },
                         from.inline,
                     )
                 })

@@ -1,5 +1,5 @@
 // The policy of src/policies/theme_choice.ts, and the page's own reading of the kept choice:
-// docs/BEHAVIOUR.md, rules 61 to 63.
+// docs/BEHAVIOUR.md, rules 114 to 116.
 
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";

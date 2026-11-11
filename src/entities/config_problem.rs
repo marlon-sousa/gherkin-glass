@@ -26,6 +26,11 @@ pub(crate) enum ConfigProblemKind {
     Empty { key: String },
     #[error("{key} is not {expected:?}")]
     WrongType { key: String, expected: ValueType },
+    #[error("{key} reaches {} hundredths", shortfall.hundredths)]
+    TooLittleContrast {
+        key: String,
+        shortfall: AccentShortfall,
+    },
     #[error("tag_links is not a list of tables")]
     NotTableList,
     /// A key a table of `tag_links` needs.
@@ -39,11 +44,6 @@ pub(crate) enum ConfigProblemKind {
     /// `group` is a number or a name, as the replacement writes it.
     #[error("{key} names no group {group}")]
     UnknownGroup { key: String, group: String },
-    #[error("{key} reaches {} hundredths", shortfall.hundredths)]
-    TooLittleContrast {
-        key: String,
-        shortfall: AccentShortfall,
-    },
 }
 
 /// The kinds of value a key takes.

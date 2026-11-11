@@ -149,6 +149,51 @@ function anchorOf(hash) {
   }
 }
 
+// src/adapters/dom_theme.ts
+var DomTheme = class {
+  document;
+  constructor(document2) {
+    this.document = document2;
+  }
+  show(choice) {
+    for (const radio of this.radios()) {
+      radio.checked = radio.value === choice;
+    }
+  }
+  apply(theme) {
+    const root = this.document.documentElement;
+    if (theme === null) {
+      delete root.dataset.theme;
+    } else {
+      root.dataset.theme = theme;
+    }
+  }
+  onChoose(handler) {
+    for (const radio of this.radios()) {
+      radio.addEventListener("change", () => {
+        if (radio.checked && isChoice(radio.value)) {
+          handler(radio.value);
+        }
+      });
+    }
+  }
+  onRestore(handler) {
+    this.document.defaultView?.addEventListener("pageshow", (event) => {
+      if (event.persisted) {
+        handler();
+      }
+    });
+  }
+  radios() {
+    return [...this.document.querySelectorAll("input[name='ghg-theme']")].filter(
+      (element) => element instanceof HTMLInputElement
+    );
+  }
+};
+function isChoice(value) {
+  return value === "system" || value === "light" || value === "dark";
+}
+
 // src/policies/tree_state.ts
 var NARROW = "not all and (min-width: 48em)";
 var SHOWN = "shown";
@@ -571,8 +616,33 @@ async function startFolderTree(source, toggle, view, memory2, place) {
   view.onToggle((address, expanded) => memory2.set(itemKey(place.sitePath, address), rememberedExpanded(expanded)));
 }
 
+// src/policies/theme_choice.ts
+var THEME_KEY = "gherkin-glass:theme";
+function keptChoice(kept) {
+  return kept === "light" || kept === "dark" ? kept : "system";
+}
+function themeAttribute(choice) {
+  return choice === "system" ? null : choice;
+}
+
+// src/services/theme_switching.ts
+function startThemeSwitching(theme, memory2) {
+  const showKept = () => {
+    const choice = keptChoice(memory2.get(THEME_KEY));
+    theme.show(choice);
+    theme.apply(themeAttribute(choice));
+  };
+  showKept();
+  theme.onRestore(showKept);
+  theme.onChoose((chosen) => {
+    theme.apply(themeAttribute(chosen));
+    memory2.set(THEME_KEY, chosen);
+  });
+}
+
 // src/main.ts
 var memory = new LocalMemory();
+startThemeSwitching(new DomTheme(document), memory);
 startCollapsing(new DomPage(document), memory, document.location.pathname);
 var site = new URL("../", import.meta.url);
 var sitePath = site.pathname;

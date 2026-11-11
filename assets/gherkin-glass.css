@@ -1,28 +1,6 @@
 /* The stylesheet of every page gherkin-glass writes. Colour and emphasis never
    carry meaning alone: every state is also said in words or in the markup. */
 
-:root {
-  color-scheme: light dark;
-  --text: #1b1b1b;
-  --background: #ffffff;
-  --muted: #4a4a4a;
-  --rule: #c8c8c8;
-  --link: #0a4ab5;
-  --focus: #0a4ab5;
-  --code: #f3f3f3;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #ececec;
-    --background: #161616;
-    --muted: #c2c2c2;
-    --rule: #555555;
-    --link: #8ab4f8;
-    --focus: #8ab4f8;
-    --code: #262626;
-  }
-}
 /* The colours are the themes' tokens, --ghg-*, which every page defines in
    its head, since the accent colours are set for each site. */
 
@@ -32,24 +10,6 @@ body {
   color: var(--ghg-text);
   font-family: system-ui, sans-serif;
   line-height: 1.5;
-}
-
-.ghg-header {
-  max-width: 60rem;
-  margin: 0 auto;
-  padding: 0.5rem 1rem 0;
-}
-
-.ghg-theme input {
-  accent-color: var(--ghg-accent);
-}
-
-.ghg-theme {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.25rem 1rem;
-  margin: 0;
-  border: 1px solid var(--ghg-border);
 }
 
 main {
@@ -195,9 +155,9 @@ figcaption {
 .ghg-controls button {
   font: inherit;
   padding: 0.25rem 0.75rem;
-  background: var(--code);
-  color: var(--text);
-  border: 1px solid var(--muted);
+  background: var(--ghg-surface);
+  color: var(--ghg-text);
+  border: 1px solid var(--ghg-border);
   border-radius: 0.25rem;
   cursor: pointer;
 }
@@ -242,7 +202,7 @@ figcaption {
 }
 
 .ghg-count {
-  color: var(--muted);
+  color: var(--ghg-muted);
 }
 
 /* The skip link is out of sight until it has the focus. */
@@ -252,8 +212,8 @@ figcaption {
   top: -100rem;
   z-index: 1;
   padding: 0.5rem 1rem;
-  background: var(--background);
-  color: var(--link);
+  background: var(--ghg-background);
+  color: var(--ghg-accent);
 }
 
 .ghg-skip:focus {
@@ -262,6 +222,18 @@ figcaption {
 
 .ghg-options {
   padding: 0.5rem 1rem 0;
+}
+
+.ghg-theme {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  margin: 0 0 0 1rem;
+  border: 1px solid var(--ghg-border);
+}
+
+.ghg-theme input {
+  accent-color: var(--ghg-accent);
 }
 
 /* The folder tree beside the content, or above it on a window narrower than
@@ -279,7 +251,7 @@ figcaption {
   max-height: 100vh;
   overflow: auto;
   padding: 1rem;
-  border-right: 1px solid var(--rule);
+  border-right: 1px solid var(--ghg-border);
 }
 
 .ghg-tree[hidden] {
@@ -300,7 +272,7 @@ figcaption {
     position: static;
     max-height: none;
     border-right: none;
-    border-bottom: 1px solid var(--rule);
+    border-bottom: 1px solid var(--ghg-border);
   }
 }
 
@@ -382,12 +354,12 @@ figcaption {
 .ghg-from-background {
   margin: 0.5rem 0;
   padding: 0.25rem 0.75rem;
-  background: var(--code);
+  background: var(--ghg-surface);
 }
 
 .ghg-from-background p {
   margin: 0.25rem 0;
-  color: var(--muted);
+  color: var(--ghg-muted);
 }
 
 .ghg-from-background .ghg-steps {
@@ -396,8 +368,5 @@ figcaption {
 
 /* A doc string keeps its box inside the tint. */
 .ghg-from-background pre {
-  background: var(--background);
-  color: var(--ghg-text);
-  background: var(--ghg-surface);
-  border: 1px solid var(--ghg-border);
+  background: var(--ghg-background);
 }

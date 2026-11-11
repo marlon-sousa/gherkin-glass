@@ -1,5 +1,4 @@
-//! Entity: the values the build reads and reports, those that say how it is run, and what ghg serve serves.
-//! Entity: the values the build reads and reports, those that say how it is run, and the themes' colours.
+//! Entity: the values the build reads and reports, those that say how it is run, what ghg serve serves, and the themes' colours.
 
 mod accent_shortfall;
 mod anchors;
@@ -26,8 +25,8 @@ mod site_assets;
 mod tag_link;
 mod tag_names;
 mod tag_page;
-mod tree_item;
 mod theme;
+mod tree_item;
 mod unnamed;
 mod watch;
 
@@ -40,6 +39,7 @@ pub(crate) use config::Config;
 pub(crate) use config_problem::{ConfigProblem, ConfigProblemKind, ValueType};
 pub(crate) use doc_string::DocString;
 pub(crate) use folder_page::{FeatureEntry, FolderLink, FolderPage, FolderWords};
+pub use highlighted_step::{HighlightedStep, StepPart};
 pub(crate) use invocation::{ArgumentProblem, BuildOptions, Invocation, ServeOptions};
 pub use listen_failure::ListenFailure;
 pub(crate) use page::{
@@ -48,8 +48,6 @@ pub(crate) use page::{
 };
 pub(crate) use page_frame::PageFrame;
 pub use page_options::PageOptions;
-pub use highlighted_step::{HighlightedStep, StepPart};
-pub(crate) use invocation::{ArgumentProblem, BuildOptions, Invocation};
 pub use parse_failure::ParseFailure;
 pub use parsed_feature::ParsedFeature;
 pub use preview::{Preview, ServedSite, ServerWords, Version};
@@ -60,9 +58,8 @@ pub(crate) use site_assets::SiteAssets;
 pub use tag_link::TagLink;
 pub(crate) use tag_names::{TAGS_FOLDER, TagNames};
 pub(crate) use tag_page::{TagFeature, TagIndex, TagIndexEntry, TagPage, TagScenario};
-pub(crate) use tree_item::TreeItem;
-pub(crate) use settings::Settings;
 pub use theme::Accents;
 pub(crate) use theme::{Palette, Theme};
+pub(crate) use tree_item::TreeItem;
 pub use unnamed::Unnamed;
 pub use watch::{Burst, Changes, WatchFailure, Watched};

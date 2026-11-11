@@ -4,10 +4,7 @@ use crate::entities::{AccentShortfall, Accents, Colour, Palette, Theme};
 use crate::policies::{TEXT_CONTRAST, contrast_ratio, hundredths};
 
 /// The accents when the configuration sets none.
-pub const DEFAULT_ACCENTS: Accents = Accents {
-    light: Colour::new(0x0b, 0x4f, 0x9c),
-    dark: Colour::new(0x8c, 0xc4, 0xff),
-};
+pub const DEFAULT_ACCENTS: Accents = Accents::DEFAULT;
 
 pub(crate) fn palette(theme: Theme) -> Palette {
     match theme {

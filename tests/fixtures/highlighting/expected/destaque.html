@@ -55,15 +55,26 @@
 <script type="module" src="assets/gherkin-glass.js"></script>
 </head>
 <body>
-<header class="ghg-header">
+<a class="ghg-skip" href="#ghg_main">Skip to content</a>
+<div class="ghg-options">
+<input type="checkbox" id="ghg_show_tree" class="ghg-show-tree" aria-controls="ghg_tree" checked> <label for="ghg_show_tree">Show the folder tree</label>
 <fieldset class="ghg-theme">
 <legend>Theme</legend>
 <label><input type="radio" name="ghg-theme" value="system" checked> System</label>
 <label><input type="radio" name="ghg-theme" value="light"> Light</label>
 <label><input type="radio" name="ghg-theme" value="dark"> Dark</label>
 </fieldset>
-</header>
-<main>
+</div>
+<div class="ghg-layout">
+<nav id="ghg_tree" class="ghg-tree" aria-label="Folder tree"></nav>
+<div class="ghg-page">
+<nav class="ghg-breadcrumb" aria-label="Breadcrumb">
+<ol>
+<li><a href="index.html">Highlighting</a></li>
+<li><a href="destaque.html" aria-current="page">Funcionalidade: Destaque</a></li>
+</ol>
+</nav>
+<main id="ghg_main">
 <h1>Funcionalidade: Destaque</h1>
 <nav class="ghg-contents" aria-label="Contents">
 <ul>
@@ -84,5 +95,7 @@
 </div>
 </div>
 </main>
+</div>
+</div>
 </body>
 </html>

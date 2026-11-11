@@ -58,6 +58,12 @@
 <a class="ghg-skip" href="#ghg_main">Skip to content</a>
 <div class="ghg-options">
 <input type="checkbox" id="ghg_show_tree" class="ghg-show-tree" aria-controls="ghg_tree"> <label for="ghg_show_tree">Show the folder tree</label>
+<fieldset class="ghg-theme">
+<legend>Theme</legend>
+<label><input type="radio" name="ghg-theme" value="system" checked> System</label>
+<label><input type="radio" name="ghg-theme" value="light"> Light</label>
+<label><input type="radio" name="ghg-theme" value="dark"> Dark</label>
+</fieldset>
 </div>
 <div class="ghg-layout">
 <nav id="ghg_tree" class="ghg-tree" aria-label="Folder tree" hidden></nav>
@@ -70,15 +76,6 @@
 </ol>
 </nav>
 <main id="ghg_main">
-<header class="ghg-header">
-<fieldset class="ghg-theme">
-<legend>Theme</legend>
-<label><input type="radio" name="ghg-theme" value="system" checked> System</label>
-<label><input type="radio" name="ghg-theme" value="light"> Light</label>
-<label><input type="radio" name="ghg-theme" value="dark"> Dark</label>
-</fieldset>
-</header>
-<main>
 <h1>Feature: Refunds &#38; &#60;returns&#62;</h1>
 <ul class="ghg-tags">
 <li><a href="../tags/billing.html">@billing</a></li>
@@ -125,7 +122,7 @@ in the way it was paid.</p>
 <div class="ghg-from-background">
 <p id="refund-a-card-payment_background_1">From the background:<span class="ghg-linked" hidden> <a href="#background">Background</a></span></p>
 <ol class="ghg-steps ghg-inline" aria-labelledby="refund-a-card-payment_background_1">
-<li><span class="ghg-keyword">Given </span>a customer named &#34;Ana&#34;</li>
+<li><span class="ghg-keyword">Given </span>a customer named <span class="ghg-parameter">&#34;Ana&#34;</span></li>
 </ol>
 </div>
 <ol class="ghg-steps">
@@ -162,7 +159,7 @@ Refunded in full.
 <div class="ghg-from-background">
 <p id="refund-count-items_background_1">From the background:<span class="ghg-linked" hidden> <a href="#background">Background</a></span></p>
 <ol class="ghg-steps ghg-inline" aria-labelledby="refund-count-items_background_1">
-<li><span class="ghg-keyword">Given </span>a customer named &#34;Ana&#34;</li>
+<li><span class="ghg-keyword">Given </span>a customer named <span class="ghg-parameter">&#34;Ana&#34;</span></li>
 </ol>
 </div>
 <ol class="ghg-steps">
@@ -220,7 +217,7 @@ Refunded in full.
 <div class="ghg-from-background">
 <p id="store-credit_background_1">From the background:<span class="ghg-linked" hidden> <a href="#background">Background</a></span></p>
 <ol class="ghg-steps ghg-inline" aria-labelledby="store-credit_background_1">
-<li><span class="ghg-keyword">Given </span>a customer named &#34;Ana&#34;</li>
+<li><span class="ghg-keyword">Given </span>a customer named <span class="ghg-parameter">&#34;Ana&#34;</span></li>
 </ol>
 </div>
 <div class="ghg-from-background">
@@ -240,7 +237,7 @@ Refunded in full.
 <div class="ghg-from-background">
 <p id="refund-again-count-times_background_1">From the background:<span class="ghg-linked" hidden> <a href="#background">Background</a></span></p>
 <ol class="ghg-steps ghg-inline" aria-labelledby="refund-again-count-times_background_1">
-<li><span class="ghg-keyword">Given </span>a customer named &#34;Ana&#34;</li>
+<li><span class="ghg-keyword">Given </span>a customer named <span class="ghg-parameter">&#34;Ana&#34;</span></li>
 </ol>
 </div>
 <div class="ghg-from-background">
@@ -250,7 +247,7 @@ Refunded in full.
 </ol>
 </div>
 <ol class="ghg-steps">
-<li><span class="ghg-keyword">Given </span>&#60;count&#62; refunds</li>
+<li><span class="ghg-keyword">Given </span><span class="ghg-placeholder">&#60;count&#62;</span> refunds</li>
 </ol>
 <div class="ghg-block ghg-examples">
 <h4 id="again"><button type="button" class="ghg-toggle" aria-expanded="true">Examples: Again</button></h4>
@@ -278,7 +275,7 @@ Refunded in full.
 <div class="ghg-from-background">
 <p id="refund-a-refund_background_1">From the background:<span class="ghg-linked" hidden> <a href="#background">Background</a></span></p>
 <ol class="ghg-steps ghg-inline" aria-labelledby="refund-a-refund_background_1">
-<li><span class="ghg-keyword">Given </span>a customer named &#34;Ana&#34;</li>
+<li><span class="ghg-keyword">Given </span>a customer named <span class="ghg-parameter">&#34;Ana&#34;</span></li>
 </ol>
 </div>
 <ol class="ghg-steps">

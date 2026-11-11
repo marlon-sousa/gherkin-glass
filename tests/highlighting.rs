@@ -1,8 +1,7 @@
 //! docs/BEHAVIOUR.md, "Highlighting and themes", checked against the fixture, and its pages
 //! compared with those committed beside it.
 //!
-//! `cargo run -- build --config tests/fixtures/highlighting/ghg.toml` writes the
-//! expected pages again after a change; its `assets` folder is not kept.
+//! `cargo xtask build` writes the expected pages again after a change.
 
 use std::fs::{read, read_dir, remove_dir_all};
 use std::path::Path;
@@ -30,7 +29,7 @@ fn steps(path: &str) -> Vec<String> {
     let mut shown = Vec::new();
     let mut add = |step: &Step, scenario: Option<&Scenario>| {
         let highlighted = highlight_step(step, scenario);
-        // Rule 37: the parts are the step's text, unchanged.
+        // Rule 110: the parts are the step's text, unchanged.
         assert_eq!(highlighted.text(), step.value);
         assert_eq!(format!("{} ", highlighted.keyword), step.keyword);
         shown.push(show(&highlighted));
@@ -76,19 +75,19 @@ fn every_part_highlighting_finds_and_nothing_else() {
     assert_eq!(
         steps("highlighting.feature"),
         [
-            // Rule 39: a background's step has no placeholders.
+            // Rule 112: a background's step has no placeholders.
             r#"{Given} an account with {#100} and a {"<amount>"} note"#,
-            // Rule 38.
+            // Rule 111.
             r#"{When} the customer types {"hello 42"} and {""}"#,
             r#"{And} the customer types {"a \"quoted\" word"}"#,
             r#"{But} a "lone quote stays plain"#,
             r#"{*} the customer's 'name' is plain"#,
-            // Rule 40.
+            // Rule 113.
             "{Then} the balance is {#-3.5}, then {#1.000,50} or ${#7} on {#2026}-{#11}-{#10}.",
             "{And} R2D2 is 3rd in v1.2, 2.x, x_1 and item-{#4}",
             r#"{And} the quote in {"a\\" b"} closes after b"#,
             "{Given} <amount> is plain here",
-            // Rule 39.
+            // Rule 112.
             r#"{Given} {<amount>} in {"{<currency>} 3"} and <unknown>"#,
             "{When} the customer asks for < {#5} >",
             r#"{Given} {#2} {"items"}"#,
@@ -107,7 +106,7 @@ fn the_keyword_is_highlighted_as_written_in_the_file_s_language() {
     );
 }
 
-// Rules 52 and 61: each part in its own element, and the configured accents in the page's head.
+// Rules 109 and 118: each part in its own element, and the configured accents in the page's head.
 
 #[test]
 fn the_pages_show_the_highlighting_and_the_accents_as_the_expected_pages_do() {
@@ -139,5 +138,5 @@ fn the_pages_show_the_highlighting_and_the_accents_as_the_expected_pages_do() {
         assert!(page.contains("  --ghg-accent: #ffcc88;\n"), "{name:?}");
         pages += 1;
     }
-    assert_eq!(pages, 2);
+    assert_eq!(pages, 3);
 }
