@@ -1,8 +1,9 @@
 name: Rust
 
-# Formatting, lints and tests, CONTRIBUTING.md, "Checks". They run with the
-# toolchain pinned in rust-toolchain.toml, and the tests run again with the
-# minimum supported Rust version, rust-version in Cargo.toml.
+# Formatting, lints, tests, the script check and the browser check,
+# CONTRIBUTING.md, "Checks". They run with the toolchain pinned in
+# rust-toolchain.toml, and the tests run again with the minimum supported Rust
+# version, rust-version in Cargo.toml.
 
 on:
   pull_request:
@@ -72,3 +73,14 @@ jobs:
         with:
           node-version-file: script/.node-version
       - run: cargo xtask check-script
+
+  browser:
+    name: cargo xtask check-browser
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: rustup toolchain install
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: script/.node-version
+      - run: cargo xtask check-browser
