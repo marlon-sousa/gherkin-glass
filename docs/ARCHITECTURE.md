@@ -119,6 +119,11 @@ Cheapest first:
 
 `cargo xtask check` runs all of them, and CI runs the same command.
 
+How a Rust test is written:
+
+- **A test's name states the rule it checks.**
+- **A rule checked on several inputs is one parametrised test**, written with [`rstest`](https://crates.io/crates/rstest), with a named case per input, such as `#[case::a_rule_s_background("rule-background.feature")]`, never a run of asserts or a loop over a table. Each case's name says what its input is. A loop over every value of a closed set, such as every step kind, stays a loop, so that a new value is checked without a new case.
+
 ## What a contributor needs
 
 Plain `cargo build` and `cargo test` need only Rust: the toolchain `rust-toolchain.toml` pins, and the minimum version `rust-version` names for the second test run, as AGENTS.md describes. Node, at its pinned version, is needed for `cargo xtask build` and `cargo xtask check`, which install the Node packages from the lockfile, and the browser the check uses, themselves.
