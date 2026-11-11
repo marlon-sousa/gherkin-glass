@@ -1,5 +1,5 @@
-//! docs/BEHAVIOUR.md, "Installing through cargo", checked by running
-//! `cargo ghg` through cargo itself, and `cargo-ghg` by itself, beside `ghg`.
+//! Installing through cargo, checked by running `cargo ghg` through cargo itself, and
+//! `cargo-ghg` by itself, beside `ghg`.
 
 use std::env::{join_paths, split_paths, var_os};
 use std::ffi::OsStr;

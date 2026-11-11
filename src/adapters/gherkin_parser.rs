@@ -10,7 +10,7 @@ use crate::entities::{ParseFailure, ProblemKind, RawFeature};
 use crate::ports::FeatureParser;
 
 #[derive(Debug, Default, Clone, Copy)]
-pub struct GherkinParser;
+pub(crate) struct GherkinParser;
 
 impl FeatureParser for GherkinParser {
     fn parse(&self, path: &Path) -> Result<RawFeature, ParseFailure> {

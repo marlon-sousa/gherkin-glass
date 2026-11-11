@@ -4,6 +4,6 @@ use std::path::Path;
 
 use crate::entities::CollectedInput;
 
-pub trait InputCollector: Send + Sync {
+pub(crate) trait InputCollector: Send + Sync {
     fn collect(&self, input: &Path) -> CollectedInput;
 }

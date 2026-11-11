@@ -9,19 +9,19 @@ use thiserror::Error;
 /// One thing that cannot be read: a feature file, a `.ghg-ignore` file or a
 /// folder of the input; or a block of a feature that needs a name.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Problem {
+pub(crate) struct Problem {
     /// Relative to the input folder, with `/` between folders; the input
     /// folder itself is shown as it was given.
-    pub path: String,
-    pub line: Option<usize>,
-    pub kind: ProblemKind,
+    pub(crate) path: String,
+    pub(crate) line: Option<usize>,
+    pub(crate) kind: ProblemKind,
 }
 
 /// What is wrong. The words a person reads come from the interface text
 /// catalogue; the `#[error]` text is for developers. Every `String` here is
 /// another program's words, passed through as they are.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Error)]
-pub enum ProblemKind {
+pub(crate) enum ProblemKind {
     /// The input folder itself does not exist.
     #[error("the input folder does not exist")]
     InputMissing,
@@ -73,7 +73,7 @@ pub enum ProblemKind {
 
 /// The blocks that need a name while `allow_unnamed` is `false`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub enum UnnamedBlock {
+pub(crate) enum UnnamedBlock {
     Feature,
     Rule,
     Scenario,
@@ -141,7 +141,7 @@ impl Display for Problem {
 /// Every problem of one build, sorted, so that the report is the same on every
 /// run. Its display is the report, one line per problem.
 #[derive(Debug, Clone, PartialEq, Eq, Error)]
-pub struct Problems(Vec<Problem>);
+pub(crate) struct Problems(Vec<Problem>);
 
 impl Problems {
     pub(crate) fn new(mut problems: Vec<Problem>) -> Self {
@@ -149,7 +149,7 @@ impl Problems {
         Problems(problems)
     }
 
-    pub fn as_slice(&self) -> &[Problem] {
+    pub(crate) fn as_slice(&self) -> &[Problem] {
         &self.0
     }
 }

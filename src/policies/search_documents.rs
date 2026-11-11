@@ -10,7 +10,7 @@ use crate::policies::page_address;
 pub(crate) const LARGE_SEARCH_DOCUMENTS: usize = 5_000_000;
 
 /// The documents of every page, in the order of `pages`, and within a page in file order.
-pub fn search_documents<'a>(
+pub(crate) fn search_documents<'a>(
     pages: impl IntoIterator<Item = (&'a ParsedFeature, &'a Anchors)>,
 ) -> Vec<SearchDocument> {
     let mut documents = Vec::new();
@@ -73,7 +73,7 @@ pub fn search_documents<'a>(
     documents
 }
 
-pub fn search_json(documents: &[SearchDocument]) -> String {
+pub(crate) fn search_json(documents: &[SearchDocument]) -> String {
     serde_json::to_string(documents).expect("documents are strings and lists of strings")
 }
 
@@ -101,3 +101,6 @@ fn scenario_tags(scenario: &Scenario) -> Vec<String> {
     }
     found
 }
+
+#[cfg(test)]
+mod tests;

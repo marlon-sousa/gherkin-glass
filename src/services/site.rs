@@ -26,20 +26,20 @@ pub(crate) struct SiteFiles {
     pub(crate) built: BuiltSite,
 }
 
-pub struct SiteService {
+pub(crate) struct SiteService {
     input: InputService,
     writer: Arc<dyn SiteWriter>,
 }
 
 impl SiteService {
-    pub fn new(input: InputService, writer: Arc<dyn SiteWriter>) -> Self {
+    pub(crate) fn new(input: InputService, writer: Arc<dyn SiteWriter>) -> Self {
         SiteService { input, writer }
     }
 
     /// Writes into `output`, any folder, over what is there, and only once the
     /// whole input is read. Whether a folder on disk may be written into is
-    /// [`crate::OutputService`]'s to decide, as docs/BEHAVIOUR.md, rule 38, says.
-    pub fn build(&self, settings: &Settings, output: &Path) -> Result<BuiltSite, Problems> {
+    /// [`crate::services::OutputService`]'s to decide.
+    pub(crate) fn build(&self, settings: &Settings, output: &Path) -> Result<BuiltSite, Problems> {
         let site = self.files(settings)?;
         self.write(output, site.files)?;
         Ok(site.built)

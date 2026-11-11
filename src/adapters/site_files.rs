@@ -7,7 +7,7 @@ use std::path::Path;
 use crate::ports::SiteWriter;
 
 #[derive(Debug, Default, Clone, Copy)]
-pub struct SiteFiles;
+pub(crate) struct SiteFiles;
 
 impl SiteWriter for SiteFiles {
     fn write(&self, output: &Path, file: &str, contents: &[u8]) -> IoResult<()> {

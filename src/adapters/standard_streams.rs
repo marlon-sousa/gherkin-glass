@@ -5,7 +5,7 @@ use std::io::{Write, stderr, stdout};
 use crate::ports::Terminal;
 
 #[derive(Debug, Default, Clone, Copy)]
-pub struct StandardStreams;
+pub(crate) struct StandardStreams;
 
 impl Terminal for StandardStreams {
     fn say(&self, text: &str) {

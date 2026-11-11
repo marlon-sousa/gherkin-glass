@@ -26,7 +26,7 @@ const RELOAD_SCRIPT: &str = include_str!("preview_http/reload.js");
 const THREADS: usize = 4;
 
 #[derive(Debug, Default, Clone, Copy)]
-pub struct HttpPreviewServer;
+pub(crate) struct HttpPreviewServer;
 
 impl PreviewServer for HttpPreviewServer {
     fn start(

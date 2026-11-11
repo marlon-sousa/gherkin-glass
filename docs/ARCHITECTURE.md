@@ -23,7 +23,7 @@ Ports and adapters. The pure part of gherkin-glass, which decides what the site 
 
 ## Module roles
 
-Every module plays exactly one of six roles, and says which on the first line of its `//!` doc comment, such as `//! Policy: the anchor rule.` The other files play none and say so instead: `lib.rs`, the facade; `composition_root.rs`, the composition root, a module of the library; and the two binaries, `main.rs` and `cargo_ghg.rs`, which only call it.
+Every module plays exactly one of six roles, and says which on the first line of its `//!` doc comment, such as `//! Policy: the anchor rule.` The other files play none and say so instead: `lib.rs`, the facade; `composition_root.rs`, the composition root, a module of the library; the two binaries, `main.rs` and `cargo_ghg.rs`, which only call it; and the test-only module of shared test helpers, `fixtures.rs`, which says `Test support:`.
 
 1. **Entity or value**: data and the invariants it keeps, such as a parsed feature, a page, or a problem found in the input.
 2. **Policy**: a pure computation, the same output for the same input every time. Correcting doc strings, making anchors, building the site's model, the page addresses and the contrast check are policies, and so is rendering a template into a string.
@@ -145,9 +145,10 @@ Cheapest first:
 
 1. **Policy tests**, pure and in memory: the anchor rule, doc string corrections, page addresses, contrast, the state a block starts in.
 2. **Service tests** with fake ports: a whole build from an input held in memory, checking what would be written and every problem reported.
-3. **Golden fixture tests**: each fixture under `tests/fixtures/` built into a site, and its pages compared with the expected HTML committed beside it, which shows the rules of BEHAVIOUR.md the fixture covers.
-4. **The browser check** ([#2](https://github.com/marlon-sousa/gherkin-glass/issues/2)): every fixture's site served with `ghg serve --no-build` ([#26](https://github.com/marlon-sousa/gherkin-glass/issues/26)), as a reader would get it, and each page opened with Playwright, checked with axe-core in each theme, and driven with the keyboard.
-5. **The script's own tests**, of its policies and adapters, in `script/test/`.
+3. **Fixture tests** of a policy or a service: its code checked against a fixture under `tests/fixtures/`, read through the real adapters, or on scratch folders on the disk, in the tests of the module whose code it checks, in their `tests/against_fixtures.rs` when the module has other unit tests too.
+4. **Golden fixture tests**: each fixture under `tests/fixtures/` built into a site, and its pages compared with the expected HTML committed beside it, which shows the rules of BEHAVIOUR.md the fixture covers.
+5. **The browser check** ([#2](https://github.com/marlon-sousa/gherkin-glass/issues/2)): every fixture's site served with `ghg serve --no-build` ([#26](https://github.com/marlon-sousa/gherkin-glass/issues/26)), as a reader would get it, and each page opened with Playwright, checked with axe-core in each theme, and driven with the keyboard.
+6. **The script's own tests**, of its policies and adapters, in `script/test/`.
 
 `cargo xtask check` runs all of them, and CI runs the same command.
 

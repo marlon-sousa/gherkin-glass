@@ -53,14 +53,14 @@ impl Palette {
 
 /// The accent of each theme, used for links and for the outline of what has the focus.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct Accents {
-    pub light: Colour,
-    pub dark: Colour,
+pub(crate) struct Accents {
+    pub(crate) light: Colour,
+    pub(crate) dark: Colour,
 }
 
 impl Accents {
     /// The accents when the configuration sets none, each reaching 7:1 in its theme.
-    pub const DEFAULT: Accents = Accents {
+    pub(crate) const DEFAULT: Accents = Accents {
         light: Colour::new(0x0b, 0x4f, 0x9c),
         dark: Colour::new(0x8c, 0xc4, 0xff),
     };

@@ -6,7 +6,7 @@ use std::ffi::OsString;
 /// `ghg` that cargo puts first when it runs `cargo ghg`, so that the rest
 /// are what `ghg` would be given. Anything else is kept as it is, so that
 /// `cargo-ghg` run by itself behaves as `ghg` too.
-pub fn cargo_plugin_arguments(
+pub(crate) fn cargo_plugin_arguments(
     arguments: impl IntoIterator<Item = OsString>,
 ) -> impl Iterator<Item = OsString> {
     let mut arguments = arguments.into_iter().peekable();

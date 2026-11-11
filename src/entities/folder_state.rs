@@ -1,7 +1,7 @@
 //! Entity: what is at the place of an output folder, or of a version's folder.
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum FolderState {
+pub(crate) enum FolderState {
     Missing,
     /// A folder with nothing in it.
     Empty,

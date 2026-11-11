@@ -14,7 +14,7 @@ use crate::ports::ChangeWatcher;
 const QUIET_FOR: Duration = Duration::from_millis(200);
 
 #[derive(Debug, Default, Clone, Copy)]
-pub struct FileWatcher;
+pub(crate) struct FileWatcher;
 
 impl ChangeWatcher for FileWatcher {
     fn watch(&self, watched: &[Watched]) -> Result<Changes, WatchFailure> {

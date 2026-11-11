@@ -1,13 +1,9 @@
-//! docs/BEHAVIOUR.md, "Search", checked against the fixtures.
+//! Search, checked by running `ghg` and against the fixtures' pages.
 
 use std::fs;
 use std::path::Path;
 use std::process::Command;
-use std::sync::Arc;
 
-use gherkin_glass::{
-    GherkinParser, InputService, InputWalker, Unnamed, make_anchors, search_documents, search_json,
-};
 use serde_json::Value;
 
 fn fixture() -> &'static Path {
@@ -15,43 +11,6 @@ fn fixture() -> &'static Path {
         env!("CARGO_MANIFEST_DIR"),
         "/tests/fixtures/search"
     ))
-}
-
-fn documents() -> String {
-    let features = InputService::new(Arc::new(InputWalker), Arc::new(GherkinParser))
-        .read(&fixture().join("features"), Unnamed::Allowed)
-        .unwrap_or_else(|problems| panic!("the input is read:\n{problems}"));
-    let anchors: Vec<_> = features
-        .iter()
-        .map(|parsed| make_anchors(&parsed.feature))
-        .collect();
-    search_json(&search_documents(features.iter().zip(&anchors)))
-}
-
-#[test]
-fn every_feature_rule_and_scenario_has_its_document_in_page_and_file_order() {
-    // Rules 147 and 148.
-    let expected = fs::read_to_string(fixture().join("search.json")).unwrap();
-    let expected: Value = serde_json::from_str(&expected).unwrap();
-    let written: Value = serde_json::from_str(&documents()).unwrap();
-    assert_eq!(written, expected);
-}
-
-#[test]
-fn the_documents_are_compact_and_keep_letters_outside_ascii() {
-    // Rule 149.
-    let written = documents();
-    assert!(!written.contains('\n'));
-    assert!(!written.contains("\": "));
-    assert!(!written.contains("\", "));
-    assert!(written.contains("poupança"));
-    assert!(!written.contains("\\u"));
-}
-
-#[test]
-fn the_documents_are_the_same_on_every_build() {
-    // Rule 149.
-    assert_eq!(documents(), documents());
 }
 
 #[test]
@@ -125,5 +84,11 @@ fn documents_of_5_mb_or_less_bring_no_warning() {
     assert_eq!(output.status.code(), Some(0));
     assert_eq!(String::from_utf8(output.stderr).unwrap(), "");
     let written = fs::read_to_string(folder.join("site/assets/search.json")).unwrap();
-    assert_eq!(written, documents());
+    // Rule 149: the file is compact and keeps letters outside ASCII as they are.
+    assert!(!written.contains('\n'));
+    assert!(!written.contains("\": ") && !written.contains("\", "));
+    assert!(written.contains("poupança") && !written.contains("\\u"));
+    let expected = fs::read_to_string(fixture().join("search.json")).unwrap();
+    let written: Value = serde_json::from_str(&written).unwrap();
+    assert_eq!(written, serde_json::from_str::<Value>(&expected).unwrap());
 }

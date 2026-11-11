@@ -7,7 +7,7 @@ use gherkin::{Background, Examples, Rule, Scenario};
 /// Each block's anchor is found by the byte offset at which the block starts:
 /// a block of another feature at the same offset gets this feature's anchor.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
-pub struct Anchors {
+pub(crate) struct Anchors {
     blocks: BTreeMap<usize, String>,
     /// Keyed by the outline's offset and the row's number, counted from 1.
     rows: BTreeMap<(usize, usize), String>,
@@ -22,26 +22,26 @@ impl Anchors {
         self.rows.insert((outline_start, row), anchor);
     }
 
-    pub fn background(&self, background: &Background) -> Option<&str> {
+    pub(crate) fn background(&self, background: &Background) -> Option<&str> {
         self.block(background.span.start)
     }
 
-    pub fn rule(&self, rule: &Rule) -> Option<&str> {
+    pub(crate) fn rule(&self, rule: &Rule) -> Option<&str> {
         self.block(rule.span.start)
     }
 
     /// A scenario's, or a scenario outline's.
-    pub fn scenario(&self, scenario: &Scenario) -> Option<&str> {
+    pub(crate) fn scenario(&self, scenario: &Scenario) -> Option<&str> {
         self.block(scenario.span.start)
     }
 
-    pub fn examples(&self, examples: &Examples) -> Option<&str> {
+    pub(crate) fn examples(&self, examples: &Examples) -> Option<&str> {
         self.block(examples.span.start)
     }
 
     /// The scenario `outline` produces from its `row`th row, counted from 1
     /// across its examples blocks, without their header rows.
-    pub fn row(&self, outline: &Scenario, row: usize) -> Option<&str> {
+    pub(crate) fn row(&self, outline: &Scenario, row: usize) -> Option<&str> {
         self.rows
             .get(&(outline.span.start, row))
             .map(String::as_str)

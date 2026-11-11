@@ -4,10 +4,10 @@ use std::path::{Path, PathBuf};
 
 use crate::entities::Marker;
 
-/// Outside the crate, made only by [`crate::OutputService`]'s checks, so
+/// Outside the crate, made only by [`crate::services::OutputService`]'s checks, so
 /// that no other folder is ever emptied.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct BuildFolder {
+pub(crate) struct BuildFolder {
     path: PathBuf,
     marker: Marker,
 }
@@ -23,11 +23,11 @@ impl BuildFolder {
         BuildFolder { path, marker }
     }
 
-    pub fn path(&self) -> &Path {
+    pub(crate) fn path(&self) -> &Path {
         &self.path
     }
 
-    pub fn marker(&self) -> &Marker {
+    pub(crate) fn marker(&self) -> &Marker {
         &self.marker
     }
 }

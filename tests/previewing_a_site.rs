@@ -1,4 +1,4 @@
-//! docs/BEHAVIOUR.md, "Previewing a site", checked by running `ghg serve` and asking it over HTTP.
+//! Previewing a site, checked by running `ghg serve` and asking it over HTTP.
 
 use std::fs::{copy, create_dir_all, read, read_to_string, remove_dir_all, rename, write};
 use std::io::{BufRead, BufReader, Read, Write};

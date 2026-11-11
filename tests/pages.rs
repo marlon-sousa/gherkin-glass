@@ -1,5 +1,5 @@
-//! docs/BEHAVIOUR.md, "Pages", checked by building the fixtures and comparing
-//! every file written with the site committed beside them.
+//! The pages, checked by building the fixtures and comparing every file written with the site
+//! committed beside them.
 //!
 //! `cargo run -- build --config tests/fixtures/pages/ghg.toml`, and again with
 //! `collapsed.toml`, writes the expected sites again after a change, and so

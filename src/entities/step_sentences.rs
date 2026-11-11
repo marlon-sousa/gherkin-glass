@@ -4,42 +4,42 @@ use std::path::PathBuf;
 
 /// Ordered as the groups are shown: Given, then When, then Then.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum StepKind {
+pub(crate) enum StepKind {
     Given,
     When,
     Then,
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
-pub struct StepSentences {
+pub(crate) struct StepSentences {
     /// Only the kinds that have a sentence, in [`StepKind`]'s order.
-    pub groups: Vec<SentenceGroup>,
+    pub(crate) groups: Vec<SentenceGroup>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct SentenceGroup {
-    pub kind: StepKind,
+pub(crate) struct SentenceGroup {
+    pub(crate) kind: StepKind,
     /// Sorted as docs/BEHAVIOUR.md, rule 138, says.
-    pub sentences: Vec<Sentence>,
+    pub(crate) sentences: Vec<Sentence>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Sentence {
+pub(crate) struct Sentence {
     /// With every slot shown as `"…"`.
-    pub text: String,
+    pub(crate) text: String,
     /// One for each step that has the sentence, so how often it is used is their number.
-    pub uses: Vec<SentenceUse>,
+    pub(crate) uses: Vec<SentenceUse>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct SentenceUse {
+pub(crate) struct SentenceUse {
     /// Of the step's feature, relative to the input folder.
-    pub path: PathBuf,
+    pub(crate) path: PathBuf,
     /// Of the scenario, scenario outline or background the step is in.
-    pub anchor: String,
+    pub(crate) anchor: String,
     /// That block's keyword as written, then `: ` and its name, or its keyword alone.
-    pub heading: String,
-    pub line: usize,
+    pub(crate) heading: String,
+    pub(crate) line: usize,
     /// Each slot's text as written, quotes or angle brackets included.
-    pub values: Vec<String>,
+    pub(crate) values: Vec<String>,
 }

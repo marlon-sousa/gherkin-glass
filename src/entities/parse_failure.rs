@@ -6,7 +6,7 @@ use crate::entities::ProblemKind;
 
 #[derive(Debug, Clone, PartialEq, Eq, Error)]
 #[error("{kind}")]
-pub struct ParseFailure {
-    pub line: Option<usize>,
-    pub kind: ProblemKind,
+pub(crate) struct ParseFailure {
+    pub(crate) line: Option<usize>,
+    pub(crate) kind: ProblemKind,
 }

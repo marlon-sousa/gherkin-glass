@@ -3,8 +3,8 @@
 use gherkin::Feature;
 
 #[derive(Debug, Clone)]
-pub struct RawFeature {
-    pub feature: Feature,
+pub(crate) struct RawFeature {
+    pub(crate) feature: Feature,
     /// The text the feature was parsed from.
-    pub source: String,
+    pub(crate) source: String,
 }

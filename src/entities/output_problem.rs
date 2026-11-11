@@ -8,18 +8,18 @@ use crate::entities::VersionName;
 
 #[derive(Debug, Clone, PartialEq, Eq, Error)]
 #[error("{}{}: {kind}", output.display(), version.as_ref().map_or(String::new(), |name| format!("/{name}")))]
-pub struct OutputProblem {
+pub(crate) struct OutputProblem {
     /// The output folder, as the settings give it.
-    pub output: PathBuf,
+    pub(crate) output: PathBuf,
     /// The version whose folder it is; `None` for the output folder itself.
-    pub version: Option<VersionName>,
-    pub kind: OutputProblemKind,
+    pub(crate) version: Option<VersionName>,
+    pub(crate) kind: OutputProblemKind,
 }
 
 /// What is wrong. The words a person reads come from the interface text
 /// catalogue; the `#[error]` text is for developers.
 #[derive(Debug, Clone, PartialEq, Eq, Error)]
-pub enum OutputProblemKind {
+pub(crate) enum OutputProblemKind {
     /// The site, or the version, is already built there.
     #[error("already built, and is not to be replaced")]
     AlreadyBuilt,

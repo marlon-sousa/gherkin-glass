@@ -7,7 +7,7 @@ use std::path::Path;
 use crate::ports::ConfigReader;
 
 #[derive(Debug, Default, Clone, Copy)]
-pub struct ConfigFileReader;
+pub(crate) struct ConfigFileReader;
 
 impl ConfigReader for ConfigFileReader {
     fn read(&self, path: &Path) -> IoResult<String> {

@@ -9,7 +9,7 @@ use std::sync::{Mutex, PoisonError};
 use crate::ports::{SiteRecorder, SiteWriter};
 
 #[derive(Debug, Default)]
-pub struct MemorySite {
+pub(crate) struct MemorySite {
     files: Mutex<BTreeMap<String, Vec<u8>>>,
 }
 

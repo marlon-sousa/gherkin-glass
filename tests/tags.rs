@@ -1,5 +1,5 @@
-//! docs/BEHAVIOUR.md, "Tags", checked by building the fixtures and comparing
-//! every file written with the site committed beside them.
+//! Tags, checked by building the fixtures and comparing every file written with the site
+//! committed beside them.
 //!
 //! `cargo run -- build --config tests/fixtures/tags/ghg.toml` writes the
 //! expected site again after a change.

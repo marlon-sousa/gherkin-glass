@@ -1,18 +1,15 @@
-//! docs/BEHAVIOUR.md, "Anchors", checked against the fixtures.
+//! The anchor rule, checked against its fixtures.
 
 use std::path::Path;
-use std::sync::Arc;
 
 use gherkin::Scenario;
-use gherkin_glass::{
-    Anchors, GherkinParser, InputService, InputWalker, ParsedFeature, Unnamed, make_anchors,
-};
+
+use crate::entities::{Anchors, ParsedFeature};
+use crate::fixtures::{fixture, read_features};
+use crate::policies::make_anchors;
 
 fn features() -> Vec<ParsedFeature> {
-    let input = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/anchors");
-    InputService::new(Arc::new(InputWalker), Arc::new(GherkinParser))
-        .read(&input, Unnamed::Allowed)
-        .unwrap_or_else(|problems| panic!("the input is read:\n{problems}"))
+    read_features(&fixture("anchors"))
 }
 
 /// The anchors of the feature at `path`, each with the line of its block, in

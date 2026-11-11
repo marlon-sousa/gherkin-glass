@@ -1,5 +1,4 @@
-//! docs/BEHAVIOUR.md, "The GitHub Action", checked by running the action's scripts
-//! against releases served from memory.
+//! The GitHub Action, checked by running its scripts against releases served from memory.
 //!
 //! The scripts run in bash, with curl, tar, unzip and sha256sum or shasum,
 //! and the tests make the Windows archive with zip, which every Linux and
