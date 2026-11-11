@@ -136,14 +136,20 @@ impl DebounceEventHandler for Reporter {
         let burst = match result {
             // The system dropped changes, such as when its queue overflowed.
             Ok(events) if events.iter().any(|event| event.need_rescan()) => Burst::Missed,
-            Ok(events) => Burst::Changed(self.changed(events.iter().map(|event| &event.event))),
-            // A change was missed; which one is not known.
+            Ok(events) => {
+                let paths = self.changed(events.iter().map(|event| &event.event));
+                if paths.is_empty() {
+                    // Nothing watched changed, so there is nothing to report.
+                    return;
+                }
+                Burst::Changed(paths)
+            }
+            // The watcher failed, so changes may have been missed.
             Err(_) => Burst::Missed,
         };
-        if burst != Burst::Changed(Vec::new()) {
-            // Nobody is listening once ghg serve stops.
-            let _ = self.sender.send(burst);
-        }
+        // Sending fails only when the receiver is gone, which happens once
+        // the service has stopped watching; the burst is then not needed.
+        let _ = self.sender.send(burst);
     }
 }
 
