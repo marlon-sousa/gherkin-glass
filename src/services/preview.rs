@@ -6,14 +6,14 @@ use std::sync::Arc;
 use std::thread::park;
 
 use crate::entities::{
-    Burst, Changes, ListenFailure, Preview, Problems, ServeOptions, ServedSite, ServerWords,
-    Settings, WatchFailure, Watched,
+    BuildFailure, Burst, Changes, ListenFailure, OutputProblem, Preview, Problems, ServeOptions,
+    ServedSite, ServerWords, Settings, WatchFailure, Watched,
 };
 
 use crate::policies::{Read, calls_for_rebuild, remembered};
 use crate::ports::{ChangeWatcher, ConfigReader, PreviewServer, SiteRecorder};
 use crate::services::settings::CONFIG_FILE;
-use crate::services::{ConfigProblems, InputService, SettingsService, SiteService};
+use crate::services::{ConfigProblems, InputService, OutputService, SettingsService, SiteService};
 
 /// The address ghg serve listens on unless `--host` names another.
 const DEFAULT_HOST: &str = "127.0.0.1";
@@ -23,6 +23,7 @@ const DEFAULT_PORT: u16 = 8000;
 pub struct PreviewService {
     settings: SettingsService,
     on_disk: SiteService,
+    output: OutputService,
     in_memory: SiteService,
     input: InputService,
     memory: Arc<dyn SiteRecorder>,
@@ -43,6 +44,7 @@ struct Watching {
 pub(crate) enum ServeFailure {
     Config(ConfigProblems),
     Input(Problems),
+    Output(OutputProblem),
     Listen {
         host: String,
         port: u16,
@@ -66,11 +68,13 @@ pub(crate) trait PreviewEvents {
 }
 
 impl PreviewService {
-    /// `on_disk` writes the site into its output folder; under `--watch`,
-    /// `input` is built into `memory`.
+    /// `on_disk` writes the site into its output folder, once `output` has
+    /// checked that folder as ghg build does; under `--watch`, `input` is built
+    /// into `memory`, which no output folder's check concerns.
     pub fn new(
         config_reader: Arc<dyn ConfigReader>,
         on_disk: SiteService,
+        output: OutputService,
         input: InputService,
         memory: Arc<dyn SiteRecorder>,
         server: Arc<dyn PreviewServer>,
@@ -79,6 +83,7 @@ impl PreviewService {
         PreviewService {
             settings: SettingsService::new(config_reader),
             on_disk,
+            output,
             in_memory: SiteService::new(input.clone(), memory.clone()),
             input,
             memory,
@@ -124,7 +129,10 @@ impl PreviewService {
                 .map_err(ServeFailure::Input)?
         } else {
             self.build_into_output(&settings)
-                .map_err(ServeFailure::Input)?
+                .map_err(|failure| match failure {
+                    BuildFailure::Problems(problems) => ServeFailure::Input(problems),
+                    BuildFailure::Output(problem) => ServeFailure::Output(problem),
+                })?
         };
         let changes = changes.transpose().map_err(ServeFailure::Watch)?;
         let preview = Arc::new(Preview::new(options.watch, site));
@@ -217,8 +225,9 @@ impl PreviewService {
         built.map(|()| ServedSite::Memory(files))
     }
 
-    fn build_into_output(&self, settings: &Settings) -> Result<ServedSite, Problems> {
-        self.on_disk.build(settings, &settings.output)?;
+    /// The build ghg build makes, into the output folder, served from there.
+    fn build_into_output(&self, settings: &Settings) -> Result<ServedSite, BuildFailure> {
+        self.output.build(&self.on_disk, settings)?;
         Ok(ServedSite::Folder(settings.output.clone()))
     }
 }
@@ -236,9 +245,10 @@ mod tests {
 
     use super::*;
     use crate::entities::{
-        Changes, CollectedInput, ParseFailure, Problem, ProblemKind, RawFeature,
+        Changes, CollectedInput, FolderState, Marker, OutputProblemKind, ParseFailure, Problem,
+        ProblemKind, RawFeature, VersionName,
     };
-    use crate::ports::{FeatureParser, InputCollector, SiteWriter};
+    use crate::ports::{FeatureParser, InputCollector, OutputFolders, SiteWriter};
     use std::collections::BTreeMap;
 
     /// No configuration file.
@@ -394,6 +404,35 @@ mod tests {
         SiteService::new(reading(input), Arc::new(Recorder::default()))
     }
 
+    /// Output folders that are all in one state, and hold no version.
+    struct Folders(FolderState);
+
+    impl OutputFolders for Folders {
+        fn state(&self, _: &Path, _: &Marker) -> IoResult<FolderState> {
+            Ok(self.0)
+        }
+
+        fn clear(&self, _: &Path) -> IoResult<()> {
+            Ok(())
+        }
+
+        fn remove(&self, _: &Path) -> IoResult<()> {
+            Ok(())
+        }
+
+        fn mark(&self, _: &Path, _: &Marker) -> IoResult<()> {
+            Ok(())
+        }
+
+        fn marked(&self, _: &Path) -> IoResult<Vec<VersionName>> {
+            Ok(Vec::new())
+        }
+    }
+
+    fn output(state: FolderState) -> OutputService {
+        OutputService::new(Arc::new(Folders(state)))
+    }
+
     fn reading(input: &Arc<Input>) -> InputService {
         InputService::new(input.clone(), input.clone())
     }
@@ -429,6 +468,7 @@ mod tests {
         let service = PreviewService::new(
             Arc::new(NoFile),
             site(&input),
+            output(FolderState::Missing),
             reading(&input),
             recorder,
             server.clone(),
@@ -503,6 +543,7 @@ mod tests {
         let service = PreviewService::new(
             Arc::new(NoFile),
             site(&input),
+            output(FolderState::Missing),
             reading(&input),
             Arc::new(Recorder::default()),
             server.clone(),
@@ -533,6 +574,7 @@ mod tests {
         let service = PreviewService::new(
             Arc::new(NoFile),
             site(&input),
+            output(FolderState::Missing),
             reading(&input),
             Arc::new(Recorder::default()),
             server.clone(),
@@ -563,5 +605,42 @@ mod tests {
             (host.as_str(), port, preview.current().number),
             ("127.0.0.1", 8000, 2)
         );
+    }
+
+    #[test]
+    fn a_build_into_a_folder_ghg_did_not_build_serves_nothing_unless_it_is_in_memory() {
+        let input = Arc::new(Input::default());
+        let server = Arc::new(Server::default());
+        let watcher = Arc::new(Watcher::default());
+        let service = PreviewService::new(
+            Arc::new(NoFile),
+            site(&input),
+            output(FolderState::Other),
+            reading(&input),
+            Arc::new(Recorder::default()),
+            server.clone(),
+            watcher.clone(),
+        );
+        let failure = service.serve(&ServeOptions::default(), words(), &Recorded::default());
+        assert!(
+            matches!(
+                &failure,
+                Err(ServeFailure::Output(problem)) if problem.kind == OutputProblemKind::NotASite
+            ),
+            "{failure:?}"
+        );
+        assert!(server.started.lock().expect("lock").is_none());
+        let options = ServeOptions {
+            watch: true,
+            ..ServeOptions::default()
+        };
+        let events = Recorded::default();
+        scope(|scope| {
+            let serving = scope.spawn(|| service.serve(&options, words(), &events));
+            assert_eq!(events.wait_for(1).len(), 1);
+            drop(watcher.sender.lock().expect("lock").take());
+            assert_eq!(serving.join().expect("no panic"), Ok(()));
+        });
+        assert!(server.started.lock().expect("lock").is_some());
     }
 }

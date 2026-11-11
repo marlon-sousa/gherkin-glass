@@ -1,0 +1,3 @@
+# Keeps a version already built.
+title = "Suite"
+replace_existing_version = false

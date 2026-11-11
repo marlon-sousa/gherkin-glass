@@ -27,8 +27,17 @@ impl SiteService {
         SiteService { input, writer }
     }
 
-    /// Writes into `output`, any folder, over what is there, and only once the whole input is read.
+    /// Writes into `output`, any folder, over what is there, and only once the
+    /// whole input is read. Whether a folder on disk may be written into is
+    /// [`crate::OutputService`]'s to decide, as docs/BEHAVIOUR.md, rule 38, says.
     pub fn build(&self, settings: &Settings, output: &Path) -> Result<(), Problems> {
+        let files = self.files(settings)?;
+        self.write(output, files)
+    }
+
+    /// Every file of the site, each a `/`-joined path below the output
+    /// folder with its contents, pages first, in file order. Nothing is written.
+    pub(crate) fn files(&self, settings: &Settings) -> Result<Vec<(String, Vec<u8>)>, Problems> {
         let features = self.input.read(&settings.input, settings.unnamed)?;
         let tags = tags_of(&features);
         let names = name_tags(&tags);
@@ -64,13 +73,19 @@ impl SiteService {
                 })
                 .collect::<Vec<_>>(),
         );
-        let assets = SiteAssets::iter().filter_map(|name| {
-            SiteAssets::get(&name).map(|file| (format!("assets/{name}"), file.data.into_owned()))
-        });
-        let files = rendered
+        Ok(rendered
             .into_iter()
             .map(|(address, html)| (address, html.into_bytes()))
-            .chain(assets);
+            .chain(assets())
+            .collect())
+    }
+
+    /// Writes `files` into `output`, stopping at the first that cannot be written.
+    pub(crate) fn write(
+        &self,
+        output: &Path,
+        files: impl IntoIterator<Item = (String, Vec<u8>)>,
+    ) -> Result<(), Problems> {
         for (file, contents) in files {
             self.writer
                 .write(output, &file, &contents)
@@ -86,6 +101,13 @@ impl SiteService {
         }
         Ok(())
     }
+}
+
+/// The assets every site has, each at its path below the output folder.
+pub(crate) fn assets() -> impl Iterator<Item = (String, Vec<u8>)> {
+    SiteAssets::iter().filter_map(|name| {
+        SiteAssets::get(&name).map(|file| (format!("assets/{name}"), file.data.into_owned()))
+    })
 }
 
 #[cfg(test)]
@@ -147,6 +169,8 @@ mod tests {
             output: PathBuf::from("site"),
             unnamed: Unnamed::Allowed,
             pages: PageOptions::default(),
+            version: None,
+            replace: true,
         };
         SiteService::new(input, writer).build(&settings, Path::new("elsewhere"))
     }

@@ -3,15 +3,20 @@
 mod accent_shortfall;
 mod anchors;
 mod breadcrumb;
+mod build_failure;
+mod build_folder;
 mod collected_input;
 mod colour;
 mod config;
 mod config_problem;
 mod doc_string;
 mod folder_page;
+mod folder_state;
 mod highlighted_step;
 mod invocation;
 mod listen_failure;
+mod marker;
+mod output_problem;
 mod page;
 mod page_frame;
 mod page_options;
@@ -28,20 +33,27 @@ mod tag_page;
 mod theme;
 mod tree_item;
 mod unnamed;
+mod version_list;
+mod version_name;
 mod watch;
 
 pub(crate) use accent_shortfall::AccentShortfall;
 pub use anchors::Anchors;
 pub(crate) use breadcrumb::{Breadcrumb, Crumb};
+pub use build_failure::BuildFailure;
+pub use build_folder::BuildFolder;
 pub use collected_input::CollectedInput;
 pub use colour::Colour;
 pub(crate) use config::Config;
 pub(crate) use config_problem::{ConfigProblem, ConfigProblemKind, ValueType};
 pub(crate) use doc_string::DocString;
 pub(crate) use folder_page::{FeatureEntry, FolderLink, FolderPage, FolderWords};
+pub use folder_state::FolderState;
 pub use highlighted_step::{HighlightedStep, StepPart};
 pub(crate) use invocation::{ArgumentProblem, BuildOptions, Invocation, ServeOptions};
 pub use listen_failure::ListenFailure;
+pub use marker::Marker;
+pub use output_problem::{OutputProblem, OutputProblemKind};
 pub(crate) use page::{
     BackgroundsOption, Block, BlockKind, ContentsEntry, DocStringView, FromBackground, OutsideLink,
     Page, PageWords, Paragraph, SourceLink, StepView, TableView, TagView,
@@ -62,4 +74,6 @@ pub use theme::Accents;
 pub(crate) use theme::{Palette, Theme};
 pub(crate) use tree_item::TreeItem;
 pub use unnamed::Unnamed;
+pub use version_list::VersionList;
+pub use version_name::VersionName;
 pub use watch::{Burst, Changes, WatchFailure, Watched};

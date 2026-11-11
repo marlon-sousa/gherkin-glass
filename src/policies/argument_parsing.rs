@@ -5,7 +5,7 @@ use std::path::PathBuf;
 
 use lexopt::{Arg, Error, Parser};
 
-use crate::entities::{ArgumentProblem, Invocation, ServeOptions};
+use crate::entities::{ArgumentProblem, Invocation, ServeOptions, VersionName};
 
 /// The arguments after the command's own name.
 pub(crate) fn parse_arguments(
@@ -64,6 +64,7 @@ fn parse_options(
             Arg::Long("input") => Slot::Path(&mut options.build.input, "--input"),
             Arg::Long("output") => Slot::Path(&mut options.build.output, "--output"),
             Arg::Long("title") => Slot::Text(&mut options.build.title, "--title"),
+            Arg::Long("version-name") => Slot::Version(&mut options.build.version_name),
             Arg::Long("host") if serving => Slot::Host(&mut options.host),
             Arg::Long("port") if serving => Slot::Port(&mut options.port),
             Arg::Long("no-build") if serving => Slot::Flag(&mut options.no_build, "--no-build"),
@@ -89,6 +90,7 @@ enum Slot<'a> {
     Host(&'a mut Option<String>),
     Port(&'a mut Option<u16>),
     Flag(&'a mut bool, &'static str),
+    Version(&'a mut Option<VersionName>),
 }
 
 impl Slot<'_> {
@@ -120,6 +122,18 @@ impl Slot<'_> {
                 }
                 let text = value(parser, command, option)?;
                 *slot = Some(text.to_string_lossy().into_owned());
+            }
+            Slot::Version(slot) => {
+                if slot.is_some() {
+                    return Err(repeated("--version-name"));
+                }
+                let text = value(parser, command, "--version-name")?;
+                let text = text.to_string_lossy();
+                *slot = Some(VersionName::new(&text).ok_or_else(|| {
+                    ArgumentProblem::InvalidVersionName {
+                        name: text.into_owned(),
+                    }
+                })?);
             }
             Slot::Host(slot) => {
                 if slot.is_some() {
@@ -298,6 +312,54 @@ mod tests {
         assert_eq!(
             parse(&["build", "--config", "a.toml", "--input=b"]),
             Ok(build(Some("a.toml"), Some("b")))
+        );
+    }
+
+    #[test]
+    fn a_version_name_is_taken_in_either_spelling() {
+        let versioned = |name| {
+            Ok(Invocation::Build(BuildOptions {
+                version_name: VersionName::new(name),
+                input: Some(PathBuf::from("x")),
+                ..BuildOptions::default()
+            }))
+        };
+        assert_eq!(
+            parse(&["build", "--version-name", "v1.2.0", "--input", "x"]),
+            versioned("v1.2.0")
+        );
+        assert_eq!(
+            parse(&["build", "--input=x", "--version-name=main"]),
+            versioned("main")
+        );
+    }
+
+    #[test]
+    fn a_version_name_that_cannot_be_one_is_a_mistake() {
+        use ArgumentProblem::*;
+        assert_eq!(
+            parse(&["build", "--version-name", "../v1"]),
+            Err(InvalidVersionName {
+                name: "../v1".into()
+            })
+        );
+        assert_eq!(
+            parse(&["build", "--version-name="]),
+            Err(MissingValue {
+                option: "--version-name".into()
+            })
+        );
+        assert_eq!(
+            parse(&["build", "--version-name"]),
+            Err(MissingValue {
+                option: "--version-name".into()
+            })
+        );
+        assert_eq!(
+            parse(&["build", "--version-name", "a", "--version-name", "b"]),
+            Err(RepeatedOption {
+                option: "--version-name".into()
+            })
         );
     }
 

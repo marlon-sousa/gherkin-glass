@@ -2,6 +2,8 @@
 
 use std::path::PathBuf;
 
+use crate::entities::VersionName;
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) enum Invocation {
     Help,
@@ -15,6 +17,7 @@ pub(crate) enum Invocation {
 pub(crate) struct BuildOptions {
     pub(crate) config: Option<PathBuf>,
     pub(crate) input: Option<PathBuf>,
+    pub(crate) version_name: Option<VersionName>,
     pub(crate) output: Option<PathBuf>,
     pub(crate) title: Option<String>,
 }
@@ -59,4 +62,7 @@ pub(crate) enum ArgumentProblem {
         value: String,
     },
     WatchWithoutBuild,
+    InvalidVersionName {
+        name: String,
+    },
 }

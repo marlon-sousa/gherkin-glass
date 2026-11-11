@@ -5,7 +5,8 @@
 //! parsing the input; [`make_anchors`] makes a feature's anchors, part of
 //! the third, as [`highlight_step`] splits a step into the parts its highlighting
 //! tells apart; [`SiteService`] runs the whole build, writing each feature's
-//! page; [`PreviewService`] previews a site, built and served; and
+//! page; [`OutputService`] writes a build into its output folder, with or
+//! without versions; [`PreviewService`] previews a site, built and served; and
 //! [`CommandLine`] is the `ghg` command, configured by `ghg.toml`.
 
 #![warn(unreachable_pub)]
@@ -19,18 +20,19 @@ mod services;
 
 pub use adapters::{
     ConfigFileReader, FileWatcher, GherkinParser, HttpPreviewServer, InputWalker, MemorySite,
-    SiteFiles, StandardStreams,
+    OutputFolderStore, SiteFiles, StandardStreams,
 };
 pub use controllers::{CommandLine, Reply};
 pub use entities::{
-    Accents, Anchors, Burst, Changes, CollectedInput, Colour, HighlightedStep, ListenFailure,
+    Accents, Anchors, BuildFailure, BuildFolder, Burst, Changes, CollectedInput, Colour,
+    FolderState, HighlightedStep, ListenFailure, Marker, OutputProblem, OutputProblemKind,
     PageOptions, ParseFailure, ParsedFeature, Preview, Problem, ProblemKind, Problems, RawFeature,
     ServedSite, ServerWords, Settings, StepPart, TagLink, Unnamed, UnnamedBlock, Version,
-    WatchFailure, Watched,
+    VersionList, VersionName, WatchFailure, Watched,
 };
 pub use policies::{DEFAULT_ACCENTS, highlight_step, make_anchors};
 pub use ports::{
-    ChangeWatcher, ConfigReader, FeatureParser, InputCollector, PreviewServer, SiteRecorder,
-    SiteWriter, Terminal,
+    ChangeWatcher, ConfigReader, FeatureParser, InputCollector, OutputFolders, PreviewServer,
+    SiteRecorder, SiteWriter, Terminal,
 };
-pub use services::{InputService, PreviewService, SiteService};
+pub use services::{InputService, OutputService, PreviewService, SiteService};

@@ -292,6 +292,56 @@ fn it_builds_into_the_output_folder_and_serves_it() {
     assert_eq!(get(&serving.address, "/__ghg/build").status, 404);
 }
 
+#[test]
+fn the_output_folder_is_checked_as_ghg_build_checks_it_unless_the_site_is_in_memory() {
+    let folder = built_copy("serve-not-a-site");
+    create_dir_all(folder.join("site")).expect("made");
+    write(folder.join("site/notes.txt"), "mine").expect("written");
+    let (stdout, stderr, status) = serve_to_the_end(&folder, &["--port", "0"]);
+    assert_eq!(stdout, "");
+    assert_eq!(
+        stderr,
+        "site: this is not a site ghg built, so it is left as it is. \
+         Build into an empty or new folder.\n"
+    );
+    assert_eq!(status, Some(1));
+    let serving = serve(&folder, &["--port", "0", "--watch"]);
+    assert_eq!(get(&serving.address, "/withdraw.html").status, 200);
+    drop(serving);
+    assert_eq!(
+        read_to_string(folder.join("site/notes.txt")).expect("kept"),
+        "mine"
+    );
+}
+
+#[test]
+fn a_version_name_changes_nothing_under_watch() {
+    let folder = built_copy("serve-watch-versioned");
+    let serving = serve(
+        &folder,
+        &["--port", "0", "--watch", "--version-name", "main"],
+    );
+    assert_eq!(get(&serving.address, "/withdraw.html").status, 200);
+    assert_eq!(get(&serving.address, "/main/withdraw.html").status, 404);
+    drop(serving);
+    assert!(!folder.join("site").exists());
+}
+
+#[test]
+fn a_versioned_build_serves_the_output_folder_with_its_versions_page() {
+    let folder = built_copy("serve-versioned");
+    let serving = serve(&folder, &["--port", "0", "--version-name", "main"]);
+    let page = get(&serving.address, "/");
+    assert_eq!(page.status, 200);
+    assert!(
+        page.text().contains("href=\"main/index.html\""),
+        "{}",
+        page.text()
+    );
+    assert_eq!(get(&serving.address, "/main/withdraw.html").status, 200);
+    assert!(folder.join("site/main/ghg-version.json").is_file());
+}
+
 // What it answers: rules 61 to 64.
 
 #[test]

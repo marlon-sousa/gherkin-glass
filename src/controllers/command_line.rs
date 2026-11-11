@@ -8,16 +8,17 @@ use std::sync::Arc;
 
 use i18n_embed_fl::fl;
 
-use crate::entities::{BuildOptions, Invocation, ServeOptions, ServerWords};
+use crate::entities::{BuildFailure, BuildOptions, Invocation, ServeOptions, ServerWords};
 use crate::policies::{CATALOGUE, parse_arguments};
 use crate::ports::{ConfigReader, Terminal};
 use crate::services::{
-    PreviewEvents, PreviewService, RebuildFailure, SettingsService, SiteService,
+    OutputService, PreviewEvents, PreviewService, RebuildFailure, SettingsService, SiteService,
 };
 
 pub struct CommandLine {
     settings: SettingsService,
     site: SiteService,
+    output: OutputService,
     preview: PreviewService,
     terminal: Arc<dyn Terminal>,
 }
@@ -38,12 +39,14 @@ impl CommandLine {
     pub fn new(
         config_reader: Arc<dyn ConfigReader>,
         site: SiteService,
+        output: OutputService,
         preview: PreviewService,
         terminal: Arc<dyn Terminal>,
     ) -> Self {
         CommandLine {
             settings: SettingsService::new(config_reader),
             site,
+            output,
             preview,
             terminal,
         }
@@ -81,13 +84,18 @@ impl CommandLine {
             Ok(settings) => settings,
             Err(problems) => return Reply::failure(1, wording::config_problems(&problems)),
         };
-        match self.site.build(&settings, &settings.output) {
-            Ok(_) if settings.pages.title.is_none() => Reply {
+        match self.output.build(&self.site, &settings) {
+            Ok(()) if settings.pages.title.is_none() => Reply {
                 stderr: lines(fl!(CATALOGUE, "no-title")),
                 ..Reply::success(String::new())
             },
-            Ok(_) => Reply::success(String::new()),
-            Err(problems) => Reply::failure(1, wording::problems(&problems)),
+            Ok(()) => Reply::success(String::new()),
+            Err(BuildFailure::Problems(problems)) => {
+                Reply::failure(1, wording::problems(&problems))
+            }
+            Err(BuildFailure::Output(problem)) => {
+                Reply::failure(1, wording::output_problem(&problem))
+            }
         }
     }
 }
@@ -152,11 +160,12 @@ mod tests {
 
     use super::*;
     use crate::entities::{
-        Changes, CollectedInput, ListenFailure, ParseFailure, Preview, ProblemKind, RawFeature,
-        WatchFailure, Watched,
+        Changes, CollectedInput, FolderState, ListenFailure, Marker, ParseFailure, Preview,
+        ProblemKind, RawFeature, VersionName, WatchFailure, Watched,
     };
     use crate::ports::{
-        ChangeWatcher, FeatureParser, InputCollector, PreviewServer, SiteRecorder, SiteWriter,
+        ChangeWatcher, FeatureParser, InputCollector, OutputFolders, PreviewServer, SiteRecorder,
+        SiteWriter,
     };
     use crate::services::{InputService, ServeFailure};
 
@@ -175,12 +184,28 @@ mod tests {
         }
     }
 
-    /// Writes nothing; the parser fails every file before anything is written.
-    struct NoWriter;
+    /// An output folder with no version in it, whose folders are never touched.
+    struct NoVersions;
 
-    impl SiteWriter for NoWriter {
-        fn write(&self, _output: &Path, _file: &str, _contents: &[u8]) -> IoResult<()> {
+    impl OutputFolders for NoVersions {
+        fn state(&self, _folder: &Path, _marker: &Marker) -> IoResult<FolderState> {
+            Ok(FolderState::Missing)
+        }
+
+        fn clear(&self, _folder: &Path) -> IoResult<()> {
             Ok(())
+        }
+
+        fn remove(&self, _path: &Path) -> IoResult<()> {
+            Ok(())
+        }
+
+        fn mark(&self, _folder: &Path, _marker: &Marker) -> IoResult<()> {
+            Ok(())
+        }
+
+        fn marked(&self, _output: &Path) -> IoResult<Vec<VersionName>> {
+            Ok(Vec::new())
         }
     }
 
@@ -230,16 +255,18 @@ mod tests {
             .collect();
         let files: Arc<FakeFiles> = Arc::new(FakeFiles(files));
         let input = InputService::new(Arc::new(FakeCollector), Arc::new(FailingParser));
-        let site = || SiteService::new(input.clone(), Arc::new(NoWriter));
+        let site = || SiteService::new(input.clone(), Arc::new(NoRecorder));
+        let output = OutputService::new(Arc::new(NoVersions));
         let preview = PreviewService::new(
             files.clone(),
             site(),
+            output.clone(),
             input.clone(),
             Arc::new(NoRecorder),
             Arc::new(PortTaken),
             Arc::new(NoWatching),
         );
-        CommandLine::new(files, site(), preview, Arc::new(Silent))
+        CommandLine::new(files, site(), output, preview, Arc::new(Silent))
             .run(arguments.iter().map(OsString::from))
     }
 
