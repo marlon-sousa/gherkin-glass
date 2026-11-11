@@ -48,7 +48,7 @@ A stack is a chain of pull requests, declared to GitHub as a stack so that it sh
 2. **Declare the stack.** Once at least two layers exist, `POST /repos/OWNER/REPO/stacks` with the pull request numbers from bottom to top, `{"pull_requests": [12, 13]}`. A layer added later is appended with `POST /repos/OWNER/REPO/stacks/<stack number>/add`, giving only the new numbers, bottom to top. `GET /repos/OWNER/REPO/stacks?pull_request=<number>` finds the stack a pull request belongs to.
 3. **Say where each layer sits.** Each description says its place, such as "2 of 3", and what the layers below it already do.
 4. **Merge bottom up.** A layer is merged only after the layers below it.
-5. **Fix forward.** A change to a lower layer is merged up into the layers above it, never by rewriting their history.
+5. **Keep the stack linear.** Every layer sits on the current tip of the layer below. A fix to a lower layer is a new commit on that layer's branch only; a lower branch is never merged into an upper one, because GitHub's restack drops merge commits, and the conflicts they settled come back. When a layer merges, GitHub retargets the layer above to `main` and rebases the layers above it. When it cannot, each layer above is rebased onto the new tip of the one below, bottom first, and pushed with `git push --force-with-lease`: the only rewrite of history allowed, and only of one's own layers.
 
 ### Commit messages
 

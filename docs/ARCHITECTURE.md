@@ -6,11 +6,11 @@ It was agreed in [#23](https://github.com/marlon-sousa/gherkin-glass/issues/23),
 
 ## The guiding principle
 
-Ports and adapters. The pure part of gherkin-glass, which decides what the site contains, knows nothing of the disk. It defines the seams it needs from the world as traits, the ports, and the code that touches the world implements them, the adapters. The binary is the composition root: the one place that chooses the concrete adapters and hands them in. Dependencies point inward only.
+Ports and adapters. The pure part of gherkin-glass, which decides what the site contains, knows nothing of the disk. It defines the seams it needs from the world as traits, the ports, and the code that touches the world implements them, the adapters. The composition root is the one place that chooses the concrete adapters and hands them in, and the one door into the library. Dependencies point inward only.
 
 ## The repository
 
-- **One crate**, `gherkin-glass`: a library, `src/lib.rs`, and the binaries built on it: `ghg`, from `src/main.rs`, and the cargo plugin `cargo-ghg`, from `src/cargo_ghg.rs`, which runs the same code as `cargo ghg` ([#18](https://github.com/marlon-sousa/gherkin-glass/issues/18)). Both binaries share `src/composition_root.rs`, which wires the real adapters in, and each only hands it its arguments. Nothing in it is heavy enough to earn a crate of its own.
+- **One crate**, `gherkin-glass`: a library, `src/lib.rs`, and the binaries built on it: `ghg`, from `src/main.rs`, and the cargo plugin `cargo-ghg`, from `src/cargo_ghg.rs`, which runs the same code as `cargo ghg` ([#18](https://github.com/marlon-sousa/gherkin-glass/issues/18)). The library's composition root, `src/composition_root.rs`, wires the real adapters in, and each binary only hands its entry point the process's arguments. Nothing in it is heavy enough to earn a crate of its own.
 - **`xtask/`**, the crate behind `cargo xtask build` and `cargo xtask check` ([#4](https://github.com/marlon-sousa/gherkin-glass/issues/4)). It orchestrates the build and is never shipped.
 - **`templates/`**, the askama templates, at the place askama looks by default. They are the views: everything a page says is placed here, except the folder tree, which the script builds from shared data ([#7](https://github.com/marlon-sousa/gherkin-glass/issues/7)).
 - **`script/`**, the TypeScript of the pages' behaviour, an npm package with its own `package.json` and lockfile. Its compiled output is committed, so building the crate needs no Node ([#4](https://github.com/marlon-sousa/gherkin-glass/issues/4)).
@@ -22,7 +22,7 @@ Ports and adapters. The pure part of gherkin-glass, which decides what the site 
 
 ## Module roles
 
-Every module plays exactly one of six roles, and says which on the first line of its `//!` doc comment, such as `//! Policy: the anchor rule.` The other files play none and say so instead: `lib.rs`, the facade, and the composition root, which is `composition_root.rs` with the two binaries' entry points, `main.rs` and `cargo_ghg.rs`.
+Every module plays exactly one of six roles, and says which on the first line of its `//!` doc comment, such as `//! Policy: the anchor rule.` The other files play none and say so instead: `lib.rs`, the facade; `composition_root.rs`, the composition root, a module of the library; and the two binaries, `main.rs` and `cargo_ghg.rs`, which only call it.
 
 1. **Entity or value**: data and the invariants it keeps, such as a parsed feature, a page, or a problem found in the input.
 2. **Policy**: a pure computation, the same output for the same input every time. Correcting doc strings, making anchors, building the site's model, the page addresses and the contrast check are policies, and so is rendering a template into a string.
@@ -48,12 +48,13 @@ The service that builds a site runs these steps; the controller behind the comma
 
 ## Folders and files
 
-1. **`lib.rs` is a facade**: only `mod` declarations and `pub use` re-exports, no logic. The crate's public interface fits on one screen.
-2. **The visibility ladder**: private by default, `pub(crate)` when another module of the crate needs it, and bare `pub` only for what `lib.rs` re-exports. `#![warn(unreachable_pub)]` catches a `pub` that is not re-exported, and CI makes the warning an error; keeping the rest private is left to review.
-3. **`module.rs` with a `module/` folder, never `mod.rs`**, so that every file's name says what it holds, which also reads better in a screen reader's list of editor tabs. One concept per file, named after it. A module earns a folder when it has private internals of its own.
+1. **`lib.rs` is a facade with one door**: only `mod` declarations and a `pub use` of the two entry points, one for `ghg` and one for `cargo-ghg`, both in `composition_root.rs`, and no logic. gherkin-glass is a command, not a library: the library exists only so that both binaries and the tests share the code, so its crate documentation says it is not a stable API and that the way to use gherkin-glass is the `ghg` command. Adapters, ports, services, entities and policies are details, and none of them is exported. A real API, if one is ever wanted, starts as an issue that designs it.
+2. **The visibility ladder**: private by default, `pub(crate)` when another module of the crate needs it, and bare `pub` only for the two entry points. `#![warn(unreachable_pub)]` catches a `pub` that is not re-exported, and CI makes the warning an error; a `pub use` in `lib.rs` of anything but the entry points is a review finding.
+3. **`module.rs` with a `module/` folder, never `mod.rs`**, so that every file's name says what it holds, which also reads better in a screen reader's list of editor tabs. One concept per file, named after it. A module earns a folder when it has private internals of its own, or when it grows past rule 7's limit.
 4. **Folders are named by role**: `entities/`, `policies/`, `ports/`, `adapters/`, `services/`, `controllers/`. The path says the role before the file is opened, and the file's name says the concept. There are no folders named by concept: a concept that spans roles is several files, one in each role's folder. There is no `utils.rs` or `helpers.rs`.
-5. **Unit tests live with the code**, in a `#[cfg(test)] mod tests` at the bottom of the file they test, where they can see private items without exporting them. Tests that build a whole site from a fixture live in `tests/`.
+5. **Unit tests live with the code**, in a `#[cfg(test)] mod tests` at the bottom of the file whose code decides what they check, where they can see private items without exporting them. A test module past 150 lines is a file of its own: `#[cfg(test)] mod tests;` at the bottom of `module.rs`, with the tests in `module/tests.rs`. The tests in `tests/` reach the code only through the two entry points or by running a binary, as `tests/command_line.rs` does; a test that needs an internal type is a unit test.
 6. **Import a symbol, then use it by its bare name**: `use askama::Template;` then `#[derive(Template)]`, never `askama::Template` written inline. A type's own associated items, such as `Feature::parse_path`, and `crate::` or `super::` paths a macro needs, are the import-then-use pattern already and stay as they are.
+7. **A file past 200 lines holds one thing.** A file's length counts its code and its documentation, but not its test module. Past 200 lines, a file holding two things or more, related or not, keeps one and moves each other to a private submodule of its own, in the file's `module/` folder. Only a file whose lines all belong to one type, with its own `impl` blocks and the private helpers only it uses, may stay longer. A module whose parts all belong to one concept still splits along the seams inside it.
 
 ## Comments
 

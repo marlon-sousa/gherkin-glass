@@ -19,6 +19,23 @@ The manual for anyone, human or agent, changing gherkin-glass. [CONTRIBUTING.md]
 6. **Write for a screen reader.** Issues, pull requests, comments and documents use headings, lists, prose and simple tables, never ASCII art.
 7. **Mark agent comments.** A comment an agent writes on GitHub says it is an agent's.
 
+## Reviewing a change
+
+Every pull request is reviewed by an independent reviewer before it is opened, one given the change, not its author's reasoning. The reviewer is given this section in full, the documents under "What to read", the issue, the commits to review and the draft pull request description. For each item, it lists every place in the diff where the item applies, not only the first, and checks each against the rule it names.
+
+1. Every behaviour the change adds, against docs/BEHAVIOUR.md, and every rule added or changed there, against rule 2 above.
+2. Every page the change touches, against rule 3 above, and every page path and anchor, against rule 4 above.
+3. `lib.rs`, against docs/ARCHITECTURE.md, "Folders and files", rules 1 and 2: it exports the two entry points and nothing else. Every new bare `pub` elsewhere is a finding.
+4. Every file the change adds or makes longer: its lines before its test module, against rule 7 of that same section, and the lines of its test module, against its rule 5. Past either limit, the reviewer says what the file holds and proposes the private submodules it splits into.
+5. Every new module: its role line, its folder and its name, against "Module roles" and "Folders and files".
+6. Every test the change adds or moves: a test in `tests/` reaches the code only through the entry points or a binary, and a unit test is in the module whose code decides what it checks.
+7. Every comment and doc comment, against "Comments".
+8. Every statement of docs/ARCHITECTURE.md the change makes untrue, which the change updates itself.
+9. The commit messages and the description, against CONTRIBUTING.md and rule 5 above. For a layer of a stack, its branch sits on the current tip of the layer below and holds no merge of a lower branch, as CONTRIBUTING.md, "Stacked pull requests", says.
+10. The checks under "Building and testing", run at the reviewed revision, without changing the checkout the author works in.
+
+The report lists findings, each marked blocking or not, with its `file:line` and a fix, then a verdict: approve, or changes needed. A finding the author rejects goes back to the reviewer with the reason, and a blocking one closes only when the reviewer agrees or the maintainer decides.
+
 ## Building and testing
 
 The toolchain is pinned in `rust-toolchain.toml`. Running `rustup toolchain install` in the repository installs it with its components; this needs rustup 1.28 or later. Before pushing, run the checks a pull request runs, from the repository's root:
