@@ -1,14 +1,14 @@
-//! Policy: what a request's path asks ghg serve for.
+//! Adapter: what a request's path asks ghg serve for over HTTP.
 
 use std::path::{Component, Path};
 
 /// The address `/__ghg/build`, answered only under `--watch`.
 const BUILD_NUMBER: &str = "/__ghg/build";
 /// The address `/__ghg/reload.js`, answered only under `--watch`.
-pub(crate) const RELOAD_SCRIPT: &str = "/__ghg/reload.js";
+pub(super) const RELOAD_ADDRESS: &str = "/__ghg/reload.js";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) enum Route {
+pub(super) enum Route {
     BuildNumber,
     ReloadScript,
     /// A file, by its `/`-joined address below the site's root. When there
@@ -22,7 +22,7 @@ pub(crate) enum Route {
 }
 
 /// `url` is the request's target as the browser sent it, its path and query.
-pub(crate) fn route(url: &str, watching: bool) -> Route {
+pub(super) fn route(url: &str, watching: bool) -> Route {
     // A browser never sends the fragment, but another client may.
     let url = url.split_once('#').map_or(url, |(url, _)| url);
     let (path, query) = match url.split_once('?') {
@@ -32,7 +32,7 @@ pub(crate) fn route(url: &str, watching: bool) -> Route {
     if watching && path == BUILD_NUMBER {
         return Route::BuildNumber;
     }
-    if watching && path == RELOAD_SCRIPT {
+    if watching && path == RELOAD_ADDRESS {
         return Route::ReloadScript;
     }
     let Some(below_root) = path.strip_prefix('/') else {

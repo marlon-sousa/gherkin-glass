@@ -164,24 +164,7 @@ Each feature file becomes one page of the site, which a screen reader can move t
 ### What it answers
 
 61. It answers `GET` and `HEAD` requests. A request's path names a file below the served folder, its parts decoded from percent-encoding as UTF-8, and its query left aside. A path ending in `/` names the `index.html` file of that folder. A path naming a folder without the `/` is redirected, with status 301, to the same path with the `/`, so that the page's relative links work. Fixture: `tests/fixtures/serve/site`.
-62. A file is served with status 200, exactly as it is, and with the content type its extension gives, in this table. Any other extension, and a file with none, is served as `application/octet-stream`. Fixture: `tests/fixtures/serve/site`.
-
-    | Extension | Content type |
-    | --- | --- |
-    | `.html` | `text/html; charset=utf-8` |
-    | `.css` | `text/css; charset=utf-8` |
-    | `.js` and `.mjs` | `text/javascript; charset=utf-8` |
-    | `.json` and `.map` | `application/json` |
-    | `.txt` | `text/plain; charset=utf-8` |
-    | `.svg` | `image/svg+xml` |
-    | `.png` | `image/png` |
-    | `.jpg` and `.jpeg` | `image/jpeg` |
-    | `.gif` | `image/gif` |
-    | `.webp` | `image/webp` |
-    | `.ico` | `image/x-icon` |
-    | `.woff2` | `font/woff2` |
-    | `.woff` | `font/woff` |
-
+62. A file is served with status 200, exactly as it is, and with the content type the `mime_guess` crate gives for its extension, regardless of case, followed by `; charset=utf-8` when that type is text. An extension it does not know, and a file with none, is served as `application/octet-stream`. So the files a site holds are served as `text/html; charset=utf-8` for `.html`, `text/css; charset=utf-8` for `.css`, `text/javascript; charset=utf-8` for `.js` and `application/json` for `.json`. Fixture: `tests/fixtures/serve/site`.
 63. Every answer says `Cache-Control: no-cache`, so that a browser asks again for a file before using its copy. Fixture: `tests/fixtures/serve/site`.
 64. A path with no file, a path with an empty part, a part `.` or a part `..`, or a path that cannot be decoded, is answered with status 404 and the plain text sentence `Nothing is at this address in the site.` No request's path leads outside the served folder, though a symbolic link inside it is followed. Any method other than `GET` and `HEAD` is answered with status 405 and the sentence `ghg serve answers only GET and HEAD requests.` Fixture: `tests/fixtures/serve/site`.
 

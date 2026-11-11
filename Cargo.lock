@@ -298,6 +298,7 @@ dependencies = [
  "i18n-embed-fl",
  "ignore",
  "lexopt",
+ "mime_guess",
  "notify-debouncer-full",
  "rayon",
  "rust-embed",

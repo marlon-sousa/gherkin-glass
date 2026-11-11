@@ -1,5 +1,9 @@
 //! Adapter: the preview server port over HTTP, with tiny_http.
 
+mod content_type;
+mod reload_injection;
+mod request_route;
+
 use std::fs::read;
 use std::io::ErrorKind;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, TcpListener, TcpStream};
@@ -10,8 +14,10 @@ use std::time::Duration;
 use tiny_http::{Header, Method, Request, Response, Server, StatusCode};
 
 use crate::entities::{ListenFailure, Preview, ServedSite, ServerWords, Version};
-use crate::policies::{Route, add_reload_script, content_type, is_html, route};
 use crate::ports::PreviewServer;
+use content_type::{content_type, is_html};
+use reload_injection::add_reload_script;
+use request_route::{Route, route};
 
 /// The reload script, added to every page under `--watch`.
 const RELOAD_SCRIPT: &str = include_str!("preview_http/reload.js");
@@ -91,13 +97,13 @@ fn someone_listens(mut address: SocketAddr) -> bool {
 /// What a request is answered with, before it is sent.
 struct Answer {
     status: u16,
-    content_type: &'static str,
+    content_type: String,
     body: Vec<u8>,
     location: Option<String>,
 }
 
 impl Answer {
-    fn ok(content_type: &'static str, body: Vec<u8>) -> Self {
+    fn ok(content_type: String, body: Vec<u8>) -> Self {
         Answer {
             status: 200,
             content_type,
@@ -109,7 +115,7 @@ impl Answer {
     fn text(status: u16, sentence: &str) -> Self {
         Answer {
             status,
-            content_type: "text/plain; charset=utf-8",
+            content_type: "text/plain; charset=utf-8".into(),
             body: format!("{sentence}\n").into_bytes(),
             location: None,
         }
@@ -118,7 +124,7 @@ impl Answer {
     fn redirect(location: String) -> Self {
         Answer {
             status: 301,
-            content_type: "text/plain; charset=utf-8",
+            content_type: "text/plain; charset=utf-8".into(),
             body: Vec::new(),
             location: Some(location),
         }
@@ -132,7 +138,7 @@ fn answer(request: Request, preview: &Preview, words: &ServerWords) {
     };
     let mut response = Response::from_data(answer.body)
         .with_status_code(StatusCode(answer.status))
-        .with_header(header("Content-Type", answer.content_type))
+        .with_header(header("Content-Type", &answer.content_type))
         .with_header(header("Cache-Control", "no-cache"));
     if answer.status == 405 {
         response = response.with_header(header("Allow", "GET, HEAD"));
@@ -149,11 +155,11 @@ fn choose(url: &str, preview: &Preview, words: &ServerWords) -> Answer {
     match route(url, preview.watching) {
         Route::NotFound => not_found(),
         Route::BuildNumber => Answer::ok(
-            "text/plain; charset=utf-8",
+            "text/plain; charset=utf-8".into(),
             preview.current().number.to_string().into_bytes(),
         ),
         Route::ReloadScript => Answer::ok(
-            "text/javascript; charset=utf-8",
+            "text/javascript; charset=utf-8".into(),
             RELOAD_SCRIPT.as_bytes().to_vec(),
         ),
         Route::File {
@@ -164,7 +170,7 @@ fn choose(url: &str, preview: &Preview, words: &ServerWords) -> Answer {
             match find(&version, &address) {
                 Found::File(body) => {
                     let content_type = content_type(&address);
-                    let body = if preview.watching && is_html(content_type) {
+                    let body = if preview.watching && is_html(&content_type) {
                         add_reload_script(&body, version.number)
                     } else {
                         body

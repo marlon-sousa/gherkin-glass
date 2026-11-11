@@ -1,12 +1,13 @@
-//! Policy: the reload script's element, added to a page served under `--watch`.
+//! Adapter: the reload script's element, added to a page served over HTTP under `--watch`.
 
-use crate::policies::RELOAD_SCRIPT;
+use super::request_route::RELOAD_ADDRESS;
 
 /// `page` with the reload script's element just before its last `</body>`,
 /// in any case, or at its end when it has none; `build` is the number of
 /// the version the page comes from.
-pub(crate) fn add_reload_script(page: &[u8], build: u64) -> Vec<u8> {
-    let element = format!(r#"<script type="module" src="{RELOAD_SCRIPT}?build={build}"></script>"#);
+pub(super) fn add_reload_script(page: &[u8], build: u64) -> Vec<u8> {
+    let element =
+        format!(r#"<script type="module" src="{RELOAD_ADDRESS}?build={build}"></script>"#);
     let at = page
         .windows(7)
         .rposition(|window| window.eq_ignore_ascii_case(b"</body>"))
