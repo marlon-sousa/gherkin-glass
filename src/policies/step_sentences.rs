@@ -17,20 +17,28 @@ pub(crate) fn find_step_sentences<'a>(
     let mut features: Vec<_> = features.into_iter().collect();
     features.sort_by(|a, b| a.parsed.path.cmp(&b.parsed.path));
 
-    // Keyed so that iterating sorts as rules 137 and 138 say: by kind, by the
-    // text lower-cased, then by the text itself.
-    let mut found: BTreeMap<(StepKind, String, String), Vec<SentenceUse>> = BTreeMap::new();
+    let mut found: BTreeMap<SentenceKey, Vec<SentenceUse>> = BTreeMap::new();
     for anchored in features {
         let parsed = anchored.parsed;
-        for (anchor, heading, step, columns) in steps_of(anchored) {
+        for FoundStep {
+            anchor,
+            heading,
+            step,
+            columns,
+        } in steps_of(anchored)
+        {
             let (text, values) = sentence_of(&step.value, &columns);
             found
-                .entry((kind_of(step.ty), text.to_lowercase(), text))
+                .entry(SentenceKey {
+                    kind: kind_of(step.ty),
+                    lower: text.to_lowercase(),
+                    text,
+                })
                 .or_default()
                 .push(SentenceUse {
                     path: parsed.path.clone(),
                     anchor: anchor.to_string(),
-                    heading: heading.clone(),
+                    heading,
                     line: step.position.line,
                     values,
                 });
@@ -38,7 +46,7 @@ pub(crate) fn find_step_sentences<'a>(
     }
 
     let mut groups: Vec<SentenceGroup> = Vec::new();
-    for ((kind, _, text), uses) in found {
+    for (SentenceKey { kind, text, .. }, uses) in found {
         let sentence = Sentence { text, uses };
         match groups.last_mut() {
             Some(group) if group.kind == kind => group.sentences.push(sentence),
@@ -51,9 +59,45 @@ pub(crate) fn find_step_sentences<'a>(
     StepSentences { groups }
 }
 
+/// A sentence's place in the page: its fields, in order, sort the sentences by kind, by their
+/// text lower-cased, then by the text itself.
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
+struct SentenceKey {
+    kind: StepKind,
+    lower: String,
+    text: String,
+}
+
 /// A step, with the anchor and the heading of its block, and the columns of its outline, if
 /// it is in one.
-type FoundStep<'a> = (&'a str, String, &'a Step, Vec<&'a str>);
+struct FoundStep<'a> {
+    anchor: &'a str,
+    heading: String,
+    step: &'a Step,
+    columns: Vec<&'a str>,
+}
+
+/// What the steps of one block share.
+struct StepBlock<'a> {
+    anchor: &'a str,
+    heading: String,
+    columns: Vec<&'a str>,
+}
+
+impl<'a> StepBlock<'a> {
+    fn steps(&self, steps: &'a [Step]) -> Vec<FoundStep<'a>> {
+        steps.iter().map(|step| self.step(step)).collect()
+    }
+
+    fn step(&self, step: &'a Step) -> FoundStep<'a> {
+        FoundStep {
+            anchor: self.anchor,
+            heading: self.heading.clone(),
+            step,
+            columns: self.columns.clone(),
+        }
+    }
+}
 
 /// Every step of the feature in file order.
 fn steps_of<'a>(anchored: &'a AnchoredFeature<'a>) -> Vec<FoundStep<'a>> {
@@ -62,43 +106,27 @@ fn steps_of<'a>(anchored: &'a AnchoredFeature<'a>) -> Vec<FoundStep<'a>> {
         .flat_map(background_steps)
         .chain(anchored.all_scenarios().flat_map(scenario_steps))
         .collect();
-    steps.sort_by_key(|(_, _, step, _)| step.span.start);
+    steps.sort_by_key(|found| found.step.span.start);
     steps
 }
 
 fn background_steps<'a>(background: &'a Anchored<'a, Background>) -> Vec<FoundStep<'a>> {
-    let heading = heading(&background.block.keyword, &background.block.name);
-    background
-        .block
-        .steps
-        .iter()
-        .map(|step| {
-            (
-                background.anchor.as_str(),
-                heading.clone(),
-                step,
-                Vec::new(),
-            )
-        })
-        .collect()
+    StepBlock {
+        anchor: &background.anchor,
+        heading: heading(&background.block.keyword, &background.block.name),
+        columns: Vec::new(),
+    }
+    .steps(&background.block.steps)
 }
 
 fn scenario_steps<'a>(anchored: &'a AnchoredScenario<'a>) -> Vec<FoundStep<'a>> {
     let scenario = anchored.scenario;
-    let columns = columns_of(scenario);
-    let heading = heading(&scenario.keyword, &scenario.name);
-    scenario
-        .steps
-        .iter()
-        .map(|step| {
-            (
-                anchored.anchor.as_str(),
-                heading.clone(),
-                step,
-                columns.clone(),
-            )
-        })
-        .collect()
+    StepBlock {
+        anchor: &anchored.anchor,
+        heading: heading(&scenario.keyword, &scenario.name),
+        columns: columns_of(scenario),
+    }
+    .steps(&scenario.steps)
 }
 
 /// The names in the header rows of an outline's examples; none for a plain scenario.

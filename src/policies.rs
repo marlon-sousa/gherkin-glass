@@ -49,7 +49,7 @@ pub(crate) use contrast::{TEXT_CONTRAST, contrast_ratio, hundredths};
 pub(crate) use doc_string_correction::correct_doc_strings;
 pub(crate) use example_rows::{ExampleRow, example_rows};
 pub(crate) use file_language::file_language;
-pub(crate) use file_selection::{FileSelection, IGNORE_FILE, parse_rules};
+pub(crate) use file_selection::{FileSelection, IGNORE_FILE, InvalidRule, parse_rules};
 pub(crate) use folder_pages::build_folder_pages;
 pub(crate) use folder_tree::{build_folder_tree, render_folder_tree};
 pub(crate) use interface_text::CATALOGUE;

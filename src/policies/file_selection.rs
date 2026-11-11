@@ -20,11 +20,17 @@ pub(crate) struct FileSelection {
     rules: Vec<Gitignore>,
 }
 
-/// A `.ghg-ignore` file's rules, and the line and message of each rule that
-/// is not valid. The valid rules still apply.
+/// A `.ghg-ignore` file's rules, and each rule that is not valid. The valid rules still apply.
 pub(crate) struct ParsedRules {
     pub(crate) rules: Gitignore,
-    pub(crate) invalid: Vec<(Option<usize>, String)>,
+    pub(crate) invalid: Vec<InvalidRule>,
+}
+
+/// A rule that is not valid, with its line, if the problem is in one, and what is wrong with it.
+#[derive(Debug)]
+pub(crate) struct InvalidRule {
+    pub(crate) line: Option<usize>,
+    pub(crate) reason: String,
 }
 
 impl FileSelection {
@@ -78,11 +84,17 @@ pub(crate) fn parse_rules(folder: &Path, path: &Path, text: &str) -> ParsedRules
     let text = text.strip_prefix('\u{feff}').unwrap_or(text);
     for (index, line) in text.lines().enumerate() {
         if let Err(error) = builder.add_line(Some(path.to_path_buf()), line) {
-            invalid.push((Some(index + 1), error.to_string()));
+            invalid.push(InvalidRule {
+                line: Some(index + 1),
+                reason: error.to_string(),
+            });
         }
     }
     let rules = builder.build().unwrap_or_else(|error| {
-        invalid.push((None, error.to_string()));
+        invalid.push(InvalidRule {
+            line: None,
+            reason: error.to_string(),
+        });
         Gitignore::empty()
     });
     ParsedRules { rules, invalid }
@@ -142,7 +154,7 @@ mod tests {
             "\u{feff}a.feature\na{b\n",
         );
         assert_eq!(parsed.invalid.len(), 1);
-        assert_eq!(parsed.invalid[0].0, Some(2));
+        assert_eq!(parsed.invalid[0].line, Some(2));
         assert!(
             parsed
                 .rules
