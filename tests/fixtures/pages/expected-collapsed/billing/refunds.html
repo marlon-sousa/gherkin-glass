@@ -50,6 +50,7 @@ in the way it was paid.</p>
 <div class="ghg-controls">
 <button type="button" class="ghg-collapse-all">Collapse all</button>
 <button type="button" class="ghg-expand-all">Expand all</button>
+<label class="ghg-option"><input type="checkbox" class="ghg-inline-backgrounds" autocomplete="off" checked> Show backgrounds inside each scenario</label>
 </div>
 <div class="ghg-block ghg-background">
 <h2 id="background"><button type="button" class="ghg-toggle" aria-expanded="false">Background</button></h2>
@@ -64,6 +65,12 @@ in the way it was paid.</p>
 <div class="ghg-content" hidden>
 <div class="ghg-description">
 <p>The plain case.</p>
+</div>
+<div class="ghg-from-background">
+<p id="refund-a-card-payment_background_1">From the background:<span class="ghg-linked" hidden> <a href="#background">Background</a></span></p>
+<ol class="ghg-steps ghg-inline" aria-labelledby="refund-a-card-payment_background_1">
+<li><span class="ghg-keyword">Given </span>a customer named &#34;Ana&#34;</li>
+</ol>
 </div>
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span>an order with these lines:
@@ -96,6 +103,12 @@ Refunded in full.
 <ul class="ghg-tags">
 <li>@outline</li>
 </ul>
+<div class="ghg-from-background">
+<p id="refund-count-items_background_1">From the background:<span class="ghg-linked" hidden> <a href="#background">Background</a></span></p>
+<ol class="ghg-steps ghg-inline" aria-labelledby="refund-count-items_background_1">
+<li><span class="ghg-keyword">Given </span>a customer named &#34;Ana&#34;</li>
+</ol>
+</div>
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span>&#60;count&#62; items</li>
 <li><span class="ghg-keyword">Then </span>the total is &#60;total&#62;</li>
@@ -148,6 +161,18 @@ Refunded in full.
 <ul class="ghg-tags">
 <li>@in-rule</li>
 </ul>
+<div class="ghg-from-background">
+<p id="store-credit_background_1">From the background:<span class="ghg-linked" hidden> <a href="#background">Background</a></span></p>
+<ol class="ghg-steps ghg-inline" aria-labelledby="store-credit_background_1">
+<li><span class="ghg-keyword">Given </span>a customer named &#34;Ana&#34;</li>
+</ol>
+</div>
+<div class="ghg-from-background">
+<p id="store-credit_background_2">From the rule&#39;s background:<span class="ghg-linked" hidden> <a href="#an-old-order">Background: An old order</a></span></p>
+<ol class="ghg-steps ghg-inline" aria-labelledby="store-credit_background_2">
+<li><span class="ghg-keyword">Given </span>an order from forty days ago</li>
+</ol>
+</div>
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">Then </span>store credit is given</li>
 </ol>
@@ -156,6 +181,18 @@ Refunded in full.
 <div class="ghg-block ghg-scenario">
 <h3 id="refund-again-count-times"><button type="button" class="ghg-toggle" aria-expanded="false">Scenario Outline: Refund again &#60;count&#62; times</button></h3>
 <div class="ghg-content" hidden>
+<div class="ghg-from-background">
+<p id="refund-again-count-times_background_1">From the background:<span class="ghg-linked" hidden> <a href="#background">Background</a></span></p>
+<ol class="ghg-steps ghg-inline" aria-labelledby="refund-again-count-times_background_1">
+<li><span class="ghg-keyword">Given </span>a customer named &#34;Ana&#34;</li>
+</ol>
+</div>
+<div class="ghg-from-background">
+<p id="refund-again-count-times_background_2">From the rule&#39;s background:<span class="ghg-linked" hidden> <a href="#an-old-order">Background: An old order</a></span></p>
+<ol class="ghg-steps ghg-inline" aria-labelledby="refund-again-count-times_background_2">
+<li><span class="ghg-keyword">Given </span>an order from forty days ago</li>
+</ol>
+</div>
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span>&#60;count&#62; refunds</li>
 </ol>
@@ -182,6 +219,12 @@ Refunded in full.
 <div class="ghg-block ghg-scenario">
 <h3 id="refund-a-refund"><button type="button" class="ghg-toggle" aria-expanded="false">Scenario: Refund a refund</button></h3>
 <div class="ghg-content" hidden>
+<div class="ghg-from-background">
+<p id="refund-a-refund_background_1">From the background:<span class="ghg-linked" hidden> <a href="#background">Background</a></span></p>
+<ol class="ghg-steps ghg-inline" aria-labelledby="refund-a-refund_background_1">
+<li><span class="ghg-keyword">Given </span>a customer named &#34;Ana&#34;</li>
+</ol>
+</div>
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">Then </span>it is refused</li>
 </ol>

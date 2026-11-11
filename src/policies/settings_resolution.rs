@@ -38,6 +38,7 @@ pub(crate) fn resolve_settings(options: &BuildOptions, folder: &Path, config: &C
             collapse_rules: config.collapse_rules.unwrap_or(false),
             collapse_scenarios: config.collapse_scenarios.unwrap_or(false),
             show_tree: config.show_tree.unwrap_or(true),
+            inline_backgrounds: config.inline_backgrounds.unwrap_or(true),
         },
     }
 }
@@ -138,7 +139,8 @@ mod tests {
     }
 
     #[test]
-    fn pages_start_expanded_without_a_source_link_unless_the_file_says_otherwise() {
+    fn pages_start_expanded_with_backgrounds_inline_and_no_source_link_unless_the_file_says_otherwise()
+     {
         let pages = |config: Config| {
             resolve_settings(&BuildOptions::default(), Path::new(""), &config).pages
         };
@@ -148,12 +150,14 @@ mod tests {
             collapse_rules: Some(true),
             collapse_scenarios: Some(true),
             show_tree: Some(false),
+            inline_backgrounds: Some(false),
             ..Config::default()
         });
         assert_eq!(set.source_link.as_deref(), Some("https://x/{path}"));
         assert!(set.collapse_rules && set.collapse_scenarios);
         assert!(!set.show_tree);
         assert!(pages(Config::default()).show_tree);
+        assert!(!set.inline_backgrounds);
     }
 
     #[test]

@@ -1,10 +1,13 @@
 // Composition root: the page's behaviour, wired to the browser.
 
+import { DomBackgrounds } from "./adapters/dom_backgrounds.ts";
 import { DomPage } from "./adapters/dom_page.ts";
 import { DomTree, DomTreeSwitch } from "./adapters/dom_tree.ts";
 import { FetchedTree } from "./adapters/fetched_tree.ts";
 import { LocalMemory } from "./adapters/local_memory.ts";
+import { siteRoot } from "./policies/background_form.ts";
 import { NARROW, pageAddress } from "./policies/tree_state.ts";
+import { startBackgrounds } from "./services/backgrounds.ts";
 import { startCollapsing } from "./services/collapsing.ts";
 import { startFolderTree } from "./services/folder_tree.ts";
 
@@ -20,3 +23,7 @@ void startFolderTree(new FetchedTree(new URL("tree.json", import.meta.url)), new
   page,
   narrow: window.matchMedia(NARROW).matches,
 });
+const backgrounds = DomBackgrounds.of(document);
+if (backgrounds !== null) {
+  startBackgrounds(backgrounds, memory, siteRoot(import.meta.url));
+}

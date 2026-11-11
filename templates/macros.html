@@ -48,3 +48,22 @@
 {%- endfor %}
 </ul>
 {%- endmacro -%}
+
+{%- macro steps(steps, introduction, shown) %}
+<ol class="ghg-steps{% if !introduction.is_empty() %} ghg-inline" aria-labelledby="{{ introduction }}{% endif %}"{% if !shown %} hidden{% endif %}>
+{%- for step in steps.iter() %}
+<li><span class="ghg-keyword">{{ step.keyword }}</span>{{ step.text }}
+{%- if let Some(table) = step.table %}{% call table(table) %}{% endcall %}{% endif %}
+{%- if let Some(doc) = step.doc_string %}
+{%- if let Some(media_type) = doc.media_type %}
+<figure class="ghg-doc-string">
+<figcaption>{{ media_type }}</figcaption>
+<pre>{% if doc.content.starts_with('\n') %}{{ "\n" }}{% endif %}{{ doc.content }}</pre>
+</figure>
+{%- else %}
+<pre class="ghg-doc-string">{% if doc.content.starts_with('\n') %}{{ "\n" }}{% endif %}{{ doc.content }}</pre>
+{%- endif %}
+{%- endif %}</li>
+{%- endfor %}
+</ol>
+{%- endmacro -%}

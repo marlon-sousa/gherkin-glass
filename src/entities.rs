@@ -33,8 +33,8 @@ pub(crate) use folder_page::{FeatureEntry, FolderLink, FolderPage, FolderWords};
 pub(crate) use invocation::{ArgumentProblem, BuildOptions, Invocation, ServeOptions};
 pub use listen_failure::ListenFailure;
 pub(crate) use page::{
-    Block, BlockKind, ContentsEntry, DocStringView, Page, PageWords, Paragraph, SourceLink,
-    StepView, TableView,
+    BackgroundsOption, Block, BlockKind, ContentsEntry, DocStringView, FromBackground, Page,
+    PageWords, Paragraph, SourceLink, StepView, TableView,
 };
 pub(crate) use page_frame::PageFrame;
 pub use page_options::PageOptions;

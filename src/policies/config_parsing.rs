@@ -48,20 +48,20 @@ pub(crate) fn parse_config(source: &str) -> Result<Config, Vec<ConfigProblem>> {
                 }
                 None => Err(wrong_type(ValueType::Text)),
             },
-            "allow_unnamed" | "collapse_rules" | "collapse_scenarios" | "show_tree" => {
-                match value.get_ref().as_bool() {
-                    Some(set) => {
-                        *match name {
-                            "allow_unnamed" => &mut config.allow_unnamed,
-                            "collapse_rules" => &mut config.collapse_rules,
-                            "show_tree" => &mut config.show_tree,
-                            _ => &mut config.collapse_scenarios,
-                        } = Some(set);
-                        Ok(())
-                    }
-                    None => Err(wrong_type(ValueType::Boolean)),
+            "allow_unnamed" | "collapse_rules" | "collapse_scenarios" | "show_tree"
+            | "inline_backgrounds" => match value.get_ref().as_bool() {
+                Some(set) => {
+                    *match name {
+                        "allow_unnamed" => &mut config.allow_unnamed,
+                        "collapse_rules" => &mut config.collapse_rules,
+                        "show_tree" => &mut config.show_tree,
+                        "collapse_scenarios" => &mut config.collapse_scenarios,
+                        _ => &mut config.inline_backgrounds,
+                    } = Some(set);
+                    Ok(())
                 }
-            }
+                None => Err(wrong_type(ValueType::Boolean)),
+            },
             _ => Err(ConfigProblem {
                 line: line(key.span().start),
                 kind: ConfigProblemKind::UnknownKey {
@@ -175,7 +175,7 @@ mod tests {
         let config = parse_config(
             "output = \"out\"\nsource_link = \"https://x/{path}#L{line}\"\n\
              collapse_rules = true\ncollapse_scenarios = false\ntitle = \"Banking\"\n\
-             show_tree = false\n",
+             show_tree = false\ninline_backgrounds = false\n",
         )
         .expect("valid");
         assert_eq!(config.output, Some(PathBuf::from("out")));
@@ -187,6 +187,7 @@ mod tests {
         assert_eq!(config.collapse_scenarios, Some(false));
         assert_eq!(config.title.as_deref(), Some("Banking"));
         assert_eq!(config.show_tree, Some(false));
+        assert_eq!(config.inline_backgrounds, Some(false));
         assert_eq!(
             problems("output = 1\nsource_link = \"\"\ncollapse_rules = \"yes\"\ntitle = \"\"\n"),
             [

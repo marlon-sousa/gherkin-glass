@@ -1,0 +1,4 @@
+# The same pages, with each scenario linking to its backgrounds.
+inline_backgrounds = false
+output = "expected-linked"
+title = "Backgrounds"

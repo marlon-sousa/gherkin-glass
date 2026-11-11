@@ -335,3 +335,30 @@ figcaption {
     transition: none;
   }
 }
+
+.ghg-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* The steps a scenario takes from a background, set apart by a tint; the words before them say where they come from. */
+.ghg-from-background {
+  margin: 0.5rem 0;
+  padding: 0.25rem 0.75rem;
+  background: var(--code);
+}
+
+.ghg-from-background p {
+  margin: 0.25rem 0;
+  color: var(--muted);
+}
+
+.ghg-from-background .ghg-steps {
+  margin: 0.25rem 0;
+}
+
+/* A doc string keeps its box inside the tint. */
+.ghg-from-background pre {
+  background: var(--background);
+}

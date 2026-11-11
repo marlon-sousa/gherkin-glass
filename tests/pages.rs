@@ -2,7 +2,9 @@
 //! every file written with the site committed beside them.
 //!
 //! `cargo run -- build --config tests/fixtures/pages/ghg.toml`, and again with
-//! `collapsed.toml`, writes the expected sites again after a change.
+//! `collapsed.toml`, writes the expected sites again after a change, and so
+//! do `tests/fixtures/backgrounds/ghg.toml` and `linked.toml` for
+//! "Backgrounds".
 
 use std::collections::BTreeMap;
 use std::fs::{create_dir_all, read, read_dir, remove_dir_all, write};
@@ -49,9 +51,13 @@ fn output(name: &str) -> PathBuf {
 }
 
 fn assert_same_site(config: &str, expected: &str) {
-    let written = output(expected);
+    assert_same_site_of("pages", config, expected);
+}
+
+fn assert_same_site_of(fixture: &str, config: &str, expected: &str) {
+    let written = output(&format!("{fixture}-{expected}"));
     let result = build(
-        &fixtures().join("pages"),
+        &fixtures().join(fixture),
         &[
             "--config",
             config,
@@ -60,7 +66,7 @@ fn assert_same_site(config: &str, expected: &str) {
         ],
     );
     // Rule 17: collapsed.toml gives no title.
-    let hint = if config == "collapsed.toml" {
+    let hint = if fixture == "pages" && config == "collapsed.toml" {
         "The site has no title, so its home page is called Feature files. \
          Set title in ghg.toml, or give --title.\n"
     } else {
@@ -68,7 +74,7 @@ fn assert_same_site(config: &str, expected: &str) {
     };
     assert_eq!(String::from_utf8_lossy(&result.stderr), hint);
     assert_eq!(result.status.code(), Some(0));
-    let expected = files(&fixtures().join("pages").join(expected));
+    let expected = files(&fixtures().join(fixture).join(expected));
     let written = files(&written);
     assert_eq!(
         written.keys().collect::<Vec<_>>(),
@@ -95,6 +101,34 @@ fn every_feature_file_has_its_page_as_the_expected_site_shows() {
 #[test]
 fn the_settings_start_rules_scenarios_and_backgrounds_collapsed() {
     assert_same_site("collapsed.toml", "expected-collapsed");
+}
+
+// "Backgrounds", rules 94 to 99: each scenario with its backgrounds' steps, or
+// links to them, and the checkbox on every page with a background, disabled
+// where no scenario starts with one's steps.
+
+#[test]
+fn scenarios_show_their_backgrounds_inline_by_default() {
+    assert_same_site_of("backgrounds", "ghg.toml", "expected");
+}
+
+#[test]
+fn scenarios_link_to_their_backgrounds_when_inline_backgrounds_is_false() {
+    assert_same_site_of("backgrounds", "linked.toml", "expected-linked");
+}
+
+#[test]
+fn every_page_with_a_background_has_the_checkbox() {
+    let site = fixtures().join("backgrounds/expected");
+    let has = |page: &str| {
+        let html = String::from_utf8(read(site.join(page)).expect("read")).expect("UTF-8");
+        html.contains("class=\"ghg-inline-backgrounds\"")
+    };
+    assert!(has("both.html"));
+    assert!(has("regra.html"));
+    assert!(has("no-steps.html"));
+    assert!(has("no-scenarios.html"));
+    assert!(!has("none.html"));
 }
 
 #[test]
@@ -124,8 +158,20 @@ fn every_page_has_one_h1_and_a_lang_and_its_content_in_its_html() {
             .skip(1)
             .map(|id| &id[..id.find('"').expect("closed")])
             .collect();
+        let background_ids: Vec<&&str> = ids
+            .iter()
+            .filter(|id| id.contains("_background_"))
+            .collect();
+        // "Backgrounds", rule 96: each named after its scenario's anchor.
+        for id in &background_ids {
+            let (anchor, place) = id.split_once("_background_").expect("found");
+            assert!(ids.contains(&anchor), "{name}: {id}");
+            assert!(place.parse::<usize>().is_ok(), "{name}: {id}");
+        }
         assert_eq!(
-            ids.iter().filter(|id| id.contains('_')).collect::<Vec<_>>(),
+            ids.iter()
+                .filter(|id| id.contains('_') && !id.contains("_background_"))
+                .collect::<Vec<_>>(),
             own.iter().collect::<Vec<_>>(),
             "{name}"
         );

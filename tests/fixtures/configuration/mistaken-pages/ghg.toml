@@ -4,3 +4,4 @@ source_link = 3
 collapse_rules = "yes"
 collapse_scenarios = 1
 show_tree = "no"
+inline_backgrounds = "no"

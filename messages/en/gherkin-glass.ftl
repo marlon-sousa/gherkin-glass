@@ -176,3 +176,10 @@ serve-wrong-method = ghg serve answers only GET and HEAD requests.
 skip-to-content = Skip to content
 show-folder-tree = Show the folder tree
 folder-tree = Folder tree
+
+## How a scenario shows the steps of the backgrounds it starts with, and the
+## checkbox that switches between showing them inline and linking to them.
+
+from-background = From the background:
+from-rule-background = From the rule's background:
+inline-backgrounds = Show backgrounds inside each scenario

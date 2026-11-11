@@ -28,6 +28,8 @@ const builds = [
   { folder: "input-files", args: ["--input", "."] },
   { folder: "pages", args: ["--config", "ghg.toml"] },
   { folder: "pages", args: ["--config", "collapsed.toml"] },
+  { folder: "backgrounds", args: ["--config", "ghg.toml"] },
+  { folder: "backgrounds", args: ["--config", "linked.toml"] },
   { folder: "configuration/default", args: [] },
   { folder: "configuration/configured", args: [] },
   { folder: "configuration/configured/nested", args: [] },
@@ -51,6 +53,8 @@ const noSite = [
   "configuration/unnamed",
   "pages/expected",
   "pages/expected-collapsed",
+  "backgrounds/expected",
+  "backgrounds/expected-linked",
   "serve/site",
   "accessibility/failing",
 ];
