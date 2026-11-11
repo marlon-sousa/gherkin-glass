@@ -8,7 +8,7 @@ mod site;
 
 pub(crate) use input::InputService;
 pub(crate) use output::OutputService;
+pub(crate) use preview::PreviewEvents;
 pub(crate) use preview::PreviewService;
-pub(crate) use preview::{PreviewEvents, RebuildFailure, ServeFailure};
-pub(crate) use settings::{ConfigProblems, SettingsService};
+pub(crate) use settings::SettingsService;
 pub(crate) use site::SiteService;

@@ -1,6 +1,7 @@
 //! Policy: whether a build may write into a folder, from what is at its place, what it is to hold, and when it is looked at.
 
-use crate::entities::{FolderState, Marker, OutputProblemKind};
+use crate::entities::{FolderState, Marker};
+use crate::errors::OutputErrorKind;
 
 /// When a folder is looked at: when it is checked, before the input is read, or again just
 /// before it is emptied, once the input has been read.
@@ -18,19 +19,19 @@ pub(crate) fn folder_verdict(
     state: FolderState,
     marker: &Marker,
     moment: Moment,
-) -> Result<(), OutputProblemKind> {
+) -> Result<(), OutputErrorKind> {
     match (state, marker, moment) {
         (FolderState::Missing | FolderState::Empty, _, _)
         | (FolderState::Marked, _, Moment::Checking { replace: true } | Moment::Emptying) => Ok(()),
         (FolderState::Marked, _, Moment::Checking { replace: false }) => {
-            Err(OutputProblemKind::AlreadyBuilt)
+            Err(OutputErrorKind::AlreadyBuilt)
         }
         (FolderState::Other, Marker::Site, _)
         | (FolderState::OtherCapitals, Marker::Site, Moment::Checking { .. }) => {
-            Err(OutputProblemKind::NotASite)
+            Err(OutputErrorKind::NotASite)
         }
-        (FolderState::Other, Marker::Version(_), _) => Err(OutputProblemKind::NotAVersion),
-        (FolderState::OtherCapitals, _, _) => Err(OutputProblemKind::OtherCapitals),
+        (FolderState::Other, Marker::Version(_), _) => Err(OutputErrorKind::NotAVersion),
+        (FolderState::OtherCapitals, _, _) => Err(OutputErrorKind::OtherCapitals),
     }
 }
 
@@ -59,13 +60,13 @@ mod tests {
     }
 
     #[rstest]
-    #[case::kept(KEEP, Err(OutputProblemKind::AlreadyBuilt))]
+    #[case::kept(KEEP, Err(OutputErrorKind::AlreadyBuilt))]
     #[case::replaced(REPLACE, Ok(()))]
     #[case::emptied(EMPTYING, Ok(()))]
     fn a_folder_ghg_built_may_be_written_unless_it_is_kept(
         #[values(Marker::Site, version())] marker: Marker,
         #[case] moment: Moment,
-        #[case] verdict: Result<(), OutputProblemKind>,
+        #[case] verdict: Result<(), OutputErrorKind>,
     ) {
         assert_eq!(
             folder_verdict(FolderState::Marked, &marker, moment),
@@ -74,38 +75,34 @@ mod tests {
     }
 
     #[rstest]
-    #[case::a_site_s(Marker::Site, OutputProblemKind::NotASite)]
-    #[case::a_version_s(version(), OutputProblemKind::NotAVersion)]
+    #[case::a_site_s(Marker::Site, OutputErrorKind::NotASite)]
+    #[case::a_version_s(version(), OutputErrorKind::NotAVersion)]
     fn a_folder_holding_something_else_is_not_what_it_is_to_hold(
         #[case] marker: Marker,
-        #[case] problem: OutputProblemKind,
+        #[case] error: OutputErrorKind,
         #[values(KEEP, REPLACE, EMPTYING)] moment: Moment,
     ) {
         assert_eq!(
             folder_verdict(FolderState::Other, &marker, moment),
-            Err(problem)
+            Err(error)
         );
     }
 
     #[rstest]
-    #[case::a_site_s_when_checked(Marker::Site, KEEP, OutputProblemKind::NotASite)]
-    #[case::a_site_s_when_checked_to_replace(Marker::Site, REPLACE, OutputProblemKind::NotASite)]
-    #[case::a_site_s_when_emptied(Marker::Site, EMPTYING, OutputProblemKind::OtherCapitals)]
-    #[case::a_version_s_when_checked(version(), KEEP, OutputProblemKind::OtherCapitals)]
-    #[case::a_version_s_when_checked_to_replace(
-        version(),
-        REPLACE,
-        OutputProblemKind::OtherCapitals
-    )]
-    #[case::a_version_s_when_emptied(version(), EMPTYING, OutputProblemKind::OtherCapitals)]
+    #[case::a_site_s_when_checked(Marker::Site, KEEP, OutputErrorKind::NotASite)]
+    #[case::a_site_s_when_checked_to_replace(Marker::Site, REPLACE, OutputErrorKind::NotASite)]
+    #[case::a_site_s_when_emptied(Marker::Site, EMPTYING, OutputErrorKind::OtherCapitals)]
+    #[case::a_version_s_when_checked(version(), KEEP, OutputErrorKind::OtherCapitals)]
+    #[case::a_version_s_when_checked_to_replace(version(), REPLACE, OutputErrorKind::OtherCapitals)]
+    #[case::a_version_s_when_emptied(version(), EMPTYING, OutputErrorKind::OtherCapitals)]
     fn a_folder_holding_other_capitals_is_reported_as_such_unless_a_site_s_is_checked(
         #[case] marker: Marker,
         #[case] moment: Moment,
-        #[case] problem: OutputProblemKind,
+        #[case] error: OutputErrorKind,
     ) {
         assert_eq!(
             folder_verdict(FolderState::OtherCapitals, &marker, moment),
-            Err(problem)
+            Err(error)
         );
     }
 }

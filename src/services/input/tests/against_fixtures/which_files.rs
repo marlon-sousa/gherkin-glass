@@ -91,11 +91,11 @@ fn a_folder_sorts_by_its_name_before_its_contents() {
     write(input.join("a/x.feature"), "Nothing\n").expect("written");
     write(input.join("a-b.feature"), "Nothing\n").expect("written");
 
-    let problems = read_input(&input).expect_err("cannot be read");
-    let paths: Vec<_> = problems
+    let errors = read_input(&input).expect_err("cannot be read");
+    let paths: Vec<_> = errors
         .as_slice()
         .iter()
-        .map(|problem| problem.path.as_str())
+        .map(|error| error.path.as_str())
         .collect();
     assert_eq!(paths, ["a/x.feature", "a-b.feature"]);
 }

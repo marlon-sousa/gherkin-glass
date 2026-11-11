@@ -3,46 +3,46 @@
 use clap::Error;
 use clap::error::{ContextKind, ErrorKind};
 
-use crate::entities::ArgumentProblem;
+use crate::errors::ArgumentError;
 
 use super::option_values::Rejected;
 
 /// The mistake `error` reports, made in `command`, `ghg`, `ghg build` or
 /// `ghg serve`. clap's words are never shown: only what was typed is kept.
-pub(super) fn problem(error: &Error, command: &str) -> ArgumentProblem {
+pub(super) fn argument_error(error: &Error, command: &str) -> ArgumentError {
     let command = command.to_string();
     match error.kind() {
-        ErrorKind::InvalidSubcommand => ArgumentProblem::UnknownCommand {
+        ErrorKind::InvalidSubcommand => ArgumentError::UnknownCommand {
             name: context(error, ContextKind::InvalidSubcommand),
         },
         ErrorKind::UnknownArgument => {
             let typed = context(error, ContextKind::InvalidArg);
             if typed.starts_with('-') && typed != "-" {
-                ArgumentProblem::UnknownOption {
+                ArgumentError::UnknownOption {
                     command,
                     option: typed,
                 }
             } else {
-                ArgumentProblem::UnexpectedArgument {
+                ArgumentError::UnexpectedArgument {
                     command,
                     argument: typed,
                 }
             }
         }
         // A path's value given empty, or a value not given at all.
-        ErrorKind::InvalidValue => ArgumentProblem::MissingValue {
+        ErrorKind::InvalidValue => ArgumentError::MissingValue {
             option: option(error),
         },
         ErrorKind::ValueValidation => rejected(error),
-        ErrorKind::TooManyValues => ArgumentProblem::UnexpectedValue {
+        ErrorKind::TooManyValues => ArgumentError::UnexpectedValue {
             option: option(error),
         },
-        ErrorKind::ArgumentConflict => ArgumentProblem::RepeatedOption {
+        ErrorKind::ArgumentConflict => ArgumentError::RepeatedOption {
             option: option(error),
         },
         // No other kind is raised for these commands; should one be, it is
         // still a mistake, named by what clap says was typed, if anything.
-        _ => ArgumentProblem::UnexpectedArgument {
+        _ => ArgumentError::UnexpectedArgument {
             command,
             argument: context(error, ContextKind::InvalidArg),
         },
@@ -50,15 +50,15 @@ pub(super) fn problem(error: &Error, command: &str) -> ArgumentProblem {
 }
 
 /// A value one of the checks of [`super::option_values`] refused.
-fn rejected(error: &Error) -> ArgumentProblem {
+fn rejected(error: &Error) -> ArgumentError {
     let value = context(error, ContextKind::InvalidValue);
     let reason = std::error::Error::source(error)
         .and_then(|source| source.downcast_ref::<Rejected>())
         .copied();
     match reason {
-        Some(Rejected::NotAPort) => ArgumentProblem::NotAPort { value },
-        Some(Rejected::NotAVersionName) => ArgumentProblem::InvalidVersionName { name: value },
-        Some(Rejected::Empty) | None => ArgumentProblem::MissingValue {
+        Some(Rejected::NotAPort) => ArgumentError::NotAPort { value },
+        Some(Rejected::NotAVersionName) => ArgumentError::InvalidVersionName { name: value },
+        Some(Rejected::Empty) | None => ArgumentError::MissingValue {
             option: option(error),
         },
     }

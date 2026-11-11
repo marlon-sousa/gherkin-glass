@@ -6,14 +6,14 @@ use std::sync::Arc;
 use std::thread::park;
 
 use crate::entities::{
-    BuildFailure, Burst, Changes, ListenFailure, OutputProblem, Preview, Problems, ServeMode,
-    ServeOptions, ServedSite, ServerWords, Settings, WatchFailure, Watched,
+    Burst, Changes, Preview, ServeMode, ServeOptions, ServedSite, ServerWords, Settings, Watched,
 };
+use crate::errors::{BuildError, InputErrors, RebuildError, ServeError};
 
 use crate::policies::{Read, calls_for_rebuild, remembered};
 use crate::ports::{ChangeWatcher, ConfigReader, PreviewServer, SiteRecorder};
 use crate::services::settings::CONFIG_FILE;
-use crate::services::{ConfigProblems, InputService, OutputService, SettingsService, SiteService};
+use crate::services::{InputService, OutputService, SettingsService, SiteService};
 
 /// The address ghg serve listens on unless `--host` names another.
 const DEFAULT_HOST: &str = "127.0.0.1";
@@ -39,32 +39,11 @@ struct Watching {
     read: Vec<PathBuf>,
 }
 
-/// What stops ghg serve before it serves.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) enum ServeFailure {
-    Config(ConfigProblems),
-    Input(Problems),
-    Output(OutputProblem),
-    Listen {
-        host: String,
-        port: u16,
-        failure: ListenFailure,
-    },
-    Watch(WatchFailure),
-}
-
-/// What stops a rebuild, which leaves the last site that built served.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) enum RebuildFailure {
-    Config(ConfigProblems),
-    Input(Problems),
-}
-
 /// What happens while ghg serve serves, for the person at the terminal.
 pub(crate) trait PreviewEvents {
     fn listening(&self, address: SocketAddr);
     fn rebuilt(&self);
-    fn not_rebuilt(&self, failure: &RebuildFailure);
+    fn not_rebuilt(&self, error: &RebuildError);
 }
 
 impl PreviewService {
@@ -99,11 +78,11 @@ impl PreviewService {
         options: &ServeOptions,
         words: ServerWords,
         events: &dyn PreviewEvents,
-    ) -> Result<(), ServeFailure> {
+    ) -> Result<(), ServeError> {
         let settings = self
             .settings
             .load(&options.build)
-            .map_err(ServeFailure::Config)?;
+            .map_err(ServeError::Config)?;
         let config = options
             .build
             .config
@@ -125,28 +104,25 @@ impl PreviewService {
         };
         let site = match options.mode {
             ServeMode::Folder => ServedSite::Folder(settings.output.clone()),
-            ServeMode::Watch => self
-                .build_in_memory(&settings)
-                .map_err(ServeFailure::Input)?,
-            ServeMode::Build => {
-                self.build_into_output(&settings)
-                    .map_err(|failure| match failure {
-                        BuildFailure::Problems(problems) => ServeFailure::Input(problems),
-                        BuildFailure::Output(problem) => ServeFailure::Output(problem),
-                    })?
-            }
+            ServeMode::Watch => self.build_in_memory(&settings).map_err(ServeError::Input)?,
+            ServeMode::Build => self
+                .build_into_output(&settings)
+                .map_err(|error| match error {
+                    BuildError::Input(errors) => ServeError::Input(errors),
+                    BuildError::Output(error) => ServeError::Output(error),
+                })?,
         };
-        let changes = changes.transpose().map_err(ServeFailure::Watch)?;
+        let changes = changes.transpose().map_err(ServeError::Watch)?;
         let preview = Arc::new(Preview::new(options.mode, site));
         let host = options.host.as_deref().unwrap_or(DEFAULT_HOST);
         let port = options.port.unwrap_or(DEFAULT_PORT);
         let address = self
             .server
             .start(host, port, preview.clone(), words)
-            .map_err(|failure| ServeFailure::Listen {
+            .map_err(|kind| ServeError::Listen {
                 host: host.to_string(),
                 port,
-                failure,
+                kind,
             })?;
         events.listening(address);
         let Some(changes) = changes else {
@@ -206,20 +182,19 @@ impl PreviewService {
                 preview.replace(site);
                 events.rebuilt();
             }
-            Err(failure) => events.not_rebuilt(&failure),
+            Err(error) => events.not_rebuilt(&error),
         }
     }
 
-    fn rebuild(&self, options: &ServeOptions) -> Result<ServedSite, RebuildFailure> {
+    fn rebuild(&self, options: &ServeOptions) -> Result<ServedSite, RebuildError> {
         let settings = self
             .settings
             .load(&options.build)
-            .map_err(RebuildFailure::Config)?;
-        self.build_in_memory(&settings)
-            .map_err(RebuildFailure::Input)
+            .map_err(RebuildError::Config)?;
+        self.build_in_memory(&settings).map_err(RebuildError::Input)
     }
 
-    fn build_in_memory(&self, settings: &Settings) -> Result<ServedSite, Problems> {
+    fn build_in_memory(&self, settings: &Settings) -> Result<ServedSite, InputErrors> {
         // A build that stopped may have written some files, which this drops.
         self.memory.take();
         let built = self.in_memory.build(settings, &settings.output);
@@ -228,7 +203,7 @@ impl PreviewService {
     }
 
     /// The build ghg build makes, into the output folder, served from there.
-    fn build_into_output(&self, settings: &Settings) -> Result<ServedSite, BuildFailure> {
+    fn build_into_output(&self, settings: &Settings) -> Result<ServedSite, BuildError> {
         self.output.build(&self.on_disk, settings)?;
         Ok(ServedSite::Folder(settings.output.clone()))
     }

@@ -1,21 +1,16 @@
 //! Controller: the `ghg` command, from its arguments to what the person at the terminal reads.
 
-mod wording;
-
 use std::ffi::OsString;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
 use std::sync::Arc;
 
 use i18n_embed_fl::fl;
 
-use crate::entities::{
-    BuildFailure, BuildOptions, ExitStatus, Invocation, ServeOptions, ServerWords,
-};
+use crate::entities::{BuildOptions, BuiltSite, ExitStatus, Invocation, ServeOptions, ServerWords};
+use crate::errors::RebuildError;
 use crate::policies::{CATALOGUE, parse_arguments};
 use crate::ports::{ConfigReader, Terminal};
-use crate::services::{
-    OutputService, PreviewEvents, PreviewService, RebuildFailure, SettingsService, SiteService,
-};
+use crate::services::{OutputService, PreviewEvents, PreviewService, SettingsService, SiteService};
 
 pub(crate) struct CommandLine {
     settings: SettingsService,
@@ -55,9 +50,7 @@ impl CommandLine {
     /// `arguments` come after the command's own name.
     pub(crate) fn run(&self, arguments: impl IntoIterator<Item = OsString>) -> Reply {
         match parse_arguments(arguments) {
-            Err(problem) => {
-                Reply::failure(ExitStatus::Mistaken, wording::argument_problem(&problem))
-            }
+            Err(error) => Reply::failure(ExitStatus::Mistaken, error.to_string()),
             Ok(Invocation::Help) => Reply::success(fl!(CATALOGUE, "help")),
             Ok(Invocation::Version) => Reply::success(fl!(
                 CATALOGUE,
@@ -77,20 +70,20 @@ impl CommandLine {
         let events = Events(self.terminal.as_ref());
         match self.preview.serve(options, words, &events) {
             Ok(()) => Reply::success(String::new()),
-            Err(failure) => Reply::failure(ExitStatus::Stopped, wording::serve_failure(&failure)),
+            Err(failure) => Reply::failure(ExitStatus::Stopped, failure.to_string()),
         }
     }
 
     fn build(&self, options: &BuildOptions) -> Reply {
         let settings = match self.settings.load(options) {
             Ok(settings) => settings,
-            Err(problems) => {
-                return Reply::failure(ExitStatus::Stopped, wording::config_problems(&problems));
+            Err(errors) => {
+                return Reply::failure(ExitStatus::Stopped, errors.to_string());
             }
         };
         match self.output.build(&self.site, &settings) {
             Ok(built) => {
-                let mut stderr = wording::warnings(&built);
+                let mut stderr = warnings(&built);
                 if settings.pages.title.is_none() {
                     stderr.insert_str(0, &lines(fl!(CATALOGUE, "no-title")));
                 }
@@ -99,12 +92,7 @@ impl CommandLine {
                     ..Reply::success(String::new())
                 }
             }
-            Err(BuildFailure::Problems(problems)) => {
-                Reply::failure(ExitStatus::Stopped, wording::problems(&problems))
-            }
-            Err(BuildFailure::Output(problem)) => {
-                Reply::failure(ExitStatus::Stopped, wording::output_problem(&problem))
-            }
+            Err(error) => Reply::failure(ExitStatus::Stopped, error.to_string()),
         }
     }
 }
@@ -148,9 +136,21 @@ impl PreviewEvents for Events<'_> {
         self.0.say(&lines(fl!(CATALOGUE, "serve-rebuilt")));
     }
 
-    fn not_rebuilt(&self, failure: &RebuildFailure) {
-        self.0.warn(&wording::rebuild_failure(failure));
+    fn not_rebuilt(&self, error: &RebuildError) {
+        self.0.warn(&error.to_string());
     }
+}
+
+/// Empty when the build has nothing to warn of.
+fn warnings(built: &BuiltSite) -> String {
+    built
+        .large_search_documents
+        .map(|bytes| {
+            // Rounded up, so that a size above 5 MB never reads as 5.0.
+            let size = format!("{:.1}", (bytes as f64 / 100_000.0).ceil() / 10.0);
+            fl!(CATALOGUE, "search-documents-large", size = size.as_str())
+        })
+        .unwrap_or_default()
 }
 
 /// Text ending in a line break, unless it is empty.
@@ -169,14 +169,14 @@ mod tests {
 
     use super::*;
     use crate::entities::{
-        Changes, CollectedInput, FolderState, ListenFailure, Marker, ParseFailure, Preview,
-        ProblemKind, RawFeature, VersionName, WatchFailure, Watched,
+        Changes, CollectedInput, FolderState, Marker, Preview, RawFeature, VersionName, Watched,
     };
+    use crate::errors::{InputErrorKind, ListenErrorKind, ParseError, ServeError, WatchError};
     use crate::ports::{
         ChangeWatcher, FeatureParser, InputCollector, OutputFolders, PreviewServer, SiteRecorder,
         SiteWriter,
     };
-    use crate::services::{InputService, ServeFailure};
+    use crate::services::InputService;
 
     /// Keeps nothing; the parser fails every file before anything is written.
     struct NoRecorder;
@@ -238,7 +238,7 @@ mod tests {
         fn collect(&self, input: &Path) -> CollectedInput {
             CollectedInput {
                 paths: vec![input.join("a.feature")],
-                problems: Vec::new(),
+                errors: Vec::new(),
             }
         }
     }
@@ -247,10 +247,10 @@ mod tests {
     struct FailingParser;
 
     impl FeatureParser for FailingParser {
-        fn parse(&self, path: &Path) -> Result<RawFeature, ParseFailure> {
-            Err(ParseFailure {
+        fn parse(&self, path: &Path) -> Result<RawFeature, ParseError> {
+            Err(ParseError {
                 line: Some(1),
-                kind: ProblemKind::Parser {
+                kind: InputErrorKind::Parser {
                     message: format!("read in {}", path.parent().unwrap_or(path).display()),
                 },
             })
@@ -289,16 +289,16 @@ mod tests {
             _: u16,
             _: Arc<Preview>,
             _: ServerWords,
-        ) -> Result<SocketAddr, ListenFailure> {
-            Err(ListenFailure::PortTaken)
+        ) -> Result<SocketAddr, ListenErrorKind> {
+            Err(ListenErrorKind::PortTaken)
         }
     }
 
     struct NoWatching;
 
     impl ChangeWatcher for NoWatching {
-        fn watch(&self, watched: &[Watched]) -> Result<Changes, WatchFailure> {
-            Err(WatchFailure {
+        fn watch(&self, watched: &[Watched]) -> Result<Changes, WatchError> {
+            Err(WatchError {
                 path: match &watched[0] {
                     Watched::Folder(path) | Watched::File(path) => path.clone(),
                 },
@@ -342,23 +342,23 @@ mod tests {
 
     #[test]
     fn serve_names_what_it_cannot_watch_and_where_it_cannot_listen() {
-        let failure = ServeFailure::Watch(WatchFailure {
+        let error = ServeError::Watch(WatchError {
             path: PathBuf::from("features"),
             reason: "too many folders".into(),
         });
         assert_eq!(
-            wording::serve_failure(&failure),
+            error.to_string(),
             "ghg serve cannot watch features for changes: too many folders"
         );
-        let failure = ServeFailure::Listen {
+        let error = ServeError::Listen {
             host: "203.0.113.1".into(),
             port: 8000,
-            failure: ListenFailure::Other {
+            kind: ListenErrorKind::Other {
                 reason: "no such address".into(),
             },
         };
         assert_eq!(
-            wording::serve_failure(&failure),
+            error.to_string(),
             "ghg serve cannot listen at 203.0.113.1, port 8000: no such address"
         );
     }

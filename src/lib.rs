@@ -7,6 +7,7 @@ mod adapters;
 mod composition_root;
 mod controllers;
 mod entities;
+mod errors;
 #[cfg(test)]
 mod fixtures;
 mod policies;

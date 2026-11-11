@@ -2,8 +2,9 @@
 
 use std::path::Path;
 
-use crate::entities::{ParseFailure, RawFeature};
+use crate::entities::RawFeature;
+use crate::errors::ParseError;
 
 pub(crate) trait FeatureParser: Send + Sync {
-    fn parse(&self, path: &Path) -> Result<RawFeature, ParseFailure>;
+    fn parse(&self, path: &Path) -> Result<RawFeature, ParseError>;
 }

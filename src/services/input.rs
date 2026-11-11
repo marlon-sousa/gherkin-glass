@@ -6,7 +6,8 @@ use std::sync::Arc;
 use rayon::iter::Either;
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 
-use crate::entities::{ParsedFeature, Problem, ProblemKind, Problems, Unnamed};
+use crate::entities::{ParsedFeature, Unnamed};
+use crate::errors::{InputError, InputErrorKind, InputErrors};
 use crate::policies::{
     correct_doc_strings, correct_step_keywords, file_language, page_collisions, unnamed_blocks,
 };
@@ -29,7 +30,7 @@ impl InputService {
         self.collector.collect(input).paths
     }
 
-    /// The features under `input`, sorted by path, or every problem found:
+    /// The features under `input`, sorted by path, or every error found:
     /// those met while collecting, the files whose page another has, those
     /// of every file parsed, and, when `unnamed` is refused, every block
     /// that needs a name and has none.
@@ -37,21 +38,21 @@ impl InputService {
         &self,
         input: &Path,
         unnamed: Unnamed,
-    ) -> Result<Vec<ParsedFeature>, Problems> {
+    ) -> Result<Vec<ParsedFeature>, InputErrors> {
         let collected = self.collector.collect(input);
-        let mut problems = collected.problems;
-        problems.extend(page_collisions(input, &collected.paths));
+        let mut errors = collected.errors;
+        errors.extend(page_collisions(input, &collected.paths));
         // Collecting into a `Vec` keeps file order, whatever order the threads finish in.
         let (failed, features): (Vec<_>, Vec<_>) = collected
             .paths
             .par_iter()
             .map(|path| self.parse(input, path, unnamed))
             .partition_map(Either::from);
-        problems.extend(failed.into_iter().flatten());
-        if problems.is_empty() {
+        errors.extend(failed.into_iter().flatten());
+        if errors.is_empty() {
             Ok(features)
         } else {
-            Err(Problems::new(problems))
+            Err(InputErrors::new(errors))
         }
     }
 
@@ -60,19 +61,19 @@ impl InputService {
         input: &Path,
         path: &Path,
         unnamed: Unnamed,
-    ) -> Result<ParsedFeature, Vec<Problem>> {
-        let problem = |line, kind| Problem::new(input, path, line, kind);
+    ) -> Result<ParsedFeature, Vec<InputError>> {
+        let input_error = |line, kind| InputError::new(input, path, line, kind);
         let mut raw = self
             .parser
             .parse(path)
-            .map_err(|failure| vec![problem(failure.line, failure.kind)])?;
+            .map_err(|error| vec![input_error(error.line, error.kind)])?;
         // Only a file changed between the parse and the read of its source fails here.
         let media_types = correct_doc_strings(&mut raw.feature, &raw.source)
-            .ok_or_else(|| vec![problem(None, ProblemKind::Changed)])?;
+            .ok_or_else(|| vec![input_error(None, InputErrorKind::Changed)])?;
         if unnamed == Unnamed::Refused {
             let found: Vec<_> = unnamed_blocks(&raw.feature)
                 .into_iter()
-                .map(|(line, block)| problem(Some(line), ProblemKind::Unnamed { block }))
+                .map(|(line, block)| input_error(Some(line), InputErrorKind::Unnamed { block }))
                 .collect();
             if !found.is_empty() {
                 return Err(found);

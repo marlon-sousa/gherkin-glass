@@ -6,7 +6,8 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use crate::adapters::{GherkinParser, InputWalker};
-use crate::entities::{ParsedFeature, Problems, Unnamed};
+use crate::entities::{ParsedFeature, Unnamed};
+use crate::errors::InputErrors;
 use crate::services::InputService;
 
 /// The fixture folder `name`, under `tests/fixtures`.
@@ -16,15 +17,15 @@ pub(crate) fn fixture(name: &str) -> PathBuf {
         .join(name)
 }
 
-/// The features of the folder `input`, or the problems found, read by the input service over the
+/// The features of the folder `input`, or the errors found, read by the input service over the
 /// real file system, as the command reads them.
-pub(crate) fn read_input(input: &Path) -> Result<Vec<ParsedFeature>, Problems> {
+pub(crate) fn read_input(input: &Path) -> Result<Vec<ParsedFeature>, InputErrors> {
     InputService::new(Arc::new(InputWalker), Arc::new(GherkinParser)).read(input, Unnamed::Allowed)
 }
 
-/// The features of the folder `input`, which reads with no problem.
+/// The features of the folder `input`, which reads with no error.
 pub(crate) fn read_features(input: &Path) -> Vec<ParsedFeature> {
-    read_input(input).unwrap_or_else(|problems| panic!("the input is read:\n{problems}"))
+    read_input(input).unwrap_or_else(|errors| panic!("the input is read:\n{errors}"))
 }
 
 /// A folder of its own, emptied first, under the crate's `target/unit-tests`. Each module's

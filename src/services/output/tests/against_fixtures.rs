@@ -5,7 +5,8 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use crate::adapters::OutputFolderStore;
-use crate::entities::{FolderState, Marker, OutputProblemKind, VersionName};
+use crate::entities::{FolderState, Marker, VersionName};
+use crate::errors::OutputErrorKind;
 use crate::fixtures::{self, copy_folder, scratch};
 use crate::ports::OutputFolders;
 use crate::services::OutputService;
@@ -73,21 +74,21 @@ fn a_new_version_s_folder_is_made_with_the_folders_above() {
 
 #[test]
 fn a_version_already_built_is_kept_when_replace_existing_version_is_false() {
-    let problem = service()
+    let error = service()
         .check(&fixture().join("output"), &name("main"), false)
         .expect_err("kept");
-    assert_eq!(problem.output, fixture().join("output"));
-    assert_eq!(problem.version, Some(name("main")));
-    assert_eq!(problem.kind, OutputProblemKind::AlreadyBuilt);
+    assert_eq!(error.output, fixture().join("output"));
+    assert_eq!(error.version, Some(name("main")));
+    assert_eq!(error.kind, OutputErrorKind::AlreadyBuilt);
 }
 
 #[test]
 fn a_folder_without_the_marker_is_never_replaced() {
     for replace in [true, false] {
-        let problem = service()
+        let error = service()
             .check(&fixture().join("output"), &name("docs"), replace)
             .expect_err("left");
-        assert_eq!(problem.kind, OutputProblemKind::NotAVersion);
+        assert_eq!(error.kind, OutputErrorKind::NotAVersion);
     }
 }
 
@@ -95,10 +96,10 @@ fn a_folder_without_the_marker_is_never_replaced() {
 fn a_file_in_the_version_s_place_is_never_replaced() {
     let output = output_copy("file");
     write(output.join("v3"), "a file").expect("written");
-    let problem = service()
+    let error = service()
         .check(&output, &name("v3"), true)
         .expect_err("left");
-    assert_eq!(problem.kind, OutputProblemKind::NotAVersion);
+    assert_eq!(error.kind, OutputErrorKind::NotAVersion);
 }
 
 #[test]
@@ -116,7 +117,7 @@ fn a_folder_whose_name_differs_in_capitals_is_not_the_version() {
     let output = fixture().join("output");
     match service().check(&output, &name("Main"), true) {
         Ok(folder) => assert!(!folder.path().exists()),
-        Err(problem) => assert_eq!(problem.kind, OutputProblemKind::NotAVersion),
+        Err(error) => assert_eq!(error.kind, OutputErrorKind::NotAVersion),
     }
 }
 
@@ -124,10 +125,10 @@ fn a_folder_whose_name_differs_in_capitals_is_not_the_version() {
 fn a_marker_that_is_a_folder_is_no_marker() {
     let output = output_copy("marker-folder");
     create_dir_all(output.join("v3/ghg-version.json")).expect("made");
-    let problem = service()
+    let error = service()
         .check(&output, &name("v3"), true)
         .expect_err("left");
-    assert_eq!(problem.kind, OutputProblemKind::NotAVersion);
+    assert_eq!(error.kind, OutputErrorKind::NotAVersion);
     let list = service().versions(&output).expect("listed");
     assert!(!names(&list.releases).contains(&"v3"));
 }
@@ -162,10 +163,10 @@ mod links {
     fn a_link_in_the_version_s_place_is_never_followed() {
         let output = output_copy("link-place");
         symlink(output.join("main"), output.join("v3")).expect("linked");
-        let problem = service()
+        let error = service()
             .check(&output, &name("v3"), true)
             .expect_err("left");
-        assert_eq!(problem.kind, OutputProblemKind::NotAVersion);
+        assert_eq!(error.kind, OutputErrorKind::NotAVersion);
         // A linked folder with a marker is not listed either.
         let list = service().versions(&output).expect("listed");
         assert_eq!(names(&list.development), ["main"]);
