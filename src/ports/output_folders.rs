@@ -5,7 +5,7 @@ use std::path::Path;
 
 use crate::entities::{FolderState, Marker, VersionName};
 
-pub trait OutputFolders: Send + Sync {
+pub(crate) trait OutputFolders: Send + Sync {
     /// What is at `folder`, told apart by whether it holds the marker of
     /// `marker`'s kind, whatever the version it names.
     fn state(&self, folder: &Path, marker: &Marker) -> IoResult<FolderState>;

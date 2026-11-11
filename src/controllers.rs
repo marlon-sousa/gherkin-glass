@@ -2,4 +2,4 @@
 
 mod command_line;
 
-pub use command_line::{CommandLine, Reply};
+pub(crate) use command_line::CommandLine;

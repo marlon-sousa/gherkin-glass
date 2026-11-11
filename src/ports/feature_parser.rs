@@ -4,6 +4,6 @@ use std::path::Path;
 
 use crate::entities::{ParseFailure, RawFeature};
 
-pub trait FeatureParser: Send + Sync {
+pub(crate) trait FeatureParser: Send + Sync {
     fn parse(&self, path: &Path) -> Result<RawFeature, ParseFailure>;
 }

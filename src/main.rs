@@ -1,10 +1,10 @@
-//! Composition root: the `ghg` binary, which runs ghg with its arguments.
-
-mod composition_root;
+//! Binary: `ghg`, which hands the process's arguments to the library's entry point.
 
 use std::env::args_os;
 use std::process::ExitCode;
 
+use gherkin_glass::run;
+
 fn main() -> ExitCode {
-    composition_root::run(args_os().skip(1))
+    run(args_os().skip(1))
 }

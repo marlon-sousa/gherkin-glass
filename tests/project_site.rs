@@ -1,22 +1,73 @@
-//! docs/BEHAVIOUR.md, "The project's own site", checked against `project-site/`.
+//! The project's own site, checked against `project-site/`.
 
 use std::collections::BTreeSet;
 use std::fs::{create_dir_all, read_dir, read_to_string, remove_dir_all, write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
-use std::sync::Arc;
 
-use gherkin::{Feature, Scenario, Step};
-use gherkin_glass::{GherkinParser, InputService, InputWalker, ParsedFeature, Unnamed};
+use gherkin::{Feature, GherkinEnv, Scenario, Step};
+use serde_json::Value;
 
 fn repository() -> &'static Path {
     Path::new(env!("CARGO_MANIFEST_DIR"))
 }
 
-fn read(input: &Path) -> Vec<ParsedFeature> {
-    InputService::new(Arc::new(InputWalker), Arc::new(GherkinParser))
-        .read(input, Unnamed::Allowed)
-        .unwrap_or_else(|problems| panic!("{} is read:\n{problems}", input.display()))
+/// Builds `input` with `ghg`, which fails if any of its files cannot be read, and gives the
+/// address of every feature's page, as the site's search documents list them, so of every
+/// feature ghg read.
+fn builds(input: &Path, name: &str) -> BTreeSet<String> {
+    let site = scratch(name).join("site");
+    let output = Command::new(env!("CARGO_BIN_EXE_ghg"))
+        .args(["build", "--title", "Check", "--input"])
+        .arg(input)
+        .arg("--output")
+        .arg(&site)
+        .output()
+        .expect("ghg runs");
+    assert!(
+        output.status.success(),
+        "{}: {}",
+        input.display(),
+        text(&output.stderr)
+    );
+    let documents = read_to_string(site.join("assets/search.json")).expect("search.json is read");
+    let documents: Vec<Value> = serde_json::from_str(&documents).expect("search.json is JSON");
+    documents
+        .iter()
+        .filter(|document| document["kind"] == "feature")
+        .map(|document| document["page"].as_str().expect("a page").to_string())
+        .collect()
+}
+
+/// The feature files under `folder`, as paths from it.
+fn feature_files(folder: &Path) -> BTreeSet<PathBuf> {
+    let mut found = BTreeSet::new();
+    let mut folders = vec![PathBuf::new()];
+    while let Some(relative) = folders.pop() {
+        for entry in read_dir(folder.join(&relative)).expect("the folder is listed") {
+            let entry = entry.expect("an entry of the folder");
+            let path = relative.join(entry.file_name());
+            if entry.path().is_dir() {
+                folders.push(path);
+            } else if path
+                .extension()
+                .is_some_and(|extension| extension == "feature")
+            {
+                found.insert(path);
+            }
+        }
+    }
+    found
+}
+
+/// The media type written after a doc string's opening delimiter, on the line after its step.
+fn media_type<'a>(source: &'a str, step: &Step) -> Option<&'a str> {
+    let opener = source.lines().nth(step.position.line)?.trim();
+    let rest = opener
+        .strip_prefix("\"\"\"")
+        .or_else(|| opener.strip_prefix("```"))?
+        .trim();
+    Some(rest).filter(|rest| !rest.is_empty())
 }
 
 /// An empty folder of its own for one test.
@@ -76,7 +127,7 @@ fn every_fixture_the_site_shows_reads_with_no_problem() {
         .collect();
     assert!(!shown.is_empty());
     for name in shown {
-        read(&repository().join("tests/fixtures").join(name));
+        builds(&repository().join("tests/fixtures").join(&name), &name);
     }
 }
 
@@ -90,20 +141,13 @@ fn the_input_holds_the_example_suite_and_the_fixtures_and_reads_with_no_problem(
         .expect("the script runs");
     assert!(output.status.success(), "{}", text(&output.stderr));
 
-    let paths: BTreeSet<PathBuf> = read(&input).into_iter().map(|parsed| parsed.path).collect();
-    let mut expected: BTreeSet<PathBuf> = read(&repository().join("project-site/features"))
-        .into_iter()
-        .map(|parsed| parsed.path)
-        .collect();
+    let mut expected = builds(&repository().join("project-site/features"), "suite-pages");
     for name in fixture_folders().difference(&fixtures_left_out()) {
         let fixture = repository().join("tests/fixtures").join(name);
-        expected.extend(
-            read(&fixture)
-                .into_iter()
-                .map(|parsed| Path::new("fixtures").join(name).join(parsed.path)),
-        );
+        let pages = builds(&fixture, &format!("pages-{name}"));
+        expected.extend(pages.iter().map(|page| format!("fixtures/{name}/{page}")));
     }
-    assert_eq!(paths, expected);
+    assert_eq!(builds(&input, "input-site"), expected);
 }
 
 #[cfg(unix)]
@@ -142,20 +186,17 @@ fn non_empty(text: &Option<String>) -> bool {
 #[test]
 fn the_example_suite_shows_every_construct() {
     let suite = repository().join("project-site/features");
-    let features = read(&suite);
+    builds(&suite, "suite");
     let mut shown = BTreeSet::new();
     let mut show = |construct: &'static str, here: bool| {
         if here {
             shown.insert(construct);
         }
     };
-    for parsed in &features {
-        let feature = &parsed.feature;
-        let source = read_to_string(suite.join(&parsed.path)).unwrap();
-        show(
-            "folders within folders",
-            parsed.path.components().count() > 2,
-        );
+    for path in feature_files(&suite) {
+        let source = read_to_string(suite.join(&path)).unwrap();
+        let feature = &Feature::parse(&source, GherkinEnv::default()).expect("parsed");
+        show("folders within folders", path.components().count() > 2);
         show(
             "a language other than English",
             !["Feature", "Business Need", "Ability"].contains(&feature.keyword.as_str()),
@@ -191,15 +232,15 @@ fn the_example_suite_shows_every_construct() {
             if let Some(content) = &step.docstring {
                 show(
                     "a doc string with a media type",
-                    parsed.media_type(step).is_some(),
+                    media_type(&source, step).is_some(),
                 );
                 show(
                     "a doc string without one",
-                    parsed.media_type(step).is_none(),
+                    media_type(&source, step).is_none(),
                 );
                 show(
                     "an escaped delimiter",
-                    content.contains("\"\"\"") || content.contains("```"),
+                    content.contains(r#"\"\"\""#) || content.contains(r"\`\`\`"),
                 );
             }
         }

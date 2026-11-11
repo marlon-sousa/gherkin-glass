@@ -5,7 +5,7 @@ use thiserror::Error;
 use crate::entities::{OutputProblem, Problems};
 
 #[derive(Debug, Clone, PartialEq, Eq, Error)]
-pub enum BuildFailure {
+pub(crate) enum BuildFailure {
     /// The input's problems, or a file of the site that cannot be written.
     #[error("{0}")]
     Problems(#[from] Problems),

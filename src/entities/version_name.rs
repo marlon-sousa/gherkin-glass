@@ -10,11 +10,11 @@ const DEVICES: [&str; 4] = ["con", "prn", "aux", "nul"];
 const NUMBERED_DEVICES: [&str; 2] = ["com", "lpt"];
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct VersionName(String);
+pub(crate) struct VersionName(String);
 
 impl VersionName {
     /// `None` when `name` cannot be a version name, as docs/BEHAVIOUR.md, rule 121, says.
-    pub fn new(name: &str) -> Option<Self> {
+    pub(crate) fn new(name: &str) -> Option<Self> {
         let allowed = |c: char| c.is_ascii_alphanumeric() || matches!(c, '.' | '-' | '_' | '+');
         let starts_well = name.starts_with(|c: char| c.is_ascii_alphanumeric());
         let reserved = RESERVED
@@ -25,7 +25,7 @@ impl VersionName {
             .then(|| VersionName(name.to_string()))
     }
 
-    pub fn as_str(&self) -> &str {
+    pub(crate) fn as_str(&self) -> &str {
         &self.0
     }
 }

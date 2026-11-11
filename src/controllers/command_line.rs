@@ -15,7 +15,7 @@ use crate::services::{
     OutputService, PreviewEvents, PreviewService, RebuildFailure, SettingsService, SiteService,
 };
 
-pub struct CommandLine {
+pub(crate) struct CommandLine {
     settings: SettingsService,
     site: SiteService,
     output: OutputService,
@@ -27,16 +27,16 @@ pub struct CommandLine {
 /// that keeps running, `ghg serve`, says what happens meanwhile through the
 /// terminal it was given.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Reply {
-    pub stdout: String,
-    pub stderr: String,
+pub(crate) struct Reply {
+    pub(crate) stdout: String,
+    pub(crate) stderr: String,
     /// 0 when it did what was asked, 1 when the configuration or the input
     /// stopped it, 2 when the command line was mistaken.
-    pub status: u8,
+    pub(crate) status: u8,
 }
 
 impl CommandLine {
-    pub fn new(
+    pub(crate) fn new(
         config_reader: Arc<dyn ConfigReader>,
         site: SiteService,
         output: OutputService,
@@ -53,7 +53,7 @@ impl CommandLine {
     }
 
     /// `arguments` come after the command's own name.
-    pub fn run(&self, arguments: impl IntoIterator<Item = OsString>) -> Reply {
+    pub(crate) fn run(&self, arguments: impl IntoIterator<Item = OsString>) -> Reply {
         match parse_arguments(arguments) {
             Err(problem) => Reply::failure(2, wording::argument_problem(&problem)),
             Ok(Invocation::Help) => Reply::success(fl!(CATALOGUE, "help")),

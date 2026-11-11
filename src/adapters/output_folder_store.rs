@@ -16,7 +16,7 @@ pub(crate) const VERSION_MARKER: &str = "ghg-version.json";
 pub(crate) const SITE_MARKER: &str = "ghg-site.json";
 
 #[derive(Debug, Default, Clone, Copy)]
-pub struct OutputFolderStore;
+pub(crate) struct OutputFolderStore;
 
 impl OutputFolders for OutputFolderStore {
     fn state(&self, folder: &Path, marker: &Marker) -> IoResult<FolderState> {

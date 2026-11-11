@@ -2,7 +2,7 @@
 
 use crate::entities::{Changes, WatchFailure, Watched};
 
-pub trait ChangeWatcher: Send + Sync {
+pub(crate) trait ChangeWatcher: Send + Sync {
     /// Starts watching every one of `watched`, merging each burst of
     /// changes, such as an editor's when it saves, into one message that
     /// names the paths it changed. Opening or reading a file is not a

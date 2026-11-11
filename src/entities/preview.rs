@@ -7,28 +7,28 @@ use std::sync::{Arc, PoisonError, RwLock};
 /// A site to serve: a folder on disk, or one built in memory, its files by
 /// their `/`-joined address below the site's root.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum ServedSite {
+pub(crate) enum ServedSite {
     Folder(PathBuf),
     Memory(BTreeMap<String, Vec<u8>>),
 }
 
 /// One version of the site, numbered from 1.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Version {
-    pub number: u64,
-    pub site: ServedSite,
+pub(crate) struct Version {
+    pub(crate) number: u64,
+    pub(crate) site: ServedSite,
 }
 
 /// What ghg serve serves, shared by every request: the version being
 /// served, which a rebuild replaces whole, and whether it is watching.
 #[derive(Debug)]
-pub struct Preview {
-    pub watching: bool,
+pub(crate) struct Preview {
+    pub(crate) watching: bool,
     current: RwLock<Arc<Version>>,
 }
 
 impl Preview {
-    pub fn new(watching: bool, site: ServedSite) -> Self {
+    pub(crate) fn new(watching: bool, site: ServedSite) -> Self {
         Preview {
             watching,
             current: RwLock::new(Arc::new(Version { number: 1, site })),
@@ -36,7 +36,7 @@ impl Preview {
     }
 
     /// A request keeps the version it started with, whatever replaces it meanwhile.
-    pub fn current(&self) -> Arc<Version> {
+    pub(crate) fn current(&self) -> Arc<Version> {
         // A version is replaced whole, so a panic elsewhere never leaves one half made.
         self.current
             .read()
@@ -45,7 +45,7 @@ impl Preview {
     }
 
     /// Serves `site` from now on, as the next version; its number.
-    pub fn replace(&self, site: ServedSite) -> u64 {
+    pub(crate) fn replace(&self, site: ServedSite) -> u64 {
         let mut current = self.current.write().unwrap_or_else(PoisonError::into_inner);
         let number = current.number + 1;
         *current = Arc::new(Version { number, site });
@@ -56,9 +56,9 @@ impl Preview {
 /// The sentences ghg serve answers with when it has no file to serve,
 /// from the interface text catalogue.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ServerWords {
-    pub not_found: String,
-    pub wrong_method: String,
+pub(crate) struct ServerWords {
+    pub(crate) not_found: String,
+    pub(crate) wrong_method: String,
 }
 
 #[cfg(test)]

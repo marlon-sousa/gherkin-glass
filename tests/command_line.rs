@@ -1,4 +1,4 @@
-//! docs/BEHAVIOUR.md, "The command line and its configuration", checked by running `ghg`.
+//! The command line and its configuration, checked by running `ghg`.
 
 use std::fs::{copy, create_dir_all, read_dir, read_to_string, remove_dir_all};
 use std::path::{Path, PathBuf};

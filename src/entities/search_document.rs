@@ -3,24 +3,24 @@
 use serde::Serialize;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
-pub struct SearchDocument {
-    pub kind: SearchKind,
+pub(crate) struct SearchDocument {
+    pub(crate) kind: SearchKind,
     /// Empty for a block with no name.
-    pub name: String,
+    pub(crate) name: String,
     /// The name of the feature whose page the entry is on; `None` for the feature itself.
-    pub feature: Option<String>,
+    pub(crate) feature: Option<String>,
     /// The name of the rule the scenario is in; `None` for a scenario outside a rule, a rule and a feature.
-    pub rule: Option<String>,
-    pub steps: Vec<String>,
-    pub tags: Vec<String>,
-    pub page: String,
+    pub(crate) rule: Option<String>,
+    pub(crate) steps: Vec<String>,
+    pub(crate) tags: Vec<String>,
+    pub(crate) page: String,
     /// Empty for a feature, which is its page.
-    pub anchor: String,
+    pub(crate) anchor: String,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "kebab-case")]
-pub enum SearchKind {
+pub(crate) enum SearchKind {
     Feature,
     Rule,
     Scenario,

@@ -1,13 +1,11 @@
-//! Composition root: the `cargo-ghg` binary, the cargo plugin that cargo runs
-//! as `cargo ghg`, which runs ghg as the `ghg` binary does.
-
-mod composition_root;
+//! Binary: `cargo-ghg`, the cargo plugin that cargo runs as `cargo ghg`, which hands the
+//! process's arguments to the library's entry point for the plugin.
 
 use std::env::args_os;
 use std::process::ExitCode;
 
-use gherkin_glass::cargo_plugin_arguments;
+use gherkin_glass::run_cargo_plugin;
 
 fn main() -> ExitCode {
-    composition_root::run(cargo_plugin_arguments(args_os().skip(1)))
+    run_cargo_plugin(args_os().skip(1))
 }

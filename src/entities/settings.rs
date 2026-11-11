@@ -5,13 +5,13 @@ use std::path::PathBuf;
 use crate::entities::{PageOptions, Unnamed, VersionName};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Settings {
-    pub input: PathBuf,
-    pub output: PathBuf,
-    pub unnamed: Unnamed,
-    pub pages: PageOptions,
+pub(crate) struct Settings {
+    pub(crate) input: PathBuf,
+    pub(crate) output: PathBuf,
+    pub(crate) unnamed: Unnamed,
+    pub(crate) pages: PageOptions,
     /// `None` when the build is not versioned.
-    pub version: Option<VersionName>,
+    pub(crate) version: Option<VersionName>,
     /// Whether an earlier build of the site, or of the version, is replaced.
-    pub replace: bool,
+    pub(crate) replace: bool,
 }

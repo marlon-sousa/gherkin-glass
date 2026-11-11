@@ -3,19 +3,19 @@
 use std::fmt::{Display, Formatter, Result as FmtResult};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct Colour {
-    pub red: u8,
-    pub green: u8,
-    pub blue: u8,
+pub(crate) struct Colour {
+    pub(crate) red: u8,
+    pub(crate) green: u8,
+    pub(crate) blue: u8,
 }
 
 impl Colour {
-    pub const fn new(red: u8, green: u8, blue: u8) -> Self {
+    pub(crate) const fn new(red: u8, green: u8, blue: u8) -> Self {
         Colour { red, green, blue }
     }
 
     /// `#rrggbb` or `#rgb`, in capitals or small letters; `None` for anything else.
-    pub fn from_hex(text: &str) -> Option<Colour> {
+    pub(crate) fn from_hex(text: &str) -> Option<Colour> {
         let digits = text.strip_prefix('#')?;
         if !digits.bytes().all(|byte| byte.is_ascii_hexdigit()) {
             return None;

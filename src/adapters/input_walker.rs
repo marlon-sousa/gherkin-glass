@@ -9,7 +9,7 @@ use crate::policies::{FileSelection, IGNORE_FILE, parse_rules};
 use crate::ports::InputCollector;
 
 #[derive(Debug, Default, Clone, Copy)]
-pub struct InputWalker;
+pub(crate) struct InputWalker;
 
 impl InputCollector for InputWalker {
     fn collect(&self, input: &Path) -> CollectedInput {

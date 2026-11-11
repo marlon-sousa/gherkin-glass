@@ -4,7 +4,7 @@ use regex_automata::meta::Regex;
 
 /// Two links are the same when they are written the same.
 #[derive(Debug, Clone)]
-pub struct TagLink {
+pub(crate) struct TagLink {
     /// As written in the configuration.
     pub(crate) source: String,
     /// `source`, matched against the whole tag only.

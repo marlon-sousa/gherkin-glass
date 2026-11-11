@@ -6,10 +6,10 @@ mod preview;
 mod settings;
 mod site;
 
-pub use input::InputService;
-pub use output::OutputService;
-pub use preview::PreviewService;
+pub(crate) use input::InputService;
+pub(crate) use output::OutputService;
+pub(crate) use preview::PreviewService;
 pub(crate) use preview::{PreviewEvents, RebuildFailure, ServeFailure};
 pub(crate) use settings::{ConfigProblems, SettingsService};
-pub use site::SiteService;
+pub(crate) use site::SiteService;
 pub(crate) use site::assets;

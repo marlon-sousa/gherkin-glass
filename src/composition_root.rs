@@ -6,14 +6,16 @@ use std::io::{Write, stderr, stdout};
 use std::process::ExitCode;
 use std::sync::Arc;
 
-use gherkin_glass::{
-    CommandLine, ConfigFileReader, FileWatcher, GherkinParser, HttpPreviewServer, InputService,
-    InputWalker, MemorySite, OutputFolderStore, OutputService, PreviewService, SiteFiles,
-    SiteService, StandardStreams,
+use crate::adapters::{
+    ConfigFileReader, FileWatcher, GherkinParser, HttpPreviewServer, InputWalker, MemorySite,
+    OutputFolderStore, SiteFiles, StandardStreams,
 };
+use crate::controllers::CommandLine;
+use crate::policies::cargo_plugin_arguments;
+use crate::services::{InputService, OutputService, PreviewService, SiteService};
 
 /// Runs ghg with `arguments`, those after the command's own name.
-pub(crate) fn run(arguments: impl IntoIterator<Item = OsString>) -> ExitCode {
+pub fn run(arguments: impl IntoIterator<Item = OsString>) -> ExitCode {
     let config_reader = Arc::new(ConfigFileReader);
     let input = InputService::new(Arc::new(InputWalker), Arc::new(GherkinParser));
     let output = OutputService::new(Arc::new(OutputFolderStore));
@@ -39,4 +41,9 @@ pub(crate) fn run(arguments: impl IntoIterator<Item = OsString>) -> ExitCode {
     let _ = stdout().write_all(reply.stdout.as_bytes());
     let _ = stderr().write_all(reply.stderr.as_bytes());
     ExitCode::from(reply.status)
+}
+
+/// Runs ghg as cargo runs the plugin, `cargo ghg`, with `arguments`, those after the plugin's own name.
+pub fn run_cargo_plugin(arguments: impl IntoIterator<Item = OsString>) -> ExitCode {
+    run(cargo_plugin_arguments(arguments))
 }

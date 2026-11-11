@@ -20,7 +20,7 @@ const DEFAULT_HOST: &str = "127.0.0.1";
 /// The port ghg serve listens at unless `--port` names another.
 const DEFAULT_PORT: u16 = 8000;
 
-pub struct PreviewService {
+pub(crate) struct PreviewService {
     settings: SettingsService,
     on_disk: SiteService,
     output: OutputService,
@@ -71,7 +71,7 @@ impl PreviewService {
     /// `on_disk` writes the site into its output folder, once `output` has
     /// checked that folder as ghg build does; under `--watch`, `input` is built
     /// into `memory`, which no output folder's check concerns.
-    pub fn new(
+    pub(crate) fn new(
         config_reader: Arc<dyn ConfigReader>,
         on_disk: SiteService,
         output: OutputService,

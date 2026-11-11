@@ -5,8 +5,8 @@ use std::path::PathBuf;
 use crate::entities::Problem;
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
-pub struct CollectedInput {
+pub(crate) struct CollectedInput {
     /// Sorted.
-    pub paths: Vec<PathBuf>,
-    pub problems: Vec<Problem>,
+    pub(crate) paths: Vec<PathBuf>,
+    pub(crate) problems: Vec<Problem>,
 }

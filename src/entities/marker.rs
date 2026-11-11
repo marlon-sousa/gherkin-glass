@@ -3,7 +3,7 @@
 use crate::entities::VersionName;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Marker {
+pub(crate) enum Marker {
     /// An output folder holding a site without versions.
     Site,
     /// A version's folder inside an output folder.
