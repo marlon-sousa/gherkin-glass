@@ -7,8 +7,9 @@
 //! [`search_documents`] what search reads, all part of the third, as [`highlight_step`] splits a step into the parts its highlighting
 //! tells apart; [`SiteService`] runs the whole build, writing each feature's
 //! page and the documents of search; [`OutputService`] writes a build into its output folder, with or
-//! without versions; [`PreviewService`] previews a site, built and served; and
-//! [`CommandLine`] is the `ghg` command, configured by `ghg.toml`.
+//! without versions; [`PreviewService`] previews a site, built and served;
+//! [`CommandLine`] is the `ghg` command, configured by `ghg.toml`; and
+//! [`cargo_plugin_arguments`] lets the cargo plugin, `cargo ghg`, run it too.
 
 #![warn(unreachable_pub)]
 
@@ -33,8 +34,8 @@ pub use entities::{
     VersionList, VersionName, WatchFailure, Watched,
 };
 pub use policies::{
-    DEFAULT_ACCENTS, find_step_sentences, highlight_step, make_anchors, search_documents,
-    search_json,
+    DEFAULT_ACCENTS, cargo_plugin_arguments, find_step_sentences, highlight_step, make_anchors,
+    search_documents, search_json,
 };
 pub use ports::{
     ChangeWatcher, ConfigReader, FeatureParser, InputCollector, OutputFolders, PreviewServer,

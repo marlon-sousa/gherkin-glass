@@ -21,4 +21,6 @@ Each folder here is the input of one build, and is checked against the rules of 
 - `no-steps`: a feature whose only scenario has no step, and the page of step sentences its build writes, in `expected`.
 - `search`: the input of search's documents, in `features`, with the documents expected of it in `search.json`: a feature with tags and a background, a scenario with a data table and a doc string, an outline whose examples blocks repeat a tag, a rule with its own background and tags, an unnamed scenario, a feature in Portuguese at the input's root, and a feature without a name, with an unnamed rule holding an outline whose examples repeat its tag, and a rule without scenarios. Its doc string and table hold words found nowhere else, to check they are not searched.
 
+The cargo plugin, `cargo ghg`, is run over the `configuration` folders too, and checked to behave exactly as `ghg` does there.
+
 Some files here are left out of git by the fixture's own `.gitignore`, on purpose, and were added with `git add --force`.

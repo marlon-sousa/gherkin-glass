@@ -10,7 +10,7 @@ Ports and adapters. The pure part of gherkin-glass, which decides what the site 
 
 ## The repository
 
-- **One crate**, `gherkin-glass`: a library, `src/lib.rs`, and the binaries built on it: `ghg`, from `src/main.rs`, and the cargo plugin `cargo-ghg`, which runs the same code as `cargo ghg` ([#18](https://github.com/marlon-sousa/gherkin-glass/issues/18)). Nothing in it is heavy enough to earn a crate of its own.
+- **One crate**, `gherkin-glass`: a library, `src/lib.rs`, and the binaries built on it: `ghg`, from `src/main.rs`, and the cargo plugin `cargo-ghg`, from `src/cargo_ghg.rs`, which runs the same code as `cargo ghg` ([#18](https://github.com/marlon-sousa/gherkin-glass/issues/18)). Both binaries share `src/composition_root.rs`, which wires the real adapters in, and each only hands it its arguments. Nothing in it is heavy enough to earn a crate of its own.
 - **`xtask/`**, the crate behind `cargo xtask build` and `cargo xtask check` ([#4](https://github.com/marlon-sousa/gherkin-glass/issues/4)). It orchestrates the build and is never shipped.
 - **`templates/`**, the askama templates, at the place askama looks by default. They are the views: everything a page says is placed here, except the folder tree, which the script builds from shared data ([#7](https://github.com/marlon-sousa/gherkin-glass/issues/7)).
 - **`script/`**, the TypeScript of the pages' behaviour, an npm package with its own `package.json` and lockfile. Its compiled output is committed, so building the crate needs no Node ([#4](https://github.com/marlon-sousa/gherkin-glass/issues/4)).
@@ -20,7 +20,7 @@ Ports and adapters. The pure part of gherkin-glass, which decides what the site 
 
 ## Module roles
 
-Every module plays exactly one of six roles, and says which on the first line of its `//!` doc comment, such as `//! Policy: the anchor rule.` Two files play none and say so instead: `lib.rs`, the facade, and `main.rs`, the composition root.
+Every module plays exactly one of six roles, and says which on the first line of its `//!` doc comment, such as `//! Policy: the anchor rule.` The other files play none and say so instead: `lib.rs`, the facade, and the composition root, which is `composition_root.rs` with the two binaries' entry points, `main.rs` and `cargo_ghg.rs`.
 
 1. **Entity or value**: data and the invariants it keeps, such as a parsed feature, a page, or a problem found in the input.
 2. **Policy**: a pure computation, the same output for the same input every time. Correcting doc strings, making anchors, building the site's model, the page addresses and the contrast check are policies, and so is rendering a template into a string.
@@ -42,7 +42,7 @@ The four steps of a build ([#3](https://github.com/marlon-sousa/gherkin-glass/is
 3. **Build the model**: policies, in one place and in file order, build the folder tree, the anchors and the indexes.
 4. **Render and write**: policies render each page from its template into a string, which may again run in parallel; an adapter writes the strings, and the embedded assets, behind a port.
 
-The service that builds a site runs these steps; the controller behind the command line calls it; `main.rs` wires the real adapters in.
+The service that builds a site runs these steps; the controller behind the command line calls it; the composition root wires the real adapters in.
 
 ## Folders and files
 
@@ -66,7 +66,7 @@ One sentence, where it applies, once. Why a decision was taken, what else was co
 
 ## Dependencies between parts
 
-No dependency injection framework. Every collaborator is received through a constructor, as a trait object or a generic, and only `main.rs`, the composition root, names the concrete adapters. Nothing else constructs its own collaborators. Tests hand in fakes written for the purpose, such as an input held in memory and an output that records what was written.
+No dependency injection framework. Every collaborator is received through a constructor, as a trait object or a generic, and only the composition root names the concrete adapters. Nothing else constructs its own collaborators. Tests hand in fakes written for the purpose, such as an input held in memory and an output that records what was written.
 
 ## How the code runs
 
@@ -97,7 +97,7 @@ The TypeScript in `script/` follows the same roles, each file declaring its role
 - **The views are the templates.** Everything a page says, its headings, anchors, links and text, is in the HTML the templates write. The script adds behaviour to it, and never writes content, with two agreed exceptions: the folder tree, built from the site's shared tree data ([#7](https://github.com/marlon-sousa/gherkin-glass/issues/7)), and what search finds, its status and its results ([#15](https://github.com/marlon-sousa/gherkin-glass/issues/15)).
 - **Adapters** are the parts that touch the DOM, the browser's storage, the network or the clock: the disclosure buttons, the tree, the reader options, the theme switch, the search box, fetching the search documents, and waiting for the reader to pause. Each sits behind a small interface in `ports/`.
 - **Policies** are the pure parts: which state a block starts in, given the configured default and what the reader chose before; how a remembered choice is keyed by page and anchor.
-- **`src/main.ts`** is the composition root, as `main.rs` is for the crate.
+- **`src/main.ts`** is the composition root, as `composition_root.rs` is for the crate.
 - **Sources live in `script/src/`, and tests in `script/test/`**, a tree that mirrors it, so a test of `src/adapters/tree.ts` is `test/adapters/tree.test.ts`.
 - **What `script/` compiles to is one ES module.** Sites are served over HTTP, never opened from disk ([#26](https://github.com/marlon-sousa/gherkin-glass/issues/26), [design note 0026](design/0026-sites-are-served.md)), so the script may be a module and may fetch. The data the pages share, such as the folder tree's ([#7](https://github.com/marlon-sousa/gherkin-glass/issues/7)), is JSON written for each site and fetched by the script, at an address resolved against the script's own, such as `new URL("tree.json", import.meta.url)`, so that it works from a page at any depth and on a site served below a path such as GitHub Pages' `/<repository>/`.
 - **The reload script `ghg serve --watch` adds to each page is not part of any site.** It is a few lines of plain JavaScript beside the server's adapter, `src/adapters/preview_http/reload.js`, embedded with `include_str!`, so that it needs no build step.
