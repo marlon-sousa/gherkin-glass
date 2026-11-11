@@ -63,28 +63,40 @@ pub(crate) fn output_safety(
         return Err(OutputErrorKind::MissingVersion { name: name.clone() });
     }
     already_built(&record, target, moment)?;
-    Ok(Some(record))
+    Ok(Some(found_only(record, &files)))
 }
 
-/// Whether every path `record` lists is a path inside the output folder: made of
-/// names joined by `/`, none of them empty, `.` or `..`, and none holding `\\` or
-/// `:`, which a system could read as a separator or a drive.
+/// Whether every path `record` lists is a path inside the output folder:
+/// names joined by `/`, none of them empty, `.` or `..`.
 fn lists_only_inside(record: &Record) -> bool {
-    let mut paths: Box<dyn Iterator<Item = &FilePath>> = match record {
-        Record::Site(files) => Box::new(files.iter()),
-        Record::Versions { page, versions } => {
-            Box::new(page.iter().chain(versions.values().flatten()))
-        }
-    };
-    paths.all(|path| is_inside(path))
+    match record {
+        Record::Site(files) => files.iter().all(is_inside),
+        Record::Versions { page, versions } => page
+            .iter()
+            .chain(versions.values().flatten())
+            .all(is_inside),
+    }
 }
 
-fn is_inside(path: &str) -> bool {
+fn is_inside(path: &FilePath) -> bool {
     path.split('/').all(is_plain_name)
 }
 
 fn is_plain_name(name: &str) -> bool {
-    !matches!(name, "" | "." | "..") && !name.contains(['\\', ':'])
+    !matches!(name, "" | "." | "..")
+}
+
+/// `record`, its versions page listing only the files found, so that what is
+/// removed before the page is written again is always something in the folder,
+/// whatever a system reads as a separator.
+fn found_only(record: Record, files: &BTreeSet<FilePath>) -> Record {
+    match record {
+        Record::Versions { page, versions } => Record::Versions {
+            page: page.intersection(files).cloned().collect(),
+            versions,
+        },
+        site => site,
+    }
 }
 
 /// Paths compared folder by folder, as every list of paths is sorted.

@@ -276,6 +276,32 @@ fn a_file_ghg_did_not_write_stops_the_build() {
     assert_eq!(files(&written), expected);
 }
 
+#[cfg(unix)]
+#[test]
+fn a_site_whose_pages_have_any_name_the_system_allows_is_built_again() {
+    let input = output("odd-names-input");
+    create_dir_all(&input).expect("made");
+    for name in ["time 10:30.feature", "back\\slash.feature"] {
+        write(input.join(name), "Feature: Odd\n").expect("written");
+    }
+    let written = output("odd-names");
+    let arguments = [
+        "--input",
+        input.to_str().expect("UTF-8"),
+        "--output",
+        written.to_str().expect("UTF-8"),
+        "--title",
+        "Odd",
+    ];
+    for _ in 0..2 {
+        let result = build(&fixtures().join("pages"), &arguments);
+        assert_eq!(String::from_utf8_lossy(&result.stderr), "");
+        assert_eq!(result.status.code(), Some(0));
+    }
+    assert!(written.join("time 10:30.html").is_file());
+    assert!(written.join("back\\slash.html").is_file());
+}
+
 #[test]
 fn an_earlier_build_is_kept_when_replace_existing_version_is_false() {
     let written = output("kept-build");

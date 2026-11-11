@@ -200,8 +200,6 @@ fn listing(listed: &str) -> OutputContents {
 #[case::empty("")]
 #[case::an_empty_name("a//b.html")]
 #[case::this_folder("./index.html")]
-#[case::a_backslash("..\\victim.txt")]
-#[case::a_drive("C:victim.txt")]
 fn a_marker_listing_a_path_outside_the_folder_is_no_marker(#[case] listed: &str) {
     assert_eq!(
         output_safety(listing(listed), &BuildTarget::Site, REPLACE),
@@ -243,4 +241,39 @@ fn the_first_thing_found_is_named_folder_by_folder() {
             found: "a/b.txt".into()
         })
     );
+}
+
+#[rstest]
+#[case::a_colon("time 10:30.html")]
+#[case::a_backslash("back\\slash.html")]
+fn a_page_name_any_system_allows_is_ghg_s(#[case] page: &str) {
+    let contents = OutputContents::Folder {
+        files: set(&["ghg-site.json", page]),
+        folders: BTreeSet::new(),
+        record: Some(Record::Site(set(&[page]))),
+    };
+    assert_eq!(
+        output_safety(contents, &BuildTarget::Site, REPLACE),
+        Ok(Some(Record::Site(set(&[page]))))
+    );
+}
+
+#[test]
+fn only_the_versions_page_s_files_found_are_kept_for_removal() {
+    let mut contents = versions_folder(&[], &[], &["assets/ghg.css", "assets"]);
+    if let OutputContents::Folder { record, .. } = &mut contents {
+        *record = Some(Record::Versions {
+            page: set(&["index.html", "assets/ghg.css", "..\\victim.txt"]),
+            versions: BTreeMap::from([
+                (name("main"), set(&["index.html"])),
+                (name("v1.0.0"), set(&["index.html", "sub/old.html"])),
+            ]),
+        });
+    }
+    let Ok(Some(Record::Versions { page, .. })) =
+        output_safety(contents, &version("main"), REPLACE)
+    else {
+        panic!("the folder is safe");
+    };
+    assert_eq!(page, set(&["index.html"]));
 }
