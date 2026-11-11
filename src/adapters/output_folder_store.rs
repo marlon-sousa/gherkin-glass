@@ -1,7 +1,8 @@
 //! Adapter: the output folders port over the file system.
 
 use std::fs::{
-    create_dir_all, read_dir, remove_dir, remove_dir_all, remove_file, symlink_metadata, write,
+    DirEntry, create_dir_all, read_dir, remove_dir, remove_dir_all, remove_file, symlink_metadata,
+    write,
 };
 use std::io::{ErrorKind, Result as IoResult};
 use std::path::Path;
@@ -92,23 +93,24 @@ impl OutputFolders for OutputFolderStore {
             Err(error) if error.kind() == ErrorKind::NotFound => return Ok(Vec::new()),
             Err(error) => return Err(error),
         }
-        let entries = read_dir(output)?;
-        let mut names = Vec::new();
-        for entry in entries {
-            let entry = entry?;
-            if !entry.file_type()?.is_dir() {
-                continue;
-            }
-            // A folder whose name cannot be a version name was not built by ghg.
-            let Some(name) = entry.file_name().to_str().and_then(VersionName::new) else {
-                continue;
-            };
-            if is_file(&entry.path().join(VERSION_MARKER))? {
-                names.push(name);
-            }
-        }
-        Ok(names)
+        read_dir(output)?
+            .map(version_in)
+            .filter_map(Result::transpose)
+            .collect()
     }
+}
+
+/// The version ghg built in the entry of an output folder, if it is one.
+fn version_in(entry: IoResult<DirEntry>) -> IoResult<Option<VersionName>> {
+    let entry = entry?;
+    if !entry.file_type()?.is_dir() {
+        return Ok(None);
+    }
+    // A folder whose name cannot be a version name was not built by ghg.
+    let Some(name) = entry.file_name().to_str().and_then(VersionName::new) else {
+        return Ok(None);
+    };
+    Ok(is_file(&entry.path().join(VERSION_MARKER))?.then_some(name))
 }
 
 /// Whether the folder that holds `path` lists it under exactly its name.

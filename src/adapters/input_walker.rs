@@ -1,7 +1,7 @@
 //! Adapter: the input collector port, walking the input folder on disk with its `.ghg-ignore` files.
 
-use std::fs::{read_dir, read_to_string};
-use std::io::ErrorKind;
+use std::fs::{DirEntry, read_dir, read_to_string};
+use std::io::{ErrorKind, Result as IoResult};
 use std::path::{Path, PathBuf};
 
 use crate::entities::{CollectedInput, Problem, ProblemKind};
@@ -35,9 +35,7 @@ impl Walk<'_> {
         let Some(entries) = self.entries(folder) else {
             return;
         };
-        let has_rules = entries
-            .iter()
-            .any(|(path, is_folder)| !is_folder && path.file_name() == Some(IGNORE_FILE.as_ref()));
+        let has_rules = entries.iter().any(is_ignore_file);
         let entered = has_rules && self.enter_rules(folder);
         for (path, is_folder) in entries {
             if self.selection.is_left_out(&path, is_folder) {
@@ -60,15 +58,9 @@ impl Walk<'_> {
     fn entries(&mut self, folder: &Path) -> Option<Vec<(PathBuf, bool)>> {
         let listing = read_dir(folder).and_then(|listing| {
             listing
-                .filter_map(|entry| {
-                    entry
-                        .and_then(|entry| Ok((entry.path(), entry.file_type()?)))
-                        .map(|(path, kind)| {
-                            (kind.is_file() || kind.is_dir()).then(|| (path, kind.is_dir()))
-                        })
-                        .transpose()
-                })
-                .collect::<Result<Vec<_>, _>>()
+                .map(file_or_folder)
+                .filter_map(Result::transpose)
+                .collect::<IoResult<Vec<_>>>()
         });
         match listing {
             Ok(entries) => Some(entries),
@@ -115,4 +107,15 @@ impl Walk<'_> {
             .problems
             .push(Problem::new(self.input, path, line, kind));
     }
+}
+
+/// The entry's path and whether it is a folder, when it is a file or a folder.
+fn file_or_folder(entry: IoResult<DirEntry>) -> IoResult<Option<(PathBuf, bool)>> {
+    let entry = entry?;
+    let kind = entry.file_type()?;
+    Ok((kind.is_file() || kind.is_dir()).then(|| (entry.path(), kind.is_dir())))
+}
+
+fn is_ignore_file((path, is_folder): &(PathBuf, bool)) -> bool {
+    !is_folder && path.file_name() == Some(IGNORE_FILE.as_ref())
 }
