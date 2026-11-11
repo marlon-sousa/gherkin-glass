@@ -4,12 +4,12 @@ use std::collections::BTreeMap;
 
 use gherkin::{Background, Scenario, Step, StepType};
 
+use super::sentence_slots::sentence_of;
 use crate::entities::{
     Anchored, AnchoredFeature, AnchoredScenario, Sentence, SentenceGroup, SentenceUse, StepKind,
     StepSentences,
 };
 use crate::policies::heading;
-use crate::policies::sentence_slots::sentence_of;
 
 pub(crate) fn find_step_sentences<'a>(
     features: impl IntoIterator<Item = &'a AnchoredFeature<'a>>,
