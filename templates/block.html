@@ -1,6 +1,6 @@
 {%- import "macros.html" as m -%}
 <div class="ghg-block {{ block.kind.class() }}">
-<h{{ block.level }} id="{{ block.anchor }}"><button type="button" class="ghg-toggle" aria-expanded="{{ !block.collapsed }}">{% for part in block.heading_parts %}{% if part.isolated %}<bdi>{{ part.text }}</bdi>{% else %}{{ part.text }}{% endif %}{% endfor %}</button></h{{ block.level }}>
+<h{{ block.level.number() }} id="{{ block.anchor }}"><button type="button" class="ghg-toggle" aria-expanded="{{ !block.collapsed }}">{% for part in block.heading_parts %}{% if part.isolated %}<bdi>{{ part.text }}</bdi>{% else %}{{ part.text }}{% endif %}{% endfor %}</button></h{{ block.level.number() }}>
 <div class="ghg-content"{% if block.collapsed %} hidden{% endif %}>
 {%- call m::tags(block.tags) %}{% endcall %}
 {%- call m::description(block.description) %}{% endcall %}

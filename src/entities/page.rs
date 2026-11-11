@@ -1,6 +1,6 @@
 //! Entity: a feature's page, as its template shows it, every text in it as written or worded.
 
-use crate::entities::{Breadcrumb, PageFrame, StepPart};
+use crate::entities::{Breadcrumb, HeadingLevel, PageFrame, StepPart};
 
 /// One page of the site. Every `String` is text, escaped when it is rendered.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -101,8 +101,7 @@ pub(crate) struct ContentsEntry {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct Block {
     pub(crate) kind: BlockKind,
-    /// From 2 to 5.
-    pub(crate) level: u8,
+    pub(crate) level: HeadingLevel,
     /// The `id` of its heading: a block's anchor, or for the examples as
     /// scenarios an `id` of the page's own, with a `_`.
     pub(crate) anchor: String,

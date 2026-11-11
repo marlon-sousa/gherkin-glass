@@ -14,6 +14,7 @@ mod doc_string;
 mod exit_status;
 mod folder_page;
 mod folder_state;
+mod heading_level;
 mod highlighted_step;
 mod invocation;
 mod listen_failure;
@@ -57,6 +58,7 @@ pub(crate) use doc_string::DocString;
 pub(crate) use exit_status::ExitStatus;
 pub(crate) use folder_page::{FeatureEntry, FolderLink, FolderPage, FolderWords};
 pub(crate) use folder_state::FolderState;
+pub(crate) use heading_level::HeadingLevel;
 pub(crate) use highlighted_step::{HighlightedStep, StepPart};
 pub(crate) use invocation::{
     ArgumentProblem, BuildOption, BuildOptions, Invocation, ServeMode, ServeOptions,
