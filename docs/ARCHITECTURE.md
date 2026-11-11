@@ -32,7 +32,9 @@ Every module plays exactly one of six roles, and says which on the first line of
 5. **Service**: a named use case in the domain's own words, such as building a site. It coordinates policies, entities and ports, and touches the world only through the ports it was given, so a test can run it entirely in memory with fake ports.
 6. **Controller**: the delivery layer. It turns the command line and the configuration into a call to a service, and the service's result into what the person at the terminal reads, including the exit status. Deleting a controller loses no behaviour, only the way in.
 
-The question that classifies a module: **does it do anything nondeterministic, such as reading or writing files, reading the environment or the clock?** If yes, it is an adapter, behind a port. If no, it is one of the other five. If it still fits none, it does two things and is split until each part fits one. A pure function never gets a trait around it only to be faked: it is already testable.
+The question that classifies a module: **does it do anything nondeterministic, such as reading or writing files, reading the environment or the clock?** If yes, it is an adapter, behind a port. If no, it is one of the other five, or pure code of one adapter, as the next paragraph says. If it still fits none, it does two things and is split until each part fits one. A pure function never gets a trait around it only to be faked: it is already testable.
+
+Policies hold the domain's pure decisions. Pure code that only one adapter uses to speak its protocol or its library, such as the content type of an HTTP answer or the answer to a request's path, is part of that adapter: a private submodule in the adapter's folder, with the adapter's role line, tested there. It is pure, so it needs no port to be tested.
 
 Layering goes one way. Controllers call services; services use entities, policies and ports; adapters implement ports. Nothing reaches around a service into another module's internals.
 
