@@ -7,7 +7,7 @@ use i18n_embed_fl::fl;
 use thiserror::Error;
 
 use super::located;
-use crate::entities::VersionName;
+use crate::entities::{FilePath, VersionName};
 use crate::policies::CATALOGUE;
 
 /// Its display is the folder, joined with `/` on every system, then what is wrong.
@@ -32,13 +32,16 @@ pub(crate) enum OutputErrorKind {
     /// The output folder of a versioned build holds a site without versions.
     #[error(fmt = Self::holds_site)]
     HoldsSite,
-    /// The output folder of a build without a version holds something
-    /// else, or is a file or a link.
+    /// The output folder holds something and no marker, or is a file or a link.
     #[error(fmt = Self::not_a_site)]
     NotASite,
-    /// A file, a symbolic link, or a folder with something in it and no marker.
-    #[error(fmt = Self::not_a_version)]
-    NotAVersion,
+    /// Something in a marked output folder that ghg did not write; `found`
+    /// is its path in the folder, the outermost when it is a folder.
+    #[error(fmt = Self::not_safe)]
+    NotSafe { found: FilePath },
+    /// A version the marker lists whose folder is missing.
+    #[error(fmt = Self::missing_version)]
+    MissingVersion { name: VersionName },
     /// A folder whose name differs from the version's only in its capitals.
     #[error(fmt = Self::other_capitals)]
     OtherCapitals,
@@ -48,9 +51,6 @@ pub(crate) enum OutputErrorKind {
     /// `reason` is the operating system's.
     #[error(fmt = Self::cannot_be_written)]
     CannotBeWritten { reason: String },
-    /// The output folder's; `reason` is the operating system's.
-    #[error(fmt = Self::cannot_be_listed)]
-    CannotBeListed { reason: String },
 }
 
 impl Display for OutputError {
@@ -61,6 +61,12 @@ impl Display for OutputError {
                 format!("{output}/{name}"),
                 fl!(CATALOGUE, "version-already-built", name = name.as_str()),
             ),
+            (_, OutputErrorKind::NotSafe { found }) => {
+                (format!("{output}/{found}"), self.kind.to_string())
+            }
+            (_, OutputErrorKind::MissingVersion { name }) => {
+                (format!("{output}/{name}"), self.kind.to_string())
+            }
             (Some(name), kind) => (format!("{output}/{name}"), kind.to_string()),
             (None, kind) => (output.into_owned(), kind.to_string()),
         };
@@ -85,8 +91,12 @@ impl OutputErrorKind {
         f.write_str(&fl!(CATALOGUE, "site-not-a-site"))
     }
 
-    fn not_a_version(f: &mut Formatter<'_>) -> FmtResult {
-        f.write_str(&fl!(CATALOGUE, "version-not-a-version"))
+    fn not_safe(_found: &FilePath, f: &mut Formatter<'_>) -> FmtResult {
+        f.write_str(&fl!(CATALOGUE, "output-not-safe"))
+    }
+
+    fn missing_version(_name: &VersionName, f: &mut Formatter<'_>) -> FmtResult {
+        f.write_str(&fl!(CATALOGUE, "version-missing"))
     }
 
     fn other_capitals(f: &mut Formatter<'_>) -> FmtResult {
@@ -99,10 +109,6 @@ impl OutputErrorKind {
 
     fn cannot_be_written(reason: &str, f: &mut Formatter<'_>) -> FmtResult {
         f.write_str(&fl!(CATALOGUE, "output-cannot-be-written", reason = reason))
-    }
-
-    fn cannot_be_listed(reason: &str, f: &mut Formatter<'_>) -> FmtResult {
-        f.write_str(&fl!(CATALOGUE, "output-cannot-be-listed", reason = reason))
     }
 }
 
@@ -127,15 +133,20 @@ mod tests {
         OutputErrorKind::AlreadyBuilt,
         "site/out/v1: the version v1 is already built, and replace_existing_version is false."
     )]
-    #[case::not_a_version(
-        Some("v1"),
-        OutputErrorKind::NotAVersion,
-        "site/out/v1: this is not a version ghg built, so it is left as it is."
+    #[case::not_safe(
+        None,
+        OutputErrorKind::NotSafe { found: "docs/notes.txt".into() },
+        "site/out/docs/notes.txt: ghg did not write this, so the output folder is left as it is."
+    )]
+    #[case::missing_version(
+        None,
+        OutputErrorKind::MissingVersion { name: VersionName::new("v1").expect("a version name") },
+        "site/out/v1: the marker lists this version, but its folder is missing, so the output folder is left as it is."
     )]
     #[case::other_capitals(
         Some("v1"),
         OutputErrorKind::OtherCapitals,
-        "site/out/v1: a folder whose name differs from this one only in its capitals is in its place, so it is left as it is."
+        "site/out/v1: the output folder holds a version whose name differs from this one only in its capitals, which some systems would put in the same folder, so it is left as it is."
     )]
     #[case::cannot_be_read(
         Some("v1"),
@@ -146,11 +157,6 @@ mod tests {
         Some("v1"),
         OutputErrorKind::CannotBeWritten { reason: "denied".into() },
         "site/out/v1: cannot be written: denied"
-    )]
-    #[case::cannot_be_listed(
-        None,
-        OutputErrorKind::CannotBeListed { reason: "denied".into() },
-        "site/out: cannot be listed: denied"
     )]
     fn an_output_error_names_the_output_folder_or_the_version_s(
         #[case] version_name: Option<&str>,

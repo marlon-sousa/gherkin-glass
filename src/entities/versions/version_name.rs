@@ -2,8 +2,8 @@
 
 use derive_more::Display;
 
-/// Names the versions page itself uses, compared ignoring capitals.
-const RESERVED: [&str; 2] = ["assets", "index.html"];
+/// Names the versions page and the output folder's marker use, compared ignoring capitals.
+const RESERVED: [&str; 3] = ["assets", "index.html", "ghg-versions.json"];
 
 /// The names Windows keeps for devices, alone or before a dot, compared ignoring capitals.
 const DEVICES: [&str; 4] = ["con", "prn", "aux", "nul"];
@@ -69,6 +69,8 @@ mod tests {
             "ASSETS",
             "index.html",
             "Index.HTML",
+            "ghg-versions.json",
+            "GHG-Versions.JSON",
             "con",
             "NUL",
             "nul.txt",

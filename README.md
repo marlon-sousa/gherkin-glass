@@ -20,6 +20,17 @@ Planning. Nothing is released yet. What the first version will do is tracked in 
 
 Once it is released, a Rust project can install gherkin-glass from [crates.io](https://crates.io/) with `cargo install gherkin-glass`. That installs two commands: `ghg`, and `cargo-ghg`, which lets cargo run it as `cargo ghg`, beside `cargo test`. Both do the same, so `cargo ghg build` is `ghg build`.
 
+## The output folder belongs to ghg
+
+`ghg build` writes the site into its output folder, `site` unless you name another, and marks that folder as its own with a file at its root, `ghg-site.json`, or `ghg-versions.json` when it builds versions. From then on the output folder, and every folder in it, belongs to ghg: any build may empty it and write it again, so anything you put there by hand can be lost.
+
+To keep that from happening by mistake:
+
+- ghg marks an output folder only when it is missing or empty. It refuses to build into a folder that holds anything and no marker.
+- Before every build, ghg checks that a marked folder holds only what it wrote there. When it holds anything else, ghg names it and stops, before reading the features, and writes and deletes nothing.
+
+So keep the output folder for the site alone, and put anything you want served beside it somewhere else.
+
 ## How it is built
 
 gherkin-glass is written in Rust, with the [`gherkin`](https://crates.io/crates/gherkin) parser from cucumber-rs.

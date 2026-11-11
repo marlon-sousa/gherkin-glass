@@ -239,14 +239,67 @@ fn an_earlier_build_is_replaced_and_nothing_of_it_is_left() {
     let written = output("replaced");
     let arguments = ["--output", written.to_str().expect("UTF-8")];
     assert_eq!(
-        build(&fixtures().join("pages"), &arguments).status.code(),
+        build(&fixtures().join("backgrounds"), &arguments)
+            .status
+            .code(),
         Some(0)
     );
-    write(written.join("billing/old.html"), "old").expect("written");
     let result = build(&fixtures().join("pages"), &arguments);
     assert_eq!(String::from_utf8_lossy(&result.stderr), "");
     assert_eq!(result.status.code(), Some(0));
     assert_eq!(files(&written), files(&fixtures().join("pages/expected")));
+}
+
+// Rule 38: a marked folder holding anything ghg did not write is refused.
+
+#[test]
+fn a_file_ghg_did_not_write_stops_the_build() {
+    let written = output("stray-file");
+    let arguments = ["--output", written.to_str().expect("UTF-8")];
+    assert_eq!(
+        build(&fixtures().join("pages"), &arguments).status.code(),
+        Some(0)
+    );
+    let stray = written.join("billing/old.html");
+    write(&stray, "old").expect("written");
+    let result = build(&fixtures().join("pages"), &arguments);
+    assert_eq!(
+        String::from_utf8_lossy(&result.stderr),
+        format!(
+            "{}: ghg did not write this, so the output folder is left as it is.\n",
+            stray.to_str().expect("UTF-8")
+        )
+    );
+    assert_eq!(result.status.code(), Some(1));
+    let mut expected = files(&fixtures().join("pages/expected"));
+    expected.insert("billing/old.html".into(), b"old".to_vec());
+    assert_eq!(files(&written), expected);
+}
+
+#[cfg(unix)]
+#[test]
+fn a_site_whose_pages_have_any_name_the_system_allows_is_built_again() {
+    let input = output("odd-names-input");
+    create_dir_all(&input).expect("made");
+    for name in ["time 10:30.feature", "back\\slash.feature"] {
+        write(input.join(name), "Feature: Odd\n").expect("written");
+    }
+    let written = output("odd-names");
+    let arguments = [
+        "--input",
+        input.to_str().expect("UTF-8"),
+        "--output",
+        written.to_str().expect("UTF-8"),
+        "--title",
+        "Odd",
+    ];
+    for _ in 0..2 {
+        let result = build(&fixtures().join("pages"), &arguments);
+        assert_eq!(String::from_utf8_lossy(&result.stderr), "");
+        assert_eq!(result.status.code(), Some(0));
+    }
+    assert!(written.join("time 10:30.html").is_file());
+    assert!(written.join("back\\slash.html").is_file());
 }
 
 #[test]
@@ -321,10 +374,10 @@ fn an_output_folder_with_other_files_is_left_as_it_is() {
 #[test]
 fn an_output_folder_holding_versions_is_left_as_it_is() {
     let written = output("holding-versions");
-    create_dir_all(written.join("main")).expect("made");
+    create_dir_all(&written).expect("made");
     write(
-        written.join("main/ghg-version.json"),
-        "{\"version\": \"main\"}\n",
+        written.join("ghg-versions.json"),
+        "{\"page\": [], \"versions\": {}}\n",
     )
     .expect("written");
     let given = written.to_str().expect("UTF-8");
@@ -362,7 +415,7 @@ fn an_output_folder_that_cannot_be_written_stops_the_build() {
     // service's own tests check a file that cannot be written.
     let written = output("cannot-be-written");
     create_dir_all(&written).expect("made");
-    write(written.join("ghg-site.json"), "{\"site\": true}\n").expect("written");
+    write(written.join("ghg-site.json"), "{\"files\": []}\n").expect("written");
     set_permissions(&written, Permissions::from_mode(0o500)).expect("set");
     let given = written.to_str().expect("UTF-8");
     let result = build(&fixtures().join("pages"), &["--output", given]);

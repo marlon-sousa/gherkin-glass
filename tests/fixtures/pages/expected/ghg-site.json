@@ -1,1 +1,28 @@
-{"site": true}
+{
+  "files": [
+    "assets/gherkin-glass.css",
+    "assets/gherkin-glass.js",
+    "assets/search.json",
+    "assets/tree.json",
+    "billing/archive/closed #1.html",
+    "billing/archive/index.html",
+    "billing/index.html",
+    "billing/refunds.html",
+    "emoji.html",
+    "index.html",
+    "outlines.html",
+    "reports/index.html",
+    "reports/monthly/index.html",
+    "reports/monthly/totals.html",
+    "saque em conta poupança.html",
+    "steps.html",
+    "stories/index.html",
+    "stories/read.html",
+    "tags/billing.html",
+    "tags/cheap.html",
+    "tags/in-rule.html",
+    "tags/index.html",
+    "tags/outline.html",
+    "tags/slow.html"
+  ]
+}

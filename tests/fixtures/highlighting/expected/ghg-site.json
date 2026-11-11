@@ -1,1 +1,13 @@
-{"site": true}
+{
+  "files": [
+    "assets/gherkin-glass.css",
+    "assets/gherkin-glass.js",
+    "assets/search.json",
+    "assets/tree.json",
+    "destaque.html",
+    "highlighting.html",
+    "index.html",
+    "steps.html",
+    "tags/index.html"
+  ]
+}

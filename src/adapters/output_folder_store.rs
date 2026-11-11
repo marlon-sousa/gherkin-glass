@@ -1,59 +1,54 @@
 //! Adapter: the output folders port over the file system.
 
+mod marker_file;
+
+use std::collections::BTreeSet;
 use std::fs::{
-    DirEntry, create_dir_all, read_dir, remove_dir, remove_dir_all, remove_file, symlink_metadata,
-    write,
+    create_dir_all, read_dir, read_to_string, remove_dir, remove_dir_all, remove_file,
+    symlink_metadata, write,
 };
 use std::io::{ErrorKind, Result as IoResult};
 use std::path::Path;
 
-use crate::entities::{FolderState, Marker, VersionName};
+use marker_file::{marker_text, site_record, versions_record};
+
+use crate::entities::{FilePath, OutputContents, Record};
 use crate::ports::OutputFolders;
-
-/// The marker in every version's folder.
-pub(crate) const VERSION_MARKER: &str = "ghg-version.json";
-
-/// The marker in an output folder holding a site without versions.
-pub(crate) const SITE_MARKER: &str = "ghg-site.json";
 
 #[derive(Debug, Default, Clone, Copy)]
 pub(crate) struct OutputFolderStore;
 
 impl OutputFolders for OutputFolderStore {
-    fn state(&self, folder: &Path, marker: &Marker) -> IoResult<FolderState> {
-        let metadata = match symlink_metadata(folder) {
+    fn contents(&self, output: &Path) -> IoResult<OutputContents> {
+        let metadata = match symlink_metadata(output) {
             Ok(metadata) => metadata,
-            Err(error) if error.kind() == ErrorKind::NotFound => return Ok(FolderState::Missing),
+            Err(error) if error.kind() == ErrorKind::NotFound => {
+                return Ok(OutputContents::Missing);
+            }
             Err(error) => return Err(error),
         };
         // A symbolic link is not followed, even to a folder: it is something else's.
         if !metadata.is_dir() {
-            return Ok(FolderState::Other);
+            return Ok(OutputContents::NotAFolder);
         }
-        let file = match marker {
-            Marker::Site => SITE_MARKER,
-            // On a file system that does not tell capitals apart, `Main` finds
-            // `main`. An output folder is the one named, in any capitals.
-            Marker::Version(_) if !named_exactly(folder)? => {
-                return Ok(FolderState::OtherCapitals);
-            }
-            Marker::Version(_) => VERSION_MARKER,
+        let mut found = Found::default();
+        found.walk(output, "")?;
+        let record = match marker(output, Record::VERSIONS_MARKER)? {
+            Some(text) => versions_record(&text),
+            None => marker(output, Record::SITE_MARKER)?
+                .as_deref()
+                .and_then(site_record),
         };
-        if is_file(&folder.join(file))? {
-            return Ok(FolderState::Marked);
-        }
-        match read_dir(folder)?.next() {
-            None => Ok(FolderState::Empty),
-            Some(entry) => entry.map(|_| FolderState::Other),
-        }
+        Ok(OutputContents::Folder {
+            files: found.files,
+            folders: found.folders,
+            record,
+        })
     }
 
     fn clear(&self, folder: &Path) -> IoResult<()> {
         create_dir_all(folder)?;
-        for entry in read_dir(folder)? {
-            self.remove(&entry?.path())?;
-        }
-        Ok(())
+        read_dir(folder)?.try_for_each(|entry| self.remove(&entry?.path()))
     }
 
     fn remove(&self, path: &Path) -> IoResult<()> {
@@ -74,68 +69,51 @@ impl OutputFolders for OutputFolderStore {
         }
     }
 
-    fn mark(&self, folder: &Path, marker: &Marker) -> IoResult<()> {
-        // A version name holds no character JSON must escape.
-        match marker {
-            Marker::Site => write(folder.join(SITE_MARKER), "{\"site\": true}\n"),
-            Marker::Version(name) => write(
-                folder.join(VERSION_MARKER),
-                format!("{{\"version\": \"{name}\"}}\n"),
-            ),
-        }
-    }
-
-    fn marked(&self, output: &Path) -> IoResult<Vec<VersionName>> {
-        // A file or a link in the output folder's place holds no versions.
-        match symlink_metadata(output) {
-            Ok(metadata) if metadata.is_dir() => {}
-            Ok(_) => return Ok(Vec::new()),
-            Err(error) if error.kind() == ErrorKind::NotFound => return Ok(Vec::new()),
-            Err(error) => return Err(error),
-        }
-        read_dir(output)?
-            .map(version_in)
-            .filter_map(Result::transpose)
-            .collect()
+    fn record(&self, output: &Path, record: &Record) -> IoResult<()> {
+        let (name, text) = marker_text(record)?;
+        create_dir_all(output)?;
+        write(output.join(name), text)
     }
 }
 
-/// The version ghg built in the entry of an output folder, if it is one.
-fn version_in(entry: IoResult<DirEntry>) -> IoResult<Option<VersionName>> {
-    let entry = entry?;
-    if !entry.file_type()?.is_dir() {
-        return Ok(None);
-    }
-    // A folder whose name cannot be a version name was not built by ghg.
-    let Some(name) = entry.file_name().to_str().and_then(VersionName::new) else {
-        return Ok(None);
-    };
-    Ok(is_file(&entry.path().join(VERSION_MARKER))?.then_some(name))
+/// Every file and folder met while walking a folder.
+#[derive(Default)]
+struct Found {
+    files: BTreeSet<FilePath>,
+    folders: BTreeSet<FilePath>,
 }
 
-/// Whether the folder that holds `path` lists it under exactly its name.
-fn named_exactly(path: &Path) -> IoResult<bool> {
-    let (Some(parent), Some(name)) = (path.parent(), path.file_name()) else {
-        return Ok(true);
-    };
-    // `Path::parent` of a bare name is the empty path, the current folder.
-    let parent = if parent.as_os_str().is_empty() {
-        Path::new(".")
-    } else {
-        parent
-    };
-    for entry in read_dir(parent)? {
-        if entry?.file_name() == name {
-            return Ok(true);
+impl Found {
+    /// Adds what is in `folder`, whose path below the output folder is
+    /// `below`, empty for the output folder itself, never following a link.
+    fn walk(&mut self, folder: &Path, below: &str) -> IoResult<()> {
+        for entry in read_dir(folder)? {
+            let entry = entry?;
+            let name = entry.file_name();
+            let name = name.to_string_lossy();
+            let path = if below.is_empty() {
+                name.into_owned()
+            } else {
+                format!("{below}/{name}")
+            };
+            if entry.file_type()?.is_dir() {
+                self.walk(&entry.path(), &path)?;
+                self.folders.insert(path);
+            } else {
+                self.files.insert(path);
+            }
         }
+        Ok(())
     }
-    Ok(false)
 }
 
-fn is_file(path: &Path) -> IoResult<bool> {
-    match symlink_metadata(path) {
-        Ok(metadata) => Ok(metadata.is_file()),
-        Err(error) if error.kind() == ErrorKind::NotFound => Ok(false),
+/// The text of the marker `name` in `output`, when it is a file there.
+fn marker(output: &Path, name: &str) -> IoResult<Option<String>> {
+    let path = output.join(name);
+    match symlink_metadata(&path) {
+        Ok(metadata) if metadata.is_file() => read_to_string(path).map(Some),
+        Ok(_) => Ok(None),
+        Err(error) if error.kind() == ErrorKind::NotFound => Ok(None),
         Err(error) => Err(error),
     }
 }

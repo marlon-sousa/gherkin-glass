@@ -8,10 +8,10 @@ use std::thread::sleep;
 use std::time::{Duration, Instant};
 
 use super::*;
-use crate::entities::{Changes, CollectedInput, FolderState, Marker, RawFeature, VersionName};
+use crate::entities::{Changes, CollectedInput, OutputContents, RawFeature, Record};
 use crate::errors::{InputError, InputErrorKind, ListenErrorKind, ParseError, WatchError};
 use crate::ports::{FeatureParser, InputCollector, OutputFolders, SiteWriter};
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 /// No configuration file.
 pub(super) struct NoFile;
@@ -166,12 +166,12 @@ pub(super) fn site(input: &Arc<Input>) -> SiteService {
     SiteService::new(reading(input), Arc::new(Recorder::default()))
 }
 
-/// Output folders that are all in one state, and hold no version.
-pub(super) struct Folders(FolderState);
+/// Output folders that all hold the same contents.
+pub(super) struct Folders(OutputContents);
 
 impl OutputFolders for Folders {
-    fn state(&self, _: &Path, _: &Marker) -> IoResult<FolderState> {
-        Ok(self.0)
+    fn contents(&self, _: &Path) -> IoResult<OutputContents> {
+        Ok(self.0.clone())
     }
 
     fn clear(&self, _: &Path) -> IoResult<()> {
@@ -182,17 +182,22 @@ impl OutputFolders for Folders {
         Ok(())
     }
 
-    fn mark(&self, _: &Path, _: &Marker) -> IoResult<()> {
+    fn record(&self, _: &Path, _: &Record) -> IoResult<()> {
         Ok(())
-    }
-
-    fn marked(&self, _: &Path) -> IoResult<Vec<VersionName>> {
-        Ok(Vec::new())
     }
 }
 
-pub(super) fn output(state: FolderState) -> OutputService {
-    OutputService::new(Arc::new(Folders(state)))
+pub(super) fn output(contents: OutputContents) -> OutputService {
+    OutputService::new(Arc::new(Folders(contents)))
+}
+
+/// A folder holding a file ghg did not write, and no marker.
+pub(super) fn not_a_site() -> OutputContents {
+    OutputContents::Folder {
+        files: ["notes.txt".to_string()].into(),
+        folders: BTreeSet::new(),
+        record: None,
+    }
 }
 
 pub(super) fn reading(input: &Arc<Input>) -> InputService {

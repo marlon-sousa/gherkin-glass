@@ -169,7 +169,7 @@ mod tests {
 
     use super::*;
     use crate::entities::{
-        Changes, CollectedInput, FolderState, Marker, Preview, RawFeature, VersionName, Watched,
+        Changes, CollectedInput, OutputContents, Preview, RawFeature, Record, Watched,
     };
     use crate::errors::{InputErrorKind, ListenErrorKind, ParseError, ServeError, WatchError};
     use crate::ports::{
@@ -197,8 +197,8 @@ mod tests {
     struct NoVersions;
 
     impl OutputFolders for NoVersions {
-        fn state(&self, _folder: &Path, _marker: &Marker) -> IoResult<FolderState> {
-            Ok(FolderState::Missing)
+        fn contents(&self, _output: &Path) -> IoResult<OutputContents> {
+            Ok(OutputContents::Missing)
         }
 
         fn clear(&self, _folder: &Path) -> IoResult<()> {
@@ -209,12 +209,8 @@ mod tests {
             Ok(())
         }
 
-        fn mark(&self, _folder: &Path, _marker: &Marker) -> IoResult<()> {
+        fn record(&self, _output: &Path, _record: &Record) -> IoResult<()> {
             Ok(())
-        }
-
-        fn marked(&self, _output: &Path) -> IoResult<Vec<VersionName>> {
-            Ok(Vec::new())
         }
     }
 
