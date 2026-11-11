@@ -1,5 +1,4 @@
-//! Policy: the pure decisions of reading the input, of how a build is run, of the anchors, of the pages, the folder pages and the folder tree, of which changes ghg serve rebuilds for, and of highlighting and themes.
-//! Policy: the pure decisions of reading the input, of how a build is run, of the anchors, of the pages, the folder pages, the folder tree and the step sentences, of what ghg serve answers, and of highlighting and themes.
+//! Policy: the pure decisions of reading the input, of how a build is run, of the anchors, of the pages, the folder pages, the folder tree and the step sentences, of which changes ghg serve rebuilds for, and of highlighting and themes.
 
 mod anchor_rule;
 mod argument_parsing;
@@ -20,8 +19,6 @@ mod page_frame;
 mod page_language;
 mod page_rendering;
 mod rebuild_choice;
-mod reload_injection;
-mod request_route;
 mod sentence_slots;
 mod sentences_page_building;
 mod settings_resolution;
@@ -62,8 +59,6 @@ pub(crate) use page_rendering::{
     render_folder_page, render_page, render_sentences_page, render_tag_index, render_tag_page,
 };
 pub(crate) use rebuild_choice::{Read, calls_for_rebuild, remembered};
-pub(crate) use reload_injection::add_reload_script;
-pub(crate) use request_route::{RELOAD_SCRIPT, Route, route};
 pub(crate) use sentences_page_building::{SENTENCES_PAGE, build_sentences_page};
 pub(crate) use settings_resolution::{config_folder, resolve_settings};
 pub(crate) use site_title::site_title;
