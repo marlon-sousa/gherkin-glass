@@ -199,8 +199,10 @@ const NOT_PUBLISHED: &[&str] = &[
     ".gitattributes",
     ".gitignore",
     "AGENTS.md",
+    "CHANGELOG.md",
     "CLAUDE.md",
     "CONTRIBUTING.md",
+    "cliff.toml",
     "rust-toolchain.toml",
 ];
 

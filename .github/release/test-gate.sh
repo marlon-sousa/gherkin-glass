@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Checks gate.sh against docs/BEHAVIOUR.md, "Releases", rule 129, with the
+# Checks gate.sh against docs/BEHAVIOUR.md, "Releases", rule 160, with the
 # changelogs of tests/fixtures/release/changelogs, in a throwaway repository
 # whose Cargo.toml declares version 1.2.3 and whose main holds one commit.
 # Needs git, cargo and jq. Run from the repository's root.
