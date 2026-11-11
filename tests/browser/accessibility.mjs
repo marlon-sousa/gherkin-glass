@@ -15,6 +15,7 @@ import { mkdtempSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, relative, resolve, sep } from "node:path";
 import assert from "node:assert/strict";
+import { partProblems } from "./part_contrast.mjs";
 import { axeSource, chromium, ghg, serve, stop } from "./support.mjs";
 
 const fixtures = resolve("tests/fixtures");
@@ -312,6 +313,7 @@ export async function checkSite(browser, folder) {
   let pressed = 0;
   let trees = 0;
   let searched = 0;
+  let outlined = 0;
   try {
     for (const { name, scheme, theme } of passes) {
       const context = await browser.newContext({ colorScheme: scheme });
@@ -353,13 +355,17 @@ export async function checkSite(browser, folder) {
           // changes how another page starts.
           await page.evaluate(() => localStorage.clear());
         }
+        // Last, since it moves the focus, which the keyboard's checks start from.
+        const parts = await partProblems(page);
+        if (parts.outlined) outlined += 1;
+        for (const line of parts.lines) problems.push(`${path}, ${name}: ${line}`);
       }
       await context.close();
     }
   } finally {
     await stop(server);
   }
-  return { pages: pages.length, pressed, trees, searched, problems };
+  return { pages: pages.length, pressed, trees, searched, outlined, problems };
 }
 
 async function main() {
@@ -371,6 +377,7 @@ async function main() {
   let pressed = 0;
   let trees = 0;
   let searched = 0;
+  let outlined = 0;
   try {
     for (const [index, each] of builds.entries()) {
       const site = join(output, String(index));
@@ -382,12 +389,14 @@ async function main() {
       pressed += result.pressed;
       trees += result.trees;
       searched += result.searched;
+      outlined += result.outlined;
       const { problems } = result;
       for (const problem of problems) failures.push(`${name}: ${problem}`);
     }
     if (pressed === 0) failures.push("no page had a block whose buttons the check could press");
     if (trees === 0) failures.push("no page showed a folder tree the check could move through");
     if (searched === 0) failures.push("no page had a search box the check could search with");
+    if (outlined === 0) failures.push("no page had a link whose focus outline the check could measure");
     // The check must fail on a page that breaks each of its rules.
     const { problems } = await checkSite(browser, join(fixtures, "accessibility/failing"));
     const found = (start) => problems.some((line) => line.startsWith(`index.html${start}`));
@@ -395,6 +404,9 @@ async function main() {
       [", light: color-contrast-enhanced: .aa-only:", "enhanced contrast, in the light scheme"],
       [", dark: color-contrast: .dark-only:", "contrast, in the dark scheme"],
       [", light: image-alt:", "a WCAG 2 A rule"],
+      [", light: contrast of a part: p.faint-border border-top", "a border with too little contrast"],
+      [", light: contrast of a part: p.translucent-border border-top", "a translucent border with too little contrast"],
+      [", light: contrast of a part: a outline with the focus", "a focus outline with too little contrast"],
       [": keyboard: Tab reached", "the keyboard order"],
       [": keyboard: the first block's button", "a block's button that Space does not turn over"],
     ]) {

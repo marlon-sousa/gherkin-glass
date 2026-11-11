@@ -7,7 +7,7 @@ use i18n_embed_fl::fl;
 use thiserror::Error;
 
 use super::{invalid_version_name, located};
-use crate::entities::{AccentShortfall, Theme};
+use crate::entities::{Colour, Theme};
 use crate::policies::CATALOGUE;
 
 /// A configuration file that stops the run: the file as it was given, and
@@ -60,6 +60,17 @@ pub(crate) enum ConfigErrorKind {
     /// `group` is a number or a name, as the replacement writes it.
     #[error(fmt = Self::unknown_group)]
     UnknownGroup { key: String, group: String },
+}
+
+/// An accent colour that does not reach the contrast its theme requires.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub(crate) struct AccentShortfall {
+    pub(crate) theme: Theme,
+    pub(crate) accent: Colour,
+    /// The theme's background the accent contrasts least with.
+    pub(crate) background: Colour,
+    /// The ratio it reaches against that background, in hundredths, rounded down.
+    pub(crate) hundredths: u32,
 }
 
 /// The kinds of value a key takes.

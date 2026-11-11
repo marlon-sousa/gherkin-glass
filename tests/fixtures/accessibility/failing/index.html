@@ -7,6 +7,12 @@
   body { background: #ffffff; color: #1b1b1b; }
   /* 5.7 to 1 on white: enough for AA, not for the enhanced contrast of AAA. */
   .aa-only { color: #666666; }
+  /* 1.36 to 1 on white: a border short of the 3 to 1 of what is not text. */
+  .faint-border { border: 1px solid #dddddd; }
+  /* Black at a tenth, seen as #e6e6e6 on white: 1.25 to 1. */
+  .translucent-border { border: 1px solid rgba(0, 0, 0, 0.1); }
+  /* 1.16 to 1 on white: a focus outline short of 3 to 1. */
+  a:focus-visible { outline: 2px solid #eeeeee; }
   /* Dark text on a dark background, in the dark scheme only. */
   @media (prefers-color-scheme: dark) {
     body { background: #161616; color: #ececec; }
@@ -20,6 +26,8 @@
 <h1>A page that breaks the accessibility check</h1>
 <p class="aa-only">Text with too little contrast for AAA in the light scheme.</p>
 <p class="dark-only">Text with too little contrast in the dark scheme.</p>
+<p class="faint-border">Text in a border with too little contrast.</p>
+<p class="translucent-border">Text in a translucent border with too little contrast.</p>
 <img src="missing.png" width="10" height="10">
 <h2><span class="ghg-toggle" role="button" tabindex="0" aria-expanded="true">A block whose button Space does not turn over</span></h2>
 <p><a href="#first">Reached second by Tab</a> <a href="#second" tabindex="1">Reached first by Tab</a></p>

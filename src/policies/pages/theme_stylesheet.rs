@@ -1,7 +1,5 @@
 //! Policy: the stylesheet of colour tokens, one custom property per colour, for each theme a reader can pick.
 
-use std::fmt::Write;
-
 use crate::entities::{Accents, Colour, Theme};
 use crate::policies::palette;
 
@@ -35,18 +33,15 @@ fn tokens(theme: Theme, accents: &Accents, indent: &str) -> String {
         ("number", palette.number),
         ("placeholder", palette.placeholder),
     ];
-    let mut text = String::new();
-    for (name, colour) in colours {
-        // Writing to a String cannot fail.
-        let _ = writeln!(text, "{indent}--ghg-{name}: {colour};");
-    }
-    text
+    colours
+        .into_iter()
+        .map(|(name, colour)| format!("{indent}--ghg-{name}: {colour};\n"))
+        .collect()
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::policies::DEFAULT_ACCENTS;
 
     #[test]
     fn each_theme_s_tokens_and_the_system_s_choice() {
@@ -102,6 +97,6 @@ mod tests {
 }
 "#
         );
-        assert!(theme_stylesheet(&DEFAULT_ACCENTS).contains("--ghg-accent: #8cc4ff;"));
+        assert!(theme_stylesheet(&Accents::DEFAULT).contains("--ghg-accent: #8cc4ff;"));
     }
 }

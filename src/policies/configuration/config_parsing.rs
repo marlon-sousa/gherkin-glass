@@ -7,11 +7,12 @@ use toml::de::{DeTable, DeValue};
 
 use crate::entities::{Colour, Config, VersionName};
 use crate::errors::{ConfigError, ConfigErrorKind, ValueType};
-use crate::policies::check_accent;
 
+mod accent_contrast;
 mod config_key;
 mod tag_link_tables;
 
+use accent_contrast::check_accent;
 use config_key::{ConfigKey, SettingKey, accent_of};
 use tag_link_tables::tag_links;
 
