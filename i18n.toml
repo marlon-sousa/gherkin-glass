@@ -1,0 +1,9 @@
+# Where the fl! macro finds the interface text catalogue, and the language it
+# checks every message against (docs/ARCHITECTURE.md, "Interface text").
+fallback_language = "en"
+
+[fluent]
+assets_dir = "messages"
+# The catalogue's file name, which would otherwise be the crate's name with
+# underscores, gherkin_glass.ftl.
+domain = "gherkin-glass"

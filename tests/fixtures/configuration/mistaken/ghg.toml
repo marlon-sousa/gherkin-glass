@@ -1,0 +1,7 @@
+# Every mistake is reported, each on its own line.
+
+inputs = "features"
+input = 3
+
+[site]
+title = "Not yet a key"
