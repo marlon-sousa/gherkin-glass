@@ -3,10 +3,11 @@
 use i18n_embed_fl::fl;
 
 use crate::entities::{
-    ArgumentProblem, ConfigProblemKind, Problem, ProblemKind, Problems, UnnamedBlock, ValueType,
+    ArgumentProblem, ConfigProblemKind, ListenFailure, Problem, ProblemKind, Problems,
+    UnnamedBlock, ValueType,
 };
 use crate::policies::CATALOGUE;
-use crate::services::ConfigProblems;
+use crate::services::{ConfigProblems, RebuildFailure, ServeFailure};
 
 pub(super) fn argument_problem(problem: &ArgumentProblem) -> String {
     match problem {
@@ -35,7 +36,51 @@ pub(super) fn argument_problem(problem: &ArgumentProblem) -> String {
             command = command.as_str(),
             argument = argument.as_str()
         ),
+        ArgumentProblem::NotAPort { value } => {
+            fl!(CATALOGUE, "not-a-port", value = value.as_str())
+        }
+        ArgumentProblem::WatchWithoutBuild => fl!(CATALOGUE, "watch-without-build"),
     }
+}
+
+/// What stops ghg serve before it serves, as one line, or the report of
+/// the configuration or the input.
+pub(super) fn serve_failure(failure: &ServeFailure) -> String {
+    match failure {
+        ServeFailure::Config(problems) => config_problems(problems),
+        ServeFailure::Input(found) => problems(found),
+        ServeFailure::Listen {
+            port,
+            failure: ListenFailure::PortTaken,
+            ..
+        } => fl!(CATALOGUE, "serve-port-taken", port = port.to_string()),
+        ServeFailure::Listen {
+            host,
+            port,
+            failure: ListenFailure::Other { reason },
+        } => fl!(
+            CATALOGUE,
+            "serve-cannot-listen",
+            host = host.as_str(),
+            port = port.to_string(),
+            reason = reason.as_str()
+        ),
+        ServeFailure::Watch(failure) => fl!(
+            CATALOGUE,
+            "serve-cannot-watch",
+            path = failure.path.to_string_lossy(),
+            reason = failure.reason.as_str()
+        ),
+    }
+}
+
+/// The report of a rebuild that stopped, then what is still served.
+pub(super) fn rebuild_failure(failure: &RebuildFailure) -> String {
+    let report = match failure {
+        RebuildFailure::Config(problems) => config_problems(problems),
+        RebuildFailure::Input(found) => problems(found),
+    };
+    report + &fl!(CATALOGUE, "serve-not-rebuilt") + "\n"
 }
 
 /// One line per problem, the file shown as it was given.

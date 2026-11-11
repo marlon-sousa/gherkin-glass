@@ -10,11 +10,18 @@ help =
 
     Commands:
       build: reads the feature files and writes the site, or reports every file that cannot be read.
+      serve: builds the site and serves it on this machine, to preview it.
 
-    Options of ghg build:
+    Options of ghg build and ghg serve:
       --config <file>: the configuration file to read, instead of ghg.toml in the current folder.
       --input <folder>: the folder of feature files to read, instead of the configuration's input.
       --output <folder>: the folder to write the site into, instead of the configuration's output.
+
+    Options of ghg serve only:
+      --host <address>: the address to listen on, instead of 127.0.0.1.
+      --port <number>: the port to listen at, instead of 8000. 0 lets the system choose one.
+      --no-build: serves the output folder as it is, without building it.
+      --watch: rebuilds the site when its files change, and reloads the pages open in a browser.
 
     Other options:
       --help, -h: prints this help.
@@ -22,7 +29,7 @@ help =
 
 version = ghg { $version }
 
-## A mistake on the command line. $command is "ghg" or "ghg build".
+## A mistake on the command line. $command is "ghg", "ghg build" or "ghg serve".
 
 missing-command = ghg needs a command, such as ghg build. ghg --help lists the commands.
 unknown-command = ghg has no command named { $name }. ghg --help lists the commands.
@@ -31,6 +38,8 @@ missing-value = The option { $option } needs a value.
 unexpected-value = The option { $option } takes no value.
 repeated-option = The option { $option } is given more than once.
 unexpected-argument = { $command } takes no argument { $argument }.
+not-a-port = The option --port needs a whole number from 0 to 65535, not { $value }.
+watch-without-build = The options --watch and --no-build cannot be used together.
 
 ## One line of the report of what stops a build: the path, the line when
 ## there is one, and what is wrong.
@@ -82,3 +91,19 @@ page-contents = Contents
 collapse-all = Collapse all
 expand-all = Expand all
 source-link = Source: { $path }
+
+## ghg serve. $address is the address to open in a browser, $host an
+## address to listen on as it was given, $port a port number, $path a
+## path, and $reason the operating system's or a library's words.
+
+serve-listening = The site is served at { $address }. Press Control+C to stop.
+serve-rebuilt = The site was rebuilt.
+serve-not-rebuilt = The site was not rebuilt, so the last site that built is still served.
+serve-port-taken = Port { $port } is already in use. Choose another with --port.
+serve-cannot-listen = ghg serve cannot listen at { $host }, port { $port }: { $reason }
+serve-cannot-watch = ghg serve cannot watch { $path } for changes: { $reason }
+
+## What ghg serve answers a browser with, as plain text.
+
+serve-not-found = Nothing is at this address in the site.
+serve-wrong-method = ghg serve answers only GET and HEAD requests.

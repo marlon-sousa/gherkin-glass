@@ -12,6 +12,7 @@ use crate::policies::{
 };
 use crate::ports::{FeatureParser, InputCollector};
 
+#[derive(Clone)]
 pub struct InputService {
     collector: Arc<dyn InputCollector>,
     parser: Arc<dyn FeatureParser>,
@@ -20,6 +21,12 @@ pub struct InputService {
 impl InputService {
     pub fn new(collector: Arc<dyn InputCollector>, parser: Arc<dyn FeatureParser>) -> Self {
         InputService { collector, parser }
+    }
+
+    /// The paths of the files the `.ghg-ignore` rules select under
+    /// `input`, sorted, without reading them.
+    pub fn paths(&self, input: &Path) -> Vec<PathBuf> {
+        self.collector.collect(input).paths
     }
 
     /// The features under `input`, sorted by path, or every problem found:

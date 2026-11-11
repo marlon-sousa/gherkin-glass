@@ -5,7 +5,7 @@ use std::path::PathBuf;
 
 use lexopt::{Arg, Error, Parser};
 
-use crate::entities::{ArgumentProblem, BuildOptions, Invocation};
+use crate::entities::{ArgumentProblem, Invocation, ServeOptions};
 
 /// The arguments after the command's own name.
 pub(crate) fn parse_arguments(
@@ -23,50 +23,152 @@ pub(crate) fn parse_arguments(
         Some(Arg::Value(name)) => name,
         Some(option) => return Err(unknown_option("ghg", &option)),
     };
-    match command.to_str() {
-        Some("build") => parse_build(&mut parser),
-        _ => Err(ArgumentProblem::UnknownCommand {
-            name: command.to_string_lossy().into_owned(),
-        }),
+    let (name, serving) = match command.to_str() {
+        Some("build") => ("ghg build", false),
+        Some("serve") => ("ghg serve", true),
+        _ => {
+            return Err(ArgumentProblem::UnknownCommand {
+                name: command.to_string_lossy().into_owned(),
+            });
+        }
+    };
+    let options = match parse_options(&mut parser, name, serving) {
+        Ok(options) => options,
+        Err(Answer::Now(invocation)) => return Ok(invocation),
+        Err(Answer::Mistake(problem)) => return Err(problem),
+    };
+    if !serving {
+        Ok(Invocation::Build(options.build))
+    } else if options.watch && options.no_build {
+        Err(ArgumentProblem::WatchWithoutBuild)
+    } else {
+        Ok(Invocation::Serve(options))
     }
 }
 
-fn parse_build(parser: &mut Parser) -> Result<Invocation, ArgumentProblem> {
-    const COMMAND: &str = "ghg build";
-    let mut options = BuildOptions::default();
-    while let Some(argument) = parser.next().map_err(|error| problem(error, COMMAND))? {
+/// The options of `command`, `ghg build` or `ghg serve`; only `ghg serve`,
+/// `serving`, has those beyond `ghg build`'s.
+fn parse_options(
+    parser: &mut Parser,
+    command: &str,
+    serving: bool,
+) -> Result<ServeOptions, Answer> {
+    let mut options = ServeOptions::default();
+    while let Some(argument) = parser.next().map_err(|error| problem(error, command))? {
         let slot = match argument {
-            Arg::Short('h') => return Ok(Invocation::Help),
-            Arg::Long("help") => return flag(parser, "--help", Invocation::Help),
-            Arg::Short('V') => return Ok(Invocation::Version),
-            Arg::Long("version") => return flag(parser, "--version", Invocation::Version),
-            Arg::Long("config") => (&mut options.config, "--config"),
-            Arg::Long("input") => (&mut options.input, "--input"),
-            Arg::Long("output") => (&mut options.output, "--output"),
+            Arg::Short('h') => return Err(Answer::Now(Invocation::Help)),
+            Arg::Long("help") => return Err(answer(parser, "--help", Invocation::Help)),
+            Arg::Short('V') => return Err(Answer::Now(Invocation::Version)),
+            Arg::Long("version") => return Err(answer(parser, "--version", Invocation::Version)),
+            Arg::Long("config") => Slot::Path(&mut options.build.config, "--config"),
+            Arg::Long("input") => Slot::Path(&mut options.build.input, "--input"),
+            Arg::Long("output") => Slot::Path(&mut options.build.output, "--output"),
+            Arg::Long("host") if serving => Slot::Host(&mut options.host),
+            Arg::Long("port") if serving => Slot::Port(&mut options.port),
+            Arg::Long("no-build") if serving => Slot::Flag(&mut options.no_build, "--no-build"),
+            Arg::Long("watch") if serving => Slot::Flag(&mut options.watch, "--watch"),
             Arg::Value(value) => {
                 return Err(ArgumentProblem::UnexpectedArgument {
-                    command: COMMAND.to_string(),
+                    command: command.to_string(),
                     argument: value.to_string_lossy().into_owned(),
-                });
+                }
+                .into());
             }
-            option => return Err(unknown_option(COMMAND, &option)),
+            option => return Err(unknown_option(command, &option).into()),
         };
-        let (slot, option) = slot;
-        if slot.is_some() {
-            return Err(ArgumentProblem::RepeatedOption {
-                option: option.to_string(),
-            });
-        }
-        let value = parser.value().map_err(|error| problem(error, COMMAND))?;
-        // An empty path names nothing, and would report a line with no path.
-        if value.is_empty() {
-            return Err(ArgumentProblem::MissingValue {
-                option: option.to_string(),
-            });
-        }
-        *slot = Some(PathBuf::from(value));
+        slot.fill(parser, command)?;
     }
-    Ok(Invocation::Build(options))
+    Ok(options)
+}
+
+/// Where an option's value goes.
+enum Slot<'a> {
+    Path(&'a mut Option<PathBuf>, &'static str),
+    Host(&'a mut Option<String>),
+    Port(&'a mut Option<u16>),
+    Flag(&'a mut bool, &'static str),
+}
+
+impl Slot<'_> {
+    fn fill(self, parser: &mut Parser, command: &str) -> Result<(), ArgumentProblem> {
+        let repeated = |option: &str| ArgumentProblem::RepeatedOption {
+            option: option.to_string(),
+        };
+        match self {
+            Slot::Flag(slot, option) => {
+                if *slot {
+                    return Err(repeated(option));
+                }
+                if parser.optional_value().is_some() {
+                    return Err(ArgumentProblem::UnexpectedValue {
+                        option: option.to_string(),
+                    });
+                }
+                *slot = true;
+            }
+            Slot::Path(slot, option) => {
+                if slot.is_some() {
+                    return Err(repeated(option));
+                }
+                *slot = Some(PathBuf::from(value(parser, command, option)?));
+            }
+            Slot::Host(slot) => {
+                if slot.is_some() {
+                    return Err(repeated("--host"));
+                }
+                let host = value(parser, command, "--host")?;
+                *slot = Some(host.to_string_lossy().into_owned());
+            }
+            Slot::Port(slot) => {
+                if slot.is_some() {
+                    return Err(repeated("--port"));
+                }
+                let port = value(parser, command, "--port")?;
+                let port = port.to_string_lossy();
+                // Only digits, so that `+80` or ` 80` is not taken for 80.
+                let number = port
+                    .bytes()
+                    .all(|byte| byte.is_ascii_digit())
+                    .then(|| port.parse().ok())
+                    .flatten();
+                *slot = Some(number.ok_or_else(|| ArgumentProblem::NotAPort {
+                    value: port.into_owned(),
+                })?);
+            }
+        }
+        Ok(())
+    }
+}
+
+/// An option's value, which may not be empty: an empty path names nothing,
+/// and would report a line with no path.
+fn value(parser: &mut Parser, command: &str, option: &str) -> Result<OsString, ArgumentProblem> {
+    let value = parser.value().map_err(|error| problem(error, command))?;
+    if value.is_empty() {
+        return Err(ArgumentProblem::MissingValue {
+            option: option.to_string(),
+        });
+    }
+    Ok(value)
+}
+
+/// What stops reading the options early: help or version, answered at once, or a mistake.
+enum Answer {
+    Now(Invocation),
+    Mistake(ArgumentProblem),
+}
+
+impl From<ArgumentProblem> for Answer {
+    fn from(problem: ArgumentProblem) -> Self {
+        Answer::Mistake(problem)
+    }
+}
+
+fn answer(parser: &mut Parser, option: &str, invocation: Invocation) -> Answer {
+    match flag(parser, option, invocation) {
+        Ok(invocation) => Answer::Now(invocation),
+        Err(problem) => Answer::Mistake(problem),
+    }
 }
 
 /// A long option that takes no value, such as `--help`, answers at once,
@@ -129,6 +231,7 @@ fn problem(error: Error, command: &str) -> ArgumentProblem {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::entities::BuildOptions;
 
     fn parse(arguments: &[&str]) -> Result<Invocation, ArgumentProblem> {
         parse_arguments(arguments.iter().map(OsString::from))

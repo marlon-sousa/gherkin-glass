@@ -1,4 +1,4 @@
-//! Policy: the pure decisions of reading the input, of how a build is run, of the anchors, and of the pages.
+//! Policy: the pure decisions of reading the input, of how a build is run, of the anchors, of the pages, and of which changes ghg serve rebuilds for.
 
 mod anchor_rule;
 mod argument_parsing;
@@ -11,6 +11,7 @@ mod page_address;
 mod page_building;
 mod page_language;
 mod page_rendering;
+mod rebuild_choice;
 mod settings_resolution;
 mod step_keyword_correction;
 mod unnamed_blocks;
@@ -26,6 +27,7 @@ pub(crate) use page_address::{page_address, root_from};
 pub(crate) use page_building::build_page;
 pub(crate) use page_language::page_language;
 pub(crate) use page_rendering::render_page;
+pub(crate) use rebuild_choice::{Read, calls_for_rebuild, remembered};
 pub(crate) use settings_resolution::{config_folder, resolve_settings};
 pub(crate) use step_keyword_correction::correct_step_keywords;
 pub(crate) use unnamed_blocks::unnamed_blocks;
