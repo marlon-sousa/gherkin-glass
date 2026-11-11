@@ -214,6 +214,7 @@ const NOT_PUBLISHED: &[&str] = &[
     "CONTRIBUTING.md",
     "cliff.toml",
     "clippy.toml",
+    "deny.toml",
     "rust-toolchain.toml",
 ];
 
