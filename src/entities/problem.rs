@@ -52,6 +52,9 @@ pub enum ProblemKind {
     /// in case; `page` is its own, and `first` that folder's path.
     #[error("has the same page, {page}, as the folder {first}")]
     SameFolderPage { page: String, first: String },
+    /// `page` is the address of the page of step sentences.
+    #[error("has the same page, {page}, as the step sentences")]
+    ReservedPage { page: String },
     /// `page` is the file's own page, at the path of a folder's, and `folder`
     /// that folder's path below the input folder, `None` for the input
     /// folder's, the home page.

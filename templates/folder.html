@@ -12,6 +12,9 @@
 {%- if let Some(tags) = folder.tags %}
 <p class="ghg-tag-index-link"><a href="{{ tags.address }}">{{ tags.name }}</a></p>
 {%- endif %}
+{%- if let Some(sentences) = folder.sentences %}
+<p class="ghg-sentences"><a href="{{ sentences.address }}">{{ sentences.name }}</a></p>
+{%- endif %}
 {%- if !folder.folders.is_empty() %}
 <h2>{{ folder.words.folders }}</h2>
 <ul class="ghg-folders">

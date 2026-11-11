@@ -18,6 +18,8 @@ pub(crate) struct FolderPage {
     pub(crate) totals: Vec<String>,
     /// Only the home page's: the link to the index of every tag.
     pub(crate) tags: Option<FolderLink>,
+    /// Only the home page's: its link to the page of step sentences.
+    pub(crate) sentences: Option<FolderLink>,
     pub(crate) folders: Vec<FolderLink>,
     pub(crate) features: Vec<FeatureEntry>,
     pub(crate) words: FolderWords,

@@ -42,6 +42,8 @@ const builds = [
   { folder: "serve/built", args: [] },
   { folder: "serve/reload", args: [] },
   { folder: "versions/suite", args: ["--version-name", "v1.0.0"] },
+  { folder: "step-sentences", args: ["--input", "."] },
+  { folder: "no-steps", args: ["--input", "."] },
 ];
 
 // The fixtures that make no site: those whose build is meant to fail, and

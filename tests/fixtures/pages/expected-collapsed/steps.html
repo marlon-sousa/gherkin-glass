@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Step sentences, Feature files</title>
+<script>try{var t=localStorage.getItem("gherkin-glass:theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}</script>
+<style>
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+  --ghg-background: #ffffff;
+  --ghg-surface: #f2f2f2;
+  --ghg-text: #1a1a1a;
+  --ghg-muted: #474747;
+  --ghg-border: #757575;
+  --ghg-accent: #0b4f9c;
+  --ghg-keyword: #6a1b9a;
+  --ghg-parameter: #14521a;
+  --ghg-number: #8a3000;
+  --ghg-placeholder: #00575e;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ghg-background: #141414;
+    --ghg-surface: #222222;
+    --ghg-text: #ececec;
+    --ghg-muted: #c4c4c4;
+    --ghg-border: #8f8f8f;
+    --ghg-accent: #8cc4ff;
+    --ghg-keyword: #e1b3ff;
+    --ghg-parameter: #9fe0a8;
+    --ghg-number: #ffbf8a;
+    --ghg-placeholder: #7fdbe0;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ghg-background: #141414;
+  --ghg-surface: #222222;
+  --ghg-text: #ececec;
+  --ghg-muted: #c4c4c4;
+  --ghg-border: #8f8f8f;
+  --ghg-accent: #8cc4ff;
+  --ghg-keyword: #e1b3ff;
+  --ghg-parameter: #9fe0a8;
+  --ghg-number: #ffbf8a;
+  --ghg-placeholder: #7fdbe0;
+}
+</style>
+<link rel="stylesheet" href="assets/gherkin-glass.css">
+<script type="module" src="assets/gherkin-glass.js"></script>
+</head>
+<body>
+<a class="ghg-skip" href="#ghg_main">Skip to content</a>
+<div class="ghg-options">
+<input type="checkbox" id="ghg_show_tree" class="ghg-show-tree" aria-controls="ghg_tree"> <label for="ghg_show_tree">Show the folder tree</label>
+<fieldset class="ghg-theme">
+<legend>Theme</legend>
+<label><input type="radio" name="ghg-theme" value="system" checked> System</label>
+<label><input type="radio" name="ghg-theme" value="light"> Light</label>
+<label><input type="radio" name="ghg-theme" value="dark"> Dark</label>
+</fieldset>
+</div>
+<div class="ghg-layout">
+<nav id="ghg_tree" class="ghg-tree" aria-label="Folder tree" hidden></nav>
+<div class="ghg-page">
+<nav class="ghg-breadcrumb" aria-label="Breadcrumb">
+<ol>
+<li><a href="index.html">Feature files</a></li>
+<li><a href="steps.html" aria-current="page">Step sentences</a></li>
+</ol>
+</nav>
+<main id="ghg_main">
+<h1>Step sentences</h1>
+<h2>Given</h2>
+<h3>&#34;…&#34;</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="outlines.html#nothing-to-produce"><bdi>Scenario Outline: Nothing to produce</bdi>, <bdi>outlines.feature</bdi></a>, with <bdi>&#60;x&#62;</bdi></li>
+</ul>
+<h3>&#34;…&#34; and &#34;…&#34;</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="outlines.html#scenario-outline"><bdi>Scenario Outline</bdi>, <bdi>outlines.feature</bdi></a>, with <bdi>&#60;x&#62;</bdi>, <bdi>&#60;y&#62;</bdi></li>
+</ul>
+<h3>&#34;…&#34; items</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="billing/refunds.html#refund-count-items"><bdi>Scenario Outline: Refund &#60;count&#62; items</bdi>, <bdi>billing/refunds.feature</bdi></a>, with <bdi>&#60;count&#62;</bdi></li>
+</ul>
+<h3>&#34;…&#34; refunds</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="billing/refunds.html#refund-again-count-times"><bdi>Scenario Outline: Refund again &#60;count&#62; times</bdi>, <bdi>billing/refunds.feature</bdi></a>, with <bdi>&#60;count&#62;</bdi></li>
+</ul>
+<h3>a balance of &#34;…&#34;</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="outlines.html#withdraw-cash"><bdi>Scenario Outline: Withdraw cash</bdi>, <bdi>outlines.feature</bdi></a>, with <bdi>&#60;balance&#62;</bdi></li>
+</ul>
+<h3>a customer named &#34;…&#34;</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="billing/refunds.html#background"><bdi>Background</bdi>, <bdi>billing/refunds.feature</bdi></a>, with <bdi>&#34;Ana&#34;</bdi></li>
+</ul>
+<h3>an order from forty days ago</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="billing/refunds.html#an-old-order"><bdi>Background: An old order</bdi>, <bdi>billing/refunds.feature</bdi></a></li>
+</ul>
+<h3>an order with these lines:</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="billing/refunds.html#refund-a-card-payment"><bdi>Scenario: Refund a card payment</bdi>, <bdi>billing/refunds.feature</bdi></a></li>
+</ul>
+<h3 lang="und">something</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="emoji.html#a-scenario"><bdi lang="und">📕: A scenario</bdi>, <bdi>emoji.feature</bdi></a></li>
+</ul>
+<h3 lang="pt">uma conta com saldo</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="saque%20em%20conta%20poupan%C3%A7a.html#saque-com-saldo"><bdi lang="pt">Cenário: Saque com saldo</bdi>, <bdi>saque em conta poupança.feature</bdi></a></li>
+</ul>
+<h2>When</h2>
+<h3>&#34;…&#34; is withdrawn by &#60;who&#62;</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="outlines.html#withdraw-cash"><bdi>Scenario Outline: Withdraw cash</bdi>, <bdi>outlines.feature</bdi></a>, with <bdi>&#60;amount&#62;</bdi></li>
+</ul>
+<h3>the order is refunded</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="billing/refunds.html#refund-a-card-payment"><bdi>Scenario: Refund a card payment</bdi>, <bdi>billing/refunds.feature</bdi></a></li>
+</ul>
+<h2>Then</h2>
+<h3>a note is kept</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="billing/refunds.html#refund-a-card-payment"><bdi>Scenario: Refund a card payment</bdi>, <bdi>billing/refunds.feature</bdi></a></li>
+</ul>
+<h3>it is refused</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="billing/refunds.html#refund-a-refund"><bdi>Scenario: Refund a refund</bdi>, <bdi>billing/refunds.feature</bdi></a></li>
+</ul>
+<h3 lang="pt">o saque é feito</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="saque%20em%20conta%20poupan%C3%A7a.html#saque-com-saldo"><bdi lang="pt">Cenário: Saque com saldo</bdi>, <bdi>saque em conta poupança.feature</bdi></a></li>
+</ul>
+<h3>store credit is given</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="billing/refunds.html#store-credit"><bdi>Example: Store credit</bdi>, <bdi>billing/refunds.feature</bdi></a></li>
+</ul>
+<h3>the account shows</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="outlines.html#withdraw-cash"><bdi>Scenario Outline: Withdraw cash</bdi>, <bdi>outlines.feature</bdi></a></li>
+</ul>
+<h3>the card gets</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="billing/refunds.html#refund-a-card-payment"><bdi>Scenario: Refund a card payment</bdi>, <bdi>billing/refunds.feature</bdi></a></li>
+</ul>
+<h3>the receipt reads</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="outlines.html#withdraw-cash"><bdi>Scenario Outline: Withdraw cash</bdi>, <bdi>outlines.feature</bdi></a></li>
+</ul>
+<h3>the total is &#34;…&#34;</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="billing/refunds.html#refund-count-items"><bdi>Scenario Outline: Refund &#60;count&#62; items</bdi>, <bdi>billing/refunds.feature</bdi></a>, with <bdi>&#60;total&#62;</bdi></li>
+</ul>
+<h3>the totals add up</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="reports/monthly/totals.html#totals-add-up"><bdi>Scenario: Totals add up</bdi>, <bdi>reports/monthly/totals.feature</bdi></a></li>
+</ul>
+</main>
+</div>
+</div>
+</body>
+</html>
