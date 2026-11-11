@@ -99,6 +99,7 @@ No dependency injection framework. Every collaborator is received through a cons
 - **A controller holds each service behind a trait**, a driving port, named after the service with `Api`, such as `SiteApi` implemented by `SiteService`, so that the controller's tests hand in fake services. Only the composition root names the concrete service.
 - **A service earns its place**: it coordinates at least two of a port, an entity and a policy for a named use case. A single pass-through gets no service, and its caller calls the target directly.
 - A pure function never gets a trait around it only to be faked.
+- **Adapters translate, they don't decide.** An adapter turns the types of the crate it wraps into our entities and reports what it sees. Any choice about what matters to the domain is a policy that a service calls, such as which changes to the input call for a rebuild. A type an adapter uses only for its mechanism, such as `notify`'s events or `tiny_http`'s requests, never appears in a port, an entity, a policy or a service. The exceptions are the standard library's types, and the types of a crate that models the domain itself, such as `gherkin`'s, which the domain uses because they are what it is about.
 
 ## How the code runs
 
