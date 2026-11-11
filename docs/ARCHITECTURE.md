@@ -88,6 +88,7 @@ One sentence, where it applies, once. Why a decision was taken, what else was co
 - A measured fact names the program and its version, never a date.
 - A fact appears once in the repository; a second place that needs it says "see" with a path.
 - No `TODO` comments, and no bold.
+- Code never cites an issue, a pull request or a document, with one exception: a test cites the rule of docs/BEHAVIOUR.md it checks by its number, such as `// Rule 110: the parts are the step's text.`, so that each rule leads to its test.
 
 ## Dependencies between parts
 
