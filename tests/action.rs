@@ -305,7 +305,7 @@ fn fails(runner: &Runner, output: Output, message: &str) {
     );
 }
 
-// Installing: rules 129 to 133.
+// Installing: rules 169 to 173.
 
 #[test]
 fn installs_the_newest_release_of_the_actions_major_version_by_default() {
@@ -484,7 +484,7 @@ fn an_installed_version_is_kept_in_the_tool_cache_and_not_downloaded_again() {
     assert_eq!(runner.path_entries().len(), 2);
 }
 
-// Building: rules 134 and 135.
+// Building: rules 174 and 175.
 
 #[test]
 fn build_is_true_or_false() {
