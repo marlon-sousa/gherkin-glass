@@ -15,7 +15,7 @@ pub(crate) enum Watched {
 
 /// What one burst of changes, such as an editor's when it saves, was.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Burst {
+pub(crate) enum Burst {
     /// The paths that changed, each written from the path watched that
     /// holds it, as that was given: `features/a.feature` under
     /// `Watched::Folder("features")`, or the file itself.
@@ -25,10 +25,8 @@ pub enum Burst {
 }
 
 /// One message for each burst of changes, until the watching ends.
-pub struct Changes {
-    pub bursts: Receiver<Burst>,
 pub(crate) struct Changes {
-    pub(crate) bursts: Receiver<()>,
+    pub(crate) bursts: Receiver<Burst>,
     /// Whatever keeps the watching going; dropping it ends it.
     #[expect(dead_code, reason = "it is held only to be dropped")]
     pub(crate) watching: Box<dyn Any + Send>,

@@ -83,11 +83,7 @@ pub(crate) use tag_page::{TagFeature, TagIndex, TagIndexEntry, TagPage, TagScena
 pub(crate) use theme::Accents;
 pub(crate) use theme::{Palette, Theme};
 pub(crate) use tree_item::TreeItem;
-pub use unnamed::Unnamed;
-pub use version_list::VersionList;
-pub use version_name::VersionName;
-pub use watch::{Burst, Changes, WatchFailure, Watched};
 pub(crate) use unnamed::Unnamed;
 pub(crate) use version_list::VersionList;
 pub(crate) use version_name::VersionName;
-pub(crate) use watch::{Changes, WatchFailure, Watched};
+pub(crate) use watch::{Burst, Changes, WatchFailure, Watched};

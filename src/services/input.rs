@@ -26,7 +26,7 @@ impl InputService {
 
     /// The paths of the files the `.ghg-ignore` rules select under
     /// `input`, sorted, without reading them.
-    pub fn paths(&self, input: &Path) -> Vec<PathBuf> {
+    pub(crate) fn paths(&self, input: &Path) -> Vec<PathBuf> {
         self.collector.collect(input).paths
     }
 
