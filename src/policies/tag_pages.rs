@@ -201,7 +201,7 @@ mod tests {
 
     use super::*;
     use crate::entities::ParsedFeature;
-    use crate::policies::make_anchors;
+    use crate::policies::anchor_feature;
     use crate::policies::{build_page, name_tags, tags_of};
 
     const FEATURE: &str = "\
@@ -242,14 +242,7 @@ Feature: F
         let names = name_tags(&tags);
         let pages = parsed
             .iter()
-            .map(|p| {
-                build_page(
-                    p,
-                    &make_anchors(&p.feature),
-                    &PageOptions::default(),
-                    &names,
-                )
-            })
+            .map(|p| build_page(&anchor_feature(p), &PageOptions::default(), &names))
             .collect();
         (tags, pages, names)
     }

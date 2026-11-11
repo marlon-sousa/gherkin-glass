@@ -82,7 +82,7 @@ mod tests {
 
     use super::*;
     use crate::entities::{PageOptions, ParsedFeature, TagNames};
-    use crate::policies::make_anchors;
+    use crate::policies::anchor_feature;
     use crate::policies::{build_folder_pages, build_page};
 
     fn tree(files: &[(&str, &str)]) -> Vec<TreeItem> {
@@ -100,12 +100,7 @@ mod tests {
                     "en".to_string(),
                     BTreeMap::new(),
                 );
-                build_page(
-                    &parsed,
-                    &make_anchors(&parsed.feature),
-                    &options,
-                    &TagNames::default(),
-                )
+                build_page(&anchor_feature(&parsed), &options, &TagNames::default())
             })
             .collect();
         build_folder_tree(&build_folder_pages(&pages, &options))

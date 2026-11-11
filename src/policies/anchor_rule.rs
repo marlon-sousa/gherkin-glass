@@ -2,11 +2,11 @@
 
 use std::collections::HashSet;
 
-use gherkin::{Background, Feature, Scenario};
+use gherkin::{Background, Examples, Rule, Scenario};
 use unicode_normalization::UnicodeNormalization;
 use unicode_normalization::char::is_combining_mark;
 
-use crate::entities::Anchors;
+use crate::entities::{Anchored, AnchoredFeature, AnchoredRule, AnchoredScenario, ParsedFeature};
 use crate::policies::example_rows;
 
 /// The kinds of block that have an anchor, each named in English for when
@@ -20,99 +20,113 @@ enum Kind {
     Examples,
 }
 
-/// One block, before its anchor is made unique on the page.
-struct Block<'a> {
-    start: usize,
-    name: &'a str,
-    keyword: &'a str,
-    kind: Kind,
+/// The anchors made so far on one page, which a new one must not repeat.
+#[derive(Default)]
+struct Taken {
+    anchors: HashSet<String>,
 }
 
-pub(crate) fn make_anchors(feature: &Feature) -> Anchors {
-    let mut blocks = Vec::new();
-    let mut outlines = Vec::new();
-    if let Some(background) = &feature.background {
-        blocks.push(Block::background(background));
+/// `parsed`'s blocks, each with its anchor, and the rows of its outlines' examples with theirs.
+pub(crate) fn anchor_feature(parsed: &ParsedFeature) -> AnchoredFeature<'_> {
+    let feature = &parsed.feature;
+    let mut taken = Taken::default();
+    // Blocks take their anchors in file order, which is the order gherkin keeps them in.
+    let background = feature
+        .background
+        .as_ref()
+        .map(|background| taken.background(background));
+    let mut scenarios = taken.scenarios(&feature.scenarios);
+    let mut rules: Vec<_> = feature.rules.iter().map(|rule| taken.rule(rule)).collect();
+    // The rows take their anchors after every block.
+    for scenario in scenarios
+        .iter_mut()
+        .chain(rules.iter_mut().flat_map(|rule| &mut rule.scenarios))
+    {
+        scenario.rows = taken.rows(scenario);
     }
-    add_scenarios(&feature.scenarios, &mut blocks, &mut outlines);
-    for rule in &feature.rules {
-        blocks.push(Block {
-            start: rule.span.start,
-            name: &rule.name,
-            keyword: &rule.keyword,
-            kind: Kind::Rule,
-        });
-        if let Some(background) = &rule.background {
-            blocks.push(Block::background(background));
-        }
-        add_scenarios(&rule.scenarios, &mut blocks, &mut outlines);
-    }
-    blocks.sort_by_key(|block| block.start);
-    outlines.sort_by_key(|outline| outline.span.start);
-
-    let mut anchors = Anchors::default();
-    let mut taken = HashSet::new();
-    for block in &blocks {
-        let anchor = unique(block.anchor(), &mut taken);
-        anchors.insert_block(block.start, anchor);
-    }
-    for outline in outlines {
-        let base = anchors.scenario(outline).unwrap_or_default().to_string();
-        for row in 1..=example_rows(outline).len() {
-            let anchor = unique(format!("{base}-row-{row}"), &mut taken);
-            anchors.insert_row(outline.span.start, row, anchor);
-        }
-    }
-    anchors
-}
-
-fn add_scenarios<'a>(
-    scenarios: &'a [Scenario],
-    blocks: &mut Vec<Block<'a>>,
-    outlines: &mut Vec<&'a Scenario>,
-) {
-    for scenario in scenarios {
-        let outline = !scenario.examples.is_empty();
-        blocks.push(Block {
-            start: scenario.span.start,
-            name: &scenario.name,
-            keyword: &scenario.keyword,
-            kind: if outline {
-                Kind::ScenarioOutline
-            } else {
-                Kind::Scenario
-            },
-        });
-        if outline {
-            outlines.push(scenario);
-        }
-        for examples in &scenario.examples {
-            blocks.push(Block {
-                start: examples.span.start,
-                name: examples.name.as_deref().unwrap_or_default(),
-                keyword: &examples.keyword,
-                kind: Kind::Examples,
-            });
-        }
+    AnchoredFeature {
+        parsed,
+        background,
+        scenarios,
+        rules,
     }
 }
 
-impl<'a> Block<'a> {
-    fn background(background: &'a Background) -> Self {
-        Block {
-            start: background.span.start,
-            name: &background.name,
-            keyword: &background.keyword,
-            kind: Kind::Background,
+impl Taken {
+    fn background<'a>(&mut self, background: &'a Background) -> Anchored<'a, Background> {
+        Anchored {
+            block: background,
+            anchor: self.block(&background.name, &background.keyword, Kind::Background),
         }
     }
 
-    /// Rules 27 to 31.
-    fn anchor(&self) -> String {
-        [anchor_of(self.name), anchor_of(self.keyword)]
+    fn rule<'a>(&mut self, rule: &'a Rule) -> AnchoredRule<'a> {
+        AnchoredRule {
+            rule,
+            anchor: self.block(&rule.name, &rule.keyword, Kind::Rule),
+            background: rule
+                .background
+                .as_ref()
+                .map(|background| self.background(background)),
+            scenarios: self.scenarios(&rule.scenarios),
+        }
+    }
+
+    /// Each with its examples blocks, and no rows yet.
+    fn scenarios<'a>(&mut self, scenarios: &'a [Scenario]) -> Vec<AnchoredScenario<'a>> {
+        scenarios
+            .iter()
+            .map(|scenario| self.scenario(scenario))
+            .collect()
+    }
+
+    fn scenario<'a>(&mut self, scenario: &'a Scenario) -> AnchoredScenario<'a> {
+        let kind = if scenario.examples.is_empty() {
+            Kind::Scenario
+        } else {
+            Kind::ScenarioOutline
+        };
+        AnchoredScenario {
+            scenario,
+            anchor: self.block(&scenario.name, &scenario.keyword, kind),
+            examples: scenario
+                .examples
+                .iter()
+                .map(|examples| self.examples(examples))
+                .collect(),
+            rows: Vec::new(),
+        }
+    }
+
+    fn examples<'a>(&mut self, examples: &'a Examples) -> Anchored<'a, Examples> {
+        Anchored {
+            block: examples,
+            anchor: self.block(
+                examples.name.as_deref().unwrap_or_default(),
+                &examples.keyword,
+                Kind::Examples,
+            ),
+        }
+    }
+
+    /// The anchors of the scenarios `outline`'s rows produce, counted from 1.
+    fn rows(&mut self, outline: &AnchoredScenario<'_>) -> Vec<String> {
+        (1..=example_rows(outline.scenario).len())
+            .map(|row| self.unique(format!("{}-row-{row}", outline.anchor)))
+            .collect()
+    }
+
+    /// The anchor of a block named `name` and written with `keyword`, made unique.
+    fn block(&mut self, name: &str, keyword: &str, kind: Kind) -> String {
+        let anchor = [anchor_of(name), anchor_of(keyword)]
             .into_iter()
             .find(|anchor| !anchor.is_empty())
-            .unwrap_or_else(|| self.kind.english().to_string())
+            .unwrap_or_else(|| kind.english().to_string());
+        self.unique(anchor)
+    }
+
+    fn unique(&mut self, anchor: String) -> String {
+        unique(anchor, &mut self.anchors)
     }
 }
 

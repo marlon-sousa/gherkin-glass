@@ -1,7 +1,7 @@
 //! Entity: the values the build reads and reports, those that say how it is run, what ghg serve serves, and the themes' colours.
 
 mod accent_shortfall;
-mod anchors;
+mod anchored_feature;
 mod breadcrumb;
 mod build_failure;
 mod build_folder;
@@ -45,7 +45,7 @@ mod version_name;
 mod watch;
 
 pub(crate) use accent_shortfall::AccentShortfall;
-pub(crate) use anchors::Anchors;
+pub(crate) use anchored_feature::{Anchored, AnchoredFeature, AnchoredRule, AnchoredScenario};
 pub(crate) use breadcrumb::{Breadcrumb, Crumb};
 pub(crate) use build_failure::BuildFailure;
 pub(crate) use build_folder::BuildFolder;

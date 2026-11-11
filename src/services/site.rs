@@ -3,12 +3,12 @@
 use std::path::Path;
 use std::sync::Arc;
 
-use rayon::prelude::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
+use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 
 use crate::entities::{BuiltSite, Problem, ProblemKind, Problems, Settings, SiteAssets};
 use crate::policies::{
-    LARGE_SEARCH_DOCUMENTS, SENTENCES_PAGE, build_folder_pages, build_folder_tree, build_page,
-    build_sentences_page, build_tag_index, build_tag_page, find_step_sentences, make_anchors,
+    LARGE_SEARCH_DOCUMENTS, SENTENCES_PAGE, anchor_feature, build_folder_pages, build_folder_tree,
+    build_page, build_sentences_page, build_tag_index, build_tag_page, find_step_sentences,
     name_tags, render_folder_page, render_folder_tree, render_page, render_sentences_page,
     render_tag_index, render_tag_page, search_documents, search_json, tag_index_address, tags_of,
 };
@@ -50,15 +50,11 @@ impl SiteService {
         let features = self.input.read(&settings.input, settings.unnamed)?;
         let tags = tags_of(&features);
         let names = name_tags(&tags);
-        let anchors: Vec<_> = features
-            .iter()
-            .map(|parsed| make_anchors(&parsed.feature))
-            .collect();
+        let anchored: Vec<_> = features.iter().map(anchor_feature).collect();
         // Collecting into a `Vec` keeps file order, whatever order the threads finish in.
-        let pages: Vec<_> = features
+        let pages: Vec<_> = anchored
             .par_iter()
-            .zip(&anchors[..])
-            .map(|(parsed, anchors)| build_page(parsed, anchors, &settings.pages, &names))
+            .map(|feature| build_page(feature, &settings.pages, &names))
             .collect();
         let folders = build_folder_pages(&pages, &settings.pages);
         let mut rendered: Vec<(String, String)> = pages
@@ -71,7 +67,7 @@ impl SiteService {
                 .map(|folder| (folder.address.clone(), render_folder_page(folder)))
                 .collect::<Vec<_>>(),
         );
-        let sentences = find_step_sentences(features.iter().zip(&anchors));
+        let sentences = find_step_sentences(&anchored);
         rendered.push((
             SENTENCES_PAGE.to_string(),
             render_sentences_page(&build_sentences_page(
@@ -96,7 +92,7 @@ impl SiteService {
                 })
                 .collect::<Vec<_>>(),
         );
-        let search = search_json(&search_documents(features.iter().zip(&anchors)));
+        let search = search_json(&search_documents(&anchored));
         let built = BuiltSite {
             large_search_documents: Some(search.len())
                 .filter(|&size| size > LARGE_SEARCH_DOCUMENTS),

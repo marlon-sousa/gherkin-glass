@@ -6,7 +6,8 @@ use std::path::PathBuf;
 use gherkin::{Feature, GherkinEnv};
 
 use super::*;
-use crate::policies::make_anchors;
+use crate::entities::ParsedFeature;
+use crate::policies::anchor_feature;
 
 #[test]
 fn a_kind_with_no_sentence_has_no_group() {
@@ -21,8 +22,7 @@ fn a_kind_with_no_sentence_has_no_group() {
         "en".to_string(),
         BTreeMap::new(),
     );
-    let anchors = make_anchors(&parsed.feature);
-    let kinds: Vec<_> = find_step_sentences([(&parsed, &anchors)])
+    let kinds: Vec<_> = find_step_sentences([&anchor_feature(&parsed)])
         .groups
         .iter()
         .map(|group| group.kind)

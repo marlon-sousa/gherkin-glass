@@ -2,13 +2,13 @@
 
 use std::path::{Component, Path};
 
-use gherkin::{Background, Examples, Rule, Scenario, Step, Table};
+use gherkin::{Background, Examples, Scenario, Step, Table};
 use i18n_embed_fl::fl;
 
 use crate::entities::{
-    Anchors, BackgroundsOption, Block, BlockKind, ContentsEntry, DocStringView, FromBackground,
-    HeadingLevel, HeadingPart, Page, PageOptions, PageWords, Paragraph, ParsedFeature, SourceLink,
-    StepView, TableView, TagNames, TagView,
+    Anchored, AnchoredFeature, AnchoredRule, AnchoredScenario, BackgroundsOption, Block, BlockKind,
+    ContentsEntry, DocStringView, FromBackground, HeadingLevel, HeadingPart, Page, PageOptions,
+    PageWords, Paragraph, ParsedFeature, SourceLink, StepView, TableView, TagNames, TagView,
 };
 use crate::policies::{
     CATALOGUE, ExampleRow, breadcrumb, example_rows, highlight_step, outside_link, page_address,
@@ -23,29 +23,28 @@ const PATH_MARK: &str = "\u{0}";
 /// message of the catalogue holds them.
 const TEXT_MARKS: [&str; 2] = ["\u{1}", "\u{2}"];
 
-/// `anchors` are those `make_anchors` makes for the feature, and `tags` names every tag of the site.
+/// `tags` names every tag of the site.
 pub(crate) fn build_page(
-    parsed: &ParsedFeature,
-    anchors: &Anchors,
+    anchored: &AnchoredFeature<'_>,
     options: &PageOptions,
     tags: &TagNames,
 ) -> Page {
+    let parsed = anchored.parsed;
     let feature = &parsed.feature;
     let path = slash_path(&parsed.path);
     let address = page_address(&parsed.path);
     let heading = heading(&feature.keyword, &feature.name);
     let builder = Builder {
         parsed,
-        anchors,
         options,
         tags,
         root: root_from(&address),
     };
     let mut blocks = Vec::new();
-    if let Some(background) = &feature.background {
+    if let Some(background) = &anchored.background {
         blocks.push(builder.background(background, HeadingLevel::Two));
     }
-    let from_feature: Vec<_> = feature
+    let from_feature: Vec<_> = anchored
         .background
         .iter()
         .filter_map(|background| {
@@ -53,13 +52,13 @@ pub(crate) fn build_page(
         })
         .collect();
     blocks.extend(
-        feature
+        anchored
             .scenarios
             .iter()
             .map(|s| builder.scenario(s, HeadingLevel::Two, &from_feature)),
     );
     blocks.extend(
-        feature
+        anchored
             .rules
             .iter()
             .map(|rule| builder.rule(rule, &from_feature)),
@@ -105,7 +104,6 @@ pub(crate) fn build_page(
 
 struct Builder<'a> {
     parsed: &'a ParsedFeature,
-    anchors: &'a Anchors,
     options: &'a PageOptions,
     tags: &'a TagNames,
     /// From the page back to the site's root.
@@ -113,14 +111,15 @@ struct Builder<'a> {
 }
 
 impl Builder<'_> {
-    fn background(&self, background: &Background, level: HeadingLevel) -> Block {
+    fn background(&self, anchored: &Anchored<'_, Background>, level: HeadingLevel) -> Block {
+        let background = anchored.block;
         Block {
             steps: self.steps(&background.steps, None),
             description: description(background.description.as_deref()),
             ..block(
                 BlockKind::Background,
                 level,
-                self.anchors.background(background),
+                &anchored.anchor,
                 heading(&background.keyword, &background.name),
                 self.options.collapse_scenarios,
             )
@@ -130,35 +129,33 @@ impl Builder<'_> {
     /// `None` for a background without steps, which adds nothing to a scenario.
     fn background_steps(
         &self,
-        background: &Background,
+        anchored: &Anchored<'_, Background>,
         introduction: String,
     ) -> Option<FromBackground> {
+        let background = anchored.block;
         (!background.steps.is_empty()).then(|| FromBackground {
             id: String::new(),
             introduction,
-            // `make_anchors` gives every block of the feature an anchor.
-            anchor: self
-                .anchors
-                .background(background)
-                .unwrap_or_default()
-                .to_string(),
+            anchor: anchored.anchor.clone(),
             heading: heading(&background.keyword, &background.name),
             steps: self.steps(&background.steps, None),
             inline: self.options.inline_backgrounds,
         })
     }
 
-    fn rule(&self, rule: &Rule, from_feature: &[FromBackground]) -> Block {
+    fn rule(&self, anchored: &AnchoredRule<'_>, from_feature: &[FromBackground]) -> Block {
+        let rule = anchored.rule;
         let mut blocks = Vec::new();
-        if let Some(background) = &rule.background {
+        if let Some(background) = &anchored.background {
             blocks.push(self.background(background, HeadingLevel::Three));
         }
         let mut from: Vec<_> = from_feature.to_vec();
-        from.extend(rule.background.iter().filter_map(|background| {
+        from.extend(anchored.background.iter().filter_map(|background| {
             self.background_steps(background, fl!(CATALOGUE, "from-rule-background"))
         }));
         blocks.extend(
-            rule.scenarios
+            anchored
+                .scenarios
                 .iter()
                 .map(|s| self.scenario(s, HeadingLevel::Three, &from)),
         );
@@ -169,16 +166,21 @@ impl Builder<'_> {
             ..block(
                 BlockKind::Rule,
                 HeadingLevel::Two,
-                self.anchors.rule(rule),
+                &anchored.anchor,
                 heading(&rule.keyword, &rule.name),
                 self.options.collapse_rules,
             )
         }
     }
 
-    fn scenario(&self, scenario: &Scenario, level: HeadingLevel, from: &[FromBackground]) -> Block {
-        // `make_anchors` gives every block of the feature an anchor.
-        let anchor = self.anchors.scenario(scenario).unwrap_or_default();
+    fn scenario(
+        &self,
+        anchored: &AnchoredScenario<'_>,
+        level: HeadingLevel,
+        from: &[FromBackground],
+    ) -> Block {
+        let scenario = anchored.scenario;
+        let anchor = &anchored.anchor;
         let backgrounds = from
             .iter()
             .zip(1..)
@@ -192,23 +194,24 @@ impl Builder<'_> {
             description: description(scenario.description.as_deref()),
             backgrounds,
             steps: self.steps(&scenario.steps, Some(scenario)),
-            blocks: scenario
+            blocks: anchored
                 .examples
                 .iter()
                 .map(|examples| self.examples(examples, level.below()))
-                .chain(self.examples_as_scenarios(scenario, level.below()))
+                .chain(self.examples_as_scenarios(anchored, level.below()))
                 .collect(),
             ..block(
                 BlockKind::Scenario,
                 level,
-                self.anchors.scenario(scenario),
+                anchor,
                 heading(&scenario.keyword, &scenario.name),
                 self.options.collapse_scenarios,
             )
         }
     }
 
-    fn examples(&self, examples: &Examples, level: HeadingLevel) -> Block {
+    fn examples(&self, anchored: &Anchored<'_, Examples>, level: HeadingLevel) -> Block {
+        let examples = anchored.block;
         Block {
             tags: self.tags(&examples.tags),
             description: description(examples.description.as_deref()),
@@ -216,31 +219,36 @@ impl Builder<'_> {
             ..block(
                 BlockKind::Examples,
                 level,
-                self.anchors.examples(examples),
+                &anchored.anchor,
                 heading(&examples.keyword, examples.name.as_deref().unwrap_or("")),
                 false,
             )
         }
     }
 
-    fn examples_as_scenarios(&self, outline: &Scenario, level: HeadingLevel) -> Option<Block> {
+    fn examples_as_scenarios(
+        &self,
+        anchored: &AnchoredScenario<'_>,
+        level: HeadingLevel,
+    ) -> Option<Block> {
+        let outline = anchored.scenario;
         let rows = example_rows(outline);
         if rows.is_empty() {
             return None;
         }
-        let outline_anchor = self.anchors.scenario(outline).unwrap_or_default();
+        let outline_anchor = &anchored.anchor;
         let words = fl!(CATALOGUE, "examples-as-scenarios", name = TEXT_MARKS[0]);
         let blocks = rows
             .iter()
-            .enumerate()
-            .map(|(index, row)| self.example_scenario(outline, index + 1, row, level.below()))
+            .zip(&anchored.rows)
+            .map(|(row, anchor)| self.example_scenario(outline, anchor, row, level.below()))
             .collect();
         Some(Block {
             blocks,
             ..worded_block(
                 BlockKind::ExamplesAsScenarios,
                 level,
-                Some(&format!("{outline_anchor}_scenarios")),
+                &format!("{outline_anchor}_scenarios"),
                 worded_parts(&words, &[isolated(outline_name(outline))]),
                 true,
             )
@@ -250,7 +258,7 @@ impl Builder<'_> {
     fn example_scenario(
         &self,
         outline: &Scenario,
-        number: usize,
+        anchor: &str,
         row: &ExampleRow<'_>,
         level: HeadingLevel,
     ) -> Block {
@@ -282,7 +290,7 @@ impl Builder<'_> {
             ..worded_block(
                 BlockKind::Scenario,
                 level,
-                self.anchors.row(outline, number),
+                anchor,
                 worded_parts(&words, &[isolated(outline_name(outline)), values]),
                 self.options.collapse_scenarios,
             )
@@ -360,7 +368,7 @@ fn table_free_view(step: &Step) -> StepView {
 fn block(
     kind: BlockKind,
     level: HeadingLevel,
-    anchor: Option<&str>,
+    anchor: &str,
     heading: String,
     collapsed: bool,
 ) -> Block {
@@ -370,15 +378,14 @@ fn block(
 fn worded_block(
     kind: BlockKind,
     level: HeadingLevel,
-    anchor: Option<&str>,
+    anchor: &str,
     heading_parts: Vec<HeadingPart>,
     collapsed: bool,
 ) -> Block {
     Block {
         kind,
         level,
-        // `make_anchors` gives every block of the feature an anchor.
-        anchor: anchor.unwrap_or_default().to_string(),
+        anchor: anchor.to_string(),
         heading_parts,
         collapsed,
         tags: Vec::new(),
@@ -524,7 +531,7 @@ mod tests {
 
     use super::*;
     use crate::entities::{OutsideLink, StepPart, TagLink};
-    use crate::policies::{make_anchors, name_tags, tags_of, whole_tag_pattern};
+    use crate::policies::{anchor_feature, name_tags, tags_of, whole_tag_pattern};
 
     fn page(text: &str, options: &PageOptions) -> Page {
         let feature = Feature::parse(text, GherkinEnv::default()).expect("parses");
@@ -535,7 +542,7 @@ mod tests {
             BTreeMap::new(),
         );
         let tags = name_tags(&tags_of(std::slice::from_ref(&parsed)));
-        build_page(&parsed, &make_anchors(&parsed.feature), options, &tags)
+        build_page(&anchor_feature(&parsed), options, &tags)
     }
 
     const FEATURE: &str = "\
