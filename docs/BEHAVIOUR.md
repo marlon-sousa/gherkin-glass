@@ -22,6 +22,7 @@ Agreed so far:
 - [Step sentences](#step-sentences), issue [#14](https://github.com/marlon-sousa/gherkin-glass/issues/14).
 - [Search](#search), issue [#15](https://github.com/marlon-sousa/gherkin-glass/issues/15).
 - [Installing through cargo](#installing-through-cargo), issue [#18](https://github.com/marlon-sousa/gherkin-glass/issues/18).
+- [Releases](#releases), issue [#16](https://github.com/marlon-sousa/gherkin-glass/issues/16).
 
 The other features planned for the first version are the [issues](https://github.com/marlon-sousa/gherkin-glass/issues) labelled `feature`. Each adds its own keys and options to "The command line and its configuration" as it is built.
 
@@ -453,3 +454,37 @@ gherkin-glass is one crate, `gherkin-glass`, published on [crates.io](https://cr
 157. `cargo install gherkin-glass` installs two commands: `ghg`, the command the rest of this document describes, and `cargo-ghg`, the cargo plugin. The published crate holds everything both are built from. Fixture: the crate's own list of files, as `cargo package --list` gives it, checked against the files of the repository.
 158. `cargo ghg`, followed by anything `ghg` takes, behaves exactly as `ghg` followed by the same: it prints the same to standard output and to standard error, and exits with the same status. So `cargo ghg build --input specs` is `ghg build --input specs`, its paths relative to the current folder, `cargo ghg --version` prints `ghg` and its version, such as `ghg 0.1.0`, `cargo ghg` alone is the mistake of no command, and `cargo help ghg` prints the help of rule 18. Every sentence names the command `ghg`, as it does when `ghg` is run. Fixtures: `tests/fixtures/configuration/default` and `tests/fixtures/configuration/configured`.
 159. Cargo runs `cargo ghg` as `cargo-ghg ghg`, giving the plugin its own name first. `cargo-ghg` drops a first argument that is exactly `ghg`, and only that one, then runs as rule 158 says. Run by itself, without `ghg` first, it behaves as `ghg` too, so `cargo-ghg build` is `ghg build`. Fixture: `tests/fixtures/configuration/default`.
+
+## Releases
+
+gherkin-glass is downloaded and run, with nothing else to install. A release is made by the release workflow, `.github/workflows/release.yml`, when a maintainer pushes a version's tag, and holds an archive for each platform, a checksums file, notes, and the crate on crates.io. The names of the archives and what they hold are what the GitHub Action ([#17](https://github.com/marlon-sousa/gherkin-glass/issues/17)) and `cargo binstall` rely on, so they are part of what is promised, like the command line.
+
+The workflow's own checks test these rules: on every tag before anything is published, and on every pull request that changes how releases are made, which builds, packs and checks every archive without publishing anything. Their scripts are in `.github/release/`.
+
+### What makes a release
+
+160. Pushing a tag `v<version>` releases that version, and nothing else does. The tag is refused, and nothing is published, unless the version is the one `Cargo.toml` gives the crate, the tagged commit is on `main`, and `CHANGELOG.md` has notes for the version, under the heading `## [<version>]`. Every reason a tag is refused is reported, not only the first. Fixture: `tests/fixtures/release/changelogs`, checked by `.github/release/test-gate.sh`.
+
+### The archives
+
+161. A release has one archive for each of five targets, all 64-bit, named `ghg-<tag>-<target>.tar.gz`, or `ghg-<tag>-<target>.zip` for Windows, such as `ghg-v0.1.0-x86_64-unknown-linux-musl.tar.gz`, where the tag is the one pushed and the target is the Rust target the binaries were built for:
+
+    | Target | Platform | Archive |
+    | --- | --- | --- |
+    | `x86_64-unknown-linux-musl` | Linux on x86-64 | `.tar.gz` |
+    | `aarch64-unknown-linux-musl` | Linux on ARM64 | `.tar.gz` |
+    | `x86_64-apple-darwin` | macOS on Intel | `.tar.gz` |
+    | `aarch64-apple-darwin` | macOS on Apple silicon | `.tar.gz` |
+    | `x86_64-pc-windows-msvc` | Windows on x86-64 | `.zip` |
+
+    Checked by `.github/release/check-archive.sh` and `.github/release/check-binstall.sh` on every build, and the first by `.github/release/test-check-archive.sh` with archives it makes.
+162. Each archive holds, at its root and not inside a folder, every binary the crate declares, `ghg` and `cargo-ghg`, ending in `.exe` on Windows, and the licence files `LICENSE-MIT` and `LICENSE-APACHE`, and nothing else. Checked by `.github/release/check-archive.sh` on every build, and by `.github/release/test-check-archive.sh` with archives it makes.
+163. A release has one checksums file, `SHA256SUMS`, with one line for each archive, in the form `sha256sum` writes and checks: the archive's SHA-256 in lower-case hexadecimal, two spaces, and the archive's name. Checked by the release workflow, which writes it and checks every archive against it with `sha256sum --check` before attaching them.
+164. Each binary needs nothing installed beyond what every system of its kind has. On Linux it is statically linked, with musl, so it runs on any distribution. On Windows it links the C runtime into itself, so it needs neither the Visual C++ runtime nor the Universal C Runtime installed. On macOS, which allows no fully static binary, it loads only the libraries of macOS itself, under `/usr/lib` and `/System/Library`. Checked by `.github/release/check-binary.sh`, which also runs `ghg --version`, and checks it prints `ghg` and the version, wherever the machine running the check can run the binary: every target but macOS on Intel, which is built on Apple silicon.
+
+### The notes and the crate
+
+165. The notes of a release are the section of `CHANGELOG.md` for its version. That section is written before the tag, from what [git-cliff](https://git-cliff.org/) prints with the template in `cliff.toml`: the heading `## [<version>]`, then the changelog entries that the commits since the previous tag carry as trailers, under `### Added`, `### Changed`, `### Fixed` and `### Removed`, in that order and each only when it has entries, one list item per entry, oldest commit first. A commit whose subject does not follow [Conventional Commits](https://www.conventionalcommits.org/), such as a merge commit, adds nothing, nor does a trailer of any other kind, such as `Refs #N` or `Changelog: none`. Fixture: `tests/fixtures/release`, checked by `.github/release/test-notes.sh`.
+166. A version with a pre-release part, such as `0.2.0-rc.1`, is released on GitHub as a pre-release. Checked by the tests of the `create-release` action of [itinera-dev/actions](https://github.com/itinera-dev/actions), which makes the release.
+167. The crate is published to crates.io at the same version, before the GitHub release is made, and only after every archive has been built and checked and every check of `.github/workflows/rust.yml` passes on the tagged commit: the formatting, the lints, the tests, the script's checks and the browser check. A version already on crates.io is not published again, so a release whose GitHub release failed can be run again. The one exception is a crate's first version, which a maintainer may have to publish by hand before its tag is pushed, as [CONTRIBUTING.md](../CONTRIBUTING.md), "Releases", says. Checked by publishing: a pull request that changes how releases are made packs the crate without publishing it.
+168. `cargo binstall gherkin-glass` downloads the release archive for the machine's target, as `[package.metadata.binstall]` in `Cargo.toml` names it, and installs both binaries from it. Checked by `.github/release/check-binstall.sh`.

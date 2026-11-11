@@ -1,0 +1,3 @@
+refactor: name a module after its role
+
+Nothing a user meets changes, so the notes have only a Fixed section.

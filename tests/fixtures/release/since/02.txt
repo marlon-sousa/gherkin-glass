@@ -1,0 +1,3 @@
+docs: say how pages are named
+
+A commit without trailers adds nothing to the notes.

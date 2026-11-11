@@ -1,0 +1,6 @@
+feat(cli): an entry released before the previous tag
+
+It belongs to the previous release, so the notes leave it out.
+
+Added: An entry the previous release already listed.
+Refs #11

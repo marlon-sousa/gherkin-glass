@@ -1,0 +1,4 @@
+fix(pages): a heading in order
+
+Fixed: Every page's headings go down one level at a time.
+Refs #4
