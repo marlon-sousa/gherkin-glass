@@ -38,6 +38,7 @@ We work trunk-based: small pull requests straight to `main`, no long-lived branc
 - **Name the issue.** Every pull request names an open issue of this repository: `Closes #N` when it finishes the issue, `Refs #N` when it contributes to it. A check refuses a pull request that names none.
 - **Stack large changes.** A change too large for one pull request becomes a stack: a chain of pull requests, each building on the one before, reviewed and merged in order. Each says `Refs #N`, and the last says `Closes #N`. See "Stacked pull requests" below.
 - **Keep it focused.** One thing per pull request, described in plain prose: what changed and why.
+- **Check pages with a screen reader.** A pull request that changes what a page says or how it behaves carries a manual check with a screen reader in its description, as AGENTS.md, "Reviewing a change", describes.
 - **Merge without squashing.** Pull requests merge with a merge commit or a rebase, never squashed, because a squash folds every commit's message into one, and the release notes are built from each commit's changelog trailers.
 
 ### Stacked pull requests
@@ -48,7 +49,7 @@ A stack is a chain of pull requests, declared to GitHub as a stack so that it sh
 2. **Declare the stack.** Once at least two layers exist, `POST /repos/OWNER/REPO/stacks` with the pull request numbers from bottom to top, `{"pull_requests": [12, 13]}`. A layer added later is appended with `POST /repos/OWNER/REPO/stacks/<stack number>/add`, giving only the new numbers, bottom to top. `GET /repos/OWNER/REPO/stacks?pull_request=<number>` finds the stack a pull request belongs to.
 3. **Say where each layer sits.** Each description says its place, such as "2 of 3", and what the layers below it already do.
 4. **Merge bottom up.** A layer is merged only after the layers below it.
-5. **Keep the stack linear.** Every layer sits on the current tip of the layer below. A fix to a lower layer is a new commit on that layer's branch only; a lower branch is never merged into an upper one, because GitHub's restack drops merge commits, and the conflicts they settled come back. When a layer merges, GitHub retargets the layer above to `main` and rebases the layers above it. When it cannot, each layer above is rebased onto the new tip of the one below, bottom first, and pushed with `git push --force-with-lease`: the only rewrite of history allowed, and only of one's own layers.
+5. **Keep the stack linear.** Every layer sits on the current tip of the layer below. A fix to a lower layer is a new commit on that layer's branch only; a lower branch is never merged into an upper one, because GitHub's restack drops merge commits, and the conflicts they settled come back. When a layer merges, GitHub retargets the layer above to `main` and rebases the layers above it. When it cannot, each layer above is rebased onto the new tip of the one below, bottom first, and pushed with `git push --force-with-lease`. This rebase, and rewording a pushed commit message that the commit message check refuses, followed by the same rebase of the layers above, are the only rewrites of history allowed, and only of one's own layers.
 
 ### Commit messages
 

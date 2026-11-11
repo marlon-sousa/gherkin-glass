@@ -11,9 +11,10 @@ description: How Claude finds which parts of gherkin-glass's docs/ARCHITECTURE.m
 
 | Section | Also untrue when |
 |---|---|
+| The guiding principle | a dependency points outward, or something besides the composition root chooses an adapter |
 | The repository | a top-level folder, a binary or a crate is added, removed or renamed |
 | Module roles | a module's role changes, or a build step moves between roles |
-| Folders and files | `lib.rs` exports something new, or a file or a test module grows past its guide |
+| Folders and files | `lib.rs` exports something new, a module is inlined, or a module's public face changes |
 | Writing the code | a lint, a derive or a dependency it names changes |
 | Comments | never by code alone |
 | Dependencies between parts | a service, a driving port or the composition root changes |

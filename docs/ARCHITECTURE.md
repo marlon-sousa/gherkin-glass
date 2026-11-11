@@ -79,14 +79,16 @@ The service that builds a site runs these steps; the controller behind the comma
 A comment says only what the code cannot:
 
 - the module's role line;
-- a measured fact, with what it was measured against, such as "Chromium, through Playwright, fails a `fetch` from a `file://` page";
+- a measured fact, with what it was measured against, such as "Chromium, through Playwright 1.63.0, fails a `fetch` from a `file://` page";
 - an invariant or a hazard the code does not enforce itself;
 - what an absent value, an error or a rejection carries.
 
 One sentence, where it applies, once. Why a decision was taken, what else was considered and what came before belong in the issue and the pull request, which keep them, not in the code. A field, a function or a test whose name already says what it is gets no doc comment.
 
+Four more rules apply to every comment:
+
 - A measured fact names the program and its version, never a date.
-- A fact appears once in the repository; a second place that needs it says "see" with a path.
+- A fact appears once in the repository. A second document that needs it says "see" with a path, and code that needs it relies on it without repeating it.
 - No `TODO` comments, and no bold.
 - Code never cites an issue, a pull request or a document, with one exception: a test cites the rule of docs/BEHAVIOUR.md it checks by its number, such as `// Rule 110: the parts are the step's text.`, so that each rule leads to its test.
 
