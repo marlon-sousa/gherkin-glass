@@ -10,7 +10,7 @@ pub(crate) struct ParsedFeature {
     /// Relative to the input folder.
     pub(crate) path: PathBuf,
     /// As the `gherkin` crate reads it, except that every doc string is
-    /// corrected as docs/BEHAVIOUR.md, "Doc strings", says.
+    /// corrected from the source.
     pub(crate) feature: Feature,
     /// As Gherkin names it, such as `en` or `pt`, given by the file's
     /// `# language:` line, and `en` without one.

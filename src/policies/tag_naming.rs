@@ -1,4 +1,4 @@
-//! Policy: the tags of the input, their order, and the name of each tag's page, as docs/BEHAVIOUR.md, "Tags", rules 100 and 102, say.
+//! Policy: the tags of the input, their order, and the name of each tag's page.
 
 use std::cmp::Ordering;
 use std::collections::{BTreeSet, HashSet};
@@ -18,14 +18,14 @@ pub(crate) fn tag_index_address() -> SiteAddress {
     SiteAddress::of(&[TAGS_FOLDER], &format!("{INDEX}.html"))
 }
 
-/// Rule 102: by the text lower-cased, then as written, each by character codes.
+/// Tag order: by the text lower-cased, then as written, each by character codes.
 pub(crate) fn tag_order(a: &str, b: &str) -> Ordering {
     a.to_lowercase()
         .cmp(&b.to_lowercase())
         .then_with(|| a.cmp(b))
 }
 
-/// Every tag written in `features`, once each, with its `@`, in the order of rule 102.
+/// Every tag written in `features`, once each, with its `@`, in tag order.
 pub(crate) fn tags_of(features: &[ParsedFeature]) -> Vec<String> {
     let mut tags: Vec<String> = features
         .iter()
@@ -38,7 +38,7 @@ pub(crate) fn tags_of(features: &[ParsedFeature]) -> Vec<String> {
     tags
 }
 
-/// `tags` in the order of rule 102, each with its `@`.
+/// `tags` in tag order, each with its `@`.
 pub(crate) fn name_tags(tags: &[String]) -> TagNames {
     let mut taken = HashSet::from([INDEX.to_string()]);
     let mut names = TagNames::default();

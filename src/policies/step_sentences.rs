@@ -1,4 +1,4 @@
-//! Policy: the suite's step sentences, grouped and sorted, with where each is used, as docs/BEHAVIOUR.md, "Step sentences", says.
+//! Policy: the suite's step sentences, grouped and sorted, with where each is used.
 
 use std::collections::BTreeMap;
 

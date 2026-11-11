@@ -1,4 +1,4 @@
-//! Policy: the documents search reads, one for each feature, rule and scenario, as docs/BEHAVIOUR.md, "Search", says.
+//! Policy: the documents search reads, one for each feature, rule and scenario.
 
 use gherkin::{Background, Scenario};
 

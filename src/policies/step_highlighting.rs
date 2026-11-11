@@ -1,4 +1,4 @@
-//! Policy: which parts of a step are highlighted, as docs/BEHAVIOUR.md, "Highlighting", says.
+//! Policy: which parts of a step are highlighted.
 
 use std::collections::HashSet;
 
@@ -68,7 +68,7 @@ impl Parts {
     }
 }
 
-/// Rule 111: the end, past its closing quote, of a quoted parameter opening at `at`.
+/// The end, past its closing quote, of a quoted parameter opening at `at`.
 fn parameter_end(chars: &[char], at: usize) -> Option<usize> {
     let quote = |index: usize| {
         chars.get(index) == Some(&'"') && (index == 0 || chars.get(index - 1) != Some(&'\\'))
@@ -81,7 +81,7 @@ fn parameter_end(chars: &[char], at: usize) -> Option<usize> {
         .map(|index| index + 1)
 }
 
-/// Rule 112: the end, past its `>`, of a placeholder naming one of `columns`, opening at `at`.
+/// The end, past its `>`, of a placeholder naming one of `columns`, opening at `at`.
 fn placeholder_end(chars: &[char], at: usize, columns: &HashSet<&str>) -> Option<usize> {
     if chars.get(at) != Some(&'<') {
         return None;
@@ -113,7 +113,7 @@ fn placeholders_in(chars: &[char], columns: &HashSet<&str>) -> Vec<StepPart> {
     parts.0
 }
 
-/// Rule 113: the end of a number starting at `at`, which stands apart from any word.
+/// The end of a number starting at `at`, which stands apart from any word.
 fn number_end(chars: &[char], at: usize) -> Option<usize> {
     if at > 0 && chars.get(at - 1).copied().is_some_and(in_word) {
         return None;

@@ -1,4 +1,4 @@
-//! Policy: the anchor rule, the anchors of a feature's page as docs/BEHAVIOUR.md, "Anchors", says.
+//! Policy: the anchor rule, the anchors of a feature's page.
 
 use std::collections::HashSet;
 
@@ -142,7 +142,7 @@ impl Kind {
     }
 }
 
-/// Rule 32: `anchor`, or the first of it followed by `-2`, `-3` and so on that is not taken.
+/// `anchor`, or the first of it followed by `-2`, `-3` and so on that is not taken.
 pub(crate) fn unique(anchor: String, taken: &mut HashSet<String>) -> String {
     let mut candidate = anchor.clone();
     let mut number = 2;
@@ -154,7 +154,9 @@ pub(crate) fn unique(anchor: String, taken: &mut HashSet<String>) -> String {
     candidate
 }
 
-/// Rules 27 to 29 on one name or keyword; empty when nothing is left.
+/// The anchor of one name or keyword: lower-cased, without apostrophes, its letters and
+/// digits kept with the marks and joiners inside its words, and one hyphen between words;
+/// empty when nothing is left.
 pub(crate) fn anchor_of(text: &str) -> String {
     // Lower-casing can leave text that is no longer in NFC, so it is normalised again.
     let lower: String = text

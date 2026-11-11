@@ -1,4 +1,4 @@
-//! Policy: the links from tags to other sites, as docs/BEHAVIOUR.md, "Links to other sites", rules 106 to 108, say.
+//! Policy: the links from tags to other sites.
 
 use std::cell::RefCell;
 
