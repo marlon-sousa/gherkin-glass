@@ -2,11 +2,9 @@
 
 use std::path::Path;
 
-use gherkin::Scenario;
-
-use crate::entities::{Anchors, ParsedFeature};
+use crate::entities::{AnchoredScenario, ParsedFeature};
 use crate::fixtures::{fixture, read_features};
-use crate::policies::make_anchors;
+use crate::policies::anchor_feature;
 
 fn features() -> Vec<ParsedFeature> {
     read_features(&fixture("anchors"))
@@ -19,54 +17,45 @@ fn anchors(path: &str) -> Vec<(usize, String)> {
         .into_iter()
         .find(|feature| feature.path == Path::new(path))
         .expect("the fixture has the feature");
-    let feature = &parsed.feature;
-    let anchors = make_anchors(feature);
+    let anchored = anchor_feature(&parsed);
     let mut blocks = Vec::new();
     let mut outlines = Vec::new();
-    if let Some(found) = &feature.background {
-        blocks.push(block(anchors.background(found), found.position.line));
+    if let Some(found) = &anchored.background {
+        blocks.push((found.block.position.line, found.anchor.clone()));
     }
-    add_scenarios(&anchors, &feature.scenarios, &mut blocks, &mut outlines);
-    for rule in &feature.rules {
-        blocks.push(block(anchors.rule(rule), rule.position.line));
+    add_scenarios(&anchored.scenarios, &mut blocks, &mut outlines);
+    for rule in &anchored.rules {
+        blocks.push((rule.rule.position.line, rule.anchor.clone()));
         if let Some(found) = &rule.background {
-            blocks.push(block(anchors.background(found), found.position.line));
+            blocks.push((found.block.position.line, found.anchor.clone()));
         }
-        add_scenarios(&anchors, &rule.scenarios, &mut blocks, &mut outlines);
+        add_scenarios(&rule.scenarios, &mut blocks, &mut outlines);
     }
-    blocks.sort();
     for outline in outlines {
-        blocks.extend(row_anchors(&anchors, outline));
+        blocks.extend(
+            outline
+                .rows
+                .iter()
+                .map(|anchor| (outline.scenario.position.line, anchor.clone())),
+        );
     }
     blocks
 }
 
-fn block(anchor: Option<&str>, line: usize) -> (usize, String) {
-    (line, anchor.expect("every block has an anchor").to_string())
-}
-
 fn add_scenarios<'a>(
-    anchors: &Anchors,
-    scenarios: &'a [Scenario],
+    scenarios: &'a [AnchoredScenario<'a>],
     blocks: &mut Vec<(usize, String)>,
-    outlines: &mut Vec<&'a Scenario>,
+    outlines: &mut Vec<&'a AnchoredScenario<'a>>,
 ) {
     for scenario in scenarios {
-        blocks.push(block(anchors.scenario(scenario), scenario.position.line));
+        blocks.push((scenario.scenario.position.line, scenario.anchor.clone()));
         for examples in &scenario.examples {
-            blocks.push(block(anchors.examples(examples), examples.position.line));
+            blocks.push((examples.block.position.line, examples.anchor.clone()));
         }
         if !scenario.examples.is_empty() {
             outlines.push(scenario);
         }
     }
-}
-
-fn row_anchors(anchors: &Anchors, outline: &Scenario) -> Vec<(usize, String)> {
-    (1..)
-        .map_while(|row| anchors.row(outline, row))
-        .map(|anchor| (outline.position.line, anchor.to_string()))
-        .collect()
 }
 
 fn expected(anchors: &[(usize, &str)]) -> Vec<(usize, String)> {

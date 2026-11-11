@@ -38,7 +38,7 @@ mod unnamed_blocks;
 mod version_order;
 mod versions_page;
 
-pub(crate) use anchor_rule::make_anchors;
+pub(crate) use anchor_rule::anchor_feature;
 pub(crate) use anchor_rule::{anchor_of, unique};
 pub(crate) use argument_parsing::parse_arguments;
 pub(crate) use breadcrumb_trail::breadcrumb;

@@ -2,7 +2,7 @@
 
 use crate::entities::StepKind;
 use crate::fixtures::{fixture, read_features};
-use crate::policies::{find_step_sentences, make_anchors};
+use crate::policies::{anchor_feature, find_step_sentences};
 
 /// A use of a sentence: its path, anchor, line and values.
 type Use = (String, String, usize, Vec<String>);
@@ -12,11 +12,8 @@ type Found = Vec<(StepKind, Vec<(String, Vec<Use>)>)>;
 
 fn found() -> Found {
     let features = read_features(&fixture("step-sentences"));
-    let anchors: Vec<_> = features
-        .iter()
-        .map(|parsed| make_anchors(&parsed.feature))
-        .collect();
-    find_step_sentences(features.iter().zip(&anchors))
+    let anchored: Vec<_> = features.iter().map(anchor_feature).collect();
+    find_step_sentences(&anchored)
         .groups
         .into_iter()
         .map(|group| {

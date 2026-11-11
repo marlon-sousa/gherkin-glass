@@ -2,27 +2,27 @@
 
 use std::collections::BTreeMap;
 
-use gherkin::{Scenario, Step, StepType};
+use gherkin::{Background, Scenario, Step, StepType};
 
 use crate::entities::{
-    Anchors, ParsedFeature, Sentence, SentenceGroup, SentenceUse, StepKind, StepSentences,
+    Anchored, AnchoredFeature, AnchoredScenario, Sentence, SentenceGroup, SentenceUse, StepKind,
+    StepSentences,
 };
 use crate::policies::heading;
 use crate::policies::sentence_slots::sentence_of;
 
-/// Each feature is paired with the anchors [`make_anchors`](crate::policies::make_anchors)
-/// made for it; a pair that does not match panics.
 pub(crate) fn find_step_sentences<'a>(
-    features: impl IntoIterator<Item = (&'a ParsedFeature, &'a Anchors)>,
+    features: impl IntoIterator<Item = &'a AnchoredFeature<'a>>,
 ) -> StepSentences {
     let mut features: Vec<_> = features.into_iter().collect();
-    features.sort_by(|(a, _), (b, _)| a.path.cmp(&b.path));
+    features.sort_by(|a, b| a.parsed.path.cmp(&b.parsed.path));
 
     // Keyed so that iterating sorts as rules 137 and 138 say: by kind, by the
     // text lower-cased, then by the text itself.
     let mut found: BTreeMap<(StepKind, String, String), Vec<SentenceUse>> = BTreeMap::new();
-    for (parsed, anchors) in features {
-        for (anchor, heading, step, columns) in steps_of(parsed, anchors) {
+    for anchored in features {
+        let parsed = anchored.parsed;
+        for (anchor, heading, step, columns) in steps_of(anchored) {
             let (text, values) = sentence_of(&step.value, &columns);
             found
                 .entry((kind_of(step.ty), text.to_lowercase(), text))
@@ -51,49 +51,54 @@ pub(crate) fn find_step_sentences<'a>(
     StepSentences { groups }
 }
 
-/// Every step of the feature in file order, with the anchor and the heading
-/// of its block, and the columns of its outline, if it is in one.
-#[expect(
-    clippy::expect_used,
-    reason = "make_anchors gives every block of the feature its anchor"
-)]
-fn steps_of<'a>(
-    parsed: &'a ParsedFeature,
-    anchors: &'a Anchors,
-) -> Vec<(&'a str, String, &'a Step, Vec<&'a str>)> {
-    let feature = &parsed.feature;
-    let mut steps = Vec::new();
-    let backgrounds = feature.background.iter().chain(
-        feature
-            .rules
-            .iter()
-            .filter_map(|rule| rule.background.as_ref()),
-    );
-    for background in backgrounds {
-        let anchor = anchors
-            .background(background)
-            .expect("the anchors are the feature's own");
-        let heading = heading(&background.keyword, &background.name);
-        for step in &background.steps {
-            steps.push((anchor, heading.clone(), step, Vec::new()));
-        }
-    }
-    let scenarios = feature
-        .scenarios
-        .iter()
-        .chain(feature.rules.iter().flat_map(|rule| &rule.scenarios));
-    for scenario in scenarios {
-        let anchor = anchors
-            .scenario(scenario)
-            .expect("the anchors are the feature's own");
-        let columns = columns_of(scenario);
-        let heading = heading(&scenario.keyword, &scenario.name);
-        for step in &scenario.steps {
-            steps.push((anchor, heading.clone(), step, columns.clone()));
-        }
-    }
+/// A step, with the anchor and the heading of its block, and the columns of its outline, if
+/// it is in one.
+type FoundStep<'a> = (&'a str, String, &'a Step, Vec<&'a str>);
+
+/// Every step of the feature in file order.
+fn steps_of<'a>(anchored: &'a AnchoredFeature<'a>) -> Vec<FoundStep<'a>> {
+    let mut steps: Vec<_> = anchored
+        .backgrounds()
+        .flat_map(background_steps)
+        .chain(anchored.all_scenarios().flat_map(scenario_steps))
+        .collect();
     steps.sort_by_key(|(_, _, step, _)| step.span.start);
     steps
+}
+
+fn background_steps<'a>(background: &'a Anchored<'a, Background>) -> Vec<FoundStep<'a>> {
+    let heading = heading(&background.block.keyword, &background.block.name);
+    background
+        .block
+        .steps
+        .iter()
+        .map(|step| {
+            (
+                background.anchor.as_str(),
+                heading.clone(),
+                step,
+                Vec::new(),
+            )
+        })
+        .collect()
+}
+
+fn scenario_steps<'a>(anchored: &'a AnchoredScenario<'a>) -> Vec<FoundStep<'a>> {
+    let scenario = anchored.scenario;
+    let columns = columns_of(scenario);
+    let heading = heading(&scenario.keyword, &scenario.name);
+    scenario
+        .steps
+        .iter()
+        .map(|step| {
+            (
+                anchored.anchor.as_str(),
+                heading.clone(),
+                step,
+                columns.clone(),
+            )
+        })
+        .collect()
 }
 
 /// The names in the header rows of an outline's examples; none for a plain scenario.

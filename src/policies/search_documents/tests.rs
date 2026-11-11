@@ -6,7 +6,7 @@ use std::path::PathBuf;
 use serde_json::Value;
 
 use crate::fixtures::{self, read_features};
-use crate::policies::{make_anchors, search_documents, search_json};
+use crate::policies::{anchor_feature, search_documents, search_json};
 
 fn fixture() -> PathBuf {
     fixtures::fixture("search")
@@ -14,11 +14,8 @@ fn fixture() -> PathBuf {
 
 fn documents() -> String {
     let features = read_features(&fixture().join("features"));
-    let anchors: Vec<_> = features
-        .iter()
-        .map(|parsed| make_anchors(&parsed.feature))
-        .collect();
-    search_json(&search_documents(features.iter().zip(&anchors)))
+    let anchored: Vec<_> = features.iter().map(anchor_feature).collect();
+    search_json(&search_documents(&anchored))
 }
 
 #[test]
