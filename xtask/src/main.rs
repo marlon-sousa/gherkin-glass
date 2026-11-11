@@ -1,4 +1,7 @@
-//! Composition root: `cargo xtask build` and `cargo xtask check`, the commands contributors and CI run.
+//! Composition root: `cargo xtask build`, `cargo xtask check` and `cargo xtask comment-ratio`, the commands contributors and CI run.
+
+mod checks;
+mod comment_ratio;
 
 use std::env::consts::EXE_SUFFIX;
 use std::env::{args, var_os};
@@ -6,14 +9,18 @@ use std::fs::{read, read_to_string};
 use std::path::{Path, PathBuf};
 use std::process::{Command, ExitCode};
 
+use checks::{CARGO_CHECKS, MINIMUM_RUST_TEST};
+use comment_ratio::Lines;
+
 const USAGE: &str = "\
 Usage: cargo xtask <command>
 
 Commands:
   build: builds the pages' script from script/ into assets/gherkin-glass.js, writes the fixtures' expected sites again, then builds the release binary.
-  check: runs every check a pull request runs: formatting, lints, the tests on both Rust versions, the script check and the browser check.
+  check: runs every check a pull request runs: formatting, lints, the tests on both Rust versions, the documentation, the dependencies with cargo deny, the package, the script check and the browser check.
   check-script: type-checks and tests the script, and checks that assets/gherkin-glass.js is what it compiles to.
-  check-browser: builds ghg, installs the browser, and checks every fixture's site in it: accessibility, the keyboard, and the reload of ghg serve --watch.";
+  check-browser: builds ghg, installs the browser, and checks every fixture's site in it: accessibility, the keyboard, and the reload of ghg serve --watch.
+  comment-ratio [path ...]: counts the comment lines and the code lines of the given Rust and TypeScript files, or of every one git tracks, with the total last.";
 
 /// The browser checks, run with Node from the repository's root.
 const BROWSER_CHECKS: [&str; 2] = [
@@ -31,6 +38,7 @@ fn main() -> ExitCode {
         Some("check") => check(),
         Some("check-script") => check_script(),
         Some("check-browser") => check_browser(),
+        Some("comment-ratio") => comment_ratio(args().skip(2).collect()),
         Some("--help" | "-h") => {
             println!("{USAGE}");
             Ok(())
@@ -81,28 +89,71 @@ fn build() -> Result<(), String> {
 }
 
 fn check() -> Result<(), String> {
-    cargo(&["fmt", "--all", "--check"])?;
-    cargo(&[
-        "clippy",
-        "--workspace",
-        "--all-targets",
-        "--locked",
-        "--",
-        "-D",
-        "warnings",
-    ])?;
-    cargo(&["test", "--workspace", "--locked"])?;
+    CARGO_CHECKS
+        .iter()
+        .try_for_each(|arguments| run(cargo_command(arguments).envs(rustdoc_flags(arguments))))?;
     let msrv = minimum_rust()?;
     run(Command::new("rustup").args(["toolchain", "install", &msrv, "--profile", "minimal"]))?;
-    cargo(&[
-        &format!("+{msrv}"),
-        "test",
-        "--locked",
-        "--package",
-        "gherkin-glass",
-    ])?;
+    let version = format!("+{msrv}");
+    cargo(&[[version.as_str()].as_slice(), &MINIMUM_RUST_TEST].concat())?;
     check_script()?;
     browser_checks()
+}
+
+/// The doc check's flags, which make a broken link in a doc comment fail, as on CI. The other
+/// checks get none, so that a doctest is not held to them.
+fn rustdoc_flags(arguments: &[&str]) -> Option<(&'static str, &'static str)> {
+    (arguments.first() == Some(&"doc")).then_some(("RUSTDOCFLAGS", "-D warnings"))
+}
+
+/// Prints the comment lines and the code lines of each of `paths`, or of every Rust and
+/// TypeScript file git tracks outside `node_modules`, then their total.
+fn comment_ratio(paths: Vec<String>) -> Result<(), String> {
+    let paths = if paths.is_empty() {
+        tracked_sources()?
+    } else {
+        paths
+    };
+    let counts = paths
+        .iter()
+        .map(|path| count(path))
+        .collect::<Result<Vec<_>, _>>()?;
+    println!("{}", Lines::total(&counts).line("TOTAL"));
+    Ok(())
+}
+
+/// Counts the lines of the source at `path`, from the repository's root, and prints them.
+fn count(path: &str) -> Result<Lines, String> {
+    let source = read_to_string(root().join(path)).map_err(|error| format!("{path}: {error}"))?;
+    let lines = Lines::of(&source);
+    println!("{}", lines.line(path));
+    Ok(lines)
+}
+
+/// The Rust and TypeScript files git tracks, outside `node_modules`.
+fn tracked_sources() -> Result<Vec<String>, String> {
+    let listed = Command::new("git")
+        .arg("ls-files")
+        .current_dir(root())
+        .output()
+        .map_err(|error| format!("git ls-files could not start: {error}"))?;
+    if !listed.status.success() {
+        return Err(format!(
+            "git ls-files failed: {}",
+            String::from_utf8_lossy(&listed.stderr)
+        ));
+    }
+    Ok(String::from_utf8_lossy(&listed.stdout)
+        .lines()
+        .filter(|path| is_source(path))
+        .map(str::to_string)
+        .collect())
+}
+
+/// Whether `path` is Rust or TypeScript of the repository's own, not a Node package's.
+fn is_source(path: &str) -> bool {
+    let rust_or_typescript = path.ends_with(".rs") || path.ends_with(".ts");
+    rust_or_typescript && !path.contains("node_modules")
 }
 
 fn check_script() -> Result<(), String> {
@@ -168,7 +219,14 @@ fn npm(arguments: &[&str]) -> Result<(), String> {
 }
 
 fn cargo(arguments: &[&str]) -> Result<(), String> {
-    run(Command::new("cargo").args(arguments).current_dir(root()))
+    run(&mut cargo_command(arguments))
+}
+
+/// Cargo with `arguments`, run from the repository's root.
+fn cargo_command(arguments: &[&str]) -> Command {
+    let mut command = Command::new("cargo");
+    command.args(arguments).current_dir(root());
+    command
 }
 
 fn run(command: &mut Command) -> Result<(), String> {

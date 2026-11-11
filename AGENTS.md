@@ -47,13 +47,18 @@ The report lists findings, each marked blocking or not, with its `file:line` and
 
 The toolchain is pinned in `rust-toolchain.toml`. Running `rustup toolchain install` in the repository installs it with its components; this needs rustup 1.28 or later. Before pushing, run the checks a pull request runs, from the repository's root:
 
-- `cargo fmt --check`, the formatting;
+- `cargo fmt --all --check`, the formatting;
 - `cargo clippy --workspace --all-targets --locked -- -D warnings`, the lints, with every warning an error;
-- `cargo test --locked`, the tests;
+- `cargo test --workspace --locked`, the tests;
+- `RUSTDOCFLAGS="-D warnings" cargo doc --workspace --no-deps --document-private-items --locked`, the documentation, where a broken link fails;
+- `cargo deny check`, the dependencies' licences, advisories and sources, as `deny.toml` allows them, with cargo-deny 0.20.2, which installs with `cargo install cargo-deny --version 0.20.2 --locked`;
+- `cargo publish --dry-run --locked --allow-dirty`, the crate built from its package alone, as crates.io would receive it, with `--allow-dirty` so that it runs before committing too;
 - the tests again with the minimum supported Rust version, the one `rust-version` names in `Cargo.toml`, 1.88 today: first `rustup toolchain install 1.88 --profile minimal`, then `cargo +1.88 test --locked`.
 
 `cargo run` builds the command and runs it.
 
-The pages' script is TypeScript, in `script/`, compiled into `assets/gherkin-glass.js`, which is committed, so plain `cargo build` and `cargo test` need no Node. Changing the script needs Node, at the version `script/.node-version` pins: `cargo xtask build` installs the Node packages from the lockfile, type-checks, tests and compiles the script, writes the fixtures' expected sites again with it, as tests/fixtures/README.md describes, and builds the release binary; commit the compiled script and the expected sites with the sources. `cargo xtask check-browser` installs Playwright's headless Chromium and runs the browser check, `tests/browser/`: every fixture's site served and checked with axe-core in both colour schemes and with the keyboard, and the reload of `ghg serve --watch`. `cargo xtask check` runs every check above, the script check and the browser check, as CI does.
+The pages' script is TypeScript, in `script/`, compiled into `assets/gherkin-glass.js`, which is committed, so plain `cargo build` and `cargo test` need no Node. Changing the script needs Node, at the version `script/.node-version` pins: `cargo xtask build` installs the Node packages from the lockfile, type-checks, tests and compiles the script, writes the fixtures' expected sites again with it, as tests/fixtures/README.md describes, and builds the release binary; commit the compiled script and the expected sites with the sources. `cargo xtask check-browser` installs Playwright's headless Chromium and runs the browser check, `tests/browser/`: every fixture's site served and checked with axe-core in both colour schemes and with the keyboard, and the reload of `ghg serve --watch`. `cargo xtask check` runs every check above, the script check and the browser check, as CI does, and a test of xtask keeps its list the same as `.github/workflows/rust.yml`'s.
+
+`cargo xtask comment-ratio` counts the comment lines for each line of code in the Rust and TypeScript files given, or in every one git tracks. A pull request's description carries the total line it prints for the files the change touches, so that a reviewer sees comments growing.
 
 The commit messages can be checked before pushing with the `commit-messages` action of [itinera-dev/actions](https://github.com/itinera-dev/actions), which needs Python 3.11 or later. With a clone of it in the shell variable `ACTIONS`, run `PYTHONPATH="$ACTIONS" python3 "$ACTIONS/commit-messages/main.py" origin/main..HEAD` in this repository.

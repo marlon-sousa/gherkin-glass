@@ -11,8 +11,8 @@ Ports and adapters. The pure part of gherkin-glass, which decides what the site 
 ## The repository
 
 - **One crate**, `gherkin-glass`: a library, `src/lib.rs`, and the binaries built on it: `ghg`, from `src/main.rs`, and the cargo plugin `cargo-ghg`, from `src/cargo_ghg.rs`, which runs the same code as `cargo ghg` ([#18](https://github.com/marlon-sousa/gherkin-glass/issues/18)). The library's composition root, `src/composition_root.rs`, wires the real adapters in, and each binary only hands its entry point the process's arguments. Nothing in the crate is heavy enough to earn a crate of its own.
-- **`clippy.toml`**: what clippy allows in tests.
-- **`xtask/`**, the crate behind `cargo xtask build` and `cargo xtask check` ([#4](https://github.com/marlon-sousa/gherkin-glass/issues/4)). It orchestrates the build and is never shipped.
+- **`clippy.toml`** and **`deny.toml`**: what clippy allows in tests, and what `cargo deny` allows of the dependencies.
+- **`xtask/`**, the crate behind `cargo xtask build`, `cargo xtask check` and `cargo xtask comment-ratio` ([#4](https://github.com/marlon-sousa/gherkin-glass/issues/4)). It orchestrates the build and is never shipped.
 - **`templates/`**, the askama templates, at the place askama looks by default. They are the views: everything a page says is placed here, except the folder tree, which the script builds from shared data ([#7](https://github.com/marlon-sousa/gherkin-glass/issues/7)).
 - **`script/`**, the TypeScript of the pages' behaviour, an npm package with its own `package.json` and lockfile. Its compiled output is committed, so building the crate needs no Node ([#4](https://github.com/marlon-sousa/gherkin-glass/issues/4)).
 - **`assets/`**, the files the binary embeds and writes into every site: the stylesheet, and the script compiled from `script/`.

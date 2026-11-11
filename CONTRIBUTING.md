@@ -71,10 +71,16 @@ Each entry is one line. [git-cliff](https://git-cliff.org/) gathers the entries 
 
 Every pull request runs:
 
-- the issue check and the commit message check, from [itinera-dev/actions](https://github.com/itinera-dev/actions);
-- `cargo fmt --check`, `cargo clippy` with warnings as errors, and `cargo test`;
+- the issue check, the check that no closing keyword names another repository's issue, and the commit message check, from [itinera-dev/actions](https://github.com/itinera-dev/actions);
+- a check that fails while the description has an unticked checkbox, so that a manual check, such as the one with a screen reader, is finished before merging;
+- the formatting, the lints with warnings as errors, and the tests, on the pinned toolchain, and the tests again on the minimum supported Rust version;
+- the documentation with warnings as errors, the dependencies with `cargo deny`, and the package with a publish dry run;
 - the script check, `cargo xtask check-script`: the pages' script, in TypeScript under `script/`, is type-checked, tested and compiled again, and the check fails if the compiled script differs from the committed `assets/gherkin-glass.js`;
 - the browser check, `cargo xtask check-browser`: each fixture is built into a site and served with `ghg serve --no-build`, and every page is opened in a browser, checked with axe-core in the light and the dark colour scheme, and driven with the keyboard alone, as [docs/BEHAVIOUR.md](docs/BEHAVIOUR.md), "Accessibility", describes.
+
+AGENTS.md, "Building and testing", gives the command of each, and `cargo xtask check` runs them all.
+
+Every action a workflow uses is pinned to a commit, with its version in a comment beside it. Each week, `.github/workflows/weekly.yml` runs the tests on Rust beta, so that a change in the next Rust that breaks gherkin-glass is known before it is released.
 
 ## Releases
 

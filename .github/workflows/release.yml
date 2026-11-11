@@ -4,8 +4,8 @@ name: Release
 # version. The gate and the checks of rust.yml run beside the release tools'
 # own tests, the five builds and the archives; crates.io waits for all of
 # them, and the GitHub release for crates.io. On a pull request that changes
-# how releases are made, the tests, builds and archives run, the crate is
-# packed, and nothing is published.
+# how releases are made, the tests, builds and archives run, and nothing is
+# published. rust.yml packs the crate on every pull request.
 
 on:
   push:
@@ -22,7 +22,8 @@ on:
       - rust-toolchain.toml
       - build.rs
       - .cargo/**
-      - src/bin/**
+      - src/main.rs
+      - src/cargo_ghg.rs
 
 permissions:
   contents: read
@@ -44,7 +45,7 @@ jobs:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
       - run: rustup toolchain install
@@ -59,7 +60,7 @@ jobs:
     name: release notes and gate, against their fixtures
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: rustup toolchain install
       - run: pip install git-cliff==2.14.2
       - run: .github/release/test-notes.sh
@@ -90,7 +91,7 @@ jobs:
       run:
         shell: bash
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: rustup toolchain install
       - run: rustup target add ${{ matrix.target }}
       - if: runner.os == 'Windows'
@@ -111,7 +112,7 @@ jobs:
           done
       - run: .github/release/pack.sh "$TAG" ${{ matrix.target }} dist
       - run: .github/release/check-archive.sh dist/ghg-"$TAG"-${{ matrix.target }}.* "$TAG" ${{ matrix.target }}
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: archive-${{ matrix.target }}
           path: dist/
@@ -122,9 +123,9 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: rustup toolchain install
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           pattern: archive-*
           path: dist/
@@ -140,20 +141,11 @@ jobs:
           cat SHA256SUMS
           sha256sum --check --strict SHA256SUMS
           test "$(wc -l < SHA256SUMS)" -eq "$(printf '%s\n' ghg-* | wc -l)"
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: release-assets
           path: dist/
           if-no-files-found: error
-
-  package:
-    name: crate packages
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - run: rustup toolchain install
-      - run: cargo publish --dry-run --locked
 
   publish:
     name: crates.io
@@ -165,11 +157,11 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - run: rustup toolchain install
-      - uses: itinera-dev/actions/publish-crates@v1
+      - uses: itinera-dev/actions/publish-crates@d49d88f6b15f4d4c344503e9e3304a449ee3ebe8 # v1.11.0
 
   release:
     name: GitHub release
@@ -179,12 +171,12 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/download-artifact@v8
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: release-assets
           path: dist/
-      - uses: itinera-dev/actions/create-release@v1
+      - uses: itinera-dev/actions/create-release@d49d88f6b15f4d4c344503e9e3304a449ee3ebe8 # v1.11.0
         with:
           assets: dist/
 
@@ -198,7 +190,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
       - name: Move the major version's tag to the release
