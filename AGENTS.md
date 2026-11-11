@@ -19,6 +19,7 @@ The manual for anyone, human or agent, changing gherkin-glass. [CONTRIBUTING.md]
 5. **Small pull requests.** One thing each, naming its issue with `Closes #N` or `Refs #N`, with commit messages as CONTRIBUTING.md describes. Work too large for one is a stack, declared to GitHub through the REST API as CONTRIBUTING.md, "Stacked pull requests", describes, without installing `gh stack`.
 6. **Write for a screen reader.** Issues, pull requests, comments and documents use headings, lists, prose and simple tables, never ASCII art.
 7. **Mark agent comments.** A comment an agent writes on GitHub says it is an agent's.
+8. **Check a library before ruling it in or out.** Before saying that a crate can or cannot do something, read its source or its documentation at the version we would use. Look for its override and extension points, not only its defaults. The issue or pull request says what was checked: the file and line, or the documentation page.
 
 ## Reviewing a change
 
@@ -35,7 +36,8 @@ Every pull request is reviewed by an independent reviewer before it is opened, o
 9. Every service, every controller and every adapter, against docs/ARCHITECTURE.md, "Dependencies between parts", and every type of a wrapped crate that reaches a port, an entity, a policy or a service.
 10. Every statement of docs/ARCHITECTURE.md the change makes untrue, which the change updates itself.
 11. The commit messages and the description, against CONTRIBUTING.md and rule 5 above. For a layer of a stack, its branch sits on the current tip of the layer below and holds no merge of a lower branch, as CONTRIBUTING.md, "Stacked pull requests", rule 5, says.
-12. The checks under "Building and testing", run at the reviewed revision, without changing the checkout the author works in.
+12. Every claim that a library can or cannot do something, against rule 8 above: it names the source it was checked against.
+13. The checks under "Building and testing", run at the reviewed revision, without changing the checkout the author works in.
 
 A pull request that changes what a page says or how it behaves carries a manual check with a screen reader in its description, as checkboxes, one per check, with the findings written on the unticked items, such as the screen reader's version and what was expected and heard.
 
