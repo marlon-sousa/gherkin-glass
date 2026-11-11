@@ -26,7 +26,7 @@ pub(crate) fn build_folder_pages(pages: &[Page], options: &PageOptions) -> Vec<F
     let mut folders: BTreeSet<Vec<String>> = BTreeSet::from([Vec::new()]);
     for (parts, _, _) in &located {
         for depth in 1..=parts.len() {
-            folders.insert(parts[..depth].to_vec());
+            folders.insert(parts.get(..depth).unwrap_or_default().to_vec());
         }
     }
     folders

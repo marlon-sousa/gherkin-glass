@@ -1,5 +1,11 @@
 //! The project's own site, checked against `project-site/`.
 
+#![expect(
+    clippy::expect_used,
+    clippy::unwrap_used,
+    reason = "a test file's helpers are test code, which clippy.toml lets panic"
+)]
+
 use std::collections::BTreeSet;
 use std::fs::{create_dir_all, read_dir, read_to_string, remove_dir_all, write};
 use std::path::{Path, PathBuf};

@@ -400,16 +400,18 @@ fn worded_parts(words: &str, texts: &[Vec<HeadingPart>]) -> Vec<HeadingPart> {
     debug_assert!(texts.len() <= TEXT_MARKS.len());
     let mut parts = Vec::new();
     let mut rest = words;
-    while let Some((at, index)) = TEXT_MARKS
+    while let Some((before, text, after)) = TEXT_MARKS
         .iter()
-        .take(texts.len())
-        .enumerate()
-        .filter_map(|(index, mark)| rest.find(mark).map(|at| (at, index)))
-        .min()
+        .zip(texts)
+        .filter_map(|(mark, text)| {
+            rest.split_once(mark)
+                .map(|(before, after)| (before, text, after))
+        })
+        .min_by_key(|(before, _, _)| before.len())
     {
-        parts.push(plain(&rest[..at]));
-        parts.extend(texts[index].iter().cloned());
-        rest = &rest[at + TEXT_MARKS[index].len()..];
+        parts.push(plain(before));
+        parts.extend(text.iter().cloned());
+        rest = after;
     }
     parts.push(plain(rest));
     parts.retain(|part| !part.text.is_empty());

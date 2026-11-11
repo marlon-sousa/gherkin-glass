@@ -53,6 +53,10 @@ pub(crate) fn find_step_sentences<'a>(
 
 /// Every step of the feature in file order, with the anchor and the heading
 /// of its block, and the columns of its outline, if it is in one.
+#[expect(
+    clippy::expect_used,
+    reason = "make_anchors gives every block of the feature its anchor"
+)]
 fn steps_of<'a>(
     parsed: &'a ParsedFeature,
     anchors: &'a Anchors,

@@ -9,6 +9,10 @@ use crate::entities::{HighlightedStep, StepPart};
 
 /// `scenario` is the scenario or outline that holds `step`, or `None` for a
 /// background's step; only an outline's steps have placeholders.
+#[expect(
+    clippy::indexing_slicing,
+    reason = "every position is inside `chars`, which the scan never passes"
+)]
 pub(crate) fn highlight_step(step: &Step, scenario: Option<&Scenario>) -> HighlightedStep {
     let columns: HashSet<&str> = scenario
         .into_iter()
@@ -66,7 +70,9 @@ impl Parts {
 
 /// Rule 111: the end, past its closing quote, of a quoted parameter opening at `at`.
 fn parameter_end(chars: &[char], at: usize) -> Option<usize> {
-    let quote = |index: usize| chars[index] == '"' && (index == 0 || chars[index - 1] != '\\');
+    let quote = |index: usize| {
+        chars.get(index) == Some(&'"') && (index == 0 || chars.get(index - 1) != Some(&'\\'))
+    };
     if !quote(at) {
         return None;
     }
@@ -77,15 +83,21 @@ fn parameter_end(chars: &[char], at: usize) -> Option<usize> {
 
 /// Rule 112: the end, past its `>`, of a placeholder naming one of `columns`, opening at `at`.
 fn placeholder_end(chars: &[char], at: usize, columns: &HashSet<&str>) -> Option<usize> {
-    if chars[at] != '<' {
+    if chars.get(at) != Some(&'<') {
         return None;
     }
-    let close = at + 1 + chars[at + 1..].iter().position(|&c| c == '<' || c == '>')?;
-    let name: String = chars[at + 1..close].iter().collect();
-    (chars[close] == '>' && !name.is_empty() && columns.contains(name.as_str()))
-        .then_some(close + 1)
+    let rest = chars.get(at + 1..)?;
+    let (name, after) = rest.split_at(rest.iter().position(|&c| c == '<' || c == '>')?);
+    let end = at + name.len() + 2;
+    let name: String = name.iter().collect();
+    (after.first() == Some(&'>') && !name.is_empty() && columns.contains(name.as_str()))
+        .then_some(end)
 }
 
+#[expect(
+    clippy::indexing_slicing,
+    reason = "every position is inside `chars`, which the scan never passes"
+)]
 fn placeholders_in(chars: &[char], columns: &HashSet<&str>) -> Vec<StepPart> {
     let mut parts = Parts::default();
     let mut at = 0;
@@ -103,11 +115,11 @@ fn placeholders_in(chars: &[char], columns: &HashSet<&str>) -> Vec<StepPart> {
 
 /// Rule 113: the end of a number starting at `at`, which stands apart from any word.
 fn number_end(chars: &[char], at: usize) -> Option<usize> {
-    if at > 0 && in_word(chars[at - 1]) {
+    if at > 0 && chars.get(at - 1).copied().is_some_and(in_word) {
         return None;
     }
     let mut index = at;
-    if chars[index] == '-' {
+    if chars.get(index) == Some(&'-') {
         index += 1;
     }
     if !chars.get(index).is_some_and(char::is_ascii_digit) {
@@ -134,6 +146,10 @@ fn number_end(chars: &[char], at: usize) -> Option<usize> {
 /// The end of the text from `at` that is not highlighted: a whole word, with
 /// any digits, points and commas inside it, so that no number is found
 /// inside a word, or one character.
+#[expect(
+    clippy::indexing_slicing,
+    reason = "every position is inside `chars`, which the scan never passes"
+)]
 fn word_end(chars: &[char], at: usize) -> usize {
     if !in_word(chars[at]) {
         return at + 1;

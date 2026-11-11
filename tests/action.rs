@@ -4,6 +4,12 @@
 //! and the tests make the Windows archive with zip, which every Linux and
 //! macOS machine has or can install; the tests run there only. On macOS they
 //! run the system's own bash, /bin/bash, the oldest the action meets.
+
+#![expect(
+    clippy::expect_used,
+    clippy::unwrap_used,
+    reason = "a test file's helpers are test code, which clippy.toml lets panic"
+)]
 #![cfg(unix)]
 
 use std::collections::HashMap;

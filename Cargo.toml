@@ -22,6 +22,23 @@ include = ["/src/", "/templates/", "/assets/", "/messages/", "/i18n.toml", "/REA
 # The crate behind cargo xtask, never shipped.
 members = ["xtask"]
 
+# No unsafe code, no pub that nothing outside its module can reach, and no
+# panic outside tests; clippy.toml allows panics in tests.
+[workspace.lints.rust]
+unsafe_code = "forbid"
+unreachable_pub = "warn"
+
+[workspace.lints.clippy]
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"
+indexing_slicing = "deny"
+todo = "deny"
+unimplemented = "deny"
+
+[lints]
+workspace = true
+
 # Two binaries running the same code, as docs/BEHAVIOUR.md, "Installing
 # through cargo", says: the command, and the cargo plugin run as `cargo ghg`.
 [[bin]]

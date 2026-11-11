@@ -4,6 +4,11 @@
 //! `cargo run -- build --config tests/fixtures/tags/ghg.toml` writes the
 //! expected site again after a change.
 
+#![expect(
+    clippy::expect_used,
+    reason = "a test file's helpers are test code, which clippy.toml lets panic"
+)]
+
 use std::collections::BTreeMap;
 use std::fs::{read, read_dir, remove_dir_all};
 use std::path::{Path, PathBuf};

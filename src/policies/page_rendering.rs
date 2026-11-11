@@ -146,6 +146,10 @@ fn render_blocks(blocks: &[Block]) -> String {
 }
 
 /// The templates only write strings, which cannot fail.
+#[expect(
+    clippy::expect_used,
+    reason = "a template that writes only strings renders"
+)]
 fn render(template: &impl Template) -> String {
     template
         .render()

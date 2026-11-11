@@ -218,6 +218,10 @@ fn find(version: &Version, address: &str) -> Found {
     }
 }
 
+#[expect(
+    clippy::expect_used,
+    reason = "every header the server sends is ASCII without line breaks"
+)]
 fn header(name: &str, value: &str) -> Header {
     Header::from_bytes(name.as_bytes(), value.as_bytes())
         .expect("a header's name and value are ASCII without line breaks")

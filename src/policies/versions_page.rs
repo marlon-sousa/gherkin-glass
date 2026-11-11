@@ -48,6 +48,10 @@ impl Display for Entry {
 }
 
 /// The page, in the themes of `options`, those of the build that writes it.
+#[expect(
+    clippy::expect_used,
+    reason = "a template that writes only strings renders"
+)]
 pub(crate) fn render_versions_page(list: &VersionList, options: &PageOptions) -> String {
     let entries = |names: &[VersionName], words: fn(&VersionName) -> String| {
         names

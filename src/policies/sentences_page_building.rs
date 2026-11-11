@@ -117,17 +117,20 @@ fn kind_heading(kind: StepKind) -> String {
 fn pieces(words: &str) -> Vec<Piece> {
     let mut pieces = Vec::new();
     let mut rest = words;
-    while let Some((at, number)) = MARKS
+    while let Some((before, number, after)) = MARKS
         .iter()
         .enumerate()
-        .filter_map(|(number, mark)| rest.find(mark).map(|at| (at, number)))
-        .min()
+        .filter_map(|(number, mark)| {
+            rest.split_once(mark)
+                .map(|(before, after)| (before, number, after))
+        })
+        .min_by_key(|(before, number, _)| (before.len(), *number))
     {
-        if at > 0 {
-            pieces.push(Piece::Words(rest[..at].to_string()));
+        if !before.is_empty() {
+            pieces.push(Piece::Words(before.to_string()));
         }
         pieces.push(Piece::Placeholder(number));
-        rest = &rest[at + MARKS[number].len()..];
+        rest = after;
     }
     if !rest.is_empty() {
         pieces.push(Piece::Words(rest.to_string()));

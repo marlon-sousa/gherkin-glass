@@ -88,14 +88,14 @@ fn decode(part: &str) -> Option<String> {
     let bytes = part.as_bytes();
     let mut decoded = Vec::with_capacity(bytes.len());
     let mut index = 0;
-    while index < bytes.len() {
-        if bytes[index] == b'%' {
+    while let Some(&byte) = bytes.get(index) {
+        if byte == b'%' {
             let hex = bytes.get(index + 1..index + 3)?;
             let hex = std::str::from_utf8(hex).ok()?;
             decoded.push(u8::from_str_radix(hex, 16).ok()?);
             index += 3;
         } else {
-            decoded.push(bytes[index]);
+            decoded.push(byte);
             index += 1;
         }
     }
