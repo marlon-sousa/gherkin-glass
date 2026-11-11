@@ -40,7 +40,7 @@ pub fn run(arguments: impl IntoIterator<Item = OsString>) -> ExitCode {
     // A closed pipe or a full disk leaves nothing more to say, so the status still stands.
     let _ = stdout().write_all(reply.stdout.as_bytes());
     let _ = stderr().write_all(reply.stderr.as_bytes());
-    ExitCode::from(reply.status)
+    ExitCode::from(reply.status as u8)
 }
 
 /// Runs ghg as cargo runs the plugin, `cargo ghg`, with `arguments`, those after the plugin's own name.
