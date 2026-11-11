@@ -17,6 +17,7 @@ mod folder_state;
 mod heading_level;
 mod highlighted_step;
 mod invocation;
+mod link_address;
 mod listen_failure;
 mod marker;
 mod output_problem;
@@ -63,6 +64,7 @@ pub(crate) use highlighted_step::{HighlightedStep, StepPart};
 pub(crate) use invocation::{
     ArgumentProblem, BuildOption, BuildOptions, Invocation, ServeMode, ServeOptions,
 };
+pub(crate) use link_address::{LinkAddress, percent_encoded};
 pub(crate) use listen_failure::ListenFailure;
 pub(crate) use marker::Marker;
 pub(crate) use output_problem::{OutputProblem, OutputProblemKind};

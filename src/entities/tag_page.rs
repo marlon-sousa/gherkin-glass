@@ -1,9 +1,9 @@
 //! Entity: the index of every tag and each tag's page, as their templates show them.
 
-use crate::entities::{Breadcrumb, OutsideLink, PageFrame};
+use crate::entities::{Breadcrumb, LinkAddress, OutsideLink, PageFrame};
 
-/// Every `String` is text, escaped when it is rendered, and every address
-/// is relative to the page that holds it and percent-encoded.
+/// Every `String` is text, escaped when it is rendered, and every link is relative to the
+/// page that holds it.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct TagIndex {
     pub(crate) frame: PageFrame,
@@ -17,7 +17,7 @@ pub(crate) struct TagIndex {
 /// The tag's link, with the words before and after it.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct TagIndexEntry {
-    pub(crate) address: String,
+    pub(crate) address: LinkAddress,
     pub(crate) tag: String,
     pub(crate) before: String,
     pub(crate) after: String,
@@ -42,7 +42,7 @@ pub(crate) struct TagPage {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct TagFeature {
-    pub(crate) address: String,
+    pub(crate) address: LinkAddress,
     /// The feature page's title.
     pub(crate) heading: String,
     /// The feature page's `lang`, when it is not the tag page's.
@@ -53,7 +53,7 @@ pub(crate) struct TagFeature {
 /// The scenario's link, with the words before and after it.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct TagScenario {
-    pub(crate) address: String,
+    pub(crate) address: LinkAddress,
     pub(crate) heading: String,
     pub(crate) before: String,
     pub(crate) after: String,

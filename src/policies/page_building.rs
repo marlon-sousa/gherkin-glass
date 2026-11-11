@@ -7,12 +7,13 @@ use i18n_embed_fl::fl;
 
 use crate::entities::{
     Anchored, AnchoredFeature, AnchoredRule, AnchoredScenario, BackgroundsOption, Block, BlockKind,
-    ContentsEntry, DocStringView, FromBackground, HeadingLevel, HeadingPart, Page, PageOptions,
-    PageWords, Paragraph, ParsedFeature, SourceLink, StepView, TableView, TagNames, TagView,
+    ContentsEntry, DocStringView, FromBackground, HeadingLevel, HeadingPart, LinkAddress, Page,
+    PageOptions, PageWords, Paragraph, ParsedFeature, SourceLink, StepView, TableView, TagNames,
+    TagView, percent_encoded,
 };
 use crate::policies::{
     CATALOGUE, ExampleRow, breadcrumb, example_rows, highlight_step, outside_link, page_address,
-    page_frame, page_language, percent_encoded, root_from, site_title,
+    page_frame, page_language, root_from, site_title,
 };
 
 /// Stands for the file's path in the words of the source link, to find where
@@ -330,7 +331,7 @@ impl Builder<'_> {
             .map(|tag| {
                 let text = format!("@{tag}");
                 TagView {
-                    address: percent_encoded(&format!("{}{}", self.root, self.tags.address(&text))),
+                    address: LinkAddress::to(&format!("{}{}", self.root, self.tags.address(&text))),
                     outside: outside_link(&text, &self.options.tag_links),
                     text,
                 }
@@ -705,7 +706,7 @@ Feature: Refunds
             page.tags,
             [TagView {
                 text: "@billing".into(),
-                address: "../tags/billing.html".into(),
+                address: LinkAddress::to("../tags/billing.html"),
                 outside: None,
             }]
         );
@@ -894,7 +895,7 @@ Feature: Refunds
         assert_eq!(views.len(), 1);
         let examples = &rule.blocks[1].blocks[0];
         let tag = &examples.tags[0];
-        assert_eq!(tag.address, "../tags/in-rule.html");
+        assert_eq!(tag.address.to_string(), "../tags/in-rule.html");
         assert_eq!(
             tag.outside,
             Some(OutsideLink {

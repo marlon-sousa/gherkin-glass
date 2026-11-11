@@ -2,11 +2,13 @@
 
 use serde::Serialize;
 
+use crate::entities::LinkAddress;
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub(crate) struct TreeItem {
     pub(crate) text: String,
-    /// Relative to the site's root, percent-encoded as a link's, with the block's anchor after `#` for a rule or scenario.
-    pub(crate) address: String,
+    /// Relative to the site's root, with the block's anchor for a rule or scenario.
+    pub(crate) address: LinkAddress,
     /// Only a feature's: the `lang` of its page.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) lang: Option<String>,

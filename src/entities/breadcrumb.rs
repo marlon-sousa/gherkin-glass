@@ -1,5 +1,7 @@
 //! Entity: the trail of links from the home page to a page, through the folders above it.
 
+use crate::entities::LinkAddress;
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct Breadcrumb {
     /// The landmark's name.
@@ -11,6 +13,6 @@ pub(crate) struct Breadcrumb {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct Crumb {
     /// Relative to the page the breadcrumb is on.
-    pub(crate) address: String,
+    pub(crate) address: LinkAddress,
     pub(crate) text: String,
 }

@@ -2,8 +2,8 @@
 
 use i18n_embed_fl::fl;
 
-use crate::entities::{Breadcrumb, Crumb};
-use crate::policies::{CATALOGUE, FOLDER_PAGE, percent_encoded};
+use crate::entities::{Breadcrumb, Crumb, LinkAddress};
+use crate::policies::{CATALOGUE, FOLDER_PAGE};
 
 /// `folders` are those the page is in, from the outermost. `page` is the
 /// page's own text and file name, as written, or `None` for a folder's page, which is the
@@ -15,16 +15,16 @@ pub(crate) fn breadcrumb(
 ) -> Breadcrumb {
     let depth = folders.len();
     let mut crumbs = vec![Crumb {
-        address: format!("{}{FOLDER_PAGE}", "../".repeat(depth)),
+        address: LinkAddress::to(&format!("{}{FOLDER_PAGE}", "../".repeat(depth))),
         text: title.to_string(),
     }];
     crumbs.extend(folders.iter().enumerate().map(|(index, name)| Crumb {
-        address: format!("{}{FOLDER_PAGE}", "../".repeat(depth - index - 1)),
+        address: LinkAddress::to(&format!("{}{FOLDER_PAGE}", "../".repeat(depth - index - 1))),
         text: name.clone(),
     }));
     if let Some((text, file)) = page {
         crumbs.push(Crumb {
-            address: percent_encoded(file),
+            address: LinkAddress::to(file),
             text: text.to_string(),
         });
     }
@@ -43,7 +43,7 @@ mod tests {
         breadcrumb("Site", &folders, page)
             .crumbs
             .into_iter()
-            .map(|crumb| (crumb.address, crumb.text))
+            .map(|crumb| (crumb.address.to_string(), crumb.text))
             .collect()
     }
 

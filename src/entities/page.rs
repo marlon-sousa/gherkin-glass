@@ -1,6 +1,6 @@
 //! Entity: a feature's page, as its template shows it, every text in it as written or worded.
 
-use crate::entities::{Breadcrumb, HeadingLevel, PageFrame, StepPart};
+use crate::entities::{Breadcrumb, HeadingLevel, LinkAddress, PageFrame, StepPart};
 
 /// One page of the site. Every `String` is text, escaped when it is rendered.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -64,8 +64,8 @@ pub(crate) struct PageWords {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct TagView {
     pub(crate) text: String,
-    /// Relative to the page that shows the tag, and percent-encoded.
-    pub(crate) address: String,
+    /// Relative to the page that shows the tag.
+    pub(crate) address: LinkAddress,
     pub(crate) outside: Option<OutsideLink>,
 }
 

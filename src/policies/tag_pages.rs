@@ -6,12 +6,10 @@ use i18n_embed::LanguageLoader;
 use i18n_embed_fl::fl;
 
 use crate::entities::{
-    Block, BlockKind, Page, PageOptions, TagFeature, TagIndex, TagIndexEntry, TagNames, TagPage,
-    TagScenario, TagView,
+    Block, BlockKind, LinkAddress, Page, PageOptions, TagFeature, TagIndex, TagIndexEntry,
+    TagNames, TagPage, TagScenario, TagView,
 };
-use crate::policies::{
-    CATALOGUE, breadcrumb, outside_link, page_frame, percent_encoded, site_title,
-};
+use crate::policies::{CATALOGUE, breadcrumb, outside_link, page_frame, site_title};
 
 /// Stands for the link in the words around it, to find where the link
 /// goes; no message of the catalogue holds it.
@@ -42,7 +40,7 @@ pub(crate) fn build_tag_index(
             let words = fl!(CATALOGUE, "tag-index-entry", tag = LINK_MARK, count = count);
             let (before, after) = around_mark(&words);
             TagIndexEntry {
-                address: percent_encoded(&format!("{}.html", names.name(tag))),
+                address: LinkAddress::to(&format!("{}.html", names.name(tag))),
                 tag: tag.clone(),
                 before,
                 after,
@@ -73,7 +71,7 @@ pub(crate) fn build_tag_page(
         .map(|page| {
             let page_address = format!("{ROOT}{}", page.address);
             TagFeature {
-                address: percent_encoded(&page_address),
+                address: LinkAddress::to(&page_address),
                 heading: page.title.clone(),
                 language: (page.language != language).then(|| page.language.clone()),
                 scenarios: carriers(page, tag)
@@ -93,11 +91,7 @@ pub(crate) fn build_tag_page(
                         };
                         let (before, after) = around_mark(&words);
                         TagScenario {
-                            address: format!(
-                                "{}#{}",
-                                percent_encoded(&page_address),
-                                scenario.anchor
-                            ),
+                            address: LinkAddress::to(&page_address).at(&scenario.anchor),
                             heading: scenario.heading(),
                             before,
                             after,
@@ -253,7 +247,7 @@ Feature: F
             .flat_map(|feature| &feature.scenarios)
             .map(|s| {
                 (
-                    s.address.clone(),
+                    s.address.to_string(),
                     format!("{}{}{}", s.before, s.heading, s.after),
                 )
             })
