@@ -94,9 +94,19 @@ fn someone_listens(mut address: SocketAddr) -> bool {
     TcpStream::connect_timeout(&address, Duration::from_millis(250)).is_ok()
 }
 
+/// The HTTP status of an answer.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[repr(u16)]
+enum Status {
+    Ok = 200,
+    MovedPermanently = 301,
+    NotFound = 404,
+    MethodNotAllowed = 405,
+}
+
 /// What a request is answered with, before it is sent.
 struct Answer {
-    status: u16,
+    status: Status,
     content_type: String,
     body: Vec<u8>,
     location: Option<String>,
@@ -105,14 +115,14 @@ struct Answer {
 impl Answer {
     fn ok(content_type: String, body: Vec<u8>) -> Self {
         Answer {
-            status: 200,
+            status: Status::Ok,
             content_type,
             body,
             location: None,
         }
     }
 
-    fn text(status: u16, sentence: &str) -> Self {
+    fn text(status: Status, sentence: &str) -> Self {
         Answer {
             status,
             content_type: "text/plain; charset=utf-8".into(),
@@ -123,7 +133,7 @@ impl Answer {
 
     fn redirect(location: String) -> Self {
         Answer {
-            status: 301,
+            status: Status::MovedPermanently,
             content_type: "text/plain; charset=utf-8".into(),
             body: Vec::new(),
             location: Some(location),
@@ -134,13 +144,13 @@ impl Answer {
 fn answer(request: Request, preview: &Preview, words: &ServerWords) {
     let answer = match request.method() {
         Method::Get | Method::Head => choose(request.url(), preview, words),
-        _ => Answer::text(405, &words.wrong_method),
+        _ => Answer::text(Status::MethodNotAllowed, &words.wrong_method),
     };
     let mut response = Response::from_data(answer.body)
-        .with_status_code(StatusCode(answer.status))
+        .with_status_code(StatusCode(answer.status as u16))
         .with_header(header("Content-Type", &answer.content_type))
         .with_header(header("Cache-Control", "no-cache"));
-    if answer.status == 405 {
+    if answer.status == Status::MethodNotAllowed {
         response = response.with_header(header("Allow", "GET, HEAD"));
     }
     if let Some(location) = answer.location {
@@ -151,8 +161,8 @@ fn answer(request: Request, preview: &Preview, words: &ServerWords) {
 }
 
 fn choose(url: &str, preview: &Preview, words: &ServerWords) -> Answer {
-    let not_found = || Answer::text(404, &words.not_found);
-    match route(url, preview.watching) {
+    let not_found = || Answer::text(Status::NotFound, &words.not_found);
+    match route(url, preview.mode) {
         Route::NotFound => not_found(),
         Route::BuildNumber => Answer::ok(
             "text/plain; charset=utf-8".into(),
@@ -170,7 +180,7 @@ fn choose(url: &str, preview: &Preview, words: &ServerWords) -> Answer {
             match find(&version, &address) {
                 Found::File(body) => {
                     let content_type = content_type(&address);
-                    let body = if preview.watching && is_html(&content_type) {
+                    let body = if preview.mode.watches() && is_html(&content_type) {
                         add_reload_script(&body, version.number)
                     } else {
                         body
@@ -232,6 +242,7 @@ mod tests {
     use std::collections::BTreeMap;
 
     use super::*;
+    use crate::entities::ServeMode;
 
     fn words() -> ServerWords {
         ServerWords {
@@ -240,21 +251,21 @@ mod tests {
         }
     }
 
-    fn memory(watching: bool) -> Preview {
+    fn memory(mode: ServeMode) -> Preview {
         let files = BTreeMap::from([
             ("a/index.html".to_string(), b"<p>a</p></body>".to_vec()),
             ("a/s.js".to_string(), b"</body>".to_vec()),
         ]);
-        let preview = Preview::new(watching, ServedSite::Memory(BTreeMap::new()));
+        let preview = Preview::new(mode, ServedSite::Memory(BTreeMap::new()));
         preview.replace(ServedSite::Memory(files));
         preview
     }
 
     #[test]
     fn under_watch_a_page_has_the_script_of_its_version_and_nothing_else_does() {
-        let preview = memory(true);
+        let preview = memory(ServeMode::Watch);
         let page = choose("/a/", &preview, &words());
-        assert_eq!(page.status, 200);
+        assert_eq!(page.status, Status::Ok);
         assert_eq!(
             page.body,
             br#"<p>a</p><script type="module" src="/__ghg/reload.js?build=2"></script></body>"#
@@ -268,23 +279,26 @@ mod tests {
 
     #[test]
     fn without_watch_a_page_is_as_built() {
-        let preview = memory(false);
+        let preview = memory(ServeMode::Build);
         assert_eq!(choose("/a/", &preview, &words()).body, b"<p>a</p></body>");
-        assert_eq!(choose("/__ghg/build", &preview, &words()).status, 404);
+        assert_eq!(
+            choose("/__ghg/build", &preview, &words()).status,
+            Status::NotFound
+        );
     }
 
     #[test]
     fn a_folder_in_memory_is_redirected_and_a_missing_file_is_not_found() {
-        let preview = memory(true);
+        let preview = memory(ServeMode::Watch);
         let folder = choose("/a?x", &preview, &words());
-        assert_eq!(folder.status, 301);
+        assert_eq!(folder.status, Status::MovedPermanently);
         assert_eq!(folder.location.as_deref(), Some("/a/?x"));
         let missing = choose("/a/b.html", &preview, &words());
         assert_eq!(
             (missing.status, missing.body),
-            (404, b"not found\n".to_vec())
+            (Status::NotFound, b"not found\n".to_vec())
         );
-        assert_eq!(choose("/b/", &preview, &words()).status, 404);
-        assert_eq!(choose("/a/s", &preview, &words()).status, 404);
+        assert_eq!(choose("/b/", &preview, &words()).status, Status::NotFound);
+        assert_eq!(choose("/a/s", &preview, &words()).status, Status::NotFound);
     }
 }

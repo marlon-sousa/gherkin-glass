@@ -2,6 +2,8 @@
 
 use std::path::{Component, Path};
 
+use crate::entities::ServeMode;
+
 /// The address `/__ghg/build`, answered only under `--watch`.
 const BUILD_NUMBER: &str = "/__ghg/build";
 /// The address `/__ghg/reload.js`, answered only under `--watch`.
@@ -22,7 +24,8 @@ pub(super) enum Route {
 }
 
 /// `url` is the request's target as the browser sent it, its path and query.
-pub(super) fn route(url: &str, watching: bool) -> Route {
+pub(super) fn route(url: &str, mode: ServeMode) -> Route {
+    let watching = mode.watches();
     // A browser never sends the fragment, but another client may.
     let url = url.split_once('#').map_or(url, |(url, _)| url);
     let (path, query) = match url.split_once('?') {
@@ -129,24 +132,30 @@ mod tests {
 
     #[test]
     fn a_path_names_a_file_and_a_slash_its_folder_s_index() {
-        assert_eq!(route("/", false), file("index.html", None));
-        assert_eq!(route("/?x=1", false), file("index.html", None));
-        assert_eq!(route("/banking/", false), file("banking/index.html", None));
+        assert_eq!(route("/", ServeMode::Build), file("index.html", None));
+        assert_eq!(route("/?x=1", ServeMode::Build), file("index.html", None));
         assert_eq!(
-            route("/banking/withdraw.html?q=1#x", false),
+            route("/banking/", ServeMode::Build),
+            file("banking/index.html", None)
+        );
+        assert_eq!(
+            route("/banking/withdraw.html?q=1#x", ServeMode::Build),
             file("banking/withdraw.html", Some("/banking/withdraw.html/?q=1"))
         );
-        assert_eq!(route("/banking", false), file("banking", Some("/banking/")));
+        assert_eq!(
+            route("/banking", ServeMode::Build),
+            file("banking", Some("/banking/"))
+        );
     }
 
     #[test]
     fn parts_are_percent_decoded() {
         assert_eq!(
-            route("/p%C3%A1gina%20um.html", false),
+            route("/p%C3%A1gina%20um.html", ServeMode::Build),
             file("página um.html", Some("/p%C3%A1gina%20um.html/"))
         );
         assert_eq!(
-            route("/página.html", false),
+            route("/página.html", ServeMode::Build),
             file("página.html", Some("/p%C3%A1gina.html/"))
         );
     }
@@ -167,16 +176,19 @@ mod tests {
             "relative",
             "*",
         ] {
-            assert_eq!(route(url, false), Route::NotFound, "{url}");
+            assert_eq!(route(url, ServeMode::Build), Route::NotFound, "{url}");
         }
     }
 
     #[test]
     fn only_watching_answers_the_reload_addresses() {
-        assert_eq!(route("/__ghg/build", true), Route::BuildNumber);
-        assert_eq!(route("/__ghg/reload.js?build=3", true), Route::ReloadScript);
+        assert_eq!(route("/__ghg/build", ServeMode::Watch), Route::BuildNumber);
         assert_eq!(
-            route("/__ghg/build", false),
+            route("/__ghg/reload.js?build=3", ServeMode::Watch),
+            Route::ReloadScript
+        );
+        assert_eq!(
+            route("/__ghg/build", ServeMode::Build),
             file("__ghg/build", Some("/__ghg/build/"))
         );
     }

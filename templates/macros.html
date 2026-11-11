@@ -8,13 +8,11 @@
 {%- endif -%}
 {%- endmacro -%}
 
-{%- macro description(paragraphs) -%}
-{%- if !paragraphs.is_empty() %}
+{%- macro description(description) -%}
+{%- if let Some(paragraph) = description %}
 <div class="ghg-description">
-{%- for paragraph in paragraphs %}
 <p>{% for line in paragraph %}{{ line }}{% if !loop.last %}<br>
 {% endif %}{% endfor %}</p>
-{%- endfor %}
 </div>
 {%- endif -%}
 {%- endmacro -%}

@@ -28,8 +28,26 @@ pub(crate) struct ServeOptions {
     pub(crate) build: BuildOptions,
     pub(crate) host: Option<String>,
     pub(crate) port: Option<u16>,
-    pub(crate) no_build: bool,
-    pub(crate) watch: bool,
+    pub(crate) mode: ServeMode,
+}
+
+/// What `ghg serve` serves.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub(crate) enum ServeMode {
+    /// The output folder as it is, under `--no-build`.
+    Folder,
+    /// The site built into the output folder first.
+    #[default]
+    Build,
+    /// The site built in memory and built again on every change, under `--watch`.
+    Watch,
+}
+
+impl ServeMode {
+    /// Whether the site is built again on every change.
+    pub(crate) fn watches(self) -> bool {
+        self == ServeMode::Watch
+    }
 }
 
 /// An option of `ghg build` that sets how a site is built, every one but

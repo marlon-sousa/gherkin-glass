@@ -6,8 +6,8 @@ use std::sync::Arc;
 use std::thread::park;
 
 use crate::entities::{
-    BuildFailure, Burst, Changes, ListenFailure, OutputProblem, Preview, Problems, ServeOptions,
-    ServedSite, ServerWords, Settings, WatchFailure, Watched,
+    BuildFailure, Burst, Changes, ListenFailure, OutputProblem, Preview, Problems, ServeMode,
+    ServeOptions, ServedSite, ServerWords, Settings, WatchFailure, Watched,
 };
 
 use crate::policies::{Read, calls_for_rebuild, remembered};
@@ -111,31 +111,33 @@ impl PreviewService {
             .unwrap_or_else(|| PathBuf::from(CONFIG_FILE));
         // Watching starts before the first build, so that a change made
         // during it is not missed; what stops the build is said first.
-        let changes = options.watch.then(|| {
+        let changes = options.mode.watches().then(|| {
             let watched = [
                 Watched::Folder(settings.input.clone()),
                 Watched::File(config.clone()),
             ];
             self.watcher.watch(&watched)
         });
-        let read_before = match options.watch {
-            true => self.input.paths(&settings.input),
-            false => Vec::new(),
-        };
-        let site = if options.no_build {
-            ServedSite::Folder(settings.output.clone())
-        } else if options.watch {
-            self.build_in_memory(&settings)
-                .map_err(ServeFailure::Input)?
+        let read_before = if options.mode.watches() {
+            self.input.paths(&settings.input)
         } else {
-            self.build_into_output(&settings)
-                .map_err(|failure| match failure {
-                    BuildFailure::Problems(problems) => ServeFailure::Input(problems),
-                    BuildFailure::Output(problem) => ServeFailure::Output(problem),
-                })?
+            Vec::new()
+        };
+        let site = match options.mode {
+            ServeMode::Folder => ServedSite::Folder(settings.output.clone()),
+            ServeMode::Watch => self
+                .build_in_memory(&settings)
+                .map_err(ServeFailure::Input)?,
+            ServeMode::Build => {
+                self.build_into_output(&settings)
+                    .map_err(|failure| match failure {
+                        BuildFailure::Problems(problems) => ServeFailure::Input(problems),
+                        BuildFailure::Output(problem) => ServeFailure::Output(problem),
+                    })?
+            }
         };
         let changes = changes.transpose().map_err(ServeFailure::Watch)?;
-        let preview = Arc::new(Preview::new(options.watch, site));
+        let preview = Arc::new(Preview::new(options.mode, site));
         let host = options.host.as_deref().unwrap_or(DEFAULT_HOST);
         let port = options.port.unwrap_or(DEFAULT_PORT);
         let address = self
@@ -475,7 +477,7 @@ mod tests {
             watcher.clone(),
         );
         let options = ServeOptions {
-            watch: true,
+            mode: ServeMode::Watch,
             port: Some(0),
             ..ServeOptions::default()
         };
@@ -496,7 +498,7 @@ mod tests {
                 .clone()
                 .expect("started");
             assert_eq!((host.as_str(), port), ("127.0.0.1", 0));
-            assert!(preview.watching);
+            assert!(preview.mode.watches());
             assert_eq!(preview.current().number, 1);
             let ServedSite::Memory(files) = &preview.current().site else {
                 panic!("a site in memory");
@@ -549,9 +551,9 @@ mod tests {
             server.clone(),
             Arc::new(Watcher::default()),
         );
-        for watch in [false, true] {
+        for mode in [ServeMode::Build, ServeMode::Watch] {
             let options = ServeOptions {
-                watch,
+                mode,
                 ..ServeOptions::default()
             };
             let failure = service.serve(&options, words(), &Recorded::default());
@@ -581,7 +583,7 @@ mod tests {
             watcher.clone(),
         );
         let options = ServeOptions {
-            watch: true,
+            mode: ServeMode::Watch,
             ..ServeOptions::default()
         };
         let events = Recorded::default();
@@ -631,7 +633,7 @@ mod tests {
         );
         assert!(server.started.lock().expect("lock").is_none());
         let options = ServeOptions {
-            watch: true,
+            mode: ServeMode::Watch,
             ..ServeOptions::default()
         };
         let events = Recorded::default();

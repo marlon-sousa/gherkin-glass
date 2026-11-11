@@ -8,7 +8,9 @@ use std::sync::Arc;
 
 use i18n_embed_fl::fl;
 
-use crate::entities::{BuildFailure, BuildOptions, Invocation, ServeOptions, ServerWords};
+use crate::entities::{
+    BuildFailure, BuildOptions, ExitStatus, Invocation, ServeOptions, ServerWords,
+};
 use crate::policies::{CATALOGUE, parse_arguments};
 use crate::ports::{ConfigReader, Terminal};
 use crate::services::{
@@ -30,9 +32,7 @@ pub(crate) struct CommandLine {
 pub(crate) struct Reply {
     pub(crate) stdout: String,
     pub(crate) stderr: String,
-    /// 0 when it did what was asked, 1 when the configuration or the input
-    /// stopped it, 2 when the command line was mistaken.
-    pub(crate) status: u8,
+    pub(crate) status: ExitStatus,
 }
 
 impl CommandLine {
@@ -55,7 +55,9 @@ impl CommandLine {
     /// `arguments` come after the command's own name.
     pub(crate) fn run(&self, arguments: impl IntoIterator<Item = OsString>) -> Reply {
         match parse_arguments(arguments) {
-            Err(problem) => Reply::failure(2, wording::argument_problem(&problem)),
+            Err(problem) => {
+                Reply::failure(ExitStatus::Mistaken, wording::argument_problem(&problem))
+            }
             Ok(Invocation::Help) => Reply::success(fl!(CATALOGUE, "help")),
             Ok(Invocation::Version) => Reply::success(fl!(
                 CATALOGUE,
@@ -75,14 +77,16 @@ impl CommandLine {
         let events = Events(self.terminal.as_ref());
         match self.preview.serve(options, words, &events) {
             Ok(()) => Reply::success(String::new()),
-            Err(failure) => Reply::failure(1, wording::serve_failure(&failure)),
+            Err(failure) => Reply::failure(ExitStatus::Stopped, wording::serve_failure(&failure)),
         }
     }
 
     fn build(&self, options: &BuildOptions) -> Reply {
         let settings = match self.settings.load(options) {
             Ok(settings) => settings,
-            Err(problems) => return Reply::failure(1, wording::config_problems(&problems)),
+            Err(problems) => {
+                return Reply::failure(ExitStatus::Stopped, wording::config_problems(&problems));
+            }
         };
         match self.output.build(&self.site, &settings) {
             Ok(built) => {
@@ -96,10 +100,10 @@ impl CommandLine {
                 }
             }
             Err(BuildFailure::Problems(problems)) => {
-                Reply::failure(1, wording::problems(&problems))
+                Reply::failure(ExitStatus::Stopped, wording::problems(&problems))
             }
             Err(BuildFailure::Output(problem)) => {
-                Reply::failure(1, wording::output_problem(&problem))
+                Reply::failure(ExitStatus::Stopped, wording::output_problem(&problem))
             }
         }
     }
@@ -110,11 +114,11 @@ impl Reply {
         Reply {
             stdout: lines(stdout),
             stderr: String::new(),
-            status: 0,
+            status: ExitStatus::Done,
         }
     }
 
-    fn failure(status: u8, stderr: String) -> Self {
+    fn failure(status: ExitStatus, stderr: String) -> Self {
         Reply {
             stdout: String::new(),
             stderr: lines(stderr),
@@ -322,7 +326,7 @@ mod tests {
             reply.stderr,
             "ghg.toml:1: ghg has no setting named inputs.\n"
         );
-        assert_eq!(reply.status, 1);
+        assert_eq!(reply.status, ExitStatus::Stopped);
     }
 
     #[test]
@@ -333,7 +337,7 @@ mod tests {
             "Port 8123 is already in use. Choose another with --port.\n"
         );
         assert_eq!(reply.stdout, "");
-        assert_eq!(reply.status, 1);
+        assert_eq!(reply.status, ExitStatus::Stopped);
     }
 
     #[test]
@@ -392,13 +396,13 @@ mod tests {
             reply.stderr,
             "The option --port needs a whole number from 0 to 65535, not 80a.\n"
         );
-        assert_eq!(reply.status, 2);
+        assert_eq!(reply.status, ExitStatus::Mistaken);
         let reply = run(&[], &["serve", "--watch", "--no-build"]);
         assert_eq!(
             reply.stderr,
             "The options --watch and --no-build cannot be used together.\n"
         );
-        assert_eq!(reply.status, 2);
+        assert_eq!(reply.status, ExitStatus::Mistaken);
         let reply = run(&[], &["build", "--watch"]);
         assert_eq!(
             reply.stderr,
@@ -410,7 +414,7 @@ mod tests {
     fn without_a_file_the_input_is_the_default_folder() {
         let reply = run(&[], &["build"]);
         assert_eq!(reply.stderr, "a.feature:1: read in features\n");
-        assert_eq!(reply.status, 1);
+        assert_eq!(reply.status, ExitStatus::Stopped);
     }
 
     #[test]
@@ -430,7 +434,7 @@ mod tests {
     fn a_file_asked_for_must_exist() {
         let reply = run(&[], &["build", "--config", "ci.toml"]);
         assert_eq!(reply.stderr, "ci.toml: cannot be read: not found\n");
-        assert_eq!(reply.status, 1);
+        assert_eq!(reply.status, ExitStatus::Stopped);
     }
 
     #[test]
@@ -441,7 +445,7 @@ mod tests {
             "ghg.toml:1: ghg has no setting named inputs.\n\
              ghg.toml:2: input must be text, in quotes.\n"
         );
-        assert_eq!(reply.status, 1);
+        assert_eq!(reply.status, ExitStatus::Stopped);
     }
 
     #[test]
@@ -451,7 +455,7 @@ mod tests {
             reply.stderr,
             "ghg build has no option --bogus. ghg --help lists the options.\n"
         );
-        assert_eq!(reply.status, 2);
+        assert_eq!(reply.status, ExitStatus::Mistaken);
         assert_eq!(reply.stdout, "");
     }
 }

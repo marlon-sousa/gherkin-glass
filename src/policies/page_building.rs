@@ -7,8 +7,8 @@ use i18n_embed_fl::fl;
 
 use crate::entities::{
     Anchors, BackgroundsOption, Block, BlockKind, ContentsEntry, DocStringView, FromBackground,
-    HeadingPart, Page, PageOptions, PageWords, Paragraph, ParsedFeature, SourceLink, StepView,
-    TableView, TagNames, TagView,
+    HeadingLevel, HeadingPart, Page, PageOptions, PageWords, Paragraph, ParsedFeature, SourceLink,
+    StepView, TableView, TagNames, TagView,
 };
 use crate::policies::{
     CATALOGUE, ExampleRow, breadcrumb, example_rows, highlight_step, outside_link, page_address,
@@ -43,7 +43,7 @@ pub(crate) fn build_page(
     };
     let mut blocks = Vec::new();
     if let Some(background) = &feature.background {
-        blocks.push(builder.background(background, 2));
+        blocks.push(builder.background(background, HeadingLevel::Two));
     }
     let from_feature: Vec<_> = feature
         .background
@@ -56,7 +56,7 @@ pub(crate) fn build_page(
         feature
             .scenarios
             .iter()
-            .map(|s| builder.scenario(s, 2, &from_feature)),
+            .map(|s| builder.scenario(s, HeadingLevel::Two, &from_feature)),
     );
     blocks.extend(
         feature
@@ -113,7 +113,7 @@ struct Builder<'a> {
 }
 
 impl Builder<'_> {
-    fn background(&self, background: &Background, level: u8) -> Block {
+    fn background(&self, background: &Background, level: HeadingLevel) -> Block {
         Block {
             steps: self.steps(&background.steps, None),
             description: description(background.description.as_deref()),
@@ -151,20 +151,24 @@ impl Builder<'_> {
     fn rule(&self, rule: &Rule, from_feature: &[FromBackground]) -> Block {
         let mut blocks = Vec::new();
         if let Some(background) = &rule.background {
-            blocks.push(self.background(background, 3));
+            blocks.push(self.background(background, HeadingLevel::Three));
         }
         let mut from: Vec<_> = from_feature.to_vec();
         from.extend(rule.background.iter().filter_map(|background| {
             self.background_steps(background, fl!(CATALOGUE, "from-rule-background"))
         }));
-        blocks.extend(rule.scenarios.iter().map(|s| self.scenario(s, 3, &from)));
+        blocks.extend(
+            rule.scenarios
+                .iter()
+                .map(|s| self.scenario(s, HeadingLevel::Three, &from)),
+        );
         Block {
             tags: self.tags(&rule.tags),
             description: description(rule.description.as_deref()),
             blocks,
             ..block(
                 BlockKind::Rule,
-                2,
+                HeadingLevel::Two,
                 self.anchors.rule(rule),
                 heading(&rule.keyword, &rule.name),
                 self.options.collapse_rules,
@@ -172,7 +176,7 @@ impl Builder<'_> {
         }
     }
 
-    fn scenario(&self, scenario: &Scenario, level: u8, from: &[FromBackground]) -> Block {
+    fn scenario(&self, scenario: &Scenario, level: HeadingLevel, from: &[FromBackground]) -> Block {
         // `make_anchors` gives every block of the feature an anchor.
         let anchor = self.anchors.scenario(scenario).unwrap_or_default();
         let backgrounds = from
@@ -191,8 +195,8 @@ impl Builder<'_> {
             blocks: scenario
                 .examples
                 .iter()
-                .map(|examples| self.examples(examples, level + 1))
-                .chain(self.examples_as_scenarios(scenario, level + 1))
+                .map(|examples| self.examples(examples, level.below()))
+                .chain(self.examples_as_scenarios(scenario, level.below()))
                 .collect(),
             ..block(
                 BlockKind::Scenario,
@@ -204,7 +208,7 @@ impl Builder<'_> {
         }
     }
 
-    fn examples(&self, examples: &Examples, level: u8) -> Block {
+    fn examples(&self, examples: &Examples, level: HeadingLevel) -> Block {
         Block {
             tags: self.tags(&examples.tags),
             description: description(examples.description.as_deref()),
@@ -219,7 +223,7 @@ impl Builder<'_> {
         }
     }
 
-    fn examples_as_scenarios(&self, outline: &Scenario, level: u8) -> Option<Block> {
+    fn examples_as_scenarios(&self, outline: &Scenario, level: HeadingLevel) -> Option<Block> {
         let rows = example_rows(outline);
         if rows.is_empty() {
             return None;
@@ -229,7 +233,7 @@ impl Builder<'_> {
         let blocks = rows
             .iter()
             .enumerate()
-            .map(|(index, row)| self.example_scenario(outline, index + 1, row, level + 1))
+            .map(|(index, row)| self.example_scenario(outline, index + 1, row, level.below()))
             .collect();
         Some(Block {
             blocks,
@@ -248,7 +252,7 @@ impl Builder<'_> {
         outline: &Scenario,
         number: usize,
         row: &ExampleRow<'_>,
-        level: u8,
+        level: HeadingLevel,
     ) -> Block {
         let value_words = fl!(
             CATALOGUE,
@@ -355,7 +359,7 @@ fn table_free_view(step: &Step) -> StepView {
 
 fn block(
     kind: BlockKind,
-    level: u8,
+    level: HeadingLevel,
     anchor: Option<&str>,
     heading: String,
     collapsed: bool,
@@ -365,7 +369,7 @@ fn block(
 
 fn worded_block(
     kind: BlockKind,
-    level: u8,
+    level: HeadingLevel,
     anchor: Option<&str>,
     heading_parts: Vec<HeadingPart>,
     collapsed: bool,
@@ -378,7 +382,7 @@ fn worded_block(
         heading_parts,
         collapsed,
         tags: Vec::new(),
-        description: Vec::new(),
+        description: None,
         backgrounds: Vec::new(),
         steps: Vec::new(),
         table: None,
@@ -443,9 +447,9 @@ pub(crate) fn heading(keyword: &str, name: &str) -> String {
     }
 }
 
-/// One paragraph of the description's lines, or none: the `gherkin` crate
+/// The description's lines as one paragraph, or none when it has none: the `gherkin` crate
 /// keeps no blank line of a description to tell paragraphs apart.
-fn description(text: Option<&str>) -> Vec<Paragraph> {
+fn description(text: Option<&str>) -> Option<Paragraph> {
     let lines: Paragraph = text
         .unwrap_or_default()
         .lines()
@@ -453,11 +457,7 @@ fn description(text: Option<&str>) -> Vec<Paragraph> {
         .filter(|line| !line.trim().is_empty())
         .map(str::to_string)
         .collect();
-    if lines.is_empty() {
-        Vec::new()
-    } else {
-        vec![lines]
-    }
+    (!lines.is_empty()).then_some(lines)
 }
 
 /// The first row is the header; a table has at least one row.
@@ -577,7 +577,7 @@ Feature: Refunds
         let top: Vec<_> = page
             .blocks
             .iter()
-            .map(|b| (b.level, b.heading(), b.anchor.as_str()))
+            .map(|b| (b.level.number(), b.heading(), b.anchor.as_str()))
             .collect();
         assert_eq!(
             top,
@@ -591,12 +591,12 @@ Feature: Refunds
         let inside: Vec<_> = rule
             .blocks
             .iter()
-            .map(|b| (b.level, b.anchor.as_str()))
+            .map(|b| (b.level.number(), b.anchor.as_str()))
             .collect();
         assert_eq!(inside, [(3, "in-the-rule"), (3, "inside")]);
         let examples = &rule.blocks[1].blocks[0];
         assert_eq!(
-            (examples.level, examples.heading().as_str()),
+            (examples.level.number(), examples.heading().as_str()),
             (4, "Examples")
         );
         assert_eq!(
@@ -616,7 +616,7 @@ Feature: Refunds
         assert_eq!(
             (
                 section.kind,
-                section.level,
+                section.level.number(),
                 section.anchor.as_str(),
                 section.heading().as_str(),
                 section.collapsed
@@ -631,7 +631,11 @@ Feature: Refunds
         );
         let row = &section.blocks[0];
         assert_eq!(
-            (row.level, row.anchor.as_str(), row.heading().as_str()),
+            (
+                row.level.number(),
+                row.anchor.as_str(),
+                row.heading().as_str()
+            ),
             (5, "inside-row-1", "Inside (n: 1)")
         );
         assert_eq!(row.steps[0].parts, [StepPart::Number("1".into())]);
@@ -700,11 +704,11 @@ Feature: Refunds
         );
         assert_eq!(
             page.description,
-            [vec![
+            Some(vec![
                 "First line,".to_string(),
                 "second line.".to_string(),
                 "Another paragraph.".to_string()
-            ]]
+            ])
         );
     }
 

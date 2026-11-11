@@ -4,6 +4,8 @@ use std::collections::BTreeMap;
 use std::path::PathBuf;
 use std::sync::{Arc, PoisonError, RwLock};
 
+use crate::entities::ServeMode;
+
 /// A site to serve: a folder on disk, or one built in memory, its files by
 /// their `/`-joined address below the site's root.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -20,17 +22,17 @@ pub(crate) struct Version {
 }
 
 /// What ghg serve serves, shared by every request: the version being
-/// served, which a rebuild replaces whole, and whether it is watching.
+/// served, which a rebuild replaces whole, and how it serves.
 #[derive(Debug)]
 pub(crate) struct Preview {
-    pub(crate) watching: bool,
+    pub(crate) mode: ServeMode,
     current: RwLock<Arc<Version>>,
 }
 
 impl Preview {
-    pub(crate) fn new(watching: bool, site: ServedSite) -> Self {
+    pub(crate) fn new(mode: ServeMode, site: ServedSite) -> Self {
         Preview {
-            watching,
+            mode,
             current: RwLock::new(Arc::new(Version { number: 1, site })),
         }
     }
@@ -67,7 +69,7 @@ mod tests {
 
     #[test]
     fn a_replaced_version_takes_the_next_number_and_an_old_one_stays_whole() {
-        let preview = Preview::new(true, ServedSite::Memory(BTreeMap::new()));
+        let preview = Preview::new(ServeMode::Watch, ServedSite::Memory(BTreeMap::new()));
         let first = preview.current();
         let site = ServedSite::Memory(BTreeMap::from([("a.html".into(), b"a".to_vec())]));
         assert_eq!(preview.replace(site.clone()), 2);

@@ -6,7 +6,7 @@ use std::path::PathBuf;
 use lexopt::{Arg, Error, Parser};
 
 use crate::entities::{
-    ArgumentProblem, BuildOption, BuildOptions, Invocation, ServeOptions, VersionName,
+    ArgumentProblem, BuildOption, BuildOptions, Invocation, ServeMode, ServeOptions, VersionName,
 };
 
 /// The arguments after the command's own name.
@@ -34,18 +34,28 @@ pub(crate) fn parse_arguments(
             });
         }
     };
-    let options = match parse_options(&mut parser, name, serving) {
-        Ok(options) => options,
+    let (options, flags) = match parse_options(&mut parser, name, serving) {
+        Ok(parsed) => parsed,
         Err(Answer::Now(invocation)) => return Ok(*invocation),
         Err(Answer::Mistake(problem)) => return Err(problem),
     };
     if !serving {
-        Ok(Invocation::Build(options.build))
-    } else if options.watch && options.no_build {
-        Err(ArgumentProblem::WatchWithoutBuild)
-    } else {
-        Ok(Invocation::Serve(options))
+        return Ok(Invocation::Build(options.build));
     }
+    let mode = match (flags.no_build, flags.watch) {
+        (true, true) => return Err(ArgumentProblem::WatchWithoutBuild),
+        (true, false) => ServeMode::Folder,
+        (false, true) => ServeMode::Watch,
+        (false, false) => ServeMode::Build,
+    };
+    Ok(Invocation::Serve(ServeOptions { mode, ..options }))
+}
+
+/// The flags of `ghg serve` that together say its mode, as they are given.
+#[derive(Debug, Default)]
+struct ServeFlags {
+    no_build: bool,
+    watch: bool,
 }
 
 /// The options of `command`, `ghg build` or `ghg serve`; only `ghg serve`,
@@ -54,8 +64,9 @@ fn parse_options(
     parser: &mut Parser,
     command: &str,
     serving: bool,
-) -> Result<ServeOptions, Answer> {
+) -> Result<(ServeOptions, ServeFlags), Answer> {
     let mut options = ServeOptions::default();
+    let mut flags = ServeFlags::default();
     while let Some(argument) = parser.next().map_err(|error| problem(error, command))? {
         if let Arg::Long(name) = argument
             && let Some(option) = BuildOption::named(name)
@@ -70,8 +81,8 @@ fn parse_options(
             Arg::Long("version") => return Err(answer(parser, "--version", Invocation::Version)),
             Arg::Long("host") if serving => Slot::Host(&mut options.host),
             Arg::Long("port") if serving => Slot::Port(&mut options.port),
-            Arg::Long("no-build") if serving => Slot::Flag(&mut options.no_build, "--no-build"),
-            Arg::Long("watch") if serving => Slot::Flag(&mut options.watch, "--watch"),
+            Arg::Long("no-build") if serving => Slot::Flag(&mut flags.no_build, "--no-build"),
+            Arg::Long("watch") if serving => Slot::Flag(&mut flags.watch, "--watch"),
             Arg::Value(value) => {
                 return Err(ArgumentProblem::UnexpectedArgument {
                     command: command.to_string(),
@@ -83,7 +94,7 @@ fn parse_options(
         };
         slot.fill(parser, command)?;
     }
-    Ok(options)
+    Ok((options, flags))
 }
 
 /// Where the value of an option of `ghg build` goes.
@@ -267,6 +278,8 @@ fn problem(error: Error, command: &str) -> ArgumentProblem {
 
 #[cfg(test)]
 mod tests {
+    use rstest::rstest;
+
     use super::*;
     use crate::entities::BuildOptions;
 
@@ -280,6 +293,25 @@ mod tests {
             input: input.map(PathBuf::from),
             ..BuildOptions::default()
         })
+    }
+
+    #[rstest]
+    #[case::building_first(&["serve"], ServeMode::Build)]
+    #[case::without_building(&["serve", "--no-build"], ServeMode::Folder)]
+    #[case::watching(&["serve", "--watch"], ServeMode::Watch)]
+    fn serve_s_flags_say_its_mode(#[case] arguments: &[&str], #[case] mode: ServeMode) {
+        let Ok(Invocation::Serve(options)) = parse(arguments) else {
+            panic!("{arguments:?} is not a serve");
+        };
+        assert_eq!(options.mode, mode);
+    }
+
+    #[test]
+    fn serve_does_not_watch_without_building() {
+        assert_eq!(
+            parse(&["serve", "--no-build", "--watch"]),
+            Err(ArgumentProblem::WatchWithoutBuild)
+        );
     }
 
     #[test]
