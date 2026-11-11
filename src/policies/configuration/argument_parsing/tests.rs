@@ -10,11 +10,11 @@ use rstest::rstest;
 use super::*;
 use crate::entities::{BuildOptions, ServeMode, ServeOptions, VersionName};
 
-fn parse(arguments: &[&str]) -> Result<Invocation, ArgumentProblem> {
+fn parse(arguments: &[&str]) -> Result<Invocation, ArgumentError> {
     parse_arguments(arguments.iter().map(OsString::from))
 }
 
-fn build(options: BuildOptions) -> Result<Invocation, ArgumentProblem> {
+fn build(options: BuildOptions) -> Result<Invocation, ArgumentError> {
     Ok(Invocation::Build(options))
 }
 

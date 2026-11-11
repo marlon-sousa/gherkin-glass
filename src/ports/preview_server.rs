@@ -3,7 +3,8 @@
 use std::net::SocketAddr;
 use std::sync::Arc;
 
-use crate::entities::{ListenFailure, Preview, ServerWords};
+use crate::entities::{Preview, ServerWords};
+use crate::errors::ListenErrorKind;
 
 pub(crate) trait PreviewServer: Send + Sync {
     /// Listens at `host` and `port`, and answers every request, on threads
@@ -15,5 +16,5 @@ pub(crate) trait PreviewServer: Send + Sync {
         port: u16,
         preview: Arc<Preview>,
         words: ServerWords,
-    ) -> Result<SocketAddr, ListenFailure>;
+    ) -> Result<SocketAddr, ListenErrorKind>;
 }

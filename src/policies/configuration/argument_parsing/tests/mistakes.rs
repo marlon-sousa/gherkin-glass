@@ -1,48 +1,48 @@
-//! Each mistake on the command line, named as the problem it is.
+//! Each mistake on the command line, named as the error it is.
 
 use rstest::rstest;
 
 use super::*;
 
-fn unknown_option(command: &str, option: &str) -> ArgumentProblem {
-    ArgumentProblem::UnknownOption {
+fn unknown_option(command: &str, option: &str) -> ArgumentError {
+    ArgumentError::UnknownOption {
         command: command.into(),
         option: option.into(),
     }
 }
 
-fn unexpected_argument(command: &str, argument: &str) -> ArgumentProblem {
-    ArgumentProblem::UnexpectedArgument {
+fn unexpected_argument(command: &str, argument: &str) -> ArgumentError {
+    ArgumentError::UnexpectedArgument {
         command: command.into(),
         argument: argument.into(),
     }
 }
 
-fn missing_value(option: &str) -> ArgumentProblem {
-    ArgumentProblem::MissingValue {
+fn missing_value(option: &str) -> ArgumentError {
+    ArgumentError::MissingValue {
         option: option.into(),
     }
 }
 
-fn unexpected_value(option: &str) -> ArgumentProblem {
-    ArgumentProblem::UnexpectedValue {
+fn unexpected_value(option: &str) -> ArgumentError {
+    ArgumentError::UnexpectedValue {
         option: option.into(),
     }
 }
 
-fn repeated(option: &str) -> ArgumentProblem {
-    ArgumentProblem::RepeatedOption {
+fn repeated(option: &str) -> ArgumentError {
+    ArgumentError::RepeatedOption {
         option: option.into(),
     }
 }
 
-fn unknown_command(name: &str) -> ArgumentProblem {
-    ArgumentProblem::UnknownCommand { name: name.into() }
+fn unknown_command(name: &str) -> ArgumentError {
+    ArgumentError::UnknownCommand { name: name.into() }
 }
 
 // Rules 19, 58, 68 and 121.
 #[rstest]
-#[case::no_command(&[], ArgumentProblem::MissingCommand)]
+#[case::no_command(&[], ArgumentError::MissingCommand)]
 #[case::a_misspelt_command(&["biuld"], unknown_command("biuld"))]
 #[case::help_as_a_command(&["help"], unknown_command("help"))]
 #[case::an_option_of_build_before_it(&["--input", "x"], unknown_option("ghg", "--input"))]
@@ -72,13 +72,13 @@ fn unknown_command(name: &str) -> ArgumentProblem {
 #[case::a_repeated_output(&["build", "--output", "a", "--output", "b"], repeated("--output"))]
 #[case::a_repeated_version_name(&["build", "--version-name", "a", "--version-name", "b"], repeated("--version-name"))]
 #[case::a_repeated_flag(&["serve", "--no-build", "--no-build"], repeated("--no-build"))]
-#[case::a_port_with_a_sign(&["serve", "--port", "+80"], ArgumentProblem::NotAPort { value: "+80".into() })]
-#[case::a_port_too_large(&["serve", "--port=65536"], ArgumentProblem::NotAPort { value: "65536".into() })]
-#[case::watching_without_building(&["serve", "--no-build", "--watch"], ArgumentProblem::WatchWithoutBuild)]
+#[case::a_port_with_a_sign(&["serve", "--port", "+80"], ArgumentError::NotAPort { value: "+80".into() })]
+#[case::a_port_too_large(&["serve", "--port=65536"], ArgumentError::NotAPort { value: "65536".into() })]
+#[case::watching_without_building(&["serve", "--no-build", "--watch"], ArgumentError::WatchWithoutBuild)]
 #[case::a_path_as_version_name(
     &["build", "--version-name", "../v1"],
-    ArgumentProblem::InvalidVersionName { name: "../v1".into() }
+    ArgumentError::InvalidVersionName { name: "../v1".into() }
 )]
-fn each_mistake_is_named(#[case] arguments: &[&str], #[case] problem: ArgumentProblem) {
-    assert_eq!(parse(arguments), Err(problem));
+fn each_mistake_is_named(#[case] arguments: &[&str], #[case] error: ArgumentError) {
+    assert_eq!(parse(arguments), Err(error));
 }

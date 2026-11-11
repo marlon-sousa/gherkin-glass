@@ -49,38 +49,3 @@ impl ServeMode {
         self == ServeMode::Watch
     }
 }
-
-/// A mistake on the command line. Each `String` is what was typed, shown
-/// as it was typed, an option with its dashes.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) enum ArgumentProblem {
-    MissingCommand,
-    UnknownCommand {
-        name: String,
-    },
-    /// `command` is `ghg`, `ghg build` or `ghg serve`.
-    UnknownOption {
-        command: String,
-        option: String,
-    },
-    MissingValue {
-        option: String,
-    },
-    UnexpectedValue {
-        option: String,
-    },
-    RepeatedOption {
-        option: String,
-    },
-    UnexpectedArgument {
-        command: String,
-        argument: String,
-    },
-    NotAPort {
-        value: String,
-    },
-    WatchWithoutBuild,
-    InvalidVersionName {
-        name: String,
-    },
-}

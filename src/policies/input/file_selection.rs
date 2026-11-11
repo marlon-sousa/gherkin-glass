@@ -26,7 +26,7 @@ pub(crate) struct ParsedRules {
     pub(crate) invalid: Vec<InvalidRule>,
 }
 
-/// A rule that is not valid, with its line, if the problem is in one, and what is wrong with it.
+/// A rule that is not valid, with its line, if the error is in one, and what is wrong with it.
 #[derive(Debug)]
 pub(crate) struct InvalidRule {
     pub(crate) line: Option<usize>,

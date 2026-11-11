@@ -8,7 +8,8 @@ use std::sync::Mutex;
 use gherkin::{Feature, GherkinEnv};
 
 use super::*;
-use crate::entities::{CollectedInput, PageOptions, ParseFailure, RawFeature, Unnamed};
+use crate::entities::{CollectedInput, PageOptions, RawFeature, Unnamed};
+use crate::errors::ParseError;
 use crate::ports::{FeatureParser, InputCollector, SiteWriter};
 use crate::services::InputService;
 
@@ -94,7 +95,7 @@ fn name(text: &str) -> VersionName {
     VersionName::new(text).expect("a version name")
 }
 
-fn check(states: &[(&str, Option<FolderState>)], replace: bool) -> Result<PathBuf, OutputProblem> {
+fn check(states: &[(&str, Option<FolderState>)], replace: bool) -> Result<PathBuf, OutputError> {
     OutputService::new(FakeFolders::with(states))
         .check(Path::new("site"), &name("v1"), replace)
         .map(|folder| folder.path().to_path_buf())
@@ -113,10 +114,10 @@ fn a_version_already_built_is_replaced_only_when_asked() {
     assert_eq!(check(&built, true), Ok(PathBuf::from("site/v1")));
     assert_eq!(
         check(&built, false),
-        Err(OutputProblem {
+        Err(OutputError {
             output: PathBuf::from("site"),
             version: Some(name("v1")),
-            kind: OutputProblemKind::AlreadyBuilt,
+            kind: OutputErrorKind::AlreadyBuilt,
         })
     );
 }
@@ -124,20 +125,20 @@ fn a_version_already_built_is_replaced_only_when_asked() {
 #[test]
 fn a_folder_that_is_not_the_version_is_never_replaced() {
     for (state, kind) in [
-        (FolderState::Other, OutputProblemKind::NotAVersion),
-        (FolderState::OtherCapitals, OutputProblemKind::OtherCapitals),
+        (FolderState::Other, OutputErrorKind::NotAVersion),
+        (FolderState::OtherCapitals, OutputErrorKind::OtherCapitals),
     ] {
         for replace in [true, false] {
             assert_eq!(
-                check(&[("site/v1", Some(state))], replace).map_err(|problem| problem.kind),
+                check(&[("site/v1", Some(state))], replace).map_err(|error| error.kind),
                 Err(kind.clone())
             );
         }
     }
     let unreadable = [("site/v1", None)];
     assert!(matches!(
-        check(&unreadable, true).map_err(|problem| problem.kind),
-        Err(OutputProblemKind::CannotBeRead { .. })
+        check(&unreadable, true).map_err(|error| error.kind),
+        Err(OutputErrorKind::CannotBeRead { .. })
     ));
 }
 
@@ -147,18 +148,18 @@ fn a_folder_that_cannot_be_emptied_or_listed_is_reported() {
     let service = OutputService::new(Arc::new(FakeFolders::holding(&[], vec!["clear"])));
     assert!(matches!(
         service.make_room(Path::new("site"), &folder),
-        Err(OutputProblem {
+        Err(OutputError {
             version: Some(_),
-            kind: OutputProblemKind::CannotBeWritten { .. },
+            kind: OutputErrorKind::CannotBeWritten { .. },
             ..
         })
     ));
     let service = OutputService::new(Arc::new(FakeFolders::holding(&[], vec!["list"])));
     assert!(matches!(
         service.versions(Path::new("site")),
-        Err(OutputProblem {
+        Err(OutputError {
             version: None,
-            kind: OutputProblemKind::CannotBeListed { .. },
+            kind: OutputErrorKind::CannotBeListed { .. },
             ..
         })
     ));
@@ -170,7 +171,7 @@ impl InputCollector for FakeCollector {
     fn collect(&self, input: &Path) -> CollectedInput {
         CollectedInput {
             paths: self.0.iter().map(|path| input.join(path)).collect(),
-            problems: Vec::new(),
+            errors: Vec::new(),
         }
     }
 }
@@ -179,11 +180,11 @@ impl InputCollector for FakeCollector {
 struct FakeParser;
 
 impl FeatureParser for FakeParser {
-    fn parse(&self, path: &Path) -> Result<RawFeature, ParseFailure> {
+    fn parse(&self, path: &Path) -> Result<RawFeature, ParseError> {
         if path.ends_with("bad.feature") {
-            return Err(ParseFailure {
+            return Err(ParseError {
                 line: Some(1),
-                kind: ProblemKind::Syntax,
+                kind: InputErrorKind::Syntax,
             });
         }
         let source = format!("Feature: {}\n", path.display());
@@ -214,7 +215,7 @@ fn build(
     files: Vec<&'static str>,
     folders: Arc<FakeFolders>,
     writer: Arc<FakeWriter>,
-) -> Result<BuiltSite, BuildFailure> {
+) -> Result<BuiltSite, BuildError> {
     let input = InputService::new(Arc::new(FakeCollector(files)), Arc::new(FakeParser));
     let site = SiteService::new(input, writer);
     let settings = Settings {
@@ -232,7 +233,7 @@ fn build_site(
     files: Vec<&'static str>,
     folders: Arc<FakeFolders>,
     writer: Arc<FakeWriter>,
-) -> Result<BuiltSite, BuildFailure> {
+) -> Result<BuiltSite, BuildError> {
     let input = InputService::new(Arc::new(FakeCollector(files)), Arc::new(FakeParser));
     let site = SiteService::new(input, writer);
     let settings = Settings {
@@ -273,11 +274,11 @@ fn a_site_is_built_into_an_empty_or_marked_folder_and_marked() {
 }
 
 #[test]
-fn input_with_a_problem_leaves_an_earlier_site_as_it_was() {
+fn input_with_an_error_leaves_an_earlier_site_as_it_was() {
     let folders = FakeFolders::with(&[("site", Some(FolderState::Marked))]);
     let writer = Arc::new(FakeWriter::default());
-    let failure = build_site(vec!["bad.feature"], folders.clone(), writer.clone());
-    assert!(matches!(failure, Err(BuildFailure::Problems(_))));
+    let outcome = build_site(vec!["bad.feature"], folders.clone(), writer.clone());
+    assert!(matches!(outcome, Err(BuildError::Input(_))));
     assert_eq!(*folders.done.lock().expect("lock"), ["list site"]);
     assert!(writer.written.lock().expect("lock").is_empty());
 }
@@ -288,14 +289,14 @@ fn a_page_of_a_site_that_cannot_be_written_is_reported_with_its_path() {
         fails: Some("b.html"),
         ..FakeWriter::default()
     });
-    let failure = build_site(
+    let outcome = build_site(
         vec!["a.feature", "b.feature"],
         FakeFolders::with(&[]),
         writer,
     );
-    match failure {
-        Err(BuildFailure::Problems(problems)) => assert_eq!(
-            problems.to_string(),
+    match outcome {
+        Err(BuildError::Input(errors)) => assert_eq!(
+            errors.to_string(),
             "site/b.html: cannot be written: disk full\n"
         ),
         other => panic!("{other:?}"),
@@ -305,13 +306,10 @@ fn a_page_of_a_site_that_cannot_be_written_is_reported_with_its_path() {
 #[test]
 fn an_output_folder_that_cannot_be_looked_into_is_reported_as_such() {
     let folders = FakeFolders::holding(&[], vec!["list"]);
-    let problem = OutputService::new(Arc::new(folders))
+    let error = OutputService::new(Arc::new(folders))
         .check_site(Path::new("site"), true)
         .expect_err("unreadable");
-    assert!(matches!(
-        problem.kind,
-        OutputProblemKind::CannotBeRead { .. }
-    ));
+    assert!(matches!(error.kind, OutputErrorKind::CannotBeRead { .. }));
 }
 
 #[test]
@@ -319,10 +317,10 @@ fn a_folder_that_changed_since_its_check_is_not_emptied() {
     let folders = FakeFolders::with(&[("site", Some(FolderState::Other))]);
     let service = OutputService::new(folders.clone());
     let folder = BuildFolder::new(Path::new("site"), Marker::Site);
-    let problem = service
+    let error = service
         .make_room(Path::new("site"), &folder)
         .expect_err("changed");
-    assert_eq!(problem.kind, OutputProblemKind::NotASite);
+    assert_eq!(error.kind, OutputErrorKind::NotASite);
     assert!(folders.done.lock().expect("lock").is_empty());
 }
 
@@ -351,11 +349,11 @@ fn a_versioned_build_empties_marks_writes_and_then_writes_the_page() {
 }
 
 #[test]
-fn input_with_a_problem_empties_nothing_and_writes_nothing() {
+fn input_with_an_error_empties_nothing_and_writes_nothing() {
     let folders = FakeFolders::with(&[("site/v1.0.0", Some(FolderState::Marked))]);
     let writer = Arc::new(FakeWriter::default());
-    let failure = build(vec!["bad.feature"], folders.clone(), writer.clone());
-    assert!(matches!(failure, Err(BuildFailure::Problems(_))));
+    let outcome = build(vec!["bad.feature"], folders.clone(), writer.clone());
+    assert!(matches!(outcome, Err(BuildError::Input(_))));
     assert!(folders.done.lock().expect("lock").is_empty());
     assert!(writer.written.lock().expect("lock").is_empty());
 }
@@ -367,12 +365,12 @@ fn a_page_that_cannot_be_written_leaves_the_version_marked_and_the_root_as_it_wa
         fails: Some("b.html"),
         ..FakeWriter::default()
     });
-    let failure = build(
+    let outcome = build(
         vec!["a.feature", "b.feature"],
         folders.clone(),
         writer.clone(),
     );
-    assert!(matches!(failure, Err(BuildFailure::Problems(_))));
+    assert!(matches!(outcome, Err(BuildError::Input(_))));
     assert_eq!(
         *folders.done.lock().expect("lock"),
         ["clear site/v1.0.0", "mark site/v1.0.0"]

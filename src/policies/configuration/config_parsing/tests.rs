@@ -5,27 +5,27 @@ use rstest::rstest;
 use super::*;
 use crate::entities::Theme;
 
-fn problems(source: &str) -> Vec<(Option<usize>, ConfigProblemKind)> {
+fn errors(source: &str) -> Vec<(Option<usize>, ConfigErrorKind)> {
     parse_config(source)
         .expect_err("problems")
         .into_iter()
-        .map(|problem| (problem.line, problem.kind))
+        .map(|error| (error.line, error.kind))
         .collect()
 }
 
-fn unknown(key: &str) -> ConfigProblemKind {
-    ConfigProblemKind::UnknownKey { key: key.into() }
+fn unknown(key: &str) -> ConfigErrorKind {
+    ConfigErrorKind::UnknownKey { key: key.into() }
 }
 
-fn wrong_type(key: &str, expected: ValueType) -> ConfigProblemKind {
-    ConfigProblemKind::WrongType {
+fn wrong_type(key: &str, expected: ValueType) -> ConfigErrorKind {
+    ConfigErrorKind::WrongType {
         key: key.into(),
         expected,
     }
 }
 
-fn empty(key: &str) -> ConfigProblemKind {
-    ConfigProblemKind::Empty { key: key.into() }
+fn empty(key: &str) -> ConfigErrorKind {
+    ConfigErrorKind::Empty { key: key.into() }
 }
 
 #[test]
@@ -52,7 +52,7 @@ fn input_is_read_as_written() {
 #[test]
 fn every_unknown_key_and_wrong_type_is_reported_on_its_line_in_order() {
     assert_eq!(
-        problems("# settings\n\nzebra = 1\ninput = [\n  \"a\",\n]\napple = true\n"),
+        errors("# settings\n\nzebra = 1\ninput = [\n  \"a\",\n]\napple = true\n"),
         [
             (Some(3), unknown("zebra")),
             (Some(4), wrong_type("input", ValueType::Text)),
@@ -92,14 +92,14 @@ fn every_unknown_key_and_wrong_type_is_reported_on_its_line_in_order() {
 #[case::a_version_name_of_more_than_one_folder(
     "version_name = \"../v1\"\n",
     1,
-    ConfigProblemKind::InvalidVersionName { name: "../v1".into() }
+    ConfigErrorKind::InvalidVersionName { name: "../v1".into() }
 )]
 fn a_wrong_value_is_reported_on_its_line(
     #[case] source: &str,
     #[case] line: usize,
-    #[case] kind: ConfigProblemKind,
+    #[case] kind: ConfigErrorKind,
 ) {
-    assert_eq!(problems(source), [(Some(line), kind)]);
+    assert_eq!(errors(source), [(Some(line), kind)]);
 }
 
 #[test]
@@ -123,12 +123,12 @@ fn an_accent_is_a_colour_in_hexadecimal() {
 }
 
 #[test]
-fn an_accent_short_of_7_to_1_in_its_theme_is_a_problem() {
-    let found = problems("accent_light = \"#8cc4ff\"\n\naccent_dark = \"#0b4f9c\"\n");
+fn an_accent_short_of_7_to_1_in_its_theme_is_an_error() {
+    let found = errors("accent_light = \"#8cc4ff\"\n\naccent_dark = \"#0b4f9c\"\n");
     let shortfalls: Vec<_> = found
         .iter()
         .map(|(line, kind)| match kind {
-            ConfigProblemKind::TooLittleContrast { key, shortfall } => {
+            ConfigErrorKind::TooLittleContrast { key, shortfall } => {
                 (*line, key.as_str(), shortfall.theme, shortfall.hundredths)
             }
             other => panic!("{other:?}"),
@@ -162,7 +162,7 @@ fn the_keys_of_pages_are_read_as_written() {
     assert_eq!(config.show_tree, Some(false));
     assert_eq!(config.inline_backgrounds, Some(false));
     assert_eq!(
-        problems("output = 1\nsource_link = \"\"\ncollapse_rules = \"yes\"\ntitle = \"\"\n"),
+        errors("output = 1\nsource_link = \"\"\ncollapse_rules = \"yes\"\ntitle = \"\"\n"),
         [
             (Some(1), wrong_type("output", ValueType::Text)),
             (Some(2), empty("source_link")),
@@ -174,20 +174,20 @@ fn the_keys_of_pages_are_read_as_written() {
 
 #[test]
 fn text_that_is_not_toml_is_reported_where_the_toml_crate_stopped() {
-    let found = problems("\ninput = features\n");
+    let found = errors("\ninput = features\n");
     assert_eq!(found.len(), 1);
     assert_eq!(found[0].0, Some(2));
     assert!(
-        matches!(&found[0].1, ConfigProblemKind::Syntax { message } if !message.is_empty()),
+        matches!(&found[0].1, ConfigErrorKind::Syntax { message } if !message.is_empty()),
         "{found:?}"
     );
 }
 
 #[test]
 fn a_key_given_twice_is_not_toml() {
-    let found = problems("input = \"a\"\ninput = \"b\"\n");
+    let found = errors("input = \"a\"\ninput = \"b\"\n");
     assert_eq!(found[0].0, Some(2));
-    assert!(matches!(found[0].1, ConfigProblemKind::Syntax { .. }));
+    assert!(matches!(found[0].1, ConfigErrorKind::Syntax { .. }));
 }
 
 #[test]
@@ -200,9 +200,9 @@ fn the_version_settings_are_read() {
 }
 
 #[test]
-fn every_problem_of_the_version_settings_is_reported() {
+fn every_error_of_the_version_settings_is_reported() {
     assert_eq!(
-        problems("version_name = \"\"\nversion_name2 = 1\n\n[x]\n"),
+        errors("version_name = \"\"\nversion_name2 = 1\n\n[x]\n"),
         [
             (Some(1), empty("version_name")),
             (Some(2), unknown("version_name2")),
@@ -210,7 +210,7 @@ fn every_problem_of_the_version_settings_is_reported() {
         ]
     );
     assert_eq!(
-        problems("version_name = 1.0\nreplace_existing_version = \"yes\"\n"),
+        errors("version_name = 1.0\nreplace_existing_version = \"yes\"\n"),
         [
             (Some(1), wrong_type("version_name", ValueType::Text)),
             (

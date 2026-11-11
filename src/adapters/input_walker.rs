@@ -4,7 +4,8 @@ use std::fs::{DirEntry, read_dir, read_to_string};
 use std::io::{ErrorKind, Result as IoResult};
 use std::path::{Path, PathBuf};
 
-use crate::entities::{CollectedInput, Problem, ProblemKind};
+use crate::entities::CollectedInput;
+use crate::errors::{InputError, InputErrorKind};
 use crate::policies::{FileSelection, IGNORE_FILE, InvalidRule, parse_rules};
 use crate::ports::InputCollector;
 
@@ -66,13 +67,13 @@ impl Walk<'_> {
             Ok(entries) => Some(entries),
             Err(error) => {
                 let kind = if folder == self.input && error.kind() == ErrorKind::NotFound {
-                    ProblemKind::InputMissing
+                    InputErrorKind::InputMissing
                 } else {
-                    ProblemKind::CannotBeListed {
+                    InputErrorKind::CannotBeListed {
                         reason: error.to_string(),
                     }
                 };
-                self.problem(folder, None, kind);
+                self.add_error(folder, None, kind);
                 None
             }
         }
@@ -84,10 +85,10 @@ impl Walk<'_> {
         let text = match read_to_string(&path) {
             Ok(text) => text,
             Err(error) => {
-                self.problem(
+                self.add_error(
                     &path,
                     None,
-                    ProblemKind::CannotBeRead {
+                    InputErrorKind::CannotBeRead {
                         reason: error.to_string(),
                     },
                 );
@@ -96,16 +97,16 @@ impl Walk<'_> {
         };
         let parsed = parse_rules(folder, &path, &text);
         for InvalidRule { line, reason } in parsed.invalid {
-            self.problem(&path, line, ProblemKind::InvalidRule { reason });
+            self.add_error(&path, line, InputErrorKind::InvalidRule { reason });
         }
         self.selection.enter(parsed.rules);
         true
     }
 
-    fn problem(&mut self, path: &Path, line: Option<usize>, kind: ProblemKind) {
+    fn add_error(&mut self, path: &Path, line: Option<usize>, kind: InputErrorKind) {
         self.found
-            .problems
-            .push(Problem::new(self.input, path, line, kind));
+            .errors
+            .push(InputError::new(self.input, path, line, kind));
     }
 }
 

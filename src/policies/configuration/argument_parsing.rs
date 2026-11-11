@@ -9,14 +9,15 @@ use std::ffi::OsString;
 use clap::Parser;
 use clap::error::ErrorKind;
 
-use crate::entities::{ArgumentProblem, Invocation};
+use crate::entities::Invocation;
+use crate::errors::ArgumentError;
 
 use arguments::Arguments;
 
 /// The arguments after the command's own name.
 pub(crate) fn parse_arguments(
     arguments: impl IntoIterator<Item = OsString>,
-) -> Result<Invocation, ArgumentProblem> {
+) -> Result<Invocation, ArgumentError> {
     let arguments = ended_after_the_command(arguments.into_iter().collect());
     let command = command_named_by(&arguments);
     let program = OsString::from("ghg");
@@ -25,7 +26,7 @@ pub(crate) fn parse_arguments(
         Err(error) => match error.kind() {
             ErrorKind::DisplayHelp => Ok(Invocation::Help),
             ErrorKind::DisplayVersion => Ok(Invocation::Version),
-            _ => Err(clap_errors::problem(&error, command)),
+            _ => Err(clap_errors::argument_error(&error, command)),
         },
     }
 }

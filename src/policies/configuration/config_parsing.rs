@@ -5,7 +5,8 @@ use std::borrow::Cow;
 use toml::Spanned;
 use toml::de::{DeTable, DeValue};
 
-use crate::entities::{Colour, Config, ConfigProblem, ConfigProblemKind, ValueType, VersionName};
+use crate::entities::{Colour, Config, VersionName};
+use crate::errors::{ConfigError, ConfigErrorKind, ValueType};
 use crate::policies::check_accent;
 
 mod config_key;
@@ -14,28 +15,28 @@ mod tag_link_tables;
 use config_key::{ConfigKey, SettingKey, accent_of};
 use tag_link_tables::tag_links;
 
-/// The values `source` sets, or every problem in it, sorted by line. A file
-/// that is not TOML has one problem, where the `toml` crate stopped.
-pub(crate) fn parse_config(source: &str) -> Result<Config, Vec<ConfigProblem>> {
+/// The values `source` sets, or every error in it, sorted by line. A file
+/// that is not TOML has one error, where the `toml` crate stopped.
+pub(crate) fn parse_config(source: &str) -> Result<Config, Vec<ConfigError>> {
     let table = DeTable::parse(source).map_err(|error| {
-        vec![ConfigProblem {
+        vec![ConfigError {
             line: error.span().map(|span| line_of(source, span.start)),
-            kind: ConfigProblemKind::Syntax {
+            kind: ConfigErrorKind::Syntax {
                 message: error.message().to_string(),
             },
         }]
     })?;
     let mut config = Config::default();
-    let mut problems: Vec<_> = table
+    let mut errors: Vec<_> = table
         .get_ref()
         .iter()
         .flat_map(|(key, value)| take(&mut config, source, key, value))
         .collect();
-    if problems.is_empty() {
+    if errors.is_empty() {
         Ok(config)
     } else {
-        problems.sort();
-        Err(problems)
+        errors.sort();
+        Err(errors)
     }
 }
 
@@ -45,13 +46,13 @@ fn take(
     source: &str,
     key: &Spanned<Cow<'_, str>>,
     value: &Spanned<DeValue<'_>>,
-) -> Vec<ConfigProblem> {
+) -> Vec<ConfigError> {
     let name = key.get_ref().as_ref();
     let Some(known) = ConfigKey::named(name) else {
-        let kind = ConfigProblemKind::UnknownKey {
+        let kind = ConfigErrorKind::UnknownKey {
             key: name.to_string(),
         };
-        return vec![problem(source, key.span().start, kind)];
+        return vec![error_at(source, key.span().start, kind)];
     };
     match known {
         ConfigKey::TagLinks => match tag_links(source, value) {
@@ -63,7 +64,7 @@ fn take(
         },
         ConfigKey::Setting(key) => set(config, key, name, value)
             .err()
-            .map(|kind| problem(source, value.span().start, kind))
+            .map(|kind| error_at(source, value.span().start, kind))
             .into_iter()
             .collect(),
     }
@@ -76,12 +77,12 @@ fn set(
     key: SettingKey,
     name: &str,
     value: &Spanned<DeValue<'_>>,
-) -> Result<(), ConfigProblemKind> {
-    let wrong_type = |expected| ConfigProblemKind::WrongType {
+) -> Result<(), ConfigErrorKind> {
+    let wrong_type = |expected| ConfigErrorKind::WrongType {
         key: name.to_string(),
         expected,
     };
-    let empty = || ConfigProblemKind::Empty {
+    let empty = || ConfigErrorKind::Empty {
         key: name.to_string(),
     };
     match key {
@@ -98,7 +99,7 @@ fn set(
             Some("") => Err(empty()),
             Some(text) => {
                 config.version_name = Some(VersionName::new(text).ok_or_else(|| {
-                    ConfigProblemKind::InvalidVersionName {
+                    ConfigErrorKind::InvalidVersionName {
                         name: text.to_string(),
                     }
                 })?);
@@ -120,7 +121,7 @@ fn set(
                 .and_then(Colour::from_hex)
                 .ok_or_else(|| wrong_type(ValueType::Colour))?;
             if let Some(shortfall) = check_accent(theme, colour) {
-                return Err(ConfigProblemKind::TooLittleContrast {
+                return Err(ConfigErrorKind::TooLittleContrast {
                     key: name.to_string(),
                     shortfall,
                 });
@@ -135,9 +136,9 @@ fn text<'a>(value: &'a Spanned<DeValue<'_>>) -> Option<&'a str> {
     value.get_ref().as_str()
 }
 
-/// The problem `kind`, on the line of `offset` in `source`.
-fn problem(source: &str, offset: usize, kind: ConfigProblemKind) -> ConfigProblem {
-    ConfigProblem {
+/// The error `kind`, on the line of `offset` in `source`.
+fn error_at(source: &str, offset: usize, kind: ConfigErrorKind) -> ConfigError {
+    ConfigError {
         line: Some(line_of(source, offset)),
         kind,
     }

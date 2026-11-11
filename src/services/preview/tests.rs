@@ -3,7 +3,8 @@ use std::sync::atomic::Ordering;
 use std::thread::scope;
 
 use super::*;
-use crate::entities::{FolderState, OutputProblemKind};
+use crate::entities::FolderState;
+use crate::errors::OutputErrorKind;
 use crate::ports::SiteWriter;
 
 mod fakes;
@@ -109,11 +110,8 @@ fn a_first_build_that_stops_serves_nothing() {
             mode,
             ..ServeOptions::default()
         };
-        let failure = service.serve(&options, words(), &Recorded::default());
-        assert!(
-            matches!(failure, Err(ServeFailure::Input(_))),
-            "{failure:?}"
-        );
+        let outcome = service.serve(&options, words(), &Recorded::default());
+        assert!(matches!(outcome, Err(ServeError::Input(_))), "{outcome:?}");
     }
     assert!(server.started.lock().expect("lock").is_none());
 }
@@ -176,13 +174,13 @@ fn a_build_into_a_folder_ghg_did_not_build_serves_nothing_unless_it_is_in_memory
         server.clone(),
         watcher.clone(),
     );
-    let failure = service.serve(&ServeOptions::default(), words(), &Recorded::default());
+    let outcome = service.serve(&ServeOptions::default(), words(), &Recorded::default());
     assert!(
         matches!(
-            &failure,
-            Err(ServeFailure::Output(problem)) if problem.kind == OutputProblemKind::NotASite
+            &outcome,
+            Err(ServeError::Output(error)) if error.kind == OutputErrorKind::NotASite
         ),
-        "{failure:?}"
+        "{outcome:?}"
     );
     assert!(server.started.lock().expect("lock").is_none());
     let options = ServeOptions {

@@ -1,4 +1,4 @@
-//! Folders and files that cannot be read, reported as problems.
+//! Folders and files that cannot be read, reported as errors.
 
 use super::*;
 
@@ -36,17 +36,17 @@ fn a_folder_that_cannot_be_listed_is_reported() {
         unlock(&input.join("locked"), 0o755);
         return;
     }
-    let problems = read_input(&input);
+    let errors = read_input(&input);
     unlock(&input.join("locked"), 0o755);
 
-    let problems = problems.expect_err("cannot be read");
-    let problems = problems.as_slice();
-    assert_eq!(problems.len(), 1);
-    assert_eq!(problems[0].path, "locked");
+    let errors = errors.expect_err("cannot be read");
+    let errors = errors.as_slice();
+    assert_eq!(errors.len(), 1);
+    assert_eq!(errors[0].path, "locked");
     assert!(
-        matches!(problems[0].kind, ProblemKind::CannotBeListed { .. }),
+        matches!(errors[0].kind, InputErrorKind::CannotBeListed { .. }),
         "{}",
-        problems[0]
+        errors[0]
     );
 }
 
@@ -67,17 +67,17 @@ fn a_ghg_ignore_file_or_a_feature_file_that_cannot_be_opened_is_reported() {
         unlock(&input.join("read.feature"), 0o644);
         return;
     }
-    let problems = read_input(&input);
+    let errors = read_input(&input);
     unlock(&input.join(".ghg-ignore"), 0o644);
     unlock(&input.join("read.feature"), 0o644);
 
-    let problems = problems.expect_err("cannot be read");
-    let found: Vec<_> = problems
+    let errors = errors.expect_err("cannot be read");
+    let found: Vec<_> = errors
         .as_slice()
         .iter()
-        .map(|problem| {
-            let unreadable = matches!(problem.kind, ProblemKind::CannotBeRead { .. });
-            (problem.path.as_str(), problem.line, unreadable)
+        .map(|error| {
+            let unreadable = matches!(error.kind, InputErrorKind::CannotBeRead { .. });
+            (error.path.as_str(), error.line, unreadable)
         })
         .collect();
     assert_eq!(
@@ -90,13 +90,13 @@ fn a_ghg_ignore_file_or_a_feature_file_that_cannot_be_opened_is_reported() {
 fn an_input_folder_that_does_not_exist_is_reported() {
     // Rule 14.
     let input = scratch("input/missing").join("not-there");
-    let problems = read_input(&input).expect_err("cannot be read");
-    let problems = problems.as_slice();
-    assert_eq!(problems.len(), 1);
-    assert_eq!(problems[0].path, input.display().to_string());
+    let errors = read_input(&input).expect_err("cannot be read");
+    let errors = errors.as_slice();
+    assert_eq!(errors.len(), 1);
+    assert_eq!(errors[0].path, input.display().to_string());
     assert!(
-        matches!(problems[0].kind, ProblemKind::InputMissing),
+        matches!(errors[0].kind, InputErrorKind::InputMissing),
         "{}",
-        problems[0]
+        errors[0]
     );
 }

@@ -31,11 +31,3 @@ pub(crate) struct Changes {
     #[expect(dead_code, reason = "it is held only to be dropped")]
     pub(crate) watching: Box<dyn Any + Send>,
 }
-
-/// Watching that cannot start: the path it stopped at, and the reason in
-/// the operating system's or the `notify` crate's words.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct WatchFailure {
-    pub(crate) path: PathBuf,
-    pub(crate) reason: String,
-}

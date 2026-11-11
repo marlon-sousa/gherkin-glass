@@ -6,42 +6,43 @@ use std::path::Path;
 
 use gherkin::{EnvError, Feature, GherkinEnv, ParseFileError};
 
-use crate::entities::{ParseFailure, ProblemKind, RawFeature};
+use crate::entities::RawFeature;
+use crate::errors::{InputErrorKind, ParseError};
 use crate::ports::FeatureParser;
 
 #[derive(Debug, Default, Clone, Copy)]
 pub(crate) struct GherkinParser;
 
 impl FeatureParser for GherkinParser {
-    fn parse(&self, path: &Path) -> Result<RawFeature, ParseFailure> {
+    fn parse(&self, path: &Path) -> Result<RawFeature, ParseError> {
         let source = read_to_string(path).map_err(cannot_be_read)?;
         // `parse_path` reads the file again, but only it returns the crate's
         // messages. `GherkinEnv` holds `RefCell`s, so each parse needs its own.
         let feature = Feature::parse_path(path, GherkinEnv::default())
-            .map_err(|error| parse_failure(error, &source))?;
+            .map_err(|error| parse_error(error, &source))?;
         Ok(RawFeature { feature, source })
     }
 }
 
-fn cannot_be_read(error: IoError) -> ParseFailure {
-    ParseFailure {
+fn cannot_be_read(error: IoError) -> ParseError {
+    ParseError {
         line: None,
-        kind: ProblemKind::CannotBeRead {
+        kind: InputErrorKind::CannotBeRead {
             reason: error.to_string(),
         },
     }
 }
 
-fn parse_failure(error: ParseFileError, source: &str) -> ParseFailure {
+fn parse_error(error: ParseFileError, source: &str) -> ParseError {
     match error {
         ParseFileError::Reading { source, .. } => cannot_be_read(source),
         ParseFileError::Parsing {
             error,
             source: parse_error,
             ..
-        } => ParseFailure {
+        } => ParseError {
             line: parser_line(&parse_error.to_string()).map(|line| line_in(source, line)),
-            kind: parser_problem(error),
+            kind: parser_error(error),
         },
     }
 }
@@ -57,16 +58,16 @@ fn line_in(source: &str, line: usize) -> usize {
     line.min(source.lines().count().max(1))
 }
 
-fn parser_problem(error: Option<EnvError>) -> ProblemKind {
+fn parser_error(error: Option<EnvError>) -> InputErrorKind {
     match error {
         // The crate keeps the line break after an unknown keyword.
-        Some(EnvError::UnknownKeyword(keyword)) => ProblemKind::Parser {
+        Some(EnvError::UnknownKeyword(keyword)) => InputErrorKind::Parser {
             message: EnvError::UnknownKeyword(keyword.trim_end().to_string()).to_string(),
         },
-        Some(error) => ProblemKind::Parser {
+        Some(error) => InputErrorKind::Parser {
             message: error.to_string(),
         },
-        None => ProblemKind::Syntax,
+        None => InputErrorKind::Syntax,
     }
 }
 
@@ -96,8 +97,8 @@ mod tests {
     #[test]
     fn an_unknown_keyword_is_named_without_its_line_break() {
         assert_eq!(
-            parser_problem(Some(EnvError::UnknownKeyword("Wen \n".to_string()))),
-            ProblemKind::Parser {
+            parser_error(Some(EnvError::UnknownKeyword("Wen \n".to_string()))),
+            InputErrorKind::Parser {
                 message: "Unknown keyword: 'Wen'.".to_string()
             }
         );

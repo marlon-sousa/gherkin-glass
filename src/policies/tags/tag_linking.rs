@@ -9,18 +9,10 @@ use regex_syntax::hir::{Hir, Look};
 use regex_syntax::{Error as SyntaxError, ParserBuilder};
 
 use crate::entities::{OutsideLink, TagLink, percent_encoded};
-
-/// Why a pattern cannot be used.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) enum PatternProblem {
-    /// The `regex-syntax` crate's short description, such as `unclosed group`.
-    Syntax(String),
-    /// Over the size limit the `regex` crate sets too.
-    TooLarge,
-}
+use crate::errors::PatternErrorKind;
 
 /// `source`, in the `regex` crate's syntax, made to match a whole tag only.
-pub(crate) fn whole_tag_pattern(source: &str) -> Result<Regex, PatternProblem> {
+pub(crate) fn whole_tag_pattern(source: &str) -> Result<Regex, PatternErrorKind> {
     let hir = ParserBuilder::new()
         .build()
         .parse(source)
@@ -29,15 +21,15 @@ pub(crate) fn whole_tag_pattern(source: &str) -> Result<Regex, PatternProblem> {
             SyntaxError::Translate(error) => error.kind().to_string(),
             other => other.to_string(),
         })
-        .map_err(PatternProblem::Syntax)?;
+        .map_err(PatternErrorKind::Syntax)?;
     // Anchoring the parsed expression, rather than its text, keeps a
     // trailing comment of the `x` flag from swallowing the anchor.
     let whole = Hir::concat(vec![Hir::look(Look::Start), hir, Hir::look(Look::End)]);
     Regex::builder()
         .build_from_hir(&whole)
         .map_err(|error| match error.size_limit() {
-            Some(_) => PatternProblem::TooLarge,
-            None => PatternProblem::Syntax(error.to_string()),
+            Some(_) => PatternErrorKind::TooLarge,
+            None => PatternErrorKind::Syntax(error.to_string()),
         })
 }
 
@@ -171,11 +163,11 @@ mod tests {
     fn a_pattern_that_is_not_a_regular_expression_has_the_regex_crate_s_reason() {
         assert_eq!(
             whole_tag_pattern("@issue-(\\d+").err(),
-            Some(PatternProblem::Syntax("unclosed group".into()))
+            Some(PatternErrorKind::Syntax("unclosed group".into()))
         );
         assert_eq!(
             whole_tag_pattern("@(a{1000}){1000}").err(),
-            Some(PatternProblem::TooLarge)
+            Some(PatternErrorKind::TooLarge)
         );
     }
 

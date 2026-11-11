@@ -6,7 +6,8 @@ use std::path::PathBuf;
 use gherkin::{Feature, GherkinEnv};
 
 use super::*;
-use crate::entities::{CollectedInput, ParseFailure, RawFeature};
+use crate::entities::{CollectedInput, RawFeature};
+use crate::errors::ParseError;
 
 struct FakeCollector(CollectedInput);
 
@@ -20,16 +21,16 @@ impl InputCollector for FakeCollector {
 struct FakeParser(BTreeMap<PathBuf, String>);
 
 impl FeatureParser for FakeParser {
-    fn parse(&self, path: &Path) -> Result<RawFeature, ParseFailure> {
-        let source = self.0.get(path).cloned().ok_or_else(|| ParseFailure {
+    fn parse(&self, path: &Path) -> Result<RawFeature, ParseError> {
+        let source = self.0.get(path).cloned().ok_or_else(|| ParseError {
             line: None,
-            kind: ProblemKind::CannotBeRead {
+            kind: InputErrorKind::CannotBeRead {
                 reason: "permission denied".to_string(),
             },
         })?;
-        let feature = Feature::parse(&source, GherkinEnv::default()).map_err(|_| ParseFailure {
+        let feature = Feature::parse(&source, GherkinEnv::default()).map_err(|_| ParseError {
             line: Some(1),
-            kind: ProblemKind::Syntax,
+            kind: InputErrorKind::Syntax,
         })?;
         Ok(RawFeature { feature, source })
     }
@@ -37,21 +38,21 @@ impl FeatureParser for FakeParser {
 
 fn read(
     paths: &[&str],
-    problems: Vec<Problem>,
+    errors: Vec<InputError>,
     texts: &[(&str, &str)],
-) -> Result<Vec<ParsedFeature>, Problems> {
-    read_with(paths, problems, texts, Unnamed::Allowed)
+) -> Result<Vec<ParsedFeature>, InputErrors> {
+    read_with(paths, errors, texts, Unnamed::Allowed)
 }
 
 fn read_with(
     paths: &[&str],
-    problems: Vec<Problem>,
+    errors: Vec<InputError>,
     texts: &[(&str, &str)],
     unnamed: Unnamed,
-) -> Result<Vec<ParsedFeature>, Problems> {
+) -> Result<Vec<ParsedFeature>, InputErrors> {
     let collector = FakeCollector(CollectedInput {
         paths: paths.iter().map(PathBuf::from).collect(),
-        problems,
+        errors,
     });
     let parser = FakeParser(
         texts
@@ -63,18 +64,18 @@ fn read_with(
 }
 
 #[test]
-fn the_problems_of_collecting_and_parsing_are_reported_together_sorted() {
-    // How the service combines the collector's problems with the parser's;
+fn the_errors_of_collecting_and_parsing_are_reported_together_sorted() {
+    // How the service combines the collector's errors with the parser's;
     // the messages are the fakes' own.
-    let locked = Problem::new(
+    let locked = InputError::new(
         Path::new("in"),
         Path::new("in/locked"),
         None,
-        ProblemKind::CannotBeListed {
+        InputErrorKind::CannotBeListed {
             reason: "permission denied".to_string(),
         },
     );
-    let problems = read(
+    let errors = read(
         &["in/a.feature", "in/b.feature", "in/c.feature"],
         vec![locked],
         &[
@@ -84,7 +85,7 @@ fn the_problems_of_collecting_and_parsing_are_reported_together_sorted() {
     )
     .expect_err("problems");
     assert_eq!(
-        problems.to_string(),
+        errors.to_string(),
         "b.feature: cannot be read: permission denied\n\
          c.feature:1: Syntax error.\n\
          locked: cannot be listed: permission denied\n"
@@ -102,11 +103,11 @@ fn refused_unnamed_blocks_are_reported_with_the_files_that_cannot_be_read() {
         ("in/c.feature", "Feature: C\n"),
     ];
     let paths = ["in/a.feature", "in/b.feature", "in/c.feature"];
-    let problems = read_with(&paths, Vec::new(), &texts, Unnamed::Refused).expect_err("problems");
+    let errors = read_with(&paths, Vec::new(), &texts, Unnamed::Refused).expect_err("problems");
     assert_eq!(
-        problems.to_string(),
-        "a.feature:1: unnamed Feature\n\
-         a.feature:4: unnamed Scenario\n\
+        errors.to_string(),
+        "a.feature:1: The feature has no name, and allow_unnamed is false.\n\
+         a.feature:4: The scenario has no name, and allow_unnamed is false.\n\
          b.feature:1: Syntax error.\n"
     );
     let features = read_with(&paths[..1], Vec::new(), &texts, Unnamed::Allowed);

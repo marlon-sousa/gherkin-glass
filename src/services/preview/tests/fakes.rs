@@ -8,10 +8,8 @@ use std::thread::sleep;
 use std::time::{Duration, Instant};
 
 use super::*;
-use crate::entities::{
-    Changes, CollectedInput, FolderState, Marker, ParseFailure, Problem, ProblemKind, RawFeature,
-    VersionName,
-};
+use crate::entities::{Changes, CollectedInput, FolderState, Marker, RawFeature, VersionName};
+use crate::errors::{InputError, InputErrorKind, ListenErrorKind, ParseError, WatchError};
 use crate::ports::{FeatureParser, InputCollector, OutputFolders, SiteWriter};
 use std::collections::BTreeMap;
 
@@ -24,7 +22,7 @@ impl ConfigReader for NoFile {
     }
 }
 
-/// An input with no features, or, while `failing`, one problem;
+/// An input with no features, or, while `failing`, one error;
 /// `collected` counts how often it was walked.
 #[derive(Default)]
 pub(super) struct Input {
@@ -35,21 +33,21 @@ pub(super) struct Input {
 impl InputCollector for Input {
     fn collect(&self, input: &Path) -> CollectedInput {
         self.collected.fetch_add(1, Ordering::SeqCst);
-        let problems = if self.failing.load(Ordering::SeqCst) {
-            let kind = ProblemKind::Changed;
-            vec![Problem::new(input, &input.join("a.feature"), None, kind)]
+        let errors = if self.failing.load(Ordering::SeqCst) {
+            let kind = InputErrorKind::Changed;
+            vec![InputError::new(input, &input.join("a.feature"), None, kind)]
         } else {
             Vec::new()
         };
         CollectedInput {
             paths: Vec::new(),
-            problems,
+            errors,
         }
     }
 }
 
 impl FeatureParser for Input {
-    fn parse(&self, _: &Path) -> Result<RawFeature, ParseFailure> {
+    fn parse(&self, _: &Path) -> Result<RawFeature, ParseError> {
         unreachable!("no feature is collected")
     }
 }
@@ -67,7 +65,7 @@ impl PreviewServer for Server {
         port: u16,
         preview: Arc<Preview>,
         _: ServerWords,
-    ) -> Result<SocketAddr, ListenFailure> {
+    ) -> Result<SocketAddr, ListenErrorKind> {
         *self.started.lock().unwrap_or_else(PoisonError::into_inner) =
             Some((host.to_string(), port, preview));
         Ok(SocketAddr::V4(SocketAddrV4::new(
@@ -87,7 +85,7 @@ pub(super) struct Watcher {
 }
 
 impl ChangeWatcher for Watcher {
-    fn watch(&self, watched: &[Watched]) -> Result<Changes, WatchFailure> {
+    fn watch(&self, watched: &[Watched]) -> Result<Changes, WatchError> {
         let (sender, bursts) = channel();
         for _ in 0..self.waiting {
             sender.send(Burst::Missed).expect("sent");
@@ -111,8 +109,8 @@ impl PreviewEvents for Recorded {
     fn rebuilt(&self) {
         self.push("rebuilt".into());
     }
-    fn not_rebuilt(&self, failure: &RebuildFailure) {
-        self.push(format!("not rebuilt: {failure:?}"));
+    fn not_rebuilt(&self, error: &RebuildError) {
+        self.push(format!("not rebuilt: {error:?}"));
     }
 }
 

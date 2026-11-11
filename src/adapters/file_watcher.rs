@@ -7,7 +7,8 @@ use std::time::Duration;
 use notify_debouncer_full::notify::{Error as NotifyError, Event, EventKind, RecursiveMode};
 use notify_debouncer_full::{DebounceEventHandler, DebounceEventResult, new_debouncer};
 
-use crate::entities::{Burst, Changes, WatchFailure, Watched};
+use crate::entities::{Burst, Changes, Watched};
+use crate::errors::WatchError;
 use crate::ports::ChangeWatcher;
 
 /// How long the files must stay unchanged before a burst of changes ends.
@@ -17,7 +18,7 @@ const QUIET_FOR: Duration = Duration::from_millis(200);
 pub(crate) struct FileWatcher;
 
 impl ChangeWatcher for FileWatcher {
-    fn watch(&self, watched: &[Watched]) -> Result<Changes, WatchFailure> {
+    fn watch(&self, watched: &[Watched]) -> Result<Changes, WatchError> {
         let places = watched
             .iter()
             .map(Place::of)
@@ -28,13 +29,13 @@ impl ChangeWatcher for FileWatcher {
             sender,
         };
         let first = places.first().map(Place::folder).unwrap_or(Path::new("."));
-        let mut debouncer = new_debouncer(QUIET_FOR, None, reporter).map_err(failure_at(first))?;
+        let mut debouncer = new_debouncer(QUIET_FOR, None, reporter).map_err(error_at(first))?;
         // A folder watched alone again would stop its subfolders being
         // watched on macOS and Windows.
         for place in places.iter().filter(|place| place.alone(&places)) {
             debouncer
                 .watch(place.folder(), place.mode())
-                .map_err(failure_at(place.folder()))?;
+                .map_err(error_at(place.folder()))?;
         }
         Ok(Changes {
             bursts,
@@ -59,7 +60,7 @@ enum Place {
 }
 
 impl Place {
-    fn of(watched: &Watched) -> Result<Place, WatchFailure> {
+    fn of(watched: &Watched) -> Result<Place, WatchError> {
         match watched {
             Watched::Folder(given) => Ok(Place::Folder {
                 given: given.clone(),
@@ -184,16 +185,16 @@ fn parent(file: &Path) -> &Path {
     }
 }
 
-fn canonical(path: &Path) -> Result<PathBuf, WatchFailure> {
-    path.canonicalize().map_err(|error| WatchFailure {
+fn canonical(path: &Path) -> Result<PathBuf, WatchError> {
+    path.canonicalize().map_err(|error| WatchError {
         path: path.to_path_buf(),
         reason: error.to_string(),
     })
 }
 
-fn failure_at(path: &Path) -> impl FnOnce(NotifyError) -> WatchFailure + use<> {
+fn error_at(path: &Path) -> impl FnOnce(NotifyError) -> WatchError + use<> {
     let path = path.to_path_buf();
-    move |error| WatchFailure {
+    move |error| WatchError {
         path,
         reason: error.to_string(),
     }

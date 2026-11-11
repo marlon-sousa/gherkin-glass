@@ -2,7 +2,7 @@
 
 use gherkin::{Feature, Scenario};
 
-use crate::entities::UnnamedBlock;
+use crate::errors::UnnamedBlock;
 
 /// The line of each unnamed feature, rule, scenario and scenario outline, in file order.
 pub(crate) fn unnamed_blocks(feature: &Feature) -> Vec<(usize, UnnamedBlock)> {

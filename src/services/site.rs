@@ -3,7 +3,8 @@
 use std::path::Path;
 use std::sync::Arc;
 
-use crate::entities::{BuiltSite, Problem, ProblemKind, Problems, Settings, SiteFile, SiteFiles};
+use crate::entities::{BuiltSite, Settings, SiteFile, SiteFiles};
+use crate::errors::{InputError, InputErrorKind, InputErrors};
 use crate::policies::site_files;
 use crate::ports::SiteWriter;
 use crate::services::InputService;
@@ -21,14 +22,18 @@ impl SiteService {
     /// Writes into `output`, any folder, over what is there, and only once the
     /// whole input is read. Whether a folder on disk may be written into is
     /// [`crate::services::OutputService`]'s to decide.
-    pub(crate) fn build(&self, settings: &Settings, output: &Path) -> Result<BuiltSite, Problems> {
+    pub(crate) fn build(
+        &self,
+        settings: &Settings,
+        output: &Path,
+    ) -> Result<BuiltSite, InputErrors> {
         let site = self.files(settings)?;
         self.write(output, site.files)?;
         Ok(site.built)
     }
 
     /// Every file of the site, pages first, in file order. Nothing is written.
-    pub(crate) fn files(&self, settings: &Settings) -> Result<SiteFiles, Problems> {
+    pub(crate) fn files(&self, settings: &Settings) -> Result<SiteFiles, InputErrors> {
         let features = self.input.read(&settings.input, settings.unnamed)?;
         Ok(site_files(&features, &settings.pages))
     }
@@ -38,16 +43,16 @@ impl SiteService {
         &self,
         output: &Path,
         files: impl IntoIterator<Item = SiteFile>,
-    ) -> Result<(), Problems> {
+    ) -> Result<(), InputErrors> {
         for file in files {
             let address = file.address.as_str();
             self.writer
                 .write(output, address, &file.contents)
                 .map_err(|error| {
-                    Problems::new(vec![Problem::of_site(
+                    InputErrors::new(vec![InputError::of_site(
                         output,
                         address,
-                        ProblemKind::CannotBeWritten {
+                        InputErrorKind::CannotBeWritten {
                             reason: error.to_string(),
                         },
                     )])
@@ -67,7 +72,8 @@ mod tests {
     use gherkin::{Feature, GherkinEnv};
 
     use super::*;
-    use crate::entities::{CollectedInput, PageOptions, ParseFailure, RawFeature, Unnamed};
+    use crate::entities::{CollectedInput, PageOptions, RawFeature, Unnamed};
+    use crate::errors::ParseError;
     use crate::ports::{FeatureParser, InputCollector};
 
     struct FakeCollector(Vec<&'static str>);
@@ -76,7 +82,7 @@ mod tests {
         fn collect(&self, input: &Path) -> CollectedInput {
             CollectedInput {
                 paths: self.0.iter().map(|path| input.join(path)).collect(),
-                problems: Vec::new(),
+                errors: Vec::new(),
             }
         }
     }
@@ -84,7 +90,7 @@ mod tests {
     struct FakeParser;
 
     impl FeatureParser for FakeParser {
-        fn parse(&self, path: &Path) -> Result<RawFeature, ParseFailure> {
+        fn parse(&self, path: &Path) -> Result<RawFeature, ParseError> {
             let source = format!("Feature: {}\n", path.display());
             let feature = Feature::parse(&source, GherkinEnv::default()).expect("parses");
             Ok(RawFeature { feature, source })
@@ -109,7 +115,7 @@ mod tests {
         }
     }
 
-    fn build(paths: Vec<&'static str>, writer: Arc<FakeWriter>) -> Result<BuiltSite, Problems> {
+    fn build(paths: Vec<&'static str>, writer: Arc<FakeWriter>) -> Result<BuiltSite, InputErrors> {
         let input = InputService::new(Arc::new(FakeCollector(paths)), Arc::new(FakeParser));
         let settings = Settings {
             input: PathBuf::from("in"),
@@ -150,27 +156,43 @@ mod tests {
         );
     }
 
+    /// Each of `errors`, as the path it is said of and what is wrong.
+    fn paths_and_kinds(errors: &InputErrors) -> Vec<(&str, &InputErrorKind)> {
+        let each = errors.as_slice().iter();
+        each.map(|error| (error.path.as_str(), &error.kind))
+            .collect()
+    }
+
     #[test]
     fn a_file_that_cannot_be_written_is_reported_with_the_output_folder() {
         let writer = Arc::new(FakeWriter {
             fails: Some("sub/b.html"),
             ..FakeWriter::default()
         });
-        let problems = build(vec!["a.feature", "sub/b.feature"], writer).expect_err("fails");
-        assert_eq!(
-            problems.to_string(),
-            "elsewhere/sub/b.html: cannot be written: disk full\n"
-        );
+        let errors = build(vec!["a.feature", "sub/b.feature"], writer).expect_err("fails");
+        let found = paths_and_kinds(&errors);
+        let kind = InputErrorKind::CannotBeWritten {
+            reason: "disk full".into(),
+        };
+        assert_eq!(found, [("elsewhere/sub/b.html", &kind)]);
     }
 
     #[test]
     fn files_with_the_same_page_are_reported_and_nothing_is_written() {
         let writer = Arc::new(FakeWriter::default());
-        let problems =
+        let errors =
             build(vec!["a.feature", "a.story", "A"], writer.clone()).expect_err("the same page");
+        let found = paths_and_kinds(&errors);
+        let same_page = |page: &str| InputErrorKind::SamePage {
+            page: page.into(),
+            first: "a.feature".into(),
+        };
         assert_eq!(
-            problems.to_string(),
-            "A: has the same page, A.html, as a.feature\na.story: has the same page, a.html, as a.feature\n"
+            found,
+            [
+                ("A", &same_page("A.html")),
+                ("a.story", &same_page("a.html"))
+            ]
         );
         assert!(writer.written.lock().expect("not poisoned").is_empty());
     }

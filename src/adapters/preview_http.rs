@@ -13,7 +13,8 @@ use std::time::Duration;
 
 use tiny_http::{Header, Method, Request, Response, Server, StatusCode};
 
-use crate::entities::{ListenFailure, Preview, ServedSite, ServerWords, Version};
+use crate::entities::{Preview, ServedSite, ServerWords, Version};
+use crate::errors::ListenErrorKind;
 use crate::ports::PreviewServer;
 use content_type::{content_type, is_html};
 use reload_injection::add_reload_script;
@@ -35,11 +36,11 @@ impl PreviewServer for HttpPreviewServer {
         port: u16,
         preview: Arc<Preview>,
         words: ServerWords,
-    ) -> Result<SocketAddr, ListenFailure> {
+    ) -> Result<SocketAddr, ListenErrorKind> {
         let bind = || {
             TcpListener::bind((host, port)).map_err(|error| match error.kind() {
-                ErrorKind::AddrInUse => ListenFailure::PortTaken,
-                _ => ListenFailure::Other {
+                ErrorKind::AddrInUse => ListenErrorKind::PortTaken,
+                _ => ListenErrorKind::Other {
                     reason: error.to_string(),
                 },
             })
@@ -51,17 +52,17 @@ impl PreviewServer for HttpPreviewServer {
             let bound = listener.local_addr().ok();
             drop(listener);
             if bound.is_some_and(someone_listens) {
-                return Err(ListenFailure::PortTaken);
+                return Err(ListenErrorKind::PortTaken);
             }
             listener = bind()?;
         }
         let address = listener
             .local_addr()
-            .map_err(|error| ListenFailure::Other {
+            .map_err(|error| ListenErrorKind::Other {
                 reason: error.to_string(),
             })?;
         let server = Arc::new(Server::from_listener(listener, None).map_err(|error| {
-            ListenFailure::Other {
+            ListenErrorKind::Other {
                 reason: error.to_string(),
             }
         })?);

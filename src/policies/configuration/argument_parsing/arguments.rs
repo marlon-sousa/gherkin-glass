@@ -6,14 +6,13 @@ use std::path::PathBuf;
 use clap::builder::{OsStringValueParser, TypedValueParser};
 use clap::{ArgAction, Args, Parser, Subcommand};
 
-use crate::entities::{
-    ArgumentProblem, BuildOptions, Invocation, ServeMode, ServeOptions, VersionName,
-};
+use crate::entities::{BuildOptions, Invocation, ServeMode, ServeOptions, VersionName};
+use crate::errors::ArgumentError;
 
 use super::option_values::{port, text, version_name};
 
 /// clap prints nothing: `--help` and `--version` are answered with the
-/// catalogue's words, and its mistakes become [`ArgumentProblem`]s.
+/// catalogue's words, and its mistakes become [`ArgumentError`]s.
 #[derive(Debug, Parser)]
 #[command(
     name = "ghg",
@@ -71,11 +70,11 @@ struct ServeArguments {
 }
 
 impl TryFrom<Arguments> for Invocation {
-    type Error = ArgumentProblem;
+    type Error = ArgumentError;
 
     fn try_from(arguments: Arguments) -> Result<Self, Self::Error> {
         match arguments.command {
-            None => Err(ArgumentProblem::MissingCommand),
+            None => Err(ArgumentError::MissingCommand),
             Some(Command::Build(build)) => Ok(Invocation::Build(build.options("ghg build")?)),
             Some(Command::Serve(serve)) => Ok(Invocation::Serve(serve.try_into()?)),
         }
@@ -84,9 +83,9 @@ impl TryFrom<Arguments> for Invocation {
 
 impl BuildArguments {
     /// The options, unless an argument follows `--` in `command`.
-    fn options(self, command: &str) -> Result<BuildOptions, ArgumentProblem> {
+    fn options(self, command: &str) -> Result<BuildOptions, ArgumentError> {
         if let Some(argument) = self.after_the_options.first() {
-            return Err(ArgumentProblem::UnexpectedArgument {
+            return Err(ArgumentError::UnexpectedArgument {
                 command: command.to_string(),
                 argument: argument.to_string_lossy().into_owned(),
             });
@@ -102,12 +101,12 @@ impl BuildArguments {
 }
 
 impl TryFrom<ServeArguments> for ServeOptions {
-    type Error = ArgumentProblem;
+    type Error = ArgumentError;
 
     fn try_from(arguments: ServeArguments) -> Result<Self, Self::Error> {
         let build = arguments.build.options("ghg serve")?;
         let mode = match (arguments.no_build, arguments.watch) {
-            (true, true) => return Err(ArgumentProblem::WatchWithoutBuild),
+            (true, true) => return Err(ArgumentError::WatchWithoutBuild),
             (true, false) => ServeMode::Folder,
             (false, true) => ServeMode::Watch,
             (false, false) => ServeMode::Build,
