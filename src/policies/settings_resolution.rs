@@ -33,6 +33,7 @@ pub(crate) fn resolve_settings(options: &BuildOptions, folder: &Path, config: &C
         output,
         unnamed,
         pages: PageOptions {
+            title: options.title.clone().or_else(|| config.title.clone()),
             source_link: config.source_link.clone(),
             collapse_rules: config.collapse_rules.unwrap_or(false),
             collapse_scenarios: config.collapse_scenarios.unwrap_or(false),
@@ -95,6 +96,26 @@ mod tests {
             input((Some(file), Some("x")), file, Some("specs")),
             PathBuf::from("x")
         );
+    }
+
+    #[test]
+    fn the_title_option_wins_over_the_file_s() {
+        let title = |option: Option<&str>, set: Option<&str>| {
+            let options = BuildOptions {
+                title: option.map(str::to_string),
+                ..BuildOptions::default()
+            };
+            let config = Config {
+                title: set.map(str::to_string),
+                ..Config::default()
+            };
+            resolve_settings(&options, Path::new(""), &config)
+                .pages
+                .title
+        };
+        assert_eq!(title(Some("cli"), Some("file")).as_deref(), Some("cli"));
+        assert_eq!(title(None, Some("file")).as_deref(), Some("file"));
+        assert_eq!(title(None, None), None);
     }
 
     #[test]

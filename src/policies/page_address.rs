@@ -2,6 +2,9 @@
 
 use std::path::{Component, Path};
 
+/// A folder's page, in its folder of the site.
+pub(crate) const FOLDER_PAGE: &str = "index.html";
+
 /// `path` is relative to the input folder. Its parts are joined by `/`, and
 /// its last extension is replaced by `html`, or `.html` added when it has none.
 pub(crate) fn page_address(path: &Path) -> String {

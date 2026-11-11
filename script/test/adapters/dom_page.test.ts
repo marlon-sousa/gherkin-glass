@@ -110,3 +110,35 @@ test("the browser's storage keeps each state, and a storage that refuses keeps n
     delete global.window;
   }
 });
+
+// A folder page: tests/fixtures/pages/expected/billing/index.html, docs/BEHAVIOUR.md, rule 84.
+
+const FOLDER = new URL("../../../tests/fixtures/pages/expected/billing/index.html", import.meta.url);
+
+function openFolder(kept: Map<string, string>): Window {
+  const window = new Window({ url: "https://example.com/site/billing/index.html" });
+  window.document.write(readFileSync(FOLDER, "utf8"));
+  const memory: Memory = { get: (key) => kept.get(key) ?? null, set: (key, value) => void kept.set(key, value) };
+  startCollapsing(new DomPage(window.document as unknown as Document), memory, window.location.pathname);
+  return window;
+}
+
+test("a folder page's feature shows its contents by its button, remembered under its link's address", () => {
+  const kept = new Map<string, string>();
+  const window = openFolder(kept);
+  const page = new DomPage(window.document as unknown as Document);
+  assert.deepEqual(
+    page.blocks().map((block) => [block.anchor, block.parent]),
+    [["refunds.html", null]],
+  );
+  const toggle = window.document.querySelector(".ghg-feature > button") as unknown as HTMLElement;
+  const contents = window.document.querySelector(".ghg-feature > .ghg-content")!;
+  assert.equal(toggle.getAttribute("aria-expanded"), "false");
+  assert.equal(contents.hasAttribute("hidden"), true);
+  toggle.click();
+  assert.equal(toggle.getAttribute("aria-expanded"), "true");
+  assert.equal(contents.hasAttribute("hidden"), false);
+  assert.equal(kept.get("gherkin-glass:/site/billing/index.html#refunds.html"), "expanded");
+  const again = openFolder(kept);
+  assert.equal(again.document.querySelector(".ghg-feature > button")!.getAttribute("aria-expanded"), "true");
+});

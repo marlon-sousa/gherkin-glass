@@ -6,8 +6,8 @@ var DomBlock = class {
   parent;
   button;
   content;
-  constructor(heading, button, content, parent) {
-    this.anchor = heading.id;
+  constructor(anchor, button, content, parent) {
+    this.anchor = anchor;
     this.button = button;
     this.content = content;
     this.parent = parent;
@@ -35,9 +35,18 @@ var DomPage = class {
       }
       const around = element.parentElement?.closest(".ghg-block");
       const parent = around ? byElement.get(around) ?? null : null;
-      const block = new DomBlock(heading, button, content, parent);
+      const block = new DomBlock(heading.id, button, content, parent);
       byElement.set(element, block);
       this.found.push(block);
+    }
+    for (const element of document2.querySelectorAll(".ghg-feature")) {
+      const link = element.querySelector(":scope > a[href]");
+      const button = element.querySelector(":scope > button.ghg-toggle");
+      const content = element.querySelector(":scope > .ghg-content");
+      if (!link || !button || !content) {
+        continue;
+      }
+      this.found.push(new DomBlock(link.getAttribute("href") ?? "", button, content, null));
     }
   }
   blocks() {

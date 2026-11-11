@@ -1,15 +1,20 @@
 //! Entity: a feature's page, as its template shows it, every text in it as written or worded.
 
+use crate::entities::Breadcrumb;
+
 /// One page of the site. Every `String` is text, escaped when it is rendered.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct Page {
     /// Relative to the site's root, with `/` between folders.
     pub(crate) address: String,
+    /// The feature file's, below the input folder, with `/` between folders.
+    pub(crate) path: String,
     /// The `lang` of the page.
     pub(crate) language: String,
     pub(crate) title: String,
     /// The feature's keyword and name.
     pub(crate) heading: String,
+    pub(crate) breadcrumb: Breadcrumb,
     pub(crate) tags: Vec<String>,
     pub(crate) description: Vec<Paragraph>,
     pub(crate) source: Option<SourceLink>,
@@ -91,6 +96,32 @@ pub(crate) struct TableView {
 pub(crate) struct DocStringView {
     pub(crate) media_type: Option<String>,
     pub(crate) content: String,
+}
+
+impl Page {
+    pub(crate) fn rule_count(&self) -> usize {
+        self.blocks
+            .iter()
+            .filter(|block| block.kind == BlockKind::Rule)
+            .count()
+    }
+
+    /// Scenario outlines among them, and those inside rules.
+    pub(crate) fn scenario_count(&self) -> usize {
+        let scenarios = |blocks: &[Block]| {
+            blocks
+                .iter()
+                .filter(|block| block.kind == BlockKind::Scenario)
+                .count()
+        };
+        scenarios(&self.blocks)
+            + self
+                .blocks
+                .iter()
+                .filter(|block| block.kind == BlockKind::Rule)
+                .map(|rule| scenarios(&rule.blocks))
+                .sum::<usize>()
+    }
 }
 
 impl BlockKind {

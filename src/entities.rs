@@ -1,10 +1,12 @@
 //! Entity: the values the build reads and reports, those that say how it is run, and what ghg serve serves.
 
 mod anchors;
+mod breadcrumb;
 mod collected_input;
 mod config;
 mod config_problem;
 mod doc_string;
+mod folder_page;
 mod invocation;
 mod listen_failure;
 mod page;
@@ -20,10 +22,12 @@ mod unnamed;
 mod watch;
 
 pub use anchors::Anchors;
+pub(crate) use breadcrumb::{Breadcrumb, Crumb};
 pub use collected_input::CollectedInput;
 pub(crate) use config::Config;
 pub(crate) use config_problem::{ConfigProblem, ConfigProblemKind, ValueType};
 pub(crate) use doc_string::DocString;
+pub(crate) use folder_page::{FeatureEntry, FolderLink, FolderPage, FolderWords};
 pub(crate) use invocation::{ArgumentProblem, BuildOptions, Invocation, ServeOptions};
 pub use listen_failure::ListenFailure;
 pub(crate) use page::{

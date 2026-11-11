@@ -34,7 +34,7 @@ pub(crate) fn parse_arguments(
     };
     let options = match parse_options(&mut parser, name, serving) {
         Ok(options) => options,
-        Err(Answer::Now(invocation)) => return Ok(invocation),
+        Err(Answer::Now(invocation)) => return Ok(*invocation),
         Err(Answer::Mistake(problem)) => return Err(problem),
     };
     if !serving {
@@ -56,13 +56,14 @@ fn parse_options(
     let mut options = ServeOptions::default();
     while let Some(argument) = parser.next().map_err(|error| problem(error, command))? {
         let slot = match argument {
-            Arg::Short('h') => return Err(Answer::Now(Invocation::Help)),
+            Arg::Short('h') => return Err(Answer::Now(Box::new(Invocation::Help))),
             Arg::Long("help") => return Err(answer(parser, "--help", Invocation::Help)),
-            Arg::Short('V') => return Err(Answer::Now(Invocation::Version)),
+            Arg::Short('V') => return Err(Answer::Now(Box::new(Invocation::Version))),
             Arg::Long("version") => return Err(answer(parser, "--version", Invocation::Version)),
             Arg::Long("config") => Slot::Path(&mut options.build.config, "--config"),
             Arg::Long("input") => Slot::Path(&mut options.build.input, "--input"),
             Arg::Long("output") => Slot::Path(&mut options.build.output, "--output"),
+            Arg::Long("title") => Slot::Text(&mut options.build.title, "--title"),
             Arg::Long("host") if serving => Slot::Host(&mut options.host),
             Arg::Long("port") if serving => Slot::Port(&mut options.port),
             Arg::Long("no-build") if serving => Slot::Flag(&mut options.no_build, "--no-build"),
@@ -84,6 +85,7 @@ fn parse_options(
 /// Where an option's value goes.
 enum Slot<'a> {
     Path(&'a mut Option<PathBuf>, &'static str),
+    Text(&'a mut Option<String>, &'static str),
     Host(&'a mut Option<String>),
     Port(&'a mut Option<u16>),
     Flag(&'a mut bool, &'static str),
@@ -111,6 +113,13 @@ impl Slot<'_> {
                     return Err(repeated(option));
                 }
                 *slot = Some(PathBuf::from(value(parser, command, option)?));
+            }
+            Slot::Text(slot, option) => {
+                if slot.is_some() {
+                    return Err(repeated(option));
+                }
+                let text = value(parser, command, option)?;
+                *slot = Some(text.to_string_lossy().into_owned());
             }
             Slot::Host(slot) => {
                 if slot.is_some() {
@@ -154,7 +163,7 @@ fn value(parser: &mut Parser, command: &str, option: &str) -> Result<OsString, A
 
 /// What stops reading the options early: help or version, answered at once, or a mistake.
 enum Answer {
-    Now(Invocation),
+    Now(Box<Invocation>),
     Mistake(ArgumentProblem),
 }
 
@@ -166,7 +175,7 @@ impl From<ArgumentProblem> for Answer {
 
 fn answer(parser: &mut Parser, option: &str, invocation: Invocation) -> Answer {
     match flag(parser, option, invocation) {
-        Ok(invocation) => Answer::Now(invocation),
+        Ok(invocation) => Answer::Now(Box::new(invocation)),
         Err(problem) => Answer::Mistake(problem),
     }
 }
@@ -241,8 +250,25 @@ mod tests {
         Invocation::Build(BuildOptions {
             config: config.map(PathBuf::from),
             input: input.map(PathBuf::from),
-            output: None,
+            ..BuildOptions::default()
         })
+    }
+
+    #[test]
+    fn build_takes_a_title_which_is_not_empty() {
+        assert_eq!(
+            parse(&["build", "--title", "Banking & more"]),
+            Ok(Invocation::Build(BuildOptions {
+                title: Some("Banking & more".into()),
+                ..BuildOptions::default()
+            }))
+        );
+        assert_eq!(
+            parse(&["build", "--title="]),
+            Err(ArgumentProblem::MissingValue {
+                option: "--title".into()
+            })
+        );
     }
 
     #[test]

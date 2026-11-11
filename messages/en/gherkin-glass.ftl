@@ -16,6 +16,7 @@ help =
       --config <file>: the configuration file to read, instead of ghg.toml in the current folder.
       --input <folder>: the folder of feature files to read, instead of the configuration's input.
       --output <folder>: the folder to write the site into, instead of the configuration's output.
+      --title <text>: the site's title, instead of the configuration's title.
 
     Options of ghg serve only:
       --host <address>: the address to listen on, instead of 127.0.0.1.
@@ -69,6 +70,17 @@ unnamed-scenario-outline = The scenario outline has no name, and allow_unnamed i
 
 same-page = has the same page, { $page }, as { $first }.
 
+## A feature file whose page would be a folder's. $page is that path in the
+## site, and $folder the folder's path below the input folder.
+
+same-as-folder-page = has the same page, { $page }, as the page of the folder { $folder }.
+same-as-home-page = has the same page, { $page }, as the home page.
+
+## A folder whose page differs from an earlier folder's only in case. $page
+## is its own page, and $first the earlier folder's path below the input folder.
+
+same-folder-page = has the same page, { $page }, as the folder { $first }.
+
 ## A file of the site that cannot be written. $reason is the operating
 ## system's words.
 
@@ -91,6 +103,56 @@ page-contents = Contents
 collapse-all = Collapse all
 expand-all = Expand all
 source-link = Source: { $path }
+
+## The name of every page's breadcrumb, a navigation landmark.
+
+breadcrumb = Breadcrumb
+
+## A folder's page. $folder is the folder's path below the input folder, and
+## $site the site's title, the configuration's or default-title.
+
+default-title = Feature files
+
+## What ghg build adds, once the site is written, when neither the command
+## line nor ghg.toml gives the site a title. title is a key, never translated.
+
+no-title = The site has no title, so its home page is called Feature files. Set title in ghg.toml, or give --title.
+folder-page-title = { $folder }, { $site }
+folders = Folders
+features = Features
+
+## Counts, on the home page and beside each feature of a folder page.
+
+folder-count =
+    { $count ->
+        [one] { $count } folder
+       *[other] { $count } folders
+    }
+feature-count =
+    { $count ->
+        [one] { $count } feature
+       *[other] { $count } features
+    }
+rule-count =
+    { $count ->
+        [one] { $count } rule
+       *[other] { $count } rules
+    }
+scenario-count =
+    { $count ->
+        [one] { $count } scenario
+       *[other] { $count } scenarios
+    }
+
+## The accessible name of the button that shows a feature's contents on a
+## folder page. It starts with the words of scenario-count, which the button
+## shows. $feature is the feature's heading, as written.
+
+feature-scenarios =
+    { $count ->
+        [one] { $count } scenario of { $feature }
+       *[other] { $count } scenarios of { $feature }
+    }
 
 ## ghg serve. $address is the address to open in a browser, $host an
 ## address to listen on as it was given, $port a port number, $path a

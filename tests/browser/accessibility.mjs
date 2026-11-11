@@ -159,9 +159,10 @@ async function keyboardProblems(page) {
   ];
 }
 
-// Enter and Space on a block's button each turn it over, and Enter on
-// "Collapse all" and "Expand all" acts as a click does. Returns null for a
-// page without a block, where there is nothing to press.
+// Enter and Space on the first button that shows or hides content, a block's
+// or a folder page's feature's, each turn it over, and on a page with blocks
+// Enter on "Collapse all" and "Expand all" acts as a click does. Returns null
+// for a page without such a button, where there is nothing to press.
 async function buttonProblems(page) {
   const problems = [];
   const button = page.locator(".ghg-toggle").first();
@@ -178,6 +179,8 @@ async function buttonProblems(page) {
       `keyboard: the first block's button went from ${before} to ${afterEnter} with Enter, then ${afterSpace} with Space`,
     );
   }
+  const blocks = page.locator(".ghg-block .ghg-toggle");
+  if ((await blocks.count()) === 0) return problems;
   for (const [name, expanded] of [
     ["Collapse all", "false"],
     ["Expand all", "true"],
@@ -189,7 +192,7 @@ async function buttonProblems(page) {
     }
     await control.focus();
     await page.keyboard.press("Enter");
-    const states = await page.locator(".ghg-toggle").evaluateAll((buttons) =>
+    const states = await blocks.evaluateAll((buttons) =>
       buttons.map((element) => element.getAttribute("aria-expanded")),
     );
     if (states.some((value) => value !== expanded)) {

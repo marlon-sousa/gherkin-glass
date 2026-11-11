@@ -9,7 +9,9 @@ use crate::entities::{
     Anchors, Block, BlockKind, ContentsEntry, DocStringView, Page, PageOptions, PageWords,
     Paragraph, ParsedFeature, SourceLink, StepView, TableView,
 };
-use crate::policies::{CATALOGUE, make_anchors, page_address, page_language};
+use crate::policies::{
+    CATALOGUE, breadcrumb, make_anchors, page_address, page_language, percent_encoded, site_title,
+};
 
 /// Stands for the file's path in the words of the source link, to find where
 /// the path goes; no message of the catalogue holds it.
@@ -31,8 +33,12 @@ pub(crate) fn build_page(parsed: &ParsedFeature, options: &PageOptions) -> Page 
     }
     blocks.extend(feature.scenarios.iter().map(|s| builder.scenario(s, 2)));
     blocks.extend(feature.rules.iter().map(|rule| builder.rule(rule)));
+    let address = page_address(&parsed.path);
+    let mut parts: Vec<String> = address.split('/').map(str::to_string).collect();
+    let file = parts.pop().unwrap_or_default();
     Page {
-        address: page_address(&parsed.path),
+        breadcrumb: breadcrumb(&site_title(options), &parts, Some((&heading, &file))),
+        address,
         language: page_language(&parsed.language).to_string(),
         title: fl!(
             CATALOGUE,
@@ -41,6 +47,7 @@ pub(crate) fn build_page(parsed: &ParsedFeature, options: &PageOptions) -> Page 
             path = path.as_str()
         ),
         heading,
+        path: path.clone(),
         tags: tags(&feature.tags),
         description: description(feature.description.as_deref()),
         source: options
@@ -229,7 +236,7 @@ fn contents(blocks: &[Block]) -> Vec<ContentsEntry> {
 
 fn source_link(template: &str, path: &str, line: usize) -> SourceLink {
     let address = template
-        .replace("{path}", &percent_encode(path))
+        .replace("{path}", &percent_encoded(path))
         .replace("{line}", &line.to_string());
     let words = fl!(CATALOGUE, "source-link", path = PATH_MARK);
     let (before, after) = words.split_once(PATH_MARK).unwrap_or((&words, ""));
@@ -239,18 +246,6 @@ fn source_link(template: &str, path: &str, line: usize) -> SourceLink {
         path: path.to_string(),
         after: after.to_string(),
     }
-}
-
-/// Every byte but an ASCII letter, a digit, `-`, `.`, `_`, `~` and `/`.
-fn percent_encode(path: &str) -> String {
-    path.bytes()
-        .map(|byte| match byte {
-            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'.' | b'_' | b'~' | b'/' => {
-                char::from(byte).to_string()
-            }
-            _ => format!("%{byte:02X}"),
-        })
-        .collect()
 }
 
 /// The parts of a path relative to the input folder, joined by `/`.
@@ -399,7 +394,6 @@ Feature: Refunds
             ("Source: ", "billing/saque em conta.feature", "")
         );
         assert_eq!(page(FEATURE, &PageOptions::default()).source, None);
-        assert_eq!(percent_encode("ç?#%"), "%C3%A7%3F%23%25");
     }
 
     #[test]

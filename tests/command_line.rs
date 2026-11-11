@@ -50,6 +50,10 @@ fn copy_folder(from: &Path, to: &Path) {
     }
 }
 
+/// Rule 17: what a build that succeeds prints when the site has no title.
+const NO_TITLE: &str = "The site has no title, so its home page is called Feature files. \
+                        Set title in ghg.toml, or give --title.\n";
+
 fn text(bytes: Vec<u8>) -> String {
     String::from_utf8(bytes).expect("the output is UTF-8")
 }
@@ -66,8 +70,14 @@ fn report(output: Output, status: i32) -> String {
 
 #[test]
 fn build_reads_the_input_and_says_nothing_when_it_can_be_read() {
-    let output = ghg(&fixture("default"), &["build"]);
+    let output = ghg(&fixture("default"), &["build", "--title", "Default"]);
     assert_eq!(report(output, 0), "");
+}
+
+#[test]
+fn build_without_a_title_hints_how_to_give_one() {
+    let output = ghg(&fixture("default"), &["build"]);
+    assert_eq!(report(output, 0), NO_TITLE);
 }
 
 #[test]
@@ -83,6 +93,7 @@ fn help_lists_the_commands_and_options() {
             "--config <file>: ",
             "--input <folder>: ",
             "--output <folder>: ",
+            "--title <text>: ",
         ] {
             assert!(help.contains(expected), "{expected:?} in:\n{help}");
         }
@@ -141,7 +152,7 @@ fn each_mistake_on_the_command_line_is_one_sentence_and_status_2() {
 
 #[test]
 fn the_file_s_input_is_read_relative_to_its_folder() {
-    assert_eq!(report(ghg(&fixture("configured"), &["build"]), 0), "");
+    assert_eq!(report(ghg(&fixture("configured"), &["build"]), 0), NO_TITLE);
     // ci/ghg.toml names ../features, the broken folder beside ci.
     let output = ghg(
         &fixture("configured"),
@@ -161,7 +172,7 @@ fn the_default_input_is_beside_the_file_too() {
         &fixture("configured"),
         &["build", "--config", "nested/ghg.toml"],
     );
-    assert_eq!(report(output, 0), "");
+    assert_eq!(report(output, 0), NO_TITLE);
 }
 
 #[test]
@@ -185,15 +196,18 @@ fn the_site_is_written_into_the_output_folder_the_option_or_the_file_names() {
             .output()
             .expect("the command runs")
     };
-    assert_eq!(report(run(&["build"]), 0), "");
+    assert_eq!(report(run(&["build"]), 0), NO_TITLE);
     assert!(folder.join("site/read.html").is_file());
     assert!(folder.join("site/assets/gherkin-glass.css").is_file());
-    assert_eq!(report(run(&["build", "--output", "elsewhere"]), 0), "");
+    assert_eq!(
+        report(run(&["build", "--output", "elsewhere"]), 0),
+        NO_TITLE
+    );
     assert!(folder.join("elsewhere/read.html").is_file());
     // ci/ghg.toml's output, out, is relative to its own folder; its input
     // is broken, so --input names the good one.
     let output = run(&["build", "--config", "ci/ghg.toml", "--input", "specs"]);
-    assert_eq!(report(output, 0), "");
+    assert_eq!(report(output, 0), NO_TITLE);
     let page = read_to_string(folder.join("ci/out/read.html")).expect("the page is written");
     // Rule 47: ci/ghg.toml's source_link.
     assert!(
@@ -306,7 +320,7 @@ fn unnamed_blocks_stop_the_build_when_allow_unnamed_is_false() {
 #[test]
 fn unnamed_blocks_are_allowed_by_default_and_when_allow_unnamed_is_true() {
     let folder = fixture("unnamed-allowed");
-    assert_eq!(report(ghg(&folder, &["build"]), 0), "");
+    assert_eq!(report(ghg(&folder, &["build"]), 0), NO_TITLE);
     let output = ghg(&folder, &["build", "--config", "allowed.toml"]);
-    assert_eq!(report(output, 0), "");
+    assert_eq!(report(output, 0), NO_TITLE);
 }

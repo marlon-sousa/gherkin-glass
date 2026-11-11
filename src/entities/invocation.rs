@@ -16,6 +16,7 @@ pub(crate) struct BuildOptions {
     pub(crate) config: Option<PathBuf>,
     pub(crate) input: Option<PathBuf>,
     pub(crate) output: Option<PathBuf>,
+    pub(crate) title: Option<String>,
 }
 
 /// The options of `ghg serve`: those of `ghg build`, and how it serves.

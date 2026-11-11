@@ -1,4 +1,4 @@
-// Adapter: the page port over the page's markup, as templates/block.html and templates/feature.html write it.
+// Adapter: the page port over the page's markup, as templates/block.html, templates/feature.html and templates/folder.html write it.
 
 import type { Block, Page } from "../ports/page.ts";
 
@@ -8,8 +8,8 @@ class DomBlock implements Block {
   readonly button: HTMLButtonElement;
   private readonly content: HTMLElement;
 
-  constructor(heading: HTMLElement, button: HTMLButtonElement, content: HTMLElement, parent: Block | null) {
-    this.anchor = heading.id;
+  constructor(anchor: string, button: HTMLButtonElement, content: HTMLElement, parent: Block | null) {
+    this.anchor = anchor;
     this.button = button;
     this.content = content;
     this.parent = parent;
@@ -41,9 +41,19 @@ export class DomPage implements Page {
       }
       const around = element.parentElement?.closest(".ghg-block");
       const parent = around ? (byElement.get(around) ?? null) : null;
-      const block = new DomBlock(heading, button, content, parent);
+      const block = new DomBlock(heading.id, button, content, parent);
       byElement.set(element, block);
       this.found.push(block);
+    }
+    // A folder page's features, each known by its link's address.
+    for (const element of document.querySelectorAll(".ghg-feature")) {
+      const link = element.querySelector<HTMLAnchorElement>(":scope > a[href]");
+      const button = element.querySelector<HTMLButtonElement>(":scope > button.ghg-toggle");
+      const content = element.querySelector<HTMLElement>(":scope > .ghg-content");
+      if (!link || !button || !content) {
+        continue;
+      }
+      this.found.push(new DomBlock(link.getAttribute("href") ?? "", button, content, null));
     }
   }
 
