@@ -65,6 +65,7 @@ jobs:
       - run: .github/release/test-notes.sh
       - run: .github/release/test-gate.sh
       - run: .github/release/test-check-archive.sh
+      - run: .github/release/test-action-tag.sh
 
   build:
     name: build for ${{ matrix.target }}
@@ -186,3 +187,30 @@ jobs:
       - uses: itinera-dev/actions/create-release@v1
         with:
           assets: dist/
+
+  action-tag:
+    # docs/BEHAVIOUR.md, "The GitHub Action", rule 177: uses:
+    # marlon-sousa/gherkin-glass@v1 runs the action of the newest 1.x release.
+    name: the action's major version tag
+    if: github.event_name == 'push'
+    needs: release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Move the major version's tag to the release
+        run: |
+          major=$(git tag --list | .github/release/action-tag.sh "$TAG")
+          if [ -z "$major" ]; then
+            echo "$TAG moves no tag of the action."
+            exit 0
+          fi
+          git tag --force "$major" "$TAG^{commit}"
+          if ! git push --force origin "refs/tags/$major"; then
+            echo "::error::$major cannot be moved. Move it by hand with: git push --force origin $TAG^{commit}:refs/tags/$major"
+            exit 1
+          fi
+          echo "$major now names $TAG."

@@ -56,7 +56,7 @@ pub(crate) use doc_string::DocString;
 pub(crate) use folder_page::{FeatureEntry, FolderLink, FolderPage, FolderWords};
 pub use folder_state::FolderState;
 pub use highlighted_step::{HighlightedStep, StepPart};
-pub(crate) use invocation::{ArgumentProblem, BuildOptions, Invocation, ServeOptions};
+pub(crate) use invocation::{ArgumentProblem, BuildOption, BuildOptions, Invocation, ServeOptions};
 pub use listen_failure::ListenFailure;
 pub use marker::Marker;
 pub use output_problem::{OutputProblem, OutputProblemKind};

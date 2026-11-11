@@ -45,6 +45,7 @@ const builds = [
   { folder: "step-sentences", args: ["--input", "."] },
   { folder: "no-steps", args: ["--input", "."] },
   { folder: "search/features", args: ["--input", ".", "--title", "Search"] },
+  { folder: "action", args: [] },
 ];
 
 // The fixtures that make no site: those whose build is meant to fail, and
