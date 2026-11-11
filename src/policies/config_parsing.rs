@@ -1,14 +1,16 @@
 //! Policy: reading a configuration file's text into the values it sets.
 
-use std::path::PathBuf;
-
 use toml::Spanned;
 use toml::de::{DeTable, DeValue};
 
 use crate::entities::{
-    Colour, Config, ConfigProblem, ConfigProblemKind, TagLink, Theme, ValueType, VersionName,
+    Colour, Config, ConfigProblem, ConfigProblemKind, TagLink, ValueType, VersionName,
 };
 use crate::policies::{PatternProblem, check_accent, unknown_group, whole_tag_pattern};
+
+mod config_key;
+
+use config_key::{ConfigKey, SettingKey, accent_of};
 
 /// The keys of a table of `tag_links`, all needed.
 const TAG_LINK_KEYS: [&str; 3] = ["pattern", "address", "text"];
@@ -29,98 +31,28 @@ pub(crate) fn parse_config(source: &str) -> Result<Config, Vec<ConfigProblem>> {
     let mut problems = Vec::new();
     for (key, value) in table.get_ref() {
         let name = key.get_ref().as_ref();
-        let at = line(value.span().start);
-        if name == "tag_links" {
-            match tag_links(source, value) {
-                Ok(links) => config.tag_links = Some(links),
-                Err(found) => problems.extend(found),
-            }
-            continue;
-        }
-        let problem = |kind| ConfigProblem { line: at, kind };
-        let wrong_type = |expected| {
-            problem(ConfigProblemKind::WrongType {
-                key: name.to_string(),
-                expected,
-            })
-        };
-        let found = match name {
-            "input" | "output" | "source_link" | "title" | "version_name" => match text(value) {
-                // An empty path names nothing, and would report a line with no path.
-                Some("") => Err(problem(ConfigProblemKind::Empty {
-                    key: name.to_string(),
-                })),
-                Some(text) if name == "version_name" => match VersionName::new(text) {
-                    Some(version) => {
-                        config.version_name = Some(version);
-                        Ok(())
-                    }
-                    None => Err(problem(ConfigProblemKind::InvalidVersionName {
-                        name: text.to_string(),
-                    })),
-                },
-                Some(text) => {
-                    match name {
-                        "input" => config.input = Some(PathBuf::from(text)),
-                        "output" => config.output = Some(PathBuf::from(text)),
-                        "title" => config.title = Some(text.to_string()),
-                        _ => config.source_link = Some(text.to_string()),
-                    }
-                    Ok(())
-                }
-                None => Err(wrong_type(ValueType::Text)),
-            },
-            "allow_unnamed"
-            | "collapse_rules"
-            | "collapse_scenarios"
-            | "show_tree"
-            | "inline_backgrounds"
-            | "replace_existing_version" => match value.get_ref().as_bool() {
-                Some(set) => {
-                    *match name {
-                        "allow_unnamed" => &mut config.allow_unnamed,
-                        "collapse_rules" => &mut config.collapse_rules,
-                        "show_tree" => &mut config.show_tree,
-                        "collapse_scenarios" => &mut config.collapse_scenarios,
-                        "inline_backgrounds" => &mut config.inline_backgrounds,
-                        _ => &mut config.replace_existing_version,
-                    } = Some(set);
-                    Ok(())
-                }
-                None => Err(wrong_type(ValueType::Boolean)),
-            },
-            "accent_light" | "accent_dark" => {
-                let theme = if name == "accent_light" {
-                    Theme::Light
-                } else {
-                    Theme::Dark
-                };
-                match text(value).and_then(Colour::from_hex) {
-                    Some(colour) => match check_accent(theme, colour) {
-                        None => {
-                            *match theme {
-                                Theme::Light => &mut config.accent_light,
-                                Theme::Dark => &mut config.accent_dark,
-                            } = Some(colour);
-                            Ok(())
-                        }
-                        Some(shortfall) => Err(problem(ConfigProblemKind::TooLittleContrast {
-                            key: name.to_string(),
-                            shortfall,
-                        })),
-                    },
-                    None => Err(wrong_type(ValueType::Colour)),
-                }
-            }
-            _ => Err(ConfigProblem {
+        let Some(known) = ConfigKey::named(name) else {
+            problems.push(ConfigProblem {
                 line: line(key.span().start),
                 kind: ConfigProblemKind::UnknownKey {
                     key: name.to_string(),
                 },
-            }),
+            });
+            continue;
         };
-        if let Err(found) = found {
-            problems.push(found);
+        match known {
+            ConfigKey::TagLinks => match tag_links(source, value) {
+                Ok(links) => config.tag_links = Some(links),
+                Err(found) => problems.extend(found),
+            },
+            ConfigKey::Setting(key) => {
+                if let Err(kind) = set(&mut config, key, name, value) {
+                    problems.push(ConfigProblem {
+                        line: line(value.span().start),
+                        kind,
+                    });
+                }
+            }
         }
     }
     if problems.is_empty() {
@@ -128,6 +60,68 @@ pub(crate) fn parse_config(source: &str) -> Result<Config, Vec<ConfigProblem>> {
     } else {
         problems.sort();
         Err(problems)
+    }
+}
+
+/// Sets the value `key` names from `value`, or says what is wrong with it, naming the key as
+/// written, `name`.
+fn set(
+    config: &mut Config,
+    key: SettingKey,
+    name: &str,
+    value: &Spanned<DeValue<'_>>,
+) -> Result<(), ConfigProblemKind> {
+    let wrong_type = |expected| ConfigProblemKind::WrongType {
+        key: name.to_string(),
+        expected,
+    };
+    let empty = || ConfigProblemKind::Empty {
+        key: name.to_string(),
+    };
+    match key {
+        SettingKey::Text(key) => match text(value) {
+            // An empty path names nothing, and would report a line with no path.
+            Some("") => Err(empty()),
+            Some(text) => {
+                key.set(config, text);
+                Ok(())
+            }
+            None => Err(wrong_type(ValueType::Text)),
+        },
+        SettingKey::VersionName => match text(value) {
+            Some("") => Err(empty()),
+            Some(text) => {
+                config.version_name = Some(VersionName::new(text).ok_or_else(|| {
+                    ConfigProblemKind::InvalidVersionName {
+                        name: text.to_string(),
+                    }
+                })?);
+                Ok(())
+            }
+            None => Err(wrong_type(ValueType::Text)),
+        },
+        SettingKey::Flag(key) => {
+            *key.of(config) = Some(
+                value
+                    .get_ref()
+                    .as_bool()
+                    .ok_or_else(|| wrong_type(ValueType::Boolean))?,
+            );
+            Ok(())
+        }
+        SettingKey::Accent(theme) => {
+            let colour = text(value)
+                .and_then(Colour::from_hex)
+                .ok_or_else(|| wrong_type(ValueType::Colour))?;
+            if let Some(shortfall) = check_accent(theme, colour) {
+                return Err(ConfigProblemKind::TooLittleContrast {
+                    key: name.to_string(),
+                    shortfall,
+                });
+            }
+            *accent_of(config, theme) = Some(colour);
+            Ok(())
+        }
     }
 }
 
@@ -267,7 +261,10 @@ fn line_of(source: &str, offset: usize) -> usize {
 
 #[cfg(test)]
 mod tests {
+    use std::path::PathBuf;
+
     use super::*;
+    use crate::entities::Theme;
 
     fn problems(source: &str) -> Vec<(Option<usize>, ConfigProblemKind)> {
         parse_config(source)
