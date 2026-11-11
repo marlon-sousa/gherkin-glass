@@ -1,8 +1,4 @@
-//! Policy: the pure decisions of reading the input, of how a build is run, of the anchors, of the pages, the folder pages, the folder tree and the step sentences, of which changes ghg serve rebuilds for, of highlighting and themes, and of what search reads.
 //! Policy: the pure decisions of reading the input, of how a build is run,
-//! of what the cargo plugin is given, of the anchors, of the pages, the folder
-//! pages, the folder tree and the step sentences, of what ghg serve answers,
-//! of highlighting and themes, and of what search reads.
 
 mod anchor_rule;
 mod argument_parsing;
