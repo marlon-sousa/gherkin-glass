@@ -6,7 +6,7 @@ use i18n_embed::LanguageLoader;
 use i18n_embed_fl::fl;
 
 use crate::entities::{
-    FeatureEntry, FolderLink, FolderPage, FolderWords, LinkAddress, Page, PageOptions,
+    FeatureEntry, FolderLink, FolderPage, FolderWords, LinkAddress, Page, PageOptions, SiteAddress,
 };
 use crate::policies::{
     CATALOGUE, FOLDER_PAGE, SENTENCES_PAGE, breadcrumb, page_frame, site_title, tag_index_address,
@@ -16,14 +16,7 @@ use crate::policies::{
 /// outermost first, the home page first of all, then folder by folder.
 pub(crate) fn build_folder_pages(pages: &[Page], options: &PageOptions) -> Vec<FolderPage> {
     let title = site_title(options);
-    let located: Vec<(Vec<String>, String, &Page)> = pages
-        .iter()
-        .map(|page| {
-            let mut parts: Vec<String> = page.address.split('/').map(str::to_string).collect();
-            let file = parts.pop().unwrap_or_default();
-            (parts, file, page)
-        })
-        .collect();
+    let located: Vec<(Vec<String>, String, &Page)> = pages.iter().map(located).collect();
     let mut folders: BTreeSet<Vec<String>> = BTreeSet::from([Vec::new()]);
     for (parts, _, _) in &located {
         for depth in 1..=parts.len() {
@@ -54,11 +47,7 @@ pub(crate) fn build_folder_pages(pages: &[Page], options: &PageOptions) -> Vec<F
                 Vec::new()
             };
             FolderPage {
-                address: if folder.is_empty() {
-                    FOLDER_PAGE.to_string()
-                } else {
-                    format!("{}/{FOLDER_PAGE}", folder.join("/"))
-                },
+                address: SiteAddress::of(folder, FOLDER_PAGE),
                 language: CATALOGUE.current_language().to_string(),
                 title: if folder.is_empty() {
                     title.clone()
@@ -75,7 +64,7 @@ pub(crate) fn build_folder_pages(pages: &[Page], options: &PageOptions) -> Vec<F
                 breadcrumb: breadcrumb(&title, folder, None),
                 totals,
                 tags: folder.is_empty().then(|| FolderLink {
-                    address: LinkAddress::to(&tag_index_address()),
+                    address: LinkAddress::to(tag_index_address().as_str()),
                     name: fl!(CATALOGUE, "tag-index-title"),
                 }),
                 sentences: folder.is_empty().then(|| FolderLink {
@@ -94,6 +83,19 @@ pub(crate) fn build_folder_pages(pages: &[Page], options: &PageOptions) -> Vec<F
             }
         })
         .collect()
+}
+
+/// The page's folders, from the outermost, its file's name, and the page.
+fn located(page: &Page) -> (Vec<String>, String, &Page) {
+    (
+        page.address
+            .folders()
+            .into_iter()
+            .map(str::to_string)
+            .collect(),
+        page.address.file().to_string(),
+        page,
+    )
 }
 
 fn file_name(page: &Page) -> &str {

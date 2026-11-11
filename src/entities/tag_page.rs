@@ -1,6 +1,6 @@
 //! Entity: the index of every tag and each tag's page, as their templates show them.
 
-use crate::entities::{Breadcrumb, LinkAddress, OutsideLink, PageFrame};
+use crate::entities::{Breadcrumb, LinkAddress, OutsideLink, PageFrame, SiteAddress};
 
 /// Every `String` is text, escaped when it is rendered, and every link is relative to the
 /// page that holds it.
@@ -25,8 +25,8 @@ pub(crate) struct TagIndexEntry {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct TagPage {
-    /// Relative to the site's root, such as `tags/slow.html`.
-    pub(crate) address: String,
+    /// Such as `tags/slow.html`.
+    pub(crate) address: SiteAddress,
     pub(crate) frame: PageFrame,
     pub(crate) breadcrumb: Breadcrumb,
     pub(crate) title: String,

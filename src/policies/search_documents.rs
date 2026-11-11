@@ -3,7 +3,7 @@
 use gherkin::{Background, Scenario};
 
 use crate::entities::{
-    AnchoredFeature, AnchoredRule, AnchoredScenario, SearchDocument, SearchKind,
+    AnchoredFeature, AnchoredRule, AnchoredScenario, SearchDocument, SearchKind, SiteAddress,
 };
 use crate::policies::page_address;
 
@@ -50,7 +50,7 @@ fn page_documents(anchored: &AnchoredFeature<'_>) -> Vec<SearchDocument> {
 /// What every document of a page shares.
 struct OnPage<'a> {
     feature: &'a str,
-    address: String,
+    address: SiteAddress,
 }
 
 impl OnPage<'_> {

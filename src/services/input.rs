@@ -108,7 +108,7 @@ fn same_pages(input: &Path, paths: &[PathBuf]) -> Vec<Problem> {
     let mut problems = Vec::new();
     for path in paths {
         let relative = path.strip_prefix(input).unwrap_or(path);
-        let page = page_address(relative);
+        let page = page_address(relative).to_string();
         let parts: Vec<&str> = page.split('/').collect();
         for depth in 1..parts.len() {
             let folder = parts.get(..depth).unwrap_or_default().join("/");
@@ -184,7 +184,7 @@ fn pages_in_tags_folder(input: &Path, paths: &[PathBuf]) -> Vec<Problem> {
     paths
         .iter()
         .filter_map(|path| {
-            let page = page_address(path.strip_prefix(input).unwrap_or(path));
+            let page = page_address(path.strip_prefix(input).unwrap_or(path)).to_string();
             let (folder, _) = page.split_once('/')?;
             (folder.to_lowercase() == TAGS_FOLDER)
                 .then(|| Problem::new(input, path, None, ProblemKind::InTagsFolder { page }))

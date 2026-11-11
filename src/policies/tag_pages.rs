@@ -297,7 +297,7 @@ Feature: F
         assert_eq!(empty.features.len(), 1);
         assert!(empty.features[0].scenarios.is_empty());
         assert_eq!(empty.title, "Tag @empty");
-        assert_eq!(empty.address, "tags/empty.html");
+        assert_eq!(empty.address.as_str(), "tags/empty.html");
     }
 
     #[test]

@@ -13,7 +13,7 @@ use crate::entities::{
 };
 use crate::policies::{
     CATALOGUE, ExampleRow, breadcrumb, example_rows, highlight_step, outside_link, page_address,
-    page_frame, page_language, root_from, site_title,
+    page_frame, page_language, site_title,
 };
 
 /// Stands for the file's path in the words of the source link, to find where
@@ -39,7 +39,7 @@ pub(crate) fn build_page(
         parsed,
         options,
         tags,
-        root: root_from(&address),
+        root: address.root(),
     };
     let mut blocks = Vec::new();
     if let Some(background) = &anchored.background {
@@ -71,11 +71,14 @@ pub(crate) fn build_page(
         inline: options.inline_backgrounds,
         enabled: any_background_steps(&blocks),
     });
-    let mut parts: Vec<String> = address.split('/').map(str::to_string).collect();
-    let file = parts.pop().unwrap_or_default();
+    let folders: Vec<String> = address.folders().into_iter().map(str::to_string).collect();
     Page {
         frame: page_frame(options),
-        breadcrumb: breadcrumb(&site_title(options), &parts, Some((&heading, &file))),
+        breadcrumb: breadcrumb(
+            &site_title(options),
+            &folders,
+            Some((&heading, address.file())),
+        ),
         address,
         language: page_language(&parsed.language).to_string(),
         title: fl!(
@@ -581,7 +584,7 @@ Feature: Refunds
             page.title,
             "Feature: Refunds, billing/saque em conta.feature"
         );
-        assert_eq!(page.address, "billing/saque em conta.html");
+        assert_eq!(page.address.as_str(), "billing/saque em conta.html");
         let top: Vec<_> = page
             .blocks
             .iter()

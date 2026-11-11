@@ -1,12 +1,11 @@
 //! Entity: a feature's page, as its template shows it, every text in it as written or worded.
 
-use crate::entities::{Breadcrumb, HeadingLevel, LinkAddress, PageFrame, StepPart};
+use crate::entities::{Breadcrumb, HeadingLevel, LinkAddress, PageFrame, SiteAddress, StepPart};
 
 /// One page of the site. Every `String` is text, escaped when it is rendered.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct Page {
-    /// Relative to the site's root, with `/` between folders.
-    pub(crate) address: String,
+    pub(crate) address: SiteAddress,
     /// The feature file's, below the input folder, with `/` between folders.
     pub(crate) path: String,
     /// The `lang` of the page.

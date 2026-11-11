@@ -5,7 +5,7 @@ use std::collections::{BTreeSet, HashSet};
 
 use gherkin::Feature;
 
-use crate::entities::{ParsedFeature, TAGS_FOLDER, TagNames};
+use crate::entities::{ParsedFeature, SiteAddress, TAGS_FOLDER, TagNames};
 use crate::policies::{anchor_of, unique};
 
 /// The name of the index's page, which no tag takes.
@@ -14,9 +14,8 @@ const INDEX: &str = "index";
 /// The name of a tag that leaves nothing after the anchor rule.
 const FALLBACK: &str = "tag";
 
-/// The index's address, relative to the site's root.
-pub(crate) fn tag_index_address() -> String {
-    format!("{TAGS_FOLDER}/{INDEX}.html")
+pub(crate) fn tag_index_address() -> SiteAddress {
+    SiteAddress::of(&[TAGS_FOLDER], &format!("{INDEX}.html"))
 }
 
 /// Rule 102: by the text lower-cased, then as written, each by character codes.
@@ -112,7 +111,10 @@ mod tests {
             .map(String::from)
             .to_vec();
         let names = name_tags(&tags);
-        let addresses: Vec<_> = tags.iter().map(|tag| names.address(tag)).collect();
+        let addresses: Vec<_> = tags
+            .iter()
+            .map(|tag| names.address(tag).to_string())
+            .collect();
         assert_eq!(
             addresses,
             [

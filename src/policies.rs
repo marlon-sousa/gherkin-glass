@@ -53,7 +53,7 @@ pub(crate) use file_selection::{FileSelection, IGNORE_FILE, parse_rules};
 pub(crate) use folder_pages::build_folder_pages;
 pub(crate) use folder_tree::{build_folder_tree, render_folder_tree};
 pub(crate) use interface_text::CATALOGUE;
-pub(crate) use page_address::{FOLDER_PAGE, page_address, root_from};
+pub(crate) use page_address::{FOLDER_PAGE, page_address};
 pub(crate) use page_building::{build_page, heading};
 pub(crate) use page_frame::page_frame;
 pub(crate) use page_language::page_language;

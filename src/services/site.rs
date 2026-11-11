@@ -59,12 +59,12 @@ impl SiteService {
         let folders = build_folder_pages(&pages, &settings.pages);
         let mut rendered: Vec<(String, String)> = pages
             .par_iter()
-            .map(|page| (page.address.clone(), render_page(page)))
+            .map(|page| (page.address.to_string(), render_page(page)))
             .collect();
         rendered.extend(
             folders
                 .par_iter()
-                .map(|folder| (folder.address.clone(), render_folder_page(folder)))
+                .map(|folder| (folder.address.to_string(), render_folder_page(folder)))
                 .collect::<Vec<_>>(),
         );
         let sentences = find_step_sentences(&anchored);
@@ -81,14 +81,14 @@ impl SiteService {
             render_folder_tree(&build_folder_tree(&folders)),
         ));
         rendered.push((
-            tag_index_address(),
+            tag_index_address().to_string(),
             render_tag_index(&build_tag_index(&tags, &pages, &names, &settings.pages)),
         ));
         rendered.extend(
             tags.par_iter()
                 .map(|tag| {
                     let page = build_tag_page(tag, &pages, &names, &settings.pages);
-                    (page.address.clone(), render_tag_page(&page))
+                    (page.address.to_string(), render_tag_page(&page))
                 })
                 .collect::<Vec<_>>(),
         );

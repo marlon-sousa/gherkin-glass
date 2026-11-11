@@ -2,6 +2,8 @@
 
 use serde::Serialize;
 
+use crate::entities::SiteAddress;
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub(crate) struct SearchDocument {
     pub(crate) kind: SearchKind,
@@ -13,7 +15,7 @@ pub(crate) struct SearchDocument {
     pub(crate) rule: Option<String>,
     pub(crate) steps: Vec<String>,
     pub(crate) tags: Vec<String>,
-    pub(crate) page: String,
+    pub(crate) page: SiteAddress,
     /// Empty for a feature, which is its page.
     pub(crate) anchor: String,
 }

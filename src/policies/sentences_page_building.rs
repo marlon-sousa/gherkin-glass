@@ -88,7 +88,7 @@ fn use_view(found: &SentenceUse, language: Option<String>) -> UseView {
         ))
     };
     UseView {
-        address: LinkAddress::to(&page_address(&found.path)).at(&found.anchor),
+        address: LinkAddress::to(page_address(&found.path).as_str()).at(&found.anchor),
         language,
         link: pieces(&link),
         item,
