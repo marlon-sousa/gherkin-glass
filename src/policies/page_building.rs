@@ -378,7 +378,7 @@ fn worded_block(
         heading_parts,
         collapsed,
         tags: Vec::new(),
-        description: Vec::new(),
+        description: None,
         backgrounds: Vec::new(),
         steps: Vec::new(),
         table: None,
@@ -443,9 +443,9 @@ pub(crate) fn heading(keyword: &str, name: &str) -> String {
     }
 }
 
-/// One paragraph of the description's lines, or none: the `gherkin` crate
+/// The description's lines as one paragraph, or none when it has none: the `gherkin` crate
 /// keeps no blank line of a description to tell paragraphs apart.
-fn description(text: Option<&str>) -> Vec<Paragraph> {
+fn description(text: Option<&str>) -> Option<Paragraph> {
     let lines: Paragraph = text
         .unwrap_or_default()
         .lines()
@@ -453,11 +453,7 @@ fn description(text: Option<&str>) -> Vec<Paragraph> {
         .filter(|line| !line.trim().is_empty())
         .map(str::to_string)
         .collect();
-    if lines.is_empty() {
-        Vec::new()
-    } else {
-        vec![lines]
-    }
+    (!lines.is_empty()).then_some(lines)
 }
 
 /// The first row is the header; a table has at least one row.
@@ -700,11 +696,11 @@ Feature: Refunds
         );
         assert_eq!(
             page.description,
-            [vec![
+            Some(vec![
                 "First line,".to_string(),
                 "second line.".to_string(),
                 "Another paragraph.".to_string()
-            ]]
+            ])
         );
     }
 

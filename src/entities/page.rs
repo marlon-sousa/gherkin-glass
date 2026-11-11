@@ -17,7 +17,7 @@ pub(crate) struct Page {
     pub(crate) frame: PageFrame,
     pub(crate) breadcrumb: Breadcrumb,
     pub(crate) tags: Vec<TagView>,
-    pub(crate) description: Vec<Paragraph>,
+    pub(crate) description: Option<Paragraph>,
     pub(crate) source: Option<SourceLink>,
     pub(crate) contents: Vec<ContentsEntry>,
     pub(crate) blocks: Vec<Block>,
@@ -109,7 +109,7 @@ pub(crate) struct Block {
     pub(crate) heading_parts: Vec<HeadingPart>,
     pub(crate) collapsed: bool,
     pub(crate) tags: Vec<TagView>,
-    pub(crate) description: Vec<Paragraph>,
+    pub(crate) description: Option<Paragraph>,
     /// A scenario's: the feature's background, then its rule's.
     pub(crate) backgrounds: Vec<FromBackground>,
     pub(crate) steps: Vec<StepView>,
