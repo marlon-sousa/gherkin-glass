@@ -1,13 +1,17 @@
 //! Controller: the words of every problem a run reports, from the interface text catalogue.
 
+mod config_words;
+mod input_words;
+
+pub(super) use config_words::config_problems;
 use i18n_embed_fl::fl;
+pub(super) use input_words::problems;
 
 use crate::entities::{
-    AccentShortfall, ArgumentProblem, BuiltSite, ConfigProblemKind, ListenFailure, OutputProblem,
-    OutputProblemKind, Problem, ProblemKind, Problems, Theme, UnnamedBlock, ValueType,
+    ArgumentProblem, BuiltSite, ListenFailure, OutputProblem, OutputProblemKind,
 };
 use crate::policies::CATALOGUE;
-use crate::services::{ConfigProblems, RebuildFailure, ServeFailure};
+use crate::services::{RebuildFailure, ServeFailure};
 
 /// Empty when the build has nothing to warn of.
 pub(super) fn warnings(built: &BuiltSite) -> String {
@@ -97,164 +101,11 @@ pub(super) fn rebuild_failure(failure: &RebuildFailure) -> String {
     report + &fl!(CATALOGUE, "serve-not-rebuilt") + "\n"
 }
 
-/// One line per problem, the file shown as it was given.
-pub(super) fn config_problems(problems: &ConfigProblems) -> String {
-    let path = problems.file.to_string_lossy();
-    problems
-        .problems
-        .iter()
-        .map(|problem| line(&path, problem.line, config_message(&problem.kind)))
-        .collect()
-}
-
-/// The report of docs/BEHAVIOUR.md, "Files that cannot be read", one line per problem.
-pub(super) fn problems(problems: &Problems) -> String {
-    problems.as_slice().iter().map(input_problem).collect()
-}
-
-fn input_problem(problem: &Problem) -> String {
-    let message = match &problem.kind {
-        ProblemKind::InputMissing => fl!(CATALOGUE, "input-missing"),
-        ProblemKind::CannotBeListed { reason } => {
-            fl!(
-                CATALOGUE,
-                "input-cannot-be-listed",
-                reason = reason.as_str()
-            )
-        }
-        ProblemKind::CannotBeRead { reason } => {
-            fl!(CATALOGUE, "input-cannot-be-read", reason = reason.as_str())
-        }
-        ProblemKind::InvalidRule { reason } => reason.clone(),
-        ProblemKind::Parser { message } => message.clone(),
-        ProblemKind::Syntax => fl!(CATALOGUE, "input-syntax-error"),
-        ProblemKind::Changed => fl!(CATALOGUE, "input-changed"),
-        ProblemKind::Unnamed { block } => match block {
-            UnnamedBlock::Feature => fl!(CATALOGUE, "unnamed-feature"),
-            UnnamedBlock::Rule => fl!(CATALOGUE, "unnamed-rule"),
-            UnnamedBlock::Scenario => fl!(CATALOGUE, "unnamed-scenario"),
-            UnnamedBlock::ScenarioOutline => fl!(CATALOGUE, "unnamed-scenario-outline"),
-        },
-        ProblemKind::SamePage { page, first } => fl!(
-            CATALOGUE,
-            "same-page",
-            page = page.as_str(),
-            first = first.as_str()
-        ),
-        ProblemKind::SameFolderPage { page, first } => fl!(
-            CATALOGUE,
-            "same-folder-page",
-            page = page.as_str(),
-            first = first.as_str()
-        ),
-        ProblemKind::ReservedPage { page } => {
-            fl!(CATALOGUE, "reserved-page", page = page.as_str())
-        }
-        ProblemKind::SameAsFolderPage { page, folder } => match folder {
-            Some(folder) => fl!(
-                CATALOGUE,
-                "same-as-folder-page",
-                page = page.as_str(),
-                folder = folder.as_str()
-            ),
-            None => fl!(CATALOGUE, "same-as-home-page", page = page.as_str()),
-        },
-        ProblemKind::InTagsFolder { page } => {
-            fl!(CATALOGUE, "in-tags-folder", page = page.as_str())
-        }
-        ProblemKind::CannotBeWritten { reason } => {
-            fl!(CATALOGUE, "cannot-be-written", reason = reason.as_str())
-        }
-    };
-    line(&problem.path, problem.line, message)
-}
-
-fn config_message(kind: &ConfigProblemKind) -> String {
-    match kind {
-        ConfigProblemKind::CannotBeRead { reason } => {
-            fl!(CATALOGUE, "config-cannot-be-read", reason = reason.as_str())
-        }
-        ConfigProblemKind::Syntax { message } => message.clone(),
-        ConfigProblemKind::UnknownKey { key } => {
-            fl!(CATALOGUE, "config-unknown-key", key = key.as_str())
-        }
-        ConfigProblemKind::Empty { key } => fl!(CATALOGUE, "config-empty", key = key.as_str()),
-        ConfigProblemKind::InvalidVersionName { name } => invalid_version_name(name),
-        ConfigProblemKind::WrongType {
-            key,
-            expected: ValueType::Text,
-        } => fl!(CATALOGUE, "config-not-text", key = key.as_str()),
-        ConfigProblemKind::WrongType {
-            key,
-            expected: ValueType::Boolean,
-        } => fl!(CATALOGUE, "config-not-boolean", key = key.as_str()),
-        ConfigProblemKind::NotTableList => fl!(CATALOGUE, "config-not-table-list"),
-        ConfigProblemKind::Missing { key } => {
-            fl!(CATALOGUE, "config-missing", key = key.as_str())
-        }
-        ConfigProblemKind::NotRegex { key, reason } => fl!(
-            CATALOGUE,
-            "config-not-regex",
-            key = key.as_str(),
-            reason = reason.as_str()
-        ),
-        ConfigProblemKind::RegexTooLarge { key } => {
-            fl!(CATALOGUE, "config-regex-too-large", key = key.as_str())
-        }
-        ConfigProblemKind::UnknownGroup { key, group } => fl!(
-            CATALOGUE,
-            "config-unknown-group",
-            key = key.as_str(),
-            group = group.as_str()
-        ),
-        ConfigProblemKind::WrongType {
-            key,
-            expected: ValueType::Colour,
-        } => fl!(CATALOGUE, "config-not-colour", key = key.as_str()),
-        ConfigProblemKind::TooLittleContrast { key, shortfall } => {
-            too_little_contrast(key, shortfall)
-        }
-    }
-}
-
-/// The colours and the ratio are passed as text, so that Fluent never formats them.
-fn too_little_contrast(key: &str, shortfall: &AccentShortfall) -> String {
-    let colour = shortfall.accent.to_string();
-    let background = shortfall.background.to_string();
-    let ratio = format!(
-        "{}.{:02}",
-        shortfall.hundredths / 100,
-        shortfall.hundredths % 100
-    );
-    match shortfall.theme {
-        Theme::Light => fl!(
-            CATALOGUE,
-            "config-accent-light-contrast",
-            key = key,
-            colour = colour,
-            ratio = ratio,
-            background = background
-        ),
-        Theme::Dark => fl!(
-            CATALOGUE,
-            "config-accent-dark-contrast",
-            key = key,
-            colour = colour,
-            ratio = ratio,
-            background = background
-        ),
-    }
-}
-
-fn invalid_version_name(name: &str) -> String {
-    fl!(CATALOGUE, "invalid-version-name", name = name)
-}
-
-/// The report of docs/BEHAVIOUR.md, rule 38 and "Versions", rules 123 to 125.
+/// The output folder or the version's folder, then what stops the build writing into it.
 pub(super) fn output_problem(problem: &OutputProblem) -> String {
     let version = problem.version.as_ref();
     let output = problem.output.to_string_lossy();
-    // Joined with `/` on every system, as rule 125 says.
+    // Joined with `/` on every system.
     let folder = match version {
         Some(name) => format!("{output}/{name}"),
         None => output.into_owned(),
@@ -290,8 +141,12 @@ pub(super) fn output_problem(problem: &OutputProblem) -> String {
     line(&folder, None, message)
 }
 
+pub(super) fn invalid_version_name(name: &str) -> String {
+    fl!(CATALOGUE, "invalid-version-name", name = name)
+}
+
 /// The line number is passed as text, so that Fluent never groups its digits.
-fn line(path: &str, line: Option<usize>, message: String) -> String {
+pub(super) fn line(path: &str, line: Option<usize>, message: String) -> String {
     let text = match line {
         Some(line) => fl!(
             CATALOGUE,
