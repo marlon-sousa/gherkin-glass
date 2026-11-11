@@ -41,6 +41,16 @@ pub(crate) fn parse_config(source: &str) -> Result<Config, Vec<ConfigProblem>> {
                     },
                 }),
             },
+            "allow_unnamed" => match value.get_ref().as_bool() {
+                Some(allow) => config.allow_unnamed = Some(allow),
+                None => problems.push(ConfigProblem {
+                    line: line(value.span().start),
+                    kind: ConfigProblemKind::WrongType {
+                        key: name.to_string(),
+                        expected: ValueType::Boolean,
+                    },
+                }),
+            },
             _ => problems.push(ConfigProblem {
                 line: line(key.span().start),
                 kind: ConfigProblemKind::UnknownKey {
@@ -90,7 +100,8 @@ mod tests {
         assert_eq!(
             parse_config("input = \"specs/all\"\n"),
             Ok(Config {
-                input: Some(PathBuf::from("specs/all"))
+                input: Some(PathBuf::from("specs/all")),
+                ..Config::default()
             })
         );
         assert_eq!(
@@ -124,6 +135,24 @@ mod tests {
                     }
                 ),
             ]
+        );
+    }
+
+    #[test]
+    fn allow_unnamed_is_true_or_false() {
+        assert_eq!(
+            parse_config("allow_unnamed = false\n").map(|config| config.allow_unnamed),
+            Ok(Some(false))
+        );
+        assert_eq!(
+            problems("\nallow_unnamed = \"no\"\n"),
+            [(
+                Some(2),
+                ConfigProblemKind::WrongType {
+                    key: "allow_unnamed".into(),
+                    expected: ValueType::Boolean
+                }
+            )]
         );
     }
 

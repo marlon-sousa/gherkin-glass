@@ -30,4 +30,5 @@ pub(crate) enum ConfigProblemKind {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) enum ValueType {
     Text,
+    Boolean,
 }

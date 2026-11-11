@@ -11,12 +11,12 @@ use std::sync::Arc;
 
 use gherkin::Step;
 use gherkin_glass::{
-    GherkinParser, InputService, InputWalker, ParsedFeature, ProblemKind, Problems,
+    GherkinParser, InputService, InputWalker, ParsedFeature, ProblemKind, Problems, Unnamed,
 };
 
 /// The service as the command will wire it, over the real file system.
 fn read_input(input: &Path) -> Result<Vec<ParsedFeature>, Problems> {
-    InputService::new(Arc::new(InputWalker), Arc::new(GherkinParser)).read(input)
+    InputService::new(Arc::new(InputWalker), Arc::new(GherkinParser)).read(input, Unnamed::Allowed)
 }
 
 fn fixture(name: &str) -> PathBuf {
