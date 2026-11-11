@@ -1,0 +1,15 @@
+[package]
+name = "gherkin-glass"
+version = "0.1.0"
+edition = "2024"
+# The oldest Rust that builds gherkin-glass, checked by its own CI job. The
+# toolchain contributors and CI build with is pinned in rust-toolchain.toml.
+rust-version = "1.88"
+description = "An accessible static viewer for Gherkin feature files"
+repository = "https://github.com/marlon-sousa/gherkin-glass"
+license = "MIT OR Apache-2.0"
+readme = "README.md"
+
+[[bin]]
+name = "ghg"
+path = "src/main.rs"

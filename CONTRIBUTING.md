@@ -15,6 +15,8 @@ Every change starts as an issue, and is agreed in the issue before any code is w
 - **A feature** says what is wanted and why. It can be short; the details are worked out in the issue.
 - **A bug** says what happened, what was expected, and the smallest feature file that shows it.
 
+Once an issue is agreed, every decision taken in its comments is written into its body, which then binds the work. The comments stay as the history of how each decision was reached, and nothing in them may contradict the body.
+
 Issues carry one of these labels: `feature`, `bug`, `docs` or `process`.
 
 Please do not open a pull request for a feature before its issue is agreed and its behaviour is written in [docs/BEHAVIOUR.md](docs/BEHAVIOUR.md). Put implementation ideas in the issue instead, where they are welcome.

@@ -1,0 +1,63 @@
+name: Rust
+
+# Formatting, lints and tests, CONTRIBUTING.md, "Checks". They run with the
+# toolchain pinned in rust-toolchain.toml, and the tests run again with the
+# minimum supported Rust version, rust-version in Cargo.toml.
+
+on:
+  pull_request:
+    # "edited" so that a layer of a stack is checked again when its base
+    # changes, as it does when the layer below is merged. Other edits run the
+    # checks too: skipping them would report the skipped jobs as passed.
+    types: [opened, synchronize, reopened, edited]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rust-${{ github.ref }}
+  # Every commit on main keeps its result; on a pull request only the latest counts.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  fmt:
+    name: cargo fmt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: rustup toolchain install
+      - run: cargo fmt --check
+
+  clippy:
+    name: cargo clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: rustup toolchain install
+      - run: cargo clippy --all-targets --locked -- -D warnings
+
+  test:
+    name: cargo test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: rustup toolchain install
+      - run: cargo test --locked
+
+  msrv:
+    name: cargo test, minimum supported Rust
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install the version rust-version names
+        run: |
+          msrv=$(sed -n 's/^rust-version = "\(.*\)"$/\1/p' Cargo.toml)
+          test -n "$msrv"
+          rustup toolchain install "$msrv" --profile minimal
+          echo "MSRV=$msrv" >> "$GITHUB_ENV"
+      - run: cargo "+$MSRV" test --locked
