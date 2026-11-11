@@ -12,4 +12,3 @@ pub(crate) use preview::PreviewService;
 pub(crate) use preview::{PreviewEvents, RebuildFailure, ServeFailure};
 pub(crate) use settings::{ConfigProblems, SettingsService};
 pub(crate) use site::SiteService;
-pub(crate) use site::assets;

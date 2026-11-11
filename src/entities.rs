@@ -87,7 +87,7 @@ pub(crate) use sentences_page::{GroupView, Piece, SentenceView, SentencesPage, U
 pub(crate) use settings::Settings;
 pub(crate) use site_address::SiteAddress;
 pub(crate) use site_assets::{ASSETS, SiteAssets};
-pub(crate) use site_file::SiteFile;
+pub(crate) use site_file::{SiteFile, SiteFiles};
 pub(crate) use step_sentences::{Sentence, SentenceGroup, SentenceUse, StepKind, StepSentences};
 pub(crate) use tag_link::TagLink;
 pub(crate) use tag_names::{TAGS_FOLDER, TagNames};

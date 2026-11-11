@@ -10,9 +10,11 @@ use crate::entities::{
     OutputProblemKind, Problem, ProblemKind, Problems, Settings, SiteAddress, SiteFile,
     VersionList, VersionName,
 };
-use crate::policies::{VERSIONS_PAGE, order_versions, render_versions_page};
+use crate::policies::{
+    Moment, VERSIONS_PAGE, assets, folder_verdict, order_versions, render_versions_page,
+};
 use crate::ports::OutputFolders;
-use crate::services::{SiteService, assets};
+use crate::services::SiteService;
 
 #[derive(Clone)]
 pub(crate) struct OutputService {
@@ -98,27 +100,19 @@ impl OutputService {
             version: None,
             kind,
         };
-        let versions = self.folders.marked(output).map_err(|error| {
-            problem(OutputProblemKind::CannotBeRead {
-                reason: reason(&error),
-            })
-        })?;
+        let versions = self
+            .folders
+            .marked(output)
+            .map_err(|error| problem(cannot_be_read(&error)))?;
         if !versions.is_empty() {
             return Err(problem(OutputProblemKind::HoldsVersions));
         }
-        match self.folders.state(output, &Marker::Site) {
-            Ok(FolderState::Missing | FolderState::Empty) => {
-                Ok(BuildFolder::new(output, Marker::Site))
-            }
-            Ok(FolderState::Marked) if replace => Ok(BuildFolder::new(output, Marker::Site)),
-            Ok(FolderState::Marked) => Err(problem(OutputProblemKind::AlreadyBuilt)),
-            Ok(FolderState::Other | FolderState::OtherCapitals) => {
-                Err(problem(OutputProblemKind::NotASite))
-            }
-            Err(error) => Err(problem(OutputProblemKind::CannotBeRead {
-                reason: reason(&error),
-            })),
-        }
+        let state = self
+            .folders
+            .state(output, &Marker::Site)
+            .map_err(|error| problem(cannot_be_read(&error)))?;
+        folder_verdict(state, &Marker::Site, Moment::Checking { replace }).map_err(problem)?;
+        Ok(BuildFolder::new(output, Marker::Site))
     }
 
     /// The folder the version `name` is written into, once nothing stops it,
@@ -136,29 +130,20 @@ impl OutputService {
             version: version.cloned(),
             kind,
         };
-        match self.folders.state(output, &Marker::Site) {
-            Ok(FolderState::Marked) => return Err(problem(None, OutputProblemKind::HoldsSite)),
-            Ok(_) => {}
-            Err(error) => {
-                return Err(problem(
-                    None,
-                    OutputProblemKind::CannotBeRead {
-                        reason: reason(&error),
-                    },
-                ));
-            }
+        let site = self
+            .folders
+            .state(output, &Marker::Site)
+            .map_err(|error| problem(None, cannot_be_read(&error)))?;
+        if site == FolderState::Marked {
+            return Err(problem(None, OutputProblemKind::HoldsSite));
         }
         let problem = |kind| problem(Some(name), kind);
-        match self.folders.state(folder.path(), &marker) {
-            Ok(FolderState::Missing | FolderState::Empty) => Ok(folder),
-            Ok(FolderState::Marked) if replace => Ok(folder),
-            Ok(FolderState::Marked) => Err(problem(OutputProblemKind::AlreadyBuilt)),
-            Ok(FolderState::Other) => Err(problem(OutputProblemKind::NotAVersion)),
-            Ok(FolderState::OtherCapitals) => Err(problem(OutputProblemKind::OtherCapitals)),
-            Err(error) => Err(problem(OutputProblemKind::CannotBeRead {
-                reason: reason(&error),
-            })),
-        }
+        let state = self
+            .folders
+            .state(folder.path(), &marker)
+            .map_err(|error| problem(cannot_be_read(&error)))?;
+        folder_verdict(state, &marker, Moment::Checking { replace }).map_err(problem)?;
+        Ok(folder)
     }
 
     /// Empties the folder a check gave, and marks it, ready for the site to
@@ -179,23 +164,11 @@ impl OutputService {
         };
         // What was checked may have changed while the input was read, and
         // nothing unmarked is ever emptied.
-        match self.folders.state(folder.path(), folder.marker()) {
-            Ok(FolderState::Missing | FolderState::Empty | FolderState::Marked) => {}
-            Ok(FolderState::OtherCapitals) => {
-                return Err(problem(OutputProblemKind::OtherCapitals));
-            }
-            Ok(FolderState::Other) => {
-                return Err(problem(match version {
-                    Some(_) => OutputProblemKind::NotAVersion,
-                    None => OutputProblemKind::NotASite,
-                }));
-            }
-            Err(error) => {
-                return Err(problem(OutputProblemKind::CannotBeRead {
-                    reason: reason(&error),
-                }));
-            }
-        }
+        let state = self
+            .folders
+            .state(folder.path(), folder.marker())
+            .map_err(|error| problem(cannot_be_read(&error)))?;
+        folder_verdict(state, folder.marker(), Moment::Emptying).map_err(problem)?;
         self.folders
             .clear(folder.path())
             .and_then(|()| self.folders.mark(folder.path(), folder.marker()))
@@ -225,6 +198,12 @@ impl OutputService {
 
 fn reason(error: &IoError) -> String {
     error.to_string()
+}
+
+fn cannot_be_read(error: &IoError) -> OutputProblemKind {
+    OutputProblemKind::CannotBeRead {
+        reason: reason(error),
+    }
 }
 
 #[cfg(test)]

@@ -1,31 +1,12 @@
-//! Service: building a site, from reading its input to writing its pages, its folder pages, its page of step sentences, its folder tree's data and its assets.
+//! Service: building a site, reading its input, making its files and writing them.
 
 use std::path::Path;
 use std::sync::Arc;
 
-use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
-
-use crate::entities::{
-    ASSETS, BuiltSite, Problem, ProblemKind, Problems, Settings, SiteAddress, SiteAssets, SiteFile,
-};
-use crate::policies::{
-    LARGE_SEARCH_DOCUMENTS, SENTENCES_PAGE, anchor_feature, build_folder_pages, build_folder_tree,
-    build_page, build_sentences_page, build_tag_index, build_tag_page, find_step_sentences,
-    name_tags, render_folder_page, render_folder_tree, render_page, render_sentences_page,
-    render_tag_index, render_tag_page, search_documents, search_json, tag_index_address, tags_of,
-};
+use crate::entities::{BuiltSite, Problem, ProblemKind, Problems, Settings, SiteFile, SiteFiles};
+use crate::policies::site_files;
 use crate::ports::SiteWriter;
 use crate::services::InputService;
-
-/// In the folder of the assets, where the pages' script fetches them from.
-const TREE_DATA: &str = "tree.json";
-const SEARCH_DOCUMENTS: &str = "search.json";
-
-/// Every file of a site, and what the build has to say of them.
-pub(crate) struct SiteFiles {
-    pub(crate) files: Vec<SiteFile>,
-    pub(crate) built: BuiltSite,
-}
 
 pub(crate) struct SiteService {
     input: InputService,
@@ -49,58 +30,7 @@ impl SiteService {
     /// Every file of the site, pages first, in file order. Nothing is written.
     pub(crate) fn files(&self, settings: &Settings) -> Result<SiteFiles, Problems> {
         let features = self.input.read(&settings.input, settings.unnamed)?;
-        let tags = tags_of(&features);
-        let names = name_tags(&tags);
-        let anchored: Vec<_> = features.iter().map(anchor_feature).collect();
-        // Collecting into a `Vec` keeps file order, whatever order the threads finish in.
-        let pages: Vec<_> = anchored
-            .par_iter()
-            .map(|feature| build_page(feature, &settings.pages, &names))
-            .collect();
-        let folders = build_folder_pages(&pages, &settings.pages);
-        let mut files: Vec<SiteFile> = pages
-            .par_iter()
-            .map(|page| SiteFile::text(page.address.clone(), render_page(page)))
-            .collect();
-        files.extend(
-            folders
-                .par_iter()
-                .map(|folder| SiteFile::text(folder.address.clone(), render_folder_page(folder)))
-                .collect::<Vec<_>>(),
-        );
-        let sentences = find_step_sentences(&anchored);
-        files.push(SiteFile::text(
-            SiteAddress::at_root(SENTENCES_PAGE),
-            render_sentences_page(&build_sentences_page(
-                &features,
-                &sentences,
-                &settings.pages,
-            )),
-        ));
-        files.push(SiteFile::text(
-            asset(TREE_DATA),
-            render_folder_tree(&build_folder_tree(&folders)),
-        ));
-        files.push(SiteFile::text(
-            tag_index_address(),
-            render_tag_index(&build_tag_index(&tags, &pages, &names, &settings.pages)),
-        ));
-        files.extend(
-            tags.par_iter()
-                .map(|tag| {
-                    let page = build_tag_page(tag, &pages, &names, &settings.pages);
-                    SiteFile::text(page.address.clone(), render_tag_page(&page))
-                })
-                .collect::<Vec<_>>(),
-        );
-        let search = search_json(&search_documents(&anchored));
-        let built = BuiltSite {
-            large_search_documents: Some(search.len())
-                .filter(|&size| size > LARGE_SEARCH_DOCUMENTS),
-        };
-        files.push(SiteFile::text(asset(SEARCH_DOCUMENTS), search));
-        files.extend(assets());
-        Ok(SiteFiles { files, built })
+        Ok(site_files(&features, &settings.pages))
     }
 
     /// Writes `files` into `output`, stopping at the first that cannot be written.
@@ -125,21 +55,6 @@ impl SiteService {
         }
         Ok(())
     }
-}
-
-/// The assets every site has.
-pub(crate) fn assets() -> impl Iterator<Item = SiteFile> {
-    SiteAssets::iter().filter_map(|name| {
-        SiteAssets::get(&name).map(|file| SiteFile {
-            address: asset(&name),
-            contents: file.data.into_owned(),
-        })
-    })
-}
-
-/// The address of the file named `name` in the folder of the assets.
-fn asset(name: &str) -> SiteAddress {
-    SiteAddress::of(&[ASSETS], name)
 }
 
 #[cfg(test)]
@@ -236,17 +151,6 @@ mod tests {
     }
 
     #[test]
-    fn only_search_documents_above_the_size_are_reported() {
-        let built = build(vec!["a.feature"], Arc::default()).expect("built");
-        assert_eq!(built.large_search_documents, None);
-        // The feature's name is its path, and its page's address almost the same.
-        let long: &'static str = String::leak("a".repeat(LARGE_SEARCH_DOCUMENTS / 2));
-        let built = build(vec![long], Arc::default()).expect("built");
-        let size = built.large_search_documents.expect("reported");
-        assert!(size > LARGE_SEARCH_DOCUMENTS);
-    }
-
-    #[test]
     fn a_file_that_cannot_be_written_is_reported_with_the_output_folder() {
         let writer = Arc::new(FakeWriter {
             fails: Some("sub/b.html"),
@@ -257,42 +161,6 @@ mod tests {
             problems.to_string(),
             "elsewhere/sub/b.html: cannot be written: disk full\n"
         );
-    }
-
-    #[test]
-    fn a_page_in_the_folder_of_the_tag_pages_is_reported_and_nothing_is_written() {
-        let writer = Arc::new(FakeWriter::default());
-        let problems = build(
-            vec!["Tags/a.feature", "tags.feature", "b/tags/c.feature"],
-            writer.clone(),
-        )
-        .expect_err("in the tags folder");
-        assert_eq!(
-            problems.to_string(),
-            "Tags/a.feature: has its page, Tags/a.html, in the folder tags\n"
-        );
-        assert!(writer.written.lock().expect("not poisoned").is_empty());
-    }
-
-    #[test]
-    fn a_file_whose_page_is_the_page_of_step_sentences_is_reported() {
-        let writer = Arc::new(FakeWriter::default());
-        let problems = build(
-            vec![
-                "Steps.feature",
-                "a.feature",
-                "steps.feature",
-                "sub/steps.feature",
-            ],
-            writer.clone(),
-        )
-        .expect_err("the same page");
-        assert_eq!(
-            problems.to_string(),
-            "Steps.feature: has the same page, steps.html, as the step sentences\n\
-             steps.feature: has the same page, steps.html, as the step sentences\n"
-        );
-        assert!(writer.written.lock().expect("not poisoned").is_empty());
     }
 
     #[test]
@@ -313,42 +181,5 @@ mod tests {
         build(Vec::new(), writer.clone()).expect("built");
         let written = writer.written.lock().expect("not poisoned");
         assert!(written.contains_key("index.html"));
-    }
-
-    #[test]
-    fn a_folder_whose_page_differs_only_in_case_is_reported_once() {
-        let writer = Arc::new(FakeWriter::default());
-        let problems = build(
-            vec!["A/x.feature", "a/y.feature", "a/z.feature", "a/b/w.feature"],
-            writer.clone(),
-        )
-        .expect_err("the same folder page");
-        assert_eq!(
-            problems.to_string(),
-            "a: has the same page, a/index.html, as the folder A\n"
-        );
-        assert!(writer.written.lock().expect("not poisoned").is_empty());
-    }
-
-    #[test]
-    fn a_feature_whose_page_is_a_folder_s_is_reported_in_any_case() {
-        let writer = Arc::new(FakeWriter::default());
-        let problems = build(vec!["INDEX.feature", "a/b/index.story"], writer.clone())
-            .expect_err("a folder's page");
-        assert_eq!(
-            problems.as_slice()[0].kind,
-            ProblemKind::SameAsFolderPage {
-                page: "INDEX.html".into(),
-                folder: None
-            }
-        );
-        assert_eq!(
-            problems.as_slice()[1].kind,
-            ProblemKind::SameAsFolderPage {
-                page: "a/b/index.html".into(),
-                folder: Some("a/b".into())
-            }
-        );
-        assert!(writer.written.lock().expect("not poisoned").is_empty());
     }
 }
