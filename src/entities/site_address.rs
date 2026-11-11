@@ -24,6 +24,13 @@ impl SiteAddress {
         }
     }
 
+    /// The file named `file` in the site's root.
+    pub(crate) fn at_root(file: &str) -> SiteAddress {
+        SiteAddress {
+            address: file.to_string(),
+        }
+    }
+
     pub(crate) fn as_str(&self) -> &str {
         &self.address
     }

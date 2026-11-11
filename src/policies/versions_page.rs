@@ -12,9 +12,6 @@ use crate::policies::{CATALOGUE, page_frame};
 /// The versions page's address below the output folder.
 pub(crate) const VERSIONS_PAGE: &str = "index.html";
 
-/// The folder of the versions page's assets, below the output folder.
-pub(crate) const ASSETS: &str = "assets";
-
 #[derive(Template)]
 #[template(path = "versions.html")]
 struct VersionsTemplate {

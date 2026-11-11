@@ -6,10 +6,11 @@ use std::path::Path;
 use std::sync::Arc;
 
 use crate::entities::{
-    BuildFailure, BuildFolder, BuiltSite, FolderState, Marker, OutputProblem, OutputProblemKind,
-    Problem, ProblemKind, Problems, Settings, VersionList, VersionName,
+    ASSETS, BuildFailure, BuildFolder, BuiltSite, FolderState, Marker, OutputProblem,
+    OutputProblemKind, Problem, ProblemKind, Problems, Settings, SiteAddress, SiteFile,
+    VersionList, VersionName,
 };
-use crate::policies::{ASSETS, VERSIONS_PAGE, order_versions, render_versions_page};
+use crate::policies::{VERSIONS_PAGE, order_versions, render_versions_page};
 use crate::ports::OutputFolders;
 use crate::services::{SiteService, assets};
 
@@ -80,7 +81,7 @@ impl OutputService {
                 )])
             })?;
         }
-        let root = once((VERSIONS_PAGE.to_string(), page.into_bytes())).chain(assets());
+        let root = once(SiteFile::text(SiteAddress::at_root(VERSIONS_PAGE), page)).chain(assets());
         site.write(output, root)?;
         Ok(site_files.built)
     }

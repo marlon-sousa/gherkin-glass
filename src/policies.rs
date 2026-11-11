@@ -78,4 +78,4 @@ pub(crate) use themes::DEFAULT_ACCENTS;
 pub(crate) use themes::{check_accent, palette};
 pub(crate) use unnamed_blocks::unnamed_blocks;
 pub(crate) use version_order::order_versions;
-pub(crate) use versions_page::{ASSETS, VERSIONS_PAGE, render_versions_page};
+pub(crate) use versions_page::{VERSIONS_PAGE, render_versions_page};
