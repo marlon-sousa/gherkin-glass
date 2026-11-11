@@ -22,9 +22,9 @@ pub use adapters::{
 };
 pub use controllers::{CommandLine, Reply};
 pub use entities::{
-    Anchors, Changes, CollectedInput, ListenFailure, PageOptions, ParseFailure, ParsedFeature,
-    Preview, Problem, ProblemKind, Problems, RawFeature, ServedSite, ServerWords, Settings,
-    Unnamed, UnnamedBlock, Version, WatchFailure, Watched,
+    Anchors, Burst, Changes, CollectedInput, ListenFailure, PageOptions, ParseFailure,
+    ParsedFeature, Preview, Problem, ProblemKind, Problems, RawFeature, ServedSite, ServerWords,
+    Settings, Unnamed, UnnamedBlock, Version, WatchFailure, Watched,
 };
 pub use policies::make_anchors;
 pub use ports::{

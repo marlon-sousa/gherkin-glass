@@ -23,6 +23,12 @@ impl InputService {
         InputService { collector, parser }
     }
 
+    /// The paths of the files the `.ghg-ignore` rules select under
+    /// `input`, sorted, without reading them.
+    pub fn paths(&self, input: &Path) -> Vec<PathBuf> {
+        self.collector.collect(input).paths
+    }
+
     /// The features under `input`, sorted by path, or every problem found:
     /// those met while collecting, the files whose page another has, those
     /// of every file parsed, and, when `unnamed` is refused, every block

@@ -39,4 +39,4 @@ pub use raw_feature::RawFeature;
 pub use settings::Settings;
 pub(crate) use site_assets::SiteAssets;
 pub use unnamed::Unnamed;
-pub use watch::{Changes, WatchFailure, Watched};
+pub use watch::{Burst, Changes, WatchFailure, Watched};

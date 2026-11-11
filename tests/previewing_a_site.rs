@@ -1,6 +1,6 @@
 //! docs/BEHAVIOUR.md, "Previewing a site", checked by running `ghg serve` and asking it over HTTP.
 
-use std::fs::{copy, create_dir_all, read, read_to_string, remove_dir_all, write};
+use std::fs::{copy, create_dir_all, read, read_to_string, remove_dir_all, rename, write};
 use std::io::{BufRead, BufReader, Read, Write};
 use std::net::{TcpListener, TcpStream};
 use std::path::{Path, PathBuf};
@@ -485,6 +485,30 @@ fn watching_rebuilds_on_a_change_and_keeps_the_last_site_that_built() {
     );
     assert_eq!(build(), "5");
     assert_eq!(get(&address, "/assets/gherkin-glass.css").status, 200);
+}
+
+#[test]
+fn watching_rebuilds_only_for_changes_a_build_reads() {
+    let folder = built_copy("serve-watch-reads");
+    let serving = serve(&folder, &["--watch", "--port", "0"]);
+    let build = || get(&serving.address, "/__ghg/build").text();
+    assert_eq!(build(), "1");
+    write(folder.join("features/notes.txt"), "notes").expect("written");
+    write(folder.join("features/.withdraw.feature.swp"), "").expect("written");
+    write(folder.join("ghg.toml~"), "").expect("written");
+    // Longer than a burst takes to end and be looked at.
+    sleep(Duration::from_millis(1000));
+    assert_eq!(build(), "1");
+
+    let outside = folder.join("outside/more");
+    create_dir_all(&outside).expect("folder");
+    write(outside.join("more.feature"), "Feature: More\n").expect("written");
+    rename(&outside, folder.join("features/more")).expect("moved");
+    eventually(
+        "a rebuild after a folder with a feature was moved in",
+        || build() == "2",
+    );
+    assert_eq!(get(&serving.address, "/more/more.html").status, 200);
 }
 
 #[test]

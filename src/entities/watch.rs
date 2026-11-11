@@ -13,9 +13,20 @@ pub enum Watched {
     File(PathBuf),
 }
 
+/// What one burst of changes, such as an editor's when it saves, was.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Burst {
+    /// The paths that changed, each written from the path watched that
+    /// holds it, as that was given: `features/a.feature` under
+    /// `Watched::Folder("features")`, or the file itself.
+    Changed(Vec<PathBuf>),
+    /// Changes may have been missed, so which ones is not known.
+    Missed,
+}
+
 /// One message for each burst of changes, until the watching ends.
 pub struct Changes {
-    pub bursts: Receiver<()>,
+    pub bursts: Receiver<Burst>,
     /// Whatever keeps the watching going; dropping it ends it.
     pub watching: Box<dyn Any + Send>,
 }

@@ -4,6 +4,8 @@ use crate::entities::{Changes, WatchFailure, Watched};
 
 pub trait ChangeWatcher: Send + Sync {
     /// Starts watching every one of `watched`, merging each burst of
-    /// changes, such as an editor's when it saves, into one message.
+    /// changes, such as an editor's when it saves, into one message that
+    /// names the paths it changed. Opening or reading a file is not a
+    /// change; which changes matter is for the caller to decide.
     fn watch(&self, watched: &[Watched]) -> Result<Changes, WatchFailure>;
 }

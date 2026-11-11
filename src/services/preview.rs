@@ -6,10 +6,11 @@ use std::sync::Arc;
 use std::thread::park;
 
 use crate::entities::{
-    ListenFailure, Preview, Problems, ServeOptions, ServedSite, ServerWords, Settings,
-    WatchFailure, Watched,
+    Burst, Changes, ListenFailure, Preview, Problems, ServeOptions, ServedSite, ServerWords,
+    Settings, WatchFailure, Watched,
 };
 
+use crate::policies::{Read, calls_for_rebuild, remembered};
 use crate::ports::{ChangeWatcher, ConfigReader, PreviewServer, SiteRecorder};
 use crate::services::settings::CONFIG_FILE;
 use crate::services::{ConfigProblems, InputService, SettingsService, SiteService};
@@ -23,9 +24,18 @@ pub struct PreviewService {
     settings: SettingsService,
     on_disk: SiteService,
     in_memory: SiteService,
+    input: InputService,
     memory: Arc<dyn SiteRecorder>,
     server: Arc<dyn PreviewServer>,
     watcher: Arc<dyn ChangeWatcher>,
+}
+
+/// What ghg serve watches with, and the files the input held at the last burst.
+struct Watching {
+    changes: Changes,
+    config: PathBuf,
+    input: PathBuf,
+    read: Vec<PathBuf>,
 }
 
 /// What stops ghg serve before it serves.
@@ -69,7 +79,8 @@ impl PreviewService {
         PreviewService {
             settings: SettingsService::new(config_reader),
             on_disk,
-            in_memory: SiteService::new(input, memory.clone()),
+            in_memory: SiteService::new(input.clone(), memory.clone()),
+            input,
             memory,
             server,
             watcher,
@@ -88,20 +99,24 @@ impl PreviewService {
             .settings
             .load(&options.build)
             .map_err(ServeFailure::Config)?;
+        let config = options
+            .build
+            .config
+            .clone()
+            .unwrap_or_else(|| PathBuf::from(CONFIG_FILE));
         // Watching starts before the first build, so that a change made
         // during it is not missed; what stops the build is said first.
         let changes = options.watch.then(|| {
-            let config = options
-                .build
-                .config
-                .clone()
-                .unwrap_or_else(|| PathBuf::from(CONFIG_FILE));
             let watched = [
                 Watched::Folder(settings.input.clone()),
-                Watched::File(config),
+                Watched::File(config.clone()),
             ];
             self.watcher.watch(&watched)
         });
+        let read_before = match options.watch {
+            true => self.input.paths(&settings.input),
+            false => Vec::new(),
+        };
         let site = if options.no_build {
             ServedSite::Folder(settings.output.clone())
         } else if options.watch {
@@ -129,18 +144,60 @@ impl PreviewService {
                 park();
             }
         };
-        while changes.bursts.recv().is_ok() {
-            // Bursts that came during the last rebuild need only this one.
-            while changes.bursts.try_recv().is_ok() {}
-            match self.rebuild(options) {
-                Ok(site) => {
-                    preview.replace(site);
-                    events.rebuilt();
-                }
-                Err(failure) => events.not_rebuilt(&failure),
+        let watching = Watching {
+            changes,
+            config,
+            input: settings.input,
+            read: read_before,
+        };
+        self.rebuild_on_changes(watching, options, &preview, events);
+        Ok(())
+    }
+
+    /// Reads each burst of changes on this thread, until the watching ends,
+    /// and rebuilds when one may have changed what a build reads.
+    fn rebuild_on_changes(
+        &self,
+        mut watching: Watching,
+        options: &ServeOptions,
+        preview: &Preview,
+        events: &dyn PreviewEvents,
+    ) {
+        while let Ok(burst) = watching.changes.bursts.recv() {
+            // Bursts that came during the last rebuild need only one more.
+            let mut bursts = vec![burst];
+            bursts.extend(watching.changes.bursts.try_iter());
+            if self.calls_for_rebuild(&mut watching, &bursts) {
+                self.rebuild_and_serve(options, preview, events);
             }
         }
-        Ok(())
+    }
+
+    fn calls_for_rebuild(&self, watching: &mut Watching, bursts: &[Burst]) -> bool {
+        let after = self.input.paths(&watching.input);
+        let read = Read {
+            config: &watching.config,
+            before: &watching.read,
+            after: &after,
+        };
+        let rebuild = bursts.iter().any(|burst| calls_for_rebuild(burst, &read));
+        watching.read = remembered(&watching.read, after, rebuild);
+        rebuild
+    }
+
+    fn rebuild_and_serve(
+        &self,
+        options: &ServeOptions,
+        preview: &Preview,
+        events: &dyn PreviewEvents,
+    ) {
+        match self.rebuild(options) {
+            Ok(site) => {
+                preview.replace(site);
+                events.rebuilt();
+            }
+            Err(failure) => events.not_rebuilt(&failure),
+        }
     }
 
     fn rebuild(&self, options: &ServeOptions) -> Result<ServedSite, RebuildFailure> {
@@ -171,7 +228,7 @@ mod tests {
     use std::io::{Error as IoError, ErrorKind, Result as IoResult};
     use std::net::{Ipv4Addr, SocketAddrV4};
     use std::path::Path;
-    use std::sync::atomic::{AtomicBool, Ordering};
+    use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
     use std::sync::mpsc::{Sender, channel};
     use std::sync::{Mutex, PoisonError};
     use std::thread::{scope, sleep};
@@ -193,14 +250,17 @@ mod tests {
         }
     }
 
-    /// An input with no features, or, while `failing`, one problem.
+    /// An input with no features, or, while `failing`, one problem;
+    /// `collected` counts how often it was walked.
     #[derive(Default)]
     struct Input {
         failing: AtomicBool,
+        collected: AtomicUsize,
     }
 
     impl InputCollector for Input {
         fn collect(&self, input: &Path) -> CollectedInput {
+            self.collected.fetch_add(1, Ordering::SeqCst);
             let problems = if self.failing.load(Ordering::SeqCst) {
                 let kind = ProblemKind::Changed;
                 vec![Problem::new(input, &input.join("a.feature"), None, kind)]
@@ -247,7 +307,7 @@ mod tests {
     /// watches; `waiting` bursts are already sent when watching starts.
     #[derive(Default)]
     struct Watcher {
-        sender: Mutex<Option<Sender<()>>>,
+        sender: Mutex<Option<Sender<Burst>>>,
         watched: Mutex<Vec<Watched>>,
         waiting: usize,
     }
@@ -256,7 +316,7 @@ mod tests {
         fn watch(&self, watched: &[Watched]) -> Result<Changes, WatchFailure> {
             let (sender, bursts) = channel();
             for _ in 0..self.waiting {
-                sender.send(()).expect("sent");
+                sender.send(Burst::Missed).expect("sent");
             }
             *self.sender.lock().unwrap_or_else(PoisonError::into_inner) = Some(sender);
             *self.watched.lock().unwrap_or_else(PoisonError::into_inner) = watched.to_vec();
@@ -345,6 +405,17 @@ mod tests {
         }
     }
 
+    fn changed(path: &str) -> Burst {
+        Burst::Changed(vec![PathBuf::from(path)])
+    }
+
+    fn wait_until(done: impl Fn() -> bool) {
+        let deadline = Instant::now() + Duration::from_secs(10);
+        while !done() && Instant::now() < deadline {
+            sleep(Duration::from_millis(5));
+        }
+    }
+
     #[test]
     fn watching_rebuilds_on_each_burst_and_keeps_the_last_good_site() {
         let input = Arc::new(Input::default());
@@ -397,12 +468,18 @@ mod tests {
             );
             assert!(!files.contains_key("stale.html"));
 
-            sender.send(()).expect("sent");
+            // A change no build reads is looked at, and rebuilds nothing.
+            let walked = input.collected.load(Ordering::SeqCst);
+            sender.send(changed("features/notes.txt")).expect("sent");
+            wait_until(|| input.collected.load(Ordering::SeqCst) > walked);
+            assert_eq!(preview.current().number, 1);
+
+            sender.send(changed("ghg.toml")).expect("sent");
             assert_eq!(events.wait_for(2)[1], "rebuilt");
             assert_eq!(preview.current().number, 2);
 
             input.failing.store(true, Ordering::SeqCst);
-            sender.send(()).expect("sent");
+            sender.send(changed("ghg.toml")).expect("sent");
             assert!(events.wait_for(3)[2].starts_with("not rebuilt: Input("));
             assert_eq!(preview.current().number, 2);
 
