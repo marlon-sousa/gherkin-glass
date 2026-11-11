@@ -64,7 +64,7 @@ var DomPage = class {
     this.document = document2;
     const byElement = /* @__PURE__ */ new Map();
     for (const element of document2.querySelectorAll(".ghg-block")) {
-      const heading = element.querySelector(":scope > :is(h2, h3, h4)");
+      const heading = element.querySelector(":scope > :is(h2, h3, h4, h5)");
       const button = heading?.querySelector(":scope > button.ghg-toggle");
       const content = element.querySelector(":scope > .ghg-content");
       if (!heading || !button || !content) {

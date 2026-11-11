@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Feature: Withdraw cash at the counter, outlines.feature</title>
+<script>try{var t=localStorage.getItem("gherkin-glass:theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}</script>
+<style>
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+  --ghg-background: #ffffff;
+  --ghg-surface: #f2f2f2;
+  --ghg-text: #1a1a1a;
+  --ghg-muted: #474747;
+  --ghg-border: #757575;
+  --ghg-accent: #0b4f9c;
+  --ghg-keyword: #6a1b9a;
+  --ghg-parameter: #14521a;
+  --ghg-number: #8a3000;
+  --ghg-placeholder: #00575e;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ghg-background: #141414;
+    --ghg-surface: #222222;
+    --ghg-text: #ececec;
+    --ghg-muted: #c4c4c4;
+    --ghg-border: #8f8f8f;
+    --ghg-accent: #8cc4ff;
+    --ghg-keyword: #e1b3ff;
+    --ghg-parameter: #9fe0a8;
+    --ghg-number: #ffbf8a;
+    --ghg-placeholder: #7fdbe0;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ghg-background: #141414;
+  --ghg-surface: #222222;
+  --ghg-text: #ececec;
+  --ghg-muted: #c4c4c4;
+  --ghg-border: #8f8f8f;
+  --ghg-accent: #8cc4ff;
+  --ghg-keyword: #e1b3ff;
+  --ghg-parameter: #9fe0a8;
+  --ghg-number: #ffbf8a;
+  --ghg-placeholder: #7fdbe0;
+}
+</style>
+<link rel="stylesheet" href="assets/gherkin-glass.css">
+<script type="module" src="assets/gherkin-glass.js"></script>
+</head>
+<body>
+<a class="ghg-skip" href="#ghg_main">Skip to content</a>
+<div class="ghg-options">
+<input type="checkbox" id="ghg_show_tree" class="ghg-show-tree" aria-controls="ghg_tree"> <label for="ghg_show_tree">Show the folder tree</label>
+<fieldset class="ghg-theme">
+<legend>Theme</legend>
+<label><input type="radio" name="ghg-theme" value="system" checked> System</label>
+<label><input type="radio" name="ghg-theme" value="light"> Light</label>
+<label><input type="radio" name="ghg-theme" value="dark"> Dark</label>
+</fieldset>
+</div>
+<div class="ghg-layout">
+<nav id="ghg_tree" class="ghg-tree" aria-label="Folder tree" hidden></nav>
+<div class="ghg-page">
+<nav class="ghg-breadcrumb" aria-label="Breadcrumb">
+<ol>
+<li><a href="index.html">Feature files</a></li>
+<li><a href="outlines.html" aria-current="page">Feature: Withdraw cash at the counter</a></li>
+</ol>
+</nav>
+<main id="ghg_main">
+<h1>Feature: Withdraw cash at the counter</h1>
+<div class="ghg-description">
+<p>Outlines, and the scenarios their examples produce.</p>
+</div>
+<nav class="ghg-contents" aria-label="Contents">
+<ul>
+<li><a href="#withdraw-cash">Scenario Outline: Withdraw cash</a></li>
+<li><a href="#scenario-outline">Scenario Outline</a></li>
+<li><a href="#nothing-to-produce">Scenario Outline: Nothing to produce</a></li>
+</ul>
+</nav>
+<div class="ghg-controls">
+<button type="button" class="ghg-collapse-all">Collapse all</button>
+<button type="button" class="ghg-expand-all">Expand all</button>
+</div>
+<div class="ghg-block ghg-scenario">
+<h2 id="withdraw-cash"><button type="button" class="ghg-toggle" aria-expanded="false">Scenario Outline: Withdraw cash</button></h2>
+<div class="ghg-content" hidden>
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>a balance of <span class="ghg-placeholder">&#60;balance&#62;</span></li>
+<li><span class="ghg-keyword">When </span><span class="ghg-placeholder">&#60;amount&#62;</span> is withdrawn by &#60;who&#62;</li>
+<li><span class="ghg-keyword">Then </span>the account shows
+<table class="ghg-table">
+<thead>
+<tr><th scope="col">balance</th><th scope="col">&#60;amount&#62;</th></tr>
+</thead>
+<tbody>
+<tr><td>&#60;left&#62;</td><td>&#60;none&#62;</td></tr>
+</tbody>
+</table></li>
+<li><span class="ghg-keyword">And </span>the receipt reads
+<figure class="ghg-doc-string">
+<figcaption>&#60;format&#62;</figcaption>
+<pre>Withdrawn: &#60;amount&#62;</pre>
+</figure></li>
+</ol>
+<div class="ghg-block ghg-examples">
+<h3 id="small"><button type="button" class="ghg-toggle" aria-expanded="true">Examples: Small</button></h3>
+<div class="ghg-content">
+<table class="ghg-table">
+<thead>
+<tr><th scope="col">amount</th><th scope="col">balance</th><th scope="col">left</th><th scope="col">format</th></tr>
+</thead>
+<tbody>
+<tr><td>10</td><td>100</td><td>90</td><td>text</td></tr>
+<tr><td>20</td><td>100</td><td>80</td><td>text</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="ghg-block ghg-examples">
+<h3 id="large"><button type="button" class="ghg-toggle" aria-expanded="true">Examples: Large</button></h3>
+<div class="ghg-content">
+<table class="ghg-table">
+<thead>
+<tr><th scope="col">amount</th><th scope="col">balance</th><th scope="col">left</th><th scope="col">format</th></tr>
+</thead>
+<tbody>
+<tr><td>500</td><td>1000</td><td>500</td><td>json</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="ghg-block ghg-examples-as-scenarios">
+<h3 id="withdraw-cash_scenarios"><button type="button" class="ghg-toggle" aria-expanded="false">Examples as scenarios: <bdi>Withdraw cash</bdi></button></h3>
+<div class="ghg-content" hidden>
+<div class="ghg-block ghg-scenario">
+<h4 id="withdraw-cash-row-1"><button type="button" class="ghg-toggle" aria-expanded="false"><bdi>Withdraw cash</bdi> (<bdi>amount</bdi>: <bdi>10</bdi>, <bdi>balance</bdi>: <bdi>100</bdi>, <bdi>left</bdi>: <bdi>90</bdi>, <bdi>format</bdi>: <bdi>text</bdi>)</button></h4>
+<div class="ghg-content" hidden>
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>a balance of <span class="ghg-number">100</span></li>
+<li><span class="ghg-keyword">When </span><span class="ghg-number">10</span> is withdrawn by &#60;who&#62;</li>
+<li><span class="ghg-keyword">Then </span>the account shows
+<table class="ghg-table">
+<thead>
+<tr><th scope="col">balance</th><th scope="col">10</th></tr>
+</thead>
+<tbody>
+<tr><td>90</td><td>&#60;none&#62;</td></tr>
+</tbody>
+</table></li>
+<li><span class="ghg-keyword">And </span>the receipt reads
+<figure class="ghg-doc-string">
+<figcaption>text</figcaption>
+<pre>Withdrawn: 10</pre>
+</figure></li>
+</ol>
+</div>
+</div>
+<div class="ghg-block ghg-scenario">
+<h4 id="withdraw-cash-row-2"><button type="button" class="ghg-toggle" aria-expanded="false"><bdi>Withdraw cash</bdi> (<bdi>amount</bdi>: <bdi>20</bdi>, <bdi>balance</bdi>: <bdi>100</bdi>, <bdi>left</bdi>: <bdi>80</bdi>, <bdi>format</bdi>: <bdi>text</bdi>)</button></h4>
+<div class="ghg-content" hidden>
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>a balance of <span class="ghg-number">100</span></li>
+<li><span class="ghg-keyword">When </span><span class="ghg-number">20</span> is withdrawn by &#60;who&#62;</li>
+<li><span class="ghg-keyword">Then </span>the account shows
+<table class="ghg-table">
+<thead>
+<tr><th scope="col">balance</th><th scope="col">20</th></tr>
+</thead>
+<tbody>
+<tr><td>80</td><td>&#60;none&#62;</td></tr>
+</tbody>
+</table></li>
+<li><span class="ghg-keyword">And </span>the receipt reads
+<figure class="ghg-doc-string">
+<figcaption>text</figcaption>
+<pre>Withdrawn: 20</pre>
+</figure></li>
+</ol>
+</div>
+</div>
+<div class="ghg-block ghg-scenario">
+<h4 id="withdraw-cash-row-3"><button type="button" class="ghg-toggle" aria-expanded="false"><bdi>Withdraw cash</bdi> (<bdi>amount</bdi>: <bdi>500</bdi>, <bdi>balance</bdi>: <bdi>1000</bdi>, <bdi>left</bdi>: <bdi>500</bdi>, <bdi>format</bdi>: <bdi>json</bdi>)</button></h4>
+<div class="ghg-content" hidden>
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>a balance of <span class="ghg-number">1000</span></li>
+<li><span class="ghg-keyword">When </span><span class="ghg-number">500</span> is withdrawn by &#60;who&#62;</li>
+<li><span class="ghg-keyword">Then </span>the account shows
+<table class="ghg-table">
+<thead>
+<tr><th scope="col">balance</th><th scope="col">500</th></tr>
+</thead>
+<tbody>
+<tr><td>500</td><td>&#60;none&#62;</td></tr>
+</tbody>
+</table></li>
+<li><span class="ghg-keyword">And </span>the receipt reads
+<figure class="ghg-doc-string">
+<figcaption>json</figcaption>
+<pre>Withdrawn: 500</pre>
+</figure></li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="ghg-block ghg-scenario">
+<h2 id="scenario-outline"><button type="button" class="ghg-toggle" aria-expanded="false">Scenario Outline</button></h2>
+<div class="ghg-content" hidden>
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span><span class="ghg-placeholder">&#60;x&#62;</span> and <span class="ghg-placeholder">&#60;y&#62;</span></li>
+</ol>
+<div class="ghg-block ghg-examples">
+<h3 id="examples"><button type="button" class="ghg-toggle" aria-expanded="true">Examples</button></h3>
+<div class="ghg-content">
+<table class="ghg-table">
+<thead>
+<tr><th scope="col">x</th><th scope="col">y</th><th scope="col">x</th></tr>
+</thead>
+<tbody>
+<tr><td>1</td><td>&#60;x&#62;</td><td>3</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="ghg-block ghg-examples-as-scenarios">
+<h3 id="scenario-outline_scenarios"><button type="button" class="ghg-toggle" aria-expanded="false">Examples as scenarios: <bdi>Scenario Outline</bdi></button></h3>
+<div class="ghg-content" hidden>
+<div class="ghg-block ghg-scenario">
+<h4 id="scenario-outline-row-1"><button type="button" class="ghg-toggle" aria-expanded="false"><bdi>Scenario Outline</bdi> (<bdi>x</bdi>: <bdi>1</bdi>, <bdi>y</bdi>: <bdi>&#60;x&#62;</bdi>, <bdi>x</bdi>: <bdi>3</bdi>)</button></h4>
+<div class="ghg-content" hidden>
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span><span class="ghg-number">1</span> and &#60;x&#62;</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="ghg-block ghg-scenario">
+<h2 id="nothing-to-produce"><button type="button" class="ghg-toggle" aria-expanded="false">Scenario Outline: Nothing to produce</button></h2>
+<div class="ghg-content" hidden>
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span><span class="ghg-placeholder">&#60;x&#62;</span></li>
+</ol>
+<div class="ghg-block ghg-examples">
+<h3 id="examples-2"><button type="button" class="ghg-toggle" aria-expanded="true">Examples</button></h3>
+<div class="ghg-content">
+<table class="ghg-table">
+<thead>
+<tr><th scope="col">x</th></tr>
+</thead>
+</table>
+</div>
+</div>
+<div class="ghg-block ghg-examples">
+<h3 id="examples-3"><button type="button" class="ghg-toggle" aria-expanded="true">Examples</button></h3>
+<div class="ghg-content">
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</div>
+</body>
+</html>

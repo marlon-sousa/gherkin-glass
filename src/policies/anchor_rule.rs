@@ -7,6 +7,7 @@ use unicode_normalization::UnicodeNormalization;
 use unicode_normalization::char::is_combining_mark;
 
 use crate::entities::Anchors;
+use crate::policies::example_rows;
 
 /// The kinds of block that have an anchor, each named in English for when
 /// neither its name nor its keyword leaves anything.
@@ -57,13 +58,7 @@ pub fn make_anchors(feature: &Feature) -> Anchors {
     }
     for outline in outlines {
         let base = anchors.scenario(outline).unwrap_or_default().to_string();
-        let rows = outline
-            .examples
-            .iter()
-            .filter_map(|examples| examples.table.as_ref())
-            .map(|table| table.rows.len().saturating_sub(1))
-            .sum::<usize>();
-        for row in 1..=rows {
+        for row in 1..=example_rows(outline).len() {
             let anchor = unique(format!("{base}-row-{row}"), &mut taken);
             anchors.insert_row(outline.span.start, row, anchor);
         }

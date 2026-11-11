@@ -90,8 +90,8 @@ fn assert_same_site_of(fixture: &str, config: &str, expected: &str) {
     }
 }
 
-// Rules 36, 38 to 51 and 77 to 85: every page of the fixture, its folder
-// pages, and the assets beside them.
+// Rules 36, 38 to 51, 77 to 85 and 129 to 132: every page of the fixture,
+// its folder pages, and the assets beside them.
 
 #[test]
 fn every_feature_file_has_its_page_as_the_expected_site_shows() {
@@ -168,9 +168,16 @@ fn every_page_has_one_h1_and_a_lang_and_its_content_in_its_html() {
             assert!(ids.contains(&anchor), "{name}: {id}");
             assert!(place.parse::<usize>().is_ok(), "{name}: {id}");
         }
+        // Rule 129: an outline's examples as scenarios, after its anchor.
+        for id in ids.iter().filter(|id| id.ends_with("_scenarios")) {
+            let anchor = id.strip_suffix("_scenarios").expect("found");
+            assert!(ids.contains(&anchor), "{name}: {id}");
+        }
         assert_eq!(
             ids.iter()
-                .filter(|id| id.contains('_') && !id.contains("_background_"))
+                .filter(|id| {
+                    id.contains('_') && !id.contains("_background_") && !id.ends_with("_scenarios")
+                })
                 .collect::<Vec<_>>(),
             own.iter().collect::<Vec<_>>(),
             "{name}"
@@ -470,7 +477,7 @@ fn the_home_page_has_the_site_s_title_and_totals() {
     assert!(titled.contains("<title>Banking &#38; &#60;more&#62;</title>"));
     assert!(titled.contains("<h1>Banking &#38; &#60;more&#62;</h1>"));
     assert!(titled.contains(
-        "<ul class=\"ghg-totals\">\n<li>5 folders</li>\n<li>6 features</li>\n<li>3 rules</li>\n<li>8 scenarios</li>\n</ul>"
+        "<ul class=\"ghg-totals\">\n<li>5 folders</li>\n<li>7 features</li>\n<li>3 rules</li>\n<li>11 scenarios</li>\n</ul>"
     ));
     let untitled = home("expected-collapsed");
     assert!(untitled.contains("<title>Feature files</title>"));

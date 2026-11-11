@@ -257,3 +257,14 @@ versions-development = Development versions
 versions-releases = Releases
 versions-pre-releases = Pre-releases
 versions-development-version = { $name }, a development version
+
+## Under a scenario outline, its examples as the scenarios they produce,
+## named by the outline's $name, or its keyword when it has none. A
+## produced scenario is named by the same $name and its row's $values, each
+## value worded by example-value and separated by example-values-separator.
+## $column and $value are as written.
+
+examples-as-scenarios = Examples as scenarios: { $name }
+example-scenario-name = { $name } ({ $values })
+example-value = { $column }: { $value }
+example-values-separator = {", "}
