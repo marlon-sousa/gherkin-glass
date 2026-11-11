@@ -1,1 +1,26 @@
-{"site": true}
+{
+  "files": [
+    "accounts.html",
+    "area/index.html",
+    "area/notes.html",
+    "area/saque em conta.html",
+    "assets/gherkin-glass.css",
+    "assets/gherkin-glass.js",
+    "assets/search.json",
+    "assets/tree.json",
+    "index.html",
+    "steps.html",
+    "tags/draft.html",
+    "tags/index-2.html",
+    "tags/index.html",
+    "tags/issue-12.html",
+    "tags/issue-7.html",
+    "tags/later.html",
+    "tags/needs-db.html",
+    "tags/slow-2.html",
+    "tags/slow.html",
+    "tags/tag-2.html",
+    "tags/tag.html",
+    "tags/ticket-ç-1-2.html"
+  ]
+}

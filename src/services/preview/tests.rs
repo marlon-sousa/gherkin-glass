@@ -3,7 +3,7 @@ use std::sync::atomic::Ordering;
 use std::thread::scope;
 
 use super::*;
-use crate::entities::FolderState;
+use crate::entities::OutputContents;
 use crate::errors::OutputErrorKind;
 use crate::ports::SiteWriter;
 
@@ -24,7 +24,7 @@ fn watching_rebuilds_on_each_burst_and_keeps_the_last_good_site() {
     let service = PreviewService::new(
         Arc::new(NoFile),
         site(&input),
-        output(FolderState::Missing),
+        output(OutputContents::Missing),
         reading(&input),
         recorder,
         server.clone(),
@@ -99,7 +99,7 @@ fn a_first_build_that_stops_serves_nothing() {
     let service = PreviewService::new(
         Arc::new(NoFile),
         site(&input),
-        output(FolderState::Missing),
+        output(OutputContents::Missing),
         reading(&input),
         Arc::new(Recorder::default()),
         server.clone(),
@@ -127,7 +127,7 @@ fn bursts_that_wait_need_one_rebuild_and_the_defaults_are_127_0_0_1_at_8000() {
     let service = PreviewService::new(
         Arc::new(NoFile),
         site(&input),
-        output(FolderState::Missing),
+        output(OutputContents::Missing),
         reading(&input),
         Arc::new(Recorder::default()),
         server.clone(),
@@ -168,7 +168,7 @@ fn a_build_into_a_folder_ghg_did_not_build_serves_nothing_unless_it_is_in_memory
     let service = PreviewService::new(
         Arc::new(NoFile),
         site(&input),
-        output(FolderState::Other),
+        output(not_a_site()),
         reading(&input),
         Arc::new(Recorder::default()),
         server.clone(),

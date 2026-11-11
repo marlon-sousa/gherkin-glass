@@ -1,33 +1,38 @@
-//! Entity: a folder that nothing stops a build from emptying and writing into.
+//! Entity: an output folder that nothing stops a build from writing into, and what the build writes there.
 
 use std::path::{Path, PathBuf};
 
-use crate::entities::Marker;
+use crate::entities::{BuildTarget, Record};
 
 /// Outside the crate, made only by [`crate::services::OutputService`]'s checks, so
 /// that no other folder is ever emptied.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct BuildFolder {
-    path: PathBuf,
-    marker: Marker,
+    output: PathBuf,
+    target: BuildTarget,
+    record: Option<Record>,
 }
 
 impl BuildFolder {
-    /// The folder of `marker` in `output`: `output` itself for a site, or
-    /// the version's folder inside it.
-    pub(crate) fn new(output: &Path, marker: Marker) -> Self {
-        let path = match &marker {
-            Marker::Site => output.to_path_buf(),
-            Marker::Version(name) => output.join(name.as_str()),
-        };
-        BuildFolder { path, marker }
+    /// The output folder `output`, found safe to write `target` into, and
+    /// what its marker recorded then, `None` when it was missing or empty.
+    pub(crate) fn new(output: &Path, target: BuildTarget, record: Option<Record>) -> Self {
+        BuildFolder {
+            output: output.to_path_buf(),
+            target,
+            record,
+        }
     }
 
-    pub(crate) fn path(&self) -> &Path {
-        &self.path
+    pub(crate) fn output(&self) -> &Path {
+        &self.output
     }
 
-    pub(crate) fn marker(&self) -> &Marker {
-        &self.marker
+    pub(crate) fn target(&self) -> &BuildTarget {
+        &self.target
+    }
+
+    pub(crate) fn record(&self) -> Option<&Record> {
+        self.record.as_ref()
     }
 }

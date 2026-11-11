@@ -35,7 +35,7 @@ jobs:
         with:
           ref: ${{ inputs.version }}
       - name: Open the gh-pages branch
-        run: project-site/publish.sh open "$RUNNER_TEMP/pages"
+        run: project-site/publish.sh open "$RUNNER_TEMP/pages" "$RUNNER_TEMP/site"
       - name: Gather the example suite and the fixtures
         run: project-site/assemble-input.sh "$RUNNER_TEMP/input"
       - name: Build the site with the project's own action
@@ -45,9 +45,9 @@ jobs:
           build: true
           title: gherkin-glass examples
           input: ${{ runner.temp }}/input
-          output: ${{ runner.temp }}/pages
+          output: ${{ runner.temp }}/site
           version-name: ${{ inputs.version }}
       - name: Publish the version's folder and the versions page
-        run: project-site/publish.sh publish "$RUNNER_TEMP/pages" "$VERSION"
+        run: project-site/publish.sh publish "$RUNNER_TEMP/pages" "$RUNNER_TEMP/site" "$VERSION"
         env:
           VERSION: ${{ inputs.version }}

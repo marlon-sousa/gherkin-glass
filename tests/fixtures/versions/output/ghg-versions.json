@@ -1,0 +1,17 @@
+{
+  "page": [
+    "index.html"
+  ],
+  "versions": {
+    "main": [
+      "index.html"
+    ],
+    "v1.0.0": [
+      "index.html",
+      "sub/old.html"
+    ],
+    "v2.0.0-rc.1": [
+      "index.html"
+    ]
+  }
+}

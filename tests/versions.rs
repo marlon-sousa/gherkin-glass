@@ -5,7 +5,7 @@
     reason = "a test file's helpers are test code, which clippy.toml lets panic"
 )]
 
-use std::fs::{copy, create_dir_all, read_dir, read_to_string, remove_dir_all, remove_file, write};
+use std::fs::{copy, create_dir_all, read_dir, read_to_string, remove_dir_all, write};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
@@ -48,7 +48,7 @@ fn a_version_name_that_cannot_be_one_is_a_mistake_on_the_command_line() {
     assert_eq!(output.status.code(), Some(2));
     assert_eq!(
         String::from_utf8(output.stderr).expect("UTF-8"),
-        "release/1.0 cannot be a version name. A version name is made of letters, digits, dots, hyphens, underscores and plus signs, starts with a letter or a digit, does not end with a dot, and is not assets, index.html, or a name Windows keeps for a device, such as con or nul.\n"
+        "release/1.0 cannot be a version name. A version name is made of letters, digits, dots, hyphens, underscores and plus signs, starts with a letter or a digit, does not end with a dot, and is not assets, index.html, ghg-versions.json, or a name Windows keeps for a device, such as con or nul.\n"
     );
 }
 
@@ -62,7 +62,7 @@ fn a_version_name_that_cannot_be_one_is_a_problem_of_the_configuration() {
     assert_eq!(output.status.code(), Some(1));
     assert_eq!(
         String::from_utf8(output.stderr).expect("UTF-8"),
-        "ghg.toml:2: release/1.0 cannot be a version name. A version name is made of letters, digits, dots, hyphens, underscores and plus signs, starts with a letter or a digit, does not end with a dot, and is not assets, index.html, or a name Windows keeps for a device, such as con or nul.\n"
+        "ghg.toml:2: release/1.0 cannot be a version name. A version name is made of letters, digits, dots, hyphens, underscores and plus signs, starts with a letter or a digit, does not end with a dot, and is not assets, index.html, ghg-versions.json, or a name Windows keeps for a device, such as con or nul.\n"
     );
 }
 
@@ -109,7 +109,6 @@ fn a_versioned_build_replaces_its_version_and_writes_the_versions_page() {
         listing(&output.join("v1.0.0")),
         [
             "assets",
-            "ghg-version.json",
             "index.html",
             "steps.html",
             "tags",
@@ -120,14 +119,14 @@ fn a_versioned_build_replaces_its_version_and_writes_the_versions_page() {
         listing(&output),
         [
             "assets",
-            "docs",
+            "ghg-versions.json",
             "index.html",
             "main",
             "v1.0.0",
             "v2.0.0-rc.1"
         ]
     );
-    assert!(output.join("docs/notes.txt").is_file());
+    assert!(!output.join("v1.0.0/sub").exists());
     assert!(output.join("assets/gherkin-glass.css").is_file());
     let page = read_to_string(output.join("index.html")).expect("read");
     let expected = read_to_string(fixture().join("expected/index.html")).expect("read");
@@ -159,7 +158,7 @@ fn a_build_that_fails_leaves_the_earlier_version_as_it_was() {
 }
 
 #[test]
-fn a_version_kept_or_a_folder_that_is_not_one_stops_the_build() {
+fn a_version_kept_stops_the_build() {
     let output = output_copy("stops");
     let shown = output.display();
     let config = fixture().join("suite/keep.toml");
@@ -176,13 +175,33 @@ fn a_version_kept_or_a_folder_that_is_not_one_stops_the_build() {
             "{shown}/main: the version main is already built, and replace_existing_version is false.\n"
         )
     );
-    let (report, status) = ghg("suite", &output, &["--version-name", "docs"]);
+    assert_eq!(listing(&output.join("main")), ["index.html"]);
+}
+
+// Rule 122: a marked folder must hold only what ghg wrote there.
+
+/// A fresh copy of the fixture's `unsafe` folder, which holds `docs/notes.txt`.
+fn unsafe_copy(test: &str) -> PathBuf {
+    let copied = Path::new(env!("CARGO_TARGET_TMPDIR"))
+        .join("versions")
+        .join(test);
+    let _ = remove_dir_all(&copied);
+    copy_folder(&fixture().join("unsafe"), &copied);
+    copied
+}
+
+#[test]
+fn a_folder_ghg_did_not_write_stops_the_build() {
+    let output = unsafe_copy("unsafe");
+    let (report, status) = ghg("suite", &output, &["--version-name", "v1.0.0"]);
     assert_eq!(status, 1);
     assert_eq!(
         report,
-        format!("{shown}/docs: this is not a version ghg built, so it is left as it is.\n")
+        format!(
+            "{}/docs: ghg did not write this, so the output folder is left as it is.\n",
+            output.display()
+        )
     );
-    assert_eq!(listing(&output.join("main")), ["ghg-version.json"]);
     assert_eq!(listing(&output.join("docs")), ["notes.txt"]);
     assert_eq!(
         read_to_string(output.join("index.html")).expect("read"),
@@ -191,19 +210,36 @@ fn a_version_kept_or_a_folder_that_is_not_one_stops_the_build() {
 }
 
 #[test]
-fn what_is_at_the_page_s_place_and_its_assets_is_replaced() {
-    let output = output_copy("root");
-    remove_file(output.join("index.html")).expect("removed");
-    create_dir_all(output.join("index.html/inside")).expect("made");
+fn a_folder_beside_the_versions_page_stops_the_build() {
+    let output = output_copy("beside-the-page");
     create_dir_all(output.join("assets")).expect("made");
     write(output.join("assets/old.css"), "old").expect("written");
     let (report, status) = ghg("suite", &output, &["--version-name", "main"]);
-    assert_eq!((report.as_str(), status), ("", 0));
-    assert!(output.join("index.html").is_file());
+    assert_eq!(status, 1);
     assert_eq!(
-        listing(&output.join("assets")),
-        ["gherkin-glass.css", "gherkin-glass.js"]
+        report,
+        format!(
+            "{}/assets: ghg did not write this, so the output folder is left as it is.\n",
+            output.display()
+        )
     );
+    assert_eq!(listing(&output.join("assets")), ["old.css"]);
+}
+
+#[test]
+fn a_listed_version_whose_folder_is_missing_stops_the_build() {
+    let output = output_copy("missing-version");
+    remove_dir_all(output.join("main")).expect("removed");
+    let (report, status) = ghg("suite", &output, &["--version-name", "v1.0.0"]);
+    assert_eq!(status, 1);
+    assert_eq!(
+        report,
+        format!(
+            "{}/main: the marker lists this version, but its folder is missing, so the output folder is left as it is.\n",
+            output.display()
+        )
+    );
+    assert!(output.join("v1.0.0/sub/old.html").is_file());
 }
 
 #[test]

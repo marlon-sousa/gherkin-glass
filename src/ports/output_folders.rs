@@ -1,14 +1,14 @@
-//! Port: an output folder, the folders of its versions, and their markers.
+//! Port: an output folder, what is in it, and its marker.
 
 use std::io::Result as IoResult;
 use std::path::Path;
 
-use crate::entities::{FolderState, Marker, VersionName};
+use crate::entities::{OutputContents, Record};
 
 pub(crate) trait OutputFolders: Send + Sync {
-    /// What is at `folder`, told apart by whether it holds the marker of
-    /// `marker`'s kind, whatever the version it names.
-    fn state(&self, folder: &Path, marker: &Marker) -> IoResult<FolderState>;
+    /// What is at `output`'s place: every file and folder below it, and what
+    /// its marker records.
+    fn contents(&self, output: &Path) -> IoResult<OutputContents>;
 
     /// Leaves `folder` existing and empty, creating it and the folders above when missing.
     fn clear(&self, folder: &Path) -> IoResult<()>;
@@ -17,10 +17,6 @@ pub(crate) trait OutputFolders: Send + Sync {
     /// never following a link; nothing when there is nothing there.
     fn remove(&self, path: &Path) -> IoResult<()>;
 
-    /// Writes the marker that says what `folder` is.
-    fn mark(&self, folder: &Path, marker: &Marker) -> IoResult<()>;
-
-    /// The folders directly inside `output` that hold a version's marker, in
-    /// no particular order; none when `output` does not exist.
-    fn marked(&self, output: &Path) -> IoResult<Vec<VersionName>>;
+    /// Writes `record` as the marker of `output`, creating the folder when missing.
+    fn record(&self, output: &Path, record: &Record) -> IoResult<()>;
 }

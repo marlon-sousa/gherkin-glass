@@ -346,7 +346,7 @@ fn a_versioned_build_serves_the_output_folder_with_its_versions_page() {
         page.text()
     );
     assert_eq!(get(&serving.address, "/main/withdraw.html").status, 200);
-    assert!(folder.join("site/main/ghg-version.json").is_file());
+    assert!(folder.join("site/ghg-versions.json").is_file());
 }
 
 // What it answers: rules 61 to 64.

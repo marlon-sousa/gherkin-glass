@@ -371,6 +371,10 @@ fn published(remote: &Path) -> Vec<String> {
         .collect()
 }
 
+fn path(folder: &Path) -> &str {
+    folder.to_str().unwrap()
+}
+
 fn commits(remote: &Path) -> usize {
     git_ok(remote, &["rev-list", "--count", "gh-pages"])
         .trim()
@@ -395,19 +399,25 @@ fn each_release_adds_only_its_own_folder_and_the_versions_page() {
     let first = folder.join("first");
     checkout(&remote, &first);
     let pages = folder.join("first-pages");
-    publish_ok(&first, &["open", pages.to_str().unwrap()]);
+    let site = folder.join("first-site");
+    publish_ok(&first, &["open", path(&pages), path(&site)]);
     let mut names: Vec<_> = read_dir(&pages)
         .unwrap()
         .map(|entry| entry.unwrap().file_name().into_string().unwrap())
         .collect();
     names.sort();
     assert_eq!(names, [".git", ".nojekyll"]);
-    create_dir_all(pages.join("v0.1.0")).unwrap();
-    write(pages.join("v0.1.0/index.html"), "0.1.0\n").unwrap();
-    write(pages.join("index.html"), "v0.1.0\n").unwrap();
-    create_dir_all(pages.join("assets")).unwrap();
-    write(pages.join("assets/versions.css"), "a {}\n").unwrap();
-    publish_ok(&first, &["publish", pages.to_str().unwrap(), "v0.1.0"]);
+    assert_eq!(
+        read_dir(&site).unwrap().count(),
+        0,
+        "ghg builds into an empty folder"
+    );
+    create_dir_all(site.join("v0.1.0")).unwrap();
+    write(site.join("v0.1.0/index.html"), "0.1.0\n").unwrap();
+    write(site.join("index.html"), "v0.1.0\n").unwrap();
+    create_dir_all(site.join("assets")).unwrap();
+    write(site.join("assets/versions.css"), "a {}\n").unwrap();
+    publish_ok(&first, &["publish", path(&pages), path(&site), "v0.1.0"]);
     let after_first = published(&remote);
     let files: Vec<_> = after_first
         .iter()
@@ -428,13 +438,18 @@ fn each_release_adds_only_its_own_folder_and_the_versions_page() {
     let second = folder.join("second");
     checkout(&remote, &second);
     let pages = folder.join("second-pages");
-    publish_ok(&second, &["open", pages.to_str().unwrap()]);
-    create_dir_all(pages.join("v0.2.0")).unwrap();
-    write(pages.join("v0.2.0/index.html"), "0.2.0\n").unwrap();
-    write(pages.join("index.html"), "v0.2.0\nv0.1.0\n").unwrap();
-    write(pages.join("assets/versions.css"), "b {}\n").unwrap();
-    write(pages.join("v0.1.0/index.html"), "changed\n").unwrap();
-    let output = publish(&second, &["publish", pages.to_str().unwrap(), "v0.2.0"]);
+    let site = folder.join("second-site");
+    publish_ok(&second, &["open", path(&pages), path(&site)]);
+    assert_eq!(
+        read_to_string(site.join("v0.1.0/index.html")).unwrap(),
+        "0.1.0\n"
+    );
+    create_dir_all(site.join("v0.2.0")).unwrap();
+    write(site.join("v0.2.0/index.html"), "0.2.0\n").unwrap();
+    write(site.join("index.html"), "v0.2.0\nv0.1.0\n").unwrap();
+    write(site.join("assets/versions.css"), "b {}\n").unwrap();
+    write(site.join("v0.1.0/index.html"), "changed\n").unwrap();
+    let output = publish(&second, &["publish", path(&pages), path(&site), "v0.2.0"]);
     assert_eq!(output.status.code(), Some(1));
     assert!(text(&output.stderr).contains("v0.1.0/index.html"));
     assert_eq!(published(&remote), after_first);
@@ -442,7 +457,8 @@ fn each_release_adds_only_its_own_folder_and_the_versions_page() {
     // Without that change, it adds its folder and the versions page alone.
     git_ok(&pages, &["reset", "--quiet"]);
     git_ok(&pages, &["checkout", "--", "v0.1.0"]);
-    publish_ok(&second, &["publish", pages.to_str().unwrap(), "v0.2.0"]);
+    write(site.join("v0.1.0/index.html"), "0.1.0\n").unwrap();
+    publish_ok(&second, &["publish", path(&pages), path(&site), "v0.2.0"]);
     let after_second = published(&remote);
     assert_eq!(commits(&remote), 2);
     for line in after_first
@@ -458,33 +474,42 @@ fn each_release_adds_only_its_own_folder_and_the_versions_page() {
     );
 
     // Publishing the same build again adds no commit.
-    publish_ok(&second, &["publish", pages.to_str().unwrap(), "v0.2.0"]);
+    publish_ok(&second, &["publish", path(&pages), path(&site), "v0.2.0"]);
     assert_eq!(commits(&remote), 2);
 
     // Publishing a version again replaces its folder, removals included.
-    create_dir_all(pages.join("v0.2.0/more")).unwrap();
-    write(pages.join("v0.2.0/more/page.html"), "more\n").unwrap();
-    publish_ok(&second, &["publish", pages.to_str().unwrap(), "v0.2.0"]);
+    create_dir_all(site.join("v0.2.0/more")).unwrap();
+    write(site.join("v0.2.0/more/page.html"), "more\n").unwrap();
+    publish_ok(&second, &["publish", path(&pages), path(&site), "v0.2.0"]);
     assert_eq!(commits(&remote), 3);
-    remove_dir_all(pages.join("v0.2.0/more")).unwrap();
-    publish_ok(&second, &["publish", pages.to_str().unwrap(), "v0.2.0"]);
+    remove_dir_all(site.join("v0.2.0/more")).unwrap();
+    publish_ok(&second, &["publish", path(&pages), path(&site), "v0.2.0"]);
     assert_eq!(commits(&remote), 4);
     assert_eq!(published(&remote), after_second);
 
     // A name that is not one folder is refused.
-    for version in ["", ".", "..", ".hidden", "a/b", "index.html", "assets"] {
-        let output = publish(&second, &["publish", pages.to_str().unwrap(), version]);
+    for version in [
+        "",
+        ".",
+        "..",
+        ".hidden",
+        "a/b",
+        "index.html",
+        "assets",
+        "ghg-versions.json",
+    ] {
+        let output = publish(&second, &["publish", path(&pages), path(&site), version]);
         assert_eq!(output.status.code(), Some(1), "{version:?}");
     }
 }
 
-/// `ghg build` of the site's input, versioned as `version`, into `pages`.
-fn build_site(input: &Path, pages: &Path, version: &str) {
+/// `ghg build` of the site's input, versioned as `version`, into `site`.
+fn build_site(input: &Path, site: &Path, version: &str) {
     let output = Command::new(env!("CARGO_BIN_EXE_ghg"))
         .args(["build", "--title", "gherkin-glass examples", "--input"])
         .arg(input)
         .arg("--output")
-        .arg(pages)
+        .arg(site)
         .args(["--version-name", version])
         .current_dir(input)
         .output()
@@ -510,9 +535,13 @@ fn a_release_publishes_what_ghg_builds_and_keeps_the_earlier_ones() {
         let checked_out = folder.join(format!("checkout-{version}"));
         checkout(&remote, &checked_out);
         let pages = folder.join(format!("pages-{version}"));
-        publish_ok(&checked_out, &["open", pages.to_str().unwrap()]);
-        build_site(&input, &pages, version);
-        publish_ok(&checked_out, &["publish", pages.to_str().unwrap(), version]);
+        let site = folder.join(format!("site-{version}"));
+        publish_ok(&checked_out, &["open", path(&pages), path(&site)]);
+        build_site(&input, &site, version);
+        publish_ok(
+            &checked_out,
+            &["publish", path(&pages), path(&site), version],
+        );
         let after = published(&remote);
         for line in before
             .iter()
