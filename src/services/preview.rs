@@ -222,7 +222,7 @@ impl PreviewService {
         self.memory.take();
         let built = self.in_memory.build(settings, &settings.output);
         let files = self.memory.take();
-        built.map(|()| ServedSite::Memory(files))
+        built.map(|_| ServedSite::Memory(files))
     }
 
     /// The build ghg build makes, into the output folder, served from there.

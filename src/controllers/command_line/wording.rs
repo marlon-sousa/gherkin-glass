@@ -3,11 +3,23 @@
 use i18n_embed_fl::fl;
 
 use crate::entities::{
-    AccentShortfall, ArgumentProblem, ConfigProblemKind, ListenFailure, OutputProblem,
+    AccentShortfall, ArgumentProblem, BuiltSite, ConfigProblemKind, ListenFailure, OutputProblem,
     OutputProblemKind, Problem, ProblemKind, Problems, Theme, UnnamedBlock, ValueType,
 };
 use crate::policies::CATALOGUE;
 use crate::services::{ConfigProblems, RebuildFailure, ServeFailure};
+
+/// Empty when the build has nothing to warn of.
+pub(super) fn warnings(built: &BuiltSite) -> String {
+    built
+        .large_search_documents
+        .map(|bytes| {
+            // Rounded up, so that a size above 5 MB never reads as 5.0.
+            let size = format!("{:.1}", (bytes as f64 / 100_000.0).ceil() / 10.0);
+            fl!(CATALOGUE, "search-documents-large", size = size.as_str())
+        })
+        .unwrap_or_default()
+}
 
 pub(super) fn argument_problem(problem: &ArgumentProblem) -> String {
     match problem {

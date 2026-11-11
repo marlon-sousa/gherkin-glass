@@ -138,6 +138,7 @@ mod tests {
     use super::*;
     use crate::entities::{ParsedFeature, TagNames};
     use crate::policies::build_page;
+    use crate::policies::make_anchors;
 
     fn site(files: &[(&str, &str)]) -> Vec<FolderPage> {
         let options = PageOptions::default();
@@ -151,7 +152,12 @@ mod tests {
                     "en".to_string(),
                     BTreeMap::new(),
                 );
-                build_page(&parsed, &options, &TagNames::default())
+                build_page(
+                    &parsed,
+                    &make_anchors(&parsed.feature),
+                    &options,
+                    &TagNames::default(),
+                )
             })
             .collect();
         build_folder_pages(&pages, &options)

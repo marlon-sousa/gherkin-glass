@@ -3,7 +3,7 @@
 use i18n_embed_fl::fl;
 
 use crate::entities::{PageFrame, PageOptions};
-use crate::policies::{CATALOGUE, theme_stylesheet};
+use crate::policies::{CATALOGUE, search_words, theme_stylesheet};
 
 pub(crate) fn page_frame(options: &PageOptions) -> PageFrame {
     PageFrame {
@@ -16,6 +16,7 @@ pub(crate) fn page_frame(options: &PageOptions) -> PageFrame {
         theme_light: fl!(CATALOGUE, "theme-light"),
         theme_dark: fl!(CATALOGUE, "theme-dark"),
         theme_style: theme_stylesheet(&options.accents),
+        search: search_words(),
     }
 }
 

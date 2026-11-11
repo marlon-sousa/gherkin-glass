@@ -44,6 +44,7 @@ const builds = [
   { folder: "versions/suite", args: ["--version-name", "v1.0.0"] },
   { folder: "step-sentences", args: ["--input", "."] },
   { folder: "no-steps", args: ["--input", "."] },
+  { folder: "search/features", args: ["--input", ".", "--title", "Search"] },
 ];
 
 // The fixtures that make no site: those whose build is meant to fail, and
@@ -265,6 +266,40 @@ async function treeProblems(page) {
   return [];
 }
 
+// A word of the first named entry of the site's search documents, typed into
+// the search box, then Enter, which moves the focus to the first result, and
+// the box checked with axe-core while its results are shown; Escape then
+// empties it. Returns null for a page without a search box.
+async function searchProblems(page) {
+  const field = page.locator(".ghg-search-field");
+  if ((await field.count()) === 0) return null;
+  const word = await page.evaluate(async () => {
+    const root = document.querySelector("form.ghg-search").dataset.root;
+    const documents = await (await fetch(`${root}assets/search.json`)).json();
+    for (const { name } of documents) {
+      const found = name.match(/\p{L}{3,}/u);
+      if (found) return found[0];
+    }
+    return "";
+  });
+  if (word === "") return [];
+  const problems = [];
+  await field.focus();
+  await page.keyboard.type(word);
+  await page.keyboard.press("Enter");
+  try {
+    await page.waitForFunction(() => document.activeElement?.closest(".ghg-search-results") !== null, null, { timeout: 5000 });
+  } catch {
+    problems.push(`search: Enter after typing "${word}" did not move the focus to a result`);
+  }
+  for (const line of await violations(page)) problems.push(`search, with results: ${line}`);
+  await field.focus();
+  await page.keyboard.press("Escape");
+  const left = await page.evaluate(() => [document.querySelector(".ghg-search-field").value, document.querySelectorAll(".ghg-search-results li").length]);
+  if (left[0] !== "" || left[1] !== 0) problems.push(`search: Escape left ${JSON.stringify(left)}`);
+  return problems;
+}
+
 // Checks every page of the site in `folder`, served with ghg serve
 // --no-build, and returns the problems, one line each, with the page's path.
 export async function checkSite(browser, folder) {
@@ -275,6 +310,7 @@ export async function checkSite(browser, folder) {
   const problems = [];
   let pressed = 0;
   let trees = 0;
+  let searched = 0;
   try {
     for (const { name, scheme, theme } of passes) {
       const context = await browser.newContext({ colorScheme: scheme });
@@ -306,6 +342,12 @@ export async function checkSite(browser, folder) {
           const tree = await treeProblems(page);
           if (tree !== null) trees += 1;
           for (const line of tree ?? []) problems.push(`${path}: ${line}`);
+          // One page a site is enough: every page has the same box.
+          if (searched === 0) {
+            const search = await searchProblems(page);
+            if (search !== null) searched += 1;
+            for (const line of search ?? []) problems.push(`${path}: ${line}`);
+          }
           // What the buttons remembered is forgotten, so that it never
           // changes how another page starts.
           await page.evaluate(() => localStorage.clear());
@@ -316,7 +358,7 @@ export async function checkSite(browser, folder) {
   } finally {
     await stop(server);
   }
-  return { pages: pages.length, pressed, trees, problems };
+  return { pages: pages.length, pressed, trees, searched, problems };
 }
 
 async function main() {
@@ -327,6 +369,7 @@ async function main() {
   let checked = 0;
   let pressed = 0;
   let trees = 0;
+  let searched = 0;
   try {
     for (const [index, each] of builds.entries()) {
       const site = join(output, String(index));
@@ -337,11 +380,13 @@ async function main() {
       checked += result.pages;
       pressed += result.pressed;
       trees += result.trees;
+      searched += result.searched;
       const { problems } = result;
       for (const problem of problems) failures.push(`${name}: ${problem}`);
     }
     if (pressed === 0) failures.push("no page had a block whose buttons the check could press");
     if (trees === 0) failures.push("no page showed a folder tree the check could move through");
+    if (searched === 0) failures.push("no page had a search box the check could search with");
     // The check must fail on a page that breaks each of its rules.
     const { problems } = await checkSite(browser, join(fixtures, "accessibility/failing"));
     const found = (start) => problems.some((line) => line.startsWith(`index.html${start}`));

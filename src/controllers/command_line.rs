@@ -85,11 +85,16 @@ impl CommandLine {
             Err(problems) => return Reply::failure(1, wording::config_problems(&problems)),
         };
         match self.output.build(&self.site, &settings) {
-            Ok(()) if settings.pages.title.is_none() => Reply {
-                stderr: lines(fl!(CATALOGUE, "no-title")),
-                ..Reply::success(String::new())
-            },
-            Ok(()) => Reply::success(String::new()),
+            Ok(built) => {
+                let mut stderr = wording::warnings(&built);
+                if settings.pages.title.is_none() {
+                    stderr.insert_str(0, &lines(fl!(CATALOGUE, "no-title")));
+                }
+                Reply {
+                    stderr: lines(stderr),
+                    ..Reply::success(String::new())
+                }
+            }
             Err(BuildFailure::Problems(problems)) => {
                 Reply::failure(1, wording::problems(&problems))
             }

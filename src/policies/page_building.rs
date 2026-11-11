@@ -11,8 +11,8 @@ use crate::entities::{
     TableView, TagNames, TagView,
 };
 use crate::policies::{
-    CATALOGUE, ExampleRow, breadcrumb, example_rows, highlight_step, make_anchors, outside_link,
-    page_address, page_frame, page_language, percent_encoded, root_from, site_title,
+    CATALOGUE, ExampleRow, breadcrumb, example_rows, highlight_step, outside_link, page_address,
+    page_frame, page_language, percent_encoded, root_from, site_title,
 };
 
 /// Stands for the file's path in the words of the source link, to find where
@@ -23,16 +23,20 @@ const PATH_MARK: &str = "\u{0}";
 /// message of the catalogue holds them.
 const TEXT_MARKS: [&str; 2] = ["\u{1}", "\u{2}"];
 
-/// `tags` names every tag of the site.
-pub(crate) fn build_page(parsed: &ParsedFeature, options: &PageOptions, tags: &TagNames) -> Page {
+/// `anchors` are those `make_anchors` makes for the feature, and `tags` names every tag of the site.
+pub(crate) fn build_page(
+    parsed: &ParsedFeature,
+    anchors: &Anchors,
+    options: &PageOptions,
+    tags: &TagNames,
+) -> Page {
     let feature = &parsed.feature;
-    let anchors = make_anchors(feature);
     let path = slash_path(&parsed.path);
     let address = page_address(&parsed.path);
     let heading = heading(&feature.keyword, &feature.name);
     let builder = Builder {
         parsed,
-        anchors: &anchors,
+        anchors,
         options,
         tags,
         root: root_from(&address),
@@ -518,7 +522,7 @@ mod tests {
 
     use super::*;
     use crate::entities::{OutsideLink, StepPart, TagLink};
-    use crate::policies::{name_tags, tags_of, whole_tag_pattern};
+    use crate::policies::{make_anchors, name_tags, tags_of, whole_tag_pattern};
 
     fn page(text: &str, options: &PageOptions) -> Page {
         let feature = Feature::parse(text, GherkinEnv::default()).expect("parses");
@@ -529,7 +533,7 @@ mod tests {
             BTreeMap::new(),
         );
         let tags = name_tags(&tags_of(std::slice::from_ref(&parsed)));
-        build_page(&parsed, options, &tags)
+        build_page(&parsed, &make_anchors(&parsed.feature), options, &tags)
     }
 
     const FEATURE: &str = "\

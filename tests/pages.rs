@@ -138,6 +138,8 @@ fn the_assets_are_the_ones_built_into_ghg() {
     let mut built = files(&expected);
     // Rule 39: the folder tree's data is the site's own.
     assert!(built.remove("tree.json").is_some());
+    // Rule 147: so are the search documents.
+    assert!(built.remove("search.json").is_some());
     assert_eq!(built, files(&repository));
 }
 
