@@ -119,14 +119,17 @@ fn check_browser() -> Result<(), String> {
 
 /// The browser check, once the Node packages are installed.
 fn browser_checks() -> Result<(), String> {
-    // Headless Chromium alone, and on CI the system's libraries it needs, which
-    // Playwright installs with the runner's sudo.
-    let mut install = vec!["exec", "--", "playwright", "install", "--only-shell"];
-    if var_os("CI").is_some() && cfg!(target_os = "linux") {
-        install.push("--with-deps");
-    }
-    install.push("chromium");
-    npm(&install)?;
+    // Headless Chromium alone, with the system's own libraries: on GitHub's
+    // ubuntu-latest runner, measured on 2026-11-10, --with-deps added only fonts,
+    // and failed whenever apt could not reach Ubuntu's archive.
+    npm(&[
+        "exec",
+        "--",
+        "playwright",
+        "install",
+        "--only-shell",
+        "chromium",
+    ])?;
     cargo(&["build", "--locked", "--package", "gherkin-glass"])?;
     let ghg = target().join(format!("debug/ghg{EXE_SUFFIX}"));
     for check in BROWSER_CHECKS {
