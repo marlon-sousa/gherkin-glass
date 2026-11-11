@@ -16,7 +16,7 @@ use i18n_embed_fl::fl;
 pub(crate) use argument_error::ArgumentError;
 pub(crate) use build_error::BuildError;
 pub(crate) use config_error::{
-    ConfigError, ConfigErrorKind, ConfigErrors, PatternErrorKind, ValueType,
+    AccentShortfall, ConfigError, ConfigErrorKind, ConfigErrors, PatternErrorKind, ValueType,
 };
 pub(crate) use input_error::{InputError, InputErrors};
 pub(crate) use input_error_kind::{InputErrorKind, UnnamedBlock};

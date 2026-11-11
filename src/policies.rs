@@ -9,7 +9,6 @@ mod search;
 mod sentences;
 mod serving;
 mod tags;
-mod themes;
 mod versions;
 
 pub(crate) use configuration::*;
@@ -21,5 +20,4 @@ pub(crate) use search::*;
 pub(crate) use sentences::*;
 pub(crate) use serving::*;
 pub(crate) use tags::*;
-pub(crate) use themes::*;
 pub(crate) use versions::*;
