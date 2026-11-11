@@ -41,13 +41,10 @@ pub(crate) use page_address::{FOLDER_PAGE, page_address, root_from};
 pub(crate) use page_building::build_page;
 pub(crate) use page_frame::page_frame;
 pub(crate) use page_language::page_language;
-pub(crate) use page_rendering::{render_folder_page, render_page};
-pub(crate) use rebuild_choice::{Read, calls_for_rebuild, remembered};
 pub(crate) use page_rendering::{
     render_folder_page, render_page, render_tag_index, render_tag_page,
 };
-pub(crate) use reload_injection::add_reload_script;
-pub(crate) use request_route::{RELOAD_SCRIPT, Route, route};
+pub(crate) use rebuild_choice::{Read, calls_for_rebuild, remembered};
 pub(crate) use settings_resolution::{config_folder, resolve_settings};
 pub(crate) use site_title::site_title;
 pub(crate) use step_keyword_correction::correct_step_keywords;
