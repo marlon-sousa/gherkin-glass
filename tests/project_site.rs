@@ -455,8 +455,6 @@ fn each_release_adds_only_its_own_folder_and_the_versions_page() {
     assert_eq!(published(&remote), after_first);
 
     // Without that change, it adds its folder and the versions page alone.
-    git_ok(&pages, &["reset", "--quiet"]);
-    git_ok(&pages, &["checkout", "--", "v0.1.0"]);
     write(site.join("v0.1.0/index.html"), "0.1.0\n").unwrap();
     publish_ok(&second, &["publish", path(&pages), path(&site), "v0.2.0"]);
     let after_second = published(&remote);

@@ -183,3 +183,64 @@ fn a_build_replaces_only_when_allowed(
 fn the_folders_of_a_file_are_listed_outermost_first(#[case] file: &str, #[case] folders: &[&str]) {
     assert_eq!(folders_of(file).collect::<Vec<_>>(), folders);
 }
+
+/// A folder marked as a site of the one file `listed`, holding only its marker.
+fn listing(listed: &str) -> OutputContents {
+    OutputContents::Folder {
+        files: set(&["ghg-site.json"]),
+        folders: BTreeSet::new(),
+        record: Some(Record::Site(set(&[listed]))),
+    }
+}
+
+#[rstest]
+#[case::the_folder_above("../victim.txt")]
+#[case::deeper_above("sub/../../victim.txt")]
+#[case::the_root("/home/user")]
+#[case::empty("")]
+#[case::an_empty_name("a//b.html")]
+#[case::this_folder("./index.html")]
+#[case::a_backslash("..\\victim.txt")]
+#[case::a_drive("C:victim.txt")]
+fn a_marker_listing_a_path_outside_the_folder_is_no_marker(#[case] listed: &str) {
+    assert_eq!(
+        output_safety(listing(listed), &BuildTarget::Site, REPLACE),
+        Err(OutputErrorKind::NotASite)
+    );
+}
+
+#[rstest]
+#[case::a_version_s_file(Record::Versions {
+    page: set(&["index.html"]),
+    versions: BTreeMap::from([(name("main"), set(&["../../victim.txt"]))]),
+})]
+#[case::a_page_file(Record::Versions {
+    page: set(&["../victim.txt"]),
+    versions: BTreeMap::new(),
+})]
+fn a_versions_marker_listing_a_path_outside_the_folder_is_no_marker(#[case] record: Record) {
+    let contents = OutputContents::Folder {
+        files: set(&["ghg-versions.json"]),
+        folders: BTreeSet::new(),
+        record: Some(record),
+    };
+    assert_eq!(
+        output_safety(contents, &version("main"), REPLACE),
+        Err(OutputErrorKind::NotASite)
+    );
+}
+
+#[test]
+fn the_first_thing_found_is_named_folder_by_folder() {
+    let contents = OutputContents::Folder {
+        files: set(&["ghg-site.json", "a/index.html", "a/b.txt", "a-c.txt"]),
+        folders: set(&["a"]),
+        record: Some(Record::Site(set(&["a/index.html"]))),
+    };
+    assert_eq!(
+        output_safety(contents, &BuildTarget::Site, REPLACE),
+        Err(OutputErrorKind::NotSafe {
+            found: "a/b.txt".into()
+        })
+    );
+}

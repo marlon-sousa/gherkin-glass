@@ -146,7 +146,7 @@ mod tests {
     #[case::other_capitals(
         Some("v1"),
         OutputErrorKind::OtherCapitals,
-        "site/out/v1: a folder whose name differs from this one only in its capitals is in its place, so it is left as it is."
+        "site/out/v1: the output folder holds a version whose name differs from this one only in its capitals, which some systems would put in the same folder, so it is left as it is."
     )]
     #[case::cannot_be_read(
         Some("v1"),

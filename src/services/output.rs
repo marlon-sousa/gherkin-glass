@@ -108,14 +108,13 @@ impl OutputService {
     /// and the versions page, which are written again.
     fn clear_version(&self, folder: &BuildFolder, name: &VersionName) -> Result<(), OutputError> {
         let output = folder.output();
-        let page = match folder.record() {
-            Some(Record::Versions { page, .. }) => page.iter().map(String::as_str).collect(),
-            _ => BTreeSet::new(),
-        };
         self.folders
             .remove(&output.join(name.as_str()))
             .map_err(|io| cannot_write(folder, Some(name), &io))?;
-        page.into_iter()
+        let Some(Record::Versions { page, .. }) = folder.record() else {
+            return Ok(());
+        };
+        page.iter()
             .try_for_each(|file| self.folders.remove(&output.join(file)))
             .map_err(|io| cannot_write(folder, None, &io))
     }

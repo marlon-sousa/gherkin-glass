@@ -18,7 +18,8 @@
 set -euo pipefail
 
 # What a versioned build writes at the root of its output, besides the
-# version's own folder: the versions page of #12, and the assets it links.
+# version's own folder: the versions page, the assets it links, and the marker
+# that lists what ghg wrote.
 versions_page=index.html
 versions_assets=assets
 marker=ghg-versions.json

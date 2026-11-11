@@ -250,7 +250,7 @@ fn an_earlier_build_is_replaced_and_nothing_of_it_is_left() {
     assert_eq!(files(&written), files(&fixtures().join("pages/expected")));
 }
 
-// Rule 122: a marked folder holding anything ghg did not write is refused.
+// Rule 38: a marked folder holding anything ghg did not write is refused.
 
 #[test]
 fn a_file_ghg_did_not_write_stops_the_build() {

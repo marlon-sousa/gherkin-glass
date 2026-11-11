@@ -1,5 +1,6 @@
 //! Policy: whether a build may write into an output folder, from what the folder holds, what its marker records, and when it is looked at.
 
+use std::cmp::Ordering;
 use std::collections::BTreeSet;
 
 use crate::entities::{BuildTarget, FilePath, OutputContents, Record, VersionName};
@@ -36,7 +37,10 @@ pub(crate) fn output_safety(
     if files.is_empty() && folders.is_empty() {
         return Ok(None);
     }
-    let record = record.ok_or(OutputErrorKind::NotASite)?;
+    // A marker that lists a path outside the folder is not one ghg wrote.
+    let record = record
+        .filter(lists_only_inside)
+        .ok_or(OutputErrorKind::NotASite)?;
     match (&record, target) {
         (Record::Versions { .. }, BuildTarget::Site) => Err(OutputErrorKind::HoldsVersions),
         (Record::Site(_), BuildTarget::Version(_)) => Err(OutputErrorKind::HoldsSite),
@@ -45,24 +49,51 @@ pub(crate) fn output_safety(
     let written = written(&record);
     let made = made(&record, &written);
     let stray = folders
-        .iter()
-        .filter(|folder| !made.contains(*folder))
-        .chain(files.iter().filter(|file| !written.contains(*file)))
-        .min();
+        .difference(&made)
+        .chain(files.difference(&written))
+        .min_by(|one, other| folder_by_folder(one, other));
     if let Some(found) = stray {
         return Err(OutputErrorKind::NotSafe {
             found: found.clone(),
         });
     }
     if let Record::Versions { versions, .. } = &record
-        && let Some(name) = versions
-            .keys()
-            .find(|name| !folders.contains(name.as_str()))
+        && let Some(name) = versions.keys().find(|name| is_missing(name, &folders))
     {
         return Err(OutputErrorKind::MissingVersion { name: name.clone() });
     }
     already_built(&record, target, moment)?;
     Ok(Some(record))
+}
+
+/// Whether every path `record` lists is a path inside the output folder: made of
+/// names joined by `/`, none of them empty, `.` or `..`, and none holding `\\` or
+/// `:`, which a system could read as a separator or a drive.
+fn lists_only_inside(record: &Record) -> bool {
+    let mut paths: Box<dyn Iterator<Item = &FilePath>> = match record {
+        Record::Site(files) => Box::new(files.iter()),
+        Record::Versions { page, versions } => {
+            Box::new(page.iter().chain(versions.values().flatten()))
+        }
+    };
+    paths.all(|path| is_inside(path))
+}
+
+fn is_inside(path: &str) -> bool {
+    path.split('/').all(is_plain_name)
+}
+
+fn is_plain_name(name: &str) -> bool {
+    !matches!(name, "" | "." | "..") && !name.contains(['\\', ':'])
+}
+
+/// Paths compared folder by folder, as every list of paths is sorted.
+fn folder_by_folder(one: &str, other: &str) -> Ordering {
+    one.split('/').cmp(other.split('/'))
+}
+
+fn is_missing(name: &VersionName, folders: &BTreeSet<FilePath>) -> bool {
+    !folders.contains(name.as_str())
 }
 
 /// Every file `record` says ghg wrote, its marker included.
@@ -123,10 +154,7 @@ fn already_built(
     let keep = moment == Moment::Checking { replace: false };
     match (record, target) {
         (Record::Versions { versions, .. }, BuildTarget::Version(name)) => {
-            if versions
-                .keys()
-                .any(|listed| listed != name && listed.as_str().eq_ignore_ascii_case(name.as_str()))
-            {
+            if versions.keys().any(|listed| other_capitals(listed, name)) {
                 Err(OutputErrorKind::OtherCapitals)
             } else if keep && versions.contains_key(name) {
                 Err(OutputErrorKind::AlreadyBuilt)
@@ -137,6 +165,12 @@ fn already_built(
         _ if keep => Err(OutputErrorKind::AlreadyBuilt),
         _ => Ok(()),
     }
+}
+
+/// Whether `listed` and `name` differ only in their capitals, which a file
+/// system that does not tell capitals apart would put in the same folder.
+fn other_capitals(listed: &VersionName, name: &VersionName) -> bool {
+    listed != name && listed.as_str().eq_ignore_ascii_case(name.as_str())
 }
 
 #[cfg(test)]
