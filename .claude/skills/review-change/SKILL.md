@@ -9,7 +9,7 @@ description: How Claude has a change to gherkin-glass reviewed by an independent
 
 ## Starting the reviewer
 
-Start a separate agent with the most capable model available. Its prompt says:
+Start a separate agent with the most capable model available, at high effort. With Claude Code's Agent tool, pass `effort: "high"`: left out, the agent runs at its usual effort, not at the effort of the session that starts it. Never start the reviewer as a fork, which ignores the effort and carries the author's context. Its prompt says:
 
 1. It is read-only. It edits, commits and pushes nothing, and never switches branches in the shared checkout. To build a revision, it adds a `git worktree` under the session's scratchpad directory, with a target directory of its own, and removes it afterwards.
 2. Which commits to review, as revisions it can diff, the issue they belong to, and the draft commit messages and pull request description.
