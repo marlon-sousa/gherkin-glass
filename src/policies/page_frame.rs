@@ -3,7 +3,11 @@
 use i18n_embed_fl::fl;
 
 use crate::entities::{PageFrame, PageOptions};
-use crate::policies::{CATALOGUE, search_words};
+use crate::policies::CATALOGUE;
+
+mod search_wording;
+
+use search_wording::search_words;
 
 pub(crate) fn page_frame(options: &PageOptions) -> PageFrame {
     PageFrame {

@@ -2,7 +2,7 @@
 
 use crate::entities::StepKind;
 use crate::fixtures::{fixture, read_features};
-use crate::policies::{anchor_feature, find_step_sentences};
+use crate::policies::site::{anchor_feature, find_step_sentences};
 
 /// A use of a sentence: its path, anchor, line and values.
 type Use = (String, String, usize, Vec<String>);

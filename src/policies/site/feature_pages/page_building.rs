@@ -15,7 +15,8 @@ use crate::entities::{
     AnchoredFeature, BackgroundsOption, BlockHeading, ContentsEntry, FeatureBlock, HeadingLevel,
     Page, PageOptions, PageWords, ScenarioBlock, SourceLink, TagNames, percent_encoded,
 };
-use crate::policies::{CATALOGUE, breadcrumb, page_address, page_language, site_title};
+use crate::policies::site::{breadcrumb, page_language, site_title};
+use crate::policies::{CATALOGUE, page_address};
 
 /// Stands for the file's path in the words of the source link, to find where
 /// the path goes; no message of the catalogue holds it.

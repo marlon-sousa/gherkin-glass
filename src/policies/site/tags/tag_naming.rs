@@ -6,7 +6,7 @@ use std::collections::{BTreeSet, HashSet};
 use gherkin::Feature;
 
 use crate::entities::{ParsedFeature, SiteAddress, TAGS_FOLDER, TagNames};
-use crate::policies::{anchor_of, unique};
+use crate::policies::site::{anchor_of, unique};
 
 /// The name of the index's page, which no tag takes.
 const INDEX: &str = "index";

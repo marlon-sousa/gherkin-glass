@@ -1,7 +1,5 @@
-//! Policy: search, the documents it reads, and the words of its box.
+//! Policy: search, the documents it reads.
 
 mod search_documents;
-mod search_wording;
 
-pub(crate) use search_documents::search_documents;
-pub(crate) use search_wording::search_words;
+pub(super) use search_documents::search_documents;

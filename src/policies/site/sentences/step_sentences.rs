@@ -9,7 +9,7 @@ use crate::entities::{
     Anchored, AnchoredFeature, AnchoredScenario, Sentence, SentenceGroup, SentenceUse, StepKind,
     StepSentences,
 };
-use crate::policies::heading;
+use crate::policies::site::heading;
 
 pub(crate) fn find_step_sentences<'a>(
     features: impl IntoIterator<Item = &'a AnchoredFeature<'a>>,

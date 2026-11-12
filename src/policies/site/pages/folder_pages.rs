@@ -8,9 +8,8 @@ use i18n_embed_fl::fl;
 use crate::entities::{
     FeatureEntry, FolderLink, FolderPage, FolderWords, LinkAddress, Page, PageOptions, SiteAddress,
 };
-use crate::policies::{
-    CATALOGUE, FOLDER_PAGE, SENTENCES_PAGE, breadcrumb, site_title, tag_index_address,
-};
+use crate::policies::site::{breadcrumb, site_title, tag_index_address};
+use crate::policies::{CATALOGUE, FOLDER_PAGE, SENTENCES_PAGE};
 
 /// `pages` are every feature's, in any order; the folder pages come
 /// outermost first, the home page first of all, then folder by folder.
@@ -139,8 +138,8 @@ mod tests {
 
     use super::*;
     use crate::entities::{ParsedFeature, TagNames};
-    use crate::policies::anchor_feature;
-    use crate::policies::build_page;
+    use crate::policies::site::anchor_feature;
+    use crate::policies::site::build_page;
 
     fn site(files: &[(&str, &str)]) -> Vec<FolderPage> {
         let options = PageOptions::default();

@@ -74,8 +74,8 @@ mod tests {
 
     use super::*;
     use crate::entities::{PageOptions, ParsedFeature, TagNames};
-    use crate::policies::anchor_feature;
-    use crate::policies::{build_folder_pages, build_page};
+    use crate::policies::site::anchor_feature;
+    use crate::policies::site::{build_folder_pages, build_page};
 
     fn tree(files: &[(&str, &str)]) -> Vec<TreeItem> {
         let options = PageOptions {

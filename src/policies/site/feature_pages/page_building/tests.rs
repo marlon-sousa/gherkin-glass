@@ -6,9 +6,10 @@ use gherkin::{Feature, GherkinEnv};
 use super::*;
 use crate::entities::{
     BackgroundBlock, LinkAddress, OutlineParts, OutsideLink, ParsedFeature, RuleBlock, StepPart,
-    TableView, TagLink, TagView,
+    TableView, TagView,
 };
-use crate::policies::{anchor_feature, name_tags, tags_of, whole_tag_pattern};
+use crate::fixtures::tag_link;
+use crate::policies::site::{anchor_feature, name_tags, tags_of};
 
 fn page(text: &str, options: &PageOptions) -> Page {
     let feature = Feature::parse(text, GherkinEnv::default()).expect("parses");
@@ -139,12 +140,7 @@ fn the_source_link_fills_its_template_with_the_encoded_path_and_the_line() {
 #[test]
 fn every_tag_links_its_page_and_the_first_outside_link_that_matches() {
     let options = PageOptions {
-        tag_links: vec![TagLink {
-            source: "@in-(.+)".into(),
-            pattern: whole_tag_pattern("@in-(.+)").expect("valid"),
-            address: "https://x/$1".into(),
-            text: "In $1".into(),
-        }],
+        tag_links: vec![tag_link("@in-(.+)", "https://x/$1", "In $1")],
         ..PageOptions::default()
     };
     let page = page(FEATURE, &options);

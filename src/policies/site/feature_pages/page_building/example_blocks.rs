@@ -10,7 +10,8 @@ use crate::entities::{
     Anchored, AnchoredScenario, ExampleScenario, ExamplesAsScenarios, ExamplesBlock, HeadingLevel,
     OutlineParts,
 };
-use crate::policies::{CATALOGUE, ExampleRow, example_rows};
+use crate::policies::CATALOGUE;
+use crate::policies::site::feature_pages::{ExampleRow, example_rows};
 
 impl Builder<'_> {
     fn examples(&self, anchored: &Anchored<'_, Examples>, level: HeadingLevel) -> ExamplesBlock {

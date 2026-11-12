@@ -6,7 +6,7 @@ use gherkin::{Scenario, Step};
 
 use crate::entities::{HighlightedStep, StepPart};
 use crate::fixtures::{fixture, read_features};
-use crate::policies::highlight_step;
+use crate::policies::site::feature_pages::highlight_step;
 
 use super::text;
 

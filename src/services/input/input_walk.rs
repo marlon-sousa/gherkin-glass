@@ -3,9 +3,9 @@
 use std::io::{Error as IoError, ErrorKind};
 use std::path::Path;
 
-use crate::entities::{CollectedInput, EntryKind, FolderEntry};
+use crate::entities::{CollectedInput, EntryKind, FolderEntry, IGNORE_FILE};
 use crate::errors::{InputError, InputErrorKind};
-use crate::policies::{FileSelection, IGNORE_FILE, InvalidRule, parse_rules};
+use crate::policies::{FileSelection, InvalidRule, parse_rules};
 use crate::ports::InputFolders;
 
 /// The files under `input` that the rules select, sorted, and every error met on the way.

@@ -7,7 +7,7 @@ use unicode_normalization::UnicodeNormalization;
 use unicode_normalization::char::is_combining_mark;
 
 use crate::entities::{Anchored, AnchoredFeature, AnchoredRule, AnchoredScenario, ParsedFeature};
-use crate::policies::example_rows;
+use crate::policies::site::feature_pages::example_rows;
 
 /// The kinds of block that have an anchor, each named in English for when
 /// neither its name nor its keyword leaves anything.

@@ -11,7 +11,8 @@ use crate::entities::{
     LinkAddress, Page, PageOptions, TagFeature, TagIndex, TagIndexEntry, TagNames, TagPage,
     TagScenario,
 };
-use crate::policies::{CATALOGUE, breadcrumb, outside_link, site_title};
+use crate::policies::CATALOGUE;
+use crate::policies::site::{breadcrumb, outside_link, site_title, tag_index_address};
 use tag_carriers::{Through, carriers, writes};
 
 /// Stands for the link in the words around it, to find where the link
@@ -21,8 +22,7 @@ const LINK_MARK: &str = "\u{0}";
 /// From a tag page or the index, both in the folder of the tag pages, back to the site's root.
 const ROOT: &str = "../";
 
-/// The `lang` of the index and the tag pages: the catalogue's language.
-pub(crate) fn tag_pages_language() -> String {
+fn tag_pages_language() -> String {
     CATALOGUE.current_language().to_string()
 }
 
@@ -52,6 +52,8 @@ pub(crate) fn build_tag_index(
         .collect();
     let title = fl!(CATALOGUE, "tag-index-title");
     TagIndex {
+        address: tag_index_address(),
+        language: tag_pages_language(),
         // The index is the folder's own page, so its crumb reads the index's title.
         breadcrumb: breadcrumb(&site_title(options), from_ref(&title), None),
         title,
@@ -109,6 +111,7 @@ pub(crate) fn build_tag_page(
     let file = format!("{}.html", names.name(tag));
     TagPage {
         address: names.address(tag),
+        language: language.clone(),
         breadcrumb: breadcrumb(
             &site_title(options),
             &[fl!(CATALOGUE, "tag-index-title")],
@@ -138,8 +141,8 @@ mod tests {
 
     use super::*;
     use crate::entities::ParsedFeature;
-    use crate::policies::anchor_feature;
-    use crate::policies::{build_page, name_tags, tags_of};
+    use crate::policies::site::anchor_feature;
+    use crate::policies::site::{build_page, name_tags, tags_of};
 
     const FEATURE: &str = "\
 @feature

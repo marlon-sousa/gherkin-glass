@@ -5,9 +5,7 @@ use std::path::Path;
 use ignore::Match;
 use ignore::gitignore::{Gitignore, GitignoreBuilder};
 
-use crate::entities::EntryKind;
-
-pub(crate) const IGNORE_FILE: &str = ".ghg-ignore";
+use crate::entities::{EntryKind, IGNORE_FILE};
 
 /// Gitignore rules, where the last matching rule wins: leave out everything,
 /// but look into every folder and read every `.feature` file, and leave out

@@ -10,10 +10,8 @@ use crate::entities::{
     GroupView, LinkAddress, PageOptions, ParsedFeature, Piece, SentenceUse, SentenceView,
     SentencesPage, StepKind, StepSentences, UseView,
 };
-use crate::policies::{CATALOGUE, breadcrumb, page_address, page_language, site_title};
-
-/// The page's address, at the site's root.
-pub(crate) const SENTENCES_PAGE: &str = "steps.html";
+use crate::policies::site::{breadcrumb, page_language, site_title};
+use crate::policies::{CATALOGUE, SENTENCES_PAGE, page_address};
 
 /// Stand for a message's placeholders, to find where each goes; no message
 /// of the catalogue holds them.

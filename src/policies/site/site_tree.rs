@@ -5,10 +5,10 @@ use std::borrow::Cow;
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 
 use crate::entities::{FileNode, PageOptions, ParsedFeature, SiteAssets, SiteTree};
-use crate::policies::{
+use crate::policies::page_frame;
+use crate::policies::site::{
     anchor_feature, build_folder_pages, build_folder_tree, build_page, build_sentences_page,
-    build_tag_index, build_tag_page, find_step_sentences, name_tags, page_frame, search_documents,
-    tags_of,
+    build_tag_index, build_tag_page, find_step_sentences, name_tags, search_documents, tags_of,
 };
 
 /// The tree of the site of `features`, pages first, in file order.

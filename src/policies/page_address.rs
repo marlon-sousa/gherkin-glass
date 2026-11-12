@@ -1,4 +1,4 @@
-//! Policy: the address of a feature file's page, relative to the site's root.
+//! Policy: the addresses of the pages that both the input's checks and the site name: a feature file's page, a folder's page and the step sentences, relative to the site's root.
 
 use std::path::{Component, Path};
 
@@ -6,6 +6,9 @@ use crate::entities::SiteAddress;
 
 /// A folder's page, in its folder of the site.
 pub(crate) const FOLDER_PAGE: &str = "index.html";
+
+/// The page of step sentences, at the site's root.
+pub(crate) const SENTENCES_PAGE: &str = "steps.html";
 
 /// `path` is relative to the input folder. Its parts are joined by `/`, and
 /// its last extension is replaced by `html`, or `.html` added when it has none.

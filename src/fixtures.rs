@@ -11,14 +11,26 @@ use std::io::{Error as IoError, ErrorKind, Result as IoResult};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
+use regex_automata::meta::Regex;
+
 use crate::adapters::{GherkinCrate, InputFolderReader};
-use crate::entities::{EntryKind, FolderEntry, ParsedFeature, Unnamed};
+use crate::entities::{EntryKind, FolderEntry, ParsedFeature, TagLink, Unnamed};
 use crate::errors::InputErrors;
 use crate::ports::InputFolders;
 use crate::services::{InputService, ParserApi};
 
 pub(crate) use output::{folder, name, set, two_versions};
 pub(crate) use serving::{FakeServer, FakeWatcher, changed};
+
+/// A link from the tags that `pattern` matches whole, as the configuration gives it.
+pub(crate) fn tag_link(pattern: &str, address: &str, text: &str) -> TagLink {
+    TagLink {
+        source: pattern.into(),
+        pattern: Regex::new(&format!("^(?:{pattern})$")).expect("a regular expression"),
+        address: address.into(),
+        text: text.into(),
+    }
+}
 
 /// The fixture folder `name`, under `tests/fixtures`.
 pub(crate) fn fixture(name: &str) -> PathBuf {

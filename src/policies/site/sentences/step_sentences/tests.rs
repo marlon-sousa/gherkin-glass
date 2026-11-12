@@ -7,7 +7,7 @@ use gherkin::{Feature, GherkinEnv};
 
 use super::*;
 use crate::entities::ParsedFeature;
-use crate::policies::anchor_feature;
+use crate::policies::site::anchor_feature;
 
 #[test]
 fn a_kind_with_no_sentence_has_no_group() {

@@ -10,7 +10,8 @@ use crate::entities::{
     HeadingLevel, HeadingPart, LinkAddress, PageOptions, Paragraph, ParsedFeature, RuleBlock,
     ScenarioBlock, TagNames, TagView,
 };
-use crate::policies::{CATALOGUE, outside_link};
+use crate::policies::CATALOGUE;
+use crate::policies::site::outside_link;
 
 pub(super) struct Builder<'a> {
     pub(super) parsed: &'a ParsedFeature,
