@@ -14,7 +14,7 @@ description: How Claude finds which parts of gherkin-glass's docs/ARCHITECTURE.m
 | The guiding principle | a dependency points outward, or something besides the composition root chooses an adapter |
 | The repository | a top-level folder or file, a binary or a crate is added, removed or renamed |
 | Module roles | a module's role changes, or a build step moves between roles |
-| The pipeline | a stage, a service, a method of the controller, a handler, the destination, a level of the site tree's nodes or the rendering trait changes, or a crate's types reach the tree |
+| The pipeline | a stage, a service, a method of the controller, a handler, the destination, a sort of a tree's nodes or the rendering trait changes, or a crate's types reach the tree |
 | Folders and files | `lib.rs` exports something new, a module is inlined, a module's public face changes, a module moves to another area, or an area is added |
 | Writing the code | a lint, a derive or a dependency it names changes |
 | Comments | never by code alone |
