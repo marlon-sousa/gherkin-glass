@@ -16,7 +16,7 @@ Both trees are an `ego_tree::Tree` (ego-tree 0.11.1, ISC, allowed by `deny.toml`
 
 Each build makes its trees anew from the last ones, copying over what it keeps, rather than changing the last trees in place. ego-tree 0.11.1 has no way to free a node: `detach` (`src/lib.rs`, line 632) unlinks it from its parent and leaves it in the tree's `Vec`, so a tree changed in place for as long as a watch runs would keep every node it ever removed. Its derived `PartialEq` (`src/lib.rs`, line 51) also compares that whole `Vec`, the detached nodes and the order the nodes were added in included, so it cannot tell whether two trees hold the same site. Its `NodeRef`s compare by identity, the node's id and the tree's address (`src/lib.rs`, line 161), so the site writer compares a file node with the last site tree's by walking both with `traverse` (`src/iter.rs`, line 346) and comparing their values.
 
-Nothing a person meets changes: every page, message and report stays the same, byte for byte, and BEHAVIOUR.md gains no rule.
+Every page and report stays the same, byte for byte, and BEHAVIOUR.md gains no rule. One message may change: when the configuration file names another input than the one `ghg serve` started with, a change in the folder still watched is outside the input the last build read, so it rebuilds nothing and `The site was rebuilt.` is no longer printed for it, which rule 65 allows, since no file of that build changed.
 
 ## How the code moves there
 
