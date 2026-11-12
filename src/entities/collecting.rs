@@ -1,4 +1,4 @@
-//! Entity: the input, the entries of its folders, what collecting it found, each feature as the parser returned it and as it was read.
+//! Entity: the collecting stage, the input: the entries of its folders, what collecting it found, each feature as the parser returned it and as it was read.
 
 mod collected_input;
 mod doc_string;

@@ -1,4 +1,4 @@
-//! Policy: reading the input, which files are read, in what language, what is corrected in what the parser gives, and what stops a build.
+//! Policy: the collecting stage, reading the input: which files are read, in what language, what is corrected in what the parser gives, and what stops a build.
 
 mod doc_string_correction;
 mod file_language;
