@@ -5,8 +5,8 @@ use gherkin::{Feature, GherkinEnv};
 
 use super::*;
 use crate::entities::{
-    BackgroundBlock, LinkAddress, OutsideLink, ParsedFeature, RuleBlock, StepPart, TableView,
-    TagLink, TagView,
+    BackgroundBlock, LinkAddress, OutlineParts, OutsideLink, ParsedFeature, RuleBlock, StepPart,
+    TableView, TagLink, TagView,
 };
 use crate::policies::{anchor_feature, name_tags, tags_of, whole_tag_pattern};
 
@@ -41,6 +41,11 @@ fn in_rule(rule: &RuleBlock) -> (&BackgroundBlock, &ScenarioBlock) {
         panic!("{rule:?}");
     };
     (background, outline)
+}
+
+/// What only an outline has.
+fn parts(outline: &ScenarioBlock) -> &OutlineParts {
+    outline.outline.as_ref().expect("an outline")
 }
 
 const FEATURE: &str = "\
@@ -150,7 +155,7 @@ fn every_tag_links_its_page_and_the_first_outside_link_that_matches() {
         .flatten()
         .collect();
     assert_eq!(views.len(), 1);
-    let examples = &in_rule(rule).1.examples[0];
+    let examples = &parts(in_rule(rule).1).examples[0];
     let tag = &examples.tags[0];
     assert_eq!(tag.address.to_string(), "../tags/in-rule.html");
     assert_eq!(

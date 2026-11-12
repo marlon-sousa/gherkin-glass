@@ -8,8 +8,8 @@ mod page;
 
 pub(crate) use anchored_feature::{Anchored, AnchoredFeature, AnchoredRule, AnchoredScenario};
 pub(crate) use feature_blocks::{
-    BackgroundBlock, BlockHeading, ExamplesAsScenarios, ExamplesBlock, FeatureBlock, HeadingPart,
-    RuleBlock, ScenarioBlock,
+    BackgroundBlock, BlockHeading, ExampleScenario, ExamplesAsScenarios, ExamplesBlock,
+    FeatureBlock, HeadingPart, OutlineParts, RuleBlock, ScenarioBlock,
 };
 pub(crate) use heading_level::HeadingLevel;
 pub(crate) use highlighted_step::{HighlightedStep, StepPart};

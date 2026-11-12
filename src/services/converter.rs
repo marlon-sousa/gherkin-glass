@@ -12,8 +12,6 @@ pub(crate) trait ConverterApi: Send + Sync {
 #[derive(Debug, Default, Clone, Copy)]
 pub(crate) struct Converter;
 
-impl Converter {}
-
 impl ConverterApi for Converter {
     fn convert(&self, features: &[ParsedFeature], settings: &Settings) -> SiteTree {
         site_tree(features, &settings.pages)

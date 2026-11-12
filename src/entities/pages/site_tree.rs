@@ -24,6 +24,4 @@ pub(crate) enum FileNode {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct SiteTree {
     pub(crate) files: Vec<FileNode>,
-    /// Whether no title was given, so that the default stands.
-    pub(crate) untitled: bool,
 }

@@ -28,7 +28,7 @@ fn headings_read_the_keyword_and_the_name_at_their_levels() {
         .map(|h| (h.level.number(), h.anchor.as_str()))
         .collect();
     assert_eq!(inside, [(3, "in-the-rule"), (3, "inside")]);
-    let examples = &outline.examples[0];
+    let examples = &parts(outline).examples[0];
     assert_eq!(
         (
             examples.heading.level.number(),
@@ -49,7 +49,7 @@ fn headings_read_the_keyword_and_the_name_at_their_levels() {
 fn an_outline_shows_its_rows_as_scenarios_in_a_collapsed_block() {
     let page = page(FEATURE, &PageOptions::default());
     let (_, outline) = in_rule(blocks(&page).2);
-    let section = outline.as_scenarios.as_ref().expect("rows");
+    let section = parts(outline).as_scenarios.as_ref().expect("rows");
     let heading = &section.heading;
     assert_eq!(
         (
@@ -102,7 +102,7 @@ fn an_outline_shows_its_rows_as_scenarios_in_a_collapsed_block() {
     };
     let page = self::page(FEATURE, &scenarios);
     let (_, outline) = in_rule(blocks(&page).2);
-    let as_scenarios = outline.as_scenarios.as_ref().expect("rows");
+    let as_scenarios = parts(outline).as_scenarios.as_ref().expect("rows");
     assert!(as_scenarios.scenarios[0].heading.collapsed);
 }
 
@@ -118,7 +118,7 @@ fn the_settings_choose_which_blocks_start_collapsed() {
             &rule.heading,
             &rule_background.heading,
             &outline.heading,
-            &outline.examples[0].heading,
+            &parts(outline).examples[0].heading,
         ]
         .map(|heading| heading.collapsed)
     };

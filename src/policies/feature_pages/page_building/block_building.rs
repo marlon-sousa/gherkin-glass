@@ -111,12 +111,7 @@ impl Builder<'_> {
             description: description(scenario.description.as_deref()),
             backgrounds,
             steps: step_views(self.parsed, &scenario.steps, Some(scenario)),
-            examples: anchored
-                .examples
-                .iter()
-                .map(|examples| self.examples(examples, level.below()))
-                .collect(),
-            as_scenarios: self.examples_as_scenarios(anchored, level.below()),
+            outline: self.outline(anchored, level.below()),
         }
     }
 

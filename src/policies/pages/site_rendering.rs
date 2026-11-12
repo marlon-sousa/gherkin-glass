@@ -3,7 +3,8 @@
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 
 use crate::entities::{
-    ASSETS, BuiltSite, FileNode, SiteAddress, SiteAssets, SiteFile, SiteFiles, SiteTree,
+    ASSETS, BuiltSite, FileNode, PageOptions, SiteAddress, SiteAssets, SiteFile, SiteFiles,
+    SiteTree,
 };
 use crate::policies::{
     LARGE_SEARCH_DOCUMENTS, SENTENCES_PAGE, render_folder_page, render_folder_tree, render_page,
@@ -14,18 +15,16 @@ use crate::policies::{
 const TREE_DATA: &str = "tree.json";
 const SEARCH_DOCUMENTS: &str = "search.json";
 
-/// Every file of `tree`, in its order.
-pub(crate) fn render_site(tree: &SiteTree) -> SiteFiles {
-    // Collecting into a `Vec` keeps file order, whatever order the threads finish in.
+/// Every file of `tree`, in its order, in the site that `options` make.
+pub(crate) fn render_site(tree: &SiteTree, options: &PageOptions) -> SiteFiles {
     let files: Vec<_> = tree.files.par_iter().filter_map(render_file).collect();
-    let search = asset(SEARCH_DOCUMENTS);
     let built = BuiltSite {
         large_search_documents: files
             .iter()
-            .find(|file| file.address == search)
+            .find(is_search_documents)
             .map(|file| file.contents.len())
             .filter(is_large),
-        untitled: tree.untitled,
+        untitled: options.title.is_none(),
     };
     SiteFiles { files, built }
 }
@@ -62,6 +61,10 @@ fn asset_file(name: &str) -> Option<SiteFile> {
     })
 }
 
+fn is_search_documents(file: &&SiteFile) -> bool {
+    file.address == asset(SEARCH_DOCUMENTS)
+}
+
 /// Whether search documents of `size` bytes can be slow to start.
 fn is_large(size: &usize) -> bool {
     *size > LARGE_SEARCH_DOCUMENTS
@@ -81,7 +84,7 @@ mod tests {
     use rstest::rstest;
 
     use super::*;
-    use crate::entities::{PageOptions, ParsedFeature};
+    use crate::entities::ParsedFeature;
     use crate::policies::site_tree;
 
     /// The site of one feature named `name`.
@@ -94,7 +97,8 @@ mod tests {
             "en".to_string(),
             BTreeMap::new(),
         );
-        render_site(&site_tree(&[parsed], &PageOptions::default())).built
+        let options = PageOptions::default();
+        render_site(&site_tree(&[parsed], &options), &options).built
     }
 
     #[rstest]

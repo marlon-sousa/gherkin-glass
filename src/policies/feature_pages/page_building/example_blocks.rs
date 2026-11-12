@@ -7,16 +7,13 @@ use super::block_building::{Builder, block_heading, description, worded_heading}
 use super::heading_words::{TEXT_MARKS, heading, isolated, plain, worded_parts};
 use super::step_views::{filled_step_views, table};
 use crate::entities::{
-    Anchored, AnchoredScenario, ExamplesAsScenarios, ExamplesBlock, HeadingLevel, ScenarioBlock,
+    Anchored, AnchoredScenario, ExampleScenario, ExamplesAsScenarios, ExamplesBlock, HeadingLevel,
+    OutlineParts,
 };
 use crate::policies::{CATALOGUE, ExampleRow, example_rows};
 
 impl Builder<'_> {
-    pub(super) fn examples(
-        &self,
-        anchored: &Anchored<'_, Examples>,
-        level: HeadingLevel,
-    ) -> ExamplesBlock {
+    fn examples(&self, anchored: &Anchored<'_, Examples>, level: HeadingLevel) -> ExamplesBlock {
         let examples = anchored.block;
         ExamplesBlock {
             heading: block_heading(
@@ -31,7 +28,23 @@ impl Builder<'_> {
         }
     }
 
-    pub(super) fn examples_as_scenarios(
+    /// `None` for a scenario, which has no examples.
+    pub(super) fn outline(
+        &self,
+        anchored: &AnchoredScenario<'_>,
+        level: HeadingLevel,
+    ) -> Option<OutlineParts> {
+        (!anchored.examples.is_empty()).then(|| OutlineParts {
+            examples: anchored
+                .examples
+                .iter()
+                .map(|examples| self.examples(examples, level))
+                .collect(),
+            as_scenarios: self.examples_as_scenarios(anchored, level),
+        })
+    }
+
+    fn examples_as_scenarios(
         &self,
         anchored: &AnchoredScenario<'_>,
         level: HeadingLevel,
@@ -65,7 +78,7 @@ impl Builder<'_> {
         anchor: &str,
         row: &ExampleRow<'_>,
         level: HeadingLevel,
-    ) -> ScenarioBlock {
+    ) -> ExampleScenario {
         let value_words = fl!(
             CATALOGUE,
             "example-value",
@@ -84,15 +97,15 @@ impl Builder<'_> {
             name = TEXT_MARKS[0],
             values = TEXT_MARKS[1]
         );
-        ScenarioBlock::of_steps(
-            worded_heading(
+        ExampleScenario {
+            heading: worded_heading(
                 level,
                 anchor,
                 worded_parts(&words, &[isolated(outline_name(outline)), values]),
                 self.options.collapse_scenarios,
             ),
-            filled_step_views(self.parsed, &outline.steps, row),
-        )
+            steps: filled_step_views(self.parsed, &outline.steps, row),
+        }
     }
 }
 

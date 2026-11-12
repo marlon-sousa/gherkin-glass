@@ -4,9 +4,9 @@ use askama::Template;
 
 use super::render;
 use crate::entities::{
-    BackgroundBlock, BlockHeading, ExamplesAsScenarios, ExamplesBlock, FeatureBlock,
-    FromBackground, HeadingLevel, HeadingPart, Paragraph, RuleBlock, ScenarioBlock, StepPart,
-    StepView, TableView, TagView,
+    BackgroundBlock, BlockHeading, ExampleScenario, ExamplesAsScenarios, ExamplesBlock,
+    FeatureBlock, FromBackground, HeadingLevel, HeadingPart, OutlineParts, Paragraph, RuleBlock,
+    ScenarioBlock, StepPart, StepView, TableView, TagView,
 };
 
 #[derive(Template)]
@@ -85,12 +85,11 @@ fn render_rule(rule: &RuleBlock) -> String {
 }
 
 fn render_scenario(scenario: &ScenarioBlock) -> String {
-    let inner: Vec<_> = scenario
-        .examples
-        .iter()
-        .map(render_examples)
-        .chain(scenario.as_scenarios.iter().map(render_as_scenarios))
-        .collect();
+    let inner = scenario
+        .outline
+        .as_ref()
+        .map(render_outline)
+        .unwrap_or_default();
     render_block(
         BlockView {
             tags: &scenario.tags,
@@ -99,7 +98,28 @@ fn render_scenario(scenario: &ScenarioBlock) -> String {
             steps: &scenario.steps,
             ..BlockView::of(BlockKind::Scenario, &scenario.heading)
         },
-        inner.join("\n"),
+        inner,
+    )
+}
+
+/// An outline's examples blocks, then its examples as scenarios.
+fn render_outline(outline: &OutlineParts) -> String {
+    let inner: Vec<_> = outline
+        .examples
+        .iter()
+        .map(render_examples)
+        .chain(outline.as_scenarios.iter().map(render_as_scenarios))
+        .collect();
+    inner.join("\n")
+}
+
+fn render_example_scenario(scenario: &ExampleScenario) -> String {
+    render_block(
+        BlockView {
+            steps: &scenario.steps,
+            ..BlockView::of(BlockKind::Scenario, &scenario.heading)
+        },
+        String::new(),
     )
 }
 
@@ -116,7 +136,11 @@ fn render_examples(examples: &ExamplesBlock) -> String {
 }
 
 fn render_as_scenarios(examples: &ExamplesAsScenarios) -> String {
-    let inner: Vec<_> = examples.scenarios.iter().map(render_scenario).collect();
+    let inner: Vec<_> = examples
+        .scenarios
+        .iter()
+        .map(render_example_scenario)
+        .collect();
     render_block(
         BlockView::of(BlockKind::ExamplesAsScenarios, &examples.heading),
         inner.join("\n"),

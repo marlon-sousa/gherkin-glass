@@ -42,10 +42,7 @@ pub(crate) fn site_tree(features: &[ParsedFeature], options: &PageOptions) -> Si
         .chain([FileNode::SearchDocuments(documents)])
         .chain(SiteAssets::iter().map(Cow::into_owned).map(FileNode::Asset))
         .collect();
-    SiteTree {
-        files,
-        untitled: options.title.is_none(),
-    }
+    SiteTree { files }
 }
 
 #[cfg(test)]

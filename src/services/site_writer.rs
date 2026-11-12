@@ -168,7 +168,7 @@ impl SiteWriterApi for SiteWriter {
         settings: &Settings,
         tree: &SiteTree,
     ) -> Result<(BuiltSite, ServedSite), OutputError> {
-        let site = render_site(tree);
+        let site = render_site(tree, &settings.pages);
         let served = self.write_site(settings, &site.files)?;
         Ok((site.built, served))
     }

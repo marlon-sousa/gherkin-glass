@@ -55,13 +55,15 @@ pub(crate) fn build_page(
         anchored
             .scenarios
             .iter()
-            .map(|s| FeatureBlock::Scenario(builder.scenario(s, HeadingLevel::Two, &from_feature))),
+            .map(|s| builder.scenario(s, HeadingLevel::Two, &from_feature))
+            .map(FeatureBlock::Scenario),
     );
     blocks.extend(
         anchored
             .rules
             .iter()
-            .map(|rule| FeatureBlock::Rule(builder.rule(rule, &from_feature))),
+            .map(|rule| builder.rule(rule, &from_feature))
+            .map(FeatureBlock::Rule),
     );
     let has_background =
         feature.background.is_some() || feature.rules.iter().any(|rule| rule.background.is_some());

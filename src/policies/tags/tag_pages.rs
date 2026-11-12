@@ -1,15 +1,18 @@
 //! Policy: the index of every tag and each tag's page, built from the site's feature pages.
 
+mod tag_carriers;
+
 use std::slice::from_ref;
 
 use i18n_embed::LanguageLoader;
 use i18n_embed_fl::fl;
 
 use crate::entities::{
-    FeatureBlock, LinkAddress, Page, PageOptions, ScenarioBlock, TagFeature, TagIndex,
-    TagIndexEntry, TagNames, TagPage, TagScenario, TagView,
+    LinkAddress, Page, PageOptions, TagFeature, TagIndex, TagIndexEntry, TagNames, TagPage,
+    TagScenario,
 };
 use crate::policies::{CATALOGUE, breadcrumb, outside_link, page_frame, site_title};
+use tag_carriers::{Through, carriers, writes};
 
 /// Stands for the link in the words around it, to find where the link
 /// goes; no message of the catalogue holds it.
@@ -121,75 +124,6 @@ pub(crate) fn build_tag_page(
         features,
         no_scenario: fl!(CATALOGUE, "tag-no-scenario"),
     }
-}
-
-/// How a scenario carries a tag: the first of these that has it.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum Through {
-    Itself,
-    Examples,
-    Rule,
-    Feature,
-}
-
-/// The scenarios of `page` that carry `tag`, in the order of the file.
-fn carriers<'a>(page: &'a Page, tag: &str) -> Vec<(&'a ScenarioBlock, Through)> {
-    let feature = has(&page.tags, tag);
-    let carrier = |scenario: &'a ScenarioBlock, rule: bool| {
-        let through = if has(&scenario.tags, tag) {
-            Through::Itself
-        } else if scenario
-            .examples
-            .iter()
-            .any(|examples| has(&examples.tags, tag))
-        {
-            Through::Examples
-        } else if rule {
-            Through::Rule
-        } else if feature {
-            Through::Feature
-        } else {
-            return None;
-        };
-        Some((scenario, through))
-    };
-    let mut found = Vec::new();
-    for block in &page.blocks {
-        match block {
-            FeatureBlock::Scenario(scenario) => found.extend(carrier(scenario, false)),
-            FeatureBlock::Rule(rule) => {
-                let tagged = has(&rule.tags, tag);
-                found.extend(
-                    rule.scenarios
-                        .iter()
-                        .filter_map(|scenario| carrier(scenario, tagged)),
-                );
-            }
-            FeatureBlock::Background(_) => {}
-        }
-    }
-    found
-}
-
-/// Whether `tag` is written anywhere on `page`.
-fn writes(page: &Page, tag: &str) -> bool {
-    let in_scenario = |scenario: &ScenarioBlock| {
-        has(&scenario.tags, tag)
-            || scenario
-                .examples
-                .iter()
-                .any(|examples| has(&examples.tags, tag))
-    };
-    let in_block = |block: &FeatureBlock| match block {
-        FeatureBlock::Background(_) => false,
-        FeatureBlock::Rule(rule) => has(&rule.tags, tag) || rule.scenarios.iter().any(in_scenario),
-        FeatureBlock::Scenario(scenario) => in_scenario(scenario),
-    };
-    has(&page.tags, tag) || page.blocks.iter().any(in_block)
-}
-
-fn has(tags: &[TagView], tag: &str) -> bool {
-    tags.iter().any(|view| view.text == tag)
 }
 
 fn around_mark(words: &str) -> (String, String) {

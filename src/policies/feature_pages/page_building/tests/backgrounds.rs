@@ -44,11 +44,6 @@ fn each_scenario_starts_with_the_feature_s_background_then_its_rule_s() {
             )
         ]
     );
-    let as_scenarios = outline.as_scenarios.as_ref().expect("rows");
-    assert!(
-        as_scenarios.scenarios[0].backgrounds.is_empty(),
-        "an example's scenario"
-    );
     assert_eq!(
         page.backgrounds_option,
         Some(BackgroundsOption {
