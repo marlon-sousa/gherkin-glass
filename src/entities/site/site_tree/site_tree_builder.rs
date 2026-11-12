@@ -68,27 +68,16 @@ impl SiteTreeBuilder {
         self.site_folder(FolderId(self.input_folder))
     }
 
-    /// Each page put in the folder it is paired with, its blocks below it.
-    pub(crate) fn feature_pages(
-        &mut self,
-        pages: impl IntoIterator<Item = (FolderId, PageContent)>,
-    ) {
-        for (folder, content) in pages {
-            let id = place_feature_page(&mut self.node_mut(folder.0), content);
-            self.feature_pages.push(id);
-        }
+    /// The page of `content` put in `folder`, its blocks below it.
+    pub(crate) fn feature_page(&mut self, folder: FolderId, content: PageContent) {
+        let id = place_feature_page(&mut self.node_mut(folder.0), content);
+        self.feature_pages.push(id);
     }
 
-    /// Each page of the last site tree put in the folder it is paired with, with its blocks, as it
-    /// was there.
-    pub(crate) fn kept_feature_pages<'a>(
-        &mut self,
-        pages: impl IntoIterator<Item = (FolderId, SiteFeaturePage<'a>)>,
-    ) {
-        for (folder, page) in pages {
-            let id = copy_feature_page(&mut self.node_mut(folder.0), page.tree_node());
-            self.feature_pages.push(id);
-        }
+    /// `page`, a page of the last site tree, put in `folder` with its blocks, as it was there.
+    pub(crate) fn kept_feature_page(&mut self, folder: FolderId, page: SiteFeaturePage<'_>) {
+        let id = copy_feature_page(&mut self.node_mut(folder.0), page.tree_node());
+        self.feature_pages.push(id);
     }
 
     /// Every feature page put in so far, with its blocks, in the order it was put in.

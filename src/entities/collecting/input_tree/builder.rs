@@ -96,7 +96,7 @@ impl InputTreeBuilder {
     /// Puts `node` after the children of `parent`.
     #[expect(
         clippy::expect_used,
-        reason = "a listed folder is made only by an input tree builder, and each walk uses one"
+        reason = "every id it is given was made by this builder: a listed folder only an input tree builder makes, each walk using one, or a node it just copied"
     )]
     fn append(&mut self, parent: NodeId, node: InputNode) -> NodeId {
         self.tree

@@ -1,6 +1,7 @@
 //! Policy: which paths of the input are read.
 
 use std::path::Path;
+use std::sync::Arc;
 
 use ignore::Match;
 use ignore::gitignore::{Gitignore, GitignoreBuilder};
@@ -17,7 +18,7 @@ const DEFAULT_RULES: [&str; 4] = ["*", "!*/", "!*.feature", ".*"];
 pub(crate) struct FileSelection {
     defaults: Gitignore,
     /// Outermost first.
-    rules: Vec<Gitignore>,
+    rules: Vec<Arc<Gitignore>>,
 }
 
 /// A `.ghg-ignore` file's rules, and each rule that is not valid. The valid rules still apply.
@@ -49,7 +50,7 @@ impl FileSelection {
     }
 
     /// Takes in the rules of a folder about to be walked, until `leave`.
-    pub(crate) fn enter(&mut self, rules: Gitignore) {
+    pub(crate) fn enter(&mut self, rules: Arc<Gitignore>) {
         self.rules.push(rules);
     }
 
@@ -111,7 +112,7 @@ mod tests {
             let folder = Path::new(folder);
             let parsed = parse_rules(folder, &folder.join(IGNORE_FILE), text);
             assert!(parsed.invalid.is_empty(), "{:?}", parsed.invalid);
-            selection.enter(parsed.rules);
+            selection.enter(Arc::new(parsed.rules));
         }
         selection
     }

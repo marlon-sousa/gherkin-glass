@@ -20,10 +20,15 @@ pub(crate) fn name_tags<'a>(features: impl IntoIterator<Item = &'a ParsedFeature
 /// Whether every tag written in `parsed` has the same name in `last` as in `names`, so that its
 /// page links to the same tag pages.
 pub(crate) fn same_tag_names(parsed: &ParsedFeature, last: &TagNames, names: &TagNames) -> bool {
-    feature_tags(&parsed.feature).into_iter().all(|tag| {
-        let tag = format!("@{tag}");
-        last.name(&tag) == names.name(&tag)
-    })
+    feature_tags(&parsed.feature)
+        .into_iter()
+        .all(|tag| keeps_its_name(tag, last, names))
+}
+
+/// Whether `tag`, written without its `@`, has the same name in `last` as in `names`.
+fn keeps_its_name(tag: &str, last: &TagNames, names: &TagNames) -> bool {
+    let tag = format!("@{tag}");
+    last.name(&tag) == names.name(&tag)
 }
 
 /// Tag order: by the text lower-cased, then as written, each by character codes.

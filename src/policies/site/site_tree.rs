@@ -73,15 +73,12 @@ pub(crate) fn site_with_feature_pages(
     // Collecting into a `Vec` keeps file order, whatever order the threads finish in.
     let pages: Vec<_> = features
         .par_iter()
-        .map(|revised| match kept.page_of(*revised, names) {
-            Some(page) => FeaturePage::Kept(page),
-            None => FeaturePage::Built(Box::new(build_page(*revised, options, names))),
-        })
+        .map(|revised| kept.feature_page(*revised, options, names))
         .collect();
     for (folder, page) in folders.into_iter().zip(pages) {
         match page {
-            FeaturePage::Kept(page) => site.kept_feature_pages([(folder, page)]),
-            FeaturePage::Built(content) => site.feature_pages([(folder, *content)]),
+            FeaturePage::Kept(page) => site.kept_feature_page(folder, page),
+            FeaturePage::Built(content) => site.feature_page(folder, *content),
         }
     }
     site
@@ -106,11 +103,25 @@ impl<'a> KeptPages<'a> {
             pages: last
                 .into_iter()
                 .flat_map(SiteTree::feature_pages)
-                .map(|page| (page.page().revision, page))
+                .map(keyed_by_revision)
                 .collect(),
             tag_names: last
                 .and_then(SiteTree::version)
                 .map(|version| &version.tag_names),
+        }
+    }
+
+    /// The page of `revised`: the last site tree's, as `page_of` finds it, or else built with
+    /// `options`, its tags linked as `names` says.
+    fn feature_page(
+        &self,
+        revised: RevisedFeature<'_>,
+        options: &PageOptions,
+        names: &TagNames,
+    ) -> FeaturePage<'a> {
+        match self.page_of(revised, names) {
+            Some(page) => FeaturePage::Kept(page),
+            None => FeaturePage::Built(Box::new(build_page(revised, options, names))),
         }
     }
 
@@ -125,6 +136,10 @@ impl<'a> KeptPages<'a> {
         let page = self.pages.get(&revised.revision)?;
         same_tag_names(revised.feature, last_names, names).then_some(*page)
     }
+}
+
+fn keyed_by_revision(page: SiteFeaturePage<'_>) -> (Revision, SiteFeaturePage<'_>) {
+    (page.page().revision, page)
 }
 
 /// The versions `built_versions` the output folder holds, but `version`,

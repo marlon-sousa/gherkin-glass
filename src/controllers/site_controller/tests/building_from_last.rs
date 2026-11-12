@@ -5,6 +5,7 @@
 
 use std::collections::BTreeSet;
 use std::io::{Error as IoError, ErrorKind, Result as IoResult};
+use std::mem::take;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex, PoisonError};
 
@@ -35,6 +36,21 @@ impl ChangingInput {
                 folders.files.insert(PathBuf::from(path), text.to_string());
             }
             Change::Remove(path) => folders.files.retain(|file, _| !file.starts_with(path)),
+            Change::Rename(from, to) => {
+                let (moved, kept) = take(&mut folders.files)
+                    .into_iter()
+                    .partition(|(file, _): &(PathBuf, String)| file.starts_with(from));
+                folders.files = kept;
+                for (file, text) in moved {
+                    let below = file.strip_prefix(from).expect("in the folder moved");
+                    folders.files.insert(Path::new(to).join(below), text);
+                }
+            }
+            Change::Replace(folder, file, text) => {
+                folders
+                    .files
+                    .insert(Path::new(folder).join(file), text.to_string());
+            }
         }
     }
 }
@@ -96,20 +112,30 @@ fn not_found() -> IoError {
     IoError::new(ErrorKind::NotFound, "not found")
 }
 
-/// A change to the input, by its path.
+/// A change to the input, which one burst tells of.
 #[derive(Debug)]
 enum Change {
-    /// A file made or changed, with its text.
+    /// A file made or changed, with its text, by its path.
     Write(&'static str, &'static str),
-    /// A file removed, or a folder with everything in it.
+    /// A file removed, or a folder with everything in it, by its path.
     Remove(&'static str),
+    /// A folder moved, with everything in it, by both its paths.
+    Rename(&'static str, &'static str),
+    /// A file made or changed in a folder, with its text, by the folder's path alone, as a
+    /// watcher tells of a folder put in place of another.
+    Replace(&'static str, &'static str, &'static str),
 }
 
 impl Change {
-    fn path(&self) -> PathBuf {
-        match self {
-            Change::Write(path, _) | Change::Remove(path) => PathBuf::from(path),
-        }
+    /// The paths the burst names.
+    fn paths(&self) -> BTreeSet<PathBuf> {
+        let paths = match self {
+            Change::Write(path, _) | Change::Remove(path) | Change::Replace(path, ..) => {
+                vec![path]
+            }
+            Change::Rename(from, to) => vec![from, to],
+        };
+        paths.into_iter().map(PathBuf::from).collect()
     }
 }
 
@@ -169,6 +195,14 @@ fn left_by(outcome: BuildOutcome, last: BuildSnapshot) -> BuildSnapshot {
 ])]
 #[case::removing_a_file(&[Change::Remove("in/a.feature")])]
 #[case::removing_a_folder(&[Change::Remove("in/sub")])]
+#[case::renaming_a_folder(&[
+    Change::Rename("in/sub", "in/moved"),
+    Change::Rename("in/moved", "in/sub"),
+])]
+#[case::replacing_a_folder_whose_path_alone_is_named(&[
+    Change::Replace("in/sub", "b.feature", RETAGGED),
+    Change::Replace("in", "a.feature", EDITED),
+])]
 #[case::a_broken_file_holding_back_a_change_until_it_is_fixed(&[
     Change::Write("in/sub/b.feature", BROKEN),
     Change::Write("in/a.feature", EDITED),
@@ -210,7 +244,7 @@ fn a_build_from_the_last_build_gives_the_site_a_build_from_nothing_gives(
     let mut last = first.snapshot;
     for change in changes {
         input.apply(change);
-        let paths = BTreeSet::from([change.path()]);
+        let paths = change.paths();
         let start = BuildStart::FromLast {
             last: &last,
             paths: &paths,

@@ -15,9 +15,9 @@ pub(crate) struct Read<'a> {
 impl Read<'_> {
     /// Paths that changed call for a rebuild when one of them may have changed what a build
     /// reads: a `.ghg-ignore` file, a file the rules allow, whether it was there before the
-    /// changes or only after them, or a folder whose allowed files differ before and after, such
-    /// as one moved in or removed. A folder whose allowed files are the same, which some systems
-    /// report when a file inside it is made, does not.
+    /// changes or only after them, or a folder holding such a file, before or after, such as one
+    /// moved in, removed, or put in place of another whose files keep their names. A folder
+    /// holding none, such as an empty one, does not.
     pub(crate) fn calls_for_rebuild(&self, paths: &BTreeSet<PathBuf>) -> bool {
         paths.iter().any(|path| self.matters(path))
     }
@@ -27,13 +27,14 @@ impl Read<'_> {
         path.file_name() == Some(IGNORE_FILE.as_ref())
             || self.before.contains(&file)
             || self.after.contains(&file)
-            || under(path, self.before).ne(under(path, self.after))
+            || holds_any(path, self.before)
+            || holds_any(path, self.after)
     }
 }
 
-/// The files of `files` inside the folder `folder`.
-fn under<'a>(folder: &'a Path, files: &'a [PathBuf]) -> impl Iterator<Item = &'a PathBuf> {
-    files.iter().filter(move |file| file.starts_with(folder))
+/// Whether one of `files` is inside the folder `folder`.
+fn holds_any(folder: &Path, files: &[PathBuf]) -> bool {
+    files.iter().any(|file| file.starts_with(folder))
 }
 
 #[cfg(test)]
@@ -53,7 +54,7 @@ mod tests {
     #[case::a_file_allowed_after("features/new.feature", true)]
     #[case::a_folder_moved_in("features/moved", true)]
     #[case::the_input_folder("features", true)]
-    #[case::a_folder_whose_files_are_the_same("features/sub", false)]
+    #[case::a_folder_holding_the_same_files("features/sub", true)]
     #[case::a_file_left_out("features/notes.txt", false)]
     #[case::an_editor_s_swap_file("features/.kept.feature.swp", false)]
     #[case::an_empty_folder("features/empty", false)]
