@@ -8,7 +8,7 @@ use crate::entities::{Breadcrumb, LinkAddress, OutsideLink, SiteAddress};
 pub(crate) struct TagIndex {
     /// In the folder of the tag pages.
     pub(crate) address: SiteAddress,
-    /// The `lang` of the index and the tag pages: the catalogue's language.
+    /// The index's `lang`: the catalogue's language.
     pub(crate) language: String,
     pub(crate) breadcrumb: Breadcrumb,
     pub(crate) title: String,
@@ -30,6 +30,7 @@ pub(crate) struct TagIndexEntry {
 pub(crate) struct TagPage {
     /// Such as `tags/slow.html`.
     pub(crate) address: SiteAddress,
+    /// The page's `lang`: the catalogue's language.
     pub(crate) language: String,
     pub(crate) breadcrumb: Breadcrumb,
     pub(crate) title: String,

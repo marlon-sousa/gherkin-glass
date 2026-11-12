@@ -22,7 +22,8 @@ use crate::services::{InputService, ParserApi};
 pub(crate) use output::{folder, name, set, two_versions};
 pub(crate) use serving::{FakeServer, FakeWatcher, changed};
 
-/// A link from the tags that `pattern` matches whole, as the configuration gives it.
+/// A link from the tags that `pattern` matches whole, as the configuration gives it, for a
+/// pattern without the `x` flag, whose trailing comment would swallow the anchors written here.
 pub(crate) fn tag_link(pattern: &str, address: &str, text: &str) -> TagLink {
     TagLink {
         source: pattern.into(),
