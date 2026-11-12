@@ -13,7 +13,7 @@
 
 import { spawnSync } from "node:child_process";
 import { mkdtempSync, readdirSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { availableParallelism, tmpdir } from "node:os";
 import { join, relative, resolve, sep } from "node:path";
 import assert from "node:assert/strict";
 import { partProblems } from "./part_contrast.mjs";
@@ -99,6 +99,9 @@ function filesOf(folder) {
     .map((entry) => relative(folder, join(entry.parentPath, entry.name)).split(sep).join("/"));
 }
 
+// The pages of the site in `folder`, below it, in order.
+const pagesOf = (folder) => filesOf(folder).filter((path) => path.endsWith(".html")).sort();
+
 const within = (path, folder) => path === folder || path.startsWith(`${folder}/`);
 
 // Every feature file and configuration file under tests/fixtures belongs to a
@@ -127,9 +130,10 @@ function build({ root, folder, args }, output) {
 // The address of a page below the site's address, its path's parts percent-encoded.
 const addressOf = (site, page) => new URL(page.split("/").map(encodeURIComponent).join("/"), site).href;
 
-// Runs axe-core on the page and returns its violations, each as one line per element.
+// Runs axe-core on the page and returns its violations, each as one line per
+// element. axe-core must already be loaded in the page, as checkSite's
+// contexts load it.
 async function violations(page) {
-  await page.addScriptTag({ path: axeSource });
   const found = await page.evaluate(
     async ({ tags, extraRules }) => {
       const rules = window.axe
@@ -307,9 +311,7 @@ async function searchProblems(page) {
 // Checks every page of the site in `folder`, served with ghg serve
 // --no-build, and returns the problems, one line each, with the page's path.
 export async function checkSite(browser, folder) {
-  const pages = filesOf(folder)
-    .filter((path) => path.endsWith(".html"))
-    .sort();
+  const pages = pagesOf(folder);
   const { server, address } = await serve(["--no-build", "--output", folder, "--port", "0"], folder);
   const problems = [];
   let pressed = 0;
@@ -329,6 +331,7 @@ export async function checkSite(browser, folder) {
           }
         }, theme);
       }
+      await context.addInitScript({ path: axeSource });
       const page = await context.newPage();
       for (const path of pages) {
         await page.goto(addressOf(address, path));
@@ -370,6 +373,26 @@ export async function checkSite(browser, folder) {
   return { pages: pages.length, pressed, trees, searched, outlined, problems };
 }
 
+// Checks the sites in `sites`, as many at a time as the machine has cores, the
+// one with the most pages first, and returns each site's result in the order
+// of `sites`. A site whose check throws stops no other: once every check has
+// ended, and so stopped its server, the first error in the order of `sites`
+// is thrown.
+async function checkAll(browser, sites) {
+  const waiting = sites.map((site, index) => ({ site, index, pages: pagesOf(site).length }));
+  waiting.sort((one, other) => other.pages - one.pages);
+  const settled = [];
+  const worker = async () => {
+    for (let next = waiting.shift(); next !== undefined; next = waiting.shift()) {
+      [settled[next.index]] = await Promise.allSettled([checkSite(browser, next.site)]);
+    }
+  };
+  await Promise.all(Array.from({ length: availableParallelism() }, worker));
+  const failed = settled.find((outcome) => outcome.status === "rejected");
+  if (failed !== undefined) throw failed.reason;
+  return settled.map((outcome) => outcome.value);
+}
+
 async function main() {
   checkEveryFixtureIsCounted();
   const browser = await chromium.launch();
@@ -381,19 +404,21 @@ async function main() {
   let searched = 0;
   let outlined = 0;
   try {
-    for (const [index, each] of builds.entries()) {
+    const sites = builds.map((each, index) => {
       const site = join(output, String(index));
       build(each, site);
-      const name = [each.folder, ...each.args].join(" ");
-      const result = await checkSite(browser, site);
+      return site;
+    });
+    const results = await checkAll(browser, sites);
+    for (const [index, result] of results.entries()) {
+      const name = [builds[index].folder, ...builds[index].args].join(" ");
       if (result.pages === 0) failures.push(`${name}: the site has no page`);
       checked += result.pages;
       pressed += result.pressed;
       trees += result.trees;
       searched += result.searched;
       outlined += result.outlined;
-      const { problems } = result;
-      for (const problem of problems) failures.push(`${name}: ${problem}`);
+      for (const problem of result.problems) failures.push(`${name}: ${problem}`);
     }
     if (pressed === 0) failures.push("no page had a block whose buttons the check could press");
     if (trees === 0) failures.push("no page showed a folder tree the check could move through");
