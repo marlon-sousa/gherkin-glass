@@ -1,277 +1,74 @@
+mod building_from_last;
 mod fakes;
+mod serving;
 
 use std::path::PathBuf;
-use std::sync::Arc;
-use std::sync::atomic::Ordering;
-use std::thread::scope;
 
 use fakes::*;
 use rstest::rstest;
 
 use super::*;
-use crate::entities::{OutputContents, Record, Watched};
-use crate::errors::OutputErrorKind;
-use crate::ports::FileWriter;
-use crate::test_support::{FakeWatcher, changed, folder, name, set, two_versions};
 
-fn build_options(config: Option<&str>, input: Option<&str>) -> BuildOptions {
-    BuildOptions {
-        config: config.map(PathBuf::from),
-        input: input.map(PathBuf::from),
-        ..BuildOptions::default()
-    }
+/// The calls of a build from `input` with the settings `destination` gives, from the check of
+/// the output folder on.
+fn a_build(destination: &str, input: &str) -> Vec<String> {
+    [
+        format!("site_writer.check {destination}"),
+        format!("input_collector.collect {input}"),
+        "gherkin_parser.parse a.feature Refused".into(),
+        "converter.convert a.feature beside v1.0.0".into(),
+        "site_writer.write a.feature".into(),
+    ]
+    .into()
 }
 
-#[rstest]
-// Rules 20 and 21.
-#[case::the_default_folder_without_a_file(&[], None, None, "a.feature:1: read in features\n")]
-#[case::the_file_s_input(&[("ghg.toml", "input = \"specs\"\n")], None, None, "a.feature:1: read in specs\n")]
-#[case::the_option_over_the_file_s(
-    &[("ghg.toml", "input = \"specs\"\n")],
-    None,
-    Some("other"),
-    "a.feature:1: read in other\n"
-)]
-#[case::a_file_asked_for_that_does_not_exist(&[], Some("ci.toml"), None, "ci.toml: cannot be read: not found\n")]
-#[case::a_mistaken_file_before_the_input_is_read(
-    &[("ghg.toml", "inputs = \"x\"\ninput = 1\n")],
-    None,
-    None,
-    "ghg.toml:1: ghg has no setting named inputs.\nghg.toml:2: input must be text, in quotes.\n"
-)]
-fn a_build_reads_the_input_the_configuration_and_the_options_name(
-    #[case] files: &[(&str, &str)],
-    #[case] config: Option<&str>,
-    #[case] input: Option<&str>,
-    #[case] report: &str,
-) {
-    let world = World::default();
-    world.input.failing.store(true, Ordering::SeqCst);
-    let controller = world.controller(files, OutputContents::Missing);
-    let error = controller
-        .build(&build_options(config, input))
-        .expect_err("stops");
-    assert_eq!(error.to_string(), report);
-}
-
-#[rstest]
-// Rules 38 and 123: a build whose input has a problem changes no folder.
-#[case::without_versions(folder(&["ghg-site.json"], &[], Some(Record::Site(set(&[])))), None)]
-#[case::as_a_version(two_versions(), Some("v1.0.0"))]
-fn a_build_whose_input_has_a_problem_changes_no_folder(
-    #[case] contents: OutputContents,
-    #[case] version: Option<&str>,
-) {
-    let world = World::default();
-    world.input.failing.store(true, Ordering::SeqCst);
+#[test]
+fn a_build_loads_the_settings_checks_the_output_then_collects_parses_converts_and_writes() {
+    let world = world();
     let options = BuildOptions {
-        version_name: version.map(name),
+        input: Some(PathBuf::from("specs")),
         ..BuildOptions::default()
     };
-    let outcome = world.controller(&[], contents).build(&options);
-    assert!(matches!(outcome, Err(BuildError::Input(_))), "{outcome:?}");
-    assert_eq!(world.touched.load(Ordering::SeqCst), 0);
-}
-
-#[test]
-fn serve_reads_the_configuration_as_build_does() {
-    // Rule 56.
-    let world = World::default();
-    world.input.failing.store(true, Ordering::SeqCst);
-    let files = [("ghg.toml", "input = \"specs\"\n")];
-    let error = world
-        .controller(&files, OutputContents::Missing)
-        .serve(&ServeOptions::default(), &Recorded::default())
-        .expect_err("stops");
-    assert_eq!(error.to_string(), "a.feature:1: read in specs\n");
-    let options = ServeOptions {
-        mode: ServeMode::Folder,
-        ..ServeOptions::default()
-    };
-    let error = world
-        .controller(&[("ghg.toml", "inputs = 1\n")], OutputContents::Missing)
-        .serve(&options, &Recorded::default())
-        .expect_err("stops");
+    assert_eq!(world.controller().build(&options), Ok(built_site()));
     assert_eq!(
-        error.to_string(),
-        "ghg.toml:1: ghg has no setting named inputs.\n"
-    );
-    assert!(world.server.started().is_none());
-}
-
-#[test]
-fn watching_rebuilds_on_each_burst_and_keeps_the_last_good_site() {
-    // Rules 65 to 67.
-    let world = World::default();
-    // A file left from an earlier build, which no version may serve.
-    world
-        .memory
-        .write(Path::new("site"), "stale.html", b"")
-        .expect("written");
-    let controller = world.controller(&[], OutputContents::Missing);
-    let options = ServeOptions {
-        mode: ServeMode::Watch,
-        port: Some(0),
-        ..ServeOptions::default()
-    };
-    let events = Recorded::default();
-    scope(|scope| {
-        let serving = scope.spawn(|| controller.serve(&options, &events));
-        assert_eq!(events.wait_for(1), ["listening at 127.0.0.1:1"]);
-        let sender = world.watcher.sender().expect("watching");
-        let (_, _, preview) = world.server.started().expect("started");
-        assert!(preview.mode.watches());
-        assert_eq!(preview.current().number, 1);
-        let ServedSite::Memory(files) = &preview.current().site else {
-            panic!("a site in memory");
-        };
-        assert!(
-            files.contains_key("assets/gherkin-glass.js"),
-            "{:?}",
-            files.keys()
-        );
-        assert!(!files.contains_key("stale.html"));
-
-        // A change no build reads is looked at, and rebuilds nothing.
-        let listed = world.input.listed.load(Ordering::SeqCst);
-        sender.send(changed("features/notes.txt")).expect("sent");
-        wait_until(|| world.input.listed.load(Ordering::SeqCst) > listed);
-        assert_eq!(preview.current().number, 1);
-
-        sender.send(changed("ghg.toml")).expect("sent");
-        assert_eq!(events.wait_for(2)[1], "rebuilt");
-        assert_eq!(preview.current().number, 2);
-
-        world.input.failing.store(true, Ordering::SeqCst);
-        sender.send(changed("ghg.toml")).expect("sent");
-        assert!(
-            events.wait_for(3)[2].starts_with("not rebuilt: RebuildError { build: Input("),
-            "{:?}",
-            events.wait_for(3)
-        );
-        assert_eq!(preview.current().number, 2);
-
-        drop(sender);
-        assert_eq!(serving.join().expect("no panic"), Ok(()));
-    });
-    assert_eq!(
-        *world.watcher.watched.lock().expect("lock"),
+        world.calls.taken(),
         [
-            Watched::Folder(PathBuf::from("features")),
-            Watched::File(PathBuf::from("ghg.toml"))
+            "settings.load Folder",
+            "site_writer.check Folder",
+            "input_collector.collect specs",
+            "gherkin_parser.parse a.feature Refused",
+            "converter.convert a.feature beside v1.0.0",
+            "site_writer.write a.feature",
         ]
     );
 }
 
 #[rstest]
-// Rule 67: when the first build stops, ghg serve stops.
-#[case::into_the_output_folder(ServeMode::Build, false)]
-#[case::in_memory(ServeMode::Watch, false)]
-#[case::in_memory_with_a_watch_that_cannot_start(ServeMode::Watch, true)]
-fn a_first_build_that_stops_serves_nothing_and_is_said_first(
-    #[case] mode: ServeMode,
-    #[case] watch_fails: bool,
+// Rules 20, 38 and 123: what stops a build is reported, and nothing after it runs, so a
+// configuration file with a problem stops it before the input is read, and an input with a
+// problem before any folder is written.
+#[case::by_the_settings(Failing::Settings, 0, BuildError::Config(config_errors()))]
+#[case::by_the_output_folder_s_check(Failing::OutputCheck, 1, BuildError::Output(output_error()))]
+#[case::by_the_input(Failing::Input, 3, BuildError::Input(input_errors()))]
+#[case::by_the_writing(Failing::Writing, 5, BuildError::Output(output_error()))]
+fn what_stops_a_build_is_reported_and_ends_it(
+    #[case] failing: Failing,
+    #[case] calls_of_the_build: usize,
+    #[case] error: BuildError,
 ) {
-    let world = World {
-        watcher: Arc::new(FakeWatcher {
-            failing: watch_fails,
-            ..FakeWatcher::default()
-        }),
-        ..World::default()
-    };
-    world.input.failing.store(true, Ordering::SeqCst);
-    let options = ServeOptions {
-        mode,
-        ..ServeOptions::default()
-    };
-    let outcome = world
-        .controller(&[], OutputContents::Missing)
-        .serve(&options, &Recorded::default());
-    assert!(
-        matches!(outcome, Err(ServeError::Build(BuildError::Input(_)))),
-        "{outcome:?}"
-    );
-    assert!(world.server.started().is_none());
-    // The watch started before the first build, so that no change made during it is missed.
-    let watched = !world.watcher.watched.lock().expect("lock").is_empty();
-    assert_eq!(watched, mode.watches());
-}
-
-#[test]
-fn a_watch_that_cannot_start_stops_serve_once_the_first_build_is_done() {
-    // Rule 68.
-    let world = World {
-        watcher: Arc::new(FakeWatcher {
-            failing: true,
-            ..FakeWatcher::default()
-        }),
-        ..World::default()
-    };
-    let options = ServeOptions {
-        mode: ServeMode::Watch,
-        ..ServeOptions::default()
-    };
-    let outcome = world
-        .controller(&[], OutputContents::Missing)
-        .serve(&options, &Recorded::default());
-    assert!(matches!(outcome, Err(ServeError::Watch(_))), "{outcome:?}");
-    assert!(world.server.started().is_none());
-}
-
-#[test]
-fn bursts_that_wait_need_one_rebuild() {
-    // Rule 65.
-    let world = World {
-        watcher: Arc::new(FakeWatcher {
-            waiting: 3,
-            ..FakeWatcher::default()
-        }),
-        ..World::default()
-    };
-    let controller = world.controller(&[], OutputContents::Missing);
-    let options = ServeOptions {
-        mode: ServeMode::Watch,
-        ..ServeOptions::default()
-    };
-    let events = Recorded::default();
-    scope(|scope| {
-        let serving = scope.spawn(|| controller.serve(&options, &events));
-        assert_eq!(events.wait_for(2).len(), 2);
-        drop(world.watcher.sender());
-        assert_eq!(serving.join().expect("no panic"), Ok(()));
-    });
+    let world = world();
+    world.fail(failing);
     assert_eq!(
-        events.wait_for(2),
-        ["listening at 127.0.0.1:8000", "rebuilt"]
+        world.controller().build(&BuildOptions::default()),
+        Err(error)
     );
-    let (_, _, preview) = world.server.started().expect("started");
-    assert_eq!(preview.current().number, 2);
-}
-
-#[test]
-fn a_build_into_a_folder_ghg_did_not_build_serves_nothing_unless_it_is_in_memory() {
-    // Rules 38 and 66.
-    let world = World::default();
-    let controller = world.controller(&[], not_a_site());
-    let outcome = controller.serve(&ServeOptions::default(), &Recorded::default());
-    assert!(
-        matches!(
-            &outcome,
-            Err(ServeError::Build(BuildError::Output(error))) if error.kind == OutputErrorKind::NotASite
-        ),
-        "{outcome:?}"
-    );
-    assert!(world.server.started().is_none());
-    let options = ServeOptions {
-        mode: ServeMode::Watch,
-        ..ServeOptions::default()
-    };
-    let events = Recorded::default();
-    scope(|scope| {
-        let serving = scope.spawn(|| controller.serve(&options, &events));
-        assert_eq!(events.wait_for(1).len(), 1);
-        drop(world.watcher.sender());
-        assert_eq!(serving.join().expect("no panic"), Ok(()));
-    });
-    assert!(world.server.started().is_some());
+    let expected: Vec<_> = ["settings.load Folder".to_string()]
+        .into_iter()
+        .chain(
+            a_build("Folder", "features")
+                .into_iter()
+                .take(calls_of_the_build),
+        )
+        .collect();
+    assert_eq!(world.calls.taken(), expected);
 }

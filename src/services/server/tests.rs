@@ -1,10 +1,9 @@
 use std::path::PathBuf;
-use std::sync::atomic::{AtomicUsize, Ordering};
 
 use rstest::rstest;
 
 use super::*;
-use crate::entities::{Burst, ServeMode};
+use crate::entities::ServeMode;
 use crate::errors::ListenErrorKind;
 use crate::test_support::{FakeServer, FakeWatcher, changed};
 
@@ -12,68 +11,75 @@ fn service(server: &Arc<FakeServer>, watcher: &Arc<FakeWatcher>) -> ServerServic
     ServerService::new(server.clone(), watcher.clone())
 }
 
+fn watch_the_input(server: &ServerService) -> Result<WatchedChanges, WatchError> {
+    server.watch(Path::new("features"), Path::new("ghg.toml"))
+}
+
+fn watch_the_configuration(server: &ServerService) -> Result<WatchedChanges, WatchError> {
+    server.watch_config(Path::new("ghg.toml"))
+}
+
 #[rstest]
-// Rule 65.
-#[case::the_configuration("ghg.toml", true)]
-#[case::a_file_the_rules_select("features/a.feature", true)]
-#[case::a_file_they_leave_out("features/notes.txt", false)]
-fn only_a_change_a_build_reads_calls_for_a_rebuild(#[case] path: &str, #[case] rebuilds: bool) {
+// Rule 65: the input and the configuration file are watched, or the configuration file alone,
+// and every burst waiting is merged into one.
+#[case::the_input_and_the_configuration(
+    watch_the_input,
+    &[Watched::Folder(PathBuf::from("features")), Watched::File(PathBuf::from("ghg.toml"))]
+)]
+#[case::the_configuration_alone(watch_the_configuration, &[Watched::File(PathBuf::from("ghg.toml"))])]
+fn the_bursts_waiting_are_handed_back_merged(
+    #[case] watch: fn(&ServerService) -> Result<WatchedChanges, WatchError>,
+    #[case] watched: &[Watched],
+) {
     let watcher = Arc::new(FakeWatcher::default());
     let server = service(&Arc::new(FakeServer::default()), &watcher);
-    let selected = |_: &Path| vec![PathBuf::from("features/a.feature")];
-    let mut found = server
-        .watch(Path::new("features"), Path::new("ghg.toml"), &selected)
-        .expect("watching");
+    let mut changes = watch(&server).expect("watching");
+    assert_eq!(*watcher.watched.lock().expect("lock"), watched);
     let sender = watcher.sender().expect("watching");
-    sender.send(changed(path)).expect("sent");
+    sender.send(changed("features/b.feature")).expect("sent");
+    sender.send(changed("features/a.feature")).expect("sent");
+    let paths = ["features/a.feature", "features/b.feature"].map(PathBuf::from);
+    assert_eq!(changes.next(), Some(InputChanges::Paths(paths.into())));
+    sender.send(changed("ghg.toml")).expect("sent");
+    assert_eq!(changes.next(), Some(InputChanges::Everything));
     drop(sender);
-    let expected = rebuilds.then(|| vec![changed(path)]);
-    assert_eq!(found.next(), expected);
-    assert_eq!(found.next(), None);
+    assert_eq!(changes.next(), None);
 }
 
 #[test]
-fn the_input_and_the_configuration_are_watched_and_walked_before_each_burst() {
-    let watcher = Arc::new(FakeWatcher::default());
-    let server = service(&Arc::new(FakeServer::default()), &watcher);
-    let walks = AtomicUsize::new(0);
-    let selected = |_: &Path| {
-        walks.fetch_add(1, Ordering::SeqCst);
-        Vec::new()
-    };
-    let rebuilds = server
-        .watch(Path::new("features"), Path::new("ghg.toml"), &selected)
-        .expect("watching");
-    let sender = watcher.sender().expect("watching");
-    sender.send(changed("features/notes.txt")).expect("sent");
-    drop(sender);
-    assert_eq!(rebuilds.count(), 0);
-    assert_eq!(
-        *watcher.watched.lock().expect("lock"),
-        [
-            Watched::Folder(PathBuf::from("features")),
-            Watched::File(PathBuf::from("ghg.toml"))
-        ]
-    );
-    // Once when watching starts, and once for the burst.
-    assert_eq!(walks.load(Ordering::SeqCst), 2);
-}
-
-#[test]
-fn bursts_already_waiting_call_for_one_rebuild() {
-    // Rule 65: an editor's burst, or several, is one rebuild.
+fn changes_missed_while_starting_are_everything() {
+    // Rule 65.
     let watcher = Arc::new(FakeWatcher {
         waiting: 3,
         ..FakeWatcher::default()
     });
     let server = service(&Arc::new(FakeServer::default()), &watcher);
-    let selected = |_: &Path| Vec::new();
-    let mut rebuilds = server
-        .watch(Path::new("features"), Path::new("ghg.toml"), &selected)
+    let mut changes = server
+        .watch(Path::new("features"), Path::new("ghg.toml"))
         .expect("watching");
     drop(watcher.sender());
-    assert_eq!(rebuilds.next(), Some(vec![Burst::Missed; 3]));
-    assert_eq!(rebuilds.next(), None);
+    assert_eq!(changes.next(), Some(InputChanges::Everything));
+    assert_eq!(changes.next(), None);
+}
+
+#[test]
+fn a_watch_that_cannot_start_says_where() {
+    // Rule 68.
+    let watcher = Arc::new(FakeWatcher {
+        failing: true,
+        ..FakeWatcher::default()
+    });
+    let server = service(&Arc::new(FakeServer::default()), &watcher);
+    let error = server
+        .watch(Path::new("features"), Path::new("ghg.toml"))
+        .err();
+    assert_eq!(
+        error,
+        Some(WatchError {
+            path: PathBuf::from("features"),
+            reason: "too many folders".into(),
+        })
+    );
 }
 
 #[test]

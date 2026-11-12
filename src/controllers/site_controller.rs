@@ -1,22 +1,29 @@
 //! Controller: the orchestrator, building a site and serving it by running the services in order.
 
+mod building;
+mod watching;
+
 use std::net::SocketAddr;
-use std::path::Path;
 use std::sync::Arc;
 use std::thread::park;
 
+use watching::Watching;
+
 use crate::entities::{
-    BuildOptions, BuiltSite, Destination, Preview, ServeMode, ServeOptions, ServedSite, Settings,
+    BuildOptions, BuiltSite, Destination, ServeMode, ServeOptions, Served, ServedSite,
 };
-use crate::errors::{BuildError, RebuildError, ServeError};
-use crate::services::{ConverterApi, GherkinParserApi, ServerApi, SettingsApi, SiteWriterApi};
+use crate::errors::{BuildError, RebuildError, ServeError, WatchError};
+use crate::services::{
+    ConverterApi, GherkinParserApi, InputCollectorApi, ServerApi, SettingsApi, SiteWriterApi,
+};
 
 /// What the handlers ask of gherkin-glass.
 pub(crate) trait SiteApi {
     fn build(&self, options: &BuildOptions) -> Result<BuiltSite, BuildError>;
 
     /// Serves until ghg serve is stopped, so it returns only what stops it
-    /// before it serves, or, under `--watch`, `Ok` once the watching ends.
+    /// before it serves, or, under `--watch`, a watch that cannot start, or
+    /// `Ok` once the watching ends.
     fn serve(&self, options: &ServeOptions, listener: &dyn SiteListener) -> Result<(), ServeError>;
 }
 
@@ -25,10 +32,12 @@ pub(crate) trait SiteListener {
     fn listening(&self, address: SocketAddr);
     fn rebuilt(&self);
     fn not_rebuilt(&self, error: &RebuildError);
+    fn not_watched(&self, error: &WatchError);
 }
 
 pub(crate) struct SiteController {
     settings: Arc<dyn SettingsApi>,
+    input_collector: Arc<dyn InputCollectorApi>,
     gherkin_parser: Arc<dyn GherkinParserApi>,
     converter: Arc<dyn ConverterApi>,
     site_writer: Arc<dyn SiteWriterApi>,
@@ -38,6 +47,7 @@ pub(crate) struct SiteController {
 impl SiteController {
     pub(crate) fn new(
         settings: Arc<dyn SettingsApi>,
+        input_collector: Arc<dyn InputCollectorApi>,
         gherkin_parser: Arc<dyn GherkinParserApi>,
         converter: Arc<dyn ConverterApi>,
         site_writer: Arc<dyn SiteWriterApi>,
@@ -45,6 +55,7 @@ impl SiteController {
     ) -> Self {
         SiteController {
             settings,
+            input_collector,
             gherkin_parser,
             converter,
             site_writer,
@@ -52,39 +63,16 @@ impl SiteController {
         }
     }
 
-    /// Builds the site as `settings` say, and returns what the build says of
-    /// it and the site as it is served.
-    fn build_with(&self, settings: &Settings) -> Result<(BuiltSite, ServedSite), BuildError> {
-        self.site_writer.check(settings)?;
-        let features = self
-            .gherkin_parser
-            .parse(&settings.input, settings.unnamed)?;
-        let tree = self.converter.convert(&features, settings);
-        Ok(self.site_writer.write(settings, &tree)?)
-    }
-
-    fn rebuild_and_serve(
+    /// Serves `site` as `options` say, and tells `listener` where.
+    fn serve_site(
         &self,
-        options: &BuildOptions,
-        preview: &Preview,
+        site: ServedSite,
+        options: &ServeOptions,
         listener: &dyn SiteListener,
-    ) {
-        match self.rebuild(options) {
-            Ok(site) => {
-                preview.replace(site);
-                listener.rebuilt();
-            }
-            Err(build) => listener.not_rebuilt(&RebuildError { build }),
-        }
-    }
-
-    /// Builds the site again in memory, reading the configuration again.
-    fn rebuild(&self, options: &BuildOptions) -> Result<ServedSite, BuildError> {
-        let settings = self
-            .settings
-            .load(options, Destination::Memory)
-            .map_err(BuildError::Config)?;
-        Ok(self.build_with(&settings)?.1)
+    ) -> Result<Served, ServeError> {
+        let served = self.server.serve(site, options)?;
+        listener.listening(served.address);
+        Ok(served)
     }
 }
 
@@ -94,7 +82,10 @@ impl SiteApi for SiteController {
             .settings
             .load(options, Destination::Folder)
             .map_err(BuildError::Config)?;
-        Ok(self.build_with(&settings)?.0)
+        let built = self
+            .build_from_nothing(settings)
+            .map_err(|stopped| stopped.error)?;
+        Ok(built.built)
     }
 
     fn serve(&self, options: &ServeOptions, listener: &dyn SiteListener) -> Result<(), ServeError> {
@@ -102,30 +93,39 @@ impl SiteApi for SiteController {
             .settings
             .load(&options.build, options.mode.destination())
             .map_err(BuildError::Config)?;
-        let config = self.settings.config_file(&options.build);
-        let selected = |input: &Path| self.gherkin_parser.paths(input);
-        // Watching starts before the first build, so that a change made
-        // during it is not missed; what stops the build is said first.
-        let rebuilds = options
-            .mode
-            .watches()
-            .then(|| self.server.watch(&settings.input, &config, &selected));
-        let site = match options.mode {
-            ServeMode::Folder => ServedSite::Folder(settings.output.clone()),
-            ServeMode::Build | ServeMode::Watch => self.build_with(&settings)?.1,
-        };
-        let rebuilds = rebuilds.transpose().map_err(ServeError::Watch)?;
-        let served = self.server.serve(site, options)?;
-        listener.listening(served.address);
-        let Some(rebuilds) = rebuilds else {
-            loop {
-                park();
+        match options.mode {
+            ServeMode::Folder => {
+                let site = ServedSite::Folder(settings.output.clone());
+                self.serve_site(site, options, listener)?;
             }
-        };
-        for _bursts in rebuilds {
-            self.rebuild_and_serve(&options.build, &served.preview, listener);
+            ServeMode::Build => {
+                let built = self
+                    .build_from_nothing(settings)
+                    .map_err(|stopped| stopped.error)?;
+                self.serve_site(built.site, options, listener)?;
+            }
+            ServeMode::Watch => {
+                let first = self
+                    .build_from_nothing(settings)
+                    .map_err(|stopped| stopped.error)?;
+                let served = self.server.serve(first.site, options)?;
+                let watching = Watching {
+                    controller: self,
+                    options: &options.build,
+                    config: self.settings.config_file(&options.build),
+                    preview: &served.preview,
+                    listener,
+                };
+                let changes = watching.start(&first.snapshot)?;
+                // Said once watching, so that a change made from then on is seen.
+                listener.listening(served.address);
+                watching.rebuild_on(changes, first.snapshot);
+                return Ok(());
+            }
         }
-        Ok(())
+        loop {
+            park();
+        }
     }
 }
 

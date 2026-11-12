@@ -1,5 +1,5 @@
-//! Policy: the choices of ghg serve, whether a burst of changes under `--watch` calls for a rebuild.
+//! Policy: the choices of ghg serve, the bursts of changes waiting under `--watch` merged into one.
 
-mod rebuild_choice;
+mod burst_merging;
 
-pub(crate) use rebuild_choice::{Read, calls_for_rebuild, remembered};
+pub(crate) use burst_merging::merged_bursts;

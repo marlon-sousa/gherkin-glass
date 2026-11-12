@@ -1,16 +1,16 @@
-//! Service: the server, serving a site and, under `--watch`, saying which changes call for a rebuild.
+//! Service: the server, serving a site and, under `--watch`, handing back the changes waiting, merged.
 
-mod rebuilds;
-
-use std::path::{Path, PathBuf};
+use std::iter::{from_fn, once};
+use std::path::Path;
 use std::sync::Arc;
 
 use i18n_embed_fl::fl;
-pub(crate) use rebuilds::Rebuilds;
 
-use crate::entities::{Preview, ServeOptions, Served, ServedSite, ServerWords, Watched};
+use crate::entities::{
+    Changes, InputChanges, Preview, ServeOptions, Served, ServedSite, ServerWords, Watched,
+};
 use crate::errors::{ServeError, WatchError};
-use crate::policies::CATALOGUE;
+use crate::policies::{CATALOGUE, merged_bursts};
 use crate::ports::{ChangeWatcher, PreviewServer};
 
 /// The address ghg serve listens on unless `--host` names another.
@@ -20,19 +20,20 @@ const DEFAULT_PORT: u16 = 8000;
 
 /// What the controller asks of the server.
 pub(crate) trait ServerApi: Send + Sync {
-    /// Starts watching the folder `input` and the file `config`, and takes
-    /// the files of `input` that `selected` gives as those the site is built
-    /// from, so that a change made from now on is not missed.
-    fn watch<'a>(
-        &self,
-        input: &Path,
-        config: &Path,
-        selected: &'a dyn Fn(&Path) -> Vec<PathBuf>,
-    ) -> Result<Rebuilds<'a>, WatchError>;
+    /// Starts watching the folder `input` and the configuration file `config`. Each item is
+    /// every burst of changes waiting, merged into one; it waits for one, and ends when the
+    /// watching does. Dropping it stops the watching, and drops the bursts it still holds.
+    fn watch(&self, input: &Path, config: &Path) -> Result<WatchedChanges, WatchError>;
+
+    /// Starts watching the configuration file `config` alone, as [`ServerApi::watch`] does.
+    fn watch_config(&self, config: &Path) -> Result<WatchedChanges, WatchError>;
 
     /// Serves `site` on threads of its own, as `options` say, until ghg serve is stopped.
     fn serve(&self, site: ServedSite, options: &ServeOptions) -> Result<Served, ServeError>;
 }
+
+/// The changes [`ServerApi::watch`] hands back.
+pub(crate) type WatchedChanges = Box<dyn Iterator<Item = InputChanges>>;
 
 pub(crate) struct ServerService {
     server: Arc<dyn PreviewServer>,
@@ -43,21 +44,31 @@ impl ServerService {
     pub(crate) fn new(server: Arc<dyn PreviewServer>, watcher: Arc<dyn ChangeWatcher>) -> Self {
         ServerService { server, watcher }
     }
+
+    fn watched_changes(
+        &self,
+        watched: &[Watched],
+        config: &Path,
+    ) -> Result<WatchedChanges, WatchError> {
+        let changes = self.watcher.watch(watched)?;
+        let config = config.to_path_buf();
+        Ok(Box::new(from_fn(move || {
+            changes_waiting(&changes, &config)
+        })))
+    }
 }
 
 impl ServerApi for ServerService {
-    fn watch<'a>(
-        &self,
-        input: &Path,
-        config: &Path,
-        selected: &'a dyn Fn(&Path) -> Vec<PathBuf>,
-    ) -> Result<Rebuilds<'a>, WatchError> {
+    fn watch(&self, input: &Path, config: &Path) -> Result<WatchedChanges, WatchError> {
         let watched = [
             Watched::Folder(input.to_path_buf()),
             Watched::File(config.to_path_buf()),
         ];
-        let changes = self.watcher.watch(&watched)?;
-        Ok(Rebuilds::new(changes, input, config, selected))
+        self.watched_changes(&watched, config)
+    }
+
+    fn watch_config(&self, config: &Path) -> Result<WatchedChanges, WatchError> {
+        self.watched_changes(&[Watched::File(config.to_path_buf())], config)
     }
 
     fn serve(&self, site: ServedSite, options: &ServeOptions) -> Result<Served, ServeError> {
@@ -74,6 +85,13 @@ impl ServerApi for ServerService {
             })?;
         Ok(Served { address, preview })
     }
+}
+
+/// Every burst of `changes` waiting, merged, once one comes; nothing once the watching ends.
+fn changes_waiting(changes: &Changes, config: &Path) -> Option<InputChanges> {
+    let burst = changes.bursts.recv().ok()?;
+    let bursts: Vec<_> = once(burst).chain(changes.bursts.try_iter()).collect();
+    Some(merged_bursts(&bursts, config))
 }
 
 fn words() -> ServerWords {

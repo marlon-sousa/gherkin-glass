@@ -8,27 +8,33 @@ mod step_views;
 use std::path::{Component, Path};
 
 use block_building::{Builder, description};
-pub(crate) use heading_words::heading;
+use heading_words::heading;
 use i18n_embed_fl::fl;
 
 use crate::entities::{
-    AnchoredFeature, BackgroundsOption, BlockHeading, ContentsEntry, FeatureBlock, HeadingLevel,
-    Page, PageOptions, PageWords, ScenarioBlock, SourceLink, TagNames, percent_encoded,
+    BackgroundsOption, HeadingLevel, OwnCrumb, Page, PageContent, PageOptions, PageWords,
+    RevisedFeature, SourceLink, TagNames, Trail, percent_encoded,
 };
-use crate::policies::site::{breadcrumb, page_language, site_title};
+use crate::policies::site::feature_pages::anchor_feature;
+use crate::policies::site::page_language;
 use crate::policies::{CATALOGUE, page_address};
 
 /// Stands for the file's path in the words of the source link, to find where
 /// the path goes; no message of the catalogue holds it.
 const PATH_MARK: &str = "\u{0}";
 
-/// `tags` names every tag of the site.
+/// The page of `revised` with its blocks, each with its anchor. `tags` names
+/// every tag of the site.
 pub(crate) fn build_page(
-    anchored: &AnchoredFeature<'_>,
+    revised: RevisedFeature<'_>,
     options: &PageOptions,
     tags: &TagNames,
-) -> Page {
-    let parsed = anchored.parsed;
+) -> PageContent {
+    let RevisedFeature {
+        feature: parsed,
+        revision,
+    } = revised;
+    let anchored = anchor_feature(parsed);
     let feature = &parsed.feature;
     let path = slash_path(&parsed.path);
     let address = page_address(&parsed.path);
@@ -39,47 +45,37 @@ pub(crate) fn build_page(
         tags,
         root: address.root(),
     };
-    let mut blocks = Vec::new();
-    if let Some(background) = &anchored.background {
-        blocks.push(FeatureBlock::Background(
-            builder.background(background, HeadingLevel::Two),
-        ));
-    }
-    let from_feature: Vec<_> = anchored
-        .background
+    let background = anchored.background.as_ref().map(|background| {
+        builder.background(
+            background,
+            HeadingLevel::Two,
+            fl!(CATALOGUE, "from-background"),
+        )
+    });
+    let scenarios: Vec<_> = anchored
+        .scenarios
         .iter()
-        .filter_map(|background| {
-            builder.background_steps(background, fl!(CATALOGUE, "from-background"))
-        })
+        .map(|scenario| builder.scenario(scenario, HeadingLevel::Two))
         .collect();
-    blocks.extend(
-        anchored
-            .scenarios
-            .iter()
-            .map(|s| builder.scenario(s, HeadingLevel::Two, &from_feature))
-            .map(FeatureBlock::Scenario),
-    );
-    blocks.extend(
-        anchored
-            .rules
-            .iter()
-            .map(|rule| builder.rule(rule, &from_feature))
-            .map(FeatureBlock::Rule),
-    );
+    let rules: Vec<_> = anchored
+        .rules
+        .iter()
+        .map(|rule| builder.rule(rule))
+        .collect();
     let has_background =
         feature.background.is_some() || feature.rules.iter().any(|rule| rule.background.is_some());
     let backgrounds_option = has_background.then(|| BackgroundsOption {
         label: fl!(CATALOGUE, "inline-backgrounds"),
         inline: options.inline_backgrounds,
-        enabled: any_background_steps(&blocks),
     });
-    let folders: Vec<String> = address.folders().into_iter().map(str::to_string).collect();
-    Page {
-        breadcrumb: breadcrumb(
-            &site_title(options),
-            &folders,
-            Some((&heading, address.file())),
-        ),
+    let page = Page {
+        trail: Trail {
+            folders: Vec::new(),
+            page: Some(OwnCrumb {
+                text: heading.clone(),
+                file: address.file().to_string(),
+            }),
+        },
         address,
         language: page_language(&parsed.language).to_string(),
         title: fl!(
@@ -89,66 +85,27 @@ pub(crate) fn build_page(
             path = path.as_str()
         ),
         heading,
+        name: feature.name.clone(),
         path: path.clone(),
+        revision,
         tags: builder.tags(&feature.tags),
         description: description(feature.description.as_deref()),
         source: options
             .source_link
             .as_deref()
             .map(|template| source_link(template, &path, feature.position.line)),
-        contents: contents(&blocks),
-        blocks,
         words: PageWords {
             contents: fl!(CATALOGUE, "page-contents"),
             collapse_all: fl!(CATALOGUE, "collapse-all"),
             expand_all: fl!(CATALOGUE, "expand-all"),
         },
         backgrounds_option,
-    }
-}
-
-fn any_background_steps(blocks: &[FeatureBlock]) -> bool {
-    blocks.iter().any(has_background_steps)
-}
-
-/// Whether `block` is or holds a scenario that starts with a background's steps.
-fn has_background_steps(block: &FeatureBlock) -> bool {
-    match block {
-        FeatureBlock::Background(_) => false,
-        FeatureBlock::Rule(rule) => rule.scenarios.iter().any(starts_with_background),
-        FeatureBlock::Scenario(scenario) => starts_with_background(scenario),
-    }
-}
-
-fn starts_with_background(scenario: &ScenarioBlock) -> bool {
-    !scenario.backgrounds.is_empty()
-}
-
-/// Rules and scenarios are listed in a page's contents, and a rule's entry lists its scenarios.
-fn contents(blocks: &[FeatureBlock]) -> Vec<ContentsEntry> {
-    blocks.iter().filter_map(contents_entry).collect()
-}
-
-fn contents_entry(block: &FeatureBlock) -> Option<ContentsEntry> {
-    match block {
-        FeatureBlock::Background(_) => None,
-        FeatureBlock::Rule(rule) => Some(ContentsEntry {
-            entries: rule.scenarios.iter().map(scenario_entry).collect(),
-            ..entry(&rule.heading)
-        }),
-        FeatureBlock::Scenario(scenario) => Some(scenario_entry(scenario)),
-    }
-}
-
-fn scenario_entry(scenario: &ScenarioBlock) -> ContentsEntry {
-    entry(&scenario.heading)
-}
-
-fn entry(heading: &BlockHeading) -> ContentsEntry {
-    ContentsEntry {
-        anchor: heading.anchor.clone(),
-        heading: heading.text(),
-        entries: Vec::new(),
+    };
+    PageContent {
+        page,
+        background,
+        scenarios,
+        rules,
     }
 }
 

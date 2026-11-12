@@ -8,18 +8,18 @@
 {%- if let Some(source) = page.source %}
 <p class="ghg-source"><a href="{{ source.address }}">{{ source.before }}<bdi>{{ source.path }}</bdi>{{ source.after }}</a></p>
 {%- endif %}
-{%- if !page.contents.is_empty() %}
+{%- if !contents.is_empty() %}
 <nav class="ghg-contents" aria-label="{{ page.words.contents }}">
-{{ page.contents.render()|safe }}
+{{ contents.render()|safe }}
 </nav>
 {%- endif %}
-{%- if !page.blocks.is_empty() %}
+{%- if !blocks.is_empty() %}
 <div class="ghg-controls">
 <button type="button" class="ghg-collapse-all">{{ page.words.collapse_all }}</button>
 <button type="button" class="ghg-expand-all">{{ page.words.expand_all }}</button>
 {%- if let Some(option) = page.backgrounds_option %}
-<label class="ghg-option"><input type="checkbox" class="ghg-inline-backgrounds" autocomplete="off"{% if option.inline %} checked{% endif %}{% if !option.enabled %} disabled{% endif %}> {{ option.label }}</label>
+<label class="ghg-option"><input type="checkbox" class="ghg-inline-backgrounds" autocomplete="off"{% if option.inline %} checked{% endif %}{% if !backgrounds_enabled %} disabled{% endif %}> {{ option.label }}</label>
 {%- endif %}
 </div>
-{{ page.blocks.render()|safe }}
+{{ blocks|safe }}
 {%- endif %}

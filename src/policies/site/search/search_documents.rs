@@ -1,79 +1,89 @@
-//! Policy: the documents search reads, one for each feature, rule and scenario.
-
-use gherkin::{Background, Scenario};
+//! Policy: the documents search reads, one for each feature, rule and scenario, from the feature pages of the site tree and their blocks.
 
 use crate::entities::{
-    AnchoredFeature, AnchoredRule, AnchoredScenario, SearchDocument, SearchKind, SiteAddress,
+    ExamplesBlock, RuleBlock, ScenarioBlock, SearchDocument, SearchKind, SiteAddress,
+    SiteFeaturePage, SiteNode, SiteTreeNode, StepView, TagView,
 };
-use crate::policies::page_address;
 
 /// The documents of every page, in the order of `pages`, and within a page in file order.
-pub(crate) fn search_documents<'a>(
-    pages: impl IntoIterator<Item = &'a AnchoredFeature<'a>>,
-) -> Vec<SearchDocument> {
-    pages.into_iter().flat_map(page_documents).collect()
+pub(crate) fn search_documents(pages: &[SiteFeaturePage<'_>]) -> Vec<SearchDocument> {
+    pages.iter().flat_map(page_documents).collect()
 }
 
 /// The documents of one page: its feature's, then each rule's and scenario's.
-fn page_documents(anchored: &AnchoredFeature<'_>) -> Vec<SearchDocument> {
-    let feature = &anchored.parsed.feature;
-    let page = OnPage {
-        feature: &feature.name,
-        address: page_address(&anchored.parsed.path),
+fn page_documents(feature: &SiteFeaturePage<'_>) -> Vec<SearchDocument> {
+    let page = feature.page();
+    let on_page = OnPage {
+        feature: &page.name,
+        address: &page.address,
     };
     let feature_document = SearchDocument {
         kind: SearchKind::Feature,
-        name: feature.name.clone(),
+        name: page.name.clone(),
         feature: None,
         rule: None,
-        steps: background_steps(feature.background.as_ref()),
-        tags: tags(&feature.tags),
+        steps: background_steps(feature.blocks()),
+        tags: tags(&page.tags),
         page: page.address.clone(),
         anchor: String::new(),
     };
-    let scenarios = anchored
-        .scenarios
-        .iter()
-        .map(|scenario| page.scenario(scenario, None));
-    let rules = anchored.rules.iter().flat_map(|rule| page.rule(rule));
-    [feature_document]
-        .into_iter()
-        .chain(scenarios)
-        .chain(rules)
-        .collect()
+    let blocks = feature.blocks().flat_map(|block| on_page.block(block));
+    [feature_document].into_iter().chain(blocks).collect()
 }
 
 /// What every document of a page shares.
 struct OnPage<'a> {
     feature: &'a str,
-    address: SiteAddress,
+    address: &'a SiteAddress,
 }
 
 impl OnPage<'_> {
-    /// The rule's document, then its scenarios'.
-    fn rule(&self, anchored: &AnchoredRule<'_>) -> Vec<SearchDocument> {
-        let rule = anchored.rule;
+    /// The documents of `node`, a block directly in the page: a scenario's, or a rule's then its
+    /// scenarios'; none for a background.
+    fn block(&self, node: SiteTreeNode<'_>) -> Vec<SearchDocument> {
+        match node.value() {
+            SiteNode::Scenario(scenario) => vec![self.scenario(scenario, node, None)],
+            SiteNode::Rule(rule) => self.rule(rule, node),
+            _ => Vec::new(),
+        }
+    }
+
+    /// The document of `rule`, whose node is `node`, then its scenarios'.
+    fn rule(&self, rule: &RuleBlock, node: SiteTreeNode<'_>) -> Vec<SearchDocument> {
         let document = SearchDocument {
             kind: SearchKind::Rule,
             name: rule.name.clone(),
             feature: Some(self.feature.to_string()),
             rule: None,
-            steps: background_steps(rule.background.as_ref()),
+            steps: background_steps(node.children()),
             tags: tags(&rule.tags),
             page: self.address.clone(),
-            anchor: anchored.anchor.clone(),
+            anchor: rule.heading.anchor.clone(),
         };
-        let scenarios = anchored
-            .scenarios
-            .iter()
-            .map(|scenario| self.scenario(scenario, Some(&rule.name)));
+        let scenarios = node
+            .children()
+            .filter_map(|child| self.rule_scenario(child, &rule.name));
         [document].into_iter().chain(scenarios).collect()
     }
 
-    fn scenario(&self, anchored: &AnchoredScenario<'_>, rule: Option<&str>) -> SearchDocument {
-        let scenario = anchored.scenario;
+    /// The document of `node` when it is a scenario, in the rule named `rule`.
+    fn rule_scenario(&self, node: SiteTreeNode<'_>, rule: &str) -> Option<SearchDocument> {
+        match node.value() {
+            SiteNode::Scenario(scenario) => Some(self.scenario(scenario, node, Some(rule))),
+            _ => None,
+        }
+    }
+
+    /// The document of `scenario`, whose node is `node`, in the rule named `rule`, if any.
+    fn scenario(
+        &self,
+        scenario: &ScenarioBlock,
+        node: SiteTreeNode<'_>,
+        rule: Option<&str>,
+    ) -> SearchDocument {
+        let examples: Vec<_> = node.examples().collect();
         SearchDocument {
-            kind: if scenario.examples.is_empty() {
+            kind: if examples.is_empty() {
                 SearchKind::Scenario
             } else {
                 SearchKind::ScenarioOutline
@@ -81,36 +91,50 @@ impl OnPage<'_> {
             name: scenario.name.clone(),
             feature: Some(self.feature.to_string()),
             rule: rule.map(str::to_string),
-            steps: scenario
-                .steps
-                .iter()
-                .map(|step| step.value.clone())
-                .collect(),
-            tags: scenario_tags(scenario),
+            steps: steps_of(node),
+            tags: own_then_examples_tags(
+                &scenario.tags,
+                examples.iter().copied().map(examples_tags),
+            ),
             page: self.address.clone(),
-            anchor: anchored.anchor.clone(),
+            anchor: scenario.heading.anchor.clone(),
         }
     }
 }
 
-fn background_steps(background: Option<&Background>) -> Vec<String> {
-    background
-        .map(|found| found.steps.iter().map(|step| step.value.clone()).collect())
-        .unwrap_or_default()
+/// The steps of the background among `blocks`, the blocks of a page or a rule; none without one.
+fn background_steps<'a>(blocks: impl Iterator<Item = SiteTreeNode<'a>>) -> Vec<String> {
+    blocks.filter(is_background).flat_map(steps_of).collect()
 }
 
-fn tags(tags: &[String]) -> Vec<String> {
-    tags.iter().map(|tag| format!("@{tag}")).collect()
+/// The text of each step directly below `block`.
+fn steps_of(block: SiteTreeNode<'_>) -> Vec<String> {
+    block.steps().map(StepView::text).collect()
+}
+
+fn is_background(node: &SiteTreeNode<'_>) -> bool {
+    matches!(node.value(), SiteNode::Background(_))
+}
+
+fn examples_tags(examples: &ExamplesBlock) -> &Vec<TagView> {
+    &examples.tags
+}
+
+fn tags(tags: &[TagView]) -> Vec<String> {
+    tags.iter().map(tag_text).collect()
+}
+
+fn tag_text(tag: &TagView) -> String {
+    tag.text.clone()
 }
 
 /// A scenario's own tags, then, for an outline, those of its examples blocks, each once.
-fn scenario_tags(scenario: &Scenario) -> Vec<String> {
-    let mut found = tags(&scenario.tags);
-    for tag in scenario
-        .examples
-        .iter()
-        .flat_map(|examples| tags(&examples.tags))
-    {
+fn own_then_examples_tags<'a>(
+    own: &[TagView],
+    examples: impl Iterator<Item = &'a Vec<TagView>>,
+) -> Vec<String> {
+    let mut found = tags(own);
+    for tag in examples.flat_map(Vec::as_slice).map(tag_text) {
         if !found.contains(&tag) {
             found.push(tag);
         }

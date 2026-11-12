@@ -4,11 +4,11 @@ use gherkin::Background;
 use i18n_embed_fl::fl;
 
 use super::heading_words::{heading, plain};
-use super::step_views::step_views;
+use super::step_views::step_contents;
 use crate::entities::{
-    Anchored, AnchoredRule, AnchoredScenario, BackgroundBlock, BlockHeading, FromBackground,
+    Anchored, AnchoredRule, AnchoredScenario, BackgroundBlock, BackgroundContent, BlockHeading,
     HeadingLevel, HeadingPart, LinkAddress, PageOptions, Paragraph, ParsedFeature, RuleBlock,
-    ScenarioBlock, TagNames, TagView,
+    RuleContent, ScenarioBlock, ScenarioContent, TagNames, TagView,
 };
 use crate::policies::CATALOGUE;
 use crate::policies::site::outside_link;
@@ -22,68 +22,54 @@ pub(super) struct Builder<'a> {
 }
 
 impl Builder<'_> {
+    /// `introduction` is the words that introduce its steps in a scenario that starts with them.
     pub(super) fn background(
         &self,
         anchored: &Anchored<'_, Background>,
         level: HeadingLevel,
-    ) -> BackgroundBlock {
+        introduction: String,
+    ) -> BackgroundContent {
         let background = anchored.block;
-        BackgroundBlock {
-            heading: block_heading(
-                level,
-                &anchored.anchor,
-                heading(&background.keyword, &background.name),
-                self.options.collapse_scenarios,
-            ),
-            description: description(background.description.as_deref()),
-            steps: step_views(self.parsed, &background.steps, None),
+        BackgroundContent {
+            block: BackgroundBlock {
+                heading: block_heading(
+                    level,
+                    &anchored.anchor,
+                    heading(&background.keyword, &background.name),
+                    self.options.collapse_scenarios,
+                ),
+                description: description(background.description.as_deref()),
+                introduction,
+            },
+            steps: step_contents(self.parsed, &background.steps, None),
         }
     }
 
-    /// `None` for a background without steps, which adds nothing to a scenario.
-    pub(super) fn background_steps(
-        &self,
-        anchored: &Anchored<'_, Background>,
-        introduction: String,
-    ) -> Option<FromBackground> {
-        let background = anchored.block;
-        (!background.steps.is_empty()).then(|| FromBackground {
-            id: String::new(),
-            introduction,
-            anchor: anchored.anchor.clone(),
-            heading: heading(&background.keyword, &background.name),
-            steps: step_views(self.parsed, &background.steps, None),
-            inline: self.options.inline_backgrounds,
-        })
-    }
-
-    pub(super) fn rule(
-        &self,
-        anchored: &AnchoredRule<'_>,
-        from_feature: &[FromBackground],
-    ) -> RuleBlock {
+    pub(super) fn rule(&self, anchored: &AnchoredRule<'_>) -> RuleContent {
         let rule = anchored.rule;
-        let mut from: Vec<_> = from_feature.to_vec();
-        from.extend(anchored.background.iter().filter_map(|background| {
-            self.background_steps(background, fl!(CATALOGUE, "from-rule-background"))
-        }));
-        RuleBlock {
-            heading: block_heading(
-                HeadingLevel::Two,
-                &anchored.anchor,
-                heading(&rule.keyword, &rule.name),
-                self.options.collapse_rules,
-            ),
-            tags: self.tags(&rule.tags),
-            description: description(rule.description.as_deref()),
-            background: anchored
-                .background
-                .as_ref()
-                .map(|background| self.background(background, HeadingLevel::Three)),
+        RuleContent {
+            block: RuleBlock {
+                heading: block_heading(
+                    HeadingLevel::Two,
+                    &anchored.anchor,
+                    heading(&rule.keyword, &rule.name),
+                    self.options.collapse_rules,
+                ),
+                name: rule.name.clone(),
+                tags: self.tags(&rule.tags),
+                description: description(rule.description.as_deref()),
+            },
+            background: anchored.background.as_ref().map(|background| {
+                self.background(
+                    background,
+                    HeadingLevel::Three,
+                    fl!(CATALOGUE, "from-rule-background"),
+                )
+            }),
             scenarios: anchored
                 .scenarios
                 .iter()
-                .map(|s| self.scenario(s, HeadingLevel::Three, &from))
+                .map(|scenario| self.scenario(scenario, HeadingLevel::Three))
                 .collect(),
         }
     }
@@ -92,27 +78,28 @@ impl Builder<'_> {
         &self,
         anchored: &AnchoredScenario<'_>,
         level: HeadingLevel,
-        from: &[FromBackground],
-    ) -> ScenarioBlock {
+    ) -> ScenarioContent {
         let scenario = anchored.scenario;
-        let anchor = &anchored.anchor;
-        let backgrounds = from
-            .iter()
-            .zip(1..)
-            .map(|(from, place)| numbered(from, anchor, place))
-            .collect();
-        ScenarioBlock {
-            heading: block_heading(
-                level,
-                anchor,
-                heading(&scenario.keyword, &scenario.name),
-                self.options.collapse_scenarios,
-            ),
-            tags: self.tags(&scenario.tags),
-            description: description(scenario.description.as_deref()),
-            backgrounds,
-            steps: step_views(self.parsed, &scenario.steps, Some(scenario)),
-            outline: self.outline(anchored, level.below()),
+        let below = level.below();
+        ScenarioContent {
+            block: ScenarioBlock {
+                heading: block_heading(
+                    level,
+                    &anchored.anchor,
+                    heading(&scenario.keyword, &scenario.name),
+                    self.options.collapse_scenarios,
+                ),
+                name: scenario.name.clone(),
+                tags: self.tags(&scenario.tags),
+                description: description(scenario.description.as_deref()),
+            },
+            steps: step_contents(self.parsed, &scenario.steps, Some(scenario)),
+            examples: anchored
+                .examples
+                .iter()
+                .map(|examples| self.examples(examples, below))
+                .collect(),
+            as_scenarios: self.examples_as_scenarios(anchored, below),
         }
     }
 
@@ -128,14 +115,6 @@ impl Builder<'_> {
             outside: outside_link(&text, &self.options.tag_links),
             text,
         }
-    }
-}
-
-/// The background's steps as the scenario at `anchor` shows them, at `place` among its backgrounds.
-fn numbered(from: &FromBackground, anchor: &str, place: usize) -> FromBackground {
-    FromBackground {
-        id: format!("{anchor}_background_{place}"),
-        ..from.clone()
     }
 }
 

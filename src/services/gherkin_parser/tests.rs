@@ -7,8 +7,8 @@ use gherkin::{Feature, GherkinEnv};
 
 use super::*;
 use crate::entities::RawFeature;
-use crate::errors::ParseError;
-use crate::test_support::MemoryFolders;
+use crate::errors::{InputErrors, ParseError};
+use crate::test_support::{MemoryFolders, features_of, parsed_input};
 
 /// Parses the text held for a path; a path with no text cannot be opened.
 struct FakeParser(BTreeMap<PathBuf, String>);
@@ -48,35 +48,12 @@ fn read_with(
             .map(|(path, text)| (PathBuf::from(path), text.to_string()))
             .collect(),
     );
-    GherkinParser::new(Arc::new(folders), Arc::new(parser)).parse(Path::new("in"), unnamed)
-}
-
-#[test]
-fn the_errors_of_walking_and_parsing_are_reported_together_sorted() {
-    // How the service combines the walk's errors with the parser's; the
-    // messages are the fakes' own.
-    let mut folders = MemoryFolders::with_files([
-        "in/a.feature",
-        "in/b.feature",
-        "in/c.feature",
-        "in/locked/d.feature",
-    ]);
-    folders.unlistable.insert(PathBuf::from("in/locked"));
-    let errors = read_with(
-        folders,
-        &[
-            ("in/a.feature", "Feature: A\n"),
-            ("in/c.feature", "nothing\n"),
-        ],
-        Unnamed::Allowed,
-    )
-    .expect_err("problems");
-    assert_eq!(
-        errors.to_string(),
-        "b.feature: cannot be read: permission denied\n\
-         c.feature:1: Syntax error.\n\
-         locked: cannot be listed: permission denied\n"
-    );
+    features_of(&parsed_input(
+        Arc::new(folders),
+        Arc::new(parser),
+        Path::new("in"),
+        unnamed,
+    ))
 }
 
 #[test]
@@ -137,29 +114,4 @@ fn a_doc_string_is_corrected_and_its_path_made_relative() {
     assert_eq!(parsed.path, Path::new("sub/a.feature"));
     assert_eq!(step.docstring.as_deref(), Some("Hi"));
     assert_eq!(parsed.media_type(step), Some("md"));
-}
-
-#[test]
-fn files_with_the_same_page_are_reported_in_the_order_of_their_paths() {
-    // Rule 15: `A` sorts before `a.feature`.
-    let mut folders = MemoryFolders::with_files(["in/A", "in/a.feature", "in/a.story"]);
-    folders
-        .files
-        .insert(PathBuf::from("in/.ghg-ignore"), "!*\n".to_string());
-    let texts = [
-        ("in/A", "Feature: A\n"),
-        ("in/a.feature", "Feature: a\n"),
-        ("in/a.story", "Feature: a\n"),
-    ];
-    let errors = read_with(folders, &texts, Unnamed::Allowed).expect_err("the same page");
-    let found: Vec<_> = errors.as_slice().iter().map(path_and_kind).collect();
-    let same_page = InputErrorKind::SamePage {
-        page: "a.html".into(),
-        first: "A".into(),
-    };
-    assert_eq!(found, [("a.feature", &same_page), ("a.story", &same_page)]);
-}
-
-fn path_and_kind(error: &InputError) -> (&str, &InputErrorKind) {
-    (error.path.as_str(), &error.kind)
 }

@@ -1,6 +1,6 @@
-<nav class="ghg-breadcrumb" aria-label="{{ breadcrumb.label }}">
+<nav class="ghg-breadcrumb" aria-label="{{ label }}">
 <ol>
-{%- for crumb in breadcrumb.crumbs %}
+{%- for crumb in crumbs %}
 <li><a href="{{ crumb.address }}"{% if loop.last %} aria-current="page"{% endif %}>{{ crumb.text }}</a></li>
 {%- endfor %}
 </ol>

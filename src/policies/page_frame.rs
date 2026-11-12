@@ -2,8 +2,8 @@
 
 use i18n_embed_fl::fl;
 
-use crate::entities::{PageFrame, PageOptions};
-use crate::policies::CATALOGUE;
+use crate::entities::{BreadcrumbWords, PageFrame, PageOptions};
+use crate::policies::{CATALOGUE, site_title};
 
 mod search_wording;
 
@@ -21,6 +21,10 @@ pub(crate) fn page_frame(options: &PageOptions) -> PageFrame {
         theme_dark: fl!(CATALOGUE, "theme-dark"),
         accents: options.accents,
         search: search_words(),
+        breadcrumb: BreadcrumbWords {
+            label: fl!(CATALOGUE, "breadcrumb"),
+            home: site_title(options),
+        },
     }
 }
 

@@ -14,9 +14,6 @@
 </span>
 {%- endmatch -%}
 {%- endfor -%}
-{%- if let Some(table) = step.table %}
-{{ table.render()|safe }}
-{%- endif %}
-{%- if let Some(doc) = step.doc_string %}
-{{ doc.render()|safe }}
-{%- endif %}</li>
+{%- for attachment in attachments %}
+{{ attachment|safe }}
+{%- endfor %}</li>

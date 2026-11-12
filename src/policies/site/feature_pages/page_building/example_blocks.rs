@@ -5,16 +5,19 @@ use i18n_embed_fl::fl;
 
 use super::block_building::{Builder, block_heading, description, worded_heading};
 use super::heading_words::{TEXT_MARKS, heading, isolated, plain, worded_parts};
-use super::step_views::{filled_step_views, table};
+use super::step_views::{filled_step_contents, table};
 use crate::entities::{
     Anchored, AnchoredScenario, ExampleScenario, ExamplesAsScenarios, ExamplesBlock, HeadingLevel,
-    OutlineParts,
 };
 use crate::policies::CATALOGUE;
 use crate::policies::site::feature_pages::{ExampleRow, example_rows};
 
 impl Builder<'_> {
-    fn examples(&self, anchored: &Anchored<'_, Examples>, level: HeadingLevel) -> ExamplesBlock {
+    pub(super) fn examples(
+        &self,
+        anchored: &Anchored<'_, Examples>,
+        level: HeadingLevel,
+    ) -> ExamplesBlock {
         let examples = anchored.block;
         ExamplesBlock {
             heading: block_heading(
@@ -29,23 +32,8 @@ impl Builder<'_> {
         }
     }
 
-    /// `None` for a scenario, which has no examples.
-    pub(super) fn outline(
-        &self,
-        anchored: &AnchoredScenario<'_>,
-        level: HeadingLevel,
-    ) -> Option<OutlineParts> {
-        (!anchored.examples.is_empty()).then(|| OutlineParts {
-            examples: anchored
-                .examples
-                .iter()
-                .map(|examples| self.examples(examples, level))
-                .collect(),
-            as_scenarios: self.examples_as_scenarios(anchored, level),
-        })
-    }
-
-    fn examples_as_scenarios(
+    /// `None` for a scenario, or an outline whose examples have no row.
+    pub(super) fn examples_as_scenarios(
         &self,
         anchored: &AnchoredScenario<'_>,
         level: HeadingLevel,
@@ -105,7 +93,7 @@ impl Builder<'_> {
                 worded_parts(&words, &[isolated(outline_name(outline)), values]),
                 self.options.collapse_scenarios,
             ),
-            steps: filled_step_views(self.parsed, &outline.steps, row),
+            steps: filled_step_contents(self.parsed, &outline.steps, row),
         }
     }
 }

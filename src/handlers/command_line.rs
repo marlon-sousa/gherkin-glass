@@ -12,7 +12,7 @@ use i18n_embed_fl::fl;
 
 use crate::controllers::{SiteApi, SiteListener};
 use crate::entities::{BuildOptions, BuiltSite, Invocation, ServeOptions};
-use crate::errors::RebuildError;
+use crate::errors::{RebuildError, WatchError};
 use crate::policies::{CATALOGUE, parse_arguments};
 use crate::ports::Terminal;
 
@@ -119,6 +119,10 @@ impl SiteListener for TerminalListener<'_> {
 
     fn not_rebuilt(&self, error: &RebuildError) {
         self.terminal.warn(&error.to_string());
+    }
+
+    fn not_watched(&self, error: &WatchError) {
+        self.terminal.warn(&lines(error.to_string()));
     }
 }
 

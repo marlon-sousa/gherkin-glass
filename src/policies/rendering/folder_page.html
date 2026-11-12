@@ -12,19 +12,19 @@
 {%- if let Some(sentences) = folder.sentences %}
 <p class="ghg-sentences"><a href="{{ sentences.address }}">{{ sentences.name }}</a></p>
 {%- endif %}
-{%- if !folder.folders.is_empty() %}
+{%- if !folders.is_empty() %}
 <h2>{{ folder.words.folders }}</h2>
 <ul class="ghg-folders">
-{%- for subfolder in folder.folders %}
-<li><a href="{{ subfolder.address }}">{{ subfolder.name }}</a></li>
+{%- for subfolder in folders %}
+{{ subfolder|safe }}
 {%- endfor %}
 </ul>
 {%- endif %}
-{%- if !folder.features.is_empty() %}
+{%- if !features.is_empty() %}
 <h2>{{ folder.words.features }}</h2>
 <ul class="ghg-features">
-{%- for feature in folder.features %}
-{{ feature.render()|safe }}
+{%- for feature in features %}
+{{ feature|safe }}
 {%- endfor %}
 </ul>
 {%- endif %}

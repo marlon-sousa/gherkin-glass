@@ -1,6 +1,6 @@
 //! Entity: the distinct step sentences of the suite, grouped by the kind of step, with every step that uses each.
 
-use std::path::PathBuf;
+use crate::entities::SiteAddress;
 
 /// Ordered as the groups are shown: Given, then When, then Then.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -33,8 +33,12 @@ pub(crate) struct Sentence {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct SentenceUse {
-    /// Of the step's feature, relative to the input folder.
-    pub(crate) path: PathBuf,
+    /// Of the step's feature file, relative to the input folder, with `/` between folders.
+    pub(crate) path: String,
+    /// The address of the feature's page.
+    pub(crate) page: SiteAddress,
+    /// The `lang` of the feature's page.
+    pub(crate) language: String,
     /// Of the scenario, scenario outline or background the step is in.
     pub(crate) anchor: String,
     /// That block's keyword as written, then `: ` and its name, or its keyword alone.

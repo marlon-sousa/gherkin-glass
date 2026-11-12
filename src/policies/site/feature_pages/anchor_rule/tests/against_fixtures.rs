@@ -3,7 +3,7 @@
 use std::path::Path;
 
 use crate::entities::{AnchoredScenario, ParsedFeature};
-use crate::policies::site::anchor_feature;
+use crate::policies::site::feature_pages::anchor_feature;
 use crate::test_support::{fixture, read_features};
 
 fn features() -> Vec<ParsedFeature> {

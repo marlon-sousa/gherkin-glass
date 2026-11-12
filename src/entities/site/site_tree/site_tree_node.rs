@@ -1,0 +1,146 @@
+//! Entity: a node of the site tree as the stages that read it see it: its value, the nodes below it, and what it finds among the nodes above it.
+
+use ego_tree::NodeRef;
+use ego_tree::iter::Edge;
+
+use super::site_folder::folder_name;
+use super::{SiteFeaturePage, SiteFolderPage, SiteNode};
+use crate::entities::{BackgroundBlock, ExamplesBlock, StepView};
+
+/// A node of the site tree, with every node above and below it.
+#[derive(Debug, Clone, Copy)]
+pub(crate) struct SiteTreeNode<'a> {
+    node: NodeRef<'a, SiteNode>,
+}
+
+impl<'a> SiteTreeNode<'a> {
+    pub(super) fn new(node: NodeRef<'a, SiteNode>) -> SiteTreeNode<'a> {
+        SiteTreeNode { node }
+    }
+
+    pub(crate) fn value(&self) -> &'a SiteNode {
+        self.node.value()
+    }
+
+    /// The nodes directly below this one, in the order they were put in.
+    pub(crate) fn children(&self) -> impl Iterator<Item = SiteTreeNode<'a>> + use<'a> {
+        self.node.children().map(SiteTreeNode::new)
+    }
+
+    /// The node this one is directly below; `None` for the site.
+    pub(crate) fn parent(&self) -> Option<SiteTreeNode<'a>> {
+        self.node.parent().map(SiteTreeNode::new)
+    }
+
+    /// The steps directly below this node, in the order they were put in.
+    pub(crate) fn steps(&self) -> impl Iterator<Item = &'a StepView> + use<'a> {
+        self.node.children().filter_map(step_of)
+    }
+
+    /// The examples blocks directly below this node, an outline's, in the order they were put in.
+    pub(crate) fn examples(&self) -> impl Iterator<Item = &'a ExamplesBlock> + use<'a> {
+        self.node.children().filter_map(examples_of)
+    }
+
+    /// Whether `other`, a node of this tree or of another, has the same value as this one, and
+    /// the same nodes below it, with the same values in the same shape. ego-tree's node
+    /// references compare by identity, so both are walked together, each node by its value.
+    pub(crate) fn same_subtree_as(&self, other: SiteTreeNode<'_>) -> bool {
+        let values = self.node.traverse().map(opened_value);
+        values.eq(other.node.traverse().map(opened_value))
+    }
+
+    pub(crate) fn is_step(&self) -> bool {
+        matches!(self.value(), SiteNode::Step(_))
+    }
+
+    /// The names of the folders of the input this node is in, from the outermost.
+    pub(crate) fn folders(&self) -> Vec<&'a str> {
+        let mut names: Vec<_> = self.node.ancestors().filter_map(folder_of).collect();
+        names.reverse();
+        names
+    }
+
+    /// The feature page this node is, or is part of.
+    pub(crate) fn feature_page(&self) -> Option<SiteFeaturePage<'a>> {
+        self.self_and_ancestors().find_map(SiteFeaturePage::of)
+    }
+
+    /// The folder page this node is, or is part of.
+    pub(crate) fn folder_page(&self) -> Option<SiteFolderPage<'a>> {
+        self.self_and_ancestors().find_map(SiteFolderPage::of)
+    }
+
+    /// The backgrounds whose steps this node, a scenario, starts with, each a
+    /// background node beside it or beside a block it is in, with its steps
+    /// below it: its feature's, then its rule's, those without steps left
+    /// out. Empty for any other node.
+    pub(crate) fn backgrounds(&self) -> Vec<(&'a BackgroundBlock, SiteTreeNode<'a>)> {
+        if !matches!(self.value(), SiteNode::Scenario(_)) {
+            return Vec::new();
+        }
+        let mut blocks: Vec<_> = self.enclosing_blocks().collect();
+        blocks.reverse();
+        blocks
+            .into_iter()
+            .flat_map(|block| block.children())
+            .filter_map(background_with_steps)
+            .collect()
+    }
+
+    /// The blocks this node is in, from the nearest: for a scenario, its rule,
+    /// if it is in one, then its feature page.
+    pub(crate) fn enclosing_blocks(&self) -> impl Iterator<Item = SiteTreeNode<'a>> + use<'a> {
+        self.node
+            .ancestors()
+            .take_while(holds_blocks)
+            .map(SiteTreeNode::new)
+    }
+
+    fn self_and_ancestors(&self) -> impl Iterator<Item = NodeRef<'a, SiteNode>> + use<'a> {
+        [self.node].into_iter().chain(self.node.ancestors())
+    }
+}
+
+/// The value of the node `edge` opens, and `None` where it closes one, so that the shape of
+/// the nodes walked is compared with their values.
+fn opened_value(edge: Edge<'_, SiteNode>) -> Option<&SiteNode> {
+    match edge {
+        Edge::Open(node) => Some(node.value()),
+        Edge::Close(_) => None,
+    }
+}
+
+fn folder_of(node: NodeRef<'_, SiteNode>) -> Option<&str> {
+    folder_name(node.value())
+}
+
+/// Whether `node` is a feature page or a rule, the blocks a scenario can be in.
+fn holds_blocks(node: &NodeRef<'_, SiteNode>) -> bool {
+    matches!(node.value(), SiteNode::FeaturePage(_) | SiteNode::Rule(_))
+}
+
+fn step_of(node: NodeRef<'_, SiteNode>) -> Option<&StepView> {
+    match node.value() {
+        SiteNode::Step(step) => Some(step),
+        _ => None,
+    }
+}
+
+fn examples_of(node: NodeRef<'_, SiteNode>) -> Option<&ExamplesBlock> {
+    match node.value() {
+        SiteNode::Examples(examples) => Some(examples),
+        _ => None,
+    }
+}
+
+/// `node`'s background, with the node, when it is a background with steps.
+fn background_with_steps(node: SiteTreeNode<'_>) -> Option<(&BackgroundBlock, SiteTreeNode<'_>)> {
+    let SiteNode::Background(background) = node.value() else {
+        return None;
+    };
+    node.steps().next().is_some().then_some((background, node))
+}
+
+#[cfg(test)]
+mod tests;

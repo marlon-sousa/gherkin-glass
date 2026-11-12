@@ -75,3 +75,6 @@ impl SettingsApi for SettingsService {
         }
     }
 }
+
+#[cfg(test)]
+mod tests;

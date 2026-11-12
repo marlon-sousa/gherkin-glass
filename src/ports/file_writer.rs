@@ -2,13 +2,15 @@
 
 use std::io::Result as IoResult;
 use std::path::Path;
+use std::sync::Arc;
 
 use crate::entities::ServedSite;
 
 pub(crate) trait FileWriter: Send + Sync {
     /// Writes `contents` at `file`, a `/`-joined path below `output`, making
-    /// the folders it needs and replacing a file already there.
-    fn write(&self, output: &Path, file: &str, contents: &[u8]) -> IoResult<()>;
+    /// the folders it needs and replacing a file already there; a site in
+    /// memory keeps a share of `contents`, not a copy.
+    fn write(&self, output: &Path, file: &str, contents: &Arc<[u8]>) -> IoResult<()>;
 
     /// The site written below `output`, as it is served; a site in memory is
     /// taken whole, so that the next starts empty.

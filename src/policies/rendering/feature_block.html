@@ -7,11 +7,11 @@
 {%- if let Some(description) = block.description %}
 {{ description.render()|safe }}
 {%- endif %}
-{%- for from in block.backgrounds %}
-{{ from.render()|safe }}
+{%- for from in backgrounds %}
+{{ from|safe }}
 {%- endfor %}
-{%- if !block.steps.is_empty() %}
-{{ block.steps.render()|safe }}
+{%- if !steps.is_empty() %}
+{{ steps|safe }}
 {%- endif %}
 {%- if let Some(table) = block.table %}
 {{ table.render()|safe }}

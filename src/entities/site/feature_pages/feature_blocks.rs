@@ -1,6 +1,6 @@
-//! Entity: the content nodes of a feature's page, one type for each kind of block, each holding only what its kind can have.
+//! Entity: the content nodes of a feature's page, one type for each kind of block, each holding only what its kind can have, the blocks and steps inside it being the nodes below it.
 
-use crate::entities::{FromBackground, HeadingLevel, Paragraph, StepView, TableView, TagView};
+use crate::entities::{HeadingLevel, Paragraph, TableView, TagView};
 
 /// What every block's heading holds.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -21,48 +21,33 @@ pub(crate) struct HeadingPart {
     pub(crate) isolated: bool,
 }
 
-/// A block directly under the feature, in the order of the file.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) enum FeatureBlock {
-    Background(BackgroundBlock),
-    Rule(RuleBlock),
-    Scenario(ScenarioBlock),
-}
-
+/// A background, the feature's or a rule's.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct BackgroundBlock {
     pub(crate) heading: BlockHeading,
     pub(crate) description: Option<Paragraph>,
-    pub(crate) steps: Vec<StepView>,
+    /// The words that introduce its steps in a scenario that starts with them:
+    /// "From the background:" or "From the rule's background:".
+    pub(crate) introduction: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct RuleBlock {
     pub(crate) heading: BlockHeading,
+    /// The rule's name alone, empty when it has none.
+    pub(crate) name: String,
     pub(crate) tags: Vec<TagView>,
     pub(crate) description: Option<Paragraph>,
-    pub(crate) background: Option<BackgroundBlock>,
-    pub(crate) scenarios: Vec<ScenarioBlock>,
 }
 
-/// A scenario or an outline.
+/// A scenario or an outline, which has examples below it.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct ScenarioBlock {
     pub(crate) heading: BlockHeading,
+    /// The scenario's name alone, empty when it has none.
+    pub(crate) name: String,
     pub(crate) tags: Vec<TagView>,
     pub(crate) description: Option<Paragraph>,
-    /// The feature's background, then its rule's.
-    pub(crate) backgrounds: Vec<FromBackground>,
-    pub(crate) steps: Vec<StepView>,
-    pub(crate) outline: Option<OutlineParts>,
-}
-
-/// What only an outline has.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct OutlineParts {
-    pub(crate) examples: Vec<ExamplesBlock>,
-    /// `None` when no examples block has a row.
-    pub(crate) as_scenarios: Option<ExamplesAsScenarios>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -71,20 +56,6 @@ pub(crate) struct ExamplesBlock {
     pub(crate) tags: Vec<TagView>,
     pub(crate) description: Option<Paragraph>,
     pub(crate) table: Option<TableView>,
-}
-
-/// An outline's examples, as the scenarios their rows make.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct ExamplesAsScenarios {
-    pub(crate) heading: BlockHeading,
-    pub(crate) scenarios: Vec<ExampleScenario>,
-}
-
-/// The scenario one row of an outline's examples makes, its steps filled with the row's values.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct ExampleScenario {
-    pub(crate) heading: BlockHeading,
-    pub(crate) steps: Vec<StepView>,
 }
 
 impl BlockHeading {

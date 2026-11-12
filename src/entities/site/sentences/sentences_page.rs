@@ -1,25 +1,24 @@
-//! Entity: the page of step sentences, as its template shows it, every text in it as written or worded.
+//! Entity: the page of step sentences, as its template shows it, every text in it as written or worded: its nodes and its content as the site stage builds it, with what is below each node.
 
-use crate::entities::{Breadcrumb, LinkAddress};
+use crate::entities::{LinkAddress, Trail};
 
 /// Every `String` is text, escaped when it is rendered.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct SentencesPage {
-    pub(crate) breadcrumb: Breadcrumb,
+    pub(crate) trail: Trail,
     /// The `lang` of the page.
     pub(crate) language: String,
     pub(crate) title: String,
     pub(crate) heading: String,
-    pub(crate) groups: Vec<GroupView>,
     /// Shown only when there is no group.
     pub(crate) no_steps: String,
 }
 
+/// The heading of the sentences of one kind of step.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct GroupView {
     /// The kind of step, such as `Given`.
     pub(crate) heading: String,
-    pub(crate) sentences: Vec<SentenceView>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -29,7 +28,6 @@ pub(crate) struct SentenceView {
     pub(crate) language: Option<String>,
     /// Such as `Used once.`
     pub(crate) uses_count: String,
-    pub(crate) uses: Vec<UseView>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -69,4 +67,25 @@ impl Piece {
     pub(crate) fn is_placeholder(&self, number: usize) -> bool {
         *self == Piece::Placeholder(number)
     }
+}
+
+/// The page with its groups, in the order of the kinds of step, as the site stage builds it.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct SentencesPageContent {
+    pub(crate) page: SentencesPage,
+    pub(crate) groups: Vec<GroupContent>,
+}
+
+/// A group with its sentences, sorted.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct GroupContent {
+    pub(crate) group: GroupView,
+    pub(crate) sentences: Vec<SentenceContent>,
+}
+
+/// A sentence with its uses, in the order of the paths, then of the lines.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct SentenceContent {
+    pub(crate) sentence: SentenceView,
+    pub(crate) uses: Vec<UseView>,
 }

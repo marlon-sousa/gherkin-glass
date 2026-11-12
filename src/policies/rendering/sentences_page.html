@@ -1,43 +1,7 @@
-{#- In a use's item, placeholder 0 is the link and 1 the values; in its link, 0 is the block's heading and 1 the file's path. -#}
 <h1>{{ page.heading }}</h1>
-{%- if page.groups.is_empty() %}
+{%- if groups.is_empty() %}
 <p>{{ page.no_steps }}</p>
 {%- endif %}
-{%- for group in page.groups %}
-<h2>{{ group.heading }}</h2>
-{%- for sentence in group.sentences %}
-<h3{% if let Some(language) = sentence.language %} lang="{{ language }}"{% endif %}>{{ sentence.text }}</h3>
-<p>{{ sentence.uses_count }}</p>
-<ul>
-{%- for found in sentence.uses %}
-<li>
-{%- if found.item.is_empty() -%}
-{%- call link(found) %}{% endcall -%}
-{%- else -%}
-{%- for piece in found.item -%}
-{%- if let Some(words) = piece.words() %}{{ words }}
-{%- else if piece.is_placeholder(0) %}{% call link(found) %}{% endcall %}
-{%- else -%}
-{%- for value in found.values -%}
-{%- if !loop.first %}{{ found.separator }}{% endif -%}
-<bdi{% if let Some(language) = found.language %} lang="{{ language }}"{% endif %}>{{ value }}</bdi>
-{%- endfor -%}
-{%- endif -%}
-{%- endfor -%}
-{%- endif -%}
-</li>
+{%- for group in groups %}
+{{ group|safe }}
 {%- endfor %}
-</ul>
-{%- endfor %}
-{%- endfor %}
-
-{%- macro link(found) -%}
-<a href="{{ found.address }}">
-{%- for piece in found.link -%}
-{%- if let Some(words) = piece.words() %}{{ words }}
-{%- else if piece.is_placeholder(0) %}<bdi{% if let Some(language) = found.language %} lang="{{ language }}"{% endif %}>{{ found.heading }}</bdi>
-{%- else %}<bdi>{{ found.path }}</bdi>
-{%- endif -%}
-{%- endfor -%}
-</a>
-{%- endmacro -%}

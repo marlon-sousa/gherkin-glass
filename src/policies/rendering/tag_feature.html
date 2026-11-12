@@ -1,0 +1,10 @@
+<h2><a href="{{ feature.address }}"{% if let Some(lang) = feature.language %} lang="{{ lang }}"{% endif %}>{{ feature.heading }}</a></h2>
+{%- if scenarios.is_empty() %}
+<p>{{ no_scenario }}</p>
+{%- else %}
+<ul class="ghg-tag-scenarios">
+{%- for scenario in scenarios %}
+{{ scenario|safe }}
+{%- endfor %}
+</ul>
+{%- endif %}

@@ -8,7 +8,7 @@ use rstest::rstest;
 
 use super::*;
 use crate::adapters::MemoryFiles;
-use crate::entities::OutputContents;
+use crate::entities::{IgnoreRules, InputTreeBuilder, OutputContents, Revision};
 use crate::errors::BuildError;
 use crate::services::{Converter, ConverterApi};
 use fakes::*;
@@ -113,16 +113,20 @@ fn a_site_in_memory_checks_no_folder_and_has_no_versions() {
     let folders = FakeFolders::looking(vec![None]);
     let memory = Arc::new(MemoryFiles::default());
     memory
-        .write(Path::new("site"), "stale.html", b"")
+        .write(Path::new("site"), "stale.html", &Arc::from(*b""))
         .expect("written");
     let writer = SiteWriter::new(folders.clone(), Arc::new(FakeWriter::default()), memory);
     let settings = Settings {
         replace: false,
         ..settings(Destination::Memory, Some("v1.0.0"))
     };
-    writer.check(&settings).expect("no check");
-    let site = Converter.convert(&[], &settings);
-    let (_, ServedSite::Memory(files)) = writer.write(&settings, &site).expect("written") else {
+    let built_versions = writer.check(&settings).expect("no check");
+    assert!(built_versions.is_empty());
+    let empty =
+        InputTreeBuilder::listed("in".into(), IgnoreRules::default(), Revision::default()).build();
+    let site = Converter.convert(&empty, None, &settings, &built_versions);
+    let (ServedSite::Memory(files), _) = writer.write(&settings, site, None).expect("written")
+    else {
         panic!("a site in memory");
     };
     assert!(files.contains_key("index.html"));

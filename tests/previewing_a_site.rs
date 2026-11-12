@@ -142,13 +142,15 @@ fn scratch(name: &str) -> PathBuf {
 /// The `built` fixture, copied where a test may change it.
 fn built_copy(name: &str) -> PathBuf {
     let folder = scratch(name);
-    create_dir_all(folder.join("features")).expect("features");
-    copy(fixture("built/ghg.toml"), folder.join("ghg.toml")).expect("copied");
-    copy(
-        fixture("built/features/withdraw.feature"),
-        folder.join("features/withdraw.feature"),
-    )
-    .expect("copied");
+    for file in [
+        "ghg.toml",
+        "features/withdraw.feature",
+        "elsewhere/deposit.feature",
+    ] {
+        let copied = folder.join(file);
+        create_dir_all(copied.parent().expect("a folder")).expect("made");
+        copy(fixture("built").join(file), copied).expect("copied");
+    }
     folder
 }
 
@@ -159,6 +161,14 @@ fn eventually(what: &str, mut check: impl FnMut() -> bool) {
         assert!(Instant::now() < deadline, "{what}");
         sleep(Duration::from_millis(50));
     }
+}
+
+/// Checks that `build` still gives the number `number` once a change, had it been seen, would
+/// have been rebuilt.
+fn still_built(build: impl Fn() -> String, number: &str) {
+    // Longer than a burst takes to end and be looked at.
+    sleep(Duration::from_millis(1000));
+    assert_eq!(build(), number);
 }
 
 /// `--no-build` serves the `site` fixture, the configured output folder.
@@ -556,9 +566,7 @@ fn watching_rebuilds_only_for_changes_a_build_reads() {
     write(folder.join("features/notes.txt"), "notes").expect("written");
     write(folder.join("features/.withdraw.feature.swp"), "").expect("written");
     write(folder.join("ghg.toml~"), "").expect("written");
-    // Longer than a burst takes to end and be looked at.
-    sleep(Duration::from_millis(1000));
-    assert_eq!(build(), "1");
+    still_built(build, "1");
 
     let outside = folder.join("outside/more");
     create_dir_all(&outside).expect("folder");
@@ -607,4 +615,78 @@ fn a_configuration_file_inside_the_input_keeps_every_subfolder_watched() {
     eventually("a rebuild after a feature in a subfolder changed", || {
         build() == "2"
     });
+}
+
+#[test]
+fn watching_follows_the_input_the_configuration_file_names() {
+    // Rule 65.
+    let folder = built_copy("serve-watch-again");
+    let mut serving = serve(&folder, &["--watch", "--port", "0"]);
+    let address = serving.address.clone();
+    let build = || get(&address, "/__ghg/build").text();
+    assert_eq!(build(), "1");
+    write(folder.join("ghg.toml"), "input = \"elsewhere\"\n").expect("written");
+    eventually("a rebuild after ghg.toml named another input", || {
+        build() == "2"
+    });
+    assert_eq!(get(&address, "/deposit.html").status, 200);
+    assert_eq!(get(&address, "/withdraw.html").status, 404);
+    let mut line = String::new();
+    serving.stdout.read_line(&mut line).expect("a line");
+    assert_eq!(line, "The site was rebuilt.\n");
+
+    // A change in the folder that is no longer the input is never seen.
+    let withdraw = folder.join("features/withdraw.feature");
+    let source = read_to_string(&withdraw).expect("read");
+    write(&withdraw, source.replace("20", "30")).expect("written");
+    still_built(build, "2");
+
+    let deposit = folder.join("elsewhere/deposit.feature");
+    let source = read_to_string(&deposit).expect("read");
+    write(&deposit, source.replace("20", "30")).expect("written");
+    eventually("a rebuild after a feature of the new input changed", || {
+        build() == "3"
+    });
+    let page = get(&address, "/deposit.html").text();
+    assert!(
+        page.contains("deposits <span class=\"ghg-number\">30</span>"),
+        "{page}"
+    );
+}
+
+#[test]
+fn a_watch_that_cannot_start_again_keeps_the_last_site_served_and_the_configuration_watched() {
+    // Rule 68.
+    let folder = built_copy("serve-watch-again-fails");
+    let mut serving = serve(&folder, &["--watch", "--port", "0"]);
+    let address = serving.address.clone();
+    let build = || get(&address, "/__ghg/build").text();
+    assert_eq!(build(), "1");
+    write(folder.join("ghg.toml"), "input = \"missing\"\n").expect("written");
+    let mut stderr = BufReader::new(serving.child.stderr.take().expect("piped"));
+    let mut report = String::new();
+    stderr.read_line(&mut report).expect("a line");
+    assert!(
+        report.starts_with("ghg serve cannot watch missing for changes: "),
+        "{report}"
+    );
+    assert_eq!(build(), "1");
+    assert_eq!(get(&address, "/withdraw.html").status, 200);
+
+    // Nor is the input it watched before watched now.
+    let withdraw = folder.join("features/withdraw.feature");
+    let source = read_to_string(&withdraw).expect("read");
+    write(&withdraw, source.replace("20", "30")).expect("written");
+    still_built(build, "1");
+
+    write(folder.join("ghg.toml"), "input = \"features\"\n").expect("written");
+    eventually("a rebuild after ghg.toml was mended", || build() == "2");
+    let page = get(&address, "/withdraw.html").text();
+    assert!(
+        page.contains("withdraws <span class=\"ghg-number\">30</span>"),
+        "{page}"
+    );
+    let mut line = String::new();
+    serving.stdout.read_line(&mut line).expect("a line");
+    assert_eq!(line, "The site was rebuilt.\n");
 }

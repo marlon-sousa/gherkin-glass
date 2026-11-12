@@ -53,7 +53,7 @@ impl Render for [TreeItem] {
     }
 }
 
-impl RenderFile for [TreeItem] {
+impl RenderFile for &[TreeItem] {
     fn address(&self) -> SiteAddress {
         asset(TREE_DATA)
     }
@@ -70,7 +70,7 @@ impl Render for [SearchDocument] {
     }
 }
 
-impl RenderFile for [SearchDocument] {
+impl RenderFile for &[SearchDocument] {
     fn address(&self) -> SiteAddress {
         asset(SEARCH_DOCUMENTS)
     }

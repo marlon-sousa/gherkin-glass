@@ -1,23 +1,29 @@
-//! Policy: the blocks of a feature's page, each kind of block rendered through the one template of a block.
+//! Policy: the blocks of a feature's page, each kind of block node rendered through the rendering trait into the one template of a block, with the backgrounds a scenario starts with, its steps and the blocks below it.
 
 use askama::Template;
 
-use super::node_rendering::{Render, rendered};
+use super::from_background::FromBackground;
+use super::node_rendering::{NodeOf, Render, pieces, rendered};
+use super::steps::{StepList, steps_of};
 use crate::entities::{
-    BackgroundBlock, BlockHeading, ExampleScenario, ExamplesAsScenarios, ExamplesBlock,
-    FeatureBlock, FromBackground, HeadingLevel, HeadingPart, OutlineParts, Paragraph, RuleBlock,
-    ScenarioBlock, StepView, TableView, TagView,
+    BackgroundBlock, BlockHeading, ExamplesBlock, HeadingLevel, HeadingPart, Paragraph, RuleBlock,
+    ScenarioBlock, SiteTreeNode, TableView, TagView,
 };
 
 #[derive(Template)]
 #[template(path = "feature_block.html")]
 struct BlockTemplate<'a> {
     block: BlockView<'a>,
+    /// The backgrounds a scenario starts with, already rendered.
+    backgrounds: Vec<String>,
+    /// The block's own steps, already rendered; empty for a block with none.
+    steps: String,
+    /// The blocks below it, already rendered.
     blocks: String,
 }
 
-/// What the template of a block shows, whatever its kind; a kind leaves
-/// empty what it cannot have.
+/// What the template of a block shows of its own node, whatever its kind; a
+/// kind leaves empty what it cannot have.
 struct BlockView<'a> {
     kind: BlockKind,
     level: HeadingLevel,
@@ -26,8 +32,6 @@ struct BlockView<'a> {
     collapsed: bool,
     tags: &'a [TagView],
     description: &'a Option<Paragraph>,
-    backgrounds: &'a [FromBackground],
-    steps: &'a [StepView],
     table: &'a Option<TableView>,
 }
 
@@ -40,126 +44,126 @@ enum BlockKind {
     ExamplesAsScenarios,
 }
 
-impl Render for [FeatureBlock] {
+/// An outline's examples as scenarios, by its heading, with its node, which
+/// holds the scenario of each row.
+pub(super) struct ExamplesAsScenariosNode<'a> {
+    pub(super) heading: &'a BlockHeading,
+    pub(super) node: SiteTreeNode<'a>,
+}
+
+/// The scenario one row of an outline's examples makes, by its heading, with
+/// its node, which holds its steps.
+pub(super) struct ExampleScenarioNode<'a> {
+    pub(super) heading: &'a BlockHeading,
+    pub(super) node: SiteTreeNode<'a>,
+}
+
+impl Render for NodeOf<'_, BackgroundBlock> {
     fn render(&self) -> String {
-        joined(self.iter().map(FeatureBlock::render))
+        let view = BlockView {
+            description: &self.value.description,
+            ..BlockView::of(BlockKind::Background, &self.value.heading)
+        };
+        block(view, self.node)
     }
 }
 
-impl Render for FeatureBlock {
+impl Render for NodeOf<'_, RuleBlock> {
     fn render(&self) -> String {
-        match self {
-            FeatureBlock::Background(background) => background.render(),
-            FeatureBlock::Rule(rule) => rule.render(),
-            FeatureBlock::Scenario(scenario) => scenario.render(),
-        }
+        let view = BlockView {
+            tags: &self.value.tags,
+            description: &self.value.description,
+            ..BlockView::of(BlockKind::Rule, &self.value.heading)
+        };
+        block(view, self.node)
     }
 }
 
-impl Render for BackgroundBlock {
+impl Render for NodeOf<'_, ScenarioBlock> {
     fn render(&self) -> String {
-        block(
-            BlockView {
-                description: &self.description,
-                steps: &self.steps,
-                ..BlockView::of(BlockKind::Background, &self.heading)
-            },
-            String::new(),
-        )
+        let view = BlockView {
+            tags: &self.value.tags,
+            description: &self.value.description,
+            ..BlockView::of(BlockKind::Scenario, &self.value.heading)
+        };
+        block(view, self.node)
     }
 }
 
-impl Render for RuleBlock {
+impl Render for NodeOf<'_, ExamplesBlock> {
     fn render(&self) -> String {
-        let inner = self
-            .background
-            .iter()
-            .map(BackgroundBlock::render)
-            .chain(self.scenarios.iter().map(ScenarioBlock::render));
-        block(
-            BlockView {
-                tags: &self.tags,
-                description: &self.description,
-                ..BlockView::of(BlockKind::Rule, &self.heading)
-            },
-            joined(inner),
-        )
+        let view = BlockView {
+            tags: &self.value.tags,
+            description: &self.value.description,
+            table: &self.value.table,
+            ..BlockView::of(BlockKind::Examples, &self.value.heading)
+        };
+        block(view, self.node)
     }
 }
 
-impl Render for ScenarioBlock {
-    fn render(&self) -> String {
-        block(
-            BlockView {
-                tags: &self.tags,
-                description: &self.description,
-                backgrounds: &self.backgrounds,
-                steps: &self.steps,
-                ..BlockView::of(BlockKind::Scenario, &self.heading)
-            },
-            self.outline
-                .as_ref()
-                .map(OutlineParts::render)
-                .unwrap_or_default(),
-        )
-    }
-}
-
-/// An outline's examples blocks, then its examples as scenarios.
-impl Render for OutlineParts {
-    fn render(&self) -> String {
-        joined(
-            self.examples
-                .iter()
-                .map(ExamplesBlock::render)
-                .chain(self.as_scenarios.iter().map(ExamplesAsScenarios::render)),
-        )
-    }
-}
-
-impl Render for ExampleScenario {
+impl Render for ExamplesAsScenariosNode<'_> {
     fn render(&self) -> String {
         block(
-            BlockView {
-                steps: &self.steps,
-                ..BlockView::of(BlockKind::Scenario, &self.heading)
-            },
-            String::new(),
+            BlockView::of(BlockKind::ExamplesAsScenarios, self.heading),
+            self.node,
         )
     }
 }
 
-impl Render for ExamplesBlock {
+impl Render for ExampleScenarioNode<'_> {
     fn render(&self) -> String {
-        block(
-            BlockView {
-                tags: &self.tags,
-                description: &self.description,
-                table: &self.table,
-                ..BlockView::of(BlockKind::Examples, &self.heading)
-            },
-            String::new(),
-        )
+        block(BlockView::of(BlockKind::Scenario, self.heading), self.node)
     }
 }
 
-impl Render for ExamplesAsScenarios {
-    fn render(&self) -> String {
-        block(
-            BlockView::of(BlockKind::ExamplesAsScenarios, &self.heading),
-            joined(self.scenarios.iter().map(ExampleScenario::render)),
-        )
+/// The block `view` of `node`, with its backgrounds, its steps and the blocks below it.
+fn block(view: BlockView<'_>, node: SiteTreeNode<'_>) -> String {
+    rendered(&BlockTemplate {
+        backgrounds: from_backgrounds(node, view.anchor),
+        steps: own_steps(node),
+        blocks: pieces(node.children().filter(is_block)).join("\n"),
+        block: view,
+    })
+}
+
+fn is_block(node: &SiteTreeNode<'_>) -> bool {
+    !node.is_step()
+}
+
+/// The backgrounds the scenario `node`, at `anchor`, starts with; none for
+/// any other block.
+fn from_backgrounds(node: SiteTreeNode<'_>, anchor: &str) -> Vec<String> {
+    let inline = node
+        .feature_page()
+        .and_then(|feature| feature.page().backgrounds_option.as_ref())
+        .is_some_and(|option| option.inline);
+    node.backgrounds()
+        .into_iter()
+        .zip(1..)
+        .map(|((background, node), place)| FromBackground {
+            background,
+            node,
+            scenario: anchor,
+            place,
+            inline,
+        })
+        .map(|from| from.render())
+        .collect()
+}
+
+/// The steps directly below `node`, as one list; empty when it has none.
+fn own_steps(node: SiteTreeNode<'_>) -> String {
+    let steps = steps_of(node);
+    if steps.is_empty() {
+        return String::new();
     }
-}
-
-/// `blocks` is what is under it, already rendered.
-fn block(block: BlockView<'_>, blocks: String) -> String {
-    rendered(&BlockTemplate { block, blocks })
-}
-
-/// Blocks one after the other, a line apart.
-fn joined(blocks: impl Iterator<Item = String>) -> String {
-    blocks.collect::<Vec<_>>().join("\n")
+    StepList {
+        steps,
+        introduction: None,
+        shown: true,
+    }
+    .render()
 }
 
 impl<'a> BlockView<'a> {
@@ -173,8 +177,6 @@ impl<'a> BlockView<'a> {
             collapsed: heading.collapsed,
             tags: &[],
             description: &None,
-            backgrounds: &[],
-            steps: &[],
             table: &None,
         }
     }

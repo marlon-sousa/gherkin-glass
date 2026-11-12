@@ -2,15 +2,6 @@
 {%- if let Some(outside) = page.outside %}
 <p>{{ outside.render()|safe }}</p>
 {%- endif %}
-{%- for feature in page.features %}
-<h2><a href="{{ feature.address }}"{% if let Some(lang) = feature.language %} lang="{{ lang }}"{% endif %}>{{ feature.heading }}</a></h2>
-{%- if feature.scenarios.is_empty() %}
-<p>{{ page.no_scenario }}</p>
-{%- else %}
-<ul class="ghg-tag-scenarios">
-{%- for scenario in feature.scenarios %}
-<li>{{ scenario.before }}<a href="{{ scenario.address }}"{% if let Some(lang) = feature.language %} lang="{{ lang }}"{% endif %}><bdi>{{ scenario.heading }}</bdi></a>{{ scenario.after }}</li>
-{%- endfor %}
-</ul>
-{%- endif %}
+{%- for feature in features %}
+{{ feature|safe }}
 {%- endfor %}

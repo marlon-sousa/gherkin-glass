@@ -1,0 +1,281 @@
+//! The controller's tests of ghg serve --watch once it watches: what each change rebuilds, and
+//! the watch started again on the input the settings name.
+
+use std::thread::scope;
+
+use super::*;
+use crate::entities::InputChanges;
+
+/// The calls ghg serve --watch makes before it waits for the first change.
+const UNTIL_WATCHING: usize = 9;
+
+/// Runs ghg serve --watch with the fakes of `world` on a thread of its own and, once it watches,
+/// hands `steps` what the listener was told; then ends the watching, and checks that serve ends.
+fn while_watching(world: &World, steps: impl FnOnce(&Recorded)) {
+    let controller = world.controller();
+    let options = serve_options(ServeMode::Watch);
+    let events = Recorded::default();
+    scope(|scope| {
+        let serving = scope.spawn(|| controller.serve(&options, &events));
+        // Rule 65: ghg serve says where it listens once it watches.
+        assert_eq!(events.wait_for(1), ["listening at 127.0.0.1:8000"]);
+        assert_eq!(
+            world.calls.taken().last().map(String::as_str),
+            Some("server.watch features ghg.toml")
+        );
+        steps(&events);
+        world.server.stop_watching();
+        assert_eq!(serving.join().expect("no panic"), Ok(()));
+    });
+}
+
+/// The calls made since the first `count`, once there are `more` of them.
+fn calls_after(world: &World, count: usize, more: usize) -> Vec<String> {
+    world.calls.wait_for(count + more)[count..].to_vec()
+}
+
+/// What the listener is told of a rebuild that `build` stopped.
+fn not_rebuilt(build: BuildError) -> String {
+    format!("not rebuilt: {:?}", RebuildError { build })
+}
+
+/// What the listener is told of a watch of `path` that cannot start.
+fn not_watched(path: &str) -> String {
+    format!("not watched: {}", watch_error(Path::new(path)))
+}
+
+fn paths(paths: &[&str]) -> InputChanges {
+    InputChanges::Paths(paths.iter().map(PathBuf::from).collect())
+}
+
+/// `calls`, then those of a build from `input` in memory.
+fn then_a_build(calls: &[&str], input: &str) -> Vec<String> {
+    calls
+        .iter()
+        .map(ToString::to_string)
+        .chain(a_build("Memory", input))
+        .collect()
+}
+
+#[test]
+fn everything_changed_loads_the_settings_again_and_watches_again_before_it_rebuilds() {
+    // Rules 65 to 67: and only a site that built is served.
+    let world = world();
+    while_watching(&world, |events| {
+        let preview = world.server.preview();
+        assert_eq!(preview.current().number, 1);
+
+        world.server.change(InputChanges::Everything);
+        assert_eq!(events.wait_for(2)[1], "rebuilt");
+        assert_eq!(
+            calls_after(&world, UNTIL_WATCHING, 8),
+            then_a_build(
+                &[
+                    "settings.load Memory",
+                    "server.watch features ghg.toml",
+                    "settings.load Memory",
+                ],
+                "features"
+            )
+        );
+        assert_eq!(preview.current().number, 2);
+        assert_eq!(
+            preview.current().site,
+            ServedSite::Memory([("site 2".to_string(), Arc::from([]))].into())
+        );
+
+        world.fail(Failing::Input);
+        world.server.change(InputChanges::Everything);
+        let error = not_rebuilt(BuildError::Input(input_errors()));
+        assert_eq!(events.wait_for(3)[2], error);
+
+        world.fail(Failing::Settings);
+        let count = world.calls.taken().len();
+        world.server.change(InputChanges::Everything);
+        let error = not_rebuilt(BuildError::Config(config_errors()));
+        assert_eq!(events.wait_for(4)[3], error);
+        // The configuration stops the rebuild, so the watching stays as it was.
+        assert_eq!(world.calls.taken()[count..], ["settings.load Memory"]);
+        assert_eq!(preview.current().number, 2);
+    });
+}
+
+#[test]
+fn paths_rebuild_only_when_the_input_collector_says_they_call_for_it() {
+    // Rule 65: judged against the last build's input tree before the settings are read again,
+    // and rebuilt from the last build without watching again.
+    let world = world();
+    while_watching(&world, |events| {
+        let collector = &world.input_collector;
+        collector.nothing_read_changes.store(true, Ordering::SeqCst);
+        world.server.change(paths(&["features/notes.txt"]));
+        assert_eq!(
+            calls_after(&world, UNTIL_WATCHING, 1),
+            ["input_collector.collect_changes features features/notes.txt"]
+        );
+
+        collector
+            .nothing_read_changes
+            .store(false, Ordering::SeqCst);
+        world.server.change(paths(&["features/a.feature"]));
+        assert_eq!(
+            events.wait_for(2),
+            ["listening at 127.0.0.1:8000", "rebuilt"]
+        );
+        // Built from the last build: the output is not checked again, the input is not walked
+        // again from nothing, and the converter is given the last site tree.
+        assert_eq!(
+            calls_after(&world, UNTIL_WATCHING + 1, 5),
+            [
+                "input_collector.collect_changes features features/a.feature",
+                "settings.load Memory",
+                "gherkin_parser.parse a.feature Refused",
+                "converter.convert a.feature beside v1.0.0 after a.feature",
+                "site_writer.write a.feature after a.feature",
+            ]
+        );
+    });
+}
+
+#[test]
+fn the_input_the_settings_name_is_watched_built_and_judged_from_then_on() {
+    // Rule 65: whether paths changed and the settings read again differ, or everything
+    // changed, and even when the input stops the rebuild.
+    let world = world();
+    let configure = |input: &str| {
+        *world.settings.configured_input.lock().expect("lock") = Some(input.into());
+    };
+    while_watching(&world, |events| {
+        configure("elsewhere");
+        world.server.change(paths(&["features/a.feature"]));
+        assert_eq!(events.wait_for(2)[1], "rebuilt");
+        assert_eq!(
+            calls_after(&world, UNTIL_WATCHING, 9),
+            then_a_build(
+                &[
+                    "input_collector.collect_changes features features/a.feature",
+                    "settings.load Memory",
+                    "server.watch elsewhere ghg.toml",
+                    "settings.load Memory",
+                ],
+                "elsewhere"
+            )
+        );
+
+        configure("other");
+        world.fail(Failing::Input);
+        world.server.change(InputChanges::Everything);
+        let error = not_rebuilt(BuildError::Input(input_errors()));
+        assert_eq!(events.wait_for(3)[2], error);
+        let count = world.calls.taken().len();
+        world.server.change(paths(&["other/a.feature"]));
+        assert_eq!(events.wait_for(4)[3], error);
+        assert_eq!(
+            world.calls.taken()[count..count + 2],
+            [
+                "input_collector.collect_changes other other/a.feature",
+                "settings.load Memory",
+            ]
+        );
+    });
+}
+
+#[test]
+fn a_watch_that_cannot_start_again_keeps_the_last_site_and_the_configuration_watched() {
+    // Rule 68.
+    let world = world();
+    while_watching(&world, |events| {
+        let preview = world.server.preview();
+        world.server.watch_failing.store(true, Ordering::SeqCst);
+        *world.settings.configured_input.lock().expect("lock") = Some("missing".into());
+        world.server.change(InputChanges::Everything);
+        assert_eq!(events.wait_for(2)[1], not_watched("missing"));
+        assert_eq!(
+            calls_after(&world, UNTIL_WATCHING, 3),
+            [
+                "settings.load Memory",
+                "server.watch missing ghg.toml",
+                "server.watch_config ghg.toml",
+            ]
+        );
+        assert_eq!(preview.current().number, 1);
+
+        // The configuration file, watched alone, tells of its next change, which tries again.
+        world.server.watch_failing.store(false, Ordering::SeqCst);
+        *world.settings.configured_input.lock().expect("lock") = Some("features".into());
+        world.server.change(InputChanges::Everything);
+        assert_eq!(events.wait_for(3)[2], "rebuilt");
+        assert_eq!(preview.current().number, 2);
+    });
+}
+
+#[test]
+fn when_not_even_the_configuration_file_can_be_watched_the_last_watch_is_kept() {
+    // Rule 68.
+    let world = world();
+    while_watching(&world, |events| {
+        let server = &world.server;
+        server.watch_failing.store(true, Ordering::SeqCst);
+        server.config_watch_failing.store(true, Ordering::SeqCst);
+        server.change(InputChanges::Everything);
+        assert_eq!(
+            events.wait_for(3)[1..],
+            [not_watched("features"), not_watched("ghg.toml")]
+        );
+        server.watch_failing.store(false, Ordering::SeqCst);
+        server.change(InputChanges::Everything);
+        assert_eq!(events.wait_for(4)[3], "rebuilt");
+    });
+}
+
+#[test]
+fn a_configuration_saved_while_watching_again_is_watched_and_built_from() {
+    // Rule 65: the settings are read again once the new watch has started, so that a change to
+    // the configuration file saved before it started is not lost.
+    let world = world();
+    while_watching(&world, |events| {
+        *world.settings.configured_input.lock().expect("lock") = Some("elsewhere".into());
+        *world.settings.next_configured_input.lock().expect("lock") = Some("other".into());
+        world.server.change(InputChanges::Everything);
+        assert_eq!(events.wait_for(2)[1], "rebuilt");
+        assert_eq!(
+            calls_after(&world, UNTIL_WATCHING, 10),
+            then_a_build(
+                &[
+                    "settings.load Memory",
+                    "server.watch elsewhere ghg.toml",
+                    "settings.load Memory",
+                    "server.watch other ghg.toml",
+                    "settings.load Memory",
+                ],
+                "other"
+            )
+        );
+    });
+}
+
+#[test]
+fn a_configuration_that_stops_the_rebuild_once_watching_again_keeps_the_last_watch() {
+    // Rules 65 and 67: the settings read once the new watch has started stop the rebuild, so the
+    // new watch is dropped and the last one still tells of the next change.
+    let world = world();
+    while_watching(&world, |events| {
+        world.settings.failing_next.store(true, Ordering::SeqCst);
+        world.server.change(InputChanges::Everything);
+        let error = not_rebuilt(BuildError::Config(config_errors()));
+        assert_eq!(events.wait_for(2)[1], error);
+        assert_eq!(
+            calls_after(&world, UNTIL_WATCHING, 3),
+            [
+                "settings.load Memory",
+                "server.watch features ghg.toml",
+                "settings.load Memory",
+            ]
+        );
+        assert_eq!(world.server.dropped.load(Ordering::SeqCst), 1);
+
+        world.settings.failing.store(false, Ordering::SeqCst);
+        world.server.change(InputChanges::Everything);
+        assert_eq!(events.wait_for(3)[2], "rebuilt");
+    });
+}
