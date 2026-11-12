@@ -4,7 +4,7 @@ use std::io::ErrorKind;
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use crate::entities::{BuildOptions, Config, Settings};
+use crate::entities::{BuildOptions, Config, Destination, Settings};
 use crate::errors::{ConfigError, ConfigErrorKind, ConfigErrors};
 use crate::policies::{config_folder, parse_config, resolve_settings};
 use crate::ports::ConfigReader;
@@ -30,7 +30,12 @@ impl SettingsService {
             .unwrap_or_else(|| PathBuf::from(CONFIG_FILE))
     }
 
-    pub(crate) fn load(&self, options: &BuildOptions) -> Result<Settings, ConfigErrors> {
+    /// The settings of a build into `destination`.
+    pub(crate) fn load(
+        &self,
+        options: &BuildOptions,
+        destination: Destination,
+    ) -> Result<Settings, ConfigErrors> {
         let asked_for = options.config.is_some();
         let file = Self::config_file(options);
         let config = match self.reader.read(&file) {
@@ -47,7 +52,10 @@ impl SettingsService {
             }]),
         };
         match config {
-            Ok(config) => Ok(resolve_settings(options, &config_folder(&file), &config)),
+            Ok(config) => Ok(Settings {
+                destination,
+                ..resolve_settings(options, &config_folder(&file), &config)
+            }),
             Err(errors) => Err(ConfigErrors { file, errors }),
         }
     }

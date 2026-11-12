@@ -1,4 +1,4 @@
-//! The output service's fakes: an output folder held in memory, an input, a parser and a writer.
+//! The site writer's fakes: an output folder held in memory, an input, a parser and a writer.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::io::{ErrorKind, Result as IoResult};
@@ -9,10 +9,11 @@ use gherkin::{Feature, GherkinEnv};
 
 use super::*;
 use crate::entities::{OutputContents, PageOptions, RawFeature, Unnamed};
+use crate::errors::BuildError;
 use crate::errors::{InputErrorKind, ParseError};
 use crate::fixtures::MemoryFolders;
-use crate::ports::{FeatureParser, SiteWriter};
-use crate::services::InputService;
+use crate::ports::FeatureParser;
+use crate::services::{Converter, InputService};
 
 /// An output folder held in memory. Each look into it takes the next of
 /// `looks`, and the last one again once they run out; `None` cannot be read.
@@ -142,7 +143,7 @@ pub(super) struct FakeWriter {
     pub(super) fails: Option<&'static str>,
 }
 
-impl SiteWriter for FakeWriter {
+impl FileWriter for FakeWriter {
     fn write(&self, output: &Path, file: &str, _contents: &[u8]) -> IoResult<()> {
         if self.fails == Some(file) {
             return Err(IoError::other("disk full"));
@@ -151,27 +152,36 @@ impl SiteWriter for FakeWriter {
         self.written.lock().expect("lock").push(path);
         Ok(())
     }
+
+    fn site(&self, output: &Path) -> ServedSite {
+        ServedSite::Folder(output.to_path_buf())
+    }
 }
 
-/// Builds the features `files` into `site`, as the version `version` when there is one.
+/// Builds the features `files` into `site`, as the version `version` when
+/// there is one, as the controller does: the folder is checked, the input
+/// read and converted, and the site written.
 pub(super) fn build(
     files: Vec<&'static str>,
     version: Option<&str>,
     folders: Arc<FakeFolders>,
     writer: Arc<FakeWriter>,
-) -> Result<BuiltSite, BuildError> {
+) -> Result<ServedSite, BuildError> {
     let folders_in = MemoryFolders::with_files_in(Path::new("in"), &files);
     let input = InputService::new(Arc::new(folders_in), Arc::new(FakeParser));
-    let site = SiteService::new(input, writer);
     let settings = Settings {
         input: PathBuf::from("in"),
         output: PathBuf::from("site"),
+        destination: Destination::Folder,
         unnamed: Unnamed::Allowed,
         pages: PageOptions::default(),
         version: version.map(name),
         replace: true,
     };
-    OutputService::new(folders).build(&site, &settings)
+    let site_writer = SiteWriter::new(folders, writer, Arc::new(FakeWriter::default()));
+    site_writer.check(&settings)?;
+    let features = input.read(&settings.input, settings.unnamed)?;
+    Ok(site_writer.write(&settings, Converter.convert(&features, &settings))?)
 }
 
 pub(super) fn written(writer: &FakeWriter) -> Vec<String> {

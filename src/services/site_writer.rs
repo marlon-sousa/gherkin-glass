@@ -1,4 +1,4 @@
-//! Service: writing a build into its output folder, with or without versions, once the folder is safe.
+//! Service: the site writer, writing a site into its output folder, with or without versions, once the folder is safe, or into memory.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::io::Error as IoError;
@@ -7,55 +7,72 @@ use std::path::Path;
 use std::sync::Arc;
 
 use crate::entities::{
-    BuildFolder, BuildTarget, BuiltSite, FilePath, Record, Settings, SiteAddress, SiteFile,
-    VersionName,
+    BuildFolder, BuildTarget, Destination, FilePath, Record, ServedSite, Settings, SiteAddress,
+    SiteFile, SiteFiles, VersionName,
 };
-use crate::errors::{BuildError, OutputError, OutputErrorKind};
+use crate::errors::{OutputError, OutputErrorKind};
 use crate::policies::{
     Moment, VERSIONS_PAGE, assets, order_versions, output_safety, render_versions_page,
 };
-use crate::ports::OutputFolders;
-use crate::services::SiteService;
+use crate::ports::{FileWriter, OutputFolders};
 
-#[derive(Clone)]
-pub(crate) struct OutputService {
+pub(crate) struct SiteWriter {
     folders: Arc<dyn OutputFolders>,
+    folder_files: Arc<dyn FileWriter>,
+    memory_files: Arc<dyn FileWriter>,
 }
 
-impl OutputService {
-    pub(crate) fn new(folders: Arc<dyn OutputFolders>) -> Self {
-        OutputService { folders }
+impl SiteWriter {
+    /// `folder_files` writes into the output folder, and `memory_files` keeps
+    /// the site in memory; the destination of the settings chooses between them.
+    pub(crate) fn new(
+        folders: Arc<dyn OutputFolders>,
+        folder_files: Arc<dyn FileWriter>,
+        memory_files: Arc<dyn FileWriter>,
+    ) -> Self {
+        SiteWriter {
+            folders,
+            folder_files,
+            memory_files,
+        }
     }
 
-    /// Builds the site into `settings.output`, as the version its settings
-    /// name, or without versions when they name none. The output folder is
-    /// checked before the input is read, and again before anything is
-    /// written, once the input has been read without an error.
-    pub(crate) fn build(
-        &self,
-        site: &SiteService,
-        settings: &Settings,
-    ) -> Result<BuiltSite, BuildError> {
-        let output = &settings.output;
-        let target = match &settings.version {
-            Some(version) => BuildTarget::Version(version.clone()),
-            None => BuildTarget::Site,
+    /// Checks, before the input is read, that the site may be built into the
+    /// output folder; a site built in memory needs no check.
+    pub(crate) fn check(&self, settings: &Settings) -> Result<(), OutputError> {
+        if settings.destination == Destination::Memory {
+            return Ok(());
+        }
+        let moment = Moment::Checking {
+            replace: settings.replace,
         };
-        self.check(
-            output,
-            &target,
-            Moment::Checking {
-                replace: settings.replace,
-            },
-        )?;
-        let site_files = site.files(settings)?;
-        let folder = self.check(output, &target, Moment::Writing)?;
-        let files = paths(&site_files.files);
+        self.check_folder(&settings.output, &target(settings), moment)
+            .map(drop)
+    }
+
+    /// Writes `site` where the settings say, and returns it as it is served.
+    /// Into the output folder, it is written as the version its settings name,
+    /// or without versions when they name none, once the folder is checked
+    /// again; in memory, as a site without versions.
+    pub(crate) fn write(
+        &self,
+        settings: &Settings,
+        site: SiteFiles,
+    ) -> Result<ServedSite, OutputError> {
+        let output = &settings.output;
+        if settings.destination == Destination::Memory {
+            // A site that was not taken, if any, is dropped, so that nothing of it is served.
+            self.memory_files.site(output);
+            write_files(self.memory_files.as_ref(), output, site.files)?;
+            return Ok(self.memory_files.site(output));
+        }
+        let folder = self.check_folder(output, &target(settings), Moment::Writing)?;
+        let files = paths(&site.files);
         match folder.target() {
             BuildTarget::Site => {
                 self.clear(&folder)?;
                 self.mark(&folder, &Record::Site(files))?;
-                site.write(output, site_files.files)?;
+                self.write_into(output, site.files)?;
             }
             BuildTarget::Version(name) => {
                 let versions = versions(&folder, name, &files);
@@ -73,16 +90,20 @@ impl OutputService {
                     versions,
                 };
                 self.mark(&folder, &record)?;
-                site.write(&output.join(name.as_str()), site_files.files)?;
-                site.write(output, page_files)?;
+                self.write_into(&output.join(name.as_str()), site.files)?;
+                self.write_into(output, page_files)?;
             }
         }
-        Ok(site_files.built)
+        Ok(self.folder_files.site(output))
+    }
+
+    fn write_into(&self, output: &Path, files: Vec<SiteFile>) -> Result<(), OutputError> {
+        write_files(self.folder_files.as_ref(), output, files)
     }
 
     /// The output folder, once nothing stops `target` being written into it
     /// at `moment`, with what its marker records. Nothing is written.
-    pub(crate) fn check(
+    fn check_folder(
         &self,
         output: &Path,
         target: &BuildTarget,
@@ -126,6 +147,27 @@ impl OutputService {
             .record(folder.output(), record)
             .map_err(|io| cannot_write(folder, None, &io))
     }
+}
+
+/// What the build writes: the version its settings name, or a site without versions.
+fn target(settings: &Settings) -> BuildTarget {
+    match &settings.version {
+        Some(version) => BuildTarget::Version(version.clone()),
+        None => BuildTarget::Site,
+    }
+}
+
+/// Writes `files` into `output`, stopping at the first that cannot be written.
+fn write_files(
+    writer: &dyn FileWriter,
+    output: &Path,
+    files: Vec<SiteFile>,
+) -> Result<(), OutputError> {
+    files.iter().try_for_each(|file| {
+        writer
+            .write(output, file.address.as_str(), &file.contents)
+            .map_err(|io| file_not_written(output, file, &io))
+    })
 }
 
 /// The versions the output folder holds once the version `name`, with
@@ -177,6 +219,17 @@ fn cannot_write(
         output: folder.output().to_path_buf(),
         version: version.cloned(),
         kind: OutputErrorKind::CannotBeWritten {
+            reason: error.to_string(),
+        },
+    }
+}
+
+fn file_not_written(output: &Path, file: &SiteFile, error: &IoError) -> OutputError {
+    OutputError {
+        output: output.to_path_buf(),
+        version: None,
+        kind: OutputErrorKind::FileNotWritten {
+            file: file.address.as_str().to_string(),
             reason: error.to_string(),
         },
     }

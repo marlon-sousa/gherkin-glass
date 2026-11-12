@@ -1,7 +1,7 @@
 //! Error: what stops a build writing its output, said of the output folder or of a version's folder.
 
 use std::fmt::{Display, Formatter, Result as FmtResult};
-use std::path::PathBuf;
+use std::path::{MAIN_SEPARATOR, PathBuf};
 
 use i18n_embed_fl::fl;
 use thiserror::Error;
@@ -51,6 +51,10 @@ pub(crate) enum OutputErrorKind {
     /// `reason` is the operating system's.
     #[error(fmt = Self::cannot_be_written)]
     CannotBeWritten { reason: String },
+    /// A file of the site, `file` its `/`-joined path below the folder;
+    /// `reason` is the operating system's.
+    #[error(fmt = Self::file_not_written)]
+    FileNotWritten { file: FilePath, reason: String },
 }
 
 impl Display for OutputError {
@@ -63,6 +67,9 @@ impl Display for OutputError {
             ),
             (_, OutputErrorKind::NotSafe { found }) => {
                 (format!("{output}/{found}"), self.kind.to_string())
+            }
+            (_, OutputErrorKind::FileNotWritten { file, .. }) => {
+                (file_in(&output, file), self.kind.to_string())
             }
             (_, OutputErrorKind::MissingVersion { name }) => {
                 (format!("{output}/{name}"), self.kind.to_string())
@@ -109,6 +116,20 @@ impl OutputErrorKind {
 
     fn cannot_be_written(reason: &str, f: &mut Formatter<'_>) -> FmtResult {
         f.write_str(&fl!(CATALOGUE, "output-cannot-be-written", reason = reason))
+    }
+
+    fn file_not_written(_file: &FilePath, reason: &str, f: &mut Formatter<'_>) -> FmtResult {
+        f.write_str(&fl!(CATALOGUE, "cannot-be-written", reason = reason))
+    }
+}
+
+/// The path of `file` in the folder `output`, as it was given, with no
+/// separator added when it already ends in one.
+fn file_in(output: &str, file: &str) -> String {
+    if output.is_empty() || output.ends_with(['/', MAIN_SEPARATOR]) {
+        format!("{output}{file}")
+    } else {
+        format!("{output}/{file}")
     }
 }
 
@@ -157,6 +178,11 @@ mod tests {
         Some("v1"),
         OutputErrorKind::CannotBeWritten { reason: "denied".into() },
         "site/out/v1: cannot be written: denied"
+    )]
+    #[case::a_file_of_the_site(
+        None,
+        OutputErrorKind::FileNotWritten { file: "sub/b.html".into(), reason: "denied".into() },
+        "site/out/sub/b.html: cannot be written: denied"
     )]
     fn an_output_error_names_the_output_folder_or_the_version_s(
         #[case] version_name: Option<&str>,

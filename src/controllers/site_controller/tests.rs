@@ -1,6 +1,7 @@
 mod fakes;
 
 use std::path::PathBuf;
+use std::sync::Arc;
 use std::sync::atomic::Ordering;
 use std::thread::scope;
 
@@ -11,7 +12,7 @@ use super::*;
 use crate::entities::{OutputContents, Watched};
 use crate::errors::OutputErrorKind;
 use crate::fixtures::{FakeWatcher, changed};
-use crate::ports::SiteWriter;
+use crate::ports::FileWriter;
 
 fn build_options(config: Option<&str>, input: Option<&str>) -> BuildOptions {
     BuildOptions {
@@ -124,7 +125,7 @@ fn watching_rebuilds_on_each_burst_and_keeps_the_last_good_site() {
 
         world.input.failing.store(true, Ordering::SeqCst);
         sender.send(changed("ghg.toml")).expect("sent");
-        assert!(events.wait_for(3)[2].starts_with("not rebuilt: Input("));
+        assert!(events.wait_for(3)[2].contains("build: Input("));
         assert_eq!(preview.current().number, 2);
 
         drop(sender);

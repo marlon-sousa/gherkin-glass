@@ -2,7 +2,7 @@
 
 use std::path::{Path, PathBuf};
 
-use crate::entities::{Accents, BuildOptions, Config, PageOptions, Settings, Unnamed};
+use crate::entities::{Accents, BuildOptions, Config, Destination, PageOptions, Settings, Unnamed};
 
 /// The input folder when neither the command line nor the file names one,
 /// relative to the configuration file's folder.
@@ -35,6 +35,7 @@ pub(crate) fn resolve_settings(options: &BuildOptions, folder: &Path, config: &C
     Settings {
         input,
         output,
+        destination: Destination::default(),
         unnamed,
         version,
         replace: config.replace_existing_version.unwrap_or(true),

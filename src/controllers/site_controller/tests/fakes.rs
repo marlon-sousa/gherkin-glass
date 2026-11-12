@@ -3,7 +3,7 @@ use std::io::{Error as IoError, ErrorKind, Result as IoResult};
 use std::mem::take;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
-use std::sync::{Mutex, PoisonError};
+use std::sync::{Arc, Mutex, PoisonError};
 use std::thread::sleep;
 use std::time::{Duration, Instant};
 
@@ -11,7 +11,7 @@ use super::*;
 use crate::entities::{EntryKind, FolderEntry, OutputContents, RawFeature, Record};
 use crate::errors::{InputErrorKind, ParseError};
 use crate::fixtures::{FakeServer, FakeWatcher};
-use crate::ports::{ConfigReader, FeatureParser, InputFolders, OutputFolders};
+use crate::ports::{ConfigReader, FeatureParser, FileWriter, InputFolders, OutputFolders};
 
 /// Configuration files held in memory; any other path is not found.
 struct ConfigFiles {
@@ -87,13 +87,13 @@ impl OutputFolders for Folders {
     }
 }
 
-/// Keeps what is written until it is taken.
+/// Keeps what is written in memory until the site is taken.
 #[derive(Default)]
 pub(super) struct Recorder {
     pub(super) files: Mutex<BTreeMap<String, Vec<u8>>>,
 }
 
-impl SiteWriter for Recorder {
+impl FileWriter for Recorder {
     fn write(&self, _: &Path, file: &str, contents: &[u8]) -> IoResult<()> {
         self.files
             .lock()
@@ -101,11 +101,24 @@ impl SiteWriter for Recorder {
             .insert(file.to_string(), contents.to_vec());
         Ok(())
     }
+
+    fn site(&self, _: &Path) -> ServedSite {
+        ServedSite::Memory(take(
+            &mut *self.files.lock().unwrap_or_else(PoisonError::into_inner),
+        ))
+    }
 }
 
-impl SiteRecorder for Recorder {
-    fn take(&self) -> BTreeMap<String, Vec<u8>> {
-        take(&mut *self.files.lock().unwrap_or_else(PoisonError::into_inner))
+/// Writes nothing, as if into the output folder.
+pub(super) struct NoFolder;
+
+impl FileWriter for NoFolder {
+    fn write(&self, _: &Path, _: &str, _: &[u8]) -> IoResult<()> {
+        Ok(())
+    }
+
+    fn site(&self, output: &Path) -> ServedSite {
+        ServedSite::Folder(output.to_path_buf())
     }
 }
 
@@ -133,9 +146,12 @@ impl World {
         SiteController::new(
             SettingsService::new(Arc::new(ConfigFiles { files })),
             InputService::new(self.input.clone(), self.input.clone()),
-            OutputService::new(Arc::new(Folders { contents })),
-            Arc::new(Recorder::default()),
-            self.memory.clone(),
+            Converter,
+            SiteWriter::new(
+                Arc::new(Folders { contents }),
+                Arc::new(NoFolder),
+                self.memory.clone(),
+            ),
             ServerService::new(self.server.clone(), self.watcher.clone()),
         )
     }

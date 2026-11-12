@@ -53,9 +53,6 @@ pub(crate) enum InputErrorKind {
     /// `page` is the file's page, in the folder that holds the tag pages.
     #[error(fmt = Self::in_tags_folder)]
     InTagsFolder { page: String },
-    /// A file of the site; `reason` is the operating system's.
-    #[error(fmt = Self::cannot_be_written)]
-    CannotBeWritten { reason: String },
 }
 
 /// The blocks that need a name while `allow_unnamed` is `false`.
@@ -133,9 +130,5 @@ impl InputErrorKind {
 
     fn in_tags_folder(page: &str, f: &mut Formatter<'_>) -> FmtResult {
         f.write_str(&fl!(CATALOGUE, "in-tags-folder", page = page))
-    }
-
-    fn cannot_be_written(reason: &str, f: &mut Formatter<'_>) -> FmtResult {
-        f.write_str(&fl!(CATALOGUE, "cannot-be-written", reason = reason))
     }
 }
