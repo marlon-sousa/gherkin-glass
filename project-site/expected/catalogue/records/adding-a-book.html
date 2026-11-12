@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Feature: Adding a book to the catalogue, catalogue/records/adding-a-book.feature</title>
+<script>try{var t=localStorage.getItem("gherkin-glass:theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}</script>
+<style>
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+  --ghg-background: #ffffff;
+  --ghg-surface: #f2f2f2;
+  --ghg-text: #1a1a1a;
+  --ghg-muted: #474747;
+  --ghg-border: #757575;
+  --ghg-accent: #0b4f9c;
+  --ghg-keyword: #6a1b9a;
+  --ghg-parameter: #14521a;
+  --ghg-number: #8a3000;
+  --ghg-placeholder: #00575e;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ghg-background: #141414;
+    --ghg-surface: #222222;
+    --ghg-text: #ececec;
+    --ghg-muted: #c4c4c4;
+    --ghg-border: #8f8f8f;
+    --ghg-accent: #8cc4ff;
+    --ghg-keyword: #e1b3ff;
+    --ghg-parameter: #9fe0a8;
+    --ghg-number: #ffbf8a;
+    --ghg-placeholder: #7fdbe0;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ghg-background: #141414;
+  --ghg-surface: #222222;
+  --ghg-text: #ececec;
+  --ghg-muted: #c4c4c4;
+  --ghg-border: #8f8f8f;
+  --ghg-accent: #8cc4ff;
+  --ghg-keyword: #e1b3ff;
+  --ghg-parameter: #9fe0a8;
+  --ghg-number: #ffbf8a;
+  --ghg-placeholder: #7fdbe0;
+}
+</style>
+<link rel="stylesheet" href="../../assets/gherkin-glass.css">
+<script type="module" src="../../assets/gherkin-glass.js"></script>
+</head>
+<body>
+<a class="ghg-skip" href="#ghg_main">Skip to content</a>
+<div class="ghg-options">
+<input type="checkbox" id="ghg_show_tree" class="ghg-show-tree" aria-controls="ghg_tree" checked> <label for="ghg_show_tree">Show the folder tree</label>
+<fieldset class="ghg-theme">
+<legend>Theme</legend>
+<label><input type="radio" name="ghg-theme" value="system" checked> System</label>
+<label><input type="radio" name="ghg-theme" value="light"> Light</label>
+<label><input type="radio" name="ghg-theme" value="dark"> Dark</label>
+</fieldset>
+</div>
+<div class="ghg-layout">
+<nav id="ghg_tree" class="ghg-tree" aria-label="Folder tree"></nav>
+<div class="ghg-page">
+<nav class="ghg-breadcrumb" aria-label="Breadcrumb">
+<ol>
+<li><a href="../../index.html">gherkin-glass examples</a></li>
+<li><a href="../index.html">catalogue</a></li>
+<li><a href="index.html">records</a></li>
+<li><a href="adding-a-book.html" aria-current="page">Feature: Adding a book to the catalogue</a></li>
+</ol>
+</nav>
+<form class="ghg-search" role="search" data-root="../../" data-shown="50" data-loading="Loading search." data-failed="Search could not be loaded." data-none="No results." data-count="Results: {count}." data-count-limited="Results: {count}. The first 50 are listed." data-no-name="no name" data-feature="{name}, feature" data-rule="{name}, rule in {feature}" data-scenario="{name}, scenario in {feature}" data-scenario-in-rule="{name}, scenario in {rule}, {feature}" data-scenario-outline="{name}, scenario outline in {feature}" data-scenario-outline-in-rule="{name}, scenario outline in {rule}, {feature}">
+<label>Search features, rules and scenarios <input type="search" class="ghg-search-field" autocomplete="off" spellcheck="false" enterkeyhint="search"></label>
+<p class="ghg-search-status" role="status"></p>
+<ol class="ghg-search-results" hidden></ol>
+</form>
+<main id="ghg_main">
+<h1>Feature: Adding a book to the catalogue</h1>
+<ul class="ghg-tags">
+<li><a href="../../tags/catalogue.html">@catalogue</a></li>
+<li><a href="../../tags/staff.html">@staff</a></li>
+</ul>
+<div class="ghg-description">
+<p>Staff add each new book to the catalogue, from its record.</p>
+</div>
+<nav class="ghg-contents" aria-label="Contents">
+<ul>
+<li><a href="#adding-a-book-from-its-record">Scenario: Adding a book from its record</a></li>
+<li><a href="#a-record-in-the-librarys-own-format">Scenario: A record in the library&#39;s own format</a></li>
+<li><a href="#a-record-with-a-mistake-is-refused">Scenario: A record with a mistake is refused</a></li>
+</ul>
+</nav>
+<div class="ghg-controls">
+<button type="button" class="ghg-collapse-all">Collapse all</button>
+<button type="button" class="ghg-expand-all">Expand all</button>
+</div>
+<div class="ghg-block ghg-scenario">
+<h2 id="adding-a-book-from-its-record"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: Adding a book from its record</button></h2>
+<div class="ghg-content">
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>a member of staff is signed in</li>
+<li><span class="ghg-keyword">When </span>they add a book with this record:
+<figure class="ghg-doc-string">
+<figcaption>json</figcaption>
+<pre>{
+  &#34;title&#34;: &#34;Emma&#34;,
+  &#34;author&#34;: &#34;Jane Austen&#34;,
+  &#34;year&#34;: 1815
+}</pre>
+</figure></li>
+<li><span class="ghg-keyword">Then </span>the book <span class="ghg-parameter">&#34;Emma&#34;</span> is on the shelf</li>
+</ol>
+</div>
+</div>
+<div class="ghg-block ghg-scenario">
+<h2 id="a-record-in-the-librarys-own-format"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: A record in the library&#39;s own format</button></h2>
+<div class="ghg-content">
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>a member of staff is signed in</li>
+<li><span class="ghg-keyword">When </span>they add a book with this record:
+<figure class="ghg-doc-string">
+<figcaption>text</figcaption>
+<pre>Title:  The Hobbit
+Author: J. R. R. Tolkien
+  Note: the record keeps its own indentation.
+A line with three backticks: ```</pre>
+</figure></li>
+<li><span class="ghg-keyword">Then </span>the book <span class="ghg-parameter">&#34;The Hobbit&#34;</span> is on the shelf</li>
+</ol>
+</div>
+</div>
+<div class="ghg-block ghg-scenario">
+<h2 id="a-record-with-a-mistake-is-refused"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: A record with a mistake is refused</button></h2>
+<div class="ghg-content">
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>a member of staff is signed in</li>
+<li><span class="ghg-keyword">When </span>they add a book with this record:
+<figure class="ghg-doc-string">
+<figcaption>json</figcaption>
+<pre>{ &#34;title&#34;: &#34;&#34; }</pre>
+</figure></li>
+<li><span class="ghg-keyword">Then </span>the record is refused with <span class="ghg-parameter">&#34;A book needs a title.&#34;</span></li>
+</ol>
+</div>
+</div>
+</main>
+</div>
+</div>
+</body>
+</html>

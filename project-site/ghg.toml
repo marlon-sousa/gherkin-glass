@@ -1,0 +1,6 @@
+# The example suite's site, as the browser check, cargo xtask build and the
+# test of its committed copy build it: the suite alone, with the title the
+# release gives the project's site.
+title = "gherkin-glass examples"
+input = "features"
+output = "expected"

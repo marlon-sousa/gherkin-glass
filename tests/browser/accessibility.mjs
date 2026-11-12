@@ -1,5 +1,6 @@
 // docs/BEHAVIOUR.md, "Accessibility", checked in Chromium with Playwright and
-// axe-core: every fixture that builds is built into a site, served with
+// axe-core: every fixture that builds, and the example suite of
+// project-site, is built into a site, served with
 // ghg serve --no-build, and each page is checked with axe-core in the light
 // and the dark colour scheme and in each theme a reader can pick, then driven
 // with the keyboard.
@@ -20,9 +21,9 @@ import { axeSource, chromium, ghg, serve, stop } from "./support.mjs";
 
 const fixtures = resolve("tests/fixtures");
 
-// Every build of a fixture that makes a site: the folder it runs in, below
-// tests/fixtures, and its arguments after `ghg build`, to which the check adds
-// --output.
+// Every build that makes a site: the folder it runs in, below its root,
+// tests/fixtures unless it names another, and its arguments after `ghg build`,
+// to which the check adds --output.
 const builds = [
   { folder: "anchors", args: ["--input", "."] },
   { folder: "constructs", args: ["--input", "."] },
@@ -47,6 +48,7 @@ const builds = [
   { folder: "no-steps", args: ["--input", "."] },
   { folder: "search/features", args: ["--input", ".", "--title", "Search"] },
   { folder: "action", args: [] },
+  { root: ".", folder: "project-site", args: ["--config", "ghg.toml"] },
 ];
 
 // The fixtures that make no site: those whose build is meant to fail, and
@@ -103,7 +105,7 @@ const within = (path, folder) => path === folder || path.startsWith(`${folder}/`
 // build or to a fixture that makes no site, so that a new fixture is not
 // left out of the check unnoticed.
 function checkEveryFixtureIsCounted() {
-  const counted = [...builds.map((build) => build.folder), ...noSite];
+  const counted = [...builds.filter((build) => !build.root).map((build) => build.folder), ...noSite];
   const missed = filesOf(fixtures)
     .filter((path) => /\.(feature|story|toml)$/.test(path))
     .filter((path) => !counted.some((folder) => within(path, folder)));
@@ -114,9 +116,9 @@ function checkEveryFixtureIsCounted() {
   );
 }
 
-function build({ folder, args }, output) {
+function build({ root, folder, args }, output) {
   const run = spawnSync(ghg, ["build", ...args, "--output", output], {
-    cwd: join(fixtures, folder),
+    cwd: root ? resolve(root, folder) : join(fixtures, folder),
     encoding: "utf8",
   });
   assert.equal(run.status, 0, `ghg build ${args.join(" ")} in ${folder}: ${run.stderr}`);

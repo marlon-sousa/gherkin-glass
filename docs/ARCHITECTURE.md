@@ -18,7 +18,7 @@ Ports and adapters. The pure part of gherkin-glass, which decides what the site 
 - **`assets/`**, the files the binary embeds and writes into every site: the stylesheet, and the script compiled from `script/`.
 - **`messages/`**, the Fluent catalogue of gherkin-glass's own interface text, one folder per language, embedded in the binary, and **`i18n.toml`** at the crate's root, which tells the `fl!` macro where the catalogue is and which language it checks against (see "Interface text").
 - **`action.yml`** and **`action/`**, the GitHub Action that installs `ghg` and builds a site with it ([#17](https://github.com/marlon-sousa/gherkin-glass/issues/17)): a composite action whose steps run the bash scripts in `action/`, each saying its role in a comment on its first lines, as a module does.
-- **`project-site/`**, the project's own site ([#19](https://github.com/marlon-sousa/gherkin-glass/issues/19)): the example suite it shows, the list of fixtures it leaves out, and the scripts that gather its input and publish each release to the `gh-pages` branch, which `.github/workflows/site.yml` runs.
+- **`project-site/`**, the project's own site ([#19](https://github.com/marlon-sousa/gherkin-glass/issues/19)): the example suite it shows, with its site as ghg builds it, the list of fixtures it leaves out, and the scripts that gather its input and publish each release to the `gh-pages` branch, which `.github/workflows/site.yml` runs.
 - **`.claude/skills/`**, the procedures an agent follows to review a change, write a commit, follow a stack and keep this document true. They add no rule of their own: each points at the rules it follows.
 - **`tests/`**, the crate's integration tests, and `tests/fixtures/`, the feature files every rule of BEHAVIOUR.md is checked against.
 
@@ -148,8 +148,8 @@ Cheapest first:
 1. **Policy tests**, pure and in memory: the anchor rule, doc string corrections, page addresses, contrast, the state a block starts in.
 2. **Service tests** with fake ports: a whole build from an input held in memory, checking what would be written and every problem reported.
 3. **Fixture tests** of a policy or a service: its code checked against a fixture under `tests/fixtures/`, read through the real adapters, or on scratch folders on the disk, in the tests of the module whose code it checks, in their `tests/against_fixtures.rs` when the module has other unit tests too.
-4. **Golden fixture tests**: each fixture under `tests/fixtures/` built into a site, and its pages compared with the expected HTML committed beside it, which shows the rules of BEHAVIOUR.md the fixture covers.
-5. **The browser check** ([#2](https://github.com/marlon-sousa/gherkin-glass/issues/2)): every fixture's site served with `ghg serve --no-build` ([#26](https://github.com/marlon-sousa/gherkin-glass/issues/26)), as a reader would get it, and each page opened with Playwright, checked with axe-core in each theme, its borders and focus outline measured against WCAG's 3:1 for what is not text, and driven with the keyboard.
+4. **Golden fixture tests**: each fixture under `tests/fixtures/` built into a site, and its pages compared with the expected HTML committed beside it, which shows the rules of BEHAVIOUR.md the fixture covers; and so is the example suite of `project-site/`, against `project-site/expected`.
+5. **The browser check** ([#2](https://github.com/marlon-sousa/gherkin-glass/issues/2)): every fixture's site and the example suite's served with `ghg serve --no-build` ([#26](https://github.com/marlon-sousa/gherkin-glass/issues/26)), as a reader would get it, and each page opened with Playwright, checked with axe-core in each theme, its borders and focus outline measured against WCAG's 3:1 for what is not text, and driven with the keyboard.
 6. **The script's own tests**, of its policies and adapters, in `script/test/`.
 
 `cargo xtask check` runs all of them, and CI runs the same command.

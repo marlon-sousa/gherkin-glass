@@ -16,10 +16,10 @@ const USAGE: &str = "\
 Usage: cargo xtask <command>
 
 Commands:
-  build: builds the pages' script from script/ into assets/gherkin-glass.js, writes the fixtures' expected sites again, then builds the release binary.
+  build: builds the pages' script from script/ into assets/gherkin-glass.js, writes the fixtures' and the example suite's expected sites again, then builds the release binary.
   check: runs every check a pull request runs: formatting, lints, the tests on both Rust versions, the documentation, the dependencies with cargo deny, the package, the script check and the browser check.
   check-script: type-checks and tests the script, and checks that assets/gherkin-glass.js is what it compiles to.
-  check-browser: builds ghg, installs the browser, and checks every fixture's site in it: accessibility, the keyboard, and the reload of ghg serve --watch.
+  check-browser: builds ghg, installs the browser, and checks every fixture's site and the example suite's in it: accessibility, the keyboard, and the reload of ghg serve --watch.
   comment-ratio [path ...]: counts the comment lines and the code lines of the given Rust and TypeScript files, or of every one git tracks, with the total last.";
 
 /// The browser checks, run with Node from the repository's root.
@@ -79,6 +79,18 @@ fn build() -> Result<(), String> {
             &config,
         ])?;
     }
+    // So does the example suite's, which the project's site shows.
+    cargo(&[
+        "run",
+        "--quiet",
+        "--locked",
+        "--package",
+        "gherkin-glass",
+        "--",
+        "build",
+        "--config",
+        "project-site/ghg.toml",
+    ])?;
     cargo(&[
         "build",
         "--release",

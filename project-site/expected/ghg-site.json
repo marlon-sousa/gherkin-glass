@@ -1,0 +1,31 @@
+{
+  "files": [
+    "assets/gherkin-glass.css",
+    "assets/gherkin-glass.js",
+    "assets/search.json",
+    "assets/tree.json",
+    "catalogue/index.html",
+    "catalogue/records/adding-a-book.html",
+    "catalogue/records/index.html",
+    "catalogue/searching.html",
+    "em-portugues/emprestimo.html",
+    "em-portugues/index.html",
+    "index.html",
+    "lending/borrowing.html",
+    "lending/index.html",
+    "lending/returning.html",
+    "steps.html",
+    "tags/books.html",
+    "tags/catalogue.html",
+    "tags/empréstimo.html",
+    "tags/films.html",
+    "tags/holds.html",
+    "tags/index.html",
+    "tags/issue-19.html",
+    "tags/lending.html",
+    "tags/outline.html",
+    "tags/queue.html",
+    "tags/slow.html",
+    "tags/staff.html"
+  ]
+}

@@ -1,3 +1,4 @@
 # The compiled script and the expected sites are compared byte for byte, on every system.
 assets/** text eol=lf
 tests/fixtures/pages/expected*/** text eol=lf
+project-site/expected/** text eol=lf
