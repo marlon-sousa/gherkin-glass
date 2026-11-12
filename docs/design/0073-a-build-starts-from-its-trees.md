@@ -21,16 +21,17 @@ Every page and report stays the same, byte for byte. Two rules of BEHAVIOUR.md c
 
 ## How the code moves there
 
-The work is built as a stack of layers, each keeping every page byte for byte, each saying `Refs #73` or `Refs #74` and reviewed before it opens, once this note has merged and once the layer that renames the gherkin parser and the test support (decisions 23 and 24 of #45) has merged:
+The work is built as one stack of nine pull requests, once this note has merged, on top of the renaming of the gherkin parser and the test support, decisions 23 and 24 of #45, which came with #72. Each is reviewed before it opens and keeps every page byte for byte. Layer 4 closes #73 and layer 9 closes #74; the others say `Refs #73` or `Refs #74`.
 
 1. the controller's tests build fakes of the driving traits instead of the real services (#73, item 3);
-2. the site tree becomes one `ego_tree::Tree` of typed kinds, with its builder module, holding the kinds of today;
+2. the site tree becomes one `ego_tree::Tree` of typed kinds, with its builder module, holding the kinds of today (#73, item 4);
 3. the top of the site tree becomes real: the site, its versions and their folders, with the versions page a node like any other page, and the folder pages, the folder tree's data and the breadcrumbs made from the folder nodes (#73, items 1 and 4);
 4. a scenario's inherited tags and backgrounds are found among its ancestors instead of being copied in or passed down, and each need of the site stage keeps one entry point (#73, item 2), which ends #73, so this layer drops from docs/ARCHITECTURE.md's introduction the sentences that name its differences;
 5. the input collector and the input tree come in: the collector walks the input into the tree, as the gherkin parser's walk does today, and finds the pages that clash; the gherkin parser parses only the list of files the controller takes from the tree, whose results the controller gives back to it; and the controller's one `build` starts from nothing, which is all `ghg build` and `ghg serve` need;
-6. `serve` takes the order of decision 26 of #45: the first build, then the server, then the watch, with the bursts waiting merged and judged by the input collector walking the input from nothing, with the last build's input folder, into a new input tree compared with the last one before the settings are read again; `Rebuilds` and the walk handed to the server go, every rebuild still starts from nothing, and one that the configuration file or missed changes start also restarts the watch on the input the settings name. This changes BEHAVIOUR.md rules 65 and 68, whose new text is written first, in a pull request of its own, as AGENTS.md rule 1 asks, and this layer brings their fixtures and their tests;
-7. a rebuild starts from the last build: the input tree and the site tree are made from the last ones and the paths, with the tests that compare, after every step, a rebuild from the last build with one from nothing (#74);
-8. the site writer renders only the file nodes that changed, and keeps the others' files from the last site.
+6. no code: BEHAVIOUR.md rules 65 and 68 take their new text, as the decision above says, written before the code that makes it true, as AGENTS.md rule 1 asks;
+7. `serve` takes the order of decision 26 of #45: the first build, then the server, then the watch, with the bursts waiting merged and judged by the input collector walking the input from nothing, with the last build's input folder, into a new input tree compared with the last one before the settings are read again; `Rebuilds` and the walk handed to the server go, every rebuild still starts from nothing, and one that the configuration file or missed changes start also restarts the watch on the input the settings name; this layer brings the fixtures and the tests of rules 65 and 68, as AGENTS.md rule 2 asks;
+8. a rebuild starts from the last build: the input tree and the site tree are made from the last ones and the paths, with the tests that compare, after every step, a rebuild from the last build with one from nothing (#74);
+9. the site writer renders only the file nodes that changed, and keeps the others' files from the last site.
 
 ## What else was considered
 
