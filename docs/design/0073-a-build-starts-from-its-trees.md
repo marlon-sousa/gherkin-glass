@@ -27,7 +27,7 @@ The work is built as a stack of layers, each keeping every page byte for byte, e
 3. the top of the site tree becomes real: the site, its versions and their folders, with the versions page a node like any other page, and the folder pages, the folder tree's data and the breadcrumbs made from the folder nodes (#73, items 1 and 4);
 4. a scenario's inherited tags and backgrounds are found among its ancestors instead of being copied in or passed down, and each need of the site stage keeps one entry point (#73, item 2);
 5. the input tree comes in: the gherkin parser walks the input into it and parses into its file nodes, and the controller's one `build` starts from nothing, which is all `ghg build` and `ghg serve` need;
-6. `serve` takes the order of decision 26 of #45: the first build, then the server, then the watch, with the bursts waiting merged and judged against the input tree, and `Rebuilds` and the walk handed to the server gone, while every rebuild still starts from nothing;
+6. `serve` takes the order of decision 26 of #45: the first build, then the server, then the watch, with the bursts waiting merged and judged by walking the input from nothing, with the last build's input folder, into a new input tree compared with the last one before the settings are read again, and `Rebuilds` and the walk handed to the server gone, while every rebuild still starts from nothing;
 7. a rebuild starts from the last build: the input tree and the site tree are made from the last ones and the paths, with the tests that compare, after every step, a rebuild from the last build with one from nothing (#74);
 8. the site writer renders only the file nodes that changed, and keeps the others' files from the last site.
 
