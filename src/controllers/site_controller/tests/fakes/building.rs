@@ -8,7 +8,7 @@ use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use gherkin::{Feature, GherkinEnv};
 
 use super::*;
-use crate::entities::{PageOptions, ParsedFeature, SiteNode, SiteTree, Unnamed};
+use crate::entities::{PageOptions, ParsedFeature, SiteNode, SiteTree, SiteTreeBuilder, Unnamed};
 use crate::policies::page_frame;
 
 /// Gives the settings of a build from the input `options` name, or `features`, into `site`, or,
@@ -92,13 +92,12 @@ pub(crate) struct FakeConverter {
 
 impl ConverterApi for FakeConverter {
     fn convert(&self, features: &[ParsedFeature], settings: &Settings) -> SiteTree {
-        let files: Vec<_> = features.iter().map(asset_of).collect();
+        let tree = SiteTreeBuilder::new(page_frame(&settings.pages))
+            .assets(features.iter().map(asset_of))
+            .build();
         self.calls
-            .note(format!("converter.convert {}", asset_names(&files)));
-        SiteTree {
-            frame: page_frame(&settings.pages),
-            files,
-        }
+            .note(format!("converter.convert {}", asset_names(&tree)));
+        tree
     }
 }
 
@@ -129,7 +128,7 @@ impl SiteWriterApi for FakeSiteWriter {
         tree: &SiteTree,
     ) -> Result<(BuiltSite, ServedSite), OutputError> {
         self.calls
-            .note(format!("site_writer.write {}", asset_names(&tree.files)));
+            .note(format!("site_writer.write {}", asset_names(tree)));
         if self.write_failing.load(Ordering::SeqCst) {
             return Err(output_error());
         }
@@ -144,15 +143,15 @@ impl SiteWriterApi for FakeSiteWriter {
     }
 }
 
-/// The names of the assets among `files`, joined with spaces.
-fn asset_names(files: &[SiteNode]) -> String {
-    let names: Vec<_> = files.iter().filter_map(asset_name).collect();
+/// The names of the assets among the files of `tree`, joined with spaces.
+fn asset_names(tree: &SiteTree) -> String {
+    let names: Vec<_> = tree.files().filter_map(asset_name).collect();
     names.join(" ")
 }
 
-/// The asset that stands for `feature`.
-fn asset_of(feature: &ParsedFeature) -> SiteNode {
-    SiteNode::Asset(feature.path.display().to_string())
+/// The name of the asset that stands for `feature`.
+fn asset_of(feature: &ParsedFeature) -> String {
+    feature.path.display().to_string()
 }
 
 fn asset_name(file: &SiteNode) -> Option<&str> {

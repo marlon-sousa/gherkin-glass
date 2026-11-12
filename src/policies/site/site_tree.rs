@@ -4,7 +4,7 @@ use std::borrow::Cow;
 
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 
-use crate::entities::{PageOptions, ParsedFeature, SiteAssets, SiteNode, SiteTree};
+use crate::entities::{PageOptions, ParsedFeature, SiteAssets, SiteTree, SiteTreeBuilder};
 use crate::policies::page_frame;
 use crate::policies::site::{
     anchor_feature, build_folder_pages, build_folder_tree, build_page, build_sentences_page,
@@ -30,33 +30,27 @@ pub(crate) fn site_tree(features: &[ParsedFeature], options: &PageOptions) -> Si
         .map(|tag| build_tag_page(tag, &pages, &names, options))
         .collect();
     let documents = search_documents(&anchored);
-    let files = pages
-        .into_iter()
-        .map(SiteNode::FeaturePage)
-        .chain(folders.into_iter().map(SiteNode::FolderPage))
-        .chain([
-            SiteNode::SentencesPage(sentences),
-            SiteNode::FolderTree(folder_tree),
-            SiteNode::TagIndex(tag_index),
-        ])
-        .chain(tag_pages.into_iter().map(SiteNode::TagPage))
-        .chain([SiteNode::SearchDocuments(documents)])
-        .chain(SiteAssets::iter().map(Cow::into_owned).map(SiteNode::Asset))
-        .collect();
-    SiteTree {
-        frame: page_frame(options),
-        files,
-    }
+    SiteTreeBuilder::new(page_frame(options))
+        .feature_pages(pages)
+        .folder_pages(folders)
+        .sentences_page(sentences)
+        .folder_tree(folder_tree)
+        .tag_index(tag_index)
+        .tag_pages(tag_pages)
+        .search_documents(documents)
+        .assets(SiteAssets::iter().map(Cow::into_owned))
+        .build()
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::entities::SiteNode;
 
     #[test]
     fn an_empty_input_still_has_its_home_page() {
         let tree = site_tree(&[], &PageOptions::default());
-        assert!(tree.files.iter().any(is_the_home_page));
+        assert!(tree.files().any(is_the_home_page));
     }
 
     fn is_the_home_page(node: &SiteNode) -> bool {

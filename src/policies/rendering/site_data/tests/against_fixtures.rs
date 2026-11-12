@@ -25,8 +25,7 @@ fn written_documents(node: &SiteNode) -> Option<String> {
 fn documents() -> String {
     let features = read_features(&fixture().join("features"));
     let tree = site_tree(&features, &PageOptions::default());
-    tree.files
-        .iter()
+    tree.files()
         .find_map(written_documents)
         .expect("a site has its search documents")
 }

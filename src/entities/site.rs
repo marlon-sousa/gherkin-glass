@@ -28,6 +28,6 @@ pub(crate) use sentences::*;
 pub(crate) use site_address::SiteAddress;
 pub(crate) use site_assets::{ASSETS, SiteAssets};
 pub(crate) use site_file::{SiteFile, SiteFiles};
-pub(crate) use site_tree::{SiteNode, SiteTree};
+pub(crate) use site_tree::{SiteNode, SiteTree, SiteTreeBuilder};
 pub(crate) use tags::*;
 pub(crate) use versions::*;
