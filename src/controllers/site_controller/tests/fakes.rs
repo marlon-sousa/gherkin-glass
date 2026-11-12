@@ -10,9 +10,9 @@ use std::time::{Duration, Instant};
 use super::*;
 use crate::entities::{EntryKind, FolderEntry, OutputContents, RawFeature, Record};
 use crate::errors::{InputErrorKind, ParseError};
-use crate::fixtures::{FakeServer, FakeWatcher};
 use crate::ports::{ConfigReader, FeatureParser, FileWriter, InputFolders, OutputFolders};
 use crate::services::{Converter, GherkinParser, ServerService, SettingsService, SiteWriter};
+use crate::test_support::{FakeServer, FakeWatcher};
 
 /// Configuration files held in memory; any other path is not found.
 struct ConfigFiles {

@@ -9,9 +9,9 @@ use gherkin::{Feature, GherkinEnv};
 use super::*;
 use crate::entities::{OutputContents, PageOptions, RawFeature, Unnamed};
 use crate::errors::{BuildError, ParseError};
-pub(super) use crate::fixtures::{MemoryFolders, folder, name, set, two_versions};
 use crate::ports::FeatureParser;
 use crate::services::{Converter, ConverterApi, GherkinParser, GherkinParserApi};
+pub(super) use crate::test_support::{MemoryFolders, folder, name, set, two_versions};
 
 /// An output folder held in memory. Each look into it takes the next of
 /// `looks`, and the last one again once they run out; `None` cannot be read.

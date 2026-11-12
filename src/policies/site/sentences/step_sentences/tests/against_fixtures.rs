@@ -1,8 +1,8 @@
 //! The sentences found, checked against the fixture.
 
 use crate::entities::StepKind;
-use crate::fixtures::{fixture, read_features};
 use crate::policies::site::{anchor_feature, find_step_sentences};
+use crate::test_support::{fixture, read_features};
 
 /// A use of a sentence: its path, anchor, line and values.
 type Use = (String, String, usize, Vec<String>);

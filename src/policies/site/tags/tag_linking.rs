@@ -42,7 +42,7 @@ pub(crate) fn outside_link(tag: &str, links: &[TagLink]) -> Option<OutsideLink> 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::fixtures::tag_link as link;
+    use crate::test_support::tag_link as link;
 
     #[test]
     fn the_first_pattern_that_matches_the_whole_tag_gives_the_link() {

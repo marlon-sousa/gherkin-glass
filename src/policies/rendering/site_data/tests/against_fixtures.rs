@@ -6,12 +6,12 @@ use std::path::PathBuf;
 use serde_json::Value;
 
 use crate::entities::{FileNode, PageOptions};
-use crate::fixtures::{self, read_features};
 use crate::policies::rendering::node_rendering::Render;
 use crate::policies::site_tree;
+use crate::test_support::{self, read_features};
 
 fn fixture() -> PathBuf {
-    fixtures::fixture("search")
+    test_support::fixture("search")
 }
 
 /// The search documents' file, when `node` is it.

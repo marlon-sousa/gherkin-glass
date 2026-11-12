@@ -16,7 +16,7 @@ use gherkin::Step;
 
 use crate::entities::ParsedFeature;
 use crate::errors::InputErrorKind;
-use crate::fixtures::{copy_folder, fixture, read_features as read, read_input, scratch};
+use crate::test_support::{copy_folder, fixture, read_features as read, read_input, scratch};
 
 /// The paths read, with `/` between folders.
 fn paths(features: &[ParsedFeature]) -> Vec<String> {

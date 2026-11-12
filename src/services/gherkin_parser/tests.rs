@@ -8,7 +8,7 @@ use gherkin::{Feature, GherkinEnv};
 use super::*;
 use crate::entities::RawFeature;
 use crate::errors::ParseError;
-use crate::fixtures::MemoryFolders;
+use crate::test_support::MemoryFolders;
 
 /// Parses the text held for a path; a path with no text cannot be opened.
 struct FakeParser(BTreeMap<PathBuf, String>);

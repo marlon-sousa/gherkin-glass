@@ -8,8 +8,8 @@ use crate::entities::{
     BackgroundBlock, LinkAddress, OutlineParts, OutsideLink, ParsedFeature, RuleBlock, StepPart,
     TableView, TagView,
 };
-use crate::fixtures::tag_link;
 use crate::policies::site::{anchor_feature, name_tags, tags_of};
+use crate::test_support::tag_link;
 
 fn page(text: &str, options: &PageOptions) -> Page {
     let feature = Feature::parse(text, GherkinEnv::default()).expect("parses");
