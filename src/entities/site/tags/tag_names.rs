@@ -1,4 +1,4 @@
-//! Entity: the name of every tag's page, each tag as written with its `@`.
+//! Entity: the name of every tag's page, each tag as written with its `@`, and the tags in the order they were named.
 
 use std::collections::BTreeMap;
 
@@ -10,11 +10,20 @@ pub(crate) const TAGS_FOLDER: &str = "tags";
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub(crate) struct TagNames {
     names: BTreeMap<String, String>,
+    /// Every tag named, in the order they were named.
+    tags: Vec<String>,
 }
 
 impl TagNames {
     pub(crate) fn insert(&mut self, tag: String, name: String) {
-        self.names.insert(tag, name);
+        if self.names.insert(tag.clone(), name).is_none() {
+            self.tags.push(tag);
+        }
+    }
+
+    /// Every tag named, in the order they were named.
+    pub(crate) fn tags(&self) -> &[String] {
+        &self.tags
     }
 
     /// Such as `slow`; empty for a tag that was never named, which a build never shows.

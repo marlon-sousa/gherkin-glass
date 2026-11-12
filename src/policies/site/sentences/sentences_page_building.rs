@@ -1,12 +1,14 @@
-//! Policy: the page of step sentences, from the sentences found and the features they are in.
+//! Policy: the page of step sentences, from the sentences found in the feature pages of the site tree.
 
 use i18n_embed::LanguageLoader;
 use i18n_embed_fl::fl;
 
 use crate::entities::{
     GroupContent, GroupView, LinkAddress, PageOptions, Piece, SentenceContent, SentenceUse,
-    SentenceView, SentencesPage, SentencesPageContent, StepKind, StepSentences, UseView,
+    SentenceView, SentencesPage, SentencesPageContent, SiteFeaturePage, StepKind, StepSentences,
+    UseView,
 };
+use crate::policies::site::sentences::find_step_sentences;
 use crate::policies::site::{breadcrumb, site_title};
 use crate::policies::{CATALOGUE, SENTENCES_PAGE};
 
@@ -14,10 +16,16 @@ use crate::policies::{CATALOGUE, SENTENCES_PAGE};
 /// of the catalogue holds them.
 const MARKS: [&str; 2] = ["\u{0}", "\u{1}"];
 
+/// The page of the step sentences of `pages`, every feature page of the site
+/// tree, with its blocks.
 pub(crate) fn build_sentences_page(
-    sentences: &StepSentences,
+    pages: &[SiteFeaturePage<'_>],
     options: &PageOptions,
 ) -> SentencesPageContent {
+    sentences_page(&find_step_sentences(pages), options)
+}
+
+fn sentences_page(sentences: &StepSentences, options: &PageOptions) -> SentencesPageContent {
     let own = CATALOGUE.current_language().to_string();
     // A use's language is shown only where it differs from the page's own.
     let language_of = |found: &SentenceUse| (found.language != own).then(|| found.language.clone());
@@ -161,7 +169,7 @@ mod tests {
                     }],
                 }],
             };
-            build_sentences_page(&sentences, &PageOptions::default()).groups[0].sentences[0]
+            sentences_page(&sentences, &PageOptions::default()).groups[0].sentences[0]
                 .sentence
                 .uses_count
                 .clone()
@@ -172,7 +180,7 @@ mod tests {
 
     #[test]
     fn with_no_step_there_is_no_group() {
-        let page = build_sentences_page(&StepSentences::default(), &PageOptions::default());
+        let page = sentences_page(&StepSentences::default(), &PageOptions::default());
         assert!(page.groups.is_empty());
         assert_eq!(page.page.no_steps, "No feature has a step.");
     }

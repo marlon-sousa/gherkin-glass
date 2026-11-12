@@ -13,7 +13,9 @@ mod site;
 pub(crate) use collecting::*;
 pub(crate) use configuration::*;
 pub(crate) use interface_text::CATALOGUE;
-pub(crate) use page_address::{FOLDER_PAGE, SENTENCES_PAGE, page_address};
+pub(crate) use page_address::{
+    FOLDER_PAGE, SENTENCES_PAGE, TAG_INDEX_NAME, page_address, tag_index_address,
+};
 pub(crate) use page_frame::page_frame;
 pub(crate) use palettes::palette;
 pub(crate) use rendering::*;

@@ -2,12 +2,9 @@
 
 use gherkin::{Background, Examples, Rule, Scenario};
 
-use crate::entities::ParsedFeature;
-
 /// A feature, its blocks in file order, each with its anchor.
 #[derive(Debug, Clone)]
 pub(crate) struct AnchoredFeature<'a> {
-    pub(crate) parsed: &'a ParsedFeature,
     pub(crate) background: Option<Anchored<'a, Background>>,
     pub(crate) scenarios: Vec<AnchoredScenario<'a>>,
     pub(crate) rules: Vec<AnchoredRule<'a>>,

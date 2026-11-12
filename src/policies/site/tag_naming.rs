@@ -1,32 +1,31 @@
-//! Policy: the tags of the input, their order, and the name of each tag's page.
+//! Policy: the tags of the input, their order, and the name of each tag's page, which the feature pages link to and the tag pages are written at.
 
 use std::cmp::Ordering;
 use std::collections::{BTreeSet, HashSet};
 
 use gherkin::Feature;
 
-use crate::entities::{ParsedFeature, SiteAddress, TAGS_FOLDER, TagNames};
+use crate::entities::{ParsedFeature, TagNames};
+use crate::policies::TAG_INDEX_NAME;
 use crate::policies::site::{anchor_of, unique};
-
-/// The name of the index's page, which no tag takes.
-const INDEX: &str = "index";
 
 /// The name of a tag that leaves nothing after the anchor rule.
 const FALLBACK: &str = "tag";
 
-pub(crate) fn tag_index_address() -> SiteAddress {
-    SiteAddress::of(&[TAGS_FOLDER], &format!("{INDEX}.html"))
+/// Every tag written in `features`, in tag order, each named.
+pub(crate) fn name_tags(features: &[ParsedFeature]) -> TagNames {
+    name_each(&tags_of(features))
 }
 
 /// Tag order: by the text lower-cased, then as written, each by character codes.
-pub(crate) fn tag_order(a: &str, b: &str) -> Ordering {
+fn tag_order(a: &str, b: &str) -> Ordering {
     a.to_lowercase()
         .cmp(&b.to_lowercase())
         .then_with(|| a.cmp(b))
 }
 
 /// Every tag written in `features`, once each, with its `@`, in tag order.
-pub(crate) fn tags_of(features: &[ParsedFeature]) -> Vec<String> {
+fn tags_of(features: &[ParsedFeature]) -> Vec<String> {
     let mut tags: Vec<String> = features
         .iter()
         .flat_map(|parsed| feature_tags(&parsed.feature))
@@ -39,8 +38,8 @@ pub(crate) fn tags_of(features: &[ParsedFeature]) -> Vec<String> {
 }
 
 /// `tags` in tag order, each with its `@`.
-pub(crate) fn name_tags(tags: &[String]) -> TagNames {
-    let mut taken = HashSet::from([INDEX.to_string()]);
+fn name_each(tags: &[String]) -> TagNames {
+    let mut taken = HashSet::from([TAG_INDEX_NAME.to_string()]);
     let mut names = TagNames::default();
     for tag in tags {
         let mut name = anchor_of(tag.strip_prefix('@').unwrap_or(tag));
@@ -110,7 +109,7 @@ mod tests {
         let tags: Vec<String> = ["@index", "@needs:db", "@Slow", "@slow", "@🚀", "@???"]
             .map(String::from)
             .to_vec();
-        let names = name_tags(&tags);
+        let names = name_each(&tags);
         let addresses: Vec<_> = tags
             .iter()
             .map(|tag| names.address(tag).to_string())

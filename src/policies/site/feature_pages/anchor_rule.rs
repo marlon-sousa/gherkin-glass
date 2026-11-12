@@ -3,11 +3,10 @@
 use std::collections::HashSet;
 
 use gherkin::{Background, Examples, Rule, Scenario};
-use unicode_normalization::UnicodeNormalization;
-use unicode_normalization::char::is_combining_mark;
 
 use crate::entities::{Anchored, AnchoredFeature, AnchoredRule, AnchoredScenario, ParsedFeature};
 use crate::policies::site::feature_pages::example_rows;
+use crate::policies::site::{anchor_of, unique};
 
 /// The kinds of block that have an anchor, each named in English for when
 /// neither its name nor its keyword leaves anything.
@@ -45,7 +44,6 @@ pub(crate) fn anchor_feature(parsed: &ParsedFeature) -> AnchoredFeature<'_> {
         scenario.rows = taken.rows(scenario);
     }
     AnchoredFeature {
-        parsed,
         background,
         scenarios,
         rules,
@@ -140,65 +138,6 @@ impl Kind {
             Kind::Examples => "examples",
         }
     }
-}
-
-/// `anchor`, or the first of it followed by `-2`, `-3` and so on that is not taken.
-pub(crate) fn unique(anchor: String, taken: &mut HashSet<String>) -> String {
-    let mut candidate = anchor.clone();
-    let mut number = 2;
-    while taken.contains(&candidate) {
-        candidate = format!("{anchor}-{number}");
-        number += 1;
-    }
-    taken.insert(candidate.clone());
-    candidate
-}
-
-/// The anchor of one name or keyword: lower-cased, without apostrophes, its letters and
-/// digits kept with the marks and joiners inside its words, and one hyphen between words;
-/// empty when nothing is left.
-pub(crate) fn anchor_of(text: &str) -> String {
-    // Lower-casing can leave text that is no longer in NFC, so it is normalised again.
-    let lower: String = text
-        .nfc()
-        .collect::<String>()
-        .to_lowercase()
-        .nfc()
-        .collect();
-    let characters: Vec<char> = lower
-        .chars()
-        .filter(|c| !matches!(c, '\'' | '\u{2019}'))
-        .collect();
-    let mut anchor = String::with_capacity(lower.len());
-    // Whether the last character looked at was kept, so that a mark or a joiner may follow it.
-    let mut joined = false;
-    for (index, &character) in characters.iter().enumerate() {
-        let keep = if character.is_alphanumeric() {
-            if !joined && !anchor.is_empty() {
-                anchor.push('-');
-            }
-            true
-        } else if is_combining_mark(character) {
-            joined
-        } else if is_joiner(character) {
-            joined
-                && characters
-                    .get(index + 1)
-                    .is_some_and(|c| c.is_alphanumeric())
-        } else {
-            false
-        };
-        if keep {
-            anchor.push(character);
-        }
-        joined = keep;
-    }
-    anchor
-}
-
-/// The zero width non-joiner and joiner, which Persian and the scripts of India write inside words.
-fn is_joiner(character: char) -> bool {
-    matches!(character, '\u{200c}' | '\u{200d}')
 }
 
 #[cfg(test)]

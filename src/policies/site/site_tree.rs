@@ -10,40 +10,34 @@ use crate::entities::{
     VersionName,
 };
 use crate::policies::site::{
-    anchor_feature, build_folder_pages, build_folder_tree, build_page, build_sentences_page,
-    build_tag_index, build_tag_page, build_versions_page, find_step_sentences, name_tags,
-    search_documents, tags_of,
+    build_folder_pages, build_folder_tree, build_page, build_sentences_page, build_tag_pages,
+    build_versions_page, name_tags, search_documents,
 };
 use crate::policies::{page_address, page_frame};
 
 /// The tree of the site of `features`, each feature's page in its folder,
 /// the folders made once from the pages' addresses, and the views of the
-/// feature pages, such as the tag pages, made from the pages in the tree. `version` names the
-/// version the build makes, or is `None` for a site without versions, and
-/// `built_versions` are those the output folder already holds.
+/// feature pages, such as the tag pages, made from the pages in the tree.
+/// `version` names the version the build makes, or is `None` for a site
+/// without versions, and `built_versions` are those the output folder
+/// already holds.
 pub(crate) fn site_tree(
     features: &[ParsedFeature],
     options: &PageOptions,
     version: Option<&VersionName>,
     built_versions: &BTreeSet<VersionName>,
 ) -> SiteTree {
-    let tags = tags_of(features);
-    let names = name_tags(&tags);
+    let names = name_tags(features);
     let mut site = site_with_feature_pages(features, options, &names, version);
     let feature_pages: Vec<_> = site.every_feature_page().collect();
-    let sentences = build_sentences_page(&find_step_sentences(&feature_pages), options);
-    let tag_index = build_tag_index(&tags, &feature_pages, &names, options);
-    let tag_pages: Vec<_> = tags
-        .par_iter()
-        .map(|tag| build_tag_page(tag, &feature_pages, &names, options))
-        .collect();
+    let sentences = build_sentences_page(&feature_pages, options);
+    let tag_pages = build_tag_pages(&feature_pages, &names, options);
     let documents = search_documents(&feature_pages);
     let folder_pages = build_folder_pages(site.folders(), options);
     site.folder_pages(folder_pages);
     let folder_tree = build_folder_tree(site.input_folder());
     site.sentences_page(sentences);
     site.folder_tree(folder_tree);
-    site.tag_index(tag_index);
     site.tag_pages(tag_pages);
     site.search_documents(documents);
     site.assets(SiteAssets::iter().map(Cow::into_owned));
@@ -71,13 +65,7 @@ pub(crate) fn site_with_feature_pages(
         .par_iter()
         .zip(folders.par_iter())
         .map(|(feature, folder)| {
-            let anchored = anchor_feature(feature);
-            build_page(
-                &anchored,
-                options,
-                names,
-                &site.site_folder(*folder).names(),
-            )
+            build_page(feature, options, names, &site.site_folder(*folder).names())
         })
         .collect();
     site.feature_pages(folders.into_iter().zip(pages));

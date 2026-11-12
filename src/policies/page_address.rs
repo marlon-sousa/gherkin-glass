@@ -1,14 +1,22 @@
-//! Policy: the addresses of the pages that both the input's checks and the site name: a feature file's page, a folder's page and the step sentences, relative to the site's root.
+//! Policy: the addresses of the pages that more than one part of the code names, relative to the site's root: a feature file's page and a folder's page, which the input's checks name too, the step sentences, and the tag index, which the tags' names leave free.
 
 use std::path::{Component, Path};
 
-use crate::entities::SiteAddress;
+use crate::entities::{SiteAddress, TAGS_FOLDER};
 
 /// A folder's page, in its folder of the site.
 pub(crate) const FOLDER_PAGE: &str = "index.html";
 
 /// The page of step sentences, at the site's root.
 pub(crate) const SENTENCES_PAGE: &str = "steps.html";
+
+/// The name of the index of every tag, in the folder of the tag pages, which no tag's page takes.
+pub(crate) const TAG_INDEX_NAME: &str = "index";
+
+/// The index of every tag, relative to the site's root.
+pub(crate) fn tag_index_address() -> SiteAddress {
+    SiteAddress::of(&[TAGS_FOLDER], &format!("{TAG_INDEX_NAME}.html"))
+}
 
 /// `path` is relative to the input folder. Its parts are joined by `/`, and
 /// its last extension is replaced by `html`, or `.html` added when it has none.

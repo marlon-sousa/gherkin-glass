@@ -1,7 +1,8 @@
 //! The sentences found, checked against the fixture.
 
 use crate::entities::{PageOptions, StepKind, TagNames};
-use crate::policies::site::{find_step_sentences, site_with_feature_pages};
+use crate::policies::site::sentences::find_step_sentences;
+use crate::policies::site::site_with_feature_pages;
 use crate::test_support::{fixture, read_features};
 
 /// A use of a sentence: its path, anchor, line and values.

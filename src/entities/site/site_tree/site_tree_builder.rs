@@ -6,8 +6,8 @@ use super::{FolderId, SiteFeaturePage, SiteFolder, SiteNode, SiteTree};
 use crate::entities::{
     BackgroundContent, ExampleScenario, ExamplesAsScenarios, FolderPageContent, GroupContent,
     PageContent, PageFrame, RuleContent, ScenarioContent, SearchDocument, SentenceContent,
-    SentencesPageContent, StepContent, TagFeatureContent, TagIndexContent, TagPageContent,
-    TreeItem, VersionName, VersionsList, VersionsPageContent,
+    SentencesPageContent, StepContent, TagFeatureContent, TagPagesContent, TreeItem, VersionName,
+    VersionsList, VersionsPageContent,
 };
 
 /// A site tree being built, each add putting its nodes after those already
@@ -134,21 +134,17 @@ impl SiteTreeBuilder {
         self.version_files([SiteNode::FolderTree(items)]);
     }
 
-    /// The index, its entries below it.
-    pub(crate) fn tag_index(&mut self, content: TagIndexContent) {
+    /// The index, its entries below it, then each tag's page, its features
+    /// below it, each feature's scenarios below the feature.
+    pub(crate) fn tag_pages(&mut self, content: TagPagesContent) {
         let mut version = self.node_mut(self.version);
-        let mut index = version.append(SiteNode::TagIndex(content.index));
-        for entry in content.entries {
+        let mut index = version.append(SiteNode::TagIndex(content.index.index));
+        for entry in content.index.entries {
             index.append(SiteNode::TagIndexEntry(entry));
         }
-    }
-
-    /// Each tag's page, its features below it, each feature's scenarios below the feature.
-    pub(crate) fn tag_pages(&mut self, pages: impl IntoIterator<Item = TagPageContent>) {
-        let mut version = self.node_mut(self.version);
-        for content in pages {
-            let mut page = version.append(SiteNode::TagPage(content.page));
-            for TagFeatureContent { feature, scenarios } in content.features {
+        for page_content in content.pages {
+            let mut page = version.append(SiteNode::TagPage(page_content.page));
+            for TagFeatureContent { feature, scenarios } in page_content.features {
                 let mut feature = page.append(SiteNode::TagFeature(feature));
                 for scenario in scenarios {
                     feature.append(SiteNode::TagScenario(scenario));

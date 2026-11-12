@@ -7,8 +7,8 @@ use crate::entities::{
     FeatureEntry, FolderId, FolderLink, FolderPage, FolderPageContent, FolderWords, LinkAddress,
     PageOptions, SiteAddress, SiteFeaturePage, SiteFolder,
 };
-use crate::policies::site::{breadcrumb, site_title, tag_index_address};
-use crate::policies::{CATALOGUE, FOLDER_PAGE, SENTENCES_PAGE};
+use crate::policies::site::{breadcrumb, site_title};
+use crate::policies::{CATALOGUE, FOLDER_PAGE, SENTENCES_PAGE, tag_index_address};
 
 /// The page of each of `folders`, the input folder's first, the home page,
 /// each paired with its folder, made from the folders and feature pages the

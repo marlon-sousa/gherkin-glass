@@ -12,9 +12,10 @@ use heading_words::heading;
 use i18n_embed_fl::fl;
 
 use crate::entities::{
-    AnchoredFeature, BackgroundContent, BackgroundsOption, HeadingLevel, Page, PageContent,
-    PageOptions, PageWords, RuleContent, ScenarioContent, SourceLink, TagNames, percent_encoded,
+    BackgroundContent, BackgroundsOption, HeadingLevel, Page, PageContent, PageOptions, PageWords,
+    ParsedFeature, RuleContent, ScenarioContent, SourceLink, TagNames, percent_encoded,
 };
+use crate::policies::site::feature_pages::anchor_feature;
 use crate::policies::site::{breadcrumb, page_language, site_title};
 use crate::policies::{CATALOGUE, page_address};
 
@@ -22,16 +23,16 @@ use crate::policies::{CATALOGUE, page_address};
 /// the path goes; no message of the catalogue holds it.
 const PATH_MARK: &str = "\u{0}";
 
-/// The page of `anchored` with its blocks. `tags` names every tag of the
-/// site, and `folders` are the names of the folder nodes the page is in,
-/// from the outermost, for its breadcrumb.
+/// The page of `parsed` with its blocks, each with its anchor. `tags` names
+/// every tag of the site, and `folders` are the names of the folder nodes
+/// the page is in, from the outermost, for its breadcrumb.
 pub(crate) fn build_page(
-    anchored: &AnchoredFeature<'_>,
+    parsed: &ParsedFeature,
     options: &PageOptions,
     tags: &TagNames,
     folders: &[String],
 ) -> PageContent {
-    let parsed = anchored.parsed;
+    let anchored = anchor_feature(parsed);
     let feature = &parsed.feature;
     let path = slash_path(&parsed.path);
     let address = page_address(&parsed.path);

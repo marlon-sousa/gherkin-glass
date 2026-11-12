@@ -8,7 +8,7 @@ use crate::entities::{
     BackgroundContent, LinkAddress, OutsideLink, ParsedFeature, RuleContent, ScenarioContent,
     SiteTreeBuilder, StepPart, TableView, TagView,
 };
-use crate::policies::site::{anchor_feature, name_tags, site_with_feature_pages, tags_of};
+use crate::policies::site::{name_tags, site_with_feature_pages};
 use crate::test_support::tag_link;
 
 /// The feature of `text`, in `billing/saque em conta.feature`.
@@ -24,13 +24,8 @@ fn parsed(text: &str) -> ParsedFeature {
 
 fn page(text: &str, options: &PageOptions) -> PageContent {
     let parsed = parsed(text);
-    let tags = name_tags(&tags_of(std::slice::from_ref(&parsed)));
-    build_page(
-        &anchor_feature(&parsed),
-        options,
-        &tags,
-        &["billing".to_string()],
-    )
+    let tags = name_tags(std::slice::from_ref(&parsed));
+    build_page(&parsed, options, &tags, &["billing".to_string()])
 }
 
 /// The blocks of a page of `FEATURE`: its background, its scenario and its rule.
@@ -56,7 +51,7 @@ fn in_rule(rule: &RuleContent) -> (&BackgroundContent, &ScenarioContent) {
 /// A site tree holding only the page of `text`, with the settings of every page `options`.
 fn tree_of(text: &str, options: &PageOptions) -> SiteTreeBuilder {
     let features = [parsed(text)];
-    site_with_feature_pages(&features, options, &name_tags(&tags_of(&features)), None)
+    site_with_feature_pages(&features, options, &name_tags(&features), None)
 }
 
 const FEATURE: &str = "\

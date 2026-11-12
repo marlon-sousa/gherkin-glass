@@ -63,6 +63,13 @@ pub(crate) struct TagScenario {
     pub(crate) after: String,
 }
 
+/// The index and every tag's page, in tag order, with what each holds, as the site stage builds them.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct TagPagesContent {
+    pub(crate) index: TagIndexContent,
+    pub(crate) pages: Vec<TagPageContent>,
+}
+
 /// The index with its entries, in tag order, as the site stage builds it.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct TagIndexContent {
