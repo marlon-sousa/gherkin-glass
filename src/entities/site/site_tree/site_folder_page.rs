@@ -2,7 +2,7 @@
 
 use ego_tree::NodeRef;
 
-use super::SiteNode;
+use super::{SiteNode, SiteTreeNode};
 use crate::entities::{FeatureEntry, FolderLink, FolderPage};
 
 #[derive(Debug, Clone, Copy)]
@@ -22,6 +22,11 @@ impl<'a> SiteFolderPage<'a> {
 
     pub(crate) fn page(&self) -> &'a FolderPage {
         self.page
+    }
+
+    /// The page's node, with the nodes above and below it.
+    pub(crate) fn node(&self) -> SiteTreeNode<'a> {
+        SiteTreeNode::new(self.node)
     }
 
     /// The links to the subfolders' pages, in the order the page lists them.

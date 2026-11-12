@@ -4,13 +4,12 @@ use i18n_embed::LanguageLoader;
 use i18n_embed_fl::fl;
 
 use crate::entities::{
-    GroupContent, GroupView, LinkAddress, PageOptions, Piece, SentenceContent, SentenceUse,
-    SentenceView, SentencesPage, SentencesPageContent, SiteFeaturePage, StepKind, StepSentences,
-    UseView,
+    GroupContent, GroupView, LinkAddress, OwnCrumb, PageOptions, Piece, SentenceContent,
+    SentenceUse, SentenceView, SentencesPage, SentencesPageContent, SiteFeaturePage, StepKind,
+    StepSentences, Trail, UseView,
 };
 use crate::policies::site::sentences::find_step_sentences;
-use crate::policies::site::{breadcrumb, site_title};
-use crate::policies::{CATALOGUE, SENTENCES_PAGE};
+use crate::policies::{CATALOGUE, SENTENCES_PAGE, site_title};
 
 /// Stand for a message's placeholders, to find where each goes; no message
 /// of the catalogue holds them.
@@ -58,7 +57,13 @@ fn sentences_page(sentences: &StepSentences, options: &PageOptions) -> Sentences
     let site = site_title(options);
     SentencesPageContent {
         page: SentencesPage {
-            breadcrumb: breadcrumb(&site, &[], Some((&heading, SENTENCES_PAGE))),
+            trail: Trail {
+                folders: Vec::new(),
+                page: Some(OwnCrumb {
+                    text: heading.clone(),
+                    file: SENTENCES_PAGE.to_string(),
+                }),
+            },
             language: own.clone(),
             title: fl!(CATALOGUE, "sentences-page-title", site = site.as_str()),
             heading,

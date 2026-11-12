@@ -1,6 +1,6 @@
 //! Entity: a folder's page, the home page among them, every text in it as written or worded: its nodes and its content as the site stage builds it, with what is below its node.
 
-use crate::entities::{Breadcrumb, ContentsEntry, LinkAddress, SiteAddress};
+use crate::entities::{ContentsEntry, LinkAddress, SiteAddress, Trail};
 
 /// One folder page of the site, which holds the link to each of its
 /// subfolders' pages and the entry of each of its features. Every `String`
@@ -14,7 +14,7 @@ pub(crate) struct FolderPage {
     pub(crate) title: String,
     /// The folder's name, or the site's title on the home page.
     pub(crate) heading: String,
-    pub(crate) breadcrumb: Breadcrumb,
+    pub(crate) trail: Trail,
     /// Only the home page's.
     pub(crate) totals: Vec<String>,
     /// Only the home page's: the link to the index of every tag.

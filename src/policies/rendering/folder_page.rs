@@ -2,6 +2,7 @@
 
 use askama::Template;
 
+use super::breadcrumb::Place;
 use super::contents::Contents;
 use super::node_rendering::{Render, RenderFile, rendered};
 use super::page_layout::{PageAround, SitePieces, whole_page};
@@ -42,8 +43,7 @@ impl RenderFile for SiteFolderPage<'_> {
             &PageAround {
                 language: &folder.language,
                 title: &folder.title,
-                root: folder.address.root(),
-                breadcrumb: &folder.breadcrumb,
+                place: Place::of(self.node(), &folder.trail),
             },
             rendered(&FolderTemplate {
                 folder,

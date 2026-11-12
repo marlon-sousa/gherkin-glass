@@ -1,4 +1,4 @@
-//! Policy: the site's title, the configuration's or the catalogue's default.
+//! Policy: the site's title, the configuration's or the catalogue's default, which the site stage and every page's frame use.
 
 use i18n_embed_fl::fl;
 

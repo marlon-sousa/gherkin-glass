@@ -44,6 +44,13 @@ impl<'a> SiteTreeNode<'a> {
         matches!(self.value(), SiteNode::Step(_))
     }
 
+    /// The names of the folders of the input this node is in, from the outermost.
+    pub(crate) fn folders(&self) -> Vec<&'a str> {
+        let mut names: Vec<_> = self.node.ancestors().filter_map(folder_name).collect();
+        names.reverse();
+        names
+    }
+
     /// The feature page this node is, or is part of.
     pub(crate) fn feature_page(&self) -> Option<SiteFeaturePage<'a>> {
         self.self_and_ancestors().find_map(SiteFeaturePage::of)
@@ -100,6 +107,13 @@ fn step_of(node: NodeRef<'_, SiteNode>) -> Option<&StepView> {
 fn examples_of(node: NodeRef<'_, SiteNode>) -> Option<&ExamplesBlock> {
     match node.value() {
         SiteNode::Examples(examples) => Some(examples),
+        _ => None,
+    }
+}
+
+fn folder_name(node: NodeRef<'_, SiteNode>) -> Option<&str> {
+    match node.value() {
+        SiteNode::Folder(name) => Some(name),
         _ => None,
     }
 }

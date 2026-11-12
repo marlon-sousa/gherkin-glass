@@ -2,6 +2,7 @@
 
 use askama::Template;
 
+use super::breadcrumb::Place;
 use super::node_rendering::{NodeOf, Render, RenderFile, pieces, rendered};
 use super::page_layout::{PageAround, SitePieces, whole_page};
 use crate::entities::{GroupView, SentenceView, SentencesPage, SiteAddress, UseView};
@@ -49,8 +50,7 @@ impl RenderFile for NodeOf<'_, SentencesPage> {
             &PageAround {
                 language: &page.language,
                 title: &page.title,
-                root: self.address().root(),
-                breadcrumb: &page.breadcrumb,
+                place: Place::of(self.node, &page.trail),
             },
             rendered(&SentencesTemplate {
                 page,

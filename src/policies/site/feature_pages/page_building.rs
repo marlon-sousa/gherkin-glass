@@ -12,11 +12,12 @@ use heading_words::heading;
 use i18n_embed_fl::fl;
 
 use crate::entities::{
-    BackgroundContent, BackgroundsOption, HeadingLevel, Page, PageContent, PageOptions, PageWords,
-    ParsedFeature, RuleContent, ScenarioContent, SourceLink, TagNames, percent_encoded,
+    BackgroundContent, BackgroundsOption, HeadingLevel, OwnCrumb, Page, PageContent, PageOptions,
+    PageWords, ParsedFeature, RuleContent, ScenarioContent, SourceLink, TagNames, Trail,
+    percent_encoded,
 };
 use crate::policies::site::feature_pages::anchor_feature;
-use crate::policies::site::{breadcrumb, page_language, site_title};
+use crate::policies::site::page_language;
 use crate::policies::{CATALOGUE, page_address};
 
 /// Stands for the file's path in the words of the source link, to find where
@@ -24,13 +25,11 @@ use crate::policies::{CATALOGUE, page_address};
 const PATH_MARK: &str = "\u{0}";
 
 /// The page of `parsed` with its blocks, each with its anchor. `tags` names
-/// every tag of the site, and `folders` are the names of the folder nodes
-/// the page is in, from the outermost, for its breadcrumb.
+/// every tag of the site.
 pub(crate) fn build_page(
     parsed: &ParsedFeature,
     options: &PageOptions,
     tags: &TagNames,
-    folders: &[String],
 ) -> PageContent {
     let anchored = anchor_feature(parsed);
     let feature = &parsed.feature;
@@ -68,11 +67,13 @@ pub(crate) fn build_page(
         enabled: any_background_steps(background.as_ref(), &scenarios, &rules),
     });
     let page = Page {
-        breadcrumb: breadcrumb(
-            &site_title(options),
-            folders,
-            Some((&heading, address.file())),
-        ),
+        trail: Trail {
+            folders: Vec::new(),
+            page: Some(OwnCrumb {
+                text: heading.clone(),
+                file: address.file().to_string(),
+            }),
+        },
         address,
         language: page_language(&parsed.language).to_string(),
         title: fl!(

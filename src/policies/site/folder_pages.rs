@@ -5,10 +5,9 @@ use i18n_embed_fl::fl;
 
 use crate::entities::{
     FeatureEntry, FolderId, FolderLink, FolderPage, FolderPageContent, FolderWords, LinkAddress,
-    PageOptions, SiteAddress, SiteFeaturePage, SiteFolder,
+    PageOptions, SiteAddress, SiteFeaturePage, SiteFolder, Trail,
 };
-use crate::policies::site::{breadcrumb, site_title};
-use crate::policies::{CATALOGUE, FOLDER_PAGE, SENTENCES_PAGE, tag_index_address};
+use crate::policies::{CATALOGUE, FOLDER_PAGE, SENTENCES_PAGE, site_title, tag_index_address};
 
 /// The page of each of `folders`, the input folder's first, the home page,
 /// each paired with its folder, made from the folders and feature pages the
@@ -46,7 +45,7 @@ fn folder_page(folder: &SiteFolder<'_>, title: &str) -> (FolderId, FolderPageCon
             )
         },
         heading: names.last().cloned().unwrap_or_else(|| title.to_string()),
-        breadcrumb: breadcrumb(title, &names, None),
+        trail: Trail::default(),
         totals: if home { totals(folder) } else { Vec::new() },
         tags: home.then(|| FolderLink {
             address: LinkAddress::to(tag_index_address().as_str()),

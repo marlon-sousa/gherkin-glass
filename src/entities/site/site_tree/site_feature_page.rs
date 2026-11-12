@@ -24,6 +24,11 @@ impl<'a> SiteFeaturePage<'a> {
         self.page
     }
 
+    /// The page's node, with the nodes above and below it.
+    pub(crate) fn node(&self) -> SiteTreeNode<'a> {
+        SiteTreeNode::new(self.node)
+    }
+
     /// The blocks directly in the page, in the order of the file: the
     /// feature's background, its scenarios, then its rules.
     pub(crate) fn blocks(&self) -> impl Iterator<Item = SiteTreeNode<'a>> + use<'a> {

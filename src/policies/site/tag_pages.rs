@@ -2,19 +2,17 @@
 
 mod tag_carriers;
 
-use std::slice::from_ref;
-
 use i18n_embed::LanguageLoader;
 use i18n_embed_fl::fl;
 
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 
 use crate::entities::{
-    LinkAddress, PageOptions, SiteFeaturePage, TagFeature, TagFeatureContent, TagIndex,
+    LinkAddress, OwnCrumb, PageOptions, SiteFeaturePage, TagFeature, TagFeatureContent, TagIndex,
     TagIndexContent, TagIndexEntry, TagNames, TagPage, TagPageContent, TagPagesContent,
-    TagScenario,
+    TagScenario, Trail,
 };
-use crate::policies::site::{breadcrumb, outside_link, site_title};
+use crate::policies::site::outside_link;
 use crate::policies::{CATALOGUE, tag_index_address};
 use tag_carriers::{Through, carriers, writes};
 
@@ -38,7 +36,7 @@ pub(crate) fn build_tag_pages(
 ) -> TagPagesContent {
     let tags = names.tags();
     TagPagesContent {
-        index: tag_index(tags, pages, names, options),
+        index: tag_index(tags, pages, names),
         // Collecting into a `Vec` keeps tag order, whatever order the threads finish in.
         pages: tags
             .par_iter()
@@ -47,12 +45,7 @@ pub(crate) fn build_tag_pages(
     }
 }
 
-fn tag_index(
-    tags: &[String],
-    pages: &[SiteFeaturePage<'_>],
-    names: &TagNames,
-    options: &PageOptions,
-) -> TagIndexContent {
+fn tag_index(tags: &[String], pages: &[SiteFeaturePage<'_>], names: &TagNames) -> TagIndexContent {
     let entries = tags
         .iter()
         .map(|tag| {
@@ -76,7 +69,10 @@ fn tag_index(
             address: tag_index_address(),
             language: tag_pages_language(),
             // The index is the folder's own page, so its crumb reads the index's title.
-            breadcrumb: breadcrumb(&site_title(options), from_ref(&title), None),
+            trail: Trail {
+                folders: vec![title.clone()],
+                page: None,
+            },
             title,
             empty: fl!(CATALOGUE, "tag-index-empty"),
         },
@@ -137,11 +133,13 @@ fn tag_page(
     let page = TagPage {
         address: names.address(tag),
         language: language.clone(),
-        breadcrumb: breadcrumb(
-            &site_title(options),
-            &[fl!(CATALOGUE, "tag-index-title")],
-            Some((&title, &file)),
-        ),
+        trail: Trail {
+            folders: vec![fl!(CATALOGUE, "tag-index-title")],
+            page: Some(OwnCrumb {
+                text: title.clone(),
+                file,
+            }),
+        },
         title,
         heading_before,
         tag: tag.to_string(),
@@ -272,7 +270,7 @@ Feature: F
     fn the_index_counts_the_scenarios_that_carry_each_tag() {
         let (builder, names) = site(&[("a.feature", FEATURE), ("b.feature", "@own\nFeature: G\n")]);
         let pages: Vec<_> = builder.every_feature_page().collect();
-        let index = tag_index(names.tags(), &pages, &names, &PageOptions::default());
+        let index = tag_index(names.tags(), &pages, &names);
         let entries: Vec<_> = index
             .entries
             .iter()

@@ -1,6 +1,6 @@
-//! Entity: what every page has around its content, a feature's or a folder's: the skip link, the folder tree's checkbox and the tree's landmark, the Theme control, the search box, and the themes' colours.
+//! Entity: what every page has around its content, a feature's or a folder's: the skip link, the folder tree's checkbox and the tree's landmark, the Theme control, the search box, the words every breadcrumb has, and the themes' colours.
 
-use crate::entities::{Accents, SearchWords};
+use crate::entities::{Accents, BreadcrumbWords, SearchWords};
 
 /// Every `String` is text, escaped when it is rendered.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -18,4 +18,5 @@ pub(crate) struct PageFrame {
     /// The site's accents, among the themes' colours.
     pub(crate) accents: Accents,
     pub(crate) search: SearchWords,
+    pub(crate) breadcrumb: BreadcrumbWords,
 }

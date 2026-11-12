@@ -2,11 +2,12 @@
 
 use askama::Template;
 
+use super::breadcrumb::Place;
 use super::node_rendering::{Render, page};
 use super::page_frame::TreeLandmark;
 use super::page_head::PageHead;
 use super::search_box::SearchBox;
-use crate::entities::{Breadcrumb, PageFrame};
+use crate::entities::PageFrame;
 
 /// The site nodes every page of a version's site shows, rendered once for the build.
 pub(super) struct SitePieces<'a> {
@@ -21,9 +22,7 @@ pub(super) struct PageAround<'a> {
     /// The `lang` of the page.
     pub(super) language: &'a str,
     pub(super) title: &'a str,
-    /// From the page back to the site's root.
-    pub(super) root: String,
-    pub(super) breadcrumb: &'a Breadcrumb,
+    pub(super) place: Place<'a>,
 }
 
 #[derive(Template)]
@@ -63,19 +62,20 @@ impl SitePieces<'_> {
 
 /// The whole page whose content, already rendered, is `main`.
 pub(super) fn whole_page(site: &SitePieces<'_>, around: &PageAround<'_>, main: String) -> String {
+    let root = around.place.root();
     page(&LayoutTemplate {
         language: around.language,
         head: PageHead {
             title: around.title,
-            root: &around.root,
+            root: &root,
             stylesheet: &site.stylesheet,
         }
         .render(),
         frame: &site.frame,
         tree: &site.tree,
-        breadcrumb: around.breadcrumb.render(),
+        breadcrumb: around.place.breadcrumb(&site.page_frame.breadcrumb),
         search: SearchBox {
-            root: &around.root,
+            root: &root,
             words: &site.page_frame.search,
         }
         .render(),

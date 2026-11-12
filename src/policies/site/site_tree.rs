@@ -3,7 +3,7 @@
 use std::borrow::Cow;
 use std::collections::BTreeSet;
 
-use rayon::prelude::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
+use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 
 use crate::entities::{
     FolderId, PageOptions, ParsedFeature, SiteAssets, SiteTree, SiteTreeBuilder, TagNames,
@@ -63,10 +63,7 @@ pub(crate) fn site_with_feature_pages(
     // Collecting into a `Vec` keeps file order, whatever order the threads finish in.
     let pages: Vec<_> = features
         .par_iter()
-        .zip(folders.par_iter())
-        .map(|(feature, folder)| {
-            build_page(feature, options, names, &site.site_folder(*folder).names())
-        })
+        .map(|feature| build_page(feature, options, names))
         .collect();
     site.feature_pages(folders.into_iter().zip(pages));
     site

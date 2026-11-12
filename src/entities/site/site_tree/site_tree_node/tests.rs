@@ -75,7 +75,7 @@ fn a_background_without_steps_is_left_out_and_a_background_starts_with_none() {
 }
 
 #[test]
-fn a_scenario_is_in_its_rule_then_its_feature_page() {
+fn a_scenario_is_in_its_rule_then_its_feature_page_and_in_its_folders() {
     let site = site(FEATURE);
     let [page] = feature_pages(&site)[..] else {
         panic!("one page");
@@ -88,6 +88,7 @@ fn a_scenario_is_in_its_rule_then_its_feature_page() {
         .map(|block| matches!(block.value(), SiteNode::Rule(_)))
         .collect();
     assert_eq!(kinds, [true, false]);
+    assert_eq!(inside.folders(), ["billing", "archive"]);
     assert!(inside.feature_page().is_some());
     assert!(inside.folder_page().is_none());
 }

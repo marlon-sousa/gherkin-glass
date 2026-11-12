@@ -1,6 +1,6 @@
 //! Entity: the index of every tag and each tag's page, as their templates show them, their nodes and their content as the site stage builds it, with what is below each node.
 
-use crate::entities::{Breadcrumb, LinkAddress, OutsideLink, SiteAddress};
+use crate::entities::{LinkAddress, OutsideLink, SiteAddress, Trail};
 
 /// The index, which holds an entry for each tag. Every `String` is text,
 /// escaped when it is rendered, and every link is relative to the page that
@@ -11,7 +11,7 @@ pub(crate) struct TagIndex {
     pub(crate) address: SiteAddress,
     /// The index's `lang`: the catalogue's language.
     pub(crate) language: String,
-    pub(crate) breadcrumb: Breadcrumb,
+    pub(crate) trail: Trail,
     pub(crate) title: String,
     /// Shown in place of the entries when there are none.
     pub(crate) empty: String,
@@ -33,7 +33,7 @@ pub(crate) struct TagPage {
     pub(crate) address: SiteAddress,
     /// The page's `lang`: the catalogue's language.
     pub(crate) language: String,
-    pub(crate) breadcrumb: Breadcrumb,
+    pub(crate) trail: Trail,
     pub(crate) title: String,
     /// The title's words before and after the tag, which is isolated in the markup.
     pub(crate) heading_before: String,

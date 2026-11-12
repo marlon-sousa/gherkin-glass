@@ -25,7 +25,7 @@ fn parsed(text: &str) -> ParsedFeature {
 fn page(text: &str, options: &PageOptions) -> PageContent {
     let parsed = parsed(text);
     let tags = name_tags(std::slice::from_ref(&parsed));
-    build_page(&parsed, options, &tags, &["billing".to_string()])
+    build_page(&parsed, options, &tags)
 }
 
 /// The blocks of a page of `FEATURE`: its background, its scenario and its rule.

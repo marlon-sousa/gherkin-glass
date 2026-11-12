@@ -2,6 +2,7 @@
 
 use askama::Template;
 
+use super::breadcrumb::Place;
 use super::node_rendering::{NodeOf, Render, RenderFile, pieces, rendered};
 use super::page_layout::{PageAround, SitePieces, whole_page};
 use crate::entities::{
@@ -60,8 +61,7 @@ impl RenderFile for NodeOf<'_, TagIndex> {
             &PageAround {
                 language: &index.language,
                 title: &index.title,
-                root: index.address.root(),
-                breadcrumb: &index.breadcrumb,
+                place: Place::of(self.node, &index.trail),
             },
             rendered(&TagIndexTemplate {
                 index,
@@ -89,8 +89,7 @@ impl RenderFile for NodeOf<'_, TagPage> {
             &PageAround {
                 language: &page.language,
                 title: &page.title,
-                root: page.address.root(),
-                breadcrumb: &page.breadcrumb,
+                place: Place::of(self.node, &page.trail),
             },
             rendered(&TagPageTemplate {
                 page,

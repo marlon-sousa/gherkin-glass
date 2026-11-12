@@ -2,6 +2,7 @@
 
 use askama::Template;
 
+use super::breadcrumb::Place;
 use super::node_rendering::{Render, RenderFile, pieces, rendered};
 use super::page_layout::{PageAround, SitePieces, whole_page};
 use crate::entities::{ContentsEntry, Page, SiteAddress, SiteFeaturePage};
@@ -27,8 +28,7 @@ impl RenderFile for SiteFeaturePage<'_> {
             &PageAround {
                 language: &page.language,
                 title: &page.title,
-                root: page.address.root(),
-                breadcrumb: &page.breadcrumb,
+                place: Place::of(self.node(), &page.trail),
             },
             rendered(&FeatureTemplate {
                 page,
