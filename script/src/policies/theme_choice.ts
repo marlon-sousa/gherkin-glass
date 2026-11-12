@@ -1,6 +1,6 @@
 // Policy: the theme a reader can choose, how the choice is kept, and the theme it shows.
 
-/** The theme choice is kept under this key for every page of the origin. templates/layout.html reads it too. */
+/** The theme choice is kept under this key for every page of the origin. src/policies/rendering/page_head.html reads it too. */
 export const THEME_KEY = "gherkin-glass:theme";
 
 export type ThemeChoice = "system" | "light" | "dark";

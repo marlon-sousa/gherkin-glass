@@ -1,9 +1,6 @@
-{%- extends "layout.html" -%}
-{%- import "macros.html" as m -%}
-{%- block main -%}
 <h1>{{ page.heading_before }}<bdi>{{ page.tag }}</bdi>{{ page.heading_after }}</h1>
 {%- if let Some(outside) = page.outside %}
-<p>{% call m::outside_link(outside) %}{% endcall %}</p>
+<p>{{ outside.render()|safe }}</p>
 {%- endif %}
 {%- for feature in page.features %}
 <h2><a href="{{ feature.address }}"{% if let Some(lang) = feature.language %} lang="{{ lang }}"{% endif %}>{{ feature.heading }}</a></h2>
@@ -17,4 +14,3 @@
 </ul>
 {%- endif %}
 {%- endfor %}
-{%- endblock -%}

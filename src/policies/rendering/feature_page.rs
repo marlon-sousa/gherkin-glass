@@ -1,38 +1,29 @@
-//! Policy: a feature's page, rendered from its template.
+//! Policy: a feature's page, its content rendered from its template inside the page's layout.
 
 use askama::Template;
 
-use super::node_rendering::{Render, RenderFile, page};
-use super::theme_stylesheet::theme_stylesheet;
-use crate::entities::{Breadcrumb, Page, PageFrame, SiteAddress};
+use super::node_rendering::{Render, RenderFile, rendered};
+use super::page_layout::{PageAround, whole_page};
+use crate::entities::{Page, SiteAddress};
 
 #[derive(Template)]
 #[template(path = "feature_page.html")]
 struct FeatureTemplate<'a> {
-    language: &'a str,
-    title: &'a str,
-    /// From the page back to the site's root, for the shared assets.
-    root: String,
-    frame: &'a PageFrame,
-    /// The stylesheet of the themes' colours, written into the page's head as it is.
-    theme_style: String,
-    breadcrumb: &'a Breadcrumb,
     page: &'a Page,
-    blocks: String,
 }
 
 impl Render for Page {
     fn render(&self) -> String {
-        page(&FeatureTemplate {
-            language: &self.language,
-            title: &self.title,
-            root: self.address.root(),
-            frame: &self.frame,
-            theme_style: theme_stylesheet(&self.frame.accents),
-            breadcrumb: &self.breadcrumb,
-            page: self,
-            blocks: self.blocks.render(),
-        })
+        whole_page(
+            &PageAround {
+                language: &self.language,
+                title: &self.title,
+                root: self.address.root(),
+                frame: &self.frame,
+                breadcrumb: &self.breadcrumb,
+            },
+            rendered(&FeatureTemplate { page: self }),
+        )
     }
 }
 

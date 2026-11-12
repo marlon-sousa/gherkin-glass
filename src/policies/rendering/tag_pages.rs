@@ -1,51 +1,36 @@
-//! Policy: the tag index and each tag's page, rendered from their templates, in the language of the catalogue.
+//! Policy: the tag index and each tag's page, their content rendered from their templates inside the page's layout, in the language of the catalogue.
 
 use askama::Template;
 
-use super::node_rendering::{Render, RenderFile, page};
-use super::theme_stylesheet::theme_stylesheet;
-use crate::entities::{Breadcrumb, PageFrame, SiteAddress, TagIndex, TagPage};
+use super::node_rendering::{Render, RenderFile, rendered};
+use super::page_layout::{PageAround, whole_page};
+use crate::entities::{SiteAddress, TagIndex, TagPage};
 use crate::policies::{tag_index_address, tag_pages_language};
 
 #[derive(Template)]
 #[template(path = "tag_index.html")]
 struct TagIndexTemplate<'a> {
-    language: &'a str,
-    title: &'a str,
-    /// From the page back to the site's root, for the shared assets.
-    root: String,
-    frame: &'a PageFrame,
-    /// The stylesheet of the themes' colours, written into the page's head as it is.
-    theme_style: String,
-    breadcrumb: &'a Breadcrumb,
     index: &'a TagIndex,
 }
 
 #[derive(Template)]
 #[template(path = "tag_page.html")]
 struct TagPageTemplate<'a> {
-    language: &'a str,
-    title: &'a str,
-    /// From the page back to the site's root, for the shared assets.
-    root: String,
-    frame: &'a PageFrame,
-    /// The stylesheet of the themes' colours, written into the page's head as it is.
-    theme_style: String,
-    breadcrumb: &'a Breadcrumb,
     page: &'a TagPage,
 }
 
 impl Render for TagIndex {
     fn render(&self) -> String {
-        page(&TagIndexTemplate {
-            language: &tag_pages_language(),
-            title: &self.title,
-            root: tag_index_address().root(),
-            frame: &self.frame,
-            theme_style: theme_stylesheet(&self.frame.accents),
-            breadcrumb: &self.breadcrumb,
-            index: self,
-        })
+        whole_page(
+            &PageAround {
+                language: &tag_pages_language(),
+                title: &self.title,
+                root: self.address().root(),
+                frame: &self.frame,
+                breadcrumb: &self.breadcrumb,
+            },
+            rendered(&TagIndexTemplate { index: self }),
+        )
     }
 }
 
@@ -57,15 +42,16 @@ impl RenderFile for TagIndex {
 
 impl Render for TagPage {
     fn render(&self) -> String {
-        page(&TagPageTemplate {
-            language: &tag_pages_language(),
-            title: &self.title,
-            root: self.address.root(),
-            frame: &self.frame,
-            theme_style: theme_stylesheet(&self.frame.accents),
-            breadcrumb: &self.breadcrumb,
-            page: self,
-        })
+        whole_page(
+            &PageAround {
+                language: &tag_pages_language(),
+                title: &self.title,
+                root: self.address.root(),
+                frame: &self.frame,
+                breadcrumb: &self.breadcrumb,
+            },
+            rendered(&TagPageTemplate { page: self }),
+        )
     }
 }
 

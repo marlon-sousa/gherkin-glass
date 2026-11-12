@@ -1,4 +1,4 @@
-// Port: the search box of the page, as templates/layout.html writes it, and what the reader does in it.
+// Port: the search box of the page, as src/policies/rendering/search_box.html writes it, and what the reader does in it.
 
 /** The page's words for the search box, each `{count}`, `{name}`, `{feature}` and `{rule}` a placeholder. */
 export interface SearchWords {

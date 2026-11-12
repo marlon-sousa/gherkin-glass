@@ -10,7 +10,7 @@ use crate::entities::{
 
 /// Above this size, search can be slow to start. MiniSearch 7.2.0, in Node 22
 /// on a four-core server, took about 70 ms to index each million bytes.
-pub(super) const LARGE_SEARCH_DOCUMENTS: usize = 5_000_000;
+const LARGE_SEARCH_DOCUMENTS: usize = 5_000_000;
 
 /// Every file of `tree`, in its order, in the site that `options` make.
 pub(crate) fn render_site(tree: &SiteTree, options: &PageOptions) -> SiteFiles {

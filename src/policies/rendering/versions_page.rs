@@ -7,9 +7,10 @@ use askama::Template;
 use i18n_embed::LanguageLoader;
 use i18n_embed_fl::fl;
 
-use super::node_rendering::page;
+use super::node_rendering::{Render, page};
+use super::page_frame::ThemeControl;
+use super::page_head::PageHead;
 use super::site_files::assets;
-use super::theme_stylesheet::theme_stylesheet;
 use crate::entities::{PageFrame, PageOptions, SiteAddress, SiteFile, VersionList, VersionName};
 use crate::policies::{CATALOGUE, page_frame};
 
@@ -20,11 +21,10 @@ const VERSIONS_PAGE: &str = "index.html";
 #[template(path = "versions_page.html")]
 struct VersionsTemplate {
     language: String,
-    title: String,
+    head: String,
     /// The skip link and the themes every page has; the page has no folder tree.
     frame: PageFrame,
-    /// The stylesheet of the themes' colours, written into the page's head as it is.
-    theme_style: String,
+    theme_control: String,
     words: Words,
     development: Vec<Entry>,
     releases: Vec<Entry>,
@@ -72,12 +72,18 @@ fn render_versions_page(list: &VersionList, options: &PageOptions) -> String {
             .collect()
     };
     let title = fl!(CATALOGUE, "versions-title");
+    let frame = page_frame(options);
     let template = VersionsTemplate {
         // The page holds interface text only, in the catalogue's language.
         language: CATALOGUE.current_language().to_string(),
-        title: title.clone(),
-        frame: page_frame(options),
-        theme_style: theme_stylesheet(&options.accents),
+        head: PageHead {
+            title: &title,
+            root: "",
+            accents: &options.accents,
+        }
+        .render(),
+        theme_control: ThemeControl(&frame).render(),
+        frame,
         words: Words {
             title,
             development: fl!(CATALOGUE, "versions-development"),

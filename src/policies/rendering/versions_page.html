@@ -1,26 +1,12 @@
 <!doctype html>
 <html lang="{{ language }}">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{{ title }}</title>
-<script>try{var t=localStorage.getItem("gherkin-glass:theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}</script>
-<style>
-{{ theme_style|safe }}</style>
-<link rel="stylesheet" href="assets/gherkin-glass.css">
-<script type="module" src="assets/gherkin-glass.js"></script>
-</head>
+{{ head|safe }}
 <body>
 {#- The versions page is above every version's site, so it has no folder tree
     and no breadcrumb. #}
 <a class="ghg-skip" href="#ghg_main">{{ frame.skip_link }}</a>
 <div class="ghg-options">
-<fieldset class="ghg-theme">
-<legend>{{ frame.theme }}</legend>
-<label><input type="radio" name="ghg-theme" value="system" checked> {{ frame.theme_system }}</label>
-<label><input type="radio" name="ghg-theme" value="light"> {{ frame.theme_light }}</label>
-<label><input type="radio" name="ghg-theme" value="dark"> {{ frame.theme_dark }}</label>
-</fieldset>
+{{ theme_control|safe }}
 </div>
 <main id="ghg_main">
 <h1>{{ words.title }}</h1>

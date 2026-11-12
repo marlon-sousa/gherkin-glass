@@ -1,17 +1,21 @@
-{%- import "macros.html" as m -%}
 <div class="ghg-block {{ block.kind.class() }}">
 <h{{ block.level.number() }} id="{{ block.anchor }}"><button type="button" class="ghg-toggle" aria-expanded="{{ !block.collapsed }}">{% for part in block.heading_parts %}{% if part.isolated %}<bdi>{{ part.text }}</bdi>{% else %}{{ part.text }}{% endif %}{% endfor %}</button></h{{ block.level.number() }}>
 <div class="ghg-content"{% if block.collapsed %} hidden{% endif %}>
-{%- call m::tags(block.tags) %}{% endcall %}
-{%- call m::description(block.description) %}{% endcall %}
+{%- if !block.tags.is_empty() %}
+{{ block.tags.render()|safe }}
+{%- endif %}
+{%- if let Some(description) = block.description %}
+{{ description.render()|safe }}
+{%- endif %}
 {%- for from in block.backgrounds %}
-<div class="ghg-from-background">
-<p id="{{ from.id }}">{{ from.introduction }}<span class="ghg-linked"{% if from.inline %} hidden{% endif %}> <a href="#{{ from.anchor }}">{{ from.heading }}</a></span></p>
-{%- call m::steps(from.steps, from.id.as_str(), from.inline) %}{% endcall %}
-</div>
+{{ from.render()|safe }}
 {%- endfor %}
-{%- if !block.steps.is_empty() %}{% call m::steps(block.steps, "", true) %}{% endcall %}{% endif %}
-{%- if let Some(table) = block.table %}{% call m::table(table) %}{% endcall %}{% endif %}
+{%- if !block.steps.is_empty() %}
+{{ block.steps.render()|safe }}
+{%- endif %}
+{%- if let Some(table) = block.table %}
+{{ table.render()|safe }}
+{%- endif %}
 {%- if !blocks.is_empty() %}
 {{ blocks|safe }}
 {%- endif %}

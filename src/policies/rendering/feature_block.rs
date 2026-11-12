@@ -6,7 +6,7 @@ use super::node_rendering::{Render, rendered};
 use crate::entities::{
     BackgroundBlock, BlockHeading, ExampleScenario, ExamplesAsScenarios, ExamplesBlock,
     FeatureBlock, FromBackground, HeadingLevel, HeadingPart, OutlineParts, Paragraph, RuleBlock,
-    ScenarioBlock, StepPart, StepView, TableView, TagView,
+    ScenarioBlock, StepView, TableView, TagView,
 };
 
 #[derive(Template)]

@@ -22,7 +22,7 @@ test("the system's choice sets no theme on the page", () => {
 });
 
 test("the page's head applies the kept choice as the policy does, before the page is drawn", () => {
-  const layout = readFileSync(new URL("../../../templates/layout.html", import.meta.url), "utf8");
+  const layout = readFileSync(new URL("../../../src/policies/rendering/page_head.html", import.meta.url), "utf8");
   const head = layout.slice(0, layout.indexOf("<style>"));
   const found = /<script>(.*)<\/script>/.exec(head);
   assert.ok(found?.[1], "a classic script before the page's style");

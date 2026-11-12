@@ -4,7 +4,8 @@ use askama::Template;
 
 use crate::entities::SiteAddress;
 
-/// A node of the site tree, rendered into its piece of a page.
+/// A node of the site tree, rendered into its piece of a page. A piece has no
+/// line break before or after it: the template that places it puts them.
 pub(super) trait Render {
     fn render(&self) -> String;
 }
