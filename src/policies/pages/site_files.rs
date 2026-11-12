@@ -128,4 +128,14 @@ mod tests {
                 .is_none_or(|size| is_large(&size))
         );
     }
+
+    #[test]
+    fn an_empty_input_still_has_its_home_page() {
+        let site = site_files(&[], &PageOptions::default());
+        assert!(
+            site.files
+                .iter()
+                .any(|file| file.address.as_str() == "index.html")
+        );
+    }
 }

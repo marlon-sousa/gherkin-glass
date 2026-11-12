@@ -1,4 +1,4 @@
-//! The output service's checks over the real file system, against the versions fixture.
+//! The site writer's checks over the real file system, against the versions fixture.
 
 use std::fs::{create_dir_all, remove_dir_all, remove_file, write};
 use std::path::{Path, PathBuf};
@@ -6,12 +6,12 @@ use std::sync::Arc;
 
 use rstest::rstest;
 
-use crate::adapters::OutputFolderStore;
+use crate::adapters::{FolderFiles, MemoryFiles, OutputFolderStore};
 use crate::entities::{BuildTarget, Record, VersionName};
 use crate::errors::{OutputError, OutputErrorKind};
 use crate::fixtures::{self, copy_folder, scratch};
 use crate::policies::Moment;
-use crate::services::OutputService;
+use crate::services::SiteWriter;
 
 fn fixture() -> PathBuf {
     fixtures::fixture("versions")
@@ -40,8 +40,13 @@ fn check(
     target: &BuildTarget,
     moment: Moment,
 ) -> Result<Option<Record>, OutputError> {
-    OutputService::new(Arc::new(OutputFolderStore))
-        .check(output, target, moment)
+    let writer = SiteWriter::new(
+        Arc::new(OutputFolderStore),
+        Arc::new(FolderFiles),
+        Arc::new(MemoryFiles::default()),
+    );
+    writer
+        .check_folder(output, target, moment)
         .map(|folder| folder.record().cloned())
 }
 

@@ -6,7 +6,7 @@ use std::path::PathBuf;
 use i18n_embed_fl::fl;
 use thiserror::Error;
 
-use super::{BuildError, ConfigErrors, InputErrors};
+use super::BuildError;
 use crate::policies::CATALOGUE;
 
 #[derive(Debug, Clone, PartialEq, Eq, Error)]
@@ -45,11 +45,9 @@ pub(crate) struct WatchError {
 /// What stops a rebuild, which leaves the last site that built served. Its
 /// display is the report, then that the last site is still served.
 #[derive(Debug, Clone, PartialEq, Eq, Error)]
-pub(crate) enum RebuildError {
-    #[error(fmt = Self::not_rebuilt)]
-    Config(ConfigErrors),
-    #[error(fmt = Self::not_rebuilt)]
-    Input(InputErrors),
+pub(crate) struct RebuildError {
+    #[source]
+    pub(crate) build: BuildError,
 }
 
 impl ServeError {
@@ -85,9 +83,9 @@ impl Display for WatchError {
     }
 }
 
-impl RebuildError {
-    fn not_rebuilt(report: &dyn Display, f: &mut Formatter<'_>) -> FmtResult {
-        write!(f, "{report}")?;
+impl Display for RebuildError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+        write!(f, "{}", self.build)?;
         writeln!(f, "{}", fl!(CATALOGUE, "serve-not-rebuilt"))
     }
 }

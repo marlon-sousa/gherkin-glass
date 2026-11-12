@@ -2,7 +2,7 @@
 
 use std::cmp::Ordering;
 use std::fmt::{Display, Formatter, Result as FmtResult};
-use std::path::{Component, MAIN_SEPARATOR, Path};
+use std::path::{Component, Path};
 
 use thiserror::Error;
 
@@ -20,22 +20,6 @@ pub(crate) struct InputError {
 }
 
 impl InputError {
-    /// An error with a file of the site, whose path is the output folder as
-    /// it was given, followed by the file's path in it.
-    pub(crate) fn of_site(output: &Path, file: &str, kind: InputErrorKind) -> Self {
-        let output = output.display().to_string();
-        let path = if output.is_empty() || output.ends_with(['/', MAIN_SEPARATOR]) {
-            format!("{output}{file}")
-        } else {
-            format!("{output}/{file}")
-        };
-        InputError {
-            path,
-            line: None,
-            kind,
-        }
-    }
-
     /// `path` as an error shows it: relative to `input`, with `/` between folders.
     pub(crate) fn shown_path(input: &Path, path: &Path) -> String {
         display_path(input, path)

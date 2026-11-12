@@ -7,22 +7,25 @@ use std::process::ExitCode;
 use std::sync::Arc;
 
 use crate::adapters::{
-    ConfigFileReader, FileWatcher, GherkinCrate, HttpPreviewServer, InputFolderReader, MemorySite,
-    OutputFolderStore, SiteFiles, StandardStreams,
+    ConfigFileReader, FileWatcher, FolderFiles, GherkinCrate, HttpPreviewServer, InputFolderReader,
+    MemoryFiles, OutputFolderStore, StandardStreams,
 };
 use crate::controllers::SiteController;
 use crate::handlers::CommandLine;
 use crate::policies::cargo_plugin_arguments;
-use crate::services::{InputService, OutputService, ServerService, SettingsService};
+use crate::services::{Converter, InputService, ServerService, SettingsService, SiteWriter};
 
 /// Runs ghg with `arguments`, those after the command's own name.
 pub fn run(arguments: impl IntoIterator<Item = OsString>) -> ExitCode {
     let site = SiteController::new(
         SettingsService::new(Arc::new(ConfigFileReader)),
         InputService::new(Arc::new(InputFolderReader), Arc::new(GherkinCrate)),
-        OutputService::new(Arc::new(OutputFolderStore)),
-        Arc::new(SiteFiles),
-        Arc::new(MemorySite::default()),
+        Converter,
+        SiteWriter::new(
+            Arc::new(OutputFolderStore),
+            Arc::new(FolderFiles),
+            Arc::new(MemoryFiles::default()),
+        ),
         ServerService::new(Arc::new(HttpPreviewServer), Arc::new(FileWatcher)),
     );
     let reply = CommandLine::new(Arc::new(site), Arc::new(StandardStreams)).run(arguments);

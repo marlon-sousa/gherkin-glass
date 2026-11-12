@@ -1,6 +1,7 @@
 mod fakes;
 
 use std::path::PathBuf;
+use std::sync::Arc;
 use std::sync::atomic::Ordering;
 use std::thread::scope;
 
@@ -8,10 +9,10 @@ use fakes::*;
 use rstest::rstest;
 
 use super::*;
-use crate::entities::{OutputContents, Watched};
+use crate::entities::{OutputContents, Record, Watched};
 use crate::errors::OutputErrorKind;
-use crate::fixtures::{FakeWatcher, changed};
-use crate::ports::SiteWriter;
+use crate::fixtures::{FakeWatcher, changed, folder, name, set, two_versions};
+use crate::ports::FileWriter;
 
 fn build_options(config: Option<&str>, input: Option<&str>) -> BuildOptions {
     BuildOptions {
@@ -51,6 +52,25 @@ fn a_build_reads_the_input_the_configuration_and_the_options_name(
         .build(&build_options(config, input))
         .expect_err("stops");
     assert_eq!(error.to_string(), report);
+}
+
+#[rstest]
+// Rules 38 and 123: a build whose input has a problem changes no folder.
+#[case::without_versions(folder(&["ghg-site.json"], &[], Some(Record::Site(set(&[])))), None)]
+#[case::as_a_version(two_versions(), Some("v1.0.0"))]
+fn a_build_whose_input_has_a_problem_changes_no_folder(
+    #[case] contents: OutputContents,
+    #[case] version: Option<&str>,
+) {
+    let world = World::default();
+    world.input.failing.store(true, Ordering::SeqCst);
+    let options = BuildOptions {
+        version_name: version.map(name),
+        ..BuildOptions::default()
+    };
+    let outcome = world.controller(&[], contents).build(&options);
+    assert!(matches!(outcome, Err(BuildError::Input(_))), "{outcome:?}");
+    assert_eq!(world.touched.load(Ordering::SeqCst), 0);
 }
 
 #[test]
@@ -124,7 +144,11 @@ fn watching_rebuilds_on_each_burst_and_keeps_the_last_good_site() {
 
         world.input.failing.store(true, Ordering::SeqCst);
         sender.send(changed("ghg.toml")).expect("sent");
-        assert!(events.wait_for(3)[2].starts_with("not rebuilt: Input("));
+        assert!(
+            events.wait_for(3)[2].starts_with("not rebuilt: RebuildError { build: Input("),
+            "{:?}",
+            events.wait_for(3)
+        );
         assert_eq!(preview.current().number, 2);
 
         drop(sender);

@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 
 use crate::entities::{BuildTarget, Record};
 
-/// Outside the crate, made only by [`crate::services::OutputService`]'s checks, so
+/// Outside the crate, made only by [`crate::services::SiteWriter`]'s checks, so
 /// that no other folder is ever emptied.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct BuildFolder {

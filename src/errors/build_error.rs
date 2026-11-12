@@ -8,7 +8,6 @@ use super::{ConfigErrors, InputErrors, OutputError};
 pub(crate) enum BuildError {
     #[error(transparent)]
     Config(ConfigErrors),
-    /// The input's errors, or a file of the site that cannot be written.
     #[error(transparent)]
     Input(#[from] InputErrors),
     #[error(transparent)]

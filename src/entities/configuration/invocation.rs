@@ -2,7 +2,7 @@
 
 use std::path::PathBuf;
 
-use crate::entities::VersionName;
+use crate::entities::{Destination, VersionName};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) enum Invocation {
@@ -47,5 +47,12 @@ impl ServeMode {
     /// Whether the site is built again on every change.
     pub(crate) fn watches(self) -> bool {
         self == ServeMode::Watch
+    }
+
+    pub(crate) fn destination(self) -> Destination {
+        match self {
+            ServeMode::Watch => Destination::Memory,
+            ServeMode::Folder | ServeMode::Build => Destination::Folder,
+        }
     }
 }

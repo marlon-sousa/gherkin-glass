@@ -2,12 +2,13 @@
 
 use std::path::PathBuf;
 
-use crate::entities::{PageOptions, Unnamed, VersionName};
+use crate::entities::{Destination, PageOptions, Unnamed, VersionName};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct Settings {
     pub(crate) input: PathBuf,
     pub(crate) output: PathBuf,
+    pub(crate) destination: Destination,
     pub(crate) unnamed: Unnamed,
     pub(crate) pages: PageOptions,
     /// `None` when the build is not versioned.

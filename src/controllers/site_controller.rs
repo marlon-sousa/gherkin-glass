@@ -2,15 +2,13 @@
 
 use std::net::SocketAddr;
 use std::path::Path;
-use std::sync::Arc;
 use std::thread::park;
 
 use crate::entities::{
-    BuildOptions, BuiltSite, Preview, ServeMode, ServeOptions, ServedSite, Settings,
+    BuildOptions, BuiltSite, Destination, Preview, ServeMode, ServeOptions, ServedSite, Settings,
 };
-use crate::errors::{BuildError, InputErrors, RebuildError, ServeError};
-use crate::ports::{SiteRecorder, SiteWriter};
-use crate::services::{InputService, OutputService, ServerService, SettingsService, SiteService};
+use crate::errors::{BuildError, RebuildError, ServeError};
+use crate::services::{Converter, InputService, ServerService, SettingsService, SiteWriter};
 
 /// What the handlers ask of gherkin-glass.
 pub(crate) trait SiteApi {
@@ -30,35 +28,37 @@ pub(crate) trait SiteListener {
 
 pub(crate) struct SiteController {
     settings: SettingsService,
-    input: InputService,
-    output: OutputService,
-    on_disk: SiteService,
-    in_memory: SiteService,
-    memory: Arc<dyn SiteRecorder>,
+    parser: InputService,
+    converter: Converter,
+    writer: SiteWriter,
     server: ServerService,
 }
 
 impl SiteController {
-    /// `on_disk` writes a site into its output folder, once `output` has
-    /// checked that folder; under `--watch`, the site is built into
-    /// `memory`, which no output folder's check concerns.
     pub(crate) fn new(
         settings: SettingsService,
-        input: InputService,
-        output: OutputService,
-        on_disk: Arc<dyn SiteWriter>,
-        memory: Arc<dyn SiteRecorder>,
+        parser: InputService,
+        converter: Converter,
+        writer: SiteWriter,
         server: ServerService,
     ) -> Self {
         SiteController {
             settings,
-            on_disk: SiteService::new(input.clone(), on_disk),
-            in_memory: SiteService::new(input.clone(), memory.clone()),
-            input,
-            output,
-            memory,
+            parser,
+            converter,
+            writer,
             server,
         }
+    }
+
+    /// Builds the site as `settings` say, and returns what the build says of
+    /// it and the site as it is served.
+    fn build_with(&self, settings: &Settings) -> Result<(BuiltSite, ServedSite), BuildError> {
+        self.writer.check(settings)?;
+        let features = self.parser.read(&settings.input, settings.unnamed)?;
+        let site = self.converter.convert(&features, settings);
+        let built = site.built;
+        Ok((built, self.writer.write(settings, site)?))
     }
 
     fn rebuild_and_serve(
@@ -72,43 +72,36 @@ impl SiteController {
                 preview.replace(site);
                 listener.rebuilt();
             }
-            Err(error) => listener.not_rebuilt(&error),
+            Err(build) => listener.not_rebuilt(&RebuildError { build }),
         }
     }
 
-    fn rebuild(&self, options: &BuildOptions) -> Result<ServedSite, RebuildError> {
-        let settings = self.settings.load(options).map_err(RebuildError::Config)?;
-        self.build_in_memory(&settings).map_err(RebuildError::Input)
-    }
-
-    fn build_in_memory(&self, settings: &Settings) -> Result<ServedSite, InputErrors> {
-        // A build that stopped may have written some files, which this drops.
-        self.memory.take();
-        let built = self.in_memory.build(settings, &settings.output);
-        let files = self.memory.take();
-        built.map(|_| ServedSite::Memory(files))
-    }
-
-    /// The build ghg build makes, into the output folder, served from there.
-    fn build_into_output(&self, settings: &Settings) -> Result<ServedSite, BuildError> {
-        self.output.build(&self.on_disk, settings)?;
-        Ok(ServedSite::Folder(settings.output.clone()))
+    /// Builds the site again in memory, reading the configuration again.
+    fn rebuild(&self, options: &BuildOptions) -> Result<ServedSite, BuildError> {
+        let settings = self
+            .settings
+            .load(options, Destination::Memory)
+            .map_err(BuildError::Config)?;
+        Ok(self.build_with(&settings)?.1)
     }
 }
 
 impl SiteApi for SiteController {
     fn build(&self, options: &BuildOptions) -> Result<BuiltSite, BuildError> {
-        let settings = self.settings.load(options).map_err(BuildError::Config)?;
-        self.output.build(&self.on_disk, &settings)
+        let settings = self
+            .settings
+            .load(options, Destination::Folder)
+            .map_err(BuildError::Config)?;
+        Ok(self.build_with(&settings)?.0)
     }
 
     fn serve(&self, options: &ServeOptions, listener: &dyn SiteListener) -> Result<(), ServeError> {
         let settings = self
             .settings
-            .load(&options.build)
+            .load(&options.build, options.mode.destination())
             .map_err(BuildError::Config)?;
         let config = SettingsService::config_file(&options.build);
-        let selected = |input: &Path| self.input.paths(input);
+        let selected = |input: &Path| self.parser.paths(input);
         // Watching starts before the first build, so that a change made
         // during it is not missed; what stops the build is said first.
         let rebuilds = options
@@ -117,8 +110,7 @@ impl SiteApi for SiteController {
             .then(|| self.server.watch(&settings.input, &config, &selected));
         let site = match options.mode {
             ServeMode::Folder => ServedSite::Folder(settings.output.clone()),
-            ServeMode::Watch => self.build_in_memory(&settings).map_err(BuildError::Input)?,
-            ServeMode::Build => self.build_into_output(&settings)?,
+            ServeMode::Build | ServeMode::Watch => self.build_with(&settings)?.1,
         };
         let rebuilds = rebuilds.transpose().map_err(ServeError::Watch)?;
         let served = self.server.serve(site, options)?;
