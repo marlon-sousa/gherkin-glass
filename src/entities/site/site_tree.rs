@@ -6,14 +6,14 @@ use crate::entities::{
 
 /// One file of the site, as the node of its kind.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) enum FileNode {
-    Feature(Page),
-    Folder(FolderPage),
-    Sentences(SentencesPage),
+pub(crate) enum SiteNode {
+    FeaturePage(Page),
+    FolderPage(FolderPage),
+    SentencesPage(SentencesPage),
     /// The folder tree's data, which the pages' script builds the tree from.
     FolderTree(Vec<TreeItem>),
     TagIndex(TagIndex),
-    Tag(TagPage),
+    TagPage(TagPage),
     /// The documents search reads.
     SearchDocuments(Vec<SearchDocument>),
     /// One of the assets every site has, by its name in their folder.
@@ -24,5 +24,5 @@ pub(crate) enum FileNode {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct SiteTree {
     pub(crate) frame: PageFrame,
-    pub(crate) files: Vec<FileNode>,
+    pub(crate) files: Vec<SiteNode>,
 }

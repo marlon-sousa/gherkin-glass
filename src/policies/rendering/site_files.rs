@@ -6,7 +6,7 @@ use super::node_rendering::RenderFile;
 use super::page_layout::SitePieces;
 use super::site_data::{SEARCH_DOCUMENTS, asset};
 use crate::entities::{
-    BuiltSite, FileNode, PageOptions, SiteAssets, SiteFile, SiteFiles, SiteTree,
+    BuiltSite, PageOptions, SiteAssets, SiteFile, SiteFiles, SiteNode, SiteTree,
 };
 
 /// Above this size, search can be slow to start. MiniSearch 7.2.0, in Node 22
@@ -33,16 +33,16 @@ pub(crate) fn render_site(tree: &SiteTree, options: &PageOptions) -> SiteFiles {
 }
 
 /// The file of `node`; `None` only for an asset that is not there.
-fn render_file(node: &FileNode, site: &SitePieces<'_>) -> Option<SiteFile> {
+fn render_file(node: &SiteNode, site: &SitePieces<'_>) -> Option<SiteFile> {
     match node {
-        FileNode::Feature(page) => Some(file(page, site)),
-        FileNode::Folder(folder) => Some(file(folder, site)),
-        FileNode::Sentences(page) => Some(file(page, site)),
-        FileNode::FolderTree(items) => Some(file(items.as_slice(), site)),
-        FileNode::TagIndex(index) => Some(file(index, site)),
-        FileNode::Tag(page) => Some(file(page, site)),
-        FileNode::SearchDocuments(documents) => Some(file(documents.as_slice(), site)),
-        FileNode::Asset(name) => asset_file(name),
+        SiteNode::FeaturePage(page) => Some(file(page, site)),
+        SiteNode::FolderPage(folder) => Some(file(folder, site)),
+        SiteNode::SentencesPage(page) => Some(file(page, site)),
+        SiteNode::FolderTree(items) => Some(file(items.as_slice(), site)),
+        SiteNode::TagIndex(index) => Some(file(index, site)),
+        SiteNode::TagPage(page) => Some(file(page, site)),
+        SiteNode::SearchDocuments(documents) => Some(file(documents.as_slice(), site)),
+        SiteNode::Asset(name) => asset_file(name),
     }
 }
 

@@ -4,7 +4,7 @@ use std::borrow::Cow;
 
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 
-use crate::entities::{FileNode, PageOptions, ParsedFeature, SiteAssets, SiteTree};
+use crate::entities::{PageOptions, ParsedFeature, SiteAssets, SiteNode, SiteTree};
 use crate::policies::page_frame;
 use crate::policies::site::{
     anchor_feature, build_folder_pages, build_folder_tree, build_page, build_sentences_page,
@@ -32,16 +32,16 @@ pub(crate) fn site_tree(features: &[ParsedFeature], options: &PageOptions) -> Si
     let documents = search_documents(&anchored);
     let files = pages
         .into_iter()
-        .map(FileNode::Feature)
-        .chain(folders.into_iter().map(FileNode::Folder))
+        .map(SiteNode::FeaturePage)
+        .chain(folders.into_iter().map(SiteNode::FolderPage))
         .chain([
-            FileNode::Sentences(sentences),
-            FileNode::FolderTree(folder_tree),
-            FileNode::TagIndex(tag_index),
+            SiteNode::SentencesPage(sentences),
+            SiteNode::FolderTree(folder_tree),
+            SiteNode::TagIndex(tag_index),
         ])
-        .chain(tag_pages.into_iter().map(FileNode::Tag))
-        .chain([FileNode::SearchDocuments(documents)])
-        .chain(SiteAssets::iter().map(Cow::into_owned).map(FileNode::Asset))
+        .chain(tag_pages.into_iter().map(SiteNode::TagPage))
+        .chain([SiteNode::SearchDocuments(documents)])
+        .chain(SiteAssets::iter().map(Cow::into_owned).map(SiteNode::Asset))
         .collect();
     SiteTree {
         frame: page_frame(options),
@@ -59,7 +59,7 @@ mod tests {
         assert!(tree.files.iter().any(is_the_home_page));
     }
 
-    fn is_the_home_page(node: &FileNode) -> bool {
-        matches!(node, FileNode::Folder(folder) if folder.address.as_str() == "index.html")
+    fn is_the_home_page(node: &SiteNode) -> bool {
+        matches!(node, SiteNode::FolderPage(folder) if folder.address.as_str() == "index.html")
     }
 }

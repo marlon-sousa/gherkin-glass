@@ -8,7 +8,7 @@ use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use gherkin::{Feature, GherkinEnv};
 
 use super::*;
-use crate::entities::{FileNode, PageOptions, ParsedFeature, SiteTree, Unnamed};
+use crate::entities::{PageOptions, ParsedFeature, SiteNode, SiteTree, Unnamed};
 use crate::policies::page_frame;
 
 /// Gives the settings of a build from the input `options` name, or `features`, into `site`, or,
@@ -145,19 +145,19 @@ impl SiteWriterApi for FakeSiteWriter {
 }
 
 /// The names of the assets among `files`, joined with spaces.
-fn asset_names(files: &[FileNode]) -> String {
+fn asset_names(files: &[SiteNode]) -> String {
     let names: Vec<_> = files.iter().filter_map(asset_name).collect();
     names.join(" ")
 }
 
 /// The asset that stands for `feature`.
-fn asset_of(feature: &ParsedFeature) -> FileNode {
-    FileNode::Asset(feature.path.display().to_string())
+fn asset_of(feature: &ParsedFeature) -> SiteNode {
+    SiteNode::Asset(feature.path.display().to_string())
 }
 
-fn asset_name(file: &FileNode) -> Option<&str> {
+fn asset_name(file: &SiteNode) -> Option<&str> {
     match file {
-        FileNode::Asset(name) => Some(name),
+        SiteNode::Asset(name) => Some(name),
         _ => None,
     }
 }
