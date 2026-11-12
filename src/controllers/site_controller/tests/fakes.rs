@@ -14,7 +14,9 @@ use crate::errors::{
     ConfigError, ConfigErrorKind, ConfigErrors, InputError, InputErrorKind, InputErrors,
     ListenErrorKind, OutputError, OutputErrorKind,
 };
-use building::{FakeConverter, FakeGherkinParser, FakeSettingsService, FakeSiteWriter};
+use building::{
+    FakeConverter, FakeGherkinParser, FakeInputCollector, FakeSettingsService, FakeSiteWriter,
+};
 use serving::FakeServerService;
 pub(super) use serving::Recorded;
 
@@ -54,6 +56,7 @@ pub(super) enum Failing {
 pub(super) struct World {
     pub(super) calls: Arc<Calls>,
     pub(super) settings: Arc<FakeSettingsService>,
+    pub(super) input_collector: Arc<FakeInputCollector>,
     pub(super) gherkin_parser: Arc<FakeGherkinParser>,
     pub(super) converter: Arc<FakeConverter>,
     pub(super) site_writer: Arc<FakeSiteWriter>,
@@ -65,6 +68,7 @@ impl World {
     pub(super) fn controller(&self) -> SiteController {
         SiteController::new(
             self.settings.clone(),
+            self.input_collector.clone(),
             self.gherkin_parser.clone(),
             self.converter.clone(),
             self.site_writer.clone(),
@@ -91,6 +95,9 @@ pub(super) fn world() -> World {
         settings: Arc::new(FakeSettingsService {
             calls: calls.clone(),
             ..FakeSettingsService::default()
+        }),
+        input_collector: Arc::new(FakeInputCollector {
+            calls: calls.clone(),
         }),
         gherkin_parser: Arc::new(FakeGherkinParser {
             calls: calls.clone(),

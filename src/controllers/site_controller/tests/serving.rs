@@ -18,7 +18,7 @@ fn serve_options(mode: ServeMode) -> ServeOptions {
 // Rules 56 and 66: ghg serve loads the settings as ghg build does, with the destination its
 // mode gives, builds as its mode says, then serves the site it built, or the output folder as
 // it is; and, under --watch, the watch starts first, on the input and the configuration file,
-// with the files the gherkin parser selects.
+// with the files the input collector allows.
 #[case::the_output_folder_as_it_is(ServeMode::Folder, "Folder", &[], &[], "Folder(\"site\")")]
 #[case::the_site_built_into_the_output_folder(
     ServeMode::Build,
@@ -32,7 +32,7 @@ fn serve_options(mode: ServeMode) -> ServeOptions {
     "Memory",
     &[
         "server.watch features ghg.toml",
-        "gherkin_parser.paths features",
+        "input_collector.collect features",
     ],
     &a_build("Memory"),
     "Memory({\"site 1\": []})"

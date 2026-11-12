@@ -13,7 +13,8 @@ use super::*;
 fn a_build(destination: &str) -> Vec<String> {
     [
         format!("site_writer.check {destination}"),
-        "gherkin_parser.parse features Refused".into(),
+        "input_collector.collect features".into(),
+        "gherkin_parser.parse a.feature Refused".into(),
         "converter.convert a.feature beside v1.0.0".into(),
         "site_writer.write a.feature".into(),
     ]
@@ -21,7 +22,7 @@ fn a_build(destination: &str) -> Vec<String> {
 }
 
 #[test]
-fn a_build_loads_the_settings_checks_the_output_then_parses_converts_and_writes() {
+fn a_build_loads_the_settings_checks_the_output_then_collects_parses_converts_and_writes() {
     let world = world();
     let options = BuildOptions {
         input: Some(PathBuf::from("specs")),
@@ -33,7 +34,8 @@ fn a_build_loads_the_settings_checks_the_output_then_parses_converts_and_writes(
         [
             "settings.load Folder",
             "site_writer.check Folder",
-            "gherkin_parser.parse specs Refused",
+            "input_collector.collect specs",
+            "gherkin_parser.parse a.feature Refused",
             "converter.convert a.feature beside v1.0.0",
             "site_writer.write a.feature",
         ]
@@ -46,8 +48,8 @@ fn a_build_loads_the_settings_checks_the_output_then_parses_converts_and_writes(
 // problem before any folder is written.
 #[case::by_the_settings(Failing::Settings, 0, BuildError::Config(config_errors()))]
 #[case::by_the_output_folder_s_check(Failing::OutputCheck, 1, BuildError::Output(output_error()))]
-#[case::by_the_input(Failing::Input, 2, BuildError::Input(input_errors()))]
-#[case::by_the_writing(Failing::Writing, 4, BuildError::Output(output_error()))]
+#[case::by_the_input(Failing::Input, 3, BuildError::Input(input_errors()))]
+#[case::by_the_writing(Failing::Writing, 5, BuildError::Output(output_error()))]
 fn what_stops_a_build_is_reported_and_ends_it(
     #[case] failing: Failing,
     #[case] calls_of_the_build: usize,

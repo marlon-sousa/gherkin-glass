@@ -10,7 +10,8 @@ use super::*;
 use crate::entities::{OutputContents, PageOptions, RawFeature, Unnamed};
 use crate::errors::{BuildError, ParseError};
 use crate::ports::FeatureParser;
-use crate::services::{Converter, ConverterApi, GherkinParser, GherkinParserApi};
+use crate::services::{Converter, ConverterApi};
+use crate::test_support::parsed_input;
 pub(super) use crate::test_support::{MemoryFolders, folder, name, set, two_versions};
 
 /// An output folder held in memory. Each look into it takes the next of
@@ -120,14 +121,16 @@ pub(super) fn build(
     writer: Arc<FakeWriter>,
 ) -> Result<ServedSite, BuildError> {
     let folders_in = MemoryFolders::with_files_in(Path::new("in"), &files);
-    let input = GherkinParser::new(Arc::new(folders_in), Arc::new(FakeParser));
     let settings = settings(Destination::Folder, version);
+    let input_tree = parsed_input(
+        Arc::new(folders_in),
+        Arc::new(FakeParser),
+        &settings.input,
+        settings.unnamed,
+    );
     let site_writer = SiteWriter::new(folders, writer, Arc::new(FakeWriter::default()));
-    let features = input
-        .parse(&settings.input, settings.unnamed)
-        .expect("features");
     let built_versions = site_writer.check(&settings)?;
-    let tree = Converter.convert(&features, &settings, &built_versions);
+    let tree = Converter.convert(&input_tree, &settings, &built_versions);
     let (_, served) = site_writer.write(&settings, &tree)?;
     Ok(served)
 }

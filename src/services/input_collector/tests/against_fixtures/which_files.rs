@@ -1,4 +1,4 @@
-//! Which files the gherkin parser reads, checked against the fixtures.
+//! Which files the input collector allows, checked against the fixtures.
 
 use super::*;
 
@@ -6,9 +6,8 @@ use super::*;
 
 #[test]
 fn only_the_files_the_defaults_and_the_ghg_ignore_files_allow_are_read() {
-    let features = read(&fixture("input-files"));
     assert_eq!(
-        paths(&features),
+        allowed(&fixture("input-files")),
         [
             // Rule 3: `!.github/` in the input's .ghg-ignore reads a hidden folder again.
             ".github/read-again.feature",
@@ -43,7 +42,7 @@ fn the_ignore_files_of_the_folders_above_the_input_have_no_effect() {
     let input = root.join("input");
     copy_folder(&fixture("input-files"), &input);
 
-    assert_eq!(paths(&read(&input)), paths(&read(&fixture("input-files"))));
+    assert_eq!(allowed(&input), allowed(&fixture("input-files")));
 }
 
 #[test]
@@ -57,7 +56,7 @@ fn a_ghg_ignore_file_is_never_read_as_a_feature() {
     )
     .expect("copied");
 
-    assert_eq!(paths(&read(&input)), [".hidden.feature"]);
+    assert_eq!(allowed(&input), [".hidden.feature"]);
 }
 
 #[cfg(unix)]
@@ -79,7 +78,7 @@ fn symbolic_links_are_not_followed() {
     symlink(elsewhere.join("read.feature"), input.join("linked.feature")).expect("linked");
     symlink(&elsewhere, input.join("linked-folder")).expect("linked");
 
-    assert_eq!(paths(&read(&input)), ["read.feature"]);
+    assert_eq!(allowed(&input), ["read.feature"]);
 }
 
 #[test]
@@ -91,11 +90,5 @@ fn a_folder_sorts_by_its_name_before_its_contents() {
     write(input.join("a/x.feature"), "Nothing\n").expect("written");
     write(input.join("a-b.feature"), "Nothing\n").expect("written");
 
-    let errors = read_input(&input).expect_err("cannot be read");
-    let paths: Vec<_> = errors
-        .as_slice()
-        .iter()
-        .map(|error| error.path.as_str())
-        .collect();
-    assert_eq!(paths, ["a/x.feature", "a-b.feature"]);
+    assert_eq!(allowed(&input), ["a/x.feature", "a-b.feature"]);
 }

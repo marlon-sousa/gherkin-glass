@@ -1,43 +1,30 @@
-//! Service: the gherkin parser, walking the input and parsing the feature files it selects.
+//! Service: the gherkin parser, parsing the feature files it is given, each on its own.
 
-mod input_walk;
-
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::sync::Arc;
 
-use input_walk::walk_input;
-use rayon::iter::Either;
-use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
+use rayon::prelude::{IntoParallelIterator, ParallelIterator};
 
-use crate::entities::{ParsedFeature, Unnamed};
-use crate::errors::{InputError, InputErrorKind, InputErrors};
-use crate::policies::{
-    correct_doc_strings, correct_step_keywords, file_language, page_collisions, unnamed_blocks,
-};
-use crate::ports::{FeatureParser, InputFolders};
+use crate::entities::{FileToParse, ParsedFeature, ParsedFile, Unnamed};
+use crate::errors::{InputError, InputErrorKind};
+use crate::policies::{correct_doc_strings, correct_step_keywords, file_language, unnamed_blocks};
+use crate::ports::FeatureParser;
 
 /// What the controller asks of the gherkin parser.
 pub(crate) trait GherkinParserApi: Send + Sync {
-    /// The paths of the files the `.ghg-ignore` rules select under
-    /// `input`, sorted, without reading them.
-    fn paths(&self, input: &Path) -> Vec<PathBuf>;
-
-    /// The features under `input`, sorted by path, or every error found:
-    /// those met while collecting, the files whose page another has, those
-    /// of every file parsed, and, when `unnamed` is refused, every block
-    /// that needs a name and has none.
-    fn parse(&self, input: &Path, unnamed: Unnamed) -> Result<Vec<ParsedFeature>, InputErrors>;
+    /// What parsing each of `files`, under `input`, gave, in their order: its feature, or its
+    /// errors, among them, when `unnamed` is refused, every block that needs a name and has none.
+    fn parse(&self, input: &Path, files: Vec<FileToParse>, unnamed: Unnamed) -> Vec<ParsedFile>;
 }
 
 #[derive(Clone)]
 pub(crate) struct GherkinParser {
-    folders: Arc<dyn InputFolders>,
-    parser: Arc<dyn FeatureParser>,
+    feature_parser: Arc<dyn FeatureParser>,
 }
 
 impl GherkinParser {
-    pub(crate) fn new(folders: Arc<dyn InputFolders>, parser: Arc<dyn FeatureParser>) -> Self {
-        GherkinParser { folders, parser }
+    pub(crate) fn new(feature_parser: Arc<dyn FeatureParser>) -> Self {
+        GherkinParser { feature_parser }
     }
 
     fn parse_file(
@@ -48,7 +35,7 @@ impl GherkinParser {
     ) -> Result<ParsedFeature, Vec<InputError>> {
         let input_error = |line, kind| InputError::new(input, path, line, kind);
         let mut raw = self
-            .parser
+            .feature_parser
             .parse(path)
             .map_err(|error| vec![input_error(error.line, error.kind)])?;
         // Only a file changed between the parse and the read of its source fails here.
@@ -73,30 +60,20 @@ impl GherkinParser {
             media_types,
         ))
     }
+
+    fn parsed_file(&self, input: &Path, file: FileToParse, unnamed: Unnamed) -> ParsedFile {
+        let result = self.parse_file(input, &file.path, unnamed);
+        ParsedFile { file, result }
+    }
 }
 
 impl GherkinParserApi for GherkinParser {
-    fn paths(&self, input: &Path) -> Vec<PathBuf> {
-        walk_input(self.folders.as_ref(), input).paths
-    }
-
-    fn parse(&self, input: &Path, unnamed: Unnamed) -> Result<Vec<ParsedFeature>, InputErrors> {
-        let collected = walk_input(self.folders.as_ref(), input);
-        let mut errors = collected.errors;
-        let clashes = page_collisions(input, &collected.paths);
-        errors.extend(clashes.into_iter().map(|clash| clash.error));
+    fn parse(&self, input: &Path, files: Vec<FileToParse>, unnamed: Unnamed) -> Vec<ParsedFile> {
         // Collecting into a `Vec` keeps file order, whatever order the threads finish in.
-        let (failed, features): (Vec<_>, Vec<_>) = collected
-            .paths
-            .par_iter()
-            .map(|path| self.parse_file(input, path, unnamed))
-            .partition_map(Either::from);
-        errors.extend(failed.into_iter().flatten());
-        if errors.is_empty() {
-            Ok(features)
-        } else {
-            Err(InputErrors::new(errors))
-        }
+        files
+            .into_par_iter()
+            .map(|file| self.parsed_file(input, file, unnamed))
+            .collect()
     }
 }
 

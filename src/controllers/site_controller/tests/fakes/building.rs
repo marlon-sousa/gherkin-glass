@@ -1,5 +1,5 @@
-//! The fakes of the services a build runs: the settings service, the gherkin parser, the
-//! converter and the site writer.
+//! The fakes of the services a build runs: the settings service, the input collector, the
+//! gherkin parser, the converter and the site writer.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::PathBuf;
@@ -9,7 +9,8 @@ use gherkin::{Feature, GherkinEnv};
 
 use super::*;
 use crate::entities::{
-    PageOptions, ParsedFeature, SiteNode, SiteTree, SiteTreeBuilder, Unnamed, VersionName,
+    FileToParse, InputTree, InputTreeBuilder, PageOptions, ParsedFeature, ParsedFile, SiteNode,
+    SiteTree, SiteTreeBuilder, Unnamed, VersionName,
 };
 use crate::policies::page_frame;
 use crate::test_support::name;
@@ -55,8 +56,25 @@ impl SettingsApi for FakeSettingsService {
     }
 }
 
-/// Finds one file, `a.feature`, in whatever input it is given, and parses it as a feature named
-/// `a`, or, while `failing`, gives the errors of [`input_errors`].
+/// Finds one file, `a.feature`, in whatever input it is given.
+#[derive(Default)]
+pub(crate) struct FakeInputCollector {
+    pub(super) calls: Arc<Calls>,
+}
+
+impl InputCollectorApi for FakeInputCollector {
+    fn collect(&self, input: &Path) -> InputTree {
+        self.calls
+            .note(format!("input_collector.collect {}", input.display()));
+        let mut builder = InputTreeBuilder::listed(input.to_path_buf(), Vec::new());
+        let root = builder.root();
+        builder.add_allowed_file(root, input.join("a.feature"));
+        builder.build()
+    }
+}
+
+/// Parses each file as a feature named after its name, or, while `failing`, gives the errors of
+/// [`input_errors`] for each.
 #[derive(Default)]
 pub(crate) struct FakeGherkinParser {
     pub(super) calls: Arc<Calls>,
@@ -64,28 +82,40 @@ pub(crate) struct FakeGherkinParser {
 }
 
 impl GherkinParserApi for FakeGherkinParser {
-    fn paths(&self, input: &Path) -> Vec<PathBuf> {
-        self.calls
-            .note(format!("gherkin_parser.paths {}", input.display()));
-        vec![input.join("a.feature")]
-    }
-
-    fn parse(&self, input: &Path, unnamed: Unnamed) -> Result<Vec<ParsedFeature>, InputErrors> {
+    fn parse(&self, input: &Path, files: Vec<FileToParse>, unnamed: Unnamed) -> Vec<ParsedFile> {
+        let names: Vec<_> = files.iter().map(|file| file_name(input, file)).collect();
         self.calls.note(format!(
             "gherkin_parser.parse {} {unnamed:?}",
-            input.display()
+            names.join(" ")
         ));
-        if self.failing.load(Ordering::SeqCst) {
-            return Err(input_errors());
-        }
-        let feature = Feature::parse("Feature: a\n", GherkinEnv::default()).expect("parses");
-        Ok(vec![ParsedFeature::new(
-            PathBuf::from("a.feature"),
+        let failing = self.failing.load(Ordering::SeqCst);
+        files
+            .into_iter()
+            .map(|file| parsed(input, file, failing))
+            .collect()
+    }
+}
+
+fn file_name(input: &Path, file: &FileToParse) -> String {
+    let relative = file.path.strip_prefix(input).expect("under the input");
+    relative.display().to_string()
+}
+
+fn parsed(input: &Path, file: FileToParse, failing: bool) -> ParsedFile {
+    let result = if failing {
+        Err(input_errors().as_slice().to_vec())
+    } else {
+        let name = file_name(input, &file);
+        let feature =
+            Feature::parse(format!("Feature: {name}\n"), GherkinEnv::default()).expect("parses");
+        Ok(ParsedFeature::new(
+            PathBuf::from(name),
             feature,
             "en".into(),
             BTreeMap::new(),
-        )])
-    }
+        ))
+    };
+    ParsedFile { file, result }
 }
 
 /// Makes a tree with one asset for each feature, named after the feature's path, and notes
@@ -97,12 +127,12 @@ pub(crate) struct FakeConverter {
 impl ConverterApi for FakeConverter {
     fn convert(
         &self,
-        features: &[ParsedFeature],
+        input_tree: &InputTree,
         settings: &Settings,
         built_versions: &BTreeSet<VersionName>,
     ) -> SiteTree {
         let mut site = SiteTreeBuilder::new(page_frame(&settings.pages), None);
-        site.assets(features.iter().map(asset_of));
+        site.assets(input_tree.features().map(asset_of));
         let tree = site.build();
         let versions: Vec<_> = built_versions.iter().map(VersionName::as_str).collect();
         self.calls.note(format!(

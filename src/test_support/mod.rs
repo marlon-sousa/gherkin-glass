@@ -6,8 +6,12 @@ mod output;
 mod serving;
 
 use std::collections::{BTreeMap, BTreeSet};
+#[cfg(unix)]
+use std::fs::{Permissions, read_to_string, set_permissions};
 use std::fs::{copy, create_dir_all, read_dir, remove_dir_all};
 use std::io::{Error as IoError, ErrorKind, Result as IoResult};
+#[cfg(unix)]
+use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
@@ -16,12 +20,13 @@ use regex_automata::meta::Regex;
 
 use crate::adapters::{GherkinCrate, InputFolderReader};
 use crate::entities::{
-    EntryKind, FolderEntry, PageOptions, ParsedFeature, SiteFeaturePage, SiteTree, TagLink, Unnamed,
+    EntryKind, FolderEntry, InputTree, PageOptions, ParsedFeature, SiteFeaturePage, SiteTree,
+    TagLink, Unnamed,
 };
 use crate::errors::InputErrors;
 use crate::policies::site_tree;
-use crate::ports::InputFolders;
-use crate::services::{GherkinParser, GherkinParserApi};
+use crate::ports::{FeatureParser, InputFolders};
+use crate::services::{GherkinParser, GherkinParserApi, InputCollector, InputCollectorApi};
 
 pub(crate) use output::{folder, name, set, two_versions};
 pub(crate) use serving::{FakeServer, FakeWatcher, changed};
@@ -72,11 +77,39 @@ pub(crate) fn fixture(name: &str) -> PathBuf {
         .join(name)
 }
 
-/// The features of the folder `input`, or the errors found, parsed by the gherkin parser over the
-/// real file system, as the command reads them.
+/// The input tree of the folder `input`, collected through `input_folders`, with its files
+/// parsed through `feature_parser`, as a build from nothing makes it.
+pub(crate) fn parsed_input(
+    input_folders: Arc<dyn InputFolders>,
+    feature_parser: Arc<dyn FeatureParser>,
+    input: &Path,
+    unnamed: Unnamed,
+) -> InputTree {
+    let mut input_tree = InputCollector::new(input_folders).collect(input);
+    let files = input_tree.files_to_parse();
+    input_tree.put_parsed(GherkinParser::new(feature_parser).parse(input, files, unnamed));
+    input_tree
+}
+
+/// The features of `input_tree`, or every error it holds.
+pub(crate) fn features_of(input_tree: &InputTree) -> Result<Vec<ParsedFeature>, InputErrors> {
+    match input_tree.input_errors() {
+        Some(errors) => Err(errors),
+        None => Ok(input_tree.features().cloned().collect()),
+    }
+}
+
+/// The features of the folder `input`, or the errors found, collected and parsed over the real
+/// file system, as the command reads them.
 pub(crate) fn read_input(input: &Path) -> Result<Vec<ParsedFeature>, InputErrors> {
-    GherkinParser::new(Arc::new(InputFolderReader), Arc::new(GherkinCrate))
-        .parse(input, Unnamed::Allowed)
+    let input_folders = Arc::new(InputFolderReader);
+    let feature_parser = Arc::new(GherkinCrate);
+    features_of(&parsed_input(
+        input_folders,
+        feature_parser,
+        input,
+        Unnamed::Allowed,
+    ))
 }
 
 /// The features of the folder `input`, which reads with no error.
@@ -93,6 +126,25 @@ pub(crate) fn scratch(name: &str) -> PathBuf {
     let _ = remove_dir_all(&folder);
     create_dir_all(&folder).expect("the scratch folder is made");
     folder
+}
+
+/// Makes `path` unreadable, and says whether it worked: it does not for root.
+#[cfg(unix)]
+pub(crate) fn lock(path: &Path) -> bool {
+    set_permissions(path, Permissions::from_mode(0o000)).expect("the mode is set");
+    let locked = read_dir(path).is_err() && read_to_string(path).is_err();
+    if !locked {
+        eprintln!(
+            "skipped: {} can still be read, as it can by root",
+            path.display()
+        );
+    }
+    locked
+}
+
+#[cfg(unix)]
+pub(crate) fn unlock(path: &Path, mode: u32) {
+    set_permissions(path, Permissions::from_mode(mode)).expect("the mode is set");
 }
 
 /// Copies the folder `from`, with everything in it, to `to`.
