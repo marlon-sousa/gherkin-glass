@@ -1,5 +1,8 @@
 //! Test support: the fixtures under `tests/fixtures`, read as the command reads them, scratch
-//! folders for tests that touch the disk, and an input held in memory.
+//! folders for tests that touch the disk, an input held in memory, and a server and a watcher
+//! for ghg serve.
+
+mod serving;
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs::{copy, create_dir_all, read_dir, remove_dir_all};
@@ -12,6 +15,8 @@ use crate::entities::{EntryKind, FolderEntry, ParsedFeature, Unnamed};
 use crate::errors::InputErrors;
 use crate::ports::InputFolders;
 use crate::services::InputService;
+
+pub(crate) use serving::{FakeServer, FakeWatcher, changed};
 
 /// The fixture folder `name`, under `tests/fixtures`.
 pub(crate) fn fixture(name: &str) -> PathBuf {

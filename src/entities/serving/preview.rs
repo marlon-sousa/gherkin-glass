@@ -1,6 +1,7 @@
-//! Entity: the site ghg serve serves, the version of it being served, and the words of its answers.
+//! Entity: the site ghg serve serves, the version of it being served, where it is served, and the words of its answers.
 
 use std::collections::BTreeMap;
+use std::net::SocketAddr;
 use std::path::PathBuf;
 use std::sync::{Arc, PoisonError, RwLock};
 
@@ -53,6 +54,14 @@ impl Preview {
         *current = Arc::new(Version { number, site });
         number
     }
+}
+
+/// A site being served: the address it is served at, and what is served,
+/// which a rebuild replaces.
+#[derive(Debug)]
+pub(crate) struct Served {
+    pub(crate) address: SocketAddr,
+    pub(crate) preview: Arc<Preview>,
 }
 
 /// The sentences ghg serve answers with when it has no file to serve,

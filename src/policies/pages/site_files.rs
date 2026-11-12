@@ -59,6 +59,7 @@ pub(crate) fn site_files(features: &[ParsedFeature], options: &PageOptions) -> S
     let search = search_json(&search_documents(&anchored));
     let built = BuiltSite {
         large_search_documents: Some(search.len()).filter(is_large),
+        untitled: options.title.is_none(),
     };
     files.push(SiteFile::text(asset(SEARCH_DOCUMENTS), search));
     files.extend(assets());

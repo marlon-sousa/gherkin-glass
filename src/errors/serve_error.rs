@@ -6,17 +6,14 @@ use std::path::PathBuf;
 use i18n_embed_fl::fl;
 use thiserror::Error;
 
-use super::{ConfigErrors, InputErrors, OutputError};
+use super::{BuildError, ConfigErrors, InputErrors};
 use crate::policies::CATALOGUE;
 
 #[derive(Debug, Clone, PartialEq, Eq, Error)]
 pub(crate) enum ServeError {
+    /// What stops the first build, or, under `--no-build`, the configuration.
     #[error(transparent)]
-    Config(ConfigErrors),
-    #[error(transparent)]
-    Input(InputErrors),
-    #[error(transparent)]
-    Output(OutputError),
+    Build(#[from] BuildError),
     #[error(fmt = Self::cannot_listen)]
     Listen {
         host: String,
@@ -92,5 +89,39 @@ impl RebuildError {
     fn not_rebuilt(report: &dyn Display, f: &mut Formatter<'_>) -> FmtResult {
         write!(f, "{report}")?;
         writeln!(f, "{}", fl!(CATALOGUE, "serve-not-rebuilt"))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use rstest::rstest;
+
+    use super::*;
+
+    #[rstest]
+    // Rule 68.
+    #[case::a_watch_that_cannot_start(
+        ServeError::Watch(WatchError {
+            path: PathBuf::from("features"),
+            reason: "too many folders".into(),
+        }),
+        "ghg serve cannot watch features for changes: too many folders"
+    )]
+    // Rule 59.
+    #[case::an_address_it_cannot_listen_at(
+        ServeError::Listen {
+            host: "203.0.113.1".into(),
+            port: 8000,
+            kind: ListenErrorKind::Other {
+                reason: "no such address".into(),
+            },
+        },
+        "ghg serve cannot listen at 203.0.113.1, port 8000: no such address"
+    )]
+    fn serve_names_what_it_cannot_watch_and_where_it_cannot_listen(
+        #[case] error: ServeError,
+        #[case] said: &str,
+    ) {
+        assert_eq!(error.to_string(), said);
     }
 }
