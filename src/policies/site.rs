@@ -2,8 +2,8 @@
 
 mod breadcrumb_trail;
 mod feature_pages;
+mod folders;
 mod page_language;
-mod pages;
 mod search;
 mod sentences;
 mod site_title;
@@ -14,8 +14,8 @@ pub(crate) use site_tree::site_tree;
 
 use breadcrumb_trail::breadcrumb;
 use feature_pages::{anchor_feature, anchor_of, build_page, heading, unique};
+use folders::{build_folder_pages, build_folder_tree};
 use page_language::page_language;
-use pages::{build_folder_pages, build_folder_tree};
 use search::search_documents;
 use sentences::{build_sentences_page, find_step_sentences};
 use site_title::site_title;

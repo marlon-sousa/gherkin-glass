@@ -1,4 +1,4 @@
-//! Policy: the folder pages and the folder tree built from them.
+//! Policy: the folders of the site, their pages and the folder tree built from them.
 
 mod folder_pages;
 mod folder_tree;
