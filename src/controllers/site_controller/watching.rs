@@ -40,13 +40,12 @@ impl Watching<'_> {
                 input_changes == InputChanges::Everything || settings != last.settings;
             if watches_again {
                 match self.watched_again(settings.input) {
-                    Ok((watched, read)) => {
+                    Ok(Some((watched, read))) => {
                         changes = watched;
-                        let Some(read) = read else {
-                            continue;
-                        };
                         settings = read;
                     }
+                    // The configuration stops the rebuild, so the watching stays as it was.
+                    Ok(None) => continue,
                     Err(error) => {
                         self.listener.not_watched(&error);
                         changes = self.config_watched_alone(changes);
@@ -71,27 +70,35 @@ impl Watching<'_> {
 
     /// The settings read again, or nothing once the listener is told what stops the rebuild.
     fn read_settings(&self) -> Option<Settings> {
-        let settings = self
-            .controller
+        self.reported(self.load_settings())
+    }
+
+    fn load_settings(&self) -> Result<Settings, BuildError> {
+        self.controller
             .settings
             .load(self.options, Destination::Memory)
-            .map_err(BuildError::Config);
-        self.reported(settings)
+            .map_err(BuildError::Config)
     }
 
     /// A new watch of `input` and the configuration file, with the settings read once it has
     /// started, watching again while they name another input, so that a change to the
-    /// configuration file saved before the watch started is never lost; the settings are nothing
-    /// once the listener is told what stops the rebuild.
+    /// configuration file saved before the watch started is never lost; or nothing, once the
+    /// listener is told what stops the rebuild, the new watch dropped.
     fn watched_again(
         &self,
         mut input: PathBuf,
-    ) -> Result<(WatchedChanges, Option<Settings>), WatchError> {
+    ) -> Result<Option<(WatchedChanges, Settings)>, WatchError> {
         loop {
             let watched = self.controller.server.watch(&input, &self.config)?;
-            match self.read_settings() {
-                Some(settings) if settings.input != input => input = settings.input,
-                settings => return Ok((watched, settings)),
+            match self.load_settings() {
+                Ok(settings) if settings.input != input => input = settings.input,
+                Ok(settings) => return Ok(Some((watched, settings))),
+                Err(build) => {
+                    // Dropped before the listener is told, so that only the last watch is left.
+                    drop(watched);
+                    self.listener.not_rebuilt(&RebuildError { build });
+                    return Ok(None);
+                }
             }
         }
     }

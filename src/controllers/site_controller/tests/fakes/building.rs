@@ -18,11 +18,13 @@ use crate::test_support::name;
 /// Gives the settings of a build from the input the configuration names, once a test sets it, or
 /// else from the one `options` name, or `features`, into `site`, or, while `failing`, the errors
 /// of [`config_errors`]. Once it has given them, the configuration names `next_configured_input`,
-/// when a test sets it, as though the configuration file was saved meanwhile.
+/// when a test sets it, as though the configuration file was saved meanwhile, and fails from then
+/// on when a test sets `failing_next`.
 #[derive(Default)]
 pub(crate) struct FakeSettingsService {
     pub(super) calls: Arc<Calls>,
     pub(crate) failing: AtomicBool,
+    pub(crate) failing_next: AtomicBool,
     pub(crate) configured_input: Mutex<Option<PathBuf>>,
     pub(crate) next_configured_input: Mutex<Option<PathBuf>>,
 }
@@ -44,6 +46,9 @@ impl SettingsApi for FakeSettingsService {
         self.calls.note(format!("settings.load {destination:?}"));
         if self.failing.load(Ordering::SeqCst) {
             return Err(config_errors());
+        }
+        if self.failing_next.swap(false, Ordering::SeqCst) {
+            self.failing.store(true, Ordering::SeqCst);
         }
         let mut configured_input = self
             .configured_input

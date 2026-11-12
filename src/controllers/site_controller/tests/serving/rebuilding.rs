@@ -251,3 +251,29 @@ fn a_configuration_saved_while_watching_again_is_watched_and_built_from() {
         );
     });
 }
+
+#[test]
+fn a_configuration_that_stops_the_rebuild_once_watching_again_keeps_the_last_watch() {
+    // Rules 65 and 67: the settings read once the new watch has started stop the rebuild, so the
+    // new watch is dropped and the last one still tells of the next change.
+    let world = world();
+    while_watching(&world, |events| {
+        world.settings.failing_next.store(true, Ordering::SeqCst);
+        world.server.change(InputChanges::Everything);
+        let error = not_rebuilt(BuildError::Config(config_errors()));
+        assert_eq!(events.wait_for(2)[1], error);
+        assert_eq!(
+            calls_after(&world, UNTIL_WATCHING, 3),
+            [
+                "settings.load Memory",
+                "server.watch features ghg.toml",
+                "settings.load Memory",
+            ]
+        );
+        assert_eq!(world.server.dropped.load(Ordering::SeqCst), 1);
+
+        world.settings.failing.store(false, Ordering::SeqCst);
+        world.server.change(InputChanges::Everything);
+        assert_eq!(events.wait_for(3)[2], "rebuilt");
+    });
+}

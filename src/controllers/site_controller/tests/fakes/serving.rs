@@ -1,8 +1,8 @@
 //! The fakes of serving: the server service, and a listener that records what it is told.
 
 use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4};
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::mpsc::{Sender, channel};
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+use std::sync::mpsc::{IntoIter, Sender, channel};
 
 use super::*;
 use crate::entities::{InputChanges, Preview, Served};
@@ -10,16 +10,17 @@ use crate::errors::WatchError;
 use crate::services::WatchedChanges;
 
 /// Serves at 127.0.0.1, port 8000, keeping the preview, unless `listen_failing`; watches,
-/// unless `watch_failing`, and hands the test the sender of the changes of the last watch it
-/// started, so that sending to an earlier one changes nothing. The configuration file alone is
-/// watched even while `watch_failing`, unless `config_watch_failing`.
+/// unless `watch_failing`, keeping the sender of each watch's changes, and counts the watches
+/// dropped. The configuration file alone is watched even while `watch_failing`, unless
+/// `config_watch_failing`.
 #[derive(Default)]
 pub(crate) struct FakeServerService {
     pub(super) calls: Arc<Calls>,
     pub(crate) listen_failing: AtomicBool,
     pub(crate) watch_failing: AtomicBool,
     pub(crate) config_watch_failing: AtomicBool,
-    pub(super) sender: Mutex<Option<Sender<InputChanges>>>,
+    pub(super) senders: Mutex<Vec<Sender<InputChanges>>>,
+    pub(crate) dropped: Arc<AtomicUsize>,
     pub(super) preview: Mutex<Option<Arc<Preview>>>,
 }
 
@@ -62,28 +63,30 @@ impl FakeServerService {
             return Err(watch_error(path));
         }
         let (sender, changes) = channel();
-        *self.sender.lock().unwrap_or_else(PoisonError::into_inner) = Some(sender);
-        self.calls.note(call);
-        Ok(Box::new(changes.into_iter()))
-    }
-
-    /// Sends `changes` to the last watch started.
-    pub(crate) fn change(&self, changes: InputChanges) {
-        self.sender
+        self.senders
             .lock()
             .unwrap_or_else(PoisonError::into_inner)
-            .as_ref()
-            .expect("watching")
-            .send(changes)
-            .expect("sent");
+            .push(sender);
+        self.calls.note(call);
+        Ok(Box::new(CountedChanges {
+            changes: changes.into_iter(),
+            dropped: self.dropped.clone(),
+        }))
+    }
+
+    /// Sends `changes` to the last watch started that is not dropped.
+    pub(crate) fn change(&self, changes: InputChanges) {
+        let senders = self.senders.lock().unwrap_or_else(PoisonError::into_inner);
+        let sent = senders.iter().rev().any(|sender| sent_to(sender, &changes));
+        assert!(sent, "a watch not dropped");
     }
 
     /// Ends the watching.
     pub(crate) fn stop_watching(&self) {
-        self.sender
+        self.senders
             .lock()
             .unwrap_or_else(PoisonError::into_inner)
-            .take();
+            .clear();
     }
 
     /// The preview served, once a site is.
@@ -101,6 +104,31 @@ pub(crate) fn watch_error(path: &Path) -> WatchError {
     WatchError {
         path: path.to_path_buf(),
         reason: "too many folders".into(),
+    }
+}
+
+/// Whether `changes` went to the watch of `sender`, which they cannot once it is dropped.
+fn sent_to(sender: &Sender<InputChanges>, changes: &InputChanges) -> bool {
+    sender.send(changes.clone()).is_ok()
+}
+
+/// A watch's changes, counted in `dropped` once dropped.
+struct CountedChanges {
+    changes: IntoIter<InputChanges>,
+    dropped: Arc<AtomicUsize>,
+}
+
+impl Iterator for CountedChanges {
+    type Item = InputChanges;
+
+    fn next(&mut self) -> Option<InputChanges> {
+        self.changes.next()
+    }
+}
+
+impl Drop for CountedChanges {
+    fn drop(&mut self) {
+        self.dropped.fetch_add(1, Ordering::SeqCst);
     }
 }
 
