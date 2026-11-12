@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="{{ language }}">
+{{ head|safe }}
+<body>
+{#- The versions page is above every version's site, so it has no folder tree
+    and no breadcrumb. #}
+{{ skip_link|safe }}
+<div class="ghg-options">
+{{ theme_control|safe }}
+</div>
+<main id="ghg_main">
+<h1>{{ words.title }}</h1>
+{%- if !development.is_empty() %}
+<h2 id="development">{{ words.development }}</h2>
+<ul class="ghg-versions">
+{%- for name in development %}
+<li><a href="{{ name }}/index.html">{{ name.words }}</a></li>
+{%- endfor %}
+</ul>
+{%- endif %}
+{%- if !releases.is_empty() %}
+<h2 id="releases">{{ words.releases }}</h2>
+<ul class="ghg-versions">
+{%- for name in releases %}
+<li><a href="{{ name }}/index.html">{{ name.words }}</a></li>
+{%- endfor %}
+</ul>
+{%- endif %}
+{%- if !pre_releases.is_empty() %}
+<div class="ghg-block">
+<h2 id="pre-releases"><button type="button" class="ghg-toggle" aria-expanded="false">{{ words.pre_releases }}</button></h2>
+<div class="ghg-content" hidden>
+<ul class="ghg-versions">
+{%- for name in pre_releases %}
+<li><a href="{{ name }}/index.html">{{ name.words }}</a></li>
+{%- endfor %}
+</ul>
+</div>
+</div>
+{%- endif %}
+</main>
+</body>
+</html>

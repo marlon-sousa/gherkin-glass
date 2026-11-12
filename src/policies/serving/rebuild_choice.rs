@@ -2,8 +2,7 @@
 
 use std::path::{Path, PathBuf};
 
-use crate::entities::Burst;
-use crate::policies::IGNORE_FILE;
+use crate::entities::{Burst, IGNORE_FILE};
 
 /// What a build reads: the configuration file, and the files the
 /// `.ghg-ignore` rules select from the input, before the burst and after it.

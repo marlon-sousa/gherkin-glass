@@ -11,8 +11,8 @@ use rstest::rstest;
 use super::*;
 use crate::entities::{OutputContents, Record, Watched};
 use crate::errors::OutputErrorKind;
-use crate::fixtures::{FakeWatcher, changed, folder, name, set, two_versions};
 use crate::ports::FileWriter;
+use crate::test_support::{FakeWatcher, changed, folder, name, set, two_versions};
 
 fn build_options(config: Option<&str>, input: Option<&str>) -> BuildOptions {
     BuildOptions {

@@ -1,4 +1,4 @@
-// Adapter: the tree switch and the tree view over the page's markup, as templates/layout.html writes it, the tree built as the WAI-ARIA Navigation Treeview example builds it.
+// Adapter: the tree switch and the tree view over the page's markup, as src/policies/rendering/page_layout.html and page_frame.html write it, the tree built as the WAI-ARIA Navigation Treeview example builds it.
 
 import { rootFrom } from "../policies/tree_state.ts";
 import type { TreeItem, TreeSwitch, TreeView } from "../ports/tree.ts";

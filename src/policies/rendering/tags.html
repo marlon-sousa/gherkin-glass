@@ -1,0 +1,5 @@
+<ul class="ghg-tags">
+{%- for tag in tags %}
+<li><a href="{{ tag.address }}">{{ tag.text }}</a>{% if let Some(outside) = tag.outside %} {{ outside.render()|safe }}{% endif %}</li>
+{%- endfor %}
+</ul>

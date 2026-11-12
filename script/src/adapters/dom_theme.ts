@@ -1,4 +1,4 @@
-// Adapter: the theme port over the page's root and its Theme control, as templates/layout.html writes them.
+// Adapter: the theme port over the page's root and its Theme control, as src/policies/rendering/page_head.html and theme_control.html write them.
 
 import type { ThemeChoice } from "../policies/theme_choice.ts";
 import type { Theme } from "../ports/theme.ts";
