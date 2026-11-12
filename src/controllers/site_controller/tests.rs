@@ -9,9 +9,9 @@ use fakes::*;
 use rstest::rstest;
 
 use super::*;
-use crate::entities::{OutputContents, VersionName, Watched};
+use crate::entities::{OutputContents, Record, Watched};
 use crate::errors::OutputErrorKind;
-use crate::fixtures::{FakeWatcher, changed};
+use crate::fixtures::{FakeWatcher, changed, folder, name, set, two_versions};
 use crate::ports::FileWriter;
 
 fn build_options(config: Option<&str>, input: Option<&str>) -> BuildOptions {
@@ -55,9 +55,8 @@ fn a_build_reads_the_input_the_configuration_and_the_options_name(
 }
 
 #[rstest]
-// Rules 38 and 123: the folder is checked before the input is read, and
-// changed only once it has been read without a problem.
-#[case::without_versions(a_site(), None)]
+// Rules 38 and 123: a build whose input has a problem changes no folder.
+#[case::without_versions(folder(&["ghg-site.json"], &[], Some(Record::Site(set(&[])))), None)]
 #[case::as_a_version(two_versions(), Some("v1.0.0"))]
 fn a_build_whose_input_has_a_problem_changes_no_folder(
     #[case] contents: OutputContents,
@@ -66,7 +65,7 @@ fn a_build_whose_input_has_a_problem_changes_no_folder(
     let world = World::default();
     world.input.failing.store(true, Ordering::SeqCst);
     let options = BuildOptions {
-        version_name: version.map(|name| VersionName::new(name).expect("a version name")),
+        version_name: version.map(name),
         ..BuildOptions::default()
     };
     let outcome = world.controller(&[], contents).build(&options);

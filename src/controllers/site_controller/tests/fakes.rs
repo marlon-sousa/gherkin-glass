@@ -8,7 +8,7 @@ use std::thread::sleep;
 use std::time::{Duration, Instant};
 
 use super::*;
-use crate::entities::{EntryKind, FolderEntry, OutputContents, RawFeature, Record, VersionName};
+use crate::entities::{EntryKind, FolderEntry, OutputContents, RawFeature, Record};
 use crate::errors::{InputErrorKind, ParseError};
 use crate::fixtures::{FakeServer, FakeWatcher};
 use crate::ports::{ConfigReader, FeatureParser, FileWriter, InputFolders, OutputFolders};
@@ -216,36 +216,6 @@ impl Recorded {
             }
             sleep(Duration::from_millis(5));
         }
-    }
-}
-
-/// A site without versions, as ghg wrote it.
-pub(super) fn a_site() -> OutputContents {
-    OutputContents::Folder {
-        files: ["ghg-site.json".to_string()].into(),
-        folders: BTreeSet::new(),
-        record: Some(Record::Site(BTreeSet::new())),
-    }
-}
-
-/// The versions `main` and `v1.0.0` of a site, as ghg wrote them.
-pub(super) fn two_versions() -> OutputContents {
-    let name = |text| VersionName::new(text).expect("a version name");
-    let versions = BTreeMap::from([
-        (name("main"), ["index.html".to_string()].into()),
-        (name("v1.0.0"), ["old.html".to_string()].into()),
-    ]);
-    OutputContents::Folder {
-        files: [
-            "ghg-versions.json".to_string(),
-            "main/index.html".to_string(),
-        ]
-        .into(),
-        folders: ["main".to_string(), "v1.0.0".to_string()].into(),
-        record: Some(Record::Versions {
-            page: ["index.html".to_string()].into(),
-            versions,
-        }),
     }
 }
 

@@ -1,6 +1,5 @@
 //! The site writer's fakes: an output folder held in memory, a parser and a writer.
 
-use std::collections::{BTreeMap, BTreeSet};
 use std::io::{ErrorKind, Result as IoResult};
 use std::path::PathBuf;
 use std::sync::Mutex;
@@ -10,7 +9,7 @@ use gherkin::{Feature, GherkinEnv};
 use super::*;
 use crate::entities::{OutputContents, PageOptions, RawFeature, Unnamed};
 use crate::errors::{BuildError, ParseError};
-use crate::fixtures::MemoryFolders;
+pub(super) use crate::fixtures::{MemoryFolders, folder, name, set, two_versions};
 use crate::ports::FeatureParser;
 use crate::services::{Converter, InputService};
 
@@ -77,45 +76,6 @@ impl OutputFolders for FakeFolders {
         *self.recorded.lock().expect("lock") = Some(record.clone());
         Ok(())
     }
-}
-
-pub(super) fn name(text: &str) -> VersionName {
-    VersionName::new(text).expect("a version name")
-}
-
-pub(super) fn set(paths: &[&str]) -> BTreeSet<FilePath> {
-    paths.iter().map(|path| path.to_string()).collect()
-}
-
-/// A folder holding `files` and `folders`, whose marker records `record`.
-pub(super) fn folder(files: &[&str], folders: &[&str], record: Option<Record>) -> OutputContents {
-    OutputContents::Folder {
-        files: set(files),
-        folders: set(folders),
-        record,
-    }
-}
-
-/// The output folder of the versions `main` and `v1.0.0`, as ghg wrote it.
-pub(super) fn two_versions() -> OutputContents {
-    let versions = BTreeMap::from([
-        (name("main"), set(&["index.html"])),
-        (name("v1.0.0"), set(&["old.html"])),
-    ]);
-    let record = Record::Versions {
-        page: set(&["index.html"]),
-        versions,
-    };
-    folder(
-        &[
-            "ghg-versions.json",
-            "index.html",
-            "main/index.html",
-            "v1.0.0/old.html",
-        ],
-        &["main", "v1.0.0"],
-        Some(record),
-    )
 }
 
 /// Parses every file as a feature named after it.

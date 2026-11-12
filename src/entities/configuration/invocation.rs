@@ -49,7 +49,6 @@ impl ServeMode {
         self == ServeMode::Watch
     }
 
-    /// Where the site is built.
     pub(crate) fn destination(self) -> Destination {
         match self {
             ServeMode::Watch => Destination::Memory,
