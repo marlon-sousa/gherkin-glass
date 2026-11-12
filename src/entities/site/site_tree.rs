@@ -48,7 +48,6 @@ pub(crate) enum SiteNode {
     /// A scenario or an outline, in its feature's page or its rule, which
     /// holds its steps, then an outline's examples and examples as scenarios.
     Scenario(ScenarioBlock),
-    /// An examples block of an outline.
     Examples(ExamplesBlock),
     /// An outline's examples as scenarios, by its heading, which holds the scenario of each row.
     ExamplesAsScenarios(BlockHeading),
@@ -56,9 +55,7 @@ pub(crate) enum SiteNode {
     ExampleScenario(BlockHeading),
     /// A step of a background or a scenario, which holds its data table or its doc string.
     Step(StepView),
-    /// A step's data table.
     StepTable(TableView),
-    /// A step's doc string.
     DocString(DocStringView),
     /// A folder's page, which holds the links to its subfolders' pages and its features' entries.
     FolderPage(FolderPage),
@@ -72,7 +69,6 @@ pub(crate) enum SiteNode {
     SentencesGroup(GroupView),
     /// A step sentence, which holds each of its uses.
     Sentence(SentenceView),
-    /// A use of a step sentence.
     SentenceUse(UseView),
     /// The folder tree's data, which the pages' script builds the tree from.
     FolderTree(Vec<TreeItem>),
@@ -84,7 +80,6 @@ pub(crate) enum SiteNode {
     TagPage(TagPage),
     /// A feature on a tag's page, which holds each of its scenarios that carry the tag.
     TagFeature(TagFeature),
-    /// A scenario on a tag's page.
     TagScenario(TagScenario),
     /// The documents search reads.
     SearchDocuments(Vec<SearchDocument>),

@@ -2,9 +2,7 @@
 
 use crate::entities::{ContentsEntry, LinkAddress, SiteAddress, Trail};
 
-/// One folder page of the site, which holds the link to each of its
-/// subfolders' pages and the entry of each of its features. Every `String`
-/// is text, escaped when it is rendered.
+/// One folder page of the site. Every `String` is text, escaped when it is rendered.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct FolderPage {
     /// Always ending in `index.html`.

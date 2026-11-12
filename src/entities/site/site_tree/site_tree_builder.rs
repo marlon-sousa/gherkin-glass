@@ -1,13 +1,16 @@
 //! Entity: the site tree's builder, whose typed adds are the only way to put a node in the site tree, each kind under the kind it belongs to: the versions, the versions page and its assets under the site, the folders under the input folder, each page in its folder, a feature page's blocks in it, a rule's background and scenarios in the rule, an outline's examples in the outline, each step in its block, a step's table or doc string in the step, and the version's other files under the version.
 
+mod feature_page_nodes;
+
 use ego_tree::{NodeId, NodeMut, NodeRef, Tree};
+
+use feature_page_nodes::place_feature_page;
 
 use super::{FolderId, SiteFeaturePage, SiteFolder, SiteNode, SiteTree};
 use crate::entities::{
-    BackgroundContent, ExampleScenario, ExamplesAsScenarios, FolderPageContent, GroupContent,
-    PageContent, PageFrame, RuleContent, ScenarioContent, SearchDocument, SentenceContent,
-    SentencesPageContent, StepContent, TagFeatureContent, TagPagesContent, TreeItem, VersionName,
-    VersionsList, VersionsPageContent,
+    FolderPageContent, GroupContent, PageContent, PageFrame, SearchDocument, SentenceContent,
+    SentencesPageContent, TagFeatureContent, TagPagesContent, TreeItem, VersionName, VersionsList,
+    VersionsPageContent,
 };
 
 /// A site tree being built, each add putting its nodes after those already
@@ -72,18 +75,7 @@ impl SiteTreeBuilder {
         pages: impl IntoIterator<Item = (FolderId, PageContent)>,
     ) {
         for (folder, content) in pages {
-            let mut folder = self.node_mut(folder.0);
-            let mut page = folder.append(SiteNode::FeaturePage(content.page));
-            if let Some(background) = content.background {
-                place_background(&mut page, background);
-            }
-            for scenario in content.scenarios {
-                place_scenario(&mut page, scenario);
-            }
-            for rule in content.rules {
-                place_rule(&mut page, rule);
-            }
-            let id = page.id();
+            let id = place_feature_page(&mut self.node_mut(folder.0), content);
             self.feature_pages.push(id);
         }
     }
@@ -95,7 +87,6 @@ impl SiteTreeBuilder {
             .filter_map(|id| SiteFeaturePage::of(self.node(*id)))
     }
 
-    /// Each folder's page put in the folder it is paired with.
     /// Each folder's page put in the folder it is paired with, its links and
     /// entries below it.
     pub(crate) fn folder_pages(
@@ -240,65 +231,6 @@ impl SiteTreeBuilder {
         self.tree
             .get_mut(id)
             .expect("every id the builder holds or hands out names a node of its tree")
-    }
-}
-
-/// `background` put in `parent`, a feature page or a rule, its steps below it.
-fn place_background(parent: &mut NodeMut<'_, SiteNode>, background: BackgroundContent) {
-    let mut node = parent.append(SiteNode::Background(background.block));
-    place_steps(&mut node, background.steps);
-}
-
-/// `rule` put in `page`, its background and its scenarios below it.
-fn place_rule(page: &mut NodeMut<'_, SiteNode>, rule: RuleContent) {
-    let mut node = page.append(SiteNode::Rule(rule.block));
-    if let Some(background) = rule.background {
-        place_background(&mut node, background);
-    }
-    for scenario in rule.scenarios {
-        place_scenario(&mut node, scenario);
-    }
-}
-
-/// `scenario` put in `parent`, a feature page or a rule: its steps below it,
-/// then an outline's examples blocks and its examples as scenarios.
-fn place_scenario(parent: &mut NodeMut<'_, SiteNode>, scenario: ScenarioContent) {
-    let mut node = parent.append(SiteNode::Scenario(scenario.block));
-    place_steps(&mut node, scenario.steps);
-    for examples in scenario.examples {
-        node.append(SiteNode::Examples(examples));
-    }
-    if let Some(as_scenarios) = scenario.as_scenarios {
-        place_examples_as_scenarios(&mut node, as_scenarios);
-    }
-}
-
-fn place_examples_as_scenarios(
-    outline: &mut NodeMut<'_, SiteNode>,
-    as_scenarios: ExamplesAsScenarios,
-) {
-    let mut node = outline.append(SiteNode::ExamplesAsScenarios(as_scenarios.heading));
-    for ExampleScenario { heading, steps } in as_scenarios.scenarios {
-        let mut scenario = node.append(SiteNode::ExampleScenario(heading));
-        place_steps(&mut scenario, steps);
-    }
-}
-
-/// `steps` put in `block`, each with its data table or its doc string below it.
-fn place_steps(block: &mut NodeMut<'_, SiteNode>, steps: Vec<StepContent>) {
-    for StepContent {
-        step,
-        table,
-        doc_string,
-    } in steps
-    {
-        let mut node = block.append(SiteNode::Step(step));
-        if let Some(table) = table {
-            node.append(SiteNode::StepTable(table));
-        }
-        if let Some(doc_string) = doc_string {
-            node.append(SiteNode::DocString(doc_string));
-        }
     }
 }
 

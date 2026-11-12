@@ -2,9 +2,8 @@
 
 use crate::entities::{LinkAddress, OutsideLink, SiteAddress, Trail};
 
-/// The index, which holds an entry for each tag. Every `String` is text,
-/// escaped when it is rendered, and every link is relative to the page that
-/// holds it.
+/// The index of every tag. Every `String` is text, escaped when it is
+/// rendered, and every link is relative to the page that holds it.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct TagIndex {
     /// In the folder of the tag pages.
@@ -26,7 +25,6 @@ pub(crate) struct TagIndexEntry {
     pub(crate) after: String,
 }
 
-/// A tag's page, which holds each feature that writes the tag.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct TagPage {
     /// Such as `tags/slow.html`.
@@ -44,7 +42,7 @@ pub(crate) struct TagPage {
     pub(crate) no_scenario: String,
 }
 
-/// A feature that writes the tag, which holds each of its scenarios that carry it.
+/// A feature that writes the tag, on its page.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct TagFeature {
     pub(crate) address: LinkAddress,

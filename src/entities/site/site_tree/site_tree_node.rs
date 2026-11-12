@@ -2,6 +2,7 @@
 
 use ego_tree::NodeRef;
 
+use super::site_folder::folder_name;
 use super::{SiteFeaturePage, SiteFolderPage, SiteNode};
 use crate::entities::{BackgroundBlock, ExamplesBlock, StepView};
 
@@ -46,7 +47,7 @@ impl<'a> SiteTreeNode<'a> {
 
     /// The names of the folders of the input this node is in, from the outermost.
     pub(crate) fn folders(&self) -> Vec<&'a str> {
-        let mut names: Vec<_> = self.node.ancestors().filter_map(folder_name).collect();
+        let mut names: Vec<_> = self.node.ancestors().filter_map(folder_of).collect();
         names.reverse();
         names
     }
@@ -92,6 +93,10 @@ impl<'a> SiteTreeNode<'a> {
     }
 }
 
+fn folder_of(node: NodeRef<'_, SiteNode>) -> Option<&str> {
+    folder_name(node.value())
+}
+
 /// Whether `node` is a feature page or a rule, the blocks a scenario can be in.
 fn holds_blocks(node: &NodeRef<'_, SiteNode>) -> bool {
     matches!(node.value(), SiteNode::FeaturePage(_) | SiteNode::Rule(_))
@@ -107,13 +112,6 @@ fn step_of(node: NodeRef<'_, SiteNode>) -> Option<&StepView> {
 fn examples_of(node: NodeRef<'_, SiteNode>) -> Option<&ExamplesBlock> {
     match node.value() {
         SiteNode::Examples(examples) => Some(examples),
-        _ => None,
-    }
-}
-
-fn folder_name(node: NodeRef<'_, SiteNode>) -> Option<&str> {
-    match node.value() {
-        SiteNode::Folder(name) => Some(name),
         _ => None,
     }
 }

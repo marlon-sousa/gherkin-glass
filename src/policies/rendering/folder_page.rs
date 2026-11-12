@@ -4,9 +4,11 @@ use askama::Template;
 
 use super::breadcrumb::Place;
 use super::contents::Contents;
-use super::node_rendering::{Render, RenderFile, rendered};
+use super::node_rendering::{Render, RenderFile, pieces, rendered};
 use super::page_layout::{PageAround, SitePieces, whole_page};
-use crate::entities::{FeatureEntry, FolderLink, FolderPage, SiteAddress, SiteFolderPage};
+use crate::entities::{
+    FeatureEntry, FolderLink, FolderPage, SiteAddress, SiteFolderPage, SiteNode, SiteTreeNode,
+};
 
 #[derive(Template)]
 #[template(path = "folder_page.html")]
@@ -47,8 +49,8 @@ impl RenderFile for SiteFolderPage<'_> {
             },
             rendered(&FolderTemplate {
                 folder,
-                folders: self.folders().map(FolderLink::render).collect(),
-                features: self.features().map(FeatureEntry::render).collect(),
+                folders: pieces(self.node().children().filter(is_subfolder_link)),
+                features: pieces(self.node().children().filter(is_feature_entry)),
             }),
         )
     }
@@ -72,4 +74,12 @@ impl Render for FeatureEntry {
             .render(),
         })
     }
+}
+
+fn is_subfolder_link(node: &SiteTreeNode<'_>) -> bool {
+    matches!(node.value(), SiteNode::SubfolderLink(_))
+}
+
+fn is_feature_entry(node: &SiteTreeNode<'_>) -> bool {
+    matches!(node.value(), SiteNode::FeatureEntry(_))
 }

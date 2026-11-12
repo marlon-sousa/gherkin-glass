@@ -2,8 +2,7 @@
 
 use crate::entities::{LinkAddress, Trail};
 
-/// The page, which holds a group for each kind of step. Every `String` is
-/// text, escaped when it is rendered.
+/// Every `String` is text, escaped when it is rendered.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct SentencesPage {
     pub(crate) trail: Trail,
@@ -15,14 +14,13 @@ pub(crate) struct SentencesPage {
     pub(crate) no_steps: String,
 }
 
-/// The sentences of one kind of step, which holds each of them.
+/// The heading of the sentences of one kind of step.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct GroupView {
     /// The kind of step, such as `Given`.
     pub(crate) heading: String,
 }
 
-/// A sentence, which holds each of its uses.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct SentenceView {
     pub(crate) text: String,

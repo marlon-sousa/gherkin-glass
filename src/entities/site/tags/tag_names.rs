@@ -10,7 +10,6 @@ pub(crate) const TAGS_FOLDER: &str = "tags";
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub(crate) struct TagNames {
     names: BTreeMap<String, String>,
-    /// Every tag named, in the order they were named.
     tags: Vec<String>,
 }
 

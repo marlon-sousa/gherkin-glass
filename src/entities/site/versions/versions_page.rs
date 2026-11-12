@@ -2,7 +2,7 @@
 
 use crate::entities::VersionName;
 
-/// The page, which holds its three lists. Every `String` is text, escaped when it is rendered.
+/// Every `String` is text, escaped when it is rendered.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct VersionsPage {
     /// The `lang` of the page, that of gherkin-glass's own text.
@@ -11,7 +11,6 @@ pub(crate) struct VersionsPage {
     pub(crate) words: VersionsWords,
 }
 
-/// One of the versions page's lists, which holds its versions' entries.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum VersionsList {
     Development,

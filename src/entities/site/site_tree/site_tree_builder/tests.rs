@@ -1,11 +1,9 @@
-use std::collections::{BTreeMap, BTreeSet};
-use std::path::PathBuf;
-
-use gherkin::{Feature, GherkinEnv};
+use std::collections::BTreeSet;
 
 use super::*;
-use crate::entities::{PageOptions, ParsedFeature};
+use crate::entities::PageOptions;
 use crate::policies::{page_frame, site_tree};
+use crate::test_support::parsed_at;
 
 fn a_builder() -> SiteTreeBuilder {
     SiteTreeBuilder::new(page_frame(&PageOptions::default()), None)
@@ -204,13 +202,7 @@ Feature: F
         | n |
         | 1 |
 ";
-    let feature = Feature::parse(text, GherkinEnv::default()).expect("parses");
-    let parsed = ParsedFeature::new(
-        PathBuf::from("f.feature"),
-        feature,
-        "en".to_string(),
-        BTreeMap::new(),
-    );
+    let parsed = parsed_at("f.feature", text);
     let tree = site_tree(&[parsed], &PageOptions::default(), None, &BTreeSet::new());
     let lines = outline(&tree);
     let start = lines
@@ -241,18 +233,25 @@ Feature: F
     );
 }
 
+/// Whether the line of `outline` is not one of the nodes the test of the
+/// other pages leaves out: the assets, the feature page's blocks and steps,
+/// the folder tree's data and the search documents.
+fn lists_an_entry(line: &str) -> bool {
+    const LEFT_OUT: [&str; 5] = [
+        "asset",
+        "step",
+        "scenario s",
+        "folder tree",
+        "search documents",
+    ];
+    LEFT_OUT.iter().all(|part| !line.contains(part))
+}
+
 #[test]
 fn each_other_page_holds_its_entries_and_each_entry_what_it_lists() {
-    let feature = Feature::parse(
+    let parsed = parsed_at(
+        "d/f.feature",
         "@t\nFeature: F\n  Scenario: S\n    Given a\n",
-        GherkinEnv::default(),
-    )
-    .expect("parses");
-    let parsed = ParsedFeature::new(
-        PathBuf::from_iter(["d", "f.feature"]),
-        feature,
-        "en".to_string(),
-        BTreeMap::new(),
     );
     let version = VersionName::new("v1.0.0").expect("a version name");
     let tree = site_tree(
@@ -263,13 +262,7 @@ fn each_other_page_holds_its_entries_and_each_entry_what_it_lists() {
     );
     let kept: Vec<_> = outline(&tree)
         .into_iter()
-        .filter(|line| {
-            !line.contains("asset")
-                && !line.contains("step")
-                && !line.contains("scenario s")
-                && !line.contains("folder tree")
-                && !line.contains("search documents")
-        })
+        .filter(|line| lists_an_entry(line))
         .collect();
     assert_eq!(
         kept,

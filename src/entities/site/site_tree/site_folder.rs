@@ -2,7 +2,7 @@
 
 use ego_tree::{NodeId, NodeRef};
 
-use super::{SiteFeaturePage, SiteFolderPage, SiteNode};
+use super::{SiteFeaturePage, SiteFolderPage, SiteNode, SiteTreeNode};
 
 /// Which folder of the site tree being built a page goes in; only the builder
 /// that handed it out can use it.
@@ -29,14 +29,12 @@ impl<'a> SiteFolder<'a> {
     /// The names of the folders from the input folder in, down to this one,
     /// the input folder left out: empty for the input folder.
     pub(crate) fn names(&self) -> Vec<String> {
-        let mut names: Vec<String> = [self.node]
+        SiteTreeNode::new(self.node)
+            .folders()
             .into_iter()
-            .chain(self.node.ancestors())
-            .filter_map(|node| folder_name(node.value()))
+            .chain(self.name())
             .map(str::to_string)
-            .collect();
-        names.reverse();
-        names
+            .collect()
     }
 
     /// The folders directly inside this one, in the order they were made.
@@ -88,7 +86,7 @@ fn is_folder(node: &NodeRef<'_, SiteNode>) -> bool {
 }
 
 /// The name of `node` when it is a folder inside the input folder.
-fn folder_name(node: &SiteNode) -> Option<&str> {
+pub(super) fn folder_name(node: &SiteNode) -> Option<&str> {
     match node {
         SiteNode::Folder(name) => Some(name),
         _ => None,
