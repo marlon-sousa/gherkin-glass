@@ -2,8 +2,8 @@
 
 use askama::Template;
 
-use super::node_rendering::{Render, rendered};
-use crate::entities::{SiteNode, SiteTreeNode, StepPart, StepView};
+use super::node_rendering::{NodeOf, Render, pieces, rendered};
+use crate::entities::{SiteTreeNode, StepPart, StepView};
 
 /// Steps as one list, each already rendered.
 pub(super) struct StepList<'a> {
@@ -35,25 +35,14 @@ impl Render for StepList<'_> {
 
 /// Each step node directly below `block`, rendered, in order.
 pub(super) fn steps_of(block: SiteTreeNode<'_>) -> Vec<String> {
-    block.children().filter_map(step).collect()
+    pieces(block.children().filter(SiteTreeNode::is_step))
 }
 
-/// The step of `node`, when it is one, with what is below it.
-fn step(node: SiteTreeNode<'_>) -> Option<String> {
-    let SiteNode::Step(step) = node.value() else {
-        return None;
-    };
-    Some(rendered(&StepTemplate {
-        step,
-        attachments: node.children().filter_map(attachment).collect(),
-    }))
-}
-
-/// A step's data table or doc string, rendered from its node.
-fn attachment(node: SiteTreeNode<'_>) -> Option<String> {
-    match node.value() {
-        SiteNode::StepTable(table) => Some(table.render()),
-        SiteNode::DocString(doc_string) => Some(doc_string.render()),
-        _ => None,
+impl Render for NodeOf<'_, StepView> {
+    fn render(&self) -> String {
+        rendered(&StepTemplate {
+            step: self.value,
+            attachments: pieces(self.node.children()),
+        })
     }
 }

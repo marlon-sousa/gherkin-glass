@@ -1,8 +1,8 @@
 //! Policy: the documents search reads, one for each feature, rule and scenario, from the feature pages of the site tree and their blocks.
 
 use crate::entities::{
-    RuleBlock, ScenarioBlock, SearchDocument, SearchKind, SiteAddress, SiteFeaturePage, SiteNode,
-    SiteTreeNode, TagView,
+    ExamplesBlock, RuleBlock, ScenarioBlock, SearchDocument, SearchKind, SiteAddress,
+    SiteFeaturePage, SiteNode, SiteTreeNode, StepView, TagView,
 };
 
 /// The documents of every page, in the order of `pages`, and within a page in file order.
@@ -27,11 +27,7 @@ fn page_documents(feature: &SiteFeaturePage<'_>) -> Vec<SearchDocument> {
         page: page.address.clone(),
         anchor: String::new(),
     };
-    let blocks = feature.blocks().flat_map(|block| match block.value() {
-        SiteNode::Scenario(scenario) => vec![on_page.scenario(scenario, block, None)],
-        SiteNode::Rule(rule) => on_page.rule(rule, block),
-        _ => Vec::new(),
-    });
+    let blocks = feature.blocks().flat_map(|block| on_page.block(block));
     [feature_document].into_iter().chain(blocks).collect()
 }
 
@@ -42,6 +38,16 @@ struct OnPage<'a> {
 }
 
 impl OnPage<'_> {
+    /// The documents of `node`, a block directly in the page: a scenario's, or a rule's then its
+    /// scenarios'; none for a background.
+    fn block(&self, node: SiteTreeNode<'_>) -> Vec<SearchDocument> {
+        match node.value() {
+            SiteNode::Scenario(scenario) => vec![self.scenario(scenario, node, None)],
+            SiteNode::Rule(rule) => self.rule(rule, node),
+            _ => Vec::new(),
+        }
+    }
+
     /// The document of `rule`, whose node is `node`, then its scenarios'.
     fn rule(&self, rule: &RuleBlock, node: SiteTreeNode<'_>) -> Vec<SearchDocument> {
         let document = SearchDocument {
@@ -54,11 +60,18 @@ impl OnPage<'_> {
             page: self.address.clone(),
             anchor: rule.heading.anchor.clone(),
         };
-        let scenarios = node.children().filter_map(|child| match child.value() {
-            SiteNode::Scenario(scenario) => Some(self.scenario(scenario, child, Some(&rule.name))),
-            _ => None,
-        });
+        let scenarios = node
+            .children()
+            .filter_map(|child| self.rule_scenario(child, &rule.name));
         [document].into_iter().chain(scenarios).collect()
+    }
+
+    /// The document of `node` when it is a scenario, in the rule named `rule`.
+    fn rule_scenario(&self, node: SiteTreeNode<'_>, rule: &str) -> Option<SearchDocument> {
+        match node.value() {
+            SiteNode::Scenario(scenario) => Some(self.scenario(scenario, node, Some(rule))),
+            _ => None,
+        }
     }
 
     /// The document of `scenario`, whose node is `node`, in the rule named `rule`, if any.
@@ -68,13 +81,7 @@ impl OnPage<'_> {
         node: SiteTreeNode<'_>,
         rule: Option<&str>,
     ) -> SearchDocument {
-        let examples: Vec<_> = node
-            .children()
-            .filter_map(|child| match child.value() {
-                SiteNode::Examples(examples) => Some(examples),
-                _ => None,
-            })
-            .collect();
+        let examples: Vec<_> = node.examples().collect();
         SearchDocument {
             kind: if examples.is_empty() {
                 SearchKind::Scenario
@@ -85,7 +92,10 @@ impl OnPage<'_> {
             feature: Some(self.feature.to_string()),
             rule: rule.map(str::to_string),
             steps: steps_of(node),
-            tags: own_then_examples_tags(&scenario.tags, examples.iter().map(|e| &e.tags)),
+            tags: own_then_examples_tags(
+                &scenario.tags,
+                examples.iter().copied().map(examples_tags),
+            ),
             page: self.address.clone(),
             anchor: scenario.heading.anchor.clone(),
         }
@@ -94,25 +104,28 @@ impl OnPage<'_> {
 
 /// The steps of the background among `blocks`, the blocks of a page or a rule; none without one.
 fn background_steps<'a>(blocks: impl Iterator<Item = SiteTreeNode<'a>>) -> Vec<String> {
-    blocks
-        .filter(|block| matches!(block.value(), SiteNode::Background(_)))
-        .flat_map(steps_of)
-        .collect()
+    blocks.filter(is_background).flat_map(steps_of).collect()
 }
 
 /// The text of each step directly below `block`.
 fn steps_of(block: SiteTreeNode<'_>) -> Vec<String> {
-    block
-        .children()
-        .filter_map(|child| match child.value() {
-            SiteNode::Step(step) => Some(step.text()),
-            _ => None,
-        })
-        .collect()
+    block.steps().map(StepView::text).collect()
+}
+
+fn is_background(node: &SiteTreeNode<'_>) -> bool {
+    matches!(node.value(), SiteNode::Background(_))
+}
+
+fn examples_tags(examples: &ExamplesBlock) -> &Vec<TagView> {
+    &examples.tags
 }
 
 fn tags(tags: &[TagView]) -> Vec<String> {
-    tags.iter().map(|tag| tag.text.clone()).collect()
+    tags.iter().map(tag_text).collect()
+}
+
+fn tag_text(tag: &TagView) -> String {
+    tag.text.clone()
 }
 
 /// A scenario's own tags, then, for an outline, those of its examples blocks, each once.
@@ -121,7 +134,7 @@ fn own_then_examples_tags<'a>(
     examples: impl Iterator<Item = &'a Vec<TagView>>,
 ) -> Vec<String> {
     let mut found = tags(own);
-    for tag in examples.flat_map(|tags| self::tags(tags)) {
+    for tag in examples.flat_map(Vec::as_slice).map(tag_text) {
         if !found.contains(&tag) {
             found.push(tag);
         }

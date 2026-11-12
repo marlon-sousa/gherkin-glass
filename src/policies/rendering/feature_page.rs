@@ -2,8 +2,7 @@
 
 use askama::Template;
 
-use super::feature_block::blocks;
-use super::node_rendering::{Render, RenderFile, rendered};
+use super::node_rendering::{Render, RenderFile, pieces, rendered};
 use super::page_layout::{PageAround, SitePieces, whole_page};
 use crate::entities::{ContentsEntry, Page, SiteAddress, SiteFeaturePage};
 
@@ -34,7 +33,7 @@ impl RenderFile for SiteFeaturePage<'_> {
             rendered(&FeatureTemplate {
                 page,
                 contents: self.contents(),
-                blocks: blocks(self.blocks()),
+                blocks: pieces(self.blocks()).join("\n"),
             }),
         )
     }

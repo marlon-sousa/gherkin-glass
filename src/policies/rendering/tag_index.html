@@ -4,7 +4,7 @@
 {%- else %}
 <ul class="ghg-tag-index">
 {%- for entry in entries %}
-<li>{{ entry.before }}<a href="{{ entry.address }}"><bdi>{{ entry.tag }}</bdi></a>{{ entry.after }}</li>
+{{ entry|safe }}
 {%- endfor %}
 </ul>
 {%- endif %}

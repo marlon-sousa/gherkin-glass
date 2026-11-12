@@ -16,7 +16,7 @@
 <h2>{{ folder.words.folders }}</h2>
 <ul class="ghg-folders">
 {%- for subfolder in folders %}
-<li><a href="{{ subfolder.address }}">{{ subfolder.name }}</a></li>
+{{ subfolder|safe }}
 {%- endfor %}
 </ul>
 {%- endif %}
@@ -24,7 +24,7 @@
 <h2>{{ folder.words.features }}</h2>
 <ul class="ghg-features">
 {%- for feature in features %}
-{{ feature.render()|safe }}
+{{ feature|safe }}
 {%- endfor %}
 </ul>
 {%- endif %}

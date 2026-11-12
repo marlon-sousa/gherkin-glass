@@ -1,8 +1,8 @@
-//! Policy: the versions page's HTML, from its node of the site tree and the lists below it.
+//! Policy: the versions page's HTML, its lists and each of their entries rendered from their templates, from its node of the site tree and the nodes below it.
 
 use askama::Template;
 
-use super::node_rendering::{PageNode, Render, RenderFile, page};
+use super::node_rendering::{NodeOf, Render, RenderFile, page, pieces, rendered};
 use super::page_frame::{SkipLink, ThemeControl};
 use super::page_head::PageHead;
 use super::page_layout::SitePieces;
@@ -21,19 +21,34 @@ struct VersionsTemplate<'a> {
     skip_link: String,
     theme_control: String,
     title: &'a str,
-    words: &'a VersionsWords,
-    development: Vec<&'a VersionEntry>,
-    releases: Vec<&'a VersionEntry>,
-    pre_releases: Vec<&'a VersionEntry>,
+    /// Its lists that hold a version, each already rendered.
+    lists: Vec<String>,
 }
 
-impl RenderFile for PageNode<'_, VersionsPage> {
+#[derive(Template)]
+#[template(path = "versions_list.html")]
+struct VersionsListTemplate<'a> {
+    heading: &'a str,
+    id: &'a str,
+    /// Whether the list starts collapsed, as the pre-releases do.
+    collapsed: bool,
+    /// Its entries, each already rendered.
+    entries: Vec<String>,
+}
+
+#[derive(Template)]
+#[template(path = "version_entry.html")]
+struct VersionEntryTemplate<'a> {
+    entry: &'a VersionEntry,
+}
+
+impl RenderFile for NodeOf<'_, VersionsPage> {
     fn address(&self) -> SiteAddress {
         SiteAddress::at_root(VERSIONS_PAGE)
     }
 
     fn render_file(&self, site: &SitePieces<'_>) -> String {
-        let versions = self.page;
+        let versions = self.value;
         page(&VersionsTemplate {
             language: &versions.language,
             head: PageHead {
@@ -51,24 +66,44 @@ impl RenderFile for PageNode<'_, VersionsPage> {
             }
             .render(),
             title: &versions.title,
-            words: &versions.words,
-            development: entries(self.node, VersionsList::Development),
-            releases: entries(self.node, VersionsList::Releases),
-            pre_releases: entries(self.node, VersionsList::PreReleases),
+            lists: pieces(self.node.children().filter(holds_a_version)),
         })
     }
 }
 
-/// The entries of the list `list` of the versions page `page`.
-fn entries(page: SiteTreeNode<'_>, list: VersionsList) -> Vec<&VersionEntry> {
-    page.children()
-        .filter(|child| *child.value() == SiteNode::VersionsList(list))
-        .flat_map(|child| child.children())
-        .filter_map(|entry| match entry.value() {
-            SiteNode::VersionEntry(entry) => Some(entry),
-            _ => None,
+impl Render for NodeOf<'_, VersionsList> {
+    fn render(&self) -> String {
+        let words = self.node.parent().and_then(versions_words);
+        let (heading, id) = match self.value {
+            VersionsList::Development => (words.map(|words| &words.development), "development"),
+            VersionsList::Releases => (words.map(|words| &words.releases), "releases"),
+            VersionsList::PreReleases => (words.map(|words| &words.pre_releases), "pre-releases"),
+        };
+        rendered(&VersionsListTemplate {
+            heading: heading.map_or("", String::as_str),
+            id,
+            collapsed: *self.value == VersionsList::PreReleases,
+            entries: pieces(self.node.children()),
         })
-        .collect()
+    }
+}
+
+impl Render for VersionEntry {
+    fn render(&self) -> String {
+        rendered(&VersionEntryTemplate { entry: self })
+    }
+}
+
+fn holds_a_version(list: &SiteTreeNode<'_>) -> bool {
+    list.children().next().is_some()
+}
+
+/// The headings of the lists of `node`, when it is the versions page.
+fn versions_words(node: SiteTreeNode<'_>) -> Option<&VersionsWords> {
+    match node.value() {
+        SiteNode::VersionsPage(page) => Some(&page.words),
+        _ => None,
+    }
 }
 
 #[cfg(test)]
@@ -92,8 +127,8 @@ mod tests {
         let SiteNode::VersionsPage(versions) = node.value() else {
             panic!("the versions page first");
         };
-        PageNode {
-            page: versions,
+        NodeOf {
+            value: versions,
             node,
         }
         .render_file(&SitePieces::of(tree.frame()))

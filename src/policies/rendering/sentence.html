@@ -1,0 +1,7 @@
+<h3{% if let Some(language) = sentence.language %} lang="{{ language }}"{% endif %}>{{ sentence.text }}</h3>
+<p>{{ sentence.uses_count }}</p>
+<ul>
+{%- for found in uses %}
+{{ found|safe }}
+{%- endfor %}
+</ul>

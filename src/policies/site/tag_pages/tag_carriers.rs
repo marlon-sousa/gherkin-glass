@@ -50,10 +50,7 @@ fn inherited(block: &SiteNode, tag: &str) -> Option<Through> {
 /// Whether `tag` is written anywhere on `page`.
 pub(super) fn writes(page: &SiteFeaturePage<'_>, tag: &str) -> bool {
     has(&page.page().tags, tag)
-        || page.blocks().any(|block| match block.value() {
-            SiteNode::Rule(rule) => has(&rule.tags, tag),
-            _ => false,
-        })
+        || page.blocks().any(|block| rule_writes(block.value(), tag))
         || page
             .scenarios()
             .any(|scenario| scenario_writes(scenario, tag))
@@ -66,10 +63,12 @@ fn scenario_writes(node: SiteTreeNode<'_>, tag: &str) -> bool {
 
 /// Whether one of the outline `node`'s examples blocks has `tag`.
 fn in_examples(node: SiteTreeNode<'_>, tag: &str) -> bool {
-    node.children().any(|child| match child.value() {
-        SiteNode::Examples(examples) => has(&examples.tags, tag),
-        _ => false,
-    })
+    node.examples().any(|examples| has(&examples.tags, tag))
+}
+
+/// Whether `block` is a rule that has `tag`.
+fn rule_writes(block: &SiteNode, tag: &str) -> bool {
+    matches!(block, SiteNode::Rule(rule) if has(&rule.tags, tag))
 }
 
 fn has(tags: &[TagView], tag: &str) -> bool {

@@ -113,15 +113,26 @@ fn any_background_steps(
     rules: &[RuleContent],
 ) -> bool {
     let feature_steps = has_steps(background);
-    let in_feature = !scenarios.is_empty() || rules.iter().any(|rule| !rule.scenarios.is_empty());
-    let in_rule = rules
-        .iter()
-        .any(|rule| has_steps(rule.background.as_ref()) && !rule.scenarios.is_empty());
+    let in_feature = !scenarios.is_empty() || rules.iter().any(has_scenarios);
+    let in_rule = rules.iter().any(starts_with_its_background);
     (feature_steps && in_feature) || in_rule
 }
 
+fn has_scenarios(rule: &RuleContent) -> bool {
+    !rule.scenarios.is_empty()
+}
+
+/// Whether a scenario of `rule` starts with the steps of the rule's background.
+fn starts_with_its_background(rule: &RuleContent) -> bool {
+    has_steps(rule.background.as_ref()) && has_scenarios(rule)
+}
+
 fn has_steps(background: Option<&BackgroundContent>) -> bool {
-    background.is_some_and(|background| !background.steps.is_empty())
+    background.is_some_and(has_own_steps)
+}
+
+fn has_own_steps(background: &BackgroundContent) -> bool {
+    !background.steps.is_empty()
 }
 
 fn source_link(template: &str, path: &str, line: usize) -> SourceLink {

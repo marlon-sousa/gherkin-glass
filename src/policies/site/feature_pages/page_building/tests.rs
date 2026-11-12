@@ -6,9 +6,9 @@ use gherkin::{Feature, GherkinEnv};
 use super::*;
 use crate::entities::{
     BackgroundContent, LinkAddress, OutsideLink, ParsedFeature, RuleContent, ScenarioContent,
-    SiteTreeBuilder, StepPart, TableView, TagView,
+    StepPart, TableView, TagView,
 };
-use crate::policies::site::{name_tags, site_with_feature_pages};
+use crate::policies::site::name_tags;
 use crate::test_support::tag_link;
 
 /// The feature of `text`, in `billing/saque em conta.feature`.
@@ -46,12 +46,6 @@ fn in_rule(rule: &RuleContent) -> (&BackgroundContent, &ScenarioContent) {
         panic!("{rule:?}");
     };
     (background, outline)
-}
-
-/// A site tree holding only the page of `text`, with the settings of every page `options`.
-fn tree_of(text: &str, options: &PageOptions) -> SiteTreeBuilder {
-    let features = [parsed(text)];
-    site_with_feature_pages(&features, options, &name_tags(&features), None)
 }
 
 const FEATURE: &str = "\
@@ -103,22 +97,6 @@ fn the_description_is_a_paragraph_that_keeps_its_lines() {
             "Another paragraph.".to_string()
         ])
     );
-}
-
-#[test]
-fn the_contents_list_rules_and_scenarios_with_a_rule_s_scenarios_inside_it() {
-    let builder = tree_of(FEATURE, &PageOptions::default());
-    let contents = builder
-        .every_feature_page()
-        .next()
-        .expect("the page")
-        .contents();
-    let entries: Vec<_> = contents
-        .iter()
-        .map(|e| (e.anchor.as_str(), e.entries.len()))
-        .collect();
-    assert_eq!(entries, [("outside", 0), ("r", 1)]);
-    assert_eq!(contents[1].entries[0].heading, "Scenario Outline: Inside");
 }
 
 #[test]

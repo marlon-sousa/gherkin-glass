@@ -1,0 +1,19 @@
+{%- if collapsed -%}
+<div class="ghg-block">
+<h2 id="{{ id }}"><button type="button" class="ghg-toggle" aria-expanded="false">{{ heading }}</button></h2>
+<div class="ghg-content" hidden>
+<ul class="ghg-versions">
+{%- for entry in entries %}
+{{ entry|safe }}
+{%- endfor %}
+</ul>
+</div>
+</div>
+{%- else -%}
+<h2 id="{{ id }}">{{ heading }}</h2>
+<ul class="ghg-versions">
+{%- for entry in entries %}
+{{ entry|safe }}
+{%- endfor %}
+</ul>
+{%- endif -%}

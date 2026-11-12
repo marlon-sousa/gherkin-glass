@@ -1,44 +1,47 @@
 //! Policy: the suite's step sentences, grouped and sorted, with where each is used.
 
+use std::cmp::Ordering;
 use std::collections::BTreeMap;
 
 use super::sentence_slots::sentence_of;
 use crate::entities::{
-    BlockHeading, Sentence, SentenceGroup, SentenceUse, SiteFeaturePage, SiteNode, SiteTreeNode,
-    StepKind, StepSentences, StepView,
+    BlockHeading, ExamplesBlock, Sentence, SentenceGroup, SentenceUse, SiteFeaturePage, SiteNode,
+    SiteTreeNode, StepKind, StepSentences, StepView, TableView,
 };
 
 /// The sentences of the steps of `pages`, feature pages of the site tree with their blocks.
 pub(crate) fn find_step_sentences(pages: &[SiteFeaturePage<'_>]) -> StepSentences {
     let mut pages: Vec<_> = pages.to_vec();
-    pages.sort_by(|a, b| a.page().path.split('/').cmp(b.page().path.split('/')));
+    pages.sort_by(path_order);
 
     let mut found: BTreeMap<SentenceKey, Vec<SentenceUse>> = BTreeMap::new();
     for feature in pages {
         let page = feature.page();
-        for FoundStep {
+        for FoundBlock {
             heading,
-            step,
             columns,
-        } in steps_of(&feature)
+            steps,
+        } in blocks_of(&feature)
         {
-            let (text, values) = sentence_of(&step.text(), &columns);
-            found
-                .entry(SentenceKey {
-                    kind: step.kind,
-                    lower: text.to_lowercase(),
-                    text,
-                })
-                .or_default()
-                .push(SentenceUse {
-                    path: page.path.clone(),
-                    page: page.address.clone(),
-                    language: page.language.clone(),
-                    anchor: heading.anchor.clone(),
-                    heading: heading.text(),
-                    line: step.line,
-                    values,
-                });
+            for step in steps {
+                let (text, values) = sentence_of(&step.text(), &columns);
+                found
+                    .entry(SentenceKey {
+                        kind: step.kind,
+                        lower: text.to_lowercase(),
+                        text,
+                    })
+                    .or_default()
+                    .push(SentenceUse {
+                        path: page.path.clone(),
+                        page: page.address.clone(),
+                        language: page.language.clone(),
+                        anchor: heading.anchor.clone(),
+                        heading: heading.text(),
+                        line: step.line,
+                        values,
+                    });
+            }
         }
     }
 
@@ -65,57 +68,66 @@ struct SentenceKey {
     text: String,
 }
 
-/// A step, with the heading of its block, and the columns of its outline, if it is in one.
-struct FoundStep<'a> {
+/// A background or a scenario: its heading, the columns of its outline, if it is one, and its
+/// steps.
+struct FoundBlock<'a> {
     heading: &'a BlockHeading,
-    step: &'a StepView,
     columns: Vec<&'a str>,
+    steps: Vec<&'a StepView>,
 }
 
-/// Every step of the page's backgrounds and scenarios, in file order; the
-/// scenarios an outline's rows make are left out.
-fn steps_of<'a>(page: &SiteFeaturePage<'a>) -> Vec<FoundStep<'a>> {
+/// Every background and scenario of the page, in file order; the scenarios an outline's rows
+/// make are left out.
+fn blocks_of<'a>(page: &SiteFeaturePage<'a>) -> Vec<FoundBlock<'a>> {
     page.blocks()
-        .flat_map(|block| match block.value() {
-            SiteNode::Rule(_) => block.children().collect(),
-            _ => vec![block],
-        })
-        .flat_map(block_steps)
+        .flat_map(with_rule_blocks)
+        .filter_map(found_block)
         .collect()
 }
 
-/// The steps of the background or the scenario `block`; none for another node.
-fn block_steps(block: SiteTreeNode<'_>) -> Vec<FoundStep<'_>> {
+/// `block`'s own blocks when it is a rule, or else `block` itself.
+fn with_rule_blocks(block: SiteTreeNode<'_>) -> Vec<SiteTreeNode<'_>> {
+    match block.value() {
+        SiteNode::Rule(_) => block.children().collect(),
+        _ => vec![block],
+    }
+}
+
+/// `block` with its steps, when it is a background or a scenario.
+fn found_block(block: SiteTreeNode<'_>) -> Option<FoundBlock<'_>> {
     let heading = match block.value() {
         SiteNode::Background(background) => &background.heading,
         SiteNode::Scenario(scenario) => &scenario.heading,
-        _ => return Vec::new(),
+        _ => return None,
     };
-    let columns = columns_of(block);
-    block
-        .children()
-        .filter_map(|child| match child.value() {
-            SiteNode::Step(step) => Some(FoundStep {
-                heading,
-                step,
-                columns: columns.clone(),
-            }),
-            _ => None,
-        })
-        .collect()
+    Some(FoundBlock {
+        heading,
+        columns: columns_of(block),
+        steps: block.steps().collect(),
+    })
 }
 
 /// The names in the header rows of an outline's examples; none for a plain scenario.
 fn columns_of(block: SiteTreeNode<'_>) -> Vec<&str> {
     block
-        .children()
-        .filter_map(|child| match child.value() {
-            SiteNode::Examples(examples) => examples.table.as_ref(),
-            _ => None,
-        })
-        .flat_map(|table| &table.header)
+        .examples()
+        .filter_map(examples_table)
+        .flat_map(header)
         .map(String::as_str)
         .collect()
+}
+
+fn examples_table(examples: &ExamplesBlock) -> Option<&TableView> {
+    examples.table.as_ref()
+}
+
+fn header(table: &TableView) -> &[String] {
+    &table.header
+}
+
+/// The order of the pages of `a` and `b`, by their paths, folder by folder.
+fn path_order(a: &SiteFeaturePage<'_>, b: &SiteFeaturePage<'_>) -> Ordering {
+    a.page().path.split('/').cmp(b.page().path.split('/'))
 }
 
 #[cfg(test)]

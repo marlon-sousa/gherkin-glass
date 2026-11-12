@@ -1,4 +1,4 @@
-//! Policy: a folder's page, and each feature it lists, rendered from their templates inside the page's layout, from the page's node and the nodes below it.
+//! Policy: a folder's page, and each subfolder and feature it lists, rendered from their templates inside the page's layout, from the page's node and the nodes below it.
 
 use askama::Template;
 
@@ -11,8 +11,16 @@ use crate::entities::{FeatureEntry, FolderLink, FolderPage, SiteAddress, SiteFol
 #[template(path = "folder_page.html")]
 struct FolderTemplate<'a> {
     folder: &'a FolderPage,
-    folders: Vec<&'a FolderLink>,
-    features: Vec<&'a FeatureEntry>,
+    /// The links to its subfolders' pages, each already rendered.
+    folders: Vec<String>,
+    /// Its features' entries, each already rendered.
+    features: Vec<String>,
+}
+
+#[derive(Template)]
+#[template(path = "subfolder_link.html")]
+struct SubfolderLinkTemplate<'a> {
+    link: &'a FolderLink,
 }
 
 #[derive(Template)]
@@ -39,10 +47,17 @@ impl RenderFile for SiteFolderPage<'_> {
             },
             rendered(&FolderTemplate {
                 folder,
-                folders: self.folders().collect(),
-                features: self.features().collect(),
+                folders: self.folders().map(FolderLink::render).collect(),
+                features: self.features().map(FeatureEntry::render).collect(),
             }),
         )
+    }
+}
+
+/// A link to a subfolder's page, as its folder's page lists it.
+impl Render for FolderLink {
+    fn render(&self) -> String {
+        rendered(&SubfolderLinkTemplate { link: self })
     }
 }
 

@@ -5,7 +5,6 @@ use ego_tree::NodeRef;
 use super::{SiteNode, SiteTreeNode};
 use crate::entities::{BlockHeading, ContentsEntry, Page};
 
-/// A feature page node of the site tree.
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct SiteFeaturePage<'a> {
     page: &'a Page,
@@ -35,7 +34,7 @@ impl<'a> SiteFeaturePage<'a> {
     pub(crate) fn scenarios(&self) -> impl Iterator<Item = SiteTreeNode<'a>> + use<'a> {
         self.node
             .children()
-            .flat_map(|block| [block].into_iter().chain(rule_children(block)))
+            .flat_map(with_rule_children)
             .filter(is_scenario)
             .map(SiteTreeNode::new)
     }
@@ -93,14 +92,18 @@ fn scenarios_in(node: NodeRef<'_, SiteNode>) -> usize {
     }
 }
 
-/// The blocks in `block` when it is a rule; none for any other block.
-fn rule_children(block: NodeRef<'_, SiteNode>) -> impl Iterator<Item = NodeRef<'_, SiteNode>> {
-    is_rule(&block)
+/// `block`, then the blocks in it when it is a rule.
+fn with_rule_children(block: NodeRef<'_, SiteNode>) -> impl Iterator<Item = NodeRef<'_, SiteNode>> {
+    let in_rule = is_rule(&block)
         .then(|| block.children())
         .into_iter()
-        .flatten()
+        .flatten();
+    [block].into_iter().chain(in_rule)
 }
 
 fn is_scenario(node: &NodeRef<'_, SiteNode>) -> bool {
     matches!(node.value(), SiteNode::Scenario(_))
 }
+
+#[cfg(test)]
+mod tests;

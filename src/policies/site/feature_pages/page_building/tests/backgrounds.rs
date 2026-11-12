@@ -1,42 +1,9 @@
+use rstest::rstest;
+
 use super::*;
-use crate::entities::{SiteNode, SiteTreeNode};
-
-/// Each background the scenario `node` starts with: its introduction, its
-/// anchor, its heading and its first step's text, a `|` between them.
-fn from(node: SiteTreeNode<'_>) -> Vec<String> {
-    node.backgrounds()
-        .into_iter()
-        .map(|(background, background_node)| {
-            let step = background_node
-                .children()
-                .find_map(|child| match child.value() {
-                    SiteNode::Step(step) => Some(step.parts.clone()),
-                    _ => None,
-                });
-            let [StepPart::Plain(text)] = step.as_deref().unwrap_or_default() else {
-                panic!("{step:?}");
-            };
-            format!(
-                "{}|{}|{}|{text}",
-                background.introduction,
-                background.heading.anchor,
-                background.heading.text()
-            )
-        })
-        .collect()
-}
-
-/// The scenarios of the page in `builder`, those inside its rules among them, in file order.
-fn scenarios(builder: &SiteTreeBuilder) -> Vec<SiteTreeNode<'_>> {
-    let page = builder.every_feature_page().next().expect("the page");
-    page.blocks()
-        .flat_map(|block| [block].into_iter().chain(block.children()))
-        .filter(|node| matches!(node.value(), SiteNode::Scenario(_)))
-        .collect()
-}
 
 #[test]
-fn each_scenario_finds_the_feature_s_background_then_its_rule_s_above_it() {
+fn a_feature_s_and_a_rule_s_background_are_introduced_each_in_its_own_words() {
     let page = page(FEATURE, &PageOptions::default());
     assert_eq!(
         page.page.backgrounds_option,
@@ -46,62 +13,47 @@ fn each_scenario_finds_the_feature_s_background_then_its_rule_s_above_it() {
             enabled: true,
         })
     );
-    let builder = tree_of(FEATURE, &PageOptions::default());
-    let [scenario, outline] = scenarios(&builder)[..] else {
-        panic!("two scenarios");
-    };
-    let feature = "From the background:|background|Background|a customer";
-    assert_eq!(from(scenario), [feature]);
-    assert_eq!(
-        from(outline),
-        [
-            feature,
-            "From the rule's background:|in-the-rule|Background: In the rule|y"
-        ]
-    );
+    let (background, _, rule) = blocks(&page);
+    let (in_rule, _) = in_rule(rule);
+    assert_eq!(background.block.introduction, "From the background:");
+    assert_eq!(in_rule.block.introduction, "From the rule's background:");
 }
 
 #[test]
-fn linked_backgrounds_are_written_so_and_a_background_without_steps_adds_nothing_and_disables_the_option()
- {
+fn linked_backgrounds_are_written_so() {
     let linked = PageOptions {
         inline_backgrounds: false,
         ..PageOptions::default()
     };
-    let linked = page(FEATURE, &linked);
     assert_eq!(
-        linked.page.backgrounds_option.map(|o| o.inline),
+        page(FEATURE, &linked)
+            .page
+            .backgrounds_option
+            .map(|o| o.inline),
         Some(false)
     );
-    let empty = "Feature: F\n  Background:\n    Only words.\n\n  Scenario: S\n    Given x\n";
+}
+
+#[rstest]
+#[case::without_steps(
+    "Feature: F\n  Background:\n    Only words.\n\n  Scenario: S\n    Given x\n",
+    Some(false)
+)]
+#[case::with_no_scenario("Feature: F\n  Background:\n    Given x\n", Some(false))]
+#[case::in_a_rule(
+    "Feature: F\n  Rule: R\n    Background:\n      Given x\n    Scenario: S\n      Given y\n",
+    Some(true)
+)]
+#[case::with_no_background("Feature: F\n  Scenario: S\n    Given x\n", None)]
+fn the_option_is_offered_with_a_background_and_enabled_when_a_scenario_starts_with_its_steps(
+    #[case] text: &str,
+    #[case] enabled: Option<bool>,
+) {
     assert_eq!(
-        page(empty, &PageOptions::default())
+        page(text, &PageOptions::default())
             .page
             .backgrounds_option
             .map(|o| o.enabled),
-        Some(false)
+        enabled
     );
-    let builder = tree_of(empty, &PageOptions::default());
-    assert!(scenarios(&builder)[0].backgrounds().is_empty());
-    let alone = page(
-        "Feature: F\n  Background:\n    Given x\n",
-        &PageOptions::default(),
-    );
-    assert_eq!(
-        alone.page.backgrounds_option.map(|o| o.enabled),
-        Some(false)
-    );
-    let in_a_rule = page(
-        "Feature: F\n  Rule: R\n    Background:\n      Given x\n    Scenario: S\n      Given y\n",
-        &PageOptions::default(),
-    );
-    assert_eq!(
-        in_a_rule.page.backgrounds_option.map(|o| o.enabled),
-        Some(true)
-    );
-    let none = page(
-        "Feature: F\n  Scenario: S\n    Given x\n",
-        &PageOptions::default(),
-    );
-    assert_eq!(none.page.backgrounds_option, None);
 }

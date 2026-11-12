@@ -1,40 +1,49 @@
-//! Policy: the page of step sentences, its content rendered from its template inside the page's layout, from its node and the nodes below it.
+//! Policy: the page of step sentences, its content, each group, each sentence and each use rendered from their templates, inside the page's layout, from the page's node and the nodes below it.
 
 use askama::Template;
 
-use super::node_rendering::{PageNode, RenderFile, rendered};
+use super::node_rendering::{NodeOf, Render, RenderFile, pieces, rendered};
 use super::page_layout::{PageAround, SitePieces, whole_page};
-use crate::entities::{
-    GroupView, SentenceView, SentencesPage, SiteAddress, SiteNode, SiteTreeNode, UseView,
-};
+use crate::entities::{GroupView, SentenceView, SentencesPage, SiteAddress, UseView};
 use crate::policies::SENTENCES_PAGE;
 
 #[derive(Template)]
 #[template(path = "sentences_page.html")]
 struct SentencesTemplate<'a> {
     page: &'a SentencesPage,
-    groups: Vec<GroupOnPage<'a>>,
+    /// Its groups, each already rendered.
+    groups: Vec<String>,
 }
 
-/// A group of the page, with its sentences.
-struct GroupOnPage<'a> {
+#[derive(Template)]
+#[template(path = "sentences_group.html")]
+struct GroupTemplate<'a> {
     group: &'a GroupView,
-    sentences: Vec<SentenceOnPage<'a>>,
+    /// Its sentences, each already rendered.
+    sentences: Vec<String>,
 }
 
-/// A sentence of the page, with its uses.
-struct SentenceOnPage<'a> {
+#[derive(Template)]
+#[template(path = "sentence.html")]
+struct SentenceTemplate<'a> {
     sentence: &'a SentenceView,
-    uses: Vec<&'a UseView>,
+    /// Its uses, each already rendered.
+    uses: Vec<String>,
 }
 
-impl RenderFile for PageNode<'_, SentencesPage> {
+#[derive(Template)]
+#[template(path = "sentence_use.html")]
+struct UseTemplate<'a> {
+    found: &'a UseView,
+}
+
+impl RenderFile for NodeOf<'_, SentencesPage> {
     fn address(&self) -> SiteAddress {
         SiteAddress::at_root(SENTENCES_PAGE)
     }
 
     fn render_file(&self, site: &SitePieces<'_>) -> String {
-        let page = self.page;
+        let page = self.value;
         whole_page(
             site,
             &PageAround {
@@ -45,36 +54,32 @@ impl RenderFile for PageNode<'_, SentencesPage> {
             },
             rendered(&SentencesTemplate {
                 page,
-                groups: self.node.children().filter_map(group_on_page).collect(),
+                groups: pieces(self.node.children()),
             }),
         )
     }
 }
 
-/// The group of `node`, when it is one, with its sentences below it.
-fn group_on_page(node: SiteTreeNode<'_>) -> Option<GroupOnPage<'_>> {
-    let SiteNode::SentencesGroup(group) = node.value() else {
-        return None;
-    };
-    Some(GroupOnPage {
-        group,
-        sentences: node.children().filter_map(sentence_on_page).collect(),
-    })
+impl Render for NodeOf<'_, GroupView> {
+    fn render(&self) -> String {
+        rendered(&GroupTemplate {
+            group: self.value,
+            sentences: pieces(self.node.children()),
+        })
+    }
 }
 
-/// The sentence of `node`, when it is one, with its uses below it.
-fn sentence_on_page(node: SiteTreeNode<'_>) -> Option<SentenceOnPage<'_>> {
-    let SiteNode::Sentence(sentence) = node.value() else {
-        return None;
-    };
-    Some(SentenceOnPage {
-        sentence,
-        uses: node
-            .children()
-            .filter_map(|child| match child.value() {
-                SiteNode::SentenceUse(found) => Some(found),
-                _ => None,
-            })
-            .collect(),
-    })
+impl Render for NodeOf<'_, SentenceView> {
+    fn render(&self) -> String {
+        rendered(&SentenceTemplate {
+            sentence: self.value,
+            uses: pieces(self.node.children()),
+        })
+    }
+}
+
+impl Render for UseView {
+    fn render(&self) -> String {
+        rendered(&UseTemplate { found: self })
+    }
 }

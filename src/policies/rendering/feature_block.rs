@@ -1,12 +1,13 @@
-//! Policy: the blocks of a feature's page, each kind of block node rendered through the one template of a block, with the backgrounds a scenario starts with, its steps and the blocks below it.
+//! Policy: the blocks of a feature's page, each kind of block node rendered through the rendering trait into the one template of a block, with the backgrounds a scenario starts with, its steps and the blocks below it.
 
 use askama::Template;
 
 use super::from_background::FromBackground;
-use super::node_rendering::{Render, rendered};
+use super::node_rendering::{NodeOf, Render, pieces, rendered};
 use super::steps::{StepList, steps_of};
 use crate::entities::{
-    BlockHeading, HeadingLevel, HeadingPart, Paragraph, SiteNode, SiteTreeNode, TableView, TagView,
+    BackgroundBlock, BlockHeading, ExamplesBlock, HeadingLevel, HeadingPart, Paragraph, RuleBlock,
+    ScenarioBlock, SiteTreeNode, TableView, TagView,
 };
 
 #[derive(Template)]
@@ -43,47 +44,91 @@ enum BlockKind {
     ExamplesAsScenarios,
 }
 
-/// The blocks among `nodes`, one after the other, a line apart, each with
-/// what is below it; the nodes that are not blocks, such as steps, left out.
-pub(super) fn blocks<'a>(nodes: impl Iterator<Item = SiteTreeNode<'a>>) -> String {
-    nodes.filter_map(block).collect::<Vec<_>>().join("\n")
+/// An outline's examples as scenarios, by its heading, with its node, which
+/// holds the scenario of each row.
+pub(super) struct ExamplesAsScenariosNode<'a> {
+    pub(super) heading: &'a BlockHeading,
+    pub(super) node: SiteTreeNode<'a>,
 }
 
-/// The block of `node`, when it is one.
-fn block(node: SiteTreeNode<'_>) -> Option<String> {
-    let view = match node.value() {
-        SiteNode::Background(background) => BlockView {
-            description: &background.description,
-            ..BlockView::of(BlockKind::Background, &background.heading)
-        },
-        SiteNode::Rule(rule) => BlockView {
-            tags: &rule.tags,
-            description: &rule.description,
-            ..BlockView::of(BlockKind::Rule, &rule.heading)
-        },
-        SiteNode::Scenario(scenario) => BlockView {
-            tags: &scenario.tags,
-            description: &scenario.description,
-            ..BlockView::of(BlockKind::Scenario, &scenario.heading)
-        },
-        SiteNode::Examples(examples) => BlockView {
-            tags: &examples.tags,
-            description: &examples.description,
-            table: &examples.table,
-            ..BlockView::of(BlockKind::Examples, &examples.heading)
-        },
-        SiteNode::ExamplesAsScenarios(heading) => {
-            BlockView::of(BlockKind::ExamplesAsScenarios, heading)
-        }
-        SiteNode::ExampleScenario(heading) => BlockView::of(BlockKind::Scenario, heading),
-        _ => return None,
-    };
-    Some(rendered(&BlockTemplate {
+/// The scenario one row of an outline's examples makes, by its heading, with
+/// its node, which holds its steps.
+pub(super) struct ExampleScenarioNode<'a> {
+    pub(super) heading: &'a BlockHeading,
+    pub(super) node: SiteTreeNode<'a>,
+}
+
+impl Render for NodeOf<'_, BackgroundBlock> {
+    fn render(&self) -> String {
+        let view = BlockView {
+            description: &self.value.description,
+            ..BlockView::of(BlockKind::Background, &self.value.heading)
+        };
+        block(view, self.node)
+    }
+}
+
+impl Render for NodeOf<'_, RuleBlock> {
+    fn render(&self) -> String {
+        let view = BlockView {
+            tags: &self.value.tags,
+            description: &self.value.description,
+            ..BlockView::of(BlockKind::Rule, &self.value.heading)
+        };
+        block(view, self.node)
+    }
+}
+
+impl Render for NodeOf<'_, ScenarioBlock> {
+    fn render(&self) -> String {
+        let view = BlockView {
+            tags: &self.value.tags,
+            description: &self.value.description,
+            ..BlockView::of(BlockKind::Scenario, &self.value.heading)
+        };
+        block(view, self.node)
+    }
+}
+
+impl Render for NodeOf<'_, ExamplesBlock> {
+    fn render(&self) -> String {
+        let view = BlockView {
+            tags: &self.value.tags,
+            description: &self.value.description,
+            table: &self.value.table,
+            ..BlockView::of(BlockKind::Examples, &self.value.heading)
+        };
+        block(view, self.node)
+    }
+}
+
+impl Render for ExamplesAsScenariosNode<'_> {
+    fn render(&self) -> String {
+        block(
+            BlockView::of(BlockKind::ExamplesAsScenarios, self.heading),
+            self.node,
+        )
+    }
+}
+
+impl Render for ExampleScenarioNode<'_> {
+    fn render(&self) -> String {
+        block(BlockView::of(BlockKind::Scenario, self.heading), self.node)
+    }
+}
+
+/// The block `view` of `node`, with its backgrounds, its steps and the blocks below it.
+fn block(view: BlockView<'_>, node: SiteTreeNode<'_>) -> String {
+    rendered(&BlockTemplate {
         backgrounds: from_backgrounds(node, view.anchor),
         steps: own_steps(node),
-        blocks: blocks(node.children()),
+        blocks: pieces(node.children().filter(is_block)).join("\n"),
         block: view,
-    }))
+    })
+}
+
+fn is_block(node: &SiteTreeNode<'_>) -> bool {
+    !node.is_step()
 }
 
 /// The backgrounds the scenario `node`, at `anchor`, starts with; none for
@@ -96,16 +141,14 @@ fn from_backgrounds(node: SiteTreeNode<'_>, anchor: &str) -> Vec<String> {
     node.backgrounds()
         .into_iter()
         .zip(1..)
-        .map(|((background, background_node), place)| {
-            FromBackground {
-                background,
-                node: background_node,
-                scenario: anchor,
-                place,
-                inline,
-            }
-            .render()
+        .map(|((background, node), place)| FromBackground {
+            background,
+            node,
+            scenario: anchor,
+            place,
+            inline,
         })
+        .map(|from| from.render())
         .collect()
 }
 

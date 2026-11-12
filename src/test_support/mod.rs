@@ -1,4 +1,4 @@
-//! Test support: the fixtures under `tests/fixtures`, read as the command reads them, scratch
+//! Test support: site trees of features written in the test, the fixtures under `tests/fixtures`, read as the command reads them, scratch
 //! folders for tests that touch the disk, an input held in memory, output folders as ghg finds
 //! them, and a server and a watcher for ghg serve.
 
@@ -11,11 +11,15 @@ use std::io::{Error as IoError, ErrorKind, Result as IoResult};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
+use gherkin::{Feature, GherkinEnv};
 use regex_automata::meta::Regex;
 
 use crate::adapters::{GherkinCrate, InputFolderReader};
-use crate::entities::{EntryKind, FolderEntry, ParsedFeature, TagLink, Unnamed};
+use crate::entities::{
+    EntryKind, FolderEntry, PageOptions, ParsedFeature, SiteFeaturePage, SiteTree, TagLink, Unnamed,
+};
 use crate::errors::InputErrors;
+use crate::policies::site_tree;
 use crate::ports::InputFolders;
 use crate::services::{GherkinParser, GherkinParserApi};
 
@@ -31,6 +35,34 @@ pub(crate) fn tag_link(pattern: &str, address: &str, text: &str) -> TagLink {
         address: address.into(),
         text: text.into(),
     }
+}
+
+/// The feature of `text`, at `path` below the input folder, written in English.
+pub(crate) fn parsed_at(path: &str, text: &str) -> ParsedFeature {
+    let feature = Feature::parse(text, GherkinEnv::default()).expect("parses");
+    ParsedFeature::new(
+        PathBuf::from(path),
+        feature,
+        "en".to_string(),
+        BTreeMap::new(),
+    )
+}
+
+/// The site tree of `features`, each a path below the input folder and its text, for a site
+/// without versions, with the settings of every page `options`.
+pub(crate) fn site_of(features: &[(&str, &str)], options: &PageOptions) -> SiteTree {
+    let parsed: Vec<_> = features
+        .iter()
+        .map(|(path, text)| parsed_at(path, text))
+        .collect();
+    site_tree(&parsed, options, None, &BTreeSet::new())
+}
+
+/// Every feature page of `site`, folder by folder from the input folder in.
+pub(crate) fn feature_pages(site: &SiteTree) -> Vec<SiteFeaturePage<'_>> {
+    site.files()
+        .filter_map(|file| file.feature_page())
+        .collect()
 }
 
 /// The fixture folder `name`, under `tests/fixtures`.
