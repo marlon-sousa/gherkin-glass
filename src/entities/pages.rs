@@ -1,4 +1,4 @@
-//! Entity: the site's pages and its files, what every page has, a folder's page, the breadcrumb and the folder tree, the addresses of the site and its links, the colours of each theme, and what a build that succeeded wrote.
+//! Entity: the site's pages and its files, the site tree of them, what every page has, a folder's page, the breadcrumb and the folder tree, the addresses of the site and its links, the colours of each theme, and what a build that succeeded wrote.
 
 mod breadcrumb;
 mod built_site;
@@ -10,6 +10,7 @@ mod palette;
 mod site_address;
 mod site_assets;
 mod site_file;
+mod site_tree;
 mod tree_item;
 
 pub(crate) use breadcrumb::{Breadcrumb, Crumb};
@@ -22,4 +23,5 @@ pub(crate) use palette::Palette;
 pub(crate) use site_address::SiteAddress;
 pub(crate) use site_assets::{ASSETS, SiteAssets};
 pub(crate) use site_file::{SiteFile, SiteFiles};
+pub(crate) use site_tree::{FileNode, SiteTree};
 pub(crate) use tree_item::TreeItem;

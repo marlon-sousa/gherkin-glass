@@ -1,6 +1,6 @@
 //! Entity: a feature's page, as its template shows it, every text in it as written or worded.
 
-use crate::entities::{Breadcrumb, HeadingLevel, LinkAddress, PageFrame, SiteAddress, StepPart};
+use crate::entities::{Breadcrumb, FeatureBlock, LinkAddress, PageFrame, SiteAddress, StepPart};
 
 /// One page of the site. Every `String` is text, escaped when it is rendered.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -19,7 +19,7 @@ pub(crate) struct Page {
     pub(crate) description: Option<Paragraph>,
     pub(crate) source: Option<SourceLink>,
     pub(crate) contents: Vec<ContentsEntry>,
-    pub(crate) blocks: Vec<Block>,
+    pub(crate) blocks: Vec<FeatureBlock>,
     pub(crate) words: PageWords,
     /// The checkbox that switches how scenarios show their backgrounds, on a
     /// page with a background.
@@ -95,46 +95,6 @@ pub(crate) struct ContentsEntry {
     pub(crate) entries: Vec<ContentsEntry>,
 }
 
-/// A background, rule, scenario or examples block, or an outline's examples
-/// as scenarios, with its heading and what is under it.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct Block {
-    pub(crate) kind: BlockKind,
-    pub(crate) level: HeadingLevel,
-    /// The `id` of its heading: a block's anchor, or for the examples as
-    /// scenarios an `id` of the page's own, with a `_`.
-    pub(crate) anchor: String,
-    pub(crate) heading_parts: Vec<HeadingPart>,
-    pub(crate) collapsed: bool,
-    pub(crate) tags: Vec<TagView>,
-    pub(crate) description: Option<Paragraph>,
-    /// A scenario's: the feature's background, then its rule's.
-    pub(crate) backgrounds: Vec<FromBackground>,
-    pub(crate) steps: Vec<StepView>,
-    /// An examples block's.
-    pub(crate) table: Option<TableView>,
-    /// A rule's background and scenarios, an outline's examples blocks and
-    /// its examples as scenarios, or the scenarios those are.
-    pub(crate) blocks: Vec<Block>,
-}
-
-/// A part of a heading; feature text inside gherkin-glass's own words is
-/// isolated, with `<bdi>`.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct HeadingPart {
-    pub(crate) text: String,
-    pub(crate) isolated: bool,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(crate) enum BlockKind {
-    Background,
-    Rule,
-    Scenario,
-    Examples,
-    ExamplesAsScenarios,
-}
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct StepView {
     /// As written, with the space after it when the language has one.
@@ -161,46 +121,21 @@ impl Page {
     pub(crate) fn rule_count(&self) -> usize {
         self.blocks
             .iter()
-            .filter(|block| block.kind == BlockKind::Rule)
+            .filter(|block| matches!(block, FeatureBlock::Rule(_)))
             .count()
     }
 
     /// Scenario outlines among them, and those inside rules.
     pub(crate) fn scenario_count(&self) -> usize {
-        let scenarios = |blocks: &[Block]| {
-            blocks
-                .iter()
-                .filter(|block| block.kind == BlockKind::Scenario)
-                .count()
-        };
-        scenarios(&self.blocks)
-            + self
-                .blocks
-                .iter()
-                .filter(|block| block.kind == BlockKind::Rule)
-                .map(|rule| scenarios(&rule.blocks))
-                .sum::<usize>()
+        self.blocks.iter().map(scenarios_in).sum()
     }
 }
 
-impl Block {
-    pub(crate) fn heading(&self) -> String {
-        self.heading_parts
-            .iter()
-            .map(|part| part.text.as_str())
-            .collect()
-    }
-}
-
-impl BlockKind {
-    /// The class the stylesheet and the script know the block by.
-    pub(crate) fn class(self) -> &'static str {
-        match self {
-            BlockKind::Background => "ghg-background",
-            BlockKind::Rule => "ghg-rule",
-            BlockKind::Scenario => "ghg-scenario",
-            BlockKind::Examples => "ghg-examples",
-            BlockKind::ExamplesAsScenarios => "ghg-examples-as-scenarios",
-        }
+/// The scenarios `block` is or holds.
+fn scenarios_in(block: &FeatureBlock) -> usize {
+    match block {
+        FeatureBlock::Background(_) => 0,
+        FeatureBlock::Rule(rule) => rule.scenarios.len(),
+        FeatureBlock::Scenario(_) => 1,
     }
 }

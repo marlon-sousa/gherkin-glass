@@ -3,8 +3,8 @@ use super::*;
 #[test]
 fn each_scenario_starts_with_the_feature_s_background_then_its_rule_s() {
     let page = page(FEATURE, &PageOptions::default());
-    fn from(block: &Block) -> Vec<(&str, &str, &str, &str, bool)> {
-        block
+    fn from(scenario: &ScenarioBlock) -> Vec<(&str, &str, &str, &str, bool)> {
+        scenario
             .backgrounds
             .iter()
             .map(|from| {
@@ -28,15 +28,11 @@ fn each_scenario_starts_with_the_feature_s_background_then_its_rule_s() {
         "a customer",
         true,
     );
-    assert!(
-        page.blocks[0].backgrounds.is_empty(),
-        "the background's own"
-    );
-    assert_eq!(from(&page.blocks[1]), [feature]);
-    let rule = &page.blocks[2];
-    assert!(rule.backgrounds.is_empty());
+    let (_, scenario, rule) = blocks(&page);
+    assert_eq!(from(scenario), [feature]);
+    let (_, outline) = in_rule(rule);
     assert_eq!(
-        from(&rule.blocks[1]),
+        from(outline),
         [
             feature,
             (
@@ -48,7 +44,6 @@ fn each_scenario_starts_with_the_feature_s_background_then_its_rule_s() {
             )
         ]
     );
-    assert!(rule.blocks[1].blocks[0].backgrounds.is_empty(), "examples");
     assert_eq!(
         page.backgrounds_option,
         Some(BackgroundsOption {
@@ -67,13 +62,16 @@ fn linked_backgrounds_are_written_so_and_a_background_without_steps_adds_nothing
         ..PageOptions::default()
     };
     let linked = page(FEATURE, &linked);
-    assert!(!linked.blocks[1].backgrounds[0].inline);
+    assert!(!blocks(&linked).1.backgrounds[0].inline);
     assert_eq!(linked.backgrounds_option.map(|o| o.inline), Some(false));
     let empty = page(
         "Feature: F\n  Background:\n    Only words.\n\n  Scenario: S\n    Given x\n",
         &PageOptions::default(),
     );
-    assert!(empty.blocks[1].backgrounds.is_empty());
+    let [_, FeatureBlock::Scenario(scenario)] = empty.blocks.as_slice() else {
+        panic!("{:?}", empty.blocks);
+    };
+    assert!(scenario.backgrounds.is_empty());
     assert_eq!(empty.backgrounds_option.map(|o| o.enabled), Some(false));
     let alone = page(
         "Feature: F\n  Background:\n    Given x\n",

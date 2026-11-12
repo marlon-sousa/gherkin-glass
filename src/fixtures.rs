@@ -15,7 +15,7 @@ use crate::adapters::{GherkinCrate, InputFolderReader};
 use crate::entities::{EntryKind, FolderEntry, ParsedFeature, Unnamed};
 use crate::errors::InputErrors;
 use crate::ports::InputFolders;
-use crate::services::InputService;
+use crate::services::{InputService, ParserApi};
 
 pub(crate) use output::{folder, name, set, two_versions};
 pub(crate) use serving::{FakeServer, FakeWatcher, changed};

@@ -1,10 +1,11 @@
 //! Policy: a page's HTML, a feature's, a folder's or the step sentences', rendered from its askama templates.
 
-use askama::Template;
+mod block_rendering;
 
-use crate::entities::{
-    Block, Breadcrumb, FolderPage, Page, PageFrame, SentencesPage, StepPart, TagIndex, TagPage,
-};
+use askama::Template;
+use block_rendering::render_blocks;
+
+use crate::entities::{Breadcrumb, FolderPage, Page, PageFrame, SentencesPage, TagIndex, TagPage};
 use crate::policies::{tag_index_address, tag_pages_language};
 
 #[derive(Template)]
@@ -42,13 +43,6 @@ struct SentencesTemplate<'a> {
     frame: &'a PageFrame,
     breadcrumb: &'a Breadcrumb,
     page: &'a SentencesPage,
-}
-
-#[derive(Template)]
-#[template(path = "block.html")]
-struct BlockTemplate<'a> {
-    block: &'a Block,
-    blocks: String,
 }
 
 #[derive(Template)]
@@ -130,19 +124,6 @@ pub(crate) fn render_sentences_page(page: &SentencesPage) -> String {
         page,
     };
     with_final_line_break(render(&template))
-}
-
-fn render_blocks(blocks: &[Block]) -> String {
-    blocks
-        .iter()
-        .map(|block| {
-            render(&BlockTemplate {
-                block,
-                blocks: render_blocks(&block.blocks),
-            })
-        })
-        .collect::<Vec<_>>()
-        .join("\n")
 }
 
 /// The templates only write strings, which cannot fail.

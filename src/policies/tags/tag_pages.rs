@@ -1,15 +1,18 @@
 //! Policy: the index of every tag and each tag's page, built from the site's feature pages.
 
+mod tag_carriers;
+
 use std::slice::from_ref;
 
 use i18n_embed::LanguageLoader;
 use i18n_embed_fl::fl;
 
 use crate::entities::{
-    Block, BlockKind, LinkAddress, Page, PageOptions, TagFeature, TagIndex, TagIndexEntry,
-    TagNames, TagPage, TagScenario, TagView,
+    LinkAddress, Page, PageOptions, TagFeature, TagIndex, TagIndexEntry, TagNames, TagPage,
+    TagScenario,
 };
 use crate::policies::{CATALOGUE, breadcrumb, outside_link, page_frame, site_title};
+use tag_carriers::{Through, carriers, writes};
 
 /// Stands for the link in the words around it, to find where the link
 /// goes; no message of the catalogue holds it.
@@ -91,8 +94,8 @@ pub(crate) fn build_tag_page(
                         };
                         let (before, after) = around_mark(&words);
                         TagScenario {
-                            address: LinkAddress::to(&page_address).at(&scenario.anchor),
-                            heading: scenario.heading(),
+                            address: LinkAddress::to(&page_address).at(&scenario.heading.anchor),
+                            heading: scenario.heading.text(),
                             before,
                             after,
                         }
@@ -121,64 +124,6 @@ pub(crate) fn build_tag_page(
         features,
         no_scenario: fl!(CATALOGUE, "tag-no-scenario"),
     }
-}
-
-/// How a scenario carries a tag: the first of these that has it.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum Through {
-    Itself,
-    Examples,
-    Rule,
-    Feature,
-}
-
-/// The scenarios of `page` that carry `tag`, in the order of the file.
-fn carriers<'a>(page: &'a Page, tag: &str) -> Vec<(&'a Block, Through)> {
-    let feature = has(&page.tags, tag);
-    let mut found = Vec::new();
-    let mut add = |block: &'a Block, rule: bool| {
-        let through = if has(&block.tags, tag) {
-            Through::Itself
-        } else if block.blocks.iter().any(|examples| has(&examples.tags, tag)) {
-            Through::Examples
-        } else if rule {
-            Through::Rule
-        } else if feature {
-            Through::Feature
-        } else {
-            return;
-        };
-        found.push((block, through));
-    };
-    for block in &page.blocks {
-        match block.kind {
-            BlockKind::Scenario => add(block, false),
-            BlockKind::Rule => {
-                let rule = has(&block.tags, tag);
-                for inner in &block.blocks {
-                    if inner.kind == BlockKind::Scenario {
-                        add(inner, rule);
-                    }
-                }
-            }
-            BlockKind::Background | BlockKind::Examples | BlockKind::ExamplesAsScenarios => {}
-        }
-    }
-    found
-}
-
-/// Whether `tag` is written anywhere on `page`.
-fn writes(page: &Page, tag: &str) -> bool {
-    fn in_blocks(blocks: &[Block], tag: &str) -> bool {
-        blocks
-            .iter()
-            .any(|block| has(&block.tags, tag) || in_blocks(&block.blocks, tag))
-    }
-    has(&page.tags, tag) || in_blocks(&page.blocks, tag)
-}
-
-fn has(tags: &[TagView], tag: &str) -> bool {
-    tags.iter().any(|view| view.text == tag)
 }
 
 fn around_mark(words: &str) -> (String, String) {

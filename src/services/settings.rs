@@ -12,6 +12,19 @@ use crate::ports::ConfigReader;
 /// The configuration file looked for in the current folder.
 const CONFIG_FILE: &str = "ghg.toml";
 
+/// What the controller asks of the settings service.
+pub(crate) trait SettingsApi: Send + Sync {
+    /// The configuration file `options` name, or the one looked for in the current folder.
+    fn config_file(&self, options: &BuildOptions) -> PathBuf;
+
+    /// The settings of a build into `destination`.
+    fn load(
+        &self,
+        options: &BuildOptions,
+        destination: Destination,
+    ) -> Result<Settings, ConfigErrors>;
+}
+
 #[derive(Clone)]
 pub(crate) struct SettingsService {
     reader: Arc<dyn ConfigReader>,
@@ -21,23 +34,23 @@ impl SettingsService {
     pub(crate) fn new(reader: Arc<dyn ConfigReader>) -> Self {
         SettingsService { reader }
     }
+}
 
-    /// The configuration file `options` name, or the one looked for in the current folder.
-    pub(crate) fn config_file(options: &BuildOptions) -> PathBuf {
+impl SettingsApi for SettingsService {
+    fn config_file(&self, options: &BuildOptions) -> PathBuf {
         options
             .config
             .clone()
             .unwrap_or_else(|| PathBuf::from(CONFIG_FILE))
     }
 
-    /// The settings of a build into `destination`.
-    pub(crate) fn load(
+    fn load(
         &self,
         options: &BuildOptions,
         destination: Destination,
     ) -> Result<Settings, ConfigErrors> {
         let asked_for = options.config.is_some();
-        let file = Self::config_file(options);
+        let file = self.config_file(options);
         let config = match self.reader.read(&file) {
             Ok(source) => parse_config(&source),
             // Only a file that was not asked for may be missing.

@@ -10,7 +10,7 @@ use super::*;
 use crate::adapters::MemoryFiles;
 use crate::entities::OutputContents;
 use crate::errors::BuildError;
-use crate::services::Converter;
+use crate::services::{Converter, ConverterApi};
 use fakes::*;
 
 #[rstest]
@@ -122,7 +122,7 @@ fn a_site_in_memory_checks_no_folder_and_has_no_versions() {
     };
     writer.check(&settings).expect("no check");
     let site = Converter.convert(&[], &settings);
-    let ServedSite::Memory(files) = writer.write(&settings, site).expect("written") else {
+    let (_, ServedSite::Memory(files)) = writer.write(&settings, &site).expect("written") else {
         panic!("a site in memory");
     };
     assert!(files.contains_key("index.html"));

@@ -18,15 +18,21 @@ use crate::services::{Converter, InputService, ServerService, SettingsService, S
 /// Runs ghg with `arguments`, those after the command's own name.
 pub fn run(arguments: impl IntoIterator<Item = OsString>) -> ExitCode {
     let site = SiteController::new(
-        SettingsService::new(Arc::new(ConfigFileReader)),
-        InputService::new(Arc::new(InputFolderReader), Arc::new(GherkinCrate)),
-        Converter,
-        SiteWriter::new(
+        Arc::new(SettingsService::new(Arc::new(ConfigFileReader))),
+        Arc::new(InputService::new(
+            Arc::new(InputFolderReader),
+            Arc::new(GherkinCrate),
+        )),
+        Arc::new(Converter),
+        Arc::new(SiteWriter::new(
             Arc::new(OutputFolderStore),
             Arc::new(FolderFiles),
             Arc::new(MemoryFiles::default()),
-        ),
-        ServerService::new(Arc::new(HttpPreviewServer), Arc::new(FileWatcher)),
+        )),
+        Arc::new(ServerService::new(
+            Arc::new(HttpPreviewServer),
+            Arc::new(FileWatcher),
+        )),
     );
     let reply = CommandLine::new(Arc::new(site), Arc::new(StandardStreams)).run(arguments);
     // A closed pipe or a full disk leaves nothing more to say, so the status still stands.

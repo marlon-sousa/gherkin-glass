@@ -11,7 +11,7 @@ use crate::entities::{OutputContents, PageOptions, RawFeature, Unnamed};
 use crate::errors::{BuildError, ParseError};
 pub(super) use crate::fixtures::{MemoryFolders, folder, name, set, two_versions};
 use crate::ports::FeatureParser;
-use crate::services::{Converter, InputService};
+use crate::services::{Converter, ConverterApi, InputService, ParserApi};
 
 /// An output folder held in memory. Each look into it takes the next of
 /// `looks`, and the last one again once they run out; `None` cannot be read.
@@ -127,7 +127,8 @@ pub(super) fn build(
         .read(&settings.input, settings.unnamed)
         .expect("features");
     site_writer.check(&settings)?;
-    Ok(site_writer.write(&settings, Converter.convert(&features, &settings))?)
+    let (_, served) = site_writer.write(&settings, &Converter.convert(&features, &settings))?;
+    Ok(served)
 }
 
 /// The settings of a build from `in` into `site`, as the version `version`

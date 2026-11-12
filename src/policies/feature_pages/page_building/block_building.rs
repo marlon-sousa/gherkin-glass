@@ -6,8 +6,9 @@ use i18n_embed_fl::fl;
 use super::heading_words::{heading, plain};
 use super::step_views::step_views;
 use crate::entities::{
-    Anchored, AnchoredRule, AnchoredScenario, Block, BlockKind, FromBackground, HeadingLevel,
-    HeadingPart, LinkAddress, PageOptions, Paragraph, ParsedFeature, TagNames, TagView,
+    Anchored, AnchoredRule, AnchoredScenario, BackgroundBlock, BlockHeading, FromBackground,
+    HeadingLevel, HeadingPart, LinkAddress, PageOptions, Paragraph, ParsedFeature, RuleBlock,
+    ScenarioBlock, TagNames, TagView,
 };
 use crate::policies::{CATALOGUE, outside_link};
 
@@ -24,18 +25,17 @@ impl Builder<'_> {
         &self,
         anchored: &Anchored<'_, Background>,
         level: HeadingLevel,
-    ) -> Block {
+    ) -> BackgroundBlock {
         let background = anchored.block;
-        Block {
-            steps: step_views(self.parsed, &background.steps, None),
-            description: description(background.description.as_deref()),
-            ..block(
-                BlockKind::Background,
+        BackgroundBlock {
+            heading: block_heading(
                 level,
                 &anchored.anchor,
                 heading(&background.keyword, &background.name),
                 self.options.collapse_scenarios,
-            )
+            ),
+            description: description(background.description.as_deref()),
+            steps: step_views(self.parsed, &background.steps, None),
         }
     }
 
@@ -60,33 +60,30 @@ impl Builder<'_> {
         &self,
         anchored: &AnchoredRule<'_>,
         from_feature: &[FromBackground],
-    ) -> Block {
+    ) -> RuleBlock {
         let rule = anchored.rule;
-        let mut blocks = Vec::new();
-        if let Some(background) = &anchored.background {
-            blocks.push(self.background(background, HeadingLevel::Three));
-        }
         let mut from: Vec<_> = from_feature.to_vec();
         from.extend(anchored.background.iter().filter_map(|background| {
             self.background_steps(background, fl!(CATALOGUE, "from-rule-background"))
         }));
-        blocks.extend(
-            anchored
-                .scenarios
-                .iter()
-                .map(|s| self.scenario(s, HeadingLevel::Three, &from)),
-        );
-        Block {
-            tags: self.tags(&rule.tags),
-            description: description(rule.description.as_deref()),
-            blocks,
-            ..block(
-                BlockKind::Rule,
+        RuleBlock {
+            heading: block_heading(
                 HeadingLevel::Two,
                 &anchored.anchor,
                 heading(&rule.keyword, &rule.name),
                 self.options.collapse_rules,
-            )
+            ),
+            tags: self.tags(&rule.tags),
+            description: description(rule.description.as_deref()),
+            background: anchored
+                .background
+                .as_ref()
+                .map(|background| self.background(background, HeadingLevel::Three)),
+            scenarios: anchored
+                .scenarios
+                .iter()
+                .map(|s| self.scenario(s, HeadingLevel::Three, &from))
+                .collect(),
         }
     }
 
@@ -95,7 +92,7 @@ impl Builder<'_> {
         anchored: &AnchoredScenario<'_>,
         level: HeadingLevel,
         from: &[FromBackground],
-    ) -> Block {
+    ) -> ScenarioBlock {
         let scenario = anchored.scenario;
         let anchor = &anchored.anchor;
         let backgrounds = from
@@ -103,24 +100,18 @@ impl Builder<'_> {
             .zip(1..)
             .map(|(from, place)| numbered(from, anchor, place))
             .collect();
-        Block {
-            tags: self.tags(&scenario.tags),
-            description: description(scenario.description.as_deref()),
-            backgrounds,
-            steps: step_views(self.parsed, &scenario.steps, Some(scenario)),
-            blocks: anchored
-                .examples
-                .iter()
-                .map(|examples| self.examples(examples, level.below()))
-                .chain(self.examples_as_scenarios(anchored, level.below()))
-                .collect(),
-            ..block(
-                BlockKind::Scenario,
+        ScenarioBlock {
+            heading: block_heading(
                 level,
                 anchor,
                 heading(&scenario.keyword, &scenario.name),
                 self.options.collapse_scenarios,
-            )
+            ),
+            tags: self.tags(&scenario.tags),
+            description: description(scenario.description.as_deref()),
+            backgrounds,
+            steps: step_views(self.parsed, &scenario.steps, Some(scenario)),
+            outline: self.outline(anchored, level.below()),
         }
     }
 
@@ -147,35 +138,26 @@ fn numbered(from: &FromBackground, anchor: &str, place: usize) -> FromBackground
     }
 }
 
-pub(super) fn block(
-    kind: BlockKind,
+pub(super) fn block_heading(
     level: HeadingLevel,
     anchor: &str,
     heading: String,
     collapsed: bool,
-) -> Block {
-    worded_block(kind, level, anchor, vec![plain(&heading)], collapsed)
+) -> BlockHeading {
+    worded_heading(level, anchor, vec![plain(&heading)], collapsed)
 }
 
-pub(super) fn worded_block(
-    kind: BlockKind,
+pub(super) fn worded_heading(
     level: HeadingLevel,
     anchor: &str,
-    heading_parts: Vec<HeadingPart>,
+    parts: Vec<HeadingPart>,
     collapsed: bool,
-) -> Block {
-    Block {
-        kind,
+) -> BlockHeading {
+    BlockHeading {
         level,
         anchor: anchor.to_string(),
-        heading_parts,
+        parts,
         collapsed,
-        tags: Vec::new(),
-        description: None,
-        backgrounds: Vec::new(),
-        steps: Vec::new(),
-        table: None,
-        blocks: Vec::new(),
     }
 }
 
