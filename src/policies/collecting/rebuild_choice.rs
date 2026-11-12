@@ -22,19 +22,17 @@ impl Read<'_> {
         paths.iter().any(|path| self.matters(path))
     }
 
+    /// A file the rules allow holds itself.
     fn matters(&self, path: &Path) -> bool {
-        let file = path.to_path_buf();
         path.file_name() == Some(IGNORE_FILE.as_ref())
-            || self.before.contains(&file)
-            || self.after.contains(&file)
             || holds_any(path, self.before)
             || holds_any(path, self.after)
     }
 }
 
-/// Whether one of `files` is inside the folder `folder`.
-fn holds_any(folder: &Path, files: &[PathBuf]) -> bool {
-    files.iter().any(|file| file.starts_with(folder))
+/// Whether one of `files` is `path` or is inside it.
+fn holds_any(path: &Path, files: &[PathBuf]) -> bool {
+    files.iter().any(|file| file.starts_with(path))
 }
 
 #[cfg(test)]

@@ -51,7 +51,7 @@ impl<'a> Last<'a> {
         changed: Changed<'_>,
     ) -> Self {
         Last {
-            entry: entry.filter(|_| !changed.names(folder)),
+            entry: if changed.names(folder) { None } else { entry },
             rules_changed: rules_changed_above || changed.names_rules_of(folder),
         }
     }
@@ -66,8 +66,10 @@ impl<'a> Last<'a> {
         folder: &Path,
         changed: Changed<'_>,
     ) -> Option<&'a IgnoreRules> {
-        let entry = self.entry.filter(|_| !changed.names_rules_of(folder))?;
-        entry.listed_rules()
+        if changed.names_rules_of(folder) {
+            return None;
+        }
+        self.entry?.listed_rules()
     }
 
     /// The entries of the folder in the last tree, by their paths.
