@@ -15,7 +15,7 @@ use crate::entities::{
     AnchoredFeature, BackgroundsOption, BlockHeading, ContentsEntry, FeatureBlock, HeadingLevel,
     Page, PageOptions, PageWords, ScenarioBlock, SourceLink, TagNames, percent_encoded,
 };
-use crate::policies::{CATALOGUE, breadcrumb, page_address, page_frame, page_language, site_title};
+use crate::policies::{CATALOGUE, breadcrumb, page_address, page_language, site_title};
 
 /// Stands for the file's path in the words of the source link, to find where
 /// the path goes; no message of the catalogue holds it.
@@ -74,7 +74,6 @@ pub(crate) fn build_page(
     });
     let folders: Vec<String> = address.folders().into_iter().map(str::to_string).collect();
     Page {
-        frame: page_frame(options),
         breadcrumb: breadcrumb(
             &site_title(options),
             &folders,

@@ -1,4 +1,4 @@
-//! The search documents, checked against the fixture.
+//! The search documents as written, checked against the fixture.
 
 use std::fs;
 use std::path::PathBuf;
@@ -6,7 +6,8 @@ use std::path::PathBuf;
 use serde_json::Value;
 
 use crate::fixtures::{self, read_features};
-use crate::policies::{anchor_feature, search_documents, search_json};
+use crate::policies::rendering::node_rendering::Render;
+use crate::policies::{anchor_feature, search_documents};
 
 fn fixture() -> PathBuf {
     fixtures::fixture("search")
@@ -15,7 +16,7 @@ fn fixture() -> PathBuf {
 fn documents() -> String {
     let features = read_features(&fixture().join("features"));
     let anchored: Vec<_> = features.iter().map(anchor_feature).collect();
-    search_json(&search_documents(&anchored))
+    search_documents(&anchored).render()
 }
 
 #[test]

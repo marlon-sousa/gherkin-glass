@@ -2,18 +2,15 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::io::Error as IoError;
-use std::iter::once;
 use std::path::Path;
 use std::sync::Arc;
 
 use crate::entities::{
     BuildFolder, BuildTarget, BuiltSite, Destination, FilePath, Record, ServedSite, Settings,
-    SiteAddress, SiteFile, SiteTree, VersionName,
+    SiteFile, SiteTree, VersionName,
 };
 use crate::errors::{OutputError, OutputErrorKind};
-use crate::policies::{
-    Moment, VERSIONS_PAGE, assets, order_versions, output_safety, render_site, render_versions_page,
-};
+use crate::policies::{Moment, order_versions, output_safety, render_site, versions_page_files};
 use crate::ports::{FileWriter, OutputFolders};
 
 /// What the controller asks of the site writer.
@@ -78,14 +75,8 @@ impl SiteWriter {
             }
             BuildTarget::Version(name) => {
                 let versions = versions(&folder, name, &written);
-                let page = render_versions_page(
-                    &order_versions(versions.keys().cloned()),
-                    &settings.pages,
-                );
-                let page_files: Vec<_> =
-                    once(SiteFile::text(SiteAddress::at_root(VERSIONS_PAGE), page))
-                        .chain(assets())
-                        .collect();
+                let page_files =
+                    versions_page_files(&order_versions(versions.keys().cloned()), &settings.pages);
                 self.clear_version(&folder, name)?;
                 let record = Record::Versions {
                     page: paths(&page_files),

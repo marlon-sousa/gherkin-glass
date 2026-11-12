@@ -1,0 +1,8 @@
+{%- if let Some(media_type) = doc.media_type -%}
+<figure class="ghg-doc-string">
+<figcaption>{{ media_type }}</figcaption>
+<pre>{% if doc.content.starts_with('\n') %}{{ "\n" }}{% endif %}{{ doc.content }}</pre>
+</figure>
+{%- else -%}
+<pre class="ghg-doc-string">{% if doc.content.starts_with('\n') %}{{ "\n" }}{% endif %}{{ doc.content }}</pre>
+{%- endif -%}

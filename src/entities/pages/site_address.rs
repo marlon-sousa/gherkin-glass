@@ -1,12 +1,9 @@
 //! Entity: where a file is in the site, relative to its root.
 
 use derive_more::Display;
-use serde::Serialize;
-
 /// The names of the folders the file is in, from the outermost, then the file's name, each as
 /// written and joined by `/`.
-#[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Hash, Display, Serialize)]
-#[serde(transparent)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Hash, Display)]
 pub(crate) struct SiteAddress {
     address: String,
 }

@@ -10,7 +10,7 @@ use crate::entities::{
     GroupView, LinkAddress, PageOptions, ParsedFeature, Piece, SentenceUse, SentenceView,
     SentencesPage, StepKind, StepSentences, UseView,
 };
-use crate::policies::{CATALOGUE, breadcrumb, page_address, page_frame, page_language, site_title};
+use crate::policies::{CATALOGUE, breadcrumb, page_address, page_language, site_title};
 
 /// The page's address, at the site's root.
 pub(crate) const SENTENCES_PAGE: &str = "steps.html";
@@ -60,7 +60,6 @@ pub(crate) fn build_sentences_page(
     let heading = fl!(CATALOGUE, "sentences-title");
     let site = site_title(options);
     SentencesPage {
-        frame: page_frame(options),
         breadcrumb: breadcrumb(&site, &[], Some((&heading, SENTENCES_PAGE))),
         language: own.clone(),
         title: fl!(CATALOGUE, "sentences-page-title", site = site.as_str()),

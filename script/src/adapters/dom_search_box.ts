@@ -1,4 +1,4 @@
-// Adapter: the search box port over the search form templates/layout.html writes.
+// Adapter: the search box port over the search form src/policies/rendering/search_box.html writes.
 
 import type { Result, SearchBox, SearchWords } from "../ports/search_box.ts";
 

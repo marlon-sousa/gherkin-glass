@@ -1,4 +1,4 @@
-// Adapter: the page port over the page's markup, as templates/block.html, templates/feature.html and templates/folder.html write it.
+// Adapter: the page port over the page's markup, as feature_block.html, feature_page.html and folder_feature.html in src/policies/rendering write it.
 
 import type { Block, Page } from "../ports/page.ts";
 

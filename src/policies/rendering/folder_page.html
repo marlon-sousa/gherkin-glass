@@ -1,6 +1,3 @@
-{%- extends "layout.html" -%}
-{%- import "macros.html" as m -%}
-{%- block main -%}
 <h1>{{ folder.heading }}</h1>
 {%- if !folder.totals.is_empty() %}
 <ul class="ghg-totals">
@@ -27,16 +24,7 @@
 <h2>{{ folder.words.features }}</h2>
 <ul class="ghg-features">
 {%- for feature in folder.features %}
-<li class="ghg-feature"><a href="{{ feature.address }}" lang="{{ feature.language }}">{{ feature.heading }}</a>
-{%- if feature.contents.is_empty() %}
-<span class="ghg-count">{{ feature.scenarios }}</span>
-{%- else %}
-<button type="button" class="ghg-toggle" aria-expanded="false" aria-label="{{ feature.label }}">{{ feature.scenarios }}</button>
-<div class="ghg-content" lang="{{ feature.language }}" hidden>
-{%- call m::contents(&feature.contents, feature.address) %}{% endcall %}
-</div>
-{%- endif %}</li>
+{{ feature.render()|safe }}
 {%- endfor %}
 </ul>
 {%- endif %}
-{%- endblock -%}

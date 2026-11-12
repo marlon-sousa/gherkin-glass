@@ -1,0 +1,22 @@
+<li><span class="ghg-keyword">{{ step.keyword }}</span>
+{%- for part in step.parts.iter() -%}
+{%- match part -%}
+{%- when StepPart::Plain(text) -%}{{ text }}
+{%- when StepPart::Number(text) -%}<span class="ghg-number">{{ text }}</span>
+{%- when StepPart::Placeholder(text) -%}<span class="ghg-placeholder">{{ text }}</span>
+{%- when StepPart::Parameter(inner) -%}<span class="ghg-parameter">
+{%- for part in inner.iter() -%}
+{%- match part -%}
+{%- when StepPart::Placeholder(text) -%}<span class="ghg-placeholder">{{ text }}</span>
+{%- when _ -%}{{ part.text() }}
+{%- endmatch -%}
+{%- endfor -%}
+</span>
+{%- endmatch -%}
+{%- endfor -%}
+{%- if let Some(table) = step.table %}
+{{ table.render()|safe }}
+{%- endif %}
+{%- if let Some(doc) = step.doc_string %}
+{{ doc.render()|safe }}
+{%- endif %}</li>

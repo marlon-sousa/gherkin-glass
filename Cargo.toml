@@ -16,7 +16,7 @@ categories = ["command-line-utilities", "development-tools::cargo-plugins", "dev
 # What crates.io receives: what builds the binaries, with the licences and the
 # README it shows. The tests and their fixtures, the script's sources and
 # xtask stay in the repository.
-include = ["/src/", "/templates/", "/assets/", "/messages/", "/i18n.toml", "/README.md", "/LICENSE-APACHE", "/LICENSE-MIT"]
+include = ["/src/", "/askama.toml", "/assets/", "/messages/", "/i18n.toml", "/README.md", "/LICENSE-APACHE", "/LICENSE-MIT"]
 
 [workspace]
 # The crate behind cargo xtask, never shipped.

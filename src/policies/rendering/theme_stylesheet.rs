@@ -1,5 +1,6 @@
-//! Policy: the stylesheet of colour tokens, one custom property per colour, for each theme a reader can pick.
+//! Policy: the themes' stylesheet of colour tokens, one custom property per colour, for each theme a reader can pick, rendered from the site's accents.
 
+use super::node_rendering::Render;
 use crate::entities::{Accents, Colour, Theme};
 use crate::policies::palette;
 
@@ -7,16 +8,18 @@ use crate::policies::palette;
 /// theme's when the reader picked dark, or picked nothing and their system
 /// prefers dark. The page's root has `data-theme="light"` or `data-theme="dark"`
 /// when the reader picked one, and no `data-theme` for the system's choice.
-pub(crate) fn theme_stylesheet(accents: &Accents) -> String {
-    let light = tokens(Theme::Light, accents, "  ");
-    let dark = tokens(Theme::Dark, accents, "  ");
-    let dark_nested = tokens(Theme::Dark, accents, "    ");
-    format!(
-        ":root,\n:root[data-theme=\"light\"] {{\n  color-scheme: light;\n{light}}}\n\n\
-         @media (prefers-color-scheme: dark) {{\n  :root:not([data-theme=\"light\"]) {{\n    \
-         color-scheme: dark;\n{dark_nested}  }}\n}}\n\n\
-         :root[data-theme=\"dark\"] {{\n  color-scheme: dark;\n{dark}}}\n"
-    )
+impl Render for Accents {
+    fn render(&self) -> String {
+        let light = tokens(Theme::Light, self, "  ");
+        let dark = tokens(Theme::Dark, self, "  ");
+        let dark_nested = tokens(Theme::Dark, self, "    ");
+        format!(
+            ":root,\n:root[data-theme=\"light\"] {{\n  color-scheme: light;\n{light}}}\n\n\
+             @media (prefers-color-scheme: dark) {{\n  :root:not([data-theme=\"light\"]) {{\n    \
+             color-scheme: dark;\n{dark_nested}  }}\n}}\n\n\
+             :root[data-theme=\"dark\"] {{\n  color-scheme: dark;\n{dark}}}\n"
+        )
+    }
 }
 
 fn tokens(theme: Theme, accents: &Accents, indent: &str) -> String {
@@ -50,7 +53,7 @@ mod tests {
             dark: Colour::new(0xff, 0xff, 0x80),
         };
         assert_eq!(
-            theme_stylesheet(&accents),
+            accents.render(),
             r#":root,
 :root[data-theme="light"] {
   color-scheme: light;
@@ -97,6 +100,6 @@ mod tests {
 }
 "#
         );
-        assert!(theme_stylesheet(&Accents::DEFAULT).contains("--ghg-accent: #8cc4ff;"));
+        assert!(Accents::DEFAULT.render().contains("--ghg-accent: #8cc4ff;"));
     }
 }

@@ -11,7 +11,7 @@ use crate::entities::{
     LinkAddress, Page, PageOptions, TagFeature, TagIndex, TagIndexEntry, TagNames, TagPage,
     TagScenario,
 };
-use crate::policies::{CATALOGUE, breadcrumb, outside_link, page_frame, site_title};
+use crate::policies::{CATALOGUE, breadcrumb, outside_link, site_title};
 use tag_carriers::{Through, carriers, writes};
 
 /// Stands for the link in the words around it, to find where the link
@@ -52,7 +52,6 @@ pub(crate) fn build_tag_index(
         .collect();
     let title = fl!(CATALOGUE, "tag-index-title");
     TagIndex {
-        frame: page_frame(options),
         // The index is the folder's own page, so its crumb reads the index's title.
         breadcrumb: breadcrumb(&site_title(options), from_ref(&title), None),
         title,
@@ -110,7 +109,6 @@ pub(crate) fn build_tag_page(
     let file = format!("{}.html", names.name(tag));
     TagPage {
         address: names.address(tag),
-        frame: page_frame(options),
         breadcrumb: breadcrumb(
             &site_title(options),
             &[fl!(CATALOGUE, "tag-index-title")],

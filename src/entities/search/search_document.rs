@@ -1,10 +1,8 @@
 //! Entity: one entry of the documents search reads, a feature, a rule or a scenario.
 
-use serde::Serialize;
-
 use crate::entities::SiteAddress;
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct SearchDocument {
     pub(crate) kind: SearchKind,
     /// Empty for a block with no name.
@@ -20,8 +18,7 @@ pub(crate) struct SearchDocument {
     pub(crate) anchor: String,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
-#[serde(rename_all = "kebab-case")]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum SearchKind {
     Feature,
     Rule,

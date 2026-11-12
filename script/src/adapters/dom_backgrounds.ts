@@ -1,4 +1,4 @@
-// Adapter: the backgrounds port over the page's markup, as templates/block.html and templates/feature.html write it.
+// Adapter: the backgrounds port over the page's markup, as feature_block.html, from_background.html and feature_page.html in src/policies/rendering write it.
 
 import type { Backgrounds } from "../ports/backgrounds.ts";
 

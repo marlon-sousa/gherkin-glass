@@ -1,6 +1,4 @@
-{%- extends "layout.html" -%}
 {#- In a use's item, placeholder 0 is the link and 1 the values; in its link, 0 is the block's heading and 1 the file's path. -#}
-{%- block main -%}
 <h1>{{ page.heading }}</h1>
 {%- if page.groups.is_empty() %}
 <p>{{ page.no_steps }}</p>
@@ -32,7 +30,6 @@
 </ul>
 {%- endfor %}
 {%- endfor %}
-{%- endblock -%}
 
 {%- macro link(found) -%}
 <a href="{{ found.address }}">

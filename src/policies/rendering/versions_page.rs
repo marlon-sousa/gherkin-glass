@@ -1,24 +1,29 @@
 //! Policy: the versions page's HTML, from the versions an output folder holds.
 
 use std::fmt::{Display, Formatter, Result as FmtResult};
+use std::iter::once;
 
 use askama::Template;
 use i18n_embed::LanguageLoader;
 use i18n_embed_fl::fl;
 
-use crate::entities::{PageFrame, PageOptions, VersionList, VersionName};
+use super::node_rendering::{Render, page};
+use super::page_frame::{SkipLink, ThemeControl};
+use super::page_head::PageHead;
+use super::site_files::assets;
+use crate::entities::{PageOptions, SiteAddress, SiteFile, VersionList, VersionName};
 use crate::policies::{CATALOGUE, page_frame};
 
 /// The versions page's address below the output folder.
-pub(crate) const VERSIONS_PAGE: &str = "index.html";
+const VERSIONS_PAGE: &str = "index.html";
 
 #[derive(Template)]
-#[template(path = "versions.html")]
+#[template(path = "versions_page.html")]
 struct VersionsTemplate {
     language: String,
-    title: String,
-    /// The skip link and the themes every page has; the page has no folder tree.
-    frame: PageFrame,
+    head: String,
+    skip_link: String,
+    theme_control: String,
     words: Words,
     development: Vec<Entry>,
     releases: Vec<Entry>,
@@ -44,12 +49,18 @@ impl Display for Entry {
     }
 }
 
-/// The page, in the themes of `options`, those of the build that writes it.
-#[expect(
-    clippy::expect_used,
-    reason = "a template that writes only strings renders"
-)]
-pub(crate) fn render_versions_page(list: &VersionList, options: &PageOptions) -> String {
+/// The files of the versions page, in the themes of `options`, those of the
+/// build that writes it: the page itself, and the assets it shares with every page.
+pub(crate) fn versions_page_files(list: &VersionList, options: &PageOptions) -> Vec<SiteFile> {
+    once(SiteFile::text(
+        SiteAddress::at_root(VERSIONS_PAGE),
+        render_versions_page(list, options),
+    ))
+    .chain(assets())
+    .collect()
+}
+
+fn render_versions_page(list: &VersionList, options: &PageOptions) -> String {
     let entries = |names: &[VersionName], words: fn(&VersionName) -> String| {
         names
             .iter()
@@ -60,11 +71,18 @@ pub(crate) fn render_versions_page(list: &VersionList, options: &PageOptions) ->
             .collect()
     };
     let title = fl!(CATALOGUE, "versions-title");
+    let frame = page_frame(options);
     let template = VersionsTemplate {
         // The page holds interface text only, in the catalogue's language.
         language: CATALOGUE.current_language().to_string(),
-        title: title.clone(),
-        frame: page_frame(options),
+        head: PageHead {
+            title: &title,
+            root: "",
+            stylesheet: &options.accents.render(),
+        }
+        .render(),
+        skip_link: SkipLink { frame: &frame }.render(),
+        theme_control: ThemeControl { frame: &frame }.render(),
         words: Words {
             title,
             development: fl!(CATALOGUE, "versions-development"),
@@ -81,13 +99,7 @@ pub(crate) fn render_versions_page(list: &VersionList, options: &PageOptions) ->
         releases: entries(&list.releases, VersionName::to_string),
         pre_releases: entries(&list.pre_releases, VersionName::to_string),
     };
-    let mut html = template
-        .render()
-        .expect("a template that writes only strings renders");
-    if !html.ends_with('\n') {
-        html.push('\n');
-    }
-    html
+    page(&template)
 }
 
 #[cfg(test)]

@@ -1,7 +1,7 @@
-//! Entity: the site tree the converter builds, every file of a site as a node of its kind, before it is rendered.
+//! Entity: the site tree the converter builds, the frame every page shares and every file of the site as a node of its kind, before it is rendered.
 
 use crate::entities::{
-    FolderPage, Page, SearchDocument, SentencesPage, TagIndex, TagPage, TreeItem,
+    FolderPage, Page, PageFrame, SearchDocument, SentencesPage, TagIndex, TagPage, TreeItem,
 };
 
 /// One file of the site, as the node of its kind.
@@ -20,6 +20,9 @@ pub(crate) enum FileNode {
     Asset(String),
 }
 
-/// Every file of a site, pages first, in file order.
+/// The site: the frame its pages share, and every file, pages first, in file order.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct SiteTree(pub(crate) Vec<FileNode>);
+pub(crate) struct SiteTree {
+    pub(crate) frame: PageFrame,
+    pub(crate) files: Vec<FileNode>,
+}

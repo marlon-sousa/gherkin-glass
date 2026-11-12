@@ -65,14 +65,6 @@ fn block_items(contents: &[ContentsEntry], page: &LinkAddress) -> Vec<TreeItem> 
         .collect()
 }
 
-/// One line, ending in a line break.
-#[expect(clippy::expect_used, reason = "strings and lists always serialise")]
-pub(crate) fn render_folder_tree(items: &[TreeItem]) -> String {
-    let mut json = serde_json::to_string(items).expect("strings and lists always serialise");
-    json.push('\n');
-    json
-}
-
 #[cfg(test)]
 mod tests {
     use std::collections::BTreeMap;
@@ -146,18 +138,6 @@ mod tests {
                 "  Rule: R z.html#r",
                 "    Scenario: In z.html#in",
             ]
-        );
-    }
-
-    #[test]
-    fn only_a_feature_s_item_has_a_lang_and_empty_lists_are_left_out_of_the_json() {
-        let items = tree(&[("a/b.feature", "Feature: B\n  Scenario: S\n")]);
-        assert_eq!(
-            render_folder_tree(&items),
-            "[{\"text\":\"Site\",\"address\":\"index.html\"},\
-             {\"text\":\"a\",\"address\":\"a/index.html\",\"items\":[\
-             {\"text\":\"Feature: B\",\"address\":\"a/b.html\",\"lang\":\"en\",\"items\":[\
-             {\"text\":\"Scenario: S\",\"address\":\"a/b.html#s\"}]}]}]\n"
         );
     }
 
