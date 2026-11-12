@@ -10,7 +10,7 @@ pub(crate) fn build_folder_tree(input: SiteFolder<'_>) -> Vec<TreeItem> {
         return Vec::new();
     };
     let mut items = vec![TreeItem {
-        text: home.heading.clone(),
+        text: home.page().heading.clone(),
         address: LinkAddress::to(FOLDER_PAGE),
         lang: None,
         items: Vec::new(),
@@ -27,10 +27,9 @@ fn folder_items(folder: SiteFolder<'_>, path: &str) -> Vec<TreeItem> {
     };
     let encoded = LinkAddress::to(path);
     let subfolders = page
-        .folders
-        .iter()
+        .folders()
         .map(|link| subfolder_item(folder, path, &encoded, link));
-    let features = page.features.iter().map(|feature| {
+    let features = page.features().map(|feature| {
         let address = encoded.then(&feature.address);
         TreeItem {
             text: feature.heading.clone(),

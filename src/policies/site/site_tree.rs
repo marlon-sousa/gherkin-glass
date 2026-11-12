@@ -105,7 +105,7 @@ fn folder_of(site: &mut SiteTreeBuilder, feature: &ParsedFeature) -> FolderId {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::entities::{SiteNode, VersionEntry};
+    use crate::entities::{SiteNode, SiteTreeNode, VersionsList};
     use crate::test_support::name;
 
     #[test]
@@ -119,22 +119,41 @@ mod tests {
     fn a_versions_page_lists_every_version_once_the_one_built_among_them() {
         let built = BTreeSet::from([name("main"), name("v1.0.0")]);
         let tree = site_tree(&[], &PageOptions::default(), Some(&name("main")), &built);
-        let Some(SiteNode::VersionsPage(page)) = tree.root_files().next().map(|node| node.value())
-        else {
+        let Some(page) = tree.root_files().next() else {
             panic!("the versions page first");
         };
-        let names = |entries: &[VersionEntry]| -> Vec<VersionName> {
-            entries.iter().map(|entry| entry.name.clone()).collect()
-        };
-        assert_eq!(names(&page.development), [name("main")]);
-        assert_eq!(names(&page.releases), [name("v1.0.0")]);
-        assert!(page.pre_releases.is_empty());
+        assert!(matches!(page.value(), SiteNode::VersionsPage(_)));
+        let lists: Vec<_> = page
+            .children()
+            .filter_map(|list| match list.value() {
+                SiteNode::VersionsList(kind) => Some((*kind, names(list))),
+                _ => None,
+            })
+            .collect();
+        assert_eq!(
+            lists,
+            [
+                (VersionsList::Development, vec![name("main")]),
+                (VersionsList::Releases, vec![name("v1.0.0")]),
+                (VersionsList::PreReleases, vec![]),
+            ]
+        );
         assert!(
             tree.root_files()
                 .skip(1)
                 .all(|node| is_an_asset(node.value()))
         );
         assert!(tree.files().any(|node| is_the_home_page(node.value())));
+    }
+
+    /// The names of the versions whose entries are in `list`.
+    fn names(list: SiteTreeNode<'_>) -> Vec<VersionName> {
+        list.children()
+            .filter_map(|entry| match entry.value() {
+                SiteNode::VersionEntry(entry) => Some(entry.name.clone()),
+                _ => None,
+            })
+            .collect()
     }
 
     fn is_an_asset(node: &SiteNode) -> bool {

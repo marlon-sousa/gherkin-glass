@@ -1,15 +1,16 @@
 {#- In a use's item, placeholder 0 is the link and 1 the values; in its link, 0 is the block's heading and 1 the file's path. -#}
 <h1>{{ page.heading }}</h1>
-{%- if page.groups.is_empty() %}
+{%- if groups.is_empty() %}
 <p>{{ page.no_steps }}</p>
 {%- endif %}
-{%- for group in page.groups %}
-<h2>{{ group.heading }}</h2>
-{%- for sentence in group.sentences %}
+{%- for on_page in groups %}
+<h2>{{ on_page.group.heading }}</h2>
+{%- for sentence_on_page in on_page.sentences %}
+{%- let sentence = sentence_on_page.sentence %}
 <h3{% if let Some(language) = sentence.language %} lang="{{ language }}"{% endif %}>{{ sentence.text }}</h3>
 <p>{{ sentence.uses_count }}</p>
 <ul>
-{%- for found in sentence.uses %}
+{%- for found in sentence_on_page.uses %}
 <li>
 {%- if found.item.is_empty() -%}
 {%- call link(found) %}{% endcall -%}

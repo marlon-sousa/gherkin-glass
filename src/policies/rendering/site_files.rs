@@ -2,7 +2,7 @@
 
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 
-use super::node_rendering::RenderFile;
+use super::node_rendering::{PageNode, RenderFile};
 use super::page_layout::SitePieces;
 use super::site_data::{SEARCH_DOCUMENTS, asset};
 use crate::entities::{
@@ -53,13 +53,13 @@ fn render_files<'a>(
 fn render_file(node: SiteTreeNode<'_>, site: &SitePieces<'_>) -> Option<SiteFile> {
     match node.value() {
         SiteNode::FeaturePage(_) => node.feature_page().map(|feature| file(&feature, site)),
-        SiteNode::FolderPage(folder) => Some(file(folder, site)),
-        SiteNode::SentencesPage(page) => Some(file(page, site)),
+        SiteNode::FolderPage(_) => node.folder_page().map(|folder| file(&folder, site)),
+        SiteNode::SentencesPage(page) => Some(file(&PageNode { page, node }, site)),
         SiteNode::FolderTree(items) => Some(file(items.as_slice(), site)),
-        SiteNode::TagIndex(index) => Some(file(index, site)),
-        SiteNode::TagPage(page) => Some(file(page, site)),
+        SiteNode::TagIndex(page) => Some(file(&PageNode { page, node }, site)),
+        SiteNode::TagPage(page) => Some(file(&PageNode { page, node }, site)),
         SiteNode::SearchDocuments(documents) => Some(file(documents.as_slice(), site)),
-        SiteNode::VersionsPage(versions) => Some(file(versions, site)),
+        SiteNode::VersionsPage(page) => Some(file(&PageNode { page, node }, site)),
         SiteNode::Asset(name) => asset_file(name),
         SiteNode::Site(_)
         | SiteNode::Version(_)
@@ -74,7 +74,17 @@ fn render_file(node: SiteTreeNode<'_>, site: &SitePieces<'_>) -> Option<SiteFile
         | SiteNode::ExampleScenario(_)
         | SiteNode::Step(_)
         | SiteNode::StepTable(_)
-        | SiteNode::DocString(_) => None,
+        | SiteNode::DocString(_)
+        | SiteNode::TagIndexEntry(_)
+        | SiteNode::TagFeature(_)
+        | SiteNode::TagScenario(_)
+        | SiteNode::SentencesGroup(_)
+        | SiteNode::Sentence(_)
+        | SiteNode::SentenceUse(_)
+        | SiteNode::SubfolderLink(_)
+        | SiteNode::FeatureEntry(_)
+        | SiteNode::VersionsList(_)
+        | SiteNode::VersionEntry(_) => None,
     }
 }
 

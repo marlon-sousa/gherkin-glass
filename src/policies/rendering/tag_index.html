@@ -1,9 +1,9 @@
 <h1>{{ index.title }}</h1>
-{%- if index.entries.is_empty() %}
+{%- if entries.is_empty() %}
 <p>{{ index.empty }}</p>
 {%- else %}
 <ul class="ghg-tag-index">
-{%- for entry in index.entries %}
+{%- for entry in entries %}
 <li>{{ entry.before }}<a href="{{ entry.address }}"><bdi>{{ entry.tag }}</bdi></a>{{ entry.after }}</li>
 {%- endfor %}
 </ul>

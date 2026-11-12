@@ -1,12 +1,14 @@
-//! Policy: the versions page's HTML, from its node of the site tree.
+//! Policy: the versions page's HTML, from its node of the site tree and the lists below it.
 
 use askama::Template;
 
-use super::node_rendering::{Render, RenderFile, page};
+use super::node_rendering::{PageNode, Render, RenderFile, page};
 use super::page_frame::{SkipLink, ThemeControl};
 use super::page_head::PageHead;
 use super::page_layout::SitePieces;
-use crate::entities::{SiteAddress, VersionEntry, VersionsPage, VersionsWords};
+use crate::entities::{
+    SiteAddress, SiteNode, SiteTreeNode, VersionEntry, VersionsList, VersionsPage, VersionsWords,
+};
 
 /// The versions page's address below the output folder.
 const VERSIONS_PAGE: &str = "index.html";
@@ -20,21 +22,22 @@ struct VersionsTemplate<'a> {
     theme_control: String,
     title: &'a str,
     words: &'a VersionsWords,
-    development: &'a [VersionEntry],
-    releases: &'a [VersionEntry],
-    pre_releases: &'a [VersionEntry],
+    development: Vec<&'a VersionEntry>,
+    releases: Vec<&'a VersionEntry>,
+    pre_releases: Vec<&'a VersionEntry>,
 }
 
-impl RenderFile for VersionsPage {
+impl RenderFile for PageNode<'_, VersionsPage> {
     fn address(&self) -> SiteAddress {
         SiteAddress::at_root(VERSIONS_PAGE)
     }
 
     fn render_file(&self, site: &SitePieces<'_>) -> String {
+        let versions = self.page;
         page(&VersionsTemplate {
-            language: &self.language,
+            language: &versions.language,
             head: PageHead {
-                title: &self.title,
+                title: &versions.title,
                 root: "",
                 stylesheet: site.stylesheet(),
             }
@@ -47,13 +50,25 @@ impl RenderFile for VersionsPage {
                 frame: site.page_frame(),
             }
             .render(),
-            title: &self.title,
-            words: &self.words,
-            development: &self.development,
-            releases: &self.releases,
-            pre_releases: &self.pre_releases,
+            title: &versions.title,
+            words: &versions.words,
+            development: entries(self.node, VersionsList::Development),
+            releases: entries(self.node, VersionsList::Releases),
+            pre_releases: entries(self.node, VersionsList::PreReleases),
         })
     }
+}
+
+/// The entries of the list `list` of the versions page `page`.
+fn entries(page: SiteTreeNode<'_>, list: VersionsList) -> Vec<&VersionEntry> {
+    page.children()
+        .filter(|child| *child.value() == SiteNode::VersionsList(list))
+        .flat_map(|child| child.children())
+        .filter_map(|entry| match entry.value() {
+            SiteNode::VersionEntry(entry) => Some(entry),
+            _ => None,
+        })
+        .collect()
 }
 
 #[cfg(test)]
@@ -61,7 +76,7 @@ mod tests {
     use std::collections::BTreeSet;
 
     use super::*;
-    use crate::entities::{PageOptions, SiteNode, VersionName};
+    use crate::entities::{PageOptions, VersionName};
     use crate::policies::site_tree;
     use crate::test_support::name;
 
@@ -71,12 +86,17 @@ mod tests {
         let options = PageOptions::default();
         let built: BTreeSet<VersionName> = others.iter().copied().map(name).collect();
         let tree = site_tree(&[], &options, Some(&name(version)), &built);
-        let Some(SiteNode::VersionsPage(versions)) =
-            tree.root_files().next().map(|node| node.value())
-        else {
+        let Some(node) = tree.root_files().next() else {
             panic!("a site with versions has its versions page");
         };
-        versions.render_file(&SitePieces::of(tree.frame()))
+        let SiteNode::VersionsPage(versions) = node.value() else {
+            panic!("the versions page first");
+        };
+        PageNode {
+            page: versions,
+            node,
+        }
+        .render_file(&SitePieces::of(tree.frame()))
     }
 
     #[test]

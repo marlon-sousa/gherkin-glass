@@ -3,5 +3,7 @@
 mod folder_page;
 mod tree_item;
 
-pub(crate) use folder_page::{FeatureEntry, FolderLink, FolderPage, FolderWords};
+pub(crate) use folder_page::{
+    FeatureEntry, FolderLink, FolderPage, FolderPageContent, FolderWords,
+};
 pub(crate) use tree_item::TreeItem;

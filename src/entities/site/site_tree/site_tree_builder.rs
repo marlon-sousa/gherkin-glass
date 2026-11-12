@@ -4,9 +4,10 @@ use ego_tree::{NodeId, NodeMut, NodeRef, Tree};
 
 use super::{FolderId, SiteFeaturePage, SiteFolder, SiteNode, SiteTree};
 use crate::entities::{
-    BackgroundContent, ExampleScenario, ExamplesAsScenarios, FolderPage, PageContent, PageFrame,
-    RuleContent, ScenarioContent, SearchDocument, SentencesPage, StepContent, TagIndex, TagPage,
-    TreeItem, VersionName, VersionsPage,
+    BackgroundContent, ExampleScenario, ExamplesAsScenarios, FolderPageContent, GroupContent,
+    PageContent, PageFrame, RuleContent, ScenarioContent, SearchDocument, SentenceContent,
+    SentencesPageContent, StepContent, TagFeatureContent, TagIndexContent, TagPageContent,
+    TreeItem, VersionName, VersionsList, VersionsPageContent,
 };
 
 /// A site tree being built, each add putting its nodes after those already
@@ -95,26 +96,65 @@ impl SiteTreeBuilder {
     }
 
     /// Each folder's page put in the folder it is paired with.
-    pub(crate) fn folder_pages(&mut self, pages: impl IntoIterator<Item = (FolderId, FolderPage)>) {
-        for (folder, page) in pages {
-            self.node_mut(folder.0).append(SiteNode::FolderPage(page));
+    /// Each folder's page put in the folder it is paired with, its links and
+    /// entries below it.
+    pub(crate) fn folder_pages(
+        &mut self,
+        pages: impl IntoIterator<Item = (FolderId, FolderPageContent)>,
+    ) {
+        for (folder, content) in pages {
+            let mut folder = self.node_mut(folder.0);
+            let mut page = folder.append(SiteNode::FolderPage(content.page));
+            for link in content.folders {
+                page.append(SiteNode::SubfolderLink(link));
+            }
+            for entry in content.features {
+                page.append(SiteNode::FeatureEntry(entry));
+            }
         }
     }
 
-    pub(crate) fn sentences_page(&mut self, page: SentencesPage) {
-        self.version_files([SiteNode::SentencesPage(page)]);
+    /// The page of step sentences, its groups below it, each group's
+    /// sentences below the group and each sentence's uses below the sentence.
+    pub(crate) fn sentences_page(&mut self, content: SentencesPageContent) {
+        let mut version = self.node_mut(self.version);
+        let mut page = version.append(SiteNode::SentencesPage(content.page));
+        for GroupContent { group, sentences } in content.groups {
+            let mut group = page.append(SiteNode::SentencesGroup(group));
+            for SentenceContent { sentence, uses } in sentences {
+                let mut sentence = group.append(SiteNode::Sentence(sentence));
+                for found in uses {
+                    sentence.append(SiteNode::SentenceUse(found));
+                }
+            }
+        }
     }
 
     pub(crate) fn folder_tree(&mut self, items: Vec<TreeItem>) {
         self.version_files([SiteNode::FolderTree(items)]);
     }
 
-    pub(crate) fn tag_index(&mut self, index: TagIndex) {
-        self.version_files([SiteNode::TagIndex(index)]);
+    /// The index, its entries below it.
+    pub(crate) fn tag_index(&mut self, content: TagIndexContent) {
+        let mut version = self.node_mut(self.version);
+        let mut index = version.append(SiteNode::TagIndex(content.index));
+        for entry in content.entries {
+            index.append(SiteNode::TagIndexEntry(entry));
+        }
     }
 
-    pub(crate) fn tag_pages(&mut self, pages: impl IntoIterator<Item = TagPage>) {
-        self.version_files(pages.into_iter().map(SiteNode::TagPage));
+    /// Each tag's page, its features below it, each feature's scenarios below the feature.
+    pub(crate) fn tag_pages(&mut self, pages: impl IntoIterator<Item = TagPageContent>) {
+        let mut version = self.node_mut(self.version);
+        for content in pages {
+            let mut page = version.append(SiteNode::TagPage(content.page));
+            for TagFeatureContent { feature, scenarios } in content.features {
+                let mut feature = page.append(SiteNode::TagFeature(feature));
+                for scenario in scenarios {
+                    feature.append(SiteNode::TagScenario(scenario));
+                }
+            }
+        }
     }
 
     pub(crate) fn search_documents(&mut self, documents: Vec<SearchDocument>) {
@@ -131,8 +171,20 @@ impl SiteTreeBuilder {
         self.site_nodes(names.into_iter().map(SiteNode::KeptVersion));
     }
 
-    pub(crate) fn versions_page(&mut self, page: VersionsPage) {
-        self.site_nodes([SiteNode::VersionsPage(page)]);
+    /// The versions page, its lists below it, each list's entries below the list.
+    pub(crate) fn versions_page(&mut self, content: VersionsPageContent) {
+        let mut site = self.tree.root_mut();
+        let mut page = site.append(SiteNode::VersionsPage(content.page));
+        for (list, entries) in [
+            (VersionsList::Development, content.development),
+            (VersionsList::Releases, content.releases),
+            (VersionsList::PreReleases, content.pre_releases),
+        ] {
+            let mut list = page.append(SiteNode::VersionsList(list));
+            for entry in entries {
+                list.append(SiteNode::VersionEntry(entry));
+            }
+        }
     }
 
     /// The assets the versions page shares with every page, named `names` in their folder.

@@ -2,7 +2,7 @@
 
 use ego_tree::NodeRef;
 
-use super::{SiteFeaturePage, SiteNode};
+use super::{SiteFeaturePage, SiteFolderPage, SiteNode};
 use crate::entities::BackgroundBlock;
 
 /// A node of the site tree, with every node above and below it.
@@ -31,6 +31,14 @@ impl<'a> SiteTreeNode<'a> {
             .into_iter()
             .chain(self.node.ancestors())
             .find_map(SiteFeaturePage::of)
+    }
+
+    /// The folder page this node is, or is part of.
+    pub(crate) fn folder_page(&self) -> Option<SiteFolderPage<'a>> {
+        [self.node]
+            .into_iter()
+            .chain(self.node.ancestors())
+            .find_map(SiteFolderPage::of)
     }
 
     /// For a scenario, the backgrounds whose steps it starts with, each a

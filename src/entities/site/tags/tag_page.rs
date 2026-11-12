@@ -1,9 +1,10 @@
-//! Entity: the index of every tag and each tag's page, as their templates show them.
+//! Entity: the index of every tag and each tag's page, as their templates show them, their nodes and their content as the site stage builds it, with what is below each node.
 
 use crate::entities::{Breadcrumb, LinkAddress, OutsideLink, SiteAddress};
 
-/// Every `String` is text, escaped when it is rendered, and every link is relative to the
-/// page that holds it.
+/// The index, which holds an entry for each tag. Every `String` is text,
+/// escaped when it is rendered, and every link is relative to the page that
+/// holds it.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct TagIndex {
     /// In the folder of the tag pages.
@@ -12,7 +13,6 @@ pub(crate) struct TagIndex {
     pub(crate) language: String,
     pub(crate) breadcrumb: Breadcrumb,
     pub(crate) title: String,
-    pub(crate) entries: Vec<TagIndexEntry>,
     /// Shown in place of the entries when there are none.
     pub(crate) empty: String,
 }
@@ -26,6 +26,7 @@ pub(crate) struct TagIndexEntry {
     pub(crate) after: String,
 }
 
+/// A tag's page, which holds each feature that writes the tag.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct TagPage {
     /// Such as `tags/slow.html`.
@@ -39,11 +40,11 @@ pub(crate) struct TagPage {
     pub(crate) tag: String,
     pub(crate) heading_after: String,
     pub(crate) outside: Option<OutsideLink>,
-    pub(crate) features: Vec<TagFeature>,
     /// Shown under a feature none of whose scenarios carries the tag.
     pub(crate) no_scenario: String,
 }
 
+/// A feature that writes the tag, which holds each of its scenarios that carry it.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct TagFeature {
     pub(crate) address: LinkAddress,
@@ -51,7 +52,6 @@ pub(crate) struct TagFeature {
     pub(crate) heading: String,
     /// The feature page's `lang`, when it is not the tag page's.
     pub(crate) language: Option<String>,
-    pub(crate) scenarios: Vec<TagScenario>,
 }
 
 /// The scenario's link, with the words before and after it.
@@ -61,4 +61,25 @@ pub(crate) struct TagScenario {
     pub(crate) heading: String,
     pub(crate) before: String,
     pub(crate) after: String,
+}
+
+/// The index with its entries, in tag order, as the site stage builds it.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct TagIndexContent {
+    pub(crate) index: TagIndex,
+    pub(crate) entries: Vec<TagIndexEntry>,
+}
+
+/// A tag's page with each feature that writes the tag, in path order, as the site stage builds it.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct TagPageContent {
+    pub(crate) page: TagPage,
+    pub(crate) features: Vec<TagFeatureContent>,
+}
+
+/// A feature that writes the tag, with its scenarios that carry it, in file order.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct TagFeatureContent {
+    pub(crate) feature: TagFeature,
+    pub(crate) scenarios: Vec<TagScenario>,
 }

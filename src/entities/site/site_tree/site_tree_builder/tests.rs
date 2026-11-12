@@ -44,7 +44,19 @@ fn outline(tree: &SiteTree) -> Vec<String> {
                 SiteNode::StepTable(_) => "step table".to_string(),
                 SiteNode::DocString(_) => "doc string".to_string(),
                 SiteNode::SentencesPage(_) => "sentences page".to_string(),
-                other => format!("{other:?}"),
+                SiteNode::SubfolderLink(link) => format!("subfolder link {}", link.name),
+                SiteNode::FeatureEntry(entry) => format!("feature entry {}", entry.address),
+                SiteNode::SentencesGroup(group) => format!("sentences group {}", group.heading),
+                SiteNode::Sentence(sentence) => format!("sentence {}", sentence.text),
+                SiteNode::SentenceUse(found) => format!("sentence use {}", found.address),
+                SiteNode::TagIndex(_) => "tag index".to_string(),
+                SiteNode::TagIndexEntry(entry) => format!("tag index entry {}", entry.tag),
+                SiteNode::TagPage(page) => format!("tag page {}", page.tag),
+                SiteNode::TagFeature(feature) => format!("tag feature {}", feature.address),
+                SiteNode::TagScenario(scenario) => format!("tag scenario {}", scenario.address),
+                SiteNode::VersionsPage(_) => "versions page".to_string(),
+                SiteNode::VersionsList(list) => format!("versions list {list:?}"),
+                SiteNode::VersionEntry(entry) => format!("version entry {}", entry.name),
             };
             format!("{}{kind}", "  ".repeat(depth))
         })
@@ -206,7 +218,7 @@ Feature: F
         .position(|line| line.ends_with("feature page f.html"))
         .expect("the feature page");
     assert_eq!(
-        lines[start..start + 18],
+        lines[start..start + 16],
         [
             "      feature page f.html",
             "        background background",
@@ -224,8 +236,67 @@ Feature: F
             "            examples as scenarios o_scenarios",
             "              example scenario o-row-1",
             "                step Given",
+        ]
+        .map(String::from)
+    );
+}
+
+#[test]
+fn each_other_page_holds_its_entries_and_each_entry_what_it_lists() {
+    let feature = Feature::parse(
+        "@t\nFeature: F\n  Scenario: S\n    Given a\n",
+        GherkinEnv::default(),
+    )
+    .expect("parses");
+    let parsed = ParsedFeature::new(
+        PathBuf::from_iter(["d", "f.feature"]),
+        feature,
+        "en".to_string(),
+        BTreeMap::new(),
+    );
+    let version = VersionName::new("v1.0.0").expect("a version name");
+    let tree = site_tree(
+        &[parsed],
+        &PageOptions::default(),
+        Some(&version),
+        &BTreeSet::new(),
+    );
+    let kept: Vec<_> = outline(&tree)
+        .into_iter()
+        .filter(|line| {
+            !line.contains("asset")
+                && !line.contains("step")
+                && !line.contains("scenario s")
+                && !line.contains("folder tree")
+                && !line.contains("search documents")
+        })
+        .collect();
+    assert_eq!(
+        kept,
+        [
+            "site",
+            "  version v1.0.0",
+            "    input folder",
+            "      folder d",
+            "        feature page d/f.html",
+            "        folder page d/index.html",
+            "          feature entry f.html",
             "      folder page index.html",
+            "        subfolder link d",
             "    sentences page",
+            "      sentences group Given",
+            "        sentence a",
+            "          sentence use d/f.html#s",
+            "    tag index",
+            "      tag index entry @t",
+            "    tag page @t",
+            "      tag feature ../d/f.html",
+            "        tag scenario ../d/f.html#s",
+            "  versions page",
+            "    versions list Development",
+            "    versions list Releases",
+            "      version entry v1.0.0",
+            "    versions list PreReleases",
         ]
         .map(String::from)
     );

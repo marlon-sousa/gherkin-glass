@@ -2,8 +2,7 @@
 
 use ego_tree::{NodeId, NodeRef};
 
-use super::{SiteFeaturePage, SiteNode};
-use crate::entities::FolderPage;
+use super::{SiteFeaturePage, SiteFolderPage, SiteNode};
 
 /// Which folder of the site tree being built a page goes in; only the builder
 /// that handed it out can use it.
@@ -74,10 +73,8 @@ impl<'a> SiteFolder<'a> {
     }
 
     /// The folder's own page, once it is put in.
-    pub(crate) fn folder_page(&self) -> Option<&'a FolderPage> {
-        self.node
-            .children()
-            .find_map(|child| folder_page_of(child.value()))
+    pub(crate) fn folder_page(&self) -> Option<SiteFolderPage<'a>> {
+        self.node.children().find_map(SiteFolderPage::of)
     }
 }
 
@@ -94,13 +91,6 @@ fn is_folder(node: &NodeRef<'_, SiteNode>) -> bool {
 fn folder_name(node: &SiteNode) -> Option<&str> {
     match node {
         SiteNode::Folder(name) => Some(name),
-        _ => None,
-    }
-}
-
-fn folder_page_of(node: &SiteNode) -> Option<&FolderPage> {
-    match node {
-        SiteNode::FolderPage(page) => Some(page),
         _ => None,
     }
 }

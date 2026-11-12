@@ -4,8 +4,8 @@ use i18n_embed::LanguageLoader;
 use i18n_embed_fl::fl;
 
 use crate::entities::{
-    GroupView, LinkAddress, PageOptions, Piece, SentenceUse, SentenceView, SentencesPage, StepKind,
-    StepSentences, UseView,
+    GroupContent, GroupView, LinkAddress, PageOptions, Piece, SentenceContent, SentenceUse,
+    SentenceView, SentencesPage, SentencesPageContent, StepKind, StepSentences, UseView,
 };
 use crate::policies::site::{breadcrumb, site_title};
 use crate::policies::{CATALOGUE, SENTENCES_PAGE};
@@ -17,22 +17,26 @@ const MARKS: [&str; 2] = ["\u{0}", "\u{1}"];
 pub(crate) fn build_sentences_page(
     sentences: &StepSentences,
     options: &PageOptions,
-) -> SentencesPage {
+) -> SentencesPageContent {
     let own = CATALOGUE.current_language().to_string();
     // A use's language is shown only where it differs from the page's own.
     let language_of = |found: &SentenceUse| (found.language != own).then(|| found.language.clone());
     let groups = sentences
         .groups
         .iter()
-        .map(|group| GroupView {
-            heading: kind_heading(group.kind),
+        .map(|group| GroupContent {
+            group: GroupView {
+                heading: kind_heading(group.kind),
+            },
             sentences: group
                 .sentences
                 .iter()
-                .map(|sentence| SentenceView {
-                    text: sentence.text.clone(),
-                    language: sentence.uses.first().and_then(language_of),
-                    uses_count: fl!(CATALOGUE, "sentence-uses", count = sentence.uses.len()),
+                .map(|sentence| SentenceContent {
+                    sentence: SentenceView {
+                        text: sentence.text.clone(),
+                        language: sentence.uses.first().and_then(language_of),
+                        uses_count: fl!(CATALOGUE, "sentence-uses", count = sentence.uses.len()),
+                    },
                     uses: sentence
                         .uses
                         .iter()
@@ -44,13 +48,15 @@ pub(crate) fn build_sentences_page(
         .collect();
     let heading = fl!(CATALOGUE, "sentences-title");
     let site = site_title(options);
-    SentencesPage {
-        breadcrumb: breadcrumb(&site, &[], Some((&heading, SENTENCES_PAGE))),
-        language: own.clone(),
-        title: fl!(CATALOGUE, "sentences-page-title", site = site.as_str()),
-        heading,
+    SentencesPageContent {
+        page: SentencesPage {
+            breadcrumb: breadcrumb(&site, &[], Some((&heading, SENTENCES_PAGE))),
+            language: own.clone(),
+            title: fl!(CATALOGUE, "sentences-page-title", site = site.as_str()),
+            heading,
+            no_steps: fl!(CATALOGUE, "sentences-none"),
+        },
         groups,
-        no_steps: fl!(CATALOGUE, "sentences-none"),
     }
 }
 
@@ -156,6 +162,7 @@ mod tests {
                 }],
             };
             build_sentences_page(&sentences, &PageOptions::default()).groups[0].sentences[0]
+                .sentence
                 .uses_count
                 .clone()
         };
@@ -167,6 +174,6 @@ mod tests {
     fn with_no_step_there_is_no_group() {
         let page = build_sentences_page(&StepSentences::default(), &PageOptions::default());
         assert!(page.groups.is_empty());
-        assert_eq!(page.no_steps, "No feature has a step.");
+        assert_eq!(page.page.no_steps, "No feature has a step.");
     }
 }

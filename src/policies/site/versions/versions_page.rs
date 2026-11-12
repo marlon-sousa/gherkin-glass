@@ -4,20 +4,26 @@ use i18n_embed::LanguageLoader;
 use i18n_embed_fl::fl;
 
 use super::order_versions;
-use crate::entities::{VersionEntry, VersionName, VersionsPage, VersionsWords};
+use crate::entities::{
+    VersionEntry, VersionName, VersionsPage, VersionsPageContent, VersionsWords,
+};
 use crate::policies::CATALOGUE;
 
 /// The versions page listing `names`, every version the output folder holds.
-pub(crate) fn build_versions_page(names: impl IntoIterator<Item = VersionName>) -> VersionsPage {
+pub(crate) fn build_versions_page(
+    names: impl IntoIterator<Item = VersionName>,
+) -> VersionsPageContent {
     let list = order_versions(names);
-    VersionsPage {
-        // The page holds interface text only, in the catalogue's language.
-        language: CATALOGUE.current_language().to_string(),
-        title: fl!(CATALOGUE, "versions-title"),
-        words: VersionsWords {
-            development: fl!(CATALOGUE, "versions-development"),
-            releases: fl!(CATALOGUE, "versions-releases"),
-            pre_releases: fl!(CATALOGUE, "versions-pre-releases"),
+    VersionsPageContent {
+        page: VersionsPage {
+            // The page holds interface text only, in the catalogue's language.
+            language: CATALOGUE.current_language().to_string(),
+            title: fl!(CATALOGUE, "versions-title"),
+            words: VersionsWords {
+                development: fl!(CATALOGUE, "versions-development"),
+                releases: fl!(CATALOGUE, "versions-releases"),
+                pre_releases: fl!(CATALOGUE, "versions-pre-releases"),
+            },
         },
         development: list
             .development
@@ -78,6 +84,6 @@ mod tests {
             listed(&page.pre_releases),
             [("v2.0.0-rc.1".to_string(), "v2.0.0-rc.1".to_string())]
         );
-        assert_eq!(page.language, "en");
+        assert_eq!(page.page.language, "en");
     }
 }

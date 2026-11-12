@@ -4,8 +4,8 @@ use i18n_embed::LanguageLoader;
 use i18n_embed_fl::fl;
 
 use crate::entities::{
-    FeatureEntry, FolderId, FolderLink, FolderPage, FolderWords, LinkAddress, PageOptions,
-    SiteAddress, SiteFeaturePage, SiteFolder,
+    FeatureEntry, FolderId, FolderLink, FolderPage, FolderPageContent, FolderWords, LinkAddress,
+    PageOptions, SiteAddress, SiteFeaturePage, SiteFolder,
 };
 use crate::policies::site::{breadcrumb, site_title, tag_index_address};
 use crate::policies::{CATALOGUE, FOLDER_PAGE, SENTENCES_PAGE};
@@ -16,13 +16,13 @@ use crate::policies::{CATALOGUE, FOLDER_PAGE, SENTENCES_PAGE};
 pub(crate) fn build_folder_pages<'a>(
     folders: impl Iterator<Item = SiteFolder<'a>>,
     options: &PageOptions,
-) -> Vec<(FolderId, FolderPage)> {
+) -> Vec<(FolderId, FolderPageContent)> {
     let title = site_title(options);
     folders.map(|folder| folder_page(&folder, &title)).collect()
 }
 
 /// The page of `folder`, in the site titled `title`, paired with the folder.
-fn folder_page(folder: &SiteFolder<'_>, title: &str) -> (FolderId, FolderPage) {
+fn folder_page(folder: &SiteFolder<'_>, title: &str) -> (FolderId, FolderPageContent) {
     let names = folder.names();
     let home = folder.name().is_none();
     let mut subfolders: Vec<&str> = folder
@@ -56,14 +56,17 @@ fn folder_page(folder: &SiteFolder<'_>, title: &str) -> (FolderId, FolderPage) {
             address: LinkAddress::to(SENTENCES_PAGE),
             name: fl!(CATALOGUE, "sentences-title"),
         }),
-        folders: subfolders.into_iter().map(folder_link).collect(),
-        features: features.iter().map(feature_entry).collect(),
         words: FolderWords {
             folders: fl!(CATALOGUE, "folders"),
             features: fl!(CATALOGUE, "features"),
         },
     };
-    (folder.id(), page)
+    let content = FolderPageContent {
+        page,
+        folders: subfolders.into_iter().map(folder_link).collect(),
+        features: features.iter().map(feature_entry).collect(),
+    };
+    (folder.id(), content)
 }
 
 /// The link to the page of the subfolder `name`.
@@ -126,7 +129,7 @@ mod tests {
     use crate::policies::site::site_with_feature_pages;
 
     /// The folder pages of the site of `files`, each a path and its text.
-    fn site(files: &[(&str, &str)]) -> Vec<FolderPage> {
+    fn site(files: &[(&str, &str)]) -> Vec<FolderPageContent> {
         let options = PageOptions::default();
         let features: Vec<_> = files
             .iter()
@@ -171,17 +174,20 @@ Feature: Counted
             ("b/c/deep.feature", "Feature: Deep\n"),
             ("a.feature", "Feature: A\n"),
         ]);
-        let addresses: Vec<_> = site.iter().map(|page| page.address.as_str()).collect();
+        let addresses: Vec<_> = site
+            .iter()
+            .map(|content| content.page.address.as_str())
+            .collect();
         assert_eq!(addresses, ["index.html", "b/index.html", "b/c/index.html"]);
         let b = &site[1];
         assert_eq!(
-            (b.heading.as_str(), b.title.as_str()),
+            (b.page.heading.as_str(), b.page.title.as_str()),
             ("b", "b, Feature files")
         );
-        assert_eq!(site[2].title, "b/c, Feature files");
+        assert_eq!(site[2].page.title, "b/c, Feature files");
         assert!(b.features.is_empty());
         assert_eq!(b.folders[0].address.to_string(), "c/index.html");
-        assert!(b.totals.is_empty());
+        assert!(b.page.totals.is_empty());
     }
 
     #[test]
@@ -220,7 +226,7 @@ Feature: Counted
         ]);
         let home = &site[0];
         assert_eq!(
-            home.totals,
+            home.page.totals,
             ["1 folder", "2 features", "2 rules", "3 scenarios"]
         );
         let counted = &site[1].features[0];
@@ -236,7 +242,7 @@ Feature: Counted
         let site = site(&[]);
         assert_eq!(site.len(), 1);
         assert_eq!(
-            site[0].totals,
+            site[0].page.totals,
             ["0 folders", "0 features", "0 rules", "0 scenarios"]
         );
         assert!(site[0].folders.is_empty() && site[0].features.is_empty());

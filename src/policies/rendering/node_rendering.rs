@@ -3,7 +3,7 @@
 use askama::Template;
 
 use super::page_layout::SitePieces;
-use crate::entities::SiteAddress;
+use crate::entities::{SiteAddress, SiteTreeNode};
 
 /// A node of the site tree, rendered into its piece of a page. A piece has no
 /// line break before or after it: the template that places it puts them.
@@ -16,6 +16,12 @@ pub(super) trait Render {
 pub(super) trait RenderFile {
     fn address(&self) -> SiteAddress;
     fn render_file(&self, site: &SitePieces<'_>) -> String;
+}
+
+/// A page's node, `page`, with the content nodes below it, which its file is made of.
+pub(super) struct PageNode<'a, Page> {
+    pub(super) page: &'a Page,
+    pub(super) node: SiteTreeNode<'a>,
 }
 
 /// The templates only write strings, which cannot fail.

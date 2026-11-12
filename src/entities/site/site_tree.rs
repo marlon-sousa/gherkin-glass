@@ -2,20 +2,23 @@
 
 mod site_feature_page;
 mod site_folder;
+mod site_folder_page;
 mod site_tree_builder;
 mod site_tree_node;
 
 pub(crate) use site_feature_page::SiteFeaturePage;
 pub(crate) use site_folder::{FolderId, SiteFolder};
+pub(crate) use site_folder_page::SiteFolderPage;
 pub(crate) use site_tree_builder::SiteTreeBuilder;
 pub(crate) use site_tree_node::SiteTreeNode;
 
 use ego_tree::{NodeRef, Tree};
 
 use crate::entities::{
-    BackgroundBlock, BlockHeading, DocStringView, ExamplesBlock, FolderPage, Page, PageFrame,
-    RuleBlock, ScenarioBlock, SearchDocument, SentencesPage, StepView, TableView, TagIndex,
-    TagPage, TreeItem, VersionName, VersionsPage,
+    BackgroundBlock, BlockHeading, DocStringView, ExamplesBlock, FeatureEntry, FolderLink,
+    FolderPage, GroupView, Page, PageFrame, RuleBlock, ScenarioBlock, SearchDocument, SentenceView,
+    SentencesPage, StepView, TableView, TagFeature, TagIndex, TagIndexEntry, TagPage, TagScenario,
+    TreeItem, UseView, VersionEntry, VersionName, VersionsList, VersionsPage,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -28,6 +31,10 @@ pub(crate) enum SiteNode {
     KeptVersion(VersionName),
     /// The page that lists every version, at the output folder's root.
     VersionsPage(VersionsPage),
+    /// One of the versions page's lists, which holds its versions' entries.
+    VersionsList(VersionsList),
+    /// A version's entry in a list of the versions page.
+    VersionEntry(VersionEntry),
     /// The input folder, which holds the home page.
     InputFolder,
     /// A folder of the input, by its name, inside the input folder or another folder.
@@ -53,12 +60,32 @@ pub(crate) enum SiteNode {
     StepTable(TableView),
     /// A step's doc string.
     DocString(DocStringView),
+    /// A folder's page, which holds the links to its subfolders' pages and its features' entries.
     FolderPage(FolderPage),
+    /// The link on a folder's page to a subfolder's page.
+    SubfolderLink(FolderLink),
+    /// A feature's entry on its folder's page.
+    FeatureEntry(FeatureEntry),
+    /// The page of step sentences, which holds a group for each kind of step.
     SentencesPage(SentencesPage),
+    /// The sentences of one kind of step, which holds each of them.
+    SentencesGroup(GroupView),
+    /// A step sentence, which holds each of its uses.
+    Sentence(SentenceView),
+    /// A use of a step sentence.
+    SentenceUse(UseView),
     /// The folder tree's data, which the pages' script builds the tree from.
     FolderTree(Vec<TreeItem>),
+    /// The index of every tag, which holds an entry for each.
     TagIndex(TagIndex),
+    /// A tag's entry in the index.
+    TagIndexEntry(TagIndexEntry),
+    /// A tag's page, which holds each feature that writes the tag.
     TagPage(TagPage),
+    /// A feature on a tag's page, which holds each of its scenarios that carry the tag.
+    TagFeature(TagFeature),
+    /// A scenario on a tag's page.
+    TagScenario(TagScenario),
     /// The documents search reads.
     SearchDocuments(Vec<SearchDocument>),
     /// One of the assets every site has, by its name in their folder.

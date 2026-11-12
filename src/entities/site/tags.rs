@@ -6,4 +6,7 @@ mod tag_page;
 
 pub(crate) use tag_link::TagLink;
 pub(crate) use tag_names::{TAGS_FOLDER, TagNames};
-pub(crate) use tag_page::{TagFeature, TagIndex, TagIndexEntry, TagPage, TagScenario};
+pub(crate) use tag_page::{
+    TagFeature, TagFeatureContent, TagIndex, TagIndexContent, TagIndexEntry, TagPage,
+    TagPageContent, TagScenario,
+};

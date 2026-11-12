@@ -14,4 +14,6 @@ pub(crate) use output_contents::OutputContents;
 pub(crate) use record::{FilePath, Record};
 pub(crate) use version_list::VersionList;
 pub(crate) use version_name::VersionName;
-pub(crate) use versions_page::{VersionEntry, VersionsPage, VersionsWords};
+pub(crate) use versions_page::{
+    VersionEntry, VersionsList, VersionsPage, VersionsPageContent, VersionsWords,
+};

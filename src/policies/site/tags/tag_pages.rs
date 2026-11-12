@@ -8,8 +8,8 @@ use i18n_embed::LanguageLoader;
 use i18n_embed_fl::fl;
 
 use crate::entities::{
-    LinkAddress, PageOptions, SiteFeaturePage, TagFeature, TagIndex, TagIndexEntry, TagNames,
-    TagPage, TagScenario,
+    LinkAddress, PageOptions, SiteFeaturePage, TagFeature, TagFeatureContent, TagIndex,
+    TagIndexContent, TagIndexEntry, TagNames, TagPage, TagPageContent, TagScenario,
 };
 use crate::policies::CATALOGUE;
 use crate::policies::site::{breadcrumb, outside_link, site_title, tag_index_address};
@@ -33,7 +33,7 @@ pub(crate) fn build_tag_index(
     pages: &[SiteFeaturePage<'_>],
     names: &TagNames,
     options: &PageOptions,
-) -> TagIndex {
+) -> TagIndexContent {
     let entries = tags
         .iter()
         .map(|tag| {
@@ -52,14 +52,16 @@ pub(crate) fn build_tag_index(
         })
         .collect();
     let title = fl!(CATALOGUE, "tag-index-title");
-    TagIndex {
-        address: tag_index_address(),
-        language: tag_pages_language(),
-        // The index is the folder's own page, so its crumb reads the index's title.
-        breadcrumb: breadcrumb(&site_title(options), from_ref(&title), None),
-        title,
+    TagIndexContent {
+        index: TagIndex {
+            address: tag_index_address(),
+            language: tag_pages_language(),
+            // The index is the folder's own page, so its crumb reads the index's title.
+            breadcrumb: breadcrumb(&site_title(options), from_ref(&title), None),
+            title,
+            empty: fl!(CATALOGUE, "tag-index-empty"),
+        },
         entries,
-        empty: fl!(CATALOGUE, "tag-index-empty"),
     }
 }
 
@@ -68,7 +70,7 @@ pub(crate) fn build_tag_page(
     pages: &[SiteFeaturePage<'_>],
     names: &TagNames,
     options: &PageOptions,
-) -> TagPage {
+) -> TagPageContent {
     let language = tag_pages_language();
     let features = pages
         .iter()
@@ -76,10 +78,12 @@ pub(crate) fn build_tag_page(
         .map(|feature| {
             let page = feature.page();
             let page_address = format!("{ROOT}{}", page.address);
-            TagFeature {
-                address: LinkAddress::to(&page_address),
-                heading: page.title.clone(),
-                language: (page.language != language).then(|| page.language.clone()),
+            TagFeatureContent {
+                feature: TagFeature {
+                    address: LinkAddress::to(&page_address),
+                    heading: page.title.clone(),
+                    language: (page.language != language).then(|| page.language.clone()),
+                },
                 scenarios: carriers(feature, tag)
                     .into_iter()
                     .map(|(scenario, through)| {
@@ -111,7 +115,7 @@ pub(crate) fn build_tag_page(
         around_mark(&fl!(CATALOGUE, "tag-page-title", tag = LINK_MARK));
     let title = fl!(CATALOGUE, "tag-page-title", tag = tag);
     let file = format!("{}.html", names.name(tag));
-    TagPage {
+    let page = TagPage {
         address: names.address(tag),
         language: language.clone(),
         breadcrumb: breadcrumb(
@@ -124,9 +128,9 @@ pub(crate) fn build_tag_page(
         tag: tag.to_string(),
         heading_after,
         outside: outside_link(tag, &options.tag_links),
-        features,
         no_scenario: fl!(CATALOGUE, "tag-no-scenario"),
-    }
+    };
+    TagPageContent { page, features }
 }
 
 fn around_mark(words: &str) -> (String, String) {
@@ -187,7 +191,7 @@ Feature: F
         (tags, builder, names)
     }
 
-    fn listed(page: &TagPage) -> Vec<(String, String)> {
+    fn listed(page: &TagPageContent) -> Vec<(String, String)> {
         page.features
             .iter()
             .flat_map(|feature| &feature.scenarios)
@@ -243,8 +247,8 @@ Feature: F
         let empty = page("@empty");
         assert_eq!(empty.features.len(), 1);
         assert!(empty.features[0].scenarios.is_empty());
-        assert_eq!(empty.title, "Tag @empty");
-        assert_eq!(empty.address.as_str(), "tags/empty.html");
+        assert_eq!(empty.page.title, "Tag @empty");
+        assert_eq!(empty.page.address.as_str(), "tags/empty.html");
     }
 
     #[test]
