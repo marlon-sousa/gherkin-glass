@@ -8,9 +8,10 @@ use std::sync::Mutex;
 use gherkin::{Feature, GherkinEnv};
 
 use super::*;
-use crate::entities::{CollectedInput, OutputContents, PageOptions, RawFeature, Unnamed};
+use crate::entities::{OutputContents, PageOptions, RawFeature, Unnamed};
 use crate::errors::{InputErrorKind, ParseError};
-use crate::ports::{FeatureParser, InputCollector, SiteWriter};
+use crate::fixtures::MemoryFolders;
+use crate::ports::{FeatureParser, SiteWriter};
 use crate::services::InputService;
 
 /// An output folder held in memory. Each look into it takes the next of
@@ -117,17 +118,6 @@ pub(super) fn two_versions() -> OutputContents {
     )
 }
 
-pub(super) struct FakeCollector(pub(super) Vec<&'static str>);
-
-impl InputCollector for FakeCollector {
-    fn collect(&self, input: &Path) -> CollectedInput {
-        CollectedInput {
-            paths: self.0.iter().map(|path| input.join(path)).collect(),
-            errors: Vec::new(),
-        }
-    }
-}
-
 /// Parses every file as a feature named after it, but fails `bad.feature`.
 pub(super) struct FakeParser;
 
@@ -170,7 +160,8 @@ pub(super) fn build(
     folders: Arc<FakeFolders>,
     writer: Arc<FakeWriter>,
 ) -> Result<BuiltSite, BuildError> {
-    let input = InputService::new(Arc::new(FakeCollector(files)), Arc::new(FakeParser));
+    let folders_in = MemoryFolders::with_files_in(Path::new("in"), &files);
+    let input = InputService::new(Arc::new(folders_in), Arc::new(FakeParser));
     let site = SiteService::new(input, writer);
     let settings = Settings {
         input: PathBuf::from("in"),

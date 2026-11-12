@@ -72,20 +72,10 @@ mod tests {
     use gherkin::{Feature, GherkinEnv};
 
     use super::*;
-    use crate::entities::{CollectedInput, PageOptions, RawFeature, Unnamed};
+    use crate::entities::{PageOptions, RawFeature, Unnamed};
     use crate::errors::ParseError;
-    use crate::ports::{FeatureParser, InputCollector};
-
-    struct FakeCollector(Vec<&'static str>);
-
-    impl InputCollector for FakeCollector {
-        fn collect(&self, input: &Path) -> CollectedInput {
-            CollectedInput {
-                paths: self.0.iter().map(|path| input.join(path)).collect(),
-                errors: Vec::new(),
-            }
-        }
-    }
+    use crate::fixtures::MemoryFolders;
+    use crate::ports::FeatureParser;
 
     struct FakeParser;
 
@@ -115,8 +105,14 @@ mod tests {
         }
     }
 
+    /// Builds the files at `paths` in the input folder, whose `.ghg-ignore` selects every one.
     fn build(paths: Vec<&'static str>, writer: Arc<FakeWriter>) -> Result<BuiltSite, InputErrors> {
-        let input = InputService::new(Arc::new(FakeCollector(paths)), Arc::new(FakeParser));
+        let input = Path::new("in");
+        let mut folders = MemoryFolders::with_files_in(input, &paths);
+        folders
+            .files
+            .insert(input.join(".ghg-ignore"), "!*\n".to_string());
+        let input = InputService::new(Arc::new(folders), Arc::new(FakeParser));
         let settings = Settings {
             input: PathBuf::from("in"),
             output: PathBuf::from("site"),
@@ -183,17 +179,12 @@ mod tests {
         let errors =
             build(vec!["a.feature", "a.story", "A"], writer.clone()).expect_err("the same page");
         let found = paths_and_kinds(&errors);
-        let same_page = |page: &str| InputErrorKind::SamePage {
-            page: page.into(),
-            first: "a.feature".into(),
+        // The walk sorts the paths, and `A` sorts first.
+        let same_page = InputErrorKind::SamePage {
+            page: "a.html".into(),
+            first: "A".into(),
         };
-        assert_eq!(
-            found,
-            [
-                ("A", &same_page("A.html")),
-                ("a.story", &same_page("a.html"))
-            ]
-        );
+        assert_eq!(found, [("a.feature", &same_page), ("a.story", &same_page)]);
         assert!(writer.written.lock().expect("not poisoned").is_empty());
     }
 

@@ -11,9 +11,9 @@ use crate::errors::{InputErrorKind, ParseError};
 use crate::ports::FeatureParser;
 
 #[derive(Debug, Default, Clone, Copy)]
-pub(crate) struct GherkinParser;
+pub(crate) struct GherkinCrate;
 
-impl FeatureParser for GherkinParser {
+impl FeatureParser for GherkinCrate {
     fn parse(&self, path: &Path) -> Result<RawFeature, ParseError> {
         let source = read_to_string(path).map_err(cannot_be_read)?;
         // `parse_path` reads the file again, but only it returns the crate's
