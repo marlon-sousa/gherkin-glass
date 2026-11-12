@@ -10,7 +10,7 @@ use crate::policies::{config_folder, parse_config, resolve_settings};
 use crate::ports::ConfigReader;
 
 /// The configuration file looked for in the current folder.
-pub(crate) const CONFIG_FILE: &str = "ghg.toml";
+const CONFIG_FILE: &str = "ghg.toml";
 
 #[derive(Clone)]
 pub(crate) struct SettingsService {
@@ -22,12 +22,17 @@ impl SettingsService {
         SettingsService { reader }
     }
 
-    pub(crate) fn load(&self, options: &BuildOptions) -> Result<Settings, ConfigErrors> {
-        let asked_for = options.config.is_some();
-        let file = options
+    /// The configuration file `options` name, or the one looked for in the current folder.
+    pub(crate) fn config_file(options: &BuildOptions) -> PathBuf {
+        options
             .config
             .clone()
-            .unwrap_or_else(|| PathBuf::from(CONFIG_FILE));
+            .unwrap_or_else(|| PathBuf::from(CONFIG_FILE))
+    }
+
+    pub(crate) fn load(&self, options: &BuildOptions) -> Result<Settings, ConfigErrors> {
+        let asked_for = options.config.is_some();
+        let file = Self::config_file(options);
         let config = match self.reader.read(&file) {
             Ok(source) => parse_config(&source),
             // Only a file that was not asked for may be missing.

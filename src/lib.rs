@@ -10,6 +10,7 @@ mod entities;
 mod errors;
 #[cfg(test)]
 mod fixtures;
+mod handlers;
 mod policies;
 mod ports;
 mod services;
