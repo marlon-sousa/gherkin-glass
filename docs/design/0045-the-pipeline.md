@@ -23,7 +23,7 @@ The redesign is built as a stack of six layers, each saying `Refs #45` and revie
 5. the rendering trait comes in over the nodes, and the templates move beside them;
 6. the folders move into their stages.
 
-Each layer is meant to keep every page byte for byte. An intermediate layer that cannot keep a test passing may disable it for its CI to run, saying so in its description; the last layer has every test enabled and passing.
+An intermediate layer of this stack that cannot keep a test passing may disable it for its CI to run, naming it in its description; the last layer enables every such test again, and has every test passing.
 
 ## What else was considered
 
