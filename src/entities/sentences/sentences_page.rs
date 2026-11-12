@@ -1,11 +1,10 @@
 //! Entity: the page of step sentences, as its template shows it, every text in it as written or worded.
 
-use crate::entities::{Breadcrumb, LinkAddress, PageFrame};
+use crate::entities::{Breadcrumb, LinkAddress};
 
 /// Every `String` is text, escaped when it is rendered.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct SentencesPage {
-    pub(crate) frame: PageFrame,
     pub(crate) breadcrumb: Breadcrumb,
     /// The `lang` of the page.
     pub(crate) language: String,

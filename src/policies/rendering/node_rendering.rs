@@ -2,6 +2,7 @@
 
 use askama::Template;
 
+use super::page_layout::SitePieces;
 use crate::entities::SiteAddress;
 
 /// A node of the site tree, rendered into its piece of a page. A piece has no
@@ -10,9 +11,11 @@ pub(super) trait Render {
     fn render(&self) -> String;
 }
 
-/// A node that is a file of its own, which also says where the file goes.
-pub(super) trait RenderFile: Render {
+/// A node that is a file of its own: where the file goes, and the whole file,
+/// which a page makes with the site nodes rendered once for the build.
+pub(super) trait RenderFile {
     fn address(&self) -> SiteAddress;
+    fn render_file(&self, site: &SitePieces<'_>) -> String;
 }
 
 /// The templates only write strings, which cannot fail.

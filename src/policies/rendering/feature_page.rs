@@ -3,7 +3,7 @@
 use askama::Template;
 
 use super::node_rendering::{Render, RenderFile, rendered};
-use super::page_layout::{PageAround, whole_page};
+use super::page_layout::{PageAround, SitePieces, whole_page};
 use crate::entities::{Page, SiteAddress};
 
 #[derive(Template)]
@@ -12,23 +12,21 @@ struct FeatureTemplate<'a> {
     page: &'a Page,
 }
 
-impl Render for Page {
-    fn render(&self) -> String {
+impl RenderFile for Page {
+    fn address(&self) -> SiteAddress {
+        self.address.clone()
+    }
+
+    fn render_file(&self, site: &SitePieces<'_>) -> String {
         whole_page(
+            site,
             &PageAround {
                 language: &self.language,
                 title: &self.title,
                 root: self.address.root(),
-                frame: &self.frame,
                 breadcrumb: &self.breadcrumb,
             },
             rendered(&FeatureTemplate { page: self }),
         )
-    }
-}
-
-impl RenderFile for Page {
-    fn address(&self) -> SiteAddress {
-        self.address.clone()
     }
 }

@@ -9,7 +9,7 @@ use crate::entities::{
     FeatureEntry, FolderLink, FolderPage, FolderWords, LinkAddress, Page, PageOptions, SiteAddress,
 };
 use crate::policies::{
-    CATALOGUE, FOLDER_PAGE, SENTENCES_PAGE, breadcrumb, page_frame, site_title, tag_index_address,
+    CATALOGUE, FOLDER_PAGE, SENTENCES_PAGE, breadcrumb, site_title, tag_index_address,
 };
 
 /// `pages` are every feature's, in any order; the folder pages come
@@ -60,7 +60,6 @@ pub(crate) fn build_folder_pages(pages: &[Page], options: &PageOptions) -> Vec<F
                     )
                 },
                 heading: folder.last().cloned().unwrap_or_else(|| title.clone()),
-                frame: page_frame(options),
                 breadcrumb: breadcrumb(&title, folder, None),
                 totals,
                 tags: folder.is_empty().then(|| FolderLink {

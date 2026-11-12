@@ -1,6 +1,6 @@
 //! Entity: a feature's page, as its template shows it, every text in it as written or worded.
 
-use crate::entities::{Breadcrumb, FeatureBlock, LinkAddress, PageFrame, SiteAddress, StepPart};
+use crate::entities::{Breadcrumb, FeatureBlock, LinkAddress, SiteAddress, StepPart};
 
 /// One page of the site. Every `String` is text, escaped when it is rendered.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -13,7 +13,6 @@ pub(crate) struct Page {
     pub(crate) title: String,
     /// The feature's keyword and name.
     pub(crate) heading: String,
-    pub(crate) frame: PageFrame,
     pub(crate) breadcrumb: Breadcrumb,
     pub(crate) tags: Vec<TagView>,
     pub(crate) description: Option<Paragraph>,

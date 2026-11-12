@@ -1,6 +1,6 @@
 //! Entity: a folder's page, the home page among them, every text in it as written or worded.
 
-use crate::entities::{Breadcrumb, ContentsEntry, LinkAddress, PageFrame, SiteAddress};
+use crate::entities::{Breadcrumb, ContentsEntry, LinkAddress, SiteAddress};
 
 /// One folder page of the site. Every `String` is text, escaped when it is rendered.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -12,7 +12,6 @@ pub(crate) struct FolderPage {
     pub(crate) title: String,
     /// The folder's name, or the site's title on the home page.
     pub(crate) heading: String,
-    pub(crate) frame: PageFrame,
     pub(crate) breadcrumb: Breadcrumb,
     /// Only the home page's.
     pub(crate) totals: Vec<String>,

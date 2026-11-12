@@ -3,6 +3,7 @@
 use serde::Serialize;
 
 use super::node_rendering::{Render, RenderFile};
+use super::page_layout::SitePieces;
 use crate::entities::{ASSETS, SearchDocument, SearchKind, SiteAddress, TreeItem};
 
 /// In the folder of the assets, where the pages' script fetches them from.
@@ -56,6 +57,10 @@ impl RenderFile for [TreeItem] {
     fn address(&self) -> SiteAddress {
         asset(TREE_DATA)
     }
+
+    fn render_file(&self, _: &SitePieces<'_>) -> String {
+        self.render()
+    }
 }
 
 impl Render for [SearchDocument] {
@@ -68,6 +73,10 @@ impl Render for [SearchDocument] {
 impl RenderFile for [SearchDocument] {
     fn address(&self) -> SiteAddress {
         asset(SEARCH_DOCUMENTS)
+    }
+
+    fn render_file(&self, _: &SitePieces<'_>) -> String {
+        self.render()
     }
 }
 

@@ -4,7 +4,7 @@ use askama::Template;
 
 use super::contents::Contents;
 use super::node_rendering::{Render, RenderFile, rendered};
-use super::page_layout::{PageAround, whole_page};
+use super::page_layout::{PageAround, SitePieces, whole_page};
 use crate::entities::{FeatureEntry, FolderPage, SiteAddress};
 
 #[derive(Template)]
@@ -20,24 +20,22 @@ struct FeatureEntryTemplate<'a> {
     contents: String,
 }
 
-impl Render for FolderPage {
-    fn render(&self) -> String {
+impl RenderFile for FolderPage {
+    fn address(&self) -> SiteAddress {
+        self.address.clone()
+    }
+
+    fn render_file(&self, site: &SitePieces<'_>) -> String {
         whole_page(
+            site,
             &PageAround {
                 language: &self.language,
                 title: &self.title,
                 root: self.address.root(),
-                frame: &self.frame,
                 breadcrumb: &self.breadcrumb,
             },
             rendered(&FolderTemplate { folder: self }),
         )
-    }
-}
-
-impl RenderFile for FolderPage {
-    fn address(&self) -> SiteAddress {
-        self.address.clone()
     }
 }
 

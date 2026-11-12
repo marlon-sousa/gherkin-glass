@@ -77,7 +77,7 @@ Each stage returns its own error, from `errors/`, and the handler turns it into 
 
 The converter builds one tree: the site, its versions, each version a tree of folders and files, and each file a tree of the nodes it is made of. Its nodes are on three levels.
 
-1. **Site nodes** are the same for the whole build: the parts of the frame that are the same on every page, the skip link, the options with the folder tree's checkbox and the Theme control, the folder tree's empty landmark and the themes' stylesheet; the folder tree's data; the search documents; and the assets.
+1. **Site nodes** are rendered once for each build: the parts of the frame that are the same on every page, the skip link, the options with the folder tree's checkbox and the Theme control, the folder tree's empty landmark and the themes' stylesheet; the folder tree's data; the search documents; and the assets.
 2. **Page nodes** are rendered for each page, since they depend on it: its head, with its language, its title and the path back to the root in the links to the stylesheet and the script; its breadcrumb; and its search box, whose root path also depends on the page's depth.
 3. **Content nodes** make up each kind of page, one node type for each kind of thing, so that each holds only what its kind can have. A feature page is made of the feature, its rules, backgrounds, scenarios, outlines and examples, their steps, and the steps' tables and doc strings. The folder pages, the step sentences page, the tag index, the tag pages and the versions page are made of their own content nodes the same way.
 

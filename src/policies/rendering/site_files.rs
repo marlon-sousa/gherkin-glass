@@ -3,6 +3,7 @@
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 
 use super::node_rendering::RenderFile;
+use super::page_layout::SitePieces;
 use super::site_data::{SEARCH_DOCUMENTS, asset};
 use crate::entities::{
     BuiltSite, FileNode, PageOptions, SiteAssets, SiteFile, SiteFiles, SiteTree,
@@ -14,7 +15,12 @@ const LARGE_SEARCH_DOCUMENTS: usize = 5_000_000;
 
 /// Every file of `tree`, in its order, in the site that `options` make.
 pub(crate) fn render_site(tree: &SiteTree, options: &PageOptions) -> SiteFiles {
-    let files: Vec<_> = tree.0.par_iter().filter_map(render_file).collect();
+    let site = SitePieces::of(&tree.frame);
+    let files: Vec<_> = tree
+        .files
+        .par_iter()
+        .filter_map(|node| render_file(node, &site))
+        .collect();
     let built = BuiltSite {
         large_search_documents: files
             .iter()
@@ -27,21 +33,21 @@ pub(crate) fn render_site(tree: &SiteTree, options: &PageOptions) -> SiteFiles {
 }
 
 /// The file of `node`; `None` only for an asset that is not there.
-fn render_file(node: &FileNode) -> Option<SiteFile> {
+fn render_file(node: &FileNode, site: &SitePieces<'_>) -> Option<SiteFile> {
     match node {
-        FileNode::Feature(page) => Some(file(page)),
-        FileNode::Folder(folder) => Some(file(folder)),
-        FileNode::Sentences(page) => Some(file(page)),
-        FileNode::FolderTree(items) => Some(file(items.as_slice())),
-        FileNode::TagIndex(index) => Some(file(index)),
-        FileNode::Tag(page) => Some(file(page)),
-        FileNode::SearchDocuments(documents) => Some(file(documents.as_slice())),
+        FileNode::Feature(page) => Some(file(page, site)),
+        FileNode::Folder(folder) => Some(file(folder, site)),
+        FileNode::Sentences(page) => Some(file(page, site)),
+        FileNode::FolderTree(items) => Some(file(items.as_slice(), site)),
+        FileNode::TagIndex(index) => Some(file(index, site)),
+        FileNode::Tag(page) => Some(file(page, site)),
+        FileNode::SearchDocuments(documents) => Some(file(documents.as_slice(), site)),
         FileNode::Asset(name) => asset_file(name),
     }
 }
 
-fn file(node: &(impl RenderFile + ?Sized)) -> SiteFile {
-    SiteFile::text(node.address(), node.render())
+fn file(node: &(impl RenderFile + ?Sized), site: &SitePieces<'_>) -> SiteFile {
+    SiteFile::text(node.address(), node.render_file(site))
 }
 
 /// The assets every site has.

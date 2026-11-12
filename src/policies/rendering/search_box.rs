@@ -7,7 +7,6 @@ use crate::entities::SearchWords;
 
 /// The search box of one page.
 pub(super) struct SearchBox<'a> {
-    /// From the page back to the site's root, where the search documents are.
     pub(super) root: &'a str,
     pub(super) words: &'a SearchWords,
 }

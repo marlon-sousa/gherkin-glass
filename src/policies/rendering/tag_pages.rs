@@ -3,7 +3,7 @@
 use askama::Template;
 
 use super::node_rendering::{Render, RenderFile, rendered};
-use super::page_layout::{PageAround, whole_page};
+use super::page_layout::{PageAround, SitePieces, whole_page};
 use crate::entities::{SiteAddress, TagIndex, TagPage};
 use crate::policies::{tag_index_address, tag_pages_language};
 
@@ -19,14 +19,18 @@ struct TagPageTemplate<'a> {
     page: &'a TagPage,
 }
 
-impl Render for TagIndex {
-    fn render(&self) -> String {
+impl RenderFile for TagIndex {
+    fn address(&self) -> SiteAddress {
+        tag_index_address()
+    }
+
+    fn render_file(&self, site: &SitePieces<'_>) -> String {
         whole_page(
+            site,
             &PageAround {
                 language: &tag_pages_language(),
                 title: &self.title,
                 root: self.address().root(),
-                frame: &self.frame,
                 breadcrumb: &self.breadcrumb,
             },
             rendered(&TagIndexTemplate { index: self }),
@@ -34,29 +38,21 @@ impl Render for TagIndex {
     }
 }
 
-impl RenderFile for TagIndex {
+impl RenderFile for TagPage {
     fn address(&self) -> SiteAddress {
-        tag_index_address()
+        self.address.clone()
     }
-}
 
-impl Render for TagPage {
-    fn render(&self) -> String {
+    fn render_file(&self, site: &SitePieces<'_>) -> String {
         whole_page(
+            site,
             &PageAround {
                 language: &tag_pages_language(),
                 title: &self.title,
                 root: self.address.root(),
-                frame: &self.frame,
                 breadcrumb: &self.breadcrumb,
             },
             rendered(&TagPageTemplate { page: self }),
         )
-    }
-}
-
-impl RenderFile for TagPage {
-    fn address(&self) -> SiteAddress {
-        self.address.clone()
     }
 }

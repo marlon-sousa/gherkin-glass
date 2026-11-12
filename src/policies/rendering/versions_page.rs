@@ -8,10 +8,10 @@ use i18n_embed::LanguageLoader;
 use i18n_embed_fl::fl;
 
 use super::node_rendering::{Render, page};
-use super::page_frame::ThemeControl;
+use super::page_frame::{SkipLink, ThemeControl};
 use super::page_head::PageHead;
 use super::site_files::assets;
-use crate::entities::{PageFrame, PageOptions, SiteAddress, SiteFile, VersionList, VersionName};
+use crate::entities::{PageOptions, SiteAddress, SiteFile, VersionList, VersionName};
 use crate::policies::{CATALOGUE, page_frame};
 
 /// The versions page's address below the output folder.
@@ -22,8 +22,8 @@ const VERSIONS_PAGE: &str = "index.html";
 struct VersionsTemplate {
     language: String,
     head: String,
-    /// The skip link and the themes every page has; the page has no folder tree.
-    frame: PageFrame,
+    /// The page has no folder tree.
+    skip_link: String,
     theme_control: String,
     words: Words,
     development: Vec<Entry>,
@@ -79,11 +79,11 @@ fn render_versions_page(list: &VersionList, options: &PageOptions) -> String {
         head: PageHead {
             title: &title,
             root: "",
-            accents: &options.accents,
+            stylesheet: &options.accents.render(),
         }
         .render(),
-        theme_control: ThemeControl(&frame).render(),
-        frame,
+        skip_link: SkipLink { frame: &frame }.render(),
+        theme_control: ThemeControl { frame: &frame }.render(),
         words: Words {
             title,
             development: fl!(CATALOGUE, "versions-development"),
