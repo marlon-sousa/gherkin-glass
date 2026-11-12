@@ -1,109 +1,87 @@
-//! Policy: the page of every folder of feature files, the home page among them, from the features' pages.
-
-use std::collections::BTreeSet;
+//! Policy: the page of every folder of feature files, the home page among them, from each folder node of the site tree and the folders and feature pages it holds.
 
 use i18n_embed::LanguageLoader;
 use i18n_embed_fl::fl;
 
 use crate::entities::{
-    FeatureEntry, FolderLink, FolderPage, FolderWords, LinkAddress, Page, PageOptions, SiteAddress,
+    FeatureEntry, FolderId, FolderLink, FolderPage, FolderWords, LinkAddress, Page, PageOptions,
+    SiteAddress, SiteFolder,
 };
 use crate::policies::site::{breadcrumb, site_title, tag_index_address};
 use crate::policies::{CATALOGUE, FOLDER_PAGE, SENTENCES_PAGE};
 
-/// `pages` are every feature's, in any order; the folder pages come
-/// outermost first, the home page first of all, then folder by folder.
-pub(crate) fn build_folder_pages(pages: &[Page], options: &PageOptions) -> Vec<FolderPage> {
+/// The page of each of `folders`, the input folder's first, the home page,
+/// each paired with its folder, made from the folders and feature pages the
+/// folder holds and from the folders above it.
+pub(crate) fn build_folder_pages<'a>(
+    folders: impl Iterator<Item = SiteFolder<'a>>,
+    options: &PageOptions,
+) -> Vec<(FolderId, FolderPage)> {
     let title = site_title(options);
-    let located: Vec<(Vec<String>, String, &Page)> = pages.iter().map(located).collect();
-    let mut folders: BTreeSet<Vec<String>> = BTreeSet::from([Vec::new()]);
-    for (parts, _, _) in &located {
-        for depth in 1..=parts.len() {
-            folders.insert(parts.get(..depth).unwrap_or_default().to_vec());
-        }
-    }
-    folders
-        .iter()
-        .map(|folder| {
-            let subfolders = folders
-                .iter()
-                .filter(|other| other.len() == folder.len() + 1 && other.starts_with(folder))
-                .filter_map(|other| other.last())
-                .map(|name| FolderLink {
-                    address: LinkAddress::to(&format!("{name}/{FOLDER_PAGE}")),
-                    name: name.clone(),
-                })
-                .collect();
-            let mut features: Vec<(&String, &Page)> = located
-                .iter()
-                .filter(|(parts, _, _)| parts == folder)
-                .map(|(_, file, page)| (file, *page))
-                .collect();
-            features.sort_by(|a, b| file_name(a.1).cmp(file_name(b.1)));
-            let totals = if folder.is_empty() {
-                totals(pages, folders.len() - 1)
-            } else {
-                Vec::new()
-            };
-            FolderPage {
-                address: SiteAddress::of(folder, FOLDER_PAGE),
-                language: CATALOGUE.current_language().to_string(),
-                title: if folder.is_empty() {
-                    title.clone()
-                } else {
-                    fl!(
-                        CATALOGUE,
-                        "folder-page-title",
-                        folder = folder.join("/"),
-                        site = title.as_str()
-                    )
-                },
-                heading: folder.last().cloned().unwrap_or_else(|| title.clone()),
-                breadcrumb: breadcrumb(&title, folder, None),
-                totals,
-                tags: folder.is_empty().then(|| FolderLink {
-                    address: LinkAddress::to(tag_index_address().as_str()),
-                    name: fl!(CATALOGUE, "tag-index-title"),
-                }),
-                sentences: folder.is_empty().then(|| FolderLink {
-                    address: LinkAddress::to(SENTENCES_PAGE),
-                    name: fl!(CATALOGUE, "sentences-title"),
-                }),
-                folders: subfolders,
-                features: features
-                    .into_iter()
-                    .map(|(file, page)| feature_entry(file, page))
-                    .collect(),
-                words: FolderWords {
-                    folders: fl!(CATALOGUE, "folders"),
-                    features: fl!(CATALOGUE, "features"),
-                },
-            }
-        })
-        .collect()
+    folders.map(|folder| folder_page(&folder, &title)).collect()
 }
 
-/// The page's folders, from the outermost, its file's name, and the page.
-fn located(page: &Page) -> (Vec<String>, String, &Page) {
-    (
-        page.address
-            .folders()
-            .into_iter()
-            .map(str::to_string)
-            .collect(),
-        page.address.file().to_string(),
-        page,
-    )
+/// The page of `folder`, in the site titled `title`, paired with the folder.
+fn folder_page(folder: &SiteFolder<'_>, title: &str) -> (FolderId, FolderPage) {
+    let names = folder.names();
+    let home = folder.name().is_none();
+    let mut subfolders: Vec<&str> = folder
+        .subfolders()
+        .filter_map(|subfolder| subfolder.name())
+        .collect();
+    subfolders.sort_unstable();
+    let mut features: Vec<&Page> = folder.feature_pages().collect();
+    features.sort_by(|a, b| file_name(a).cmp(file_name(b)));
+    let page = FolderPage {
+        address: SiteAddress::of(&names, FOLDER_PAGE),
+        language: CATALOGUE.current_language().to_string(),
+        title: if home {
+            title.to_string()
+        } else {
+            fl!(
+                CATALOGUE,
+                "folder-page-title",
+                folder = names.join("/"),
+                site = title
+            )
+        },
+        heading: names.last().cloned().unwrap_or_else(|| title.to_string()),
+        breadcrumb: breadcrumb(title, &names, None),
+        totals: if home { totals(folder) } else { Vec::new() },
+        tags: home.then(|| FolderLink {
+            address: LinkAddress::to(tag_index_address().as_str()),
+            name: fl!(CATALOGUE, "tag-index-title"),
+        }),
+        sentences: home.then(|| FolderLink {
+            address: LinkAddress::to(SENTENCES_PAGE),
+            name: fl!(CATALOGUE, "sentences-title"),
+        }),
+        folders: subfolders.into_iter().map(folder_link).collect(),
+        features: features.into_iter().map(feature_entry).collect(),
+        words: FolderWords {
+            folders: fl!(CATALOGUE, "folders"),
+            features: fl!(CATALOGUE, "features"),
+        },
+    };
+    (folder.id(), page)
+}
+
+/// The link to the page of the subfolder `name`.
+fn folder_link(name: &str) -> FolderLink {
+    FolderLink {
+        address: LinkAddress::to(&format!("{name}/{FOLDER_PAGE}")),
+        name: name.to_string(),
+    }
 }
 
 fn file_name(page: &Page) -> &str {
     page.path.rsplit('/').next().unwrap_or_default()
 }
 
-fn feature_entry(file: &str, page: &Page) -> FeatureEntry {
+fn feature_entry(page: &Page) -> FeatureEntry {
     let count = page.scenario_count();
     FeatureEntry {
-        address: LinkAddress::to(file),
+        address: LinkAddress::to(page.address.file()),
         language: page.language.clone(),
         heading: page.heading.clone(),
         scenarios: fl!(CATALOGUE, "scenario-count", count = count),
@@ -117,12 +95,18 @@ fn feature_entry(file: &str, page: &Page) -> FeatureEntry {
     }
 }
 
-/// The home page's: folders, features, rules and scenarios.
-fn totals(pages: &[Page], folders: usize) -> Vec<String> {
-    let rules: usize = pages.iter().map(Page::rule_count).sum();
-    let scenarios: usize = pages.iter().map(Page::scenario_count).sum();
+/// The home page's, of every folder and feature inside the input folder
+/// `input`: folders, features, rules and scenarios.
+fn totals(input: &SiteFolder<'_>) -> Vec<String> {
+    let pages: Vec<&Page> = input.every_feature_page().collect();
+    let rules: usize = pages.iter().copied().map(Page::rule_count).sum();
+    let scenarios: usize = pages.iter().copied().map(Page::scenario_count).sum();
     vec![
-        fl!(CATALOGUE, "folder-count", count = folders),
+        fl!(
+            CATALOGUE,
+            "folder-count",
+            count = input.every_subfolder().count()
+        ),
         fl!(CATALOGUE, "feature-count", count = pages.len()),
         fl!(CATALOGUE, "rule-count", count = rules),
         fl!(CATALOGUE, "scenario-count", count = scenarios),
@@ -137,13 +121,15 @@ mod tests {
     use gherkin::{Feature, GherkinEnv};
 
     use super::*;
-    use crate::entities::{ParsedFeature, TagNames};
-    use crate::policies::site::anchor_feature;
-    use crate::policies::site::build_page;
+    use crate::entities::{ParsedFeature, SiteTreeBuilder, TagNames};
+    use crate::policies::site::{anchor_feature, build_page};
+    use crate::policies::{page_address, page_frame};
 
+    /// The folder pages of the site of `files`, each a path and its text.
     fn site(files: &[(&str, &str)]) -> Vec<FolderPage> {
         let options = PageOptions::default();
-        let pages: Vec<Page> = files
+        let mut builder = SiteTreeBuilder::new(page_frame(&options), None);
+        let pages: Vec<_> = files
             .iter()
             .map(|(path, text)| {
                 let feature = Feature::parse(text, GherkinEnv::default()).expect("parses");
@@ -153,10 +139,22 @@ mod tests {
                     "en".to_string(),
                     BTreeMap::new(),
                 );
-                build_page(&anchor_feature(&parsed), &options, &TagNames::default())
+                let folder = builder.folder_at(&page_address(&parsed.path).folders());
+                let names = builder.site_folder(folder).names();
+                let page = build_page(
+                    &anchor_feature(&parsed),
+                    &options,
+                    &TagNames::default(),
+                    &names,
+                );
+                (folder, page)
             })
             .collect();
-        build_folder_pages(&pages, &options)
+        builder.feature_pages(pages);
+        build_folder_pages(builder.folders(), &options)
+            .into_iter()
+            .map(|(_, page)| page)
+            .collect()
     }
 
     const COUNTED: &str = "\

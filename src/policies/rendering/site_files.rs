@@ -32,7 +32,8 @@ pub(crate) fn render_site(tree: &SiteTree, options: &PageOptions) -> SiteFiles {
     SiteFiles { files, built }
 }
 
-/// The file of `node`; `None` for the site, which is no file, and for an asset that is not there.
+/// The file of `node`; `None` for the site, a version and a folder, which
+/// hold the nodes that make files, and for an asset that is not there.
 fn render_file(node: &SiteNode, site: &SitePieces<'_>) -> Option<SiteFile> {
     match node {
         SiteNode::FeaturePage(page) => Some(file(page, site)),
@@ -43,7 +44,9 @@ fn render_file(node: &SiteNode, site: &SitePieces<'_>) -> Option<SiteFile> {
         SiteNode::TagPage(page) => Some(file(page, site)),
         SiteNode::SearchDocuments(documents) => Some(file(documents.as_slice(), site)),
         SiteNode::Asset(name) => asset_file(name),
-        SiteNode::Site(_) => None,
+        SiteNode::Site(_) | SiteNode::Version(_) | SiteNode::InputFolder | SiteNode::Folder(_) => {
+            None
+        }
     }
 }
 

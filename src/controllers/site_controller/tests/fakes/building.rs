@@ -92,9 +92,9 @@ pub(crate) struct FakeConverter {
 
 impl ConverterApi for FakeConverter {
     fn convert(&self, features: &[ParsedFeature], settings: &Settings) -> SiteTree {
-        let tree = SiteTreeBuilder::new(page_frame(&settings.pages))
-            .assets(features.iter().map(asset_of))
-            .build();
+        let mut site = SiteTreeBuilder::new(page_frame(&settings.pages), None);
+        site.assets(features.iter().map(asset_of));
+        let tree = site.build();
         self.calls
             .note(format!("converter.convert {}", asset_names(&tree)));
         tree

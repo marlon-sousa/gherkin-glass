@@ -1,18 +1,12 @@
-//! Policy: the folder tree's items, from the folder pages, and the JSON the pages' script reads them from.
+//! Policy: the folder tree's items, from the input folder's node of the site tree and the folders and pages it holds.
 
-use std::collections::BTreeMap;
-
-use crate::entities::{ContentsEntry, FolderPage, LinkAddress, TreeItem};
+use crate::entities::{ContentsEntry, FolderLink, LinkAddress, SiteFolder, TreeItem};
 use crate::policies::FOLDER_PAGE;
 
-/// `folders` are every folder page, the home page among them. The home
-/// page's item comes first, then the input folder's, as its page lists them.
-pub(crate) fn build_folder_tree(folders: &[FolderPage]) -> Vec<TreeItem> {
-    let by_address: BTreeMap<&str, &FolderPage> = folders
-        .iter()
-        .map(|folder| (folder.address.as_str(), folder))
-        .collect();
-    let Some(home) = by_address.get(FOLDER_PAGE) else {
+/// The items of the input folder `input`, once each folder holds its page.
+/// The home page's item comes first, then the input folder's, as its page lists them.
+pub(crate) fn build_folder_tree(input: SiteFolder<'_>) -> Vec<TreeItem> {
+    let Some(home) = input.folder_page() else {
         return Vec::new();
     };
     let mut items = vec![TreeItem {
@@ -21,26 +15,21 @@ pub(crate) fn build_folder_tree(folders: &[FolderPage]) -> Vec<TreeItem> {
         lang: None,
         items: Vec::new(),
     }];
-    items.extend(folder_items(&by_address, ""));
+    items.extend(folder_items(input, ""));
     items
 }
 
-/// `folder` is the folder's path in the site, as written, ending in `/`, or
-/// empty for the input folder.
-fn folder_items(by_address: &BTreeMap<&str, &FolderPage>, folder: &str) -> Vec<TreeItem> {
-    let Some(page) = by_address.get(format!("{folder}{FOLDER_PAGE}").as_str()) else {
+/// The items inside `folder`, as its page lists them. `path` is the folder's
+/// path in the site, as written, ending in `/`, or empty for the input folder.
+fn folder_items(folder: SiteFolder<'_>, path: &str) -> Vec<TreeItem> {
+    let Some(page) = folder.folder_page() else {
         return Vec::new();
     };
-    let encoded = LinkAddress::to(folder);
-    let subfolders = page.folders.iter().map(|subfolder| {
-        let inner = format!("{folder}{}/", subfolder.name);
-        TreeItem {
-            text: subfolder.name.clone(),
-            address: encoded.then(&subfolder.address),
-            lang: None,
-            items: folder_items(by_address, &inner),
-        }
-    });
+    let encoded = LinkAddress::to(path);
+    let subfolders = page
+        .folders
+        .iter()
+        .map(|link| subfolder_item(folder, path, &encoded, link));
     let features = page.features.iter().map(|feature| {
         let address = encoded.then(&feature.address);
         TreeItem {
@@ -51,6 +40,25 @@ fn folder_items(by_address: &BTreeMap<&str, &FolderPage>, folder: &str) -> Vec<T
         }
     });
     subfolders.chain(features).collect()
+}
+
+/// The item of the subfolder `link` lists, inside `folder`, whose path is
+/// `path` and, encoded, `encoded`.
+fn subfolder_item(
+    folder: SiteFolder<'_>,
+    path: &str,
+    encoded: &LinkAddress,
+    link: &FolderLink,
+) -> TreeItem {
+    TreeItem {
+        text: link.name.clone(),
+        address: encoded.then(&link.address),
+        lang: None,
+        items: folder
+            .subfolder(&link.name)
+            .map(|subfolder| folder_items(subfolder, &format!("{path}{}/", link.name)))
+            .unwrap_or_default(),
+    }
 }
 
 fn block_items(contents: &[ContentsEntry], page: &LinkAddress) -> Vec<TreeItem> {
@@ -73,29 +81,34 @@ mod tests {
     use gherkin::{Feature, GherkinEnv};
 
     use super::*;
-    use crate::entities::{PageOptions, ParsedFeature, TagNames};
-    use crate::policies::site::anchor_feature;
-    use crate::policies::site::{build_folder_pages, build_page};
+    use crate::entities::{PageOptions, ParsedFeature, SiteNode};
+    use crate::policies::site_tree;
 
+    /// The folder tree's items of the site of `files`, each a path and its text.
     fn tree(files: &[(&str, &str)]) -> Vec<TreeItem> {
         let options = PageOptions {
             title: Some("Site".into()),
             ..PageOptions::default()
         };
-        let pages: Vec<_> = files
+        let features: Vec<_> = files
             .iter()
             .map(|(path, text)| {
                 let feature = Feature::parse(text, GherkinEnv::default()).expect("parses");
-                let parsed = ParsedFeature::new(
+                ParsedFeature::new(
                     PathBuf::from_iter(path.split('/')),
                     feature,
                     "en".to_string(),
                     BTreeMap::new(),
-                );
-                build_page(&anchor_feature(&parsed), &options, &TagNames::default())
+                )
             })
             .collect();
-        build_folder_tree(&build_folder_pages(&pages, &options))
+        site_tree(&features, &options)
+            .files()
+            .find_map(|file| match file {
+                SiteNode::FolderTree(items) => Some(items.clone()),
+                _ => None,
+            })
+            .expect("a site has its folder tree's data")
     }
 
     /// Each item's text and address, indented by its depth.

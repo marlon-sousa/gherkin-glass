@@ -182,7 +182,7 @@ Feature: F
         let names = name_tags(&tags);
         let pages = parsed
             .iter()
-            .map(|p| build_page(&anchor_feature(p), &PageOptions::default(), &names))
+            .map(|p| build_page(&anchor_feature(p), &PageOptions::default(), &names, &[]))
             .collect();
         (tags, pages, names)
     }

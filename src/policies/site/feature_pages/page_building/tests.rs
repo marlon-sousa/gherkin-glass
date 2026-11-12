@@ -20,7 +20,12 @@ fn page(text: &str, options: &PageOptions) -> Page {
         BTreeMap::new(),
     );
     let tags = name_tags(&tags_of(std::slice::from_ref(&parsed)));
-    build_page(&anchor_feature(&parsed), options, &tags)
+    build_page(
+        &anchor_feature(&parsed),
+        options,
+        &tags,
+        &["billing".to_string()],
+    )
 }
 
 /// The blocks of a page of `FEATURE`: its background, its scenario and its rule.

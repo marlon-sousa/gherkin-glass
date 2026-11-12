@@ -1,19 +1,28 @@
-//! Entity: the site tree the converter builds, before it is rendered: an ego-tree whose root is the site, with the frame every page shares, and whose nodes below it are every file of the site, each as the node of its kind.
+//! Entity: the site tree the converter builds, before it is rendered: an ego-tree whose root is the site, with the frame every page shares, then the version the build makes, then that version's folders, from the input folder in, with their pages, and the version's files in no folder of the input, each node as the node of its kind.
 
+mod site_folder;
 mod site_tree_builder;
 
+pub(crate) use site_folder::{FolderId, SiteFolder};
 pub(crate) use site_tree_builder::SiteTreeBuilder;
 
-use ego_tree::Tree;
+use ego_tree::{NodeRef, Tree};
 
 use crate::entities::{
     FolderPage, Page, PageFrame, SearchDocument, SentencesPage, TagIndex, TagPage, TreeItem,
+    VersionName,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) enum SiteNode {
     /// The site, which holds the frame every page shares.
     Site(PageFrame),
+    /// The version of the site the build makes, by its name, or `None` for a site without versions.
+    Version(Option<VersionName>),
+    /// The input folder, which holds the home page.
+    InputFolder,
+    /// A folder of the input, by its name, inside the input folder or another folder.
+    Folder(String),
     FeaturePage(Page),
     FolderPage(FolderPage),
     SentencesPage(SentencesPage),
@@ -25,6 +34,16 @@ pub(crate) enum SiteNode {
     SearchDocuments(Vec<SearchDocument>),
     /// One of the assets every site has, by its name in their folder.
     Asset(String),
+}
+
+impl SiteNode {
+    /// Whether the node makes a file of the site, rather than holding the nodes that do.
+    fn is_file(&self) -> bool {
+        !matches!(
+            self,
+            SiteNode::Site(_) | SiteNode::Version(_) | SiteNode::InputFolder | SiteNode::Folder(_)
+        )
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -43,10 +62,20 @@ impl SiteTree {
             .expect("the site tree builder puts the site at the root")
     }
 
-    /// Every file of the site, in its order.
+    /// Every file of the version the build makes, folder by folder from the input folder in, then those in no folder of the input.
     pub(crate) fn files(&self) -> impl Iterator<Item = &SiteNode> {
-        self.tree.root().children().map(|file| file.value())
+        self.tree
+            .root()
+            .children()
+            .filter(is_version)
+            .flat_map(|version| version.descendants())
+            .map(|node| node.value())
+            .filter(|node| node.is_file())
     }
+}
+
+fn is_version(node: &NodeRef<'_, SiteNode>) -> bool {
+    matches!(node.value(), SiteNode::Version(_))
 }
 
 /// The frame of `node`, when it is the site.

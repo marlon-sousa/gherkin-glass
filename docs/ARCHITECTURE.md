@@ -6,7 +6,7 @@ It was agreed in [#23](https://github.com/marlon-sousa/gherkin-glass/issues/23),
 
 Besides any difference named above, the build this document describes, one `build` that starts from nothing or from the last build and the paths that changed, with the input tree and the site tree as "The two trees" describes them, was agreed in [#73](https://github.com/marlon-sousa/gherkin-glass/issues/73) and [#74](https://github.com/marlon-sousa/gherkin-glass/issues/74) ([design note 0073](design/0073-a-build-starts-from-its-trees.md)), and the code is moved to it layer by layer. Until the layer the note names for each, the code still differs from it in these ways:
 
-- the site tree's root is the site, which holds the frame every page shares, and every file node sits directly below it, with no versions or folders between them, until layer 3, and each page holds what it shows in its own value rather than in page and content nodes below it, until layer 4;
+- the site tree holds only the version the build makes, not the versions the output folder already holds, until layer 3, and each page holds what it shows in its own value rather than in page and content nodes below it, until layer 4;
 - the input is walked by the gherkin parser, with no input tree, until layer 5;
 - `ghg serve --watch` starts watching before the first build and walks the whole input again for each burst, and the `serving` stage, not `collecting`, decides which paths of a burst call for a rebuild, until layer 7;
 - every build reads, parses and converts every file, until layer 8, and renders every file, until layer 9.

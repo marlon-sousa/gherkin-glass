@@ -22,11 +22,13 @@ use crate::policies::{CATALOGUE, page_address};
 /// the path goes; no message of the catalogue holds it.
 const PATH_MARK: &str = "\u{0}";
 
-/// `tags` names every tag of the site.
+/// `tags` names every tag of the site, and `folders` are the names of the
+/// folder nodes the page is in, from the outermost, for its breadcrumb.
 pub(crate) fn build_page(
     anchored: &AnchoredFeature<'_>,
     options: &PageOptions,
     tags: &TagNames,
+    folders: &[String],
 ) -> Page {
     let parsed = anchored.parsed;
     let feature = &parsed.feature;
@@ -73,11 +75,10 @@ pub(crate) fn build_page(
         inline: options.inline_backgrounds,
         enabled: any_background_steps(&blocks),
     });
-    let folders: Vec<String> = address.folders().into_iter().map(str::to_string).collect();
     Page {
         breadcrumb: breadcrumb(
             &site_title(options),
-            &folders,
+            folders,
             Some((&heading, address.file())),
         ),
         address,
