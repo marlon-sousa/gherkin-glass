@@ -5,8 +5,10 @@ use std::path::PathBuf;
 
 use serde_json::Value;
 
+use super::*;
+use crate::entities::LinkAddress;
 use crate::fixtures::{self, read_features};
-use crate::policies::{anchor_feature, search_documents, search_json};
+use crate::policies::{anchor_feature, search_documents};
 
 fn fixture() -> PathBuf {
     fixtures::fixture("search")
@@ -15,7 +17,7 @@ fn fixture() -> PathBuf {
 fn documents() -> String {
     let features = read_features(&fixture().join("features"));
     let anchored: Vec<_> = features.iter().map(anchor_feature).collect();
-    search_json(&search_documents(&anchored))
+    search_documents(&anchored).render()
 }
 
 #[test]
@@ -42,4 +44,30 @@ fn the_documents_are_compact_and_keep_letters_outside_ascii() {
 fn the_documents_are_the_same_on_every_build() {
     // Rule 149.
     assert_eq!(documents(), documents());
+}
+
+#[test]
+fn only_a_feature_s_item_has_a_lang_and_empty_lists_are_left_out_of_the_tree_data() {
+    let item = |text: &str, address: &str, lang: Option<&str>, items| TreeItem {
+        text: text.into(),
+        address: LinkAddress::to(address),
+        lang: lang.map(str::to_string),
+        items,
+    };
+    let scenario = TreeItem {
+        address: LinkAddress::to("a/b.html").at("s"),
+        ..item("Scenario: S", "", None, Vec::new())
+    };
+    let feature = item("Feature: B", "a/b.html", Some("en"), vec![scenario]);
+    let items = [
+        item("Site", "index.html", None, Vec::new()),
+        item("a", "a/index.html", None, vec![feature]),
+    ];
+    assert_eq!(
+        items.render(),
+        "[{\"text\":\"Site\",\"address\":\"index.html\"},\
+         {\"text\":\"a\",\"address\":\"a/index.html\",\"items\":[\
+         {\"text\":\"Feature: B\",\"address\":\"a/b.html\",\"lang\":\"en\",\"items\":[\
+         {\"text\":\"Scenario: S\",\"address\":\"a/b.html#s\"}]}]}]\n"
+    );
 }

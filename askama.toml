@@ -1,0 +1,4 @@
+[general]
+# The templates live beside the nodes that render them, rather than in
+# templates/ at the crate's root, where askama looks by default.
+dirs = ["src/policies/rendering"]

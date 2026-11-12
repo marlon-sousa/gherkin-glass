@@ -1,11 +1,8 @@
 //! Entity: a link's address, a path of the site percent-encoded, with a block's anchor after `#` when it links to one.
 
 use derive_more::Display;
-use serde::Serialize;
-
 /// Always percent-encoded, as [`percent_encoded`] says, except for the anchor.
-#[derive(Debug, Clone, Default, PartialEq, Eq, Display, Serialize)]
-#[serde(transparent)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Display)]
 pub(crate) struct LinkAddress {
     address: String,
 }

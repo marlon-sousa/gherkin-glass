@@ -1,19 +1,16 @@
-//! Policy: every file of a site rendered from its tree, and what the build has to say of them.
+//! Policy: every file of a site rendered from its tree, each file node through the rendering trait, and what the build has to say of them.
 
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 
+use super::node_rendering::RenderFile;
+use super::site_data::{SEARCH_DOCUMENTS, asset};
 use crate::entities::{
-    ASSETS, BuiltSite, FileNode, PageOptions, SiteAddress, SiteAssets, SiteFile, SiteFiles,
-    SiteTree,
-};
-use crate::policies::{
-    LARGE_SEARCH_DOCUMENTS, SENTENCES_PAGE, render_folder_page, render_folder_tree, render_page,
-    render_sentences_page, render_tag_index, render_tag_page, search_json, tag_index_address,
+    BuiltSite, FileNode, PageOptions, SiteAssets, SiteFile, SiteFiles, SiteTree,
 };
 
-/// In the folder of the assets, where the pages' script fetches them from.
-const TREE_DATA: &str = "tree.json";
-const SEARCH_DOCUMENTS: &str = "search.json";
+/// Above this size, search can be slow to start. MiniSearch 7.2.0, in Node 22
+/// on a four-core server, took about 70 ms to index each million bytes.
+pub(super) const LARGE_SEARCH_DOCUMENTS: usize = 5_000_000;
 
 /// Every file of `tree`, in its order, in the site that `options` make.
 pub(crate) fn render_site(tree: &SiteTree, options: &PageOptions) -> SiteFiles {
@@ -31,24 +28,24 @@ pub(crate) fn render_site(tree: &SiteTree, options: &PageOptions) -> SiteFiles {
 
 /// The file of `node`; `None` only for an asset that is not there.
 fn render_file(node: &FileNode) -> Option<SiteFile> {
-    let (address, text) = match node {
-        FileNode::Feature(page) => (page.address.clone(), render_page(page)),
-        FileNode::Folder(folder) => (folder.address.clone(), render_folder_page(folder)),
-        FileNode::Sentences(page) => (
-            SiteAddress::at_root(SENTENCES_PAGE),
-            render_sentences_page(page),
-        ),
-        FileNode::FolderTree(items) => (asset(TREE_DATA), render_folder_tree(items)),
-        FileNode::TagIndex(index) => (tag_index_address(), render_tag_index(index)),
-        FileNode::Tag(page) => (page.address.clone(), render_tag_page(page)),
-        FileNode::SearchDocuments(documents) => (asset(SEARCH_DOCUMENTS), search_json(documents)),
-        FileNode::Asset(name) => return asset_file(name),
-    };
-    Some(SiteFile::text(address, text))
+    match node {
+        FileNode::Feature(page) => Some(file(page)),
+        FileNode::Folder(folder) => Some(file(folder)),
+        FileNode::Sentences(page) => Some(file(page)),
+        FileNode::FolderTree(items) => Some(file(items.as_slice())),
+        FileNode::TagIndex(index) => Some(file(index)),
+        FileNode::Tag(page) => Some(file(page)),
+        FileNode::SearchDocuments(documents) => Some(file(documents.as_slice())),
+        FileNode::Asset(name) => asset_file(name),
+    }
+}
+
+fn file(node: &(impl RenderFile + ?Sized)) -> SiteFile {
+    SiteFile::text(node.address(), node.render())
 }
 
 /// The assets every site has.
-pub(crate) fn assets() -> impl Iterator<Item = SiteFile> {
+pub(super) fn assets() -> impl Iterator<Item = SiteFile> {
     SiteAssets::iter().filter_map(|name| asset_file(&name))
 }
 
@@ -68,11 +65,6 @@ fn is_search_documents(file: &&SiteFile) -> bool {
 /// Whether search documents of `size` bytes can be slow to start.
 fn is_large(size: &usize) -> bool {
     *size > LARGE_SEARCH_DOCUMENTS
-}
-
-/// The address of the file named `name` in the folder of the assets.
-fn asset(name: &str) -> SiteAddress {
-    SiteAddress::of(&[ASSETS], name)
 }
 
 #[cfg(test)]

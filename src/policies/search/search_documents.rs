@@ -7,10 +7,6 @@ use crate::entities::{
 };
 use crate::policies::page_address;
 
-/// Above this size, search can be slow to start. MiniSearch 7.2.0, in Node 22
-/// on a four-core server, took about 70 ms to index each million bytes.
-pub(crate) const LARGE_SEARCH_DOCUMENTS: usize = 5_000_000;
-
 /// The documents of every page, in the order of `pages`, and within a page in file order.
 pub(crate) fn search_documents<'a>(
     pages: impl IntoIterator<Item = &'a AnchoredFeature<'a>>,
@@ -97,14 +93,6 @@ impl OnPage<'_> {
     }
 }
 
-#[expect(
-    clippy::expect_used,
-    reason = "documents are strings and lists of strings, which always serialise"
-)]
-pub(crate) fn search_json(documents: &[SearchDocument]) -> String {
-    serde_json::to_string(documents).expect("documents are strings and lists of strings")
-}
-
 fn background_steps(background: Option<&Background>) -> Vec<String> {
     background
         .map(|found| found.steps.iter().map(|step| step.value.clone()).collect())
@@ -129,6 +117,3 @@ fn scenario_tags(scenario: &Scenario) -> Vec<String> {
     }
     found
 }
-
-#[cfg(test)]
-mod tests;
