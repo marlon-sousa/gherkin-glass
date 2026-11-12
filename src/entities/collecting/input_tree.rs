@@ -3,6 +3,7 @@
 mod builder;
 mod file_to_parse;
 mod input_node;
+mod parsed_file;
 
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -10,20 +11,28 @@ use std::sync::Arc;
 use ego_tree::{NodeId, NodeRef, Tree};
 
 pub(crate) use builder::{InputTreeBuilder, ListedFolder};
-pub(crate) use file_to_parse::{FileToParse, ParsedFile};
-use input_node::{FileState, InputNode, NodeKind};
+pub(crate) use file_to_parse::FileToParse;
+use input_node::{FileState, FolderState, InputNode, NodeKind};
+pub(crate) use parsed_file::ParsedFile;
 
 use crate::entities::{PageClash, ParsedFeature};
-use crate::errors::InputErrors;
+use crate::errors::{InputError, InputErrors};
 
-/// Its root is the input folder, and each folder's children are in the order of their paths, so
-/// that a walk from the root meets the files in file order.
+/// Its root is the input folder.
 #[derive(Debug, Clone)]
 pub(crate) struct InputTree {
     tree: Tree<InputNode>,
 }
 
 impl InputTree {
+    /// The tree of an input folder `input` that could not be listed, which holds only its error.
+    pub(crate) fn unlisted_input(input: PathBuf, error: InputError) -> Self {
+        let kind = NodeKind::Folder(FolderState::Unlisted(error));
+        InputTree {
+            tree: Tree::new(InputNode::new(input, kind)),
+        }
+    }
+
     /// The paths of the allowed files, in file order.
     pub(crate) fn allowed_files(&self) -> Vec<PathBuf> {
         self.tree
@@ -45,15 +54,16 @@ impl InputTree {
     /// Puts what parsing each file gave into its node.
     pub(crate) fn put_parsed(&mut self, parsed: Vec<ParsedFile>) {
         for ParsedFile { file, result } in parsed {
-            if let Some(mut node) = self.tree.get_mut(file.node) {
+            if let Some(mut node) = self.tree.get_mut(file.node)
+                && is_handed_out(node.value(), &file)
+            {
                 node.value().kind = NodeKind::File(FileState::Parsed(Arc::new(result)));
             }
         }
     }
 
     /// Puts each clash's error into the node of its file or folder, in place of those the nodes
-    /// held; one whose path has no node, which an allowed file or a folder above one always has,
-    /// goes into the root's, so that no error is lost.
+    /// held, or into the root's when its path has no node.
     pub(crate) fn put_page_errors(&mut self, clashes: Vec<PageClash>) {
         self.tree
             .values_mut()
@@ -89,6 +99,12 @@ impl InputTree {
             .find(|node| is_at(node, path))
             .map(|node| node.id())
     }
+}
+
+/// Whether `node` is the file `file` names, with nothing parsed, so that a file handed out by
+/// another tree changes nothing.
+fn is_handed_out(node: &InputNode, file: &FileToParse) -> bool {
+    node.path == file.path && matches!(node.kind, NodeKind::File(FileState::NothingParsed))
 }
 
 fn is_at(node: &NodeRef<'_, InputNode>, path: &Path) -> bool {

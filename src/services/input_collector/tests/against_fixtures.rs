@@ -8,7 +8,7 @@ use std::path::Path;
 
 use crate::adapters::InputFolderReader;
 use crate::entities::InputTree;
-use crate::errors::InputErrorKind;
+use crate::errors::{InputError, InputErrorKind};
 use crate::test_support::{copy_folder, fixture, scratch};
 
 use super::*;
@@ -23,26 +23,12 @@ fn allowed(input: &Path) -> Vec<String> {
     collected(input)
         .allowed_files()
         .iter()
-        .map(|path| shown_path(input, path))
+        .map(|path| InputError::shown_path(input, path))
         .collect()
-}
-
-fn shown_path(input: &Path, path: &Path) -> String {
-    let parts: Vec<_> = path
-        .strip_prefix(input)
-        .expect("under the input")
-        .components()
-        .map(|part| part.as_os_str().to_string_lossy().into_owned())
-        .collect();
-    parts.join("/")
 }
 
 /// The errors of the input tree of `input`, each as its path and what is wrong.
 fn errors(input: &Path) -> Vec<(String, InputErrorKind)> {
     let errors = collected(input).input_errors().expect("errors");
-    errors
-        .as_slice()
-        .iter()
-        .map(|error| (error.path.clone(), error.kind.clone()))
-        .collect()
+    errors.as_slice().iter().map(path_and_kind).collect()
 }

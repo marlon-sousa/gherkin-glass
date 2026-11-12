@@ -28,16 +28,6 @@ impl InputTreeBuilder {
         }
     }
 
-    /// The tree of an input folder `input` that could not be listed, which holds only its error.
-    pub(crate) fn unlisted(input: PathBuf, error: InputError) -> InputTree {
-        InputTree {
-            tree: Tree::new(InputNode::new(
-                input,
-                NodeKind::Folder(FolderState::Unlisted(error)),
-            )),
-        }
-    }
-
     pub(crate) fn root(&self) -> ListedFolder {
         ListedFolder(self.tree.root().id())
     }
@@ -85,7 +75,7 @@ impl InputTreeBuilder {
     /// Puts `node` among the children of `parent` before the first whose path sorts after its own.
     #[expect(
         clippy::expect_used,
-        reason = "a listed folder is only made by this builder, from a node of its own tree"
+        reason = "a listed folder is made only by an input tree builder, and each walk uses one"
     )]
     fn add(&mut self, parent: ListedFolder, node: InputNode) -> NodeId {
         let next = self

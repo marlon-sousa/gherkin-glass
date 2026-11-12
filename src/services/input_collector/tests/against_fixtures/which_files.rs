@@ -87,8 +87,8 @@ fn a_folder_sorts_by_its_name_before_its_contents() {
     // sorts after `-` as a character.
     let input = scratch("input/sorted-by-folder");
     create_dir_all(input.join("a")).expect("made");
-    write(input.join("a/x.feature"), "Nothing\n").expect("written");
-    write(input.join("a-b.feature"), "Nothing\n").expect("written");
+    write(input.join("a/x.feature"), "").expect("written");
+    write(input.join("a-b.feature"), "").expect("written");
 
     assert_eq!(allowed(&input), ["a/x.feature", "a-b.feature"]);
 }

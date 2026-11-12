@@ -116,7 +116,7 @@ fn a_tree_whose_files_are_all_parsed_holds_no_error() {
 #[test]
 fn an_input_folder_that_could_not_be_listed_holds_only_its_error() {
     let missing = error("", InputErrorKind::InputMissing);
-    let tree = InputTreeBuilder::unlisted("in".into(), missing.clone());
+    let tree = InputTree::unlisted_input("in".into(), missing.clone());
     assert!(tree.allowed_files().is_empty());
     assert_eq!(tree.input_errors(), Some(InputErrors::new(vec![missing])));
 }
@@ -146,4 +146,16 @@ fn page_errors_replace_those_the_nodes_held_and_one_with_no_node_is_kept_at_the_
 
 fn shown(error: &InputError) -> &str {
     &error.path
+}
+
+#[test]
+fn a_file_handed_out_by_another_tree_changes_nothing() {
+    let mut builder = InputTreeBuilder::listed("other".into(), Vec::new());
+    let root = builder.root();
+    builder.add_allowed_file(root, "other/x.feature".into());
+    let other = builder.build();
+    let mut tree = tree();
+    tree.put_parsed(other.files_to_parse().into_iter().map(parsed).collect());
+    assert_eq!(tree.files_to_parse().len(), 3);
+    assert!(tree.features().next().is_none());
 }

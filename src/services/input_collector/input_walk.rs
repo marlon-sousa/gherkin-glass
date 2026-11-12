@@ -18,7 +18,7 @@ pub(super) fn walk_input(input_folders: &dyn InputFolders, input: &Path) -> Inpu
         selection: FileSelection::new(input),
     };
     match walk.open(input) {
-        Opened::Unlisted(error) => InputTreeBuilder::unlisted(input.to_path_buf(), error),
+        Opened::Unlisted(error) => InputTree::unlisted_input(input.to_path_buf(), error),
         Opened::Listed(listing) => {
             let mut builder = InputTreeBuilder::listed(input.to_path_buf(), listing.ignore_errors);
             let root = builder.root();
@@ -65,11 +65,10 @@ impl Walk<'_> {
                 return Opened::Unlisted(self.error(folder, None, kind));
             }
         };
-        let mut ignore_errors = Vec::new();
-        let entered = if entries.iter().any(is_ignore_file) {
-            self.enter_rules(folder, &mut ignore_errors)
+        let (entered, ignore_errors) = if entries.iter().any(is_ignore_file) {
+            self.enter_rules(folder)
         } else {
-            Entered::NoRules
+            (Entered::NoRules, Vec::new())
         };
         Opened::Listed(Listing {
             entries,
@@ -121,24 +120,30 @@ impl Walk<'_> {
         }
     }
 
-    /// Reads the rules of `folder`'s `.ghg-ignore` file and takes them in, adding to `errors`
-    /// the error met reading it or those of its rules that are not valid.
-    fn enter_rules(&mut self, folder: &Path, errors: &mut Vec<InputError>) -> Entered {
+    /// Reads the rules of `folder`'s `.ghg-ignore` file and takes them in, with the error met
+    /// reading it or those of its rules that are not valid.
+    fn enter_rules(&mut self, folder: &Path) -> (Entered, Vec<InputError>) {
         let path = folder.join(IGNORE_FILE);
         let text = match self.input_folders.read(&path) {
             Ok(text) => text,
             Err(error) => {
                 let reason = error.to_string();
-                errors.push(self.error(&path, None, InputErrorKind::CannotBeRead { reason }));
-                return Entered::NoRules;
+                let kind = InputErrorKind::CannotBeRead { reason };
+                return (Entered::NoRules, vec![self.error(&path, None, kind)]);
             }
         };
         let parsed = parse_rules(folder, &path, &text);
-        for InvalidRule { line, reason } in parsed.invalid {
-            errors.push(self.error(&path, line, InputErrorKind::InvalidRule { reason }));
-        }
+        let errors = parsed
+            .invalid
+            .into_iter()
+            .map(|rule| self.invalid_rule(&path, rule))
+            .collect();
         self.selection.enter(parsed.rules);
-        Entered::Rules
+        (Entered::Rules, errors)
+    }
+
+    fn invalid_rule(&self, path: &Path, InvalidRule { line, reason }: InvalidRule) -> InputError {
+        self.error(path, line, InputErrorKind::InvalidRule { reason })
     }
 
     fn error(&self, path: &Path, line: Option<usize>, kind: InputErrorKind) -> InputError {

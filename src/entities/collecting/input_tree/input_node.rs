@@ -37,7 +37,6 @@ pub(super) enum FolderState {
 pub(super) enum FileState {
     NotAllowed,
     NothingParsed,
-    /// Behind an `Arc`, so that copying the node copies no feature.
     Parsed(Arc<Result<ParsedFeature, Vec<InputError>>>),
 }
 

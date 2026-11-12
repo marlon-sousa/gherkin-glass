@@ -3,7 +3,7 @@ mod against_fixtures;
 use std::path::PathBuf;
 
 use super::*;
-use crate::errors::InputErrorKind;
+use crate::errors::{InputError, InputErrorKind};
 use crate::test_support::MemoryFolders;
 
 /// The errors of the input tree of the input `in` that `folders` holds, each as its path and
@@ -11,11 +11,11 @@ use crate::test_support::MemoryFolders;
 fn errors_of(folders: MemoryFolders) -> Vec<(String, InputErrorKind)> {
     let input_tree = InputCollector::new(Arc::new(folders)).collect(Path::new("in"));
     let errors = input_tree.input_errors().expect("errors");
-    errors
-        .as_slice()
-        .iter()
-        .map(|error| (error.path.clone(), error.kind.clone()))
-        .collect()
+    errors.as_slice().iter().map(path_and_kind).collect()
+}
+
+fn path_and_kind(error: &InputError) -> (String, InputErrorKind) {
+    (error.path.clone(), error.kind.clone())
 }
 
 #[test]
