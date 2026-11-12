@@ -18,7 +18,7 @@
 <button type="button" class="ghg-collapse-all">{{ page.words.collapse_all }}</button>
 <button type="button" class="ghg-expand-all">{{ page.words.expand_all }}</button>
 {%- if let Some(option) = page.backgrounds_option %}
-<label class="ghg-option"><input type="checkbox" class="ghg-inline-backgrounds" autocomplete="off"{% if option.inline %} checked{% endif %}{% if !option.enabled %} disabled{% endif %}> {{ option.label }}</label>
+<label class="ghg-option"><input type="checkbox" class="ghg-inline-backgrounds" autocomplete="off"{% if option.inline %} checked{% endif %}{% if !backgrounds_enabled %} disabled{% endif %}> {{ option.label }}</label>
 {%- endif %}
 </div>
 {{ blocks|safe }}

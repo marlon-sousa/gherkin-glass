@@ -31,8 +31,6 @@ pub(crate) struct BackgroundsOption {
     pub(crate) label: String,
     /// Whether the page is written with each scenario showing its backgrounds' steps.
     pub(crate) inline: bool,
-    /// Whether a scenario starts with a background's steps, so that the checkbox can act.
-    pub(crate) enabled: bool,
 }
 
 /// gherkin-glass's own words on a page, from the interface text catalogue.

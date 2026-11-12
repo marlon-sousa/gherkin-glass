@@ -12,9 +12,8 @@ use heading_words::heading;
 use i18n_embed_fl::fl;
 
 use crate::entities::{
-    BackgroundContent, BackgroundsOption, HeadingLevel, OwnCrumb, Page, PageContent, PageOptions,
-    PageWords, ParsedFeature, RuleContent, ScenarioContent, SourceLink, TagNames, Trail,
-    percent_encoded,
+    BackgroundsOption, HeadingLevel, OwnCrumb, Page, PageContent, PageOptions, PageWords,
+    ParsedFeature, SourceLink, TagNames, Trail, percent_encoded,
 };
 use crate::policies::site::feature_pages::anchor_feature;
 use crate::policies::site::page_language;
@@ -64,7 +63,6 @@ pub(crate) fn build_page(
     let backgrounds_option = has_background.then(|| BackgroundsOption {
         label: fl!(CATALOGUE, "inline-backgrounds"),
         inline: options.inline_backgrounds,
-        enabled: any_background_steps(background.as_ref(), &scenarios, &rules),
     });
     let page = Page {
         trail: Trail {
@@ -104,36 +102,6 @@ pub(crate) fn build_page(
         scenarios,
         rules,
     }
-}
-
-/// Whether a scenario starts with a background's steps: one beside a feature
-/// background that has steps, or in a rule whose background has steps.
-fn any_background_steps(
-    background: Option<&BackgroundContent>,
-    scenarios: &[ScenarioContent],
-    rules: &[RuleContent],
-) -> bool {
-    let feature_steps = has_steps(background);
-    let in_feature = !scenarios.is_empty() || rules.iter().any(has_scenarios);
-    let in_rule = rules.iter().any(starts_with_its_background);
-    (feature_steps && in_feature) || in_rule
-}
-
-fn has_scenarios(rule: &RuleContent) -> bool {
-    !rule.scenarios.is_empty()
-}
-
-/// Whether a scenario of `rule` starts with the steps of the rule's background.
-fn starts_with_its_background(rule: &RuleContent) -> bool {
-    has_steps(rule.background.as_ref()) && has_scenarios(rule)
-}
-
-fn has_steps(background: Option<&BackgroundContent>) -> bool {
-    background.is_some_and(has_own_steps)
-}
-
-fn has_own_steps(background: &BackgroundContent) -> bool {
-    !background.steps.is_empty()
 }
 
 fn source_link(template: &str, path: &str, line: usize) -> SourceLink {

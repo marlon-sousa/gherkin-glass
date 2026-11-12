@@ -10,7 +10,6 @@ fn a_feature_s_and_a_rule_s_background_are_introduced_each_in_its_own_words() {
         Some(BackgroundsOption {
             label: "Show backgrounds inside each scenario".into(),
             inline: true,
-            enabled: true,
         })
     );
     let (background, _, rule) = blocks(&page);
@@ -35,25 +34,15 @@ fn linked_backgrounds_are_written_so() {
 }
 
 #[rstest]
-#[case::without_steps(
-    "Feature: F\n  Background:\n    Only words.\n\n  Scenario: S\n    Given x\n",
-    Some(false)
-)]
-#[case::with_no_scenario("Feature: F\n  Background:\n    Given x\n", Some(false))]
-#[case::in_a_rule(
-    "Feature: F\n  Rule: R\n    Background:\n      Given x\n    Scenario: S\n      Given y\n",
-    Some(true)
-)]
-#[case::with_no_background("Feature: F\n  Scenario: S\n    Given x\n", None)]
-fn the_option_is_offered_with_a_background_and_enabled_when_a_scenario_starts_with_its_steps(
-    #[case] text: &str,
-    #[case] enabled: Option<bool>,
-) {
+#[case::with_a_background("Feature: F\n  Background:\n    Only words.\n", true)]
+#[case::with_one_in_a_rule("Feature: F\n  Rule: R\n    Background:\n      Given x\n", true)]
+#[case::with_no_background("Feature: F\n  Scenario: S\n    Given x\n", false)]
+fn the_option_is_offered_on_a_page_with_a_background(#[case] text: &str, #[case] offered: bool) {
     assert_eq!(
         page(text, &PageOptions::default())
             .page
             .backgrounds_option
-            .map(|o| o.enabled),
-        enabled
+            .is_some(),
+        offered
     );
 }
