@@ -1,6 +1,6 @@
 //! Entity: a feature's page, as its template shows it, every text in it as written or worded.
 
-use crate::entities::{Breadcrumb, LinkAddress, SiteAddress, StepPart};
+use crate::entities::{Breadcrumb, LinkAddress, SiteAddress, StepKind, StepPart};
 
 /// A feature's page, its blocks the nodes below it in the site tree. Every
 /// `String` is text, escaped when it is rendered.
@@ -14,6 +14,8 @@ pub(crate) struct Page {
     pub(crate) title: String,
     /// The feature's keyword and name.
     pub(crate) heading: String,
+    /// The feature's name alone, empty when it has none.
+    pub(crate) name: String,
     pub(crate) breadcrumb: Breadcrumb,
     pub(crate) tags: Vec<TagView>,
     pub(crate) description: Option<Paragraph>,
@@ -84,6 +86,17 @@ pub(crate) struct StepView {
     pub(crate) keyword: String,
     /// The text after the keyword, in the parts its highlighting tells apart.
     pub(crate) parts: Vec<StepPart>,
+    /// Given, When or Then, an And or a But step taking the kind of the step before it.
+    pub(crate) kind: StepKind,
+    /// The line of the feature file it is written on.
+    pub(crate) line: usize,
+}
+
+impl StepView {
+    /// The text after the keyword, as written or filled with an example's values.
+    pub(crate) fn text(&self) -> String {
+        self.parts.iter().map(StepPart::text).collect()
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

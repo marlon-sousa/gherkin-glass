@@ -13,8 +13,11 @@ mod versions;
 
 pub(crate) use site_tree::site_tree;
 
+#[cfg(test)]
+use site_tree::site_with_feature_pages;
+
 use breadcrumb_trail::breadcrumb;
-use feature_pages::{anchor_feature, anchor_of, build_page, heading, unique};
+use feature_pages::{anchor_feature, anchor_of, build_page, unique};
 use folders::{build_folder_pages, build_folder_tree};
 use page_language::page_language;
 use search::search_documents;

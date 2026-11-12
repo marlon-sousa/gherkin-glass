@@ -41,13 +41,22 @@ impl<'a> SiteTreeNode<'a> {
         if !matches!(self.value(), SiteNode::Scenario(_)) {
             return Vec::new();
         }
-        let mut blocks: Vec<_> = self.node.ancestors().take_while(holds_blocks).collect();
+        let mut blocks: Vec<_> = self.enclosing_blocks().collect();
         blocks.reverse();
         blocks
             .into_iter()
-            .flat_map(|block| block.children())
+            .flat_map(|block| block.node.children())
             .filter_map(background_with_steps)
             .collect()
+    }
+
+    /// The blocks this node is in, from the nearest: for a scenario, its rule,
+    /// if it is in one, then its feature page.
+    pub(crate) fn enclosing_blocks(&self) -> impl Iterator<Item = SiteTreeNode<'a>> + use<'a> {
+        self.node
+            .ancestors()
+            .take_while(holds_blocks)
+            .map(SiteTreeNode::new)
     }
 }
 

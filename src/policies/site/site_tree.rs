@@ -6,7 +6,8 @@ use std::collections::BTreeSet;
 use rayon::prelude::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
 
 use crate::entities::{
-    FolderId, PageOptions, ParsedFeature, SiteAssets, SiteTree, SiteTreeBuilder, VersionName,
+    FolderId, PageOptions, ParsedFeature, SiteAssets, SiteTree, SiteTreeBuilder, TagNames,
+    VersionName,
 };
 use crate::policies::site::{
     anchor_feature, build_folder_pages, build_folder_tree, build_page, build_sentences_page,
@@ -16,7 +17,8 @@ use crate::policies::site::{
 use crate::policies::{page_address, page_frame};
 
 /// The tree of the site of `features`, each feature's page in its folder,
-/// the folders made once from the pages' addresses. `version` names the
+/// the folders made once from the pages' addresses, and the views of the
+/// feature pages, such as the tag pages, made from the pages in the tree. `version` names the
 /// version the build makes, or is `None` for a site without versions, and
 /// `built_versions` are those the output folder already holds.
 pub(crate) fn site_tree(
@@ -27,28 +29,15 @@ pub(crate) fn site_tree(
 ) -> SiteTree {
     let tags = tags_of(features);
     let names = name_tags(&tags);
-    let anchored: Vec<_> = features.iter().map(anchor_feature).collect();
-    let mut site = SiteTreeBuilder::new(page_frame(options), version.cloned());
-    let folders: Vec<_> = features
-        .iter()
-        .map(|feature| folder_of(&mut site, feature))
-        .collect();
-    // Collecting into a `Vec` keeps file order, whatever order the threads finish in.
-    let pages: Vec<_> = anchored
-        .par_iter()
-        .zip(folders.par_iter())
-        .map(|(feature, folder)| {
-            build_page(feature, options, &names, &site.site_folder(*folder).names())
-        })
-        .collect();
-    let sentences = build_sentences_page(features, &find_step_sentences(&anchored), options);
-    let tag_index = build_tag_index(&tags, &pages, &names, options);
+    let mut site = site_with_feature_pages(features, options, &names, version);
+    let feature_pages: Vec<_> = site.every_feature_page().collect();
+    let sentences = build_sentences_page(&find_step_sentences(&feature_pages), options);
+    let tag_index = build_tag_index(&tags, &feature_pages, &names, options);
     let tag_pages: Vec<_> = tags
         .par_iter()
-        .map(|tag| build_tag_page(tag, &pages, &names, options))
+        .map(|tag| build_tag_page(tag, &feature_pages, &names, options))
         .collect();
-    let documents = search_documents(&anchored);
-    site.feature_pages(folders.into_iter().zip(pages));
+    let documents = search_documents(&feature_pages);
     let folder_pages = build_folder_pages(site.folders(), options);
     site.folder_pages(folder_pages);
     let folder_tree = build_folder_tree(site.input_folder());
@@ -62,6 +51,37 @@ pub(crate) fn site_tree(
         add_versions(&mut site, version, built_versions);
     }
     site.build()
+}
+
+/// The site tree being built, for the version `version` makes, with the page
+/// of each of `features` in its folder, its tags linked as `names` says.
+pub(crate) fn site_with_feature_pages(
+    features: &[ParsedFeature],
+    options: &PageOptions,
+    names: &TagNames,
+    version: Option<&VersionName>,
+) -> SiteTreeBuilder {
+    let mut site = SiteTreeBuilder::new(page_frame(options), version.cloned());
+    let folders: Vec<_> = features
+        .iter()
+        .map(|feature| folder_of(&mut site, feature))
+        .collect();
+    // Collecting into a `Vec` keeps file order, whatever order the threads finish in.
+    let pages: Vec<_> = features
+        .par_iter()
+        .zip(folders.par_iter())
+        .map(|(feature, folder)| {
+            let anchored = anchor_feature(feature);
+            build_page(
+                &anchored,
+                options,
+                names,
+                &site.site_folder(*folder).names(),
+            )
+        })
+        .collect();
+    site.feature_pages(folders.into_iter().zip(pages));
+    site
 }
 
 /// The versions `built_versions` the output folder holds, but `version`,

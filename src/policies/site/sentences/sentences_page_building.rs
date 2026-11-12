@@ -1,36 +1,26 @@
 //! Policy: the page of step sentences, from the sentences found and the features they are in.
 
-use std::collections::BTreeMap;
-use std::path::{Component, Path, PathBuf};
-
 use i18n_embed::LanguageLoader;
 use i18n_embed_fl::fl;
 
 use crate::entities::{
-    GroupView, LinkAddress, PageOptions, ParsedFeature, Piece, SentenceUse, SentenceView,
-    SentencesPage, StepKind, StepSentences, UseView,
+    GroupView, LinkAddress, PageOptions, Piece, SentenceUse, SentenceView, SentencesPage, StepKind,
+    StepSentences, UseView,
 };
-use crate::policies::site::{breadcrumb, page_language, site_title};
-use crate::policies::{CATALOGUE, SENTENCES_PAGE, page_address};
+use crate::policies::site::{breadcrumb, site_title};
+use crate::policies::{CATALOGUE, SENTENCES_PAGE};
 
 /// Stand for a message's placeholders, to find where each goes; no message
 /// of the catalogue holds them.
 const MARKS: [&str; 2] = ["\u{0}", "\u{1}"];
 
 pub(crate) fn build_sentences_page(
-    features: &[ParsedFeature],
     sentences: &StepSentences,
     options: &PageOptions,
 ) -> SentencesPage {
-    let languages: BTreeMap<&PathBuf, &str> = features
-        .iter()
-        .map(|parsed| (&parsed.path, page_language(&parsed.language)))
-        .collect();
     let own = CATALOGUE.current_language().to_string();
-    let language_of = |path: &PathBuf| {
-        let language = languages.get(path).copied().unwrap_or(own.as_str());
-        (language != own).then(|| language.to_string())
-    };
+    // A use's language is shown only where it differs from the page's own.
+    let language_of = |found: &SentenceUse| (found.language != own).then(|| found.language.clone());
     let groups = sentences
         .groups
         .iter()
@@ -41,15 +31,12 @@ pub(crate) fn build_sentences_page(
                 .iter()
                 .map(|sentence| SentenceView {
                     text: sentence.text.clone(),
-                    language: sentence
-                        .uses
-                        .first()
-                        .and_then(|first| language_of(&first.path)),
+                    language: sentence.uses.first().and_then(language_of),
                     uses_count: fl!(CATALOGUE, "sentence-uses", count = sentence.uses.len()),
                     uses: sentence
                         .uses
                         .iter()
-                        .map(|found| use_view(found, language_of(&found.path)))
+                        .map(|found| use_view(found, language_of(found)))
                         .collect(),
                 })
                 .collect(),
@@ -85,12 +72,12 @@ fn use_view(found: &SentenceUse, language: Option<String>) -> UseView {
         ))
     };
     UseView {
-        address: LinkAddress::to(page_address(&found.path).as_str()).at(&found.anchor),
+        address: LinkAddress::to(found.page.as_str()).at(&found.anchor),
         language,
         link: pieces(&link),
         item,
         heading: found.heading.clone(),
-        path: slash_path(&found.path),
+        path: found.path.clone(),
         values: found.values.clone(),
         separator: fl!(CATALOGUE, "sentence-values-separator"),
     }
@@ -129,21 +116,10 @@ fn pieces(words: &str) -> Vec<Piece> {
     pieces
 }
 
-/// The parts of a path relative to the input folder, joined by `/`.
-fn slash_path(path: &Path) -> String {
-    path.components()
-        .filter_map(|part| match part {
-            Component::Normal(name) => Some(name.to_string_lossy().into_owned()),
-            _ => None,
-        })
-        .collect::<Vec<_>>()
-        .join("/")
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::entities::{Sentence, SentenceGroup};
+    use crate::entities::{Sentence, SentenceGroup, SiteAddress};
 
     #[test]
     fn a_message_is_cut_at_its_marks_in_the_order_it_puts_them() {
@@ -162,7 +138,9 @@ mod tests {
     fn the_count_is_a_plural_form() {
         let page = |uses: usize| {
             let found = SentenceUse {
-                path: PathBuf::from("a.feature"),
+                path: "a.feature".to_string(),
+                page: SiteAddress::of::<&str>(&[], "a.html"),
+                language: "en".to_string(),
                 anchor: "s".to_string(),
                 heading: "Scenario: S".to_string(),
                 line: 1,
@@ -177,7 +155,7 @@ mod tests {
                     }],
                 }],
             };
-            build_sentences_page(&[], &sentences, &PageOptions::default()).groups[0].sentences[0]
+            build_sentences_page(&sentences, &PageOptions::default()).groups[0].sentences[0]
                 .uses_count
                 .clone()
         };
@@ -187,7 +165,7 @@ mod tests {
 
     #[test]
     fn with_no_step_there_is_no_group() {
-        let page = build_sentences_page(&[], &StepSentences::default(), &PageOptions::default());
+        let page = build_sentences_page(&StepSentences::default(), &PageOptions::default());
         assert!(page.groups.is_empty());
         assert_eq!(page.no_steps, "No feature has a step.");
     }

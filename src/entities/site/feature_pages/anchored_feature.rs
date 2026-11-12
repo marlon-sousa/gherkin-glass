@@ -39,21 +39,3 @@ pub(crate) struct AnchoredScenario<'a> {
     pub(crate) examples: Vec<Anchored<'a, Examples>>,
     pub(crate) rows: Vec<String>,
 }
-
-impl<'a> AnchoredFeature<'a> {
-    /// Every background, the feature's then each rule's, in file order.
-    pub(crate) fn backgrounds(&self) -> impl Iterator<Item = &Anchored<'a, Background>> {
-        self.background.iter().chain(
-            self.rules
-                .iter()
-                .filter_map(|rule| rule.background.as_ref()),
-        )
-    }
-
-    /// Every scenario, the feature's then each rule's, in file order.
-    pub(crate) fn all_scenarios(&self) -> impl Iterator<Item = &AnchoredScenario<'a>> {
-        self.scenarios
-            .iter()
-            .chain(self.rules.iter().flat_map(|rule| &rule.scenarios))
-    }
-}

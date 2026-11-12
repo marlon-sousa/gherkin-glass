@@ -122,36 +122,25 @@ mod tests {
     use gherkin::{Feature, GherkinEnv};
 
     use super::*;
-    use crate::entities::{ParsedFeature, SiteTreeBuilder, TagNames};
-    use crate::policies::site::{anchor_feature, build_page};
-    use crate::policies::{page_address, page_frame};
+    use crate::entities::{ParsedFeature, TagNames};
+    use crate::policies::site::site_with_feature_pages;
 
     /// The folder pages of the site of `files`, each a path and its text.
     fn site(files: &[(&str, &str)]) -> Vec<FolderPage> {
         let options = PageOptions::default();
-        let mut builder = SiteTreeBuilder::new(page_frame(&options), None);
-        let pages: Vec<_> = files
+        let features: Vec<_> = files
             .iter()
             .map(|(path, text)| {
                 let feature = Feature::parse(text, GherkinEnv::default()).expect("parses");
-                let parsed = ParsedFeature::new(
+                ParsedFeature::new(
                     PathBuf::from_iter(path.split('/')),
                     feature,
                     "en".to_string(),
                     BTreeMap::new(),
-                );
-                let folder = builder.folder_at(&page_address(&parsed.path).folders());
-                let names = builder.site_folder(folder).names();
-                let page = build_page(
-                    &anchor_feature(&parsed),
-                    &options,
-                    &TagNames::default(),
-                    &names,
-                );
-                (folder, page)
+                )
             })
             .collect();
-        builder.feature_pages(pages);
+        let builder = site_with_feature_pages(&features, &options, &TagNames::default(), None);
         build_folder_pages(builder.folders(), &options)
             .into_iter()
             .map(|(_, page)| page)

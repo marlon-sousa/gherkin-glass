@@ -31,6 +31,15 @@ impl<'a> SiteFeaturePage<'a> {
         self.node.children().map(SiteTreeNode::new)
     }
 
+    /// Every scenario of the page, those in its rules among them, in the order of the file.
+    pub(crate) fn scenarios(&self) -> impl Iterator<Item = SiteTreeNode<'a>> + use<'a> {
+        self.node
+            .children()
+            .flat_map(|block| [block].into_iter().chain(rule_children(block)))
+            .filter(is_scenario)
+            .map(SiteTreeNode::new)
+    }
+
     /// The page's rules and scenarios, a rule's entry listing its scenarios.
     pub(crate) fn contents(&self) -> Vec<ContentsEntry> {
         self.node.children().filter_map(contents_entry).collect()
@@ -82,6 +91,14 @@ fn scenarios_in(node: NodeRef<'_, SiteNode>) -> usize {
         SiteNode::Scenario(_) => 1,
         _ => 0,
     }
+}
+
+/// The blocks in `block` when it is a rule; none for any other block.
+fn rule_children(block: NodeRef<'_, SiteNode>) -> impl Iterator<Item = NodeRef<'_, SiteNode>> {
+    is_rule(&block)
+        .then(|| block.children())
+        .into_iter()
+        .flatten()
 }
 
 fn is_scenario(node: &NodeRef<'_, SiteNode>) -> bool {

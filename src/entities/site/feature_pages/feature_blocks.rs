@@ -34,6 +34,8 @@ pub(crate) struct BackgroundBlock {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct RuleBlock {
     pub(crate) heading: BlockHeading,
+    /// The rule's name alone, empty when it has none.
+    pub(crate) name: String,
     pub(crate) tags: Vec<TagView>,
     pub(crate) description: Option<Paragraph>,
 }
@@ -42,6 +44,8 @@ pub(crate) struct RuleBlock {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct ScenarioBlock {
     pub(crate) heading: BlockHeading,
+    /// The scenario's name alone, empty when it has none.
+    pub(crate) name: String,
     pub(crate) tags: Vec<TagView>,
     pub(crate) description: Option<Paragraph>,
 }

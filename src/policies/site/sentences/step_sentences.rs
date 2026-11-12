@@ -2,44 +2,41 @@
 
 use std::collections::BTreeMap;
 
-use gherkin::{Background, Scenario, Step, StepType};
-
 use super::sentence_slots::sentence_of;
 use crate::entities::{
-    Anchored, AnchoredFeature, AnchoredScenario, Sentence, SentenceGroup, SentenceUse, StepKind,
-    StepSentences,
+    BlockHeading, Sentence, SentenceGroup, SentenceUse, SiteFeaturePage, SiteNode, SiteTreeNode,
+    StepKind, StepSentences, StepView,
 };
-use crate::policies::site::heading;
 
-pub(crate) fn find_step_sentences<'a>(
-    features: impl IntoIterator<Item = &'a AnchoredFeature<'a>>,
-) -> StepSentences {
-    let mut features: Vec<_> = features.into_iter().collect();
-    features.sort_by(|a, b| a.parsed.path.cmp(&b.parsed.path));
+/// The sentences of the steps of `pages`, feature pages of the site tree with their blocks.
+pub(crate) fn find_step_sentences(pages: &[SiteFeaturePage<'_>]) -> StepSentences {
+    let mut pages: Vec<_> = pages.to_vec();
+    pages.sort_by(|a, b| a.page().path.split('/').cmp(b.page().path.split('/')));
 
     let mut found: BTreeMap<SentenceKey, Vec<SentenceUse>> = BTreeMap::new();
-    for anchored in features {
-        let parsed = anchored.parsed;
+    for feature in pages {
+        let page = feature.page();
         for FoundStep {
-            anchor,
             heading,
             step,
             columns,
-        } in steps_of(anchored)
+        } in steps_of(&feature)
         {
-            let (text, values) = sentence_of(&step.value, &columns);
+            let (text, values) = sentence_of(&step.text(), &columns);
             found
                 .entry(SentenceKey {
-                    kind: kind_of(step.ty),
+                    kind: step.kind,
                     lower: text.to_lowercase(),
                     text,
                 })
                 .or_default()
                 .push(SentenceUse {
-                    path: parsed.path.clone(),
-                    anchor: anchor.to_string(),
-                    heading,
-                    line: step.position.line,
+                    path: page.path.clone(),
+                    page: page.address.clone(),
+                    language: page.language.clone(),
+                    anchor: heading.anchor.clone(),
+                    heading: heading.text(),
+                    line: step.line,
                     values,
                 });
         }
@@ -68,85 +65,57 @@ struct SentenceKey {
     text: String,
 }
 
-/// A step, with the anchor and the heading of its block, and the columns of its outline, if
-/// it is in one.
+/// A step, with the heading of its block, and the columns of its outline, if it is in one.
 struct FoundStep<'a> {
-    anchor: &'a str,
-    heading: String,
-    step: &'a Step,
+    heading: &'a BlockHeading,
+    step: &'a StepView,
     columns: Vec<&'a str>,
 }
 
-/// What the steps of one block share.
-struct StepBlock<'a> {
-    anchor: &'a str,
-    heading: String,
-    columns: Vec<&'a str>,
-}
-
-impl<'a> StepBlock<'a> {
-    fn steps(&self, steps: &'a [Step]) -> Vec<FoundStep<'a>> {
-        steps.iter().map(|step| self.step(step)).collect()
-    }
-
-    fn step(&self, step: &'a Step) -> FoundStep<'a> {
-        FoundStep {
-            anchor: self.anchor,
-            heading: self.heading.clone(),
-            step,
-            columns: self.columns.clone(),
-        }
-    }
-}
-
-/// Every step of the feature in file order.
-fn steps_of<'a>(anchored: &'a AnchoredFeature<'a>) -> Vec<FoundStep<'a>> {
-    let mut steps: Vec<_> = anchored
-        .backgrounds()
-        .flat_map(background_steps)
-        .chain(anchored.all_scenarios().flat_map(scenario_steps))
-        .collect();
-    steps.sort_by_key(|found| found.step.span.start);
-    steps
-}
-
-fn background_steps<'a>(background: &'a Anchored<'a, Background>) -> Vec<FoundStep<'a>> {
-    StepBlock {
-        anchor: &background.anchor,
-        heading: heading(&background.block.keyword, &background.block.name),
-        columns: Vec::new(),
-    }
-    .steps(&background.block.steps)
-}
-
-fn scenario_steps<'a>(anchored: &'a AnchoredScenario<'a>) -> Vec<FoundStep<'a>> {
-    let scenario = anchored.scenario;
-    StepBlock {
-        anchor: &anchored.anchor,
-        heading: heading(&scenario.keyword, &scenario.name),
-        columns: columns_of(scenario),
-    }
-    .steps(&scenario.steps)
-}
-
-/// The names in the header rows of an outline's examples; none for a plain scenario.
-fn columns_of(scenario: &Scenario) -> Vec<&str> {
-    scenario
-        .examples
-        .iter()
-        .filter_map(|examples| examples.table.as_ref())
-        .filter_map(|table| table.rows.first())
-        .flatten()
-        .map(String::as_str)
+/// Every step of the page's backgrounds and scenarios, in file order; the
+/// scenarios an outline's rows make are left out.
+fn steps_of<'a>(page: &SiteFeaturePage<'a>) -> Vec<FoundStep<'a>> {
+    page.blocks()
+        .flat_map(|block| match block.value() {
+            SiteNode::Rule(_) => block.children().collect(),
+            _ => vec![block],
+        })
+        .flat_map(block_steps)
         .collect()
 }
 
-fn kind_of(ty: StepType) -> StepKind {
-    match ty {
-        StepType::Given => StepKind::Given,
-        StepType::When => StepKind::When,
-        StepType::Then => StepKind::Then,
-    }
+/// The steps of the background or the scenario `block`; none for another node.
+fn block_steps(block: SiteTreeNode<'_>) -> Vec<FoundStep<'_>> {
+    let heading = match block.value() {
+        SiteNode::Background(background) => &background.heading,
+        SiteNode::Scenario(scenario) => &scenario.heading,
+        _ => return Vec::new(),
+    };
+    let columns = columns_of(block);
+    block
+        .children()
+        .filter_map(|child| match child.value() {
+            SiteNode::Step(step) => Some(FoundStep {
+                heading,
+                step,
+                columns: columns.clone(),
+            }),
+            _ => None,
+        })
+        .collect()
+}
+
+/// The names in the header rows of an outline's examples; none for a plain scenario.
+fn columns_of(block: SiteTreeNode<'_>) -> Vec<&str> {
+    block
+        .children()
+        .filter_map(|child| match child.value() {
+            SiteNode::Examples(examples) => examples.table.as_ref(),
+            _ => None,
+        })
+        .flat_map(|table| &table.header)
+        .map(String::as_str)
+        .collect()
 }
 
 #[cfg(test)]

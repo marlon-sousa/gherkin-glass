@@ -8,7 +8,7 @@ mod step_views;
 use std::path::{Component, Path};
 
 use block_building::{Builder, description};
-pub(crate) use heading_words::heading;
+use heading_words::heading;
 use i18n_embed_fl::fl;
 
 use crate::entities::{
@@ -81,6 +81,7 @@ pub(crate) fn build_page(
             path = path.as_str()
         ),
         heading,
+        name: feature.name.clone(),
         path: path.clone(),
         tags: builder.tags(&feature.tags),
         description: description(feature.description.as_deref()),

@@ -28,11 +28,7 @@ fn from(node: SiteTreeNode<'_>) -> Vec<String> {
 
 /// The scenarios of the page in `builder`, those inside its rules among them, in file order.
 fn scenarios(builder: &SiteTreeBuilder) -> Vec<SiteTreeNode<'_>> {
-    let page = builder
-        .input_folder()
-        .feature_pages()
-        .next()
-        .expect("the page");
+    let page = builder.every_feature_page().next().expect("the page");
     page.blocks()
         .flat_map(|block| [block].into_iter().chain(block.children()))
         .filter(|node| matches!(node.value(), SiteNode::Scenario(_)))
@@ -50,7 +46,7 @@ fn each_scenario_finds_the_feature_s_background_then_its_rule_s_above_it() {
             enabled: true,
         })
     );
-    let builder = tree_of(page);
+    let builder = tree_of(FEATURE, &PageOptions::default());
     let [scenario, outline] = scenarios(&builder)[..] else {
         panic!("two scenarios");
     };
@@ -77,15 +73,15 @@ fn linked_backgrounds_are_written_so_and_a_background_without_steps_adds_nothing
         linked.page.backgrounds_option.map(|o| o.inline),
         Some(false)
     );
-    let empty = page(
-        "Feature: F\n  Background:\n    Only words.\n\n  Scenario: S\n    Given x\n",
-        &PageOptions::default(),
-    );
+    let empty = "Feature: F\n  Background:\n    Only words.\n\n  Scenario: S\n    Given x\n";
     assert_eq!(
-        empty.page.backgrounds_option.as_ref().map(|o| o.enabled),
+        page(empty, &PageOptions::default())
+            .page
+            .backgrounds_option
+            .map(|o| o.enabled),
         Some(false)
     );
-    let builder = tree_of(empty);
+    let builder = tree_of(empty, &PageOptions::default());
     assert!(scenarios(&builder)[0].backgrounds().is_empty());
     let alone = page(
         "Feature: F\n  Background:\n    Given x\n",

@@ -1,7 +1,7 @@
 //! The sentences found, checked against the fixture.
 
-use crate::entities::StepKind;
-use crate::policies::site::{anchor_feature, find_step_sentences};
+use crate::entities::{PageOptions, StepKind, TagNames};
+use crate::policies::site::{find_step_sentences, site_with_feature_pages};
 use crate::test_support::{fixture, read_features};
 
 /// A use of a sentence: its path, anchor, line and values.
@@ -12,8 +12,14 @@ type Found = Vec<(StepKind, Vec<(String, Vec<Use>)>)>;
 
 fn found() -> Found {
     let features = read_features(&fixture("step-sentences"));
-    let anchored: Vec<_> = features.iter().map(anchor_feature).collect();
-    find_step_sentences(&anchored)
+    let site = site_with_feature_pages(
+        &features,
+        &PageOptions::default(),
+        &TagNames::default(),
+        None,
+    );
+    let pages: Vec<_> = site.every_feature_page().collect();
+    find_step_sentences(&pages)
         .groups
         .into_iter()
         .map(|group| {
@@ -24,10 +30,7 @@ fn found() -> Found {
                     let uses = sentence
                         .uses
                         .into_iter()
-                        .map(|found| {
-                            let path = found.path.to_string_lossy().replace('\\', "/");
-                            (path, found.anchor, found.line, found.values)
-                        })
+                        .map(|found| (found.path, found.anchor, found.line, found.values))
                         .collect();
                     (sentence.text, uses)
                 })

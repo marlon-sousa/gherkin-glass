@@ -2,7 +2,7 @@
 
 use ego_tree::{NodeId, NodeMut, NodeRef, Tree};
 
-use super::{FolderId, SiteFolder, SiteNode, SiteTree};
+use super::{FolderId, SiteFeaturePage, SiteFolder, SiteNode, SiteTree};
 use crate::entities::{
     BackgroundContent, ExampleScenario, ExamplesAsScenarios, FolderPage, PageContent, PageFrame,
     RuleContent, ScenarioContent, SearchDocument, SentencesPage, StepContent, TagIndex, TagPage,
@@ -16,6 +16,8 @@ pub(crate) struct SiteTreeBuilder {
     tree: Tree<SiteNode>,
     version: NodeId,
     input_folder: NodeId,
+    /// Every feature page, in the order it was put in.
+    feature_pages: Vec<NodeId>,
 }
 
 impl SiteTreeBuilder {
@@ -32,6 +34,7 @@ impl SiteTreeBuilder {
             tree,
             version,
             input_folder,
+            feature_pages: Vec::new(),
         }
     }
 
@@ -79,7 +82,16 @@ impl SiteTreeBuilder {
             for rule in content.rules {
                 place_rule(&mut page, rule);
             }
+            let id = page.id();
+            self.feature_pages.push(id);
         }
+    }
+
+    /// Every feature page put in so far, with its blocks, in the order it was put in.
+    pub(crate) fn every_feature_page(&self) -> impl Iterator<Item = SiteFeaturePage<'_>> {
+        self.feature_pages
+            .iter()
+            .filter_map(|id| SiteFeaturePage::of(self.node(*id)))
     }
 
     /// Each folder's page put in the folder it is paired with.

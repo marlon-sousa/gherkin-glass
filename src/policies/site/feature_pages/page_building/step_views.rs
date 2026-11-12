@@ -1,8 +1,8 @@
 //! Policy: the steps of a page's blocks, with their data tables and doc strings, as written or filled with an example's values.
 
-use gherkin::{Scenario, Step, Table};
+use gherkin::{Scenario, Step, StepType, Table};
 
-use crate::entities::{DocStringView, ParsedFeature, StepContent, StepView, TableView};
+use crate::entities::{DocStringView, ParsedFeature, StepContent, StepKind, StepView, TableView};
 use crate::policies::site::feature_pages::{ExampleRow, highlight_step};
 
 /// `scenario` holds the steps, or is `None` for a background's.
@@ -22,6 +22,8 @@ fn step_content(parsed: &ParsedFeature, step: &Step, scenario: Option<&Scenario>
         step: StepView {
             keyword: step.keyword.clone(),
             parts: highlight_step(step, scenario).parts,
+            kind: kind_of(step.ty),
+            line: step.position.line,
         },
         table: step.table.as_ref().map(table),
         doc_string: doc_string_view(parsed, step),
@@ -56,6 +58,8 @@ fn filled_step(parsed: &ParsedFeature, step: &Step, row: &ExampleRow<'_>) -> Ste
         step: StepView {
             keyword: filled.keyword.clone(),
             parts: highlight_step(&filled, None).parts,
+            kind: kind_of(step.ty),
+            line: step.position.line,
         },
         table: step
             .table
@@ -100,5 +104,13 @@ pub(super) fn table(table: &Table) -> TableView {
     TableView {
         header: rows.next().unwrap_or_default(),
         rows: rows.collect(),
+    }
+}
+
+fn kind_of(ty: StepType) -> StepKind {
+    match ty {
+        StepType::Given => StepKind::Given,
+        StepType::When => StepKind::When,
+        StepType::Then => StepKind::Then,
     }
 }

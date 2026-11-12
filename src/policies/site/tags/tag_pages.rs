@@ -8,8 +8,8 @@ use i18n_embed::LanguageLoader;
 use i18n_embed_fl::fl;
 
 use crate::entities::{
-    LinkAddress, PageContent, PageOptions, TagFeature, TagIndex, TagIndexEntry, TagNames, TagPage,
-    TagScenario,
+    LinkAddress, PageOptions, SiteFeaturePage, TagFeature, TagIndex, TagIndexEntry, TagNames,
+    TagPage, TagScenario,
 };
 use crate::policies::CATALOGUE;
 use crate::policies::site::{breadcrumb, outside_link, site_title, tag_index_address};
@@ -26,10 +26,11 @@ fn tag_pages_language() -> String {
     CATALOGUE.current_language().to_string()
 }
 
-/// `tags` is every tag of the site in tag order, and `pages` every feature's page in path order.
+/// `tags` is every tag of the site in tag order, and `pages` every feature's
+/// page of the site tree, with its blocks, in path order.
 pub(crate) fn build_tag_index(
     tags: &[String],
-    pages: &[PageContent],
+    pages: &[SiteFeaturePage<'_>],
     names: &TagNames,
     options: &PageOptions,
 ) -> TagIndex {
@@ -64,22 +65,22 @@ pub(crate) fn build_tag_index(
 
 pub(crate) fn build_tag_page(
     tag: &str,
-    pages: &[PageContent],
+    pages: &[SiteFeaturePage<'_>],
     names: &TagNames,
     options: &PageOptions,
 ) -> TagPage {
     let language = tag_pages_language();
     let features = pages
         .iter()
-        .filter(|content| writes(content, tag))
-        .map(|content| {
-            let page = &content.page;
+        .filter(|feature| writes(feature, tag))
+        .map(|feature| {
+            let page = feature.page();
             let page_address = format!("{ROOT}{}", page.address);
             TagFeature {
                 address: LinkAddress::to(&page_address),
                 heading: page.title.clone(),
                 language: (page.language != language).then(|| page.language.clone()),
-                scenarios: carriers(content, tag)
+                scenarios: carriers(feature, tag)
                     .into_iter()
                     .map(|(scenario, through)| {
                         let words = match through {
@@ -141,9 +142,8 @@ mod tests {
     use gherkin::{Feature, GherkinEnv};
 
     use super::*;
-    use crate::entities::ParsedFeature;
-    use crate::policies::site::anchor_feature;
-    use crate::policies::site::{build_page, name_tags, tags_of};
+    use crate::entities::{ParsedFeature, SiteTreeBuilder};
+    use crate::policies::site::{name_tags, site_with_feature_pages, tags_of};
 
     const FEATURE: &str = "\
 @feature
@@ -171,7 +171,9 @@ Feature: F
   Rule: Nothing
 ";
 
-    fn site(sources: &[(&str, &str)]) -> (Vec<String>, Vec<PageContent>, TagNames) {
+    /// Every tag of the site of `sources`, the site tree holding its pages, in
+    /// the input folder, and the tags' names.
+    fn site(sources: &[(&str, &str)]) -> (Vec<String>, SiteTreeBuilder, TagNames) {
         let parsed: Vec<_> = sources
             .iter()
             .map(|(path, source)| {
@@ -181,11 +183,8 @@ Feature: F
             .collect();
         let tags = tags_of(&parsed);
         let names = name_tags(&tags);
-        let pages = parsed
-            .iter()
-            .map(|p| build_page(&anchor_feature(p), &PageOptions::default(), &names, &[]))
-            .collect();
-        (tags, pages, names)
+        let builder = site_with_feature_pages(&parsed, &PageOptions::default(), &names, None);
+        (tags, builder, names)
     }
 
     fn listed(page: &TagPage) -> Vec<(String, String)> {
@@ -203,7 +202,8 @@ Feature: F
 
     #[test]
     fn a_scenario_carries_a_tag_itself_or_through_its_examples_rule_or_feature() {
-        let (_, pages, names) = site(&[("a b.feature", FEATURE)]);
+        let (_, builder, names) = site(&[("a b.feature", FEATURE)]);
+        let pages: Vec<_> = builder.every_feature_page().collect();
         let page = |tag| build_tag_page(tag, &pages, &names, &PageOptions::default());
         assert_eq!(
             listed(&page("@feature")),
@@ -249,8 +249,9 @@ Feature: F
 
     #[test]
     fn the_index_counts_the_scenarios_that_carry_each_tag() {
-        let (tags, pages, names) =
+        let (tags, builder, names) =
             site(&[("a.feature", FEATURE), ("b.feature", "@own\nFeature: G\n")]);
+        let pages: Vec<_> = builder.every_feature_page().collect();
         let index = build_tag_index(&tags, &pages, &names, &PageOptions::default());
         let entries: Vec<_> = index
             .entries

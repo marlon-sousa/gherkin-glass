@@ -8,18 +8,22 @@ use crate::entities::{
     BackgroundContent, LinkAddress, OutsideLink, ParsedFeature, RuleContent, ScenarioContent,
     SiteTreeBuilder, StepPart, TableView, TagView,
 };
-use crate::policies::page_frame;
-use crate::policies::site::{anchor_feature, name_tags, tags_of};
+use crate::policies::site::{anchor_feature, name_tags, site_with_feature_pages, tags_of};
 use crate::test_support::tag_link;
 
-fn page(text: &str, options: &PageOptions) -> PageContent {
+/// The feature of `text`, in `billing/saque em conta.feature`.
+fn parsed(text: &str) -> ParsedFeature {
     let feature = Feature::parse(text, GherkinEnv::default()).expect("parses");
-    let parsed = ParsedFeature::new(
+    ParsedFeature::new(
         PathBuf::from_iter(["billing", "saque em conta.feature"]),
         feature,
         "en".to_string(),
         BTreeMap::new(),
-    );
+    )
+}
+
+fn page(text: &str, options: &PageOptions) -> PageContent {
+    let parsed = parsed(text);
     let tags = name_tags(&tags_of(std::slice::from_ref(&parsed)));
     build_page(
         &anchor_feature(&parsed),
@@ -49,12 +53,10 @@ fn in_rule(rule: &RuleContent) -> (&BackgroundContent, &ScenarioContent) {
     (background, outline)
 }
 
-/// A site tree holding only `content`, in the input folder.
-fn tree_of(content: PageContent) -> SiteTreeBuilder {
-    let mut builder = SiteTreeBuilder::new(page_frame(&PageOptions::default()), None);
-    let folder = builder.folder_at(&[]);
-    builder.feature_pages([(folder, content)]);
-    builder
+/// A site tree holding only the page of `text`, with the settings of every page `options`.
+fn tree_of(text: &str, options: &PageOptions) -> SiteTreeBuilder {
+    let features = [parsed(text)];
+    site_with_feature_pages(&features, options, &name_tags(&tags_of(&features)), None)
 }
 
 const FEATURE: &str = "\
@@ -110,10 +112,9 @@ fn the_description_is_a_paragraph_that_keeps_its_lines() {
 
 #[test]
 fn the_contents_list_rules_and_scenarios_with_a_rule_s_scenarios_inside_it() {
-    let builder = tree_of(page(FEATURE, &PageOptions::default()));
+    let builder = tree_of(FEATURE, &PageOptions::default());
     let contents = builder
-        .input_folder()
-        .feature_pages()
+        .every_feature_page()
         .next()
         .expect("the page")
         .contents();
