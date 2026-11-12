@@ -10,7 +10,7 @@ pub(crate) trait FileWriter: Send + Sync {
     /// the folders it needs and replacing a file already there.
     fn write(&self, output: &Path, file: &str, contents: &[u8]) -> IoResult<()>;
 
-    /// The site written below `output` since the last call, as it is served,
-    /// which starts the next site empty.
+    /// The site written below `output`, as it is served; a site in memory is
+    /// taken whole, so that the next starts empty.
     fn site(&self, output: &Path) -> ServedSite;
 }

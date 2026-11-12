@@ -15,7 +15,12 @@ pub(crate) const DEFAULT_OUTPUT: &str = "site";
 /// `folder` is the configuration file's folder, the current folder when the
 /// file is `ghg.toml` there or there is none; paths from the command line are
 /// kept as given, relative to the current folder.
-pub(crate) fn resolve_settings(options: &BuildOptions, folder: &Path, config: &Config) -> Settings {
+pub(crate) fn resolve_settings(
+    options: &BuildOptions,
+    folder: &Path,
+    config: &Config,
+    destination: Destination,
+) -> Settings {
     let path = |option: &Option<PathBuf>, set: &Option<PathBuf>, default: &str| match (option, set)
     {
         (Some(given), _) => given.clone(),
@@ -35,7 +40,7 @@ pub(crate) fn resolve_settings(options: &BuildOptions, folder: &Path, config: &C
     Settings {
         input,
         output,
-        destination: Destination::default(),
+        destination,
         unnamed,
         version,
         replace: config.replace_existing_version.unwrap_or(true),
@@ -77,7 +82,13 @@ mod tests {
             input: set.map(PathBuf::from),
             ..Config::default()
         };
-        resolve_settings(&options, &config_folder(Path::new(file)), &config).input
+        resolve_settings(
+            &options,
+            &config_folder(Path::new(file)),
+            &config,
+            Destination::Folder,
+        )
+        .input
     }
 
     #[test]
@@ -125,7 +136,7 @@ mod tests {
                 title: set.map(str::to_string),
                 ..Config::default()
             };
-            resolve_settings(&options, Path::new(""), &config)
+            resolve_settings(&options, Path::new(""), &config, Destination::Folder)
                 .pages
                 .title
         };
@@ -145,7 +156,7 @@ mod tests {
                 output: set.map(PathBuf::from),
                 ..Config::default()
             };
-            resolve_settings(&options, Path::new("ci"), &config).output
+            resolve_settings(&options, Path::new("ci"), &config, Destination::Folder).output
         };
         assert_eq!(resolve(None, None), Path::new("ci").join("site"));
         assert_eq!(resolve(None, Some("out")), Path::new("ci").join("out"));
@@ -156,7 +167,13 @@ mod tests {
     fn pages_start_expanded_with_backgrounds_inline_and_no_source_link_unless_the_file_says_otherwise()
      {
         let pages = |config: Config| {
-            resolve_settings(&BuildOptions::default(), Path::new(""), &config).pages
+            resolve_settings(
+                &BuildOptions::default(),
+                Path::new(""),
+                &config,
+                Destination::Folder,
+            )
+            .pages
         };
         assert_eq!(pages(Config::default()), PageOptions::default());
         let set = pages(Config {
@@ -181,7 +198,13 @@ mod tests {
                 allow_unnamed,
                 ..Config::default()
             };
-            resolve_settings(&BuildOptions::default(), Path::new(""), &config).unnamed
+            resolve_settings(
+                &BuildOptions::default(),
+                Path::new(""),
+                &config,
+                Destination::Folder,
+            )
+            .unnamed
         };
         assert_eq!(unnamed(None), Unnamed::Allowed);
         assert_eq!(unnamed(Some(true)), Unnamed::Allowed);
@@ -195,9 +218,14 @@ mod tests {
             accent_light: Some(light),
             ..Config::default()
         };
-        let accents = resolve_settings(&BuildOptions::default(), Path::new(""), &config)
-            .pages
-            .accents;
+        let accents = resolve_settings(
+            &BuildOptions::default(),
+            Path::new(""),
+            &config,
+            Destination::Folder,
+        )
+        .pages
+        .accents;
         assert_eq!(
             accents,
             Accents {
@@ -220,7 +248,7 @@ mod tests {
                 replace_existing_version: replace,
                 ..Config::default()
             };
-            let settings = resolve_settings(&options, Path::new(""), &config);
+            let settings = resolve_settings(&options, Path::new(""), &config, Destination::Folder);
             (settings.version, settings.replace)
         };
         assert_eq!(settings(None, None, Some(false)), (None, false));

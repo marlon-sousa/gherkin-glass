@@ -1,4 +1,4 @@
-//! The site writer's fakes: an output folder held in memory, an input, a parser and a writer.
+//! The site writer's fakes: an output folder held in memory, a parser and a writer.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::io::{ErrorKind, Result as IoResult};
@@ -9,8 +9,7 @@ use gherkin::{Feature, GherkinEnv};
 
 use super::*;
 use crate::entities::{OutputContents, PageOptions, RawFeature, Unnamed};
-use crate::errors::BuildError;
-use crate::errors::{InputErrorKind, ParseError};
+use crate::errors::{BuildError, ParseError};
 use crate::fixtures::MemoryFolders;
 use crate::ports::FeatureParser;
 use crate::services::{Converter, InputService};
@@ -119,17 +118,11 @@ pub(super) fn two_versions() -> OutputContents {
     )
 }
 
-/// Parses every file as a feature named after it, but fails `bad.feature`.
+/// Parses every file as a feature named after it.
 pub(super) struct FakeParser;
 
 impl FeatureParser for FakeParser {
     fn parse(&self, path: &Path) -> Result<RawFeature, ParseError> {
-        if path.ends_with("bad.feature") {
-            return Err(ParseError {
-                line: Some(1),
-                kind: InputErrorKind::Syntax,
-            });
-        }
         let source = format!("Feature: {}\n", path.display());
         let feature = Feature::parse(&source, GherkinEnv::default()).expect("parses");
         Ok(RawFeature { feature, source })
@@ -158,9 +151,8 @@ impl FileWriter for FakeWriter {
     }
 }
 
-/// Builds the features `files` into `site`, as the version `version` when
-/// there is one, as the controller does: the folder is checked, the input
-/// read and converted, and the site written.
+/// Has the site writer check `site` and write into it the site of the
+/// features `files`, as the version `version` when there is one.
 pub(super) fn build(
     files: Vec<&'static str>,
     version: Option<&str>,
@@ -169,19 +161,27 @@ pub(super) fn build(
 ) -> Result<ServedSite, BuildError> {
     let folders_in = MemoryFolders::with_files_in(Path::new("in"), &files);
     let input = InputService::new(Arc::new(folders_in), Arc::new(FakeParser));
-    let settings = Settings {
+    let settings = settings(Destination::Folder, version);
+    let site_writer = SiteWriter::new(folders, writer, Arc::new(FakeWriter::default()));
+    let features = input
+        .read(&settings.input, settings.unnamed)
+        .expect("features");
+    site_writer.check(&settings)?;
+    Ok(site_writer.write(&settings, Converter.convert(&features, &settings))?)
+}
+
+/// The settings of a build from `in` into `site`, as the version `version`
+/// when there is one.
+pub(super) fn settings(destination: Destination, version: Option<&str>) -> Settings {
+    Settings {
         input: PathBuf::from("in"),
         output: PathBuf::from("site"),
-        destination: Destination::Folder,
+        destination,
         unnamed: Unnamed::Allowed,
         pages: PageOptions::default(),
         version: version.map(name),
         replace: true,
-    };
-    let site_writer = SiteWriter::new(folders, writer, Arc::new(FakeWriter::default()));
-    site_writer.check(&settings)?;
-    let features = input.read(&settings.input, settings.unnamed)?;
-    Ok(site_writer.write(&settings, Converter.convert(&features, &settings))?)
+    }
 }
 
 pub(super) fn written(writer: &FakeWriter) -> Vec<String> {

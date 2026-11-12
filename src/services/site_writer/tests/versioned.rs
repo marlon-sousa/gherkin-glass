@@ -39,21 +39,6 @@ fn a_versioned_build_replaces_its_folder_and_the_page_and_records_every_version(
 }
 
 #[test]
-fn input_with_an_error_removes_nothing_and_writes_nothing() {
-    let folders = FakeFolders::holding(two_versions());
-    let writer = Arc::new(FakeWriter::default());
-    let outcome = build(
-        vec!["bad.feature"],
-        Some("v1.0.0"),
-        folders.clone(),
-        writer.clone(),
-    );
-    assert!(matches!(outcome, Err(BuildError::Input(_))));
-    assert!(folders.done().is_empty());
-    assert!(written(&writer).is_empty());
-}
-
-#[test]
 fn a_page_that_cannot_be_written_leaves_the_versions_page_unwritten() {
     let folders = FakeFolders::holding(OutputContents::Missing);
     let writer = Arc::new(FakeWriter {

@@ -152,14 +152,14 @@ fn files_with_the_same_page_are_reported_in_the_order_of_their_paths() {
         ("in/a.story", "Feature: a\n"),
     ];
     let errors = read_with(folders, &texts, Unnamed::Allowed).expect_err("the same page");
-    let found: Vec<_> = errors
-        .as_slice()
-        .iter()
-        .map(|error| (error.path.as_str(), &error.kind))
-        .collect();
+    let found: Vec<_> = errors.as_slice().iter().map(path_and_kind).collect();
     let same_page = InputErrorKind::SamePage {
         page: "a.html".into(),
         first: "A".into(),
     };
     assert_eq!(found, [("a.feature", &same_page), ("a.story", &same_page)]);
+}
+
+fn path_and_kind(error: &InputError) -> (&str, &InputErrorKind) {
+    (error.path.as_str(), &error.kind)
 }

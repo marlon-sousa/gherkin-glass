@@ -13,7 +13,8 @@ use crate::policies::CATALOGUE;
 /// Its display is the folder, joined with `/` on every system, then what is wrong.
 #[derive(Debug, Clone, PartialEq, Eq, Error)]
 pub(crate) struct OutputError {
-    /// The output folder, as the settings give it.
+    /// The output folder, as the settings give it; for a file not written,
+    /// the folder it was written into, a version's included.
     pub(crate) output: PathBuf,
     /// The version whose folder it is; `None` for the output folder itself.
     pub(crate) version: Option<VersionName>,

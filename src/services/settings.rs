@@ -52,10 +52,12 @@ impl SettingsService {
             }]),
         };
         match config {
-            Ok(config) => Ok(Settings {
+            Ok(config) => Ok(resolve_settings(
+                options,
+                &config_folder(&file),
+                &config,
                 destination,
-                ..resolve_settings(options, &config_folder(&file), &config)
-            }),
+            )),
             Err(errors) => Err(ConfigErrors { file, errors }),
         }
     }

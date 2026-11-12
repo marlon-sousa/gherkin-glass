@@ -8,7 +8,7 @@ use std::thread::sleep;
 use std::time::{Duration, Instant};
 
 use super::*;
-use crate::entities::{EntryKind, FolderEntry, OutputContents, RawFeature, Record};
+use crate::entities::{EntryKind, FolderEntry, OutputContents, RawFeature, Record, VersionName};
 use crate::errors::{InputErrorKind, ParseError};
 use crate::fixtures::{FakeServer, FakeWatcher};
 use crate::ports::{ConfigReader, FeatureParser, FileWriter, InputFolders, OutputFolders};
@@ -64,9 +64,18 @@ impl FeatureParser for Input {
     }
 }
 
-/// Output folders that all hold the same contents.
+/// Output folders that all hold the same contents; `touched` counts every
+/// change made to one.
 struct Folders {
     contents: OutputContents,
+    touched: Arc<AtomicUsize>,
+}
+
+impl Folders {
+    fn touch(&self) -> IoResult<()> {
+        self.touched.fetch_add(1, Ordering::SeqCst);
+        Ok(())
+    }
 }
 
 impl OutputFolders for Folders {
@@ -75,15 +84,15 @@ impl OutputFolders for Folders {
     }
 
     fn clear(&self, _: &Path) -> IoResult<()> {
-        Ok(())
+        self.touch()
     }
 
     fn remove(&self, _: &Path) -> IoResult<()> {
-        Ok(())
+        self.touch()
     }
 
     fn record(&self, _: &Path, _: &Record) -> IoResult<()> {
-        Ok(())
+        self.touch()
     }
 }
 
@@ -109,11 +118,14 @@ impl FileWriter for Recorder {
     }
 }
 
-/// Writes nothing, as if into the output folder.
-pub(super) struct NoFolder;
+/// Writes nothing, as if into the output folder; `touched` counts the files written.
+pub(super) struct NoFolder {
+    touched: Arc<AtomicUsize>,
+}
 
 impl FileWriter for NoFolder {
     fn write(&self, _: &Path, _: &str, _: &[u8]) -> IoResult<()> {
+        self.touched.fetch_add(1, Ordering::SeqCst);
         Ok(())
     }
 
@@ -122,13 +134,15 @@ impl FileWriter for NoFolder {
     }
 }
 
-/// What the controller is wired to: its input, its server, its watcher and its memory.
+/// What the controller is wired to: its input, its server, its watcher and
+/// its memory; `touched` counts every change made to an output folder.
 #[derive(Default)]
 pub(super) struct World {
     pub(super) input: Arc<Input>,
     pub(super) server: Arc<FakeServer>,
     pub(super) watcher: Arc<FakeWatcher>,
     pub(super) memory: Arc<Recorder>,
+    pub(super) touched: Arc<AtomicUsize>,
 }
 
 impl World {
@@ -148,8 +162,13 @@ impl World {
             InputService::new(self.input.clone(), self.input.clone()),
             Converter,
             SiteWriter::new(
-                Arc::new(Folders { contents }),
-                Arc::new(NoFolder),
+                Arc::new(Folders {
+                    contents,
+                    touched: self.touched.clone(),
+                }),
+                Arc::new(NoFolder {
+                    touched: self.touched.clone(),
+                }),
                 self.memory.clone(),
             ),
             ServerService::new(self.server.clone(), self.watcher.clone()),
@@ -197,6 +216,36 @@ impl Recorded {
             }
             sleep(Duration::from_millis(5));
         }
+    }
+}
+
+/// A site without versions, as ghg wrote it.
+pub(super) fn a_site() -> OutputContents {
+    OutputContents::Folder {
+        files: ["ghg-site.json".to_string()].into(),
+        folders: BTreeSet::new(),
+        record: Some(Record::Site(BTreeSet::new())),
+    }
+}
+
+/// The versions `main` and `v1.0.0` of a site, as ghg wrote them.
+pub(super) fn two_versions() -> OutputContents {
+    let name = |text| VersionName::new(text).expect("a version name");
+    let versions = BTreeMap::from([
+        (name("main"), ["index.html".to_string()].into()),
+        (name("v1.0.0"), ["old.html".to_string()].into()),
+    ]);
+    OutputContents::Folder {
+        files: [
+            "ghg-versions.json".to_string(),
+            "main/index.html".to_string(),
+        ]
+        .into(),
+        folders: ["main".to_string(), "v1.0.0".to_string()].into(),
+        record: Some(Record::Versions {
+            page: ["index.html".to_string()].into(),
+            versions,
+        }),
     }
 }
 

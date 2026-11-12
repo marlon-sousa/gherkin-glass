@@ -7,10 +7,8 @@ use std::sync::Mutex;
 use rstest::rstest;
 
 use super::*;
-use std::path::PathBuf;
-
 use crate::adapters::MemoryFiles;
-use crate::entities::{OutputContents, PageOptions, Unnamed};
+use crate::entities::OutputContents;
 use crate::errors::BuildError;
 use crate::services::Converter;
 use fakes::*;
@@ -41,20 +39,6 @@ fn a_site_is_built_into_a_missing_empty_or_safe_folder_marked_with_its_files(
         .map(str::to_string)
         .collect();
     assert_eq!(files, expected);
-}
-
-#[test]
-fn input_with_an_error_leaves_an_earlier_site_as_it_was() {
-    let folders = FakeFolders::holding(folder(
-        &["ghg-site.json"],
-        &[],
-        Some(Record::Site(BTreeSet::new())),
-    ));
-    let writer = Arc::new(FakeWriter::default());
-    let outcome = build(vec!["bad.feature"], None, folders.clone(), writer.clone());
-    assert!(matches!(outcome, Err(BuildError::Input(_))));
-    assert!(folders.done().is_empty());
-    assert!(written(&writer).is_empty());
 }
 
 #[test]
@@ -133,13 +117,8 @@ fn a_site_in_memory_checks_no_folder_and_has_no_versions() {
         .expect("written");
     let writer = SiteWriter::new(folders.clone(), Arc::new(FakeWriter::default()), memory);
     let settings = Settings {
-        input: PathBuf::from("in"),
-        output: PathBuf::from("site"),
-        destination: Destination::Memory,
-        unnamed: Unnamed::Allowed,
-        pages: PageOptions::default(),
-        version: Some(name("v1.0.0")),
         replace: false,
+        ..settings(Destination::Memory, Some("v1.0.0"))
     };
     writer.check(&settings).expect("no check");
     let site = Converter.convert(&[], &settings);

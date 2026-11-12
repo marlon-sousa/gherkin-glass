@@ -98,7 +98,7 @@ impl SiteApi for SiteController {
     fn serve(&self, options: &ServeOptions, listener: &dyn SiteListener) -> Result<(), ServeError> {
         let settings = self
             .settings
-            .load(&options.build, destination(options.mode))
+            .load(&options.build, options.mode.destination())
             .map_err(BuildError::Config)?;
         let config = SettingsService::config_file(&options.build);
         let selected = |input: &Path| self.parser.paths(input);
@@ -124,14 +124,6 @@ impl SiteApi for SiteController {
             self.rebuild_and_serve(&options.build, &served.preview, listener);
         }
         Ok(())
-    }
-}
-
-/// Where `ghg serve` builds: in memory under `--watch`, into the output folder otherwise.
-fn destination(mode: ServeMode) -> Destination {
-    match mode {
-        ServeMode::Watch => Destination::Memory,
-        ServeMode::Folder | ServeMode::Build => Destination::Folder,
     }
 }
 

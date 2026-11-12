@@ -1,4 +1,4 @@
-//! Entity: how a build is run, what the command line asks for, what a configuration file sets, and the settings resolved from them and where a build writes, the theme and the accent colours among them.
+//! Entity: how a build is run, what the command line asks for, what a configuration file sets, and the settings resolved from them, among them where a build writes, the theme and the accent colours.
 
 mod colour;
 mod config;

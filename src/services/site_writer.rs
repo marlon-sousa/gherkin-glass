@@ -63,7 +63,7 @@ impl SiteWriter {
         if settings.destination == Destination::Memory {
             // A site that was not taken, if any, is dropped, so that nothing of it is served.
             self.memory_files.site(output);
-            write_files(self.memory_files.as_ref(), output, site.files)?;
+            write_files(self.memory_files.as_ref(), output, &site.files)?;
             return Ok(self.memory_files.site(output));
         }
         let folder = self.check_folder(output, &target(settings), Moment::Writing)?;
@@ -72,7 +72,7 @@ impl SiteWriter {
             BuildTarget::Site => {
                 self.clear(&folder)?;
                 self.mark(&folder, &Record::Site(files))?;
-                self.write_into(output, site.files)?;
+                write_files(self.folder_files.as_ref(), output, &site.files)?;
             }
             BuildTarget::Version(name) => {
                 let versions = versions(&folder, name, &files);
@@ -90,15 +90,15 @@ impl SiteWriter {
                     versions,
                 };
                 self.mark(&folder, &record)?;
-                self.write_into(&output.join(name.as_str()), site.files)?;
-                self.write_into(output, page_files)?;
+                write_files(
+                    self.folder_files.as_ref(),
+                    &output.join(name.as_str()),
+                    &site.files,
+                )?;
+                write_files(self.folder_files.as_ref(), output, &page_files)?;
             }
         }
         Ok(self.folder_files.site(output))
-    }
-
-    fn write_into(&self, output: &Path, files: Vec<SiteFile>) -> Result<(), OutputError> {
-        write_files(self.folder_files.as_ref(), output, files)
     }
 
     /// The output folder, once nothing stops `target` being written into it
@@ -161,13 +161,17 @@ fn target(settings: &Settings) -> BuildTarget {
 fn write_files(
     writer: &dyn FileWriter,
     output: &Path,
-    files: Vec<SiteFile>,
+    files: &[SiteFile],
 ) -> Result<(), OutputError> {
-    files.iter().try_for_each(|file| {
-        writer
-            .write(output, file.address.as_str(), &file.contents)
-            .map_err(|io| file_not_written(output, file, &io))
-    })
+    files
+        .iter()
+        .try_for_each(|file| write_file(writer, output, file))
+}
+
+fn write_file(writer: &dyn FileWriter, output: &Path, file: &SiteFile) -> Result<(), OutputError> {
+    writer
+        .write(output, file.address.as_str(), &file.contents)
+        .map_err(|io| file_not_written(output, file, &io))
 }
 
 /// The versions the output folder holds once the version `name`, with
