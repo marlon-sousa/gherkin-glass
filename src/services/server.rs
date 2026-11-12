@@ -6,9 +6,9 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use i18n_embed_fl::fl;
-pub(crate) use rebuilds::Rebuilds;
+use rebuilds::Rebuilds;
 
-use crate::entities::{Preview, ServeOptions, Served, ServedSite, ServerWords, Watched};
+use crate::entities::{Burst, Preview, ServeOptions, Served, ServedSite, ServerWords, Watched};
 use crate::errors::{ServeError, WatchError};
 use crate::policies::CATALOGUE;
 use crate::ports::{ChangeWatcher, PreviewServer};
@@ -22,13 +22,15 @@ const DEFAULT_PORT: u16 = 8000;
 pub(crate) trait ServerApi: Send + Sync {
     /// Starts watching the folder `input` and the file `config`, and takes
     /// the files of `input` that `selected` gives as those the site is built
-    /// from, so that a change made from now on is not missed.
+    /// from, so that a change made from now on is not missed. Each item is
+    /// the bursts of changes, one or more, that call for one rebuild; it waits
+    /// for them, and ends when the watching does.
     fn watch<'a>(
         &self,
         input: &Path,
         config: &Path,
         selected: &'a dyn Fn(&Path) -> Vec<PathBuf>,
-    ) -> Result<Rebuilds<'a>, WatchError>;
+    ) -> Result<Box<dyn Iterator<Item = Vec<Burst>> + 'a>, WatchError>;
 
     /// Serves `site` on threads of its own, as `options` say, until ghg serve is stopped.
     fn serve(&self, site: ServedSite, options: &ServeOptions) -> Result<Served, ServeError>;
@@ -51,13 +53,13 @@ impl ServerApi for ServerService {
         input: &Path,
         config: &Path,
         selected: &'a dyn Fn(&Path) -> Vec<PathBuf>,
-    ) -> Result<Rebuilds<'a>, WatchError> {
+    ) -> Result<Box<dyn Iterator<Item = Vec<Burst>> + 'a>, WatchError> {
         let watched = [
             Watched::Folder(input.to_path_buf()),
             Watched::File(config.to_path_buf()),
         ];
         let changes = self.watcher.watch(&watched)?;
-        Ok(Rebuilds::new(changes, input, config, selected))
+        Ok(Box::new(Rebuilds::new(changes, input, config, selected)))
     }
 
     fn serve(&self, site: ServedSite, options: &ServeOptions) -> Result<Served, ServeError> {

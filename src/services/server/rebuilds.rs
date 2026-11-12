@@ -6,9 +6,8 @@ use std::path::{Path, PathBuf};
 use crate::entities::{Burst, Changes};
 use crate::policies::{Read, calls_for_rebuild, remembered};
 
-/// Each item is the bursts of changes, one or more, that call for one
-/// rebuild; it waits for them, and ends when the watching does.
-pub(crate) struct Rebuilds<'a> {
+/// The changes that call for a rebuild, as `ServerApi::watch` hands them back.
+pub(super) struct Rebuilds<'a> {
     changes: Changes,
     config: PathBuf,
     input: PathBuf,
