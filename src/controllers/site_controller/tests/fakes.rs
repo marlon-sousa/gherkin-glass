@@ -5,9 +5,11 @@
 mod building;
 mod serving;
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::atomic::Ordering;
 use std::sync::{Arc, Mutex, PoisonError};
+use std::thread::sleep;
+use std::time::{Duration, Instant};
 
 use super::*;
 use crate::errors::{
@@ -19,6 +21,7 @@ use building::{
 };
 use serving::FakeServerService;
 pub(super) use serving::Recorded;
+pub(super) use serving::watch_error;
 
 /// The calls every fake of one controller was asked, in order, each as the fake's name, the
 /// method's and what it was handed.
@@ -41,6 +44,18 @@ impl Calls {
             .lock()
             .unwrap_or_else(PoisonError::into_inner)
             .clone()
+    }
+
+    /// The calls so far, once `count` of them were made, or after ten seconds.
+    pub(super) fn wait_for(&self, count: usize) -> Vec<String> {
+        let deadline = Instant::now() + Duration::from_secs(10);
+        loop {
+            let calls = self.taken();
+            if calls.len() >= count || Instant::now() > deadline {
+                return calls;
+            }
+            sleep(Duration::from_millis(5));
+        }
     }
 }
 
@@ -98,6 +113,7 @@ pub(super) fn world() -> World {
         }),
         input_collector: Arc::new(FakeInputCollector {
             calls: calls.clone(),
+            ..FakeInputCollector::default()
         }),
         gherkin_parser: Arc::new(FakeGherkinParser {
             calls: calls.clone(),

@@ -10,6 +10,6 @@ mod site_writer;
 pub(crate) use converter::{Converter, ConverterApi};
 pub(crate) use gherkin_parser::{GherkinParser, GherkinParserApi};
 pub(crate) use input_collector::{InputCollector, InputCollectorApi};
-pub(crate) use server::{ServerApi, ServerService};
+pub(crate) use server::{ServerApi, ServerService, WatchedChanges};
 pub(crate) use settings::{SettingsApi, SettingsService};
 pub(crate) use site_writer::{SiteWriter, SiteWriterApi};

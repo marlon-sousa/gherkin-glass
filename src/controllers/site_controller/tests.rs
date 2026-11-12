@@ -8,12 +8,12 @@ use rstest::rstest;
 
 use super::*;
 
-/// The calls of a build from `features` with the settings `destination` gives, from the check
-/// of the output folder on.
-fn a_build(destination: &str) -> Vec<String> {
+/// The calls of a build from `input` with the settings `destination` gives, from the check of
+/// the output folder on.
+fn a_build(destination: &str, input: &str) -> Vec<String> {
     [
         format!("site_writer.check {destination}"),
-        "input_collector.collect features".into(),
+        format!("input_collector.collect {input}"),
         "gherkin_parser.parse a.feature Refused".into(),
         "converter.convert a.feature beside v1.0.0".into(),
         "site_writer.write a.feature".into(),
@@ -63,7 +63,11 @@ fn what_stops_a_build_is_reported_and_ends_it(
     );
     let expected: Vec<_> = ["settings.load Folder".to_string()]
         .into_iter()
-        .chain(a_build("Folder").into_iter().take(calls_of_the_build))
+        .chain(
+            a_build("Folder", "features")
+                .into_iter()
+                .take(calls_of_the_build),
+        )
         .collect();
     assert_eq!(world.calls.taken(), expected);
 }

@@ -1,14 +1,19 @@
 //! Controller: the orchestrator, building a site and serving it by running the services in order.
 
+mod watching;
+
+use std::collections::BTreeSet;
 use std::net::SocketAddr;
-use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::thread::park;
 
+use watching::Watching;
+
 use crate::entities::{
-    BuildOptions, BuiltSite, Destination, Preview, ServeMode, ServeOptions, ServedSite, Settings,
+    BuildOptions, BuildSnapshot, BuiltSite, Destination, ServeMode, ServeOptions, Served,
+    ServedSite, Settings, VersionName,
 };
-use crate::errors::{BuildError, RebuildError, ServeError};
+use crate::errors::{BuildError, OutputError, RebuildError, ServeError, WatchError};
 use crate::services::{
     ConverterApi, GherkinParserApi, InputCollectorApi, ServerApi, SettingsApi, SiteWriterApi,
 };
@@ -18,7 +23,8 @@ pub(crate) trait SiteApi {
     fn build(&self, options: &BuildOptions) -> Result<BuiltSite, BuildError>;
 
     /// Serves until ghg serve is stopped, so it returns only what stops it
-    /// before it serves, or, under `--watch`, `Ok` once the watching ends.
+    /// before it serves, or, under `--watch`, a watch that cannot start, or
+    /// `Ok` once the watching ends.
     fn serve(&self, options: &ServeOptions, listener: &dyn SiteListener) -> Result<(), ServeError>;
 }
 
@@ -27,6 +33,7 @@ pub(crate) trait SiteListener {
     fn listening(&self, address: SocketAddr);
     fn rebuilt(&self);
     fn not_rebuilt(&self, error: &RebuildError);
+    fn not_watched(&self, error: &WatchError);
 }
 
 pub(crate) struct SiteController {
@@ -57,55 +64,66 @@ impl SiteController {
         }
     }
 
-    /// Builds the site from nothing, as `settings` say, and returns what the build says of it
-    /// and the site as it is served.
+    /// Builds the site from nothing, as `settings` say: what the next build is judged against,
+    /// what the build says of the site, and the site as it is served.
     fn build_from_nothing(
         &self,
-        settings: &Settings,
-    ) -> Result<(BuiltSite, ServedSite), BuildError> {
-        let built_versions = self.site_writer.check(settings)?;
+        settings: Settings,
+    ) -> Result<(BuildSnapshot, BuiltSite, ServedSite), BuildError> {
+        let (snapshot, built_versions) = self.read_input(settings)?;
+        let (built, site) = self.convert_and_write(&snapshot, &built_versions)?;
+        Ok((snapshot, built, site))
+    }
+
+    /// Checks the output folder, then collects and parses the input, as `settings` say: the
+    /// input tree, which keeps every error the input holds, and the versions the output folder
+    /// already holds.
+    fn read_input(
+        &self,
+        settings: Settings,
+    ) -> Result<(BuildSnapshot, BTreeSet<VersionName>), OutputError> {
+        let built_versions = self.site_writer.check(&settings)?;
         let mut input_tree = self.input_collector.collect(&settings.input);
         let files = input_tree.files_to_parse();
         let parsed = self
             .gherkin_parser
             .parse(&settings.input, files, settings.unnamed);
         input_tree.put_parsed(parsed);
+        let snapshot = BuildSnapshot {
+            settings,
+            input_tree,
+        };
+        Ok((snapshot, built_versions))
+    }
+
+    /// Converts the input of `snapshot` and writes its site, beside `built_versions`, unless the
+    /// input holds an error.
+    fn convert_and_write(
+        &self,
+        snapshot: &BuildSnapshot,
+        built_versions: &BTreeSet<VersionName>,
+    ) -> Result<(BuiltSite, ServedSite), BuildError> {
+        let BuildSnapshot {
+            settings,
+            input_tree,
+        } = snapshot;
         if let Some(errors) = input_tree.input_errors() {
             return Err(BuildError::Input(errors));
         }
-        let site_tree = self
-            .converter
-            .convert(&input_tree, settings, &built_versions);
+        let site_tree = self.converter.convert(input_tree, settings, built_versions);
         Ok(self.site_writer.write(settings, &site_tree)?)
     }
 
-    /// The paths of the files a build from nothing would read from the folder `input`.
-    fn allowed_files(&self, input: &Path) -> Vec<PathBuf> {
-        self.input_collector.collect(input).allowed_files()
-    }
-
-    fn rebuild_and_serve(
+    /// Serves `site` as `options` say, and tells `listener` where.
+    fn serve_site(
         &self,
-        options: &BuildOptions,
-        preview: &Preview,
+        site: ServedSite,
+        options: &ServeOptions,
         listener: &dyn SiteListener,
-    ) {
-        match self.rebuild(options) {
-            Ok(site) => {
-                preview.replace(site);
-                listener.rebuilt();
-            }
-            Err(build) => listener.not_rebuilt(&RebuildError { build }),
-        }
-    }
-
-    /// Builds the site again in memory, reading the configuration again.
-    fn rebuild(&self, options: &BuildOptions) -> Result<ServedSite, BuildError> {
-        let settings = self
-            .settings
-            .load(options, Destination::Memory)
-            .map_err(BuildError::Config)?;
-        Ok(self.build_from_nothing(&settings)?.1)
+    ) -> Result<Served, ServeError> {
+        let served = self.server.serve(site, options)?;
+        listener.listening(served.address);
+        Ok(served)
     }
 }
 
@@ -115,7 +133,8 @@ impl SiteApi for SiteController {
             .settings
             .load(options, Destination::Folder)
             .map_err(BuildError::Config)?;
-        Ok(self.build_from_nothing(&settings)?.0)
+        let (_, built, _) = self.build_from_nothing(settings)?;
+        Ok(built)
     }
 
     fn serve(&self, options: &ServeOptions, listener: &dyn SiteListener) -> Result<(), ServeError> {
@@ -123,30 +142,35 @@ impl SiteApi for SiteController {
             .settings
             .load(&options.build, options.mode.destination())
             .map_err(BuildError::Config)?;
-        let config = self.settings.config_file(&options.build);
-        let selected = |input: &Path| self.allowed_files(input);
-        // Watching starts before the first build, so that a change made
-        // during it is not missed; what stops the build is said first.
-        let rebuilds = options
-            .mode
-            .watches()
-            .then(|| self.server.watch(&settings.input, &config, &selected));
-        let site = match options.mode {
-            ServeMode::Folder => ServedSite::Folder(settings.output.clone()),
-            ServeMode::Build | ServeMode::Watch => self.build_from_nothing(&settings)?.1,
-        };
-        let rebuilds = rebuilds.transpose().map_err(ServeError::Watch)?;
-        let served = self.server.serve(site, options)?;
-        listener.listening(served.address);
-        let Some(rebuilds) = rebuilds else {
-            loop {
-                park();
+        match options.mode {
+            ServeMode::Folder => {
+                let site = ServedSite::Folder(settings.output.clone());
+                self.serve_site(site, options, listener)?;
             }
-        };
-        for _bursts in rebuilds {
-            self.rebuild_and_serve(&options.build, &served.preview, listener);
+            ServeMode::Build => {
+                let (_, _, site) = self.build_from_nothing(settings)?;
+                self.serve_site(site, options, listener)?;
+            }
+            ServeMode::Watch => {
+                let (last, _, site) = self.build_from_nothing(settings)?;
+                let served = self.server.serve(site, options)?;
+                let watching = Watching {
+                    controller: self,
+                    options: &options.build,
+                    config: self.settings.config_file(&options.build),
+                    preview: &served.preview,
+                    listener,
+                };
+                let changes = watching.start(&last)?;
+                // Said once watching, so that a change made from then on is seen.
+                listener.listening(served.address);
+                watching.rebuild_on(changes, last);
+                return Ok(());
+            }
         }
-        Ok(())
+        loop {
+            park();
+        }
     }
 }
 

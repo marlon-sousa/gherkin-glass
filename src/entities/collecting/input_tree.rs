@@ -33,6 +33,11 @@ impl InputTree {
         }
     }
 
+    /// The folder the tree is the input of, its root's path.
+    pub(crate) fn input_folder(&self) -> &Path {
+        &self.tree.root().value().path
+    }
+
     /// The paths of the allowed files, in file order.
     pub(crate) fn allowed_files(&self) -> Vec<PathBuf> {
         self.tree

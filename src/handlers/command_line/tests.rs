@@ -5,7 +5,7 @@ use rstest::rstest;
 
 use super::*;
 use crate::errors::{
-    BuildError, InputError, InputErrorKind, InputErrors, ListenErrorKind, ServeError,
+    BuildError, InputError, InputErrorKind, InputErrors, ListenErrorKind, ServeError, WatchError,
 };
 
 /// Answers every build and serve as it was made to, and counts how often it was asked.
@@ -37,10 +37,11 @@ impl SiteApi for FakeSite {
     }
 }
 
-/// Keeps what is said to standard output.
+/// Keeps what is said to standard output and to standard error.
 #[derive(Default)]
 struct Said {
     out: Mutex<String>,
+    err: Mutex<String>,
 }
 
 impl Terminal for Said {
@@ -48,7 +49,9 @@ impl Terminal for Said {
         self.out.lock().expect("lock").push_str(text);
     }
 
-    fn warn(&self, _: &str) {}
+    fn warn(&self, text: &str) {
+        self.err.lock().expect("lock").push_str(text);
+    }
 }
 
 fn run(site: FakeSite, arguments: &[&str]) -> (Reply, usize) {
@@ -164,4 +167,20 @@ fn the_address_that_means_every_network_is_printed_as_this_machine_s(
         *said.out.lock().expect("lock"),
         format!("The site is served at {printed}. Press Control+C to stop.\n")
     );
+}
+
+#[test]
+fn a_watch_that_cannot_start_again_is_named_on_standard_error() {
+    // Rule 68.
+    let said = Said::default();
+    let error = WatchError {
+        path: "elsewhere".into(),
+        reason: "No such file or directory".into(),
+    };
+    TerminalListener { terminal: &said }.not_watched(&error);
+    assert_eq!(
+        *said.err.lock().expect("lock"),
+        "ghg serve cannot watch elsewhere for changes: No such file or directory\n"
+    );
+    assert_eq!(*said.out.lock().expect("lock"), "");
 }

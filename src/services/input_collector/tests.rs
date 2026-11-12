@@ -2,6 +2,8 @@ mod against_fixtures;
 
 use std::path::PathBuf;
 
+use rstest::rstest;
+
 use super::*;
 use crate::errors::{InputError, InputErrorKind};
 use crate::test_support::MemoryFolders;
@@ -73,4 +75,24 @@ fn a_folder_the_rules_leave_out_is_not_listed() {
     let input_tree = InputCollector::new(Arc::new(folders)).collect(Path::new("in"));
     assert!(input_tree.input_errors().is_none());
     assert_eq!(input_tree.allowed_files(), [PathBuf::from("in/b.feature")]);
+}
+
+#[rstest]
+// Rule 65: against the last build's tree and the input walked again, a file made that the rules
+// allow, one removed and a `.ghg-ignore` call for a rebuild, and a file the rules leave out does
+// not.
+#[case::a_file_made("in/new.feature", true)]
+#[case::a_file_removed("in/gone.feature", true)]
+#[case::a_ghg_ignore_file("in/.ghg-ignore", true)]
+#[case::a_file_left_out("in/notes.txt", false)]
+fn changes_call_for_a_rebuild_judged_against_the_last_tree(
+    #[case] changed: &str,
+    #[case] rebuilds: bool,
+) {
+    let last_input = MemoryFolders::with_files(["in/gone.feature", "in/kept.feature"]);
+    let last = InputCollector::new(Arc::new(last_input)).collect(Path::new("in"));
+    let input = MemoryFolders::with_files(["in/kept.feature", "in/new.feature", "in/notes.txt"]);
+    let input_collector = InputCollector::new(Arc::new(input));
+    let paths = [PathBuf::from(changed)];
+    assert_eq!(input_collector.calls_for_rebuild(&last, &paths), rebuilds);
 }

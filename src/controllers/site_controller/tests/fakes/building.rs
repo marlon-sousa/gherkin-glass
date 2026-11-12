@@ -2,7 +2,7 @@
 //! gherkin parser, the converter and the site writer.
 
 use std::collections::{BTreeMap, BTreeSet};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 
 use gherkin::{Feature, GherkinEnv};
@@ -15,12 +15,14 @@ use crate::entities::{
 use crate::policies::page_frame;
 use crate::test_support::name;
 
-/// Gives the settings of a build from the input `options` name, or `features`, into `site`, or,
-/// while `failing`, the errors of [`config_errors`].
+/// Gives the settings of a build from the input the configuration names, once a test sets it, or
+/// else from the one `options` name, or `features`, into `site`, or, while `failing`, the errors
+/// of [`config_errors`].
 #[derive(Default)]
 pub(crate) struct FakeSettingsService {
     pub(super) calls: Arc<Calls>,
     pub(crate) failing: AtomicBool,
+    pub(crate) configured_input: Mutex<Option<PathBuf>>,
 }
 
 impl SettingsApi for FakeSettingsService {
@@ -41,10 +43,14 @@ impl SettingsApi for FakeSettingsService {
         if self.failing.load(Ordering::SeqCst) {
             return Err(config_errors());
         }
+        let configured = self
+            .configured_input
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .clone();
         Ok(Settings {
-            input: options
-                .input
-                .clone()
+            input: configured
+                .or_else(|| options.input.clone())
                 .unwrap_or_else(|| PathBuf::from("features")),
             output: PathBuf::from("site"),
             destination,
@@ -56,10 +62,12 @@ impl SettingsApi for FakeSettingsService {
     }
 }
 
-/// Finds one file, `a.feature`, in whatever input it is given.
+/// Finds one file, `a.feature`, in whatever input it is given, and says that every change calls
+/// for a rebuild, unless `nothing_read_changes`.
 #[derive(Default)]
 pub(crate) struct FakeInputCollector {
     pub(super) calls: Arc<Calls>,
+    pub(crate) nothing_read_changes: AtomicBool,
 }
 
 impl InputCollectorApi for FakeInputCollector {
@@ -70,6 +78,19 @@ impl InputCollectorApi for FakeInputCollector {
         let root = builder.root();
         builder.add_allowed_file(root, input.join("a.feature"));
         builder.build()
+    }
+
+    fn calls_for_rebuild(&self, last: &InputTree, paths: &[PathBuf]) -> bool {
+        let paths: Vec<_> = paths
+            .iter()
+            .map(|path| path.display().to_string())
+            .collect();
+        self.calls.note(format!(
+            "input_collector.calls_for_rebuild {} {}",
+            last.input_folder().display(),
+            paths.join(" ")
+        ));
+        !self.nothing_read_changes.load(Ordering::SeqCst)
     }
 }
 
