@@ -112,7 +112,7 @@ fn is_large(size: &usize) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use std::collections::{BTreeMap, BTreeSet};
+    use std::collections::BTreeMap;
     use std::path::PathBuf;
 
     use gherkin::{Feature, GherkinEnv};
@@ -120,7 +120,7 @@ mod tests {
 
     use super::*;
     use crate::entities::ParsedFeature;
-    use crate::policies::site_tree;
+    use crate::test_support::site_from_nothing;
 
     /// The site of one feature named `name`.
     fn built(name: &str) -> BuiltSite {
@@ -133,11 +133,7 @@ mod tests {
             BTreeMap::new(),
         );
         let options = PageOptions::default();
-        render_site(
-            &site_tree(&[parsed], &options, None, &BTreeSet::new()),
-            &options,
-        )
-        .built
+        render_site(&site_from_nothing(&[parsed], &options), &options).built
     }
 
     #[rstest]

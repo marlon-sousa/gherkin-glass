@@ -120,7 +120,7 @@ mod tests {
     fn html(version: &str, others: &[&str]) -> String {
         let options = PageOptions::default();
         let built: BTreeSet<VersionName> = others.iter().copied().map(name).collect();
-        let tree = site_tree(&[], &options, Some(&name(version)), &built);
+        let tree = site_tree(&[], None, &options, Some(&name(version)), &built);
         let Some(node) = tree.root_files().next() else {
             panic!("a site with versions has its versions page");
         };

@@ -3,7 +3,7 @@
 use crate::entities::{PageOptions, StepKind, TagNames};
 use crate::policies::site::sentences::find_step_sentences;
 use crate::policies::site::site_with_feature_pages;
-use crate::test_support::{fixture, read_features};
+use crate::test_support::{every_revised, fixture, read_features};
 
 /// A use of a sentence: its path, anchor, line and values.
 type Use = (String, String, usize, Vec<String>);
@@ -14,7 +14,8 @@ type Found = Vec<(StepKind, Vec<(String, Vec<Use>)>)>;
 fn found() -> Found {
     let features = read_features(&fixture("step-sentences"));
     let site = site_with_feature_pages(
-        &features,
+        &every_revised(&features),
+        None,
         &PageOptions::default(),
         &TagNames::default(),
         None,

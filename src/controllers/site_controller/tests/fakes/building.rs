@@ -9,8 +9,9 @@ use gherkin::{Feature, GherkinEnv};
 
 use super::*;
 use crate::entities::{
-    FileToParse, InputTree, InputTreeBuilder, PageOptions, ParsedFeature, ParsedFile, SiteNode,
-    SiteTree, SiteTreeBuilder, Unnamed, VersionName,
+    CollectedChanges, FileToParse, IgnoreRules, InputTree, InputTreeBuilder, PageOptions,
+    ParsedFeature, ParsedFile, RevisedFeature, Revision, Settings, SiteNode, SiteTree,
+    SiteTreeBuilder, SiteVersion, TagNames, Unnamed, VersionName,
 };
 use crate::policies::page_frame;
 use crate::test_support::name;
@@ -77,8 +78,9 @@ impl SettingsApi for FakeSettingsService {
     }
 }
 
-/// Finds one file, `a.feature`, in whatever input it is given, and says that every change calls
-/// for a rebuild, unless `nothing_read_changes`.
+/// Finds one file, `a.feature`, with nothing parsed, in whatever input it is given, from nothing
+/// or from the last tree, and says that every change calls for a rebuild, unless
+/// `nothing_read_changes`.
 #[derive(Default)]
 pub(crate) struct FakeInputCollector {
     pub(super) calls: Arc<Calls>,
@@ -89,26 +91,38 @@ impl InputCollectorApi for FakeInputCollector {
     fn collect(&self, input: &Path) -> InputTree {
         self.calls
             .note(format!("input_collector.collect {}", input.display()));
-        let mut builder = InputTreeBuilder::listed(input.to_path_buf(), Vec::new());
-        let root = builder.root();
-        builder.add_allowed_file(root, input.join("a.feature"));
-        builder.build()
+        one_file_in(input)
     }
 
-    fn calls_for_rebuild(&self, last: &InputTree, paths: &BTreeSet<PathBuf>) -> bool {
+    fn collect_changes(&self, last: &InputTree, paths: &BTreeSet<PathBuf>) -> CollectedChanges {
         // Read before the call is noted, since a test changes it once it sees the call.
-        let calls_for_it = !self.nothing_read_changes.load(Ordering::SeqCst);
+        let calls_for_rebuild = !self.nothing_read_changes.load(Ordering::SeqCst);
         let paths: Vec<_> = paths
             .iter()
             .map(|path| path.display().to_string())
             .collect();
         self.calls.note(format!(
-            "input_collector.calls_for_rebuild {} {}",
+            "input_collector.collect_changes {} {}",
             last.input_folder().display(),
             paths.join(" ")
         ));
-        calls_for_it
+        CollectedChanges {
+            input_tree: one_file_in(last.input_folder()),
+            calls_for_rebuild,
+        }
     }
+}
+
+/// The tree of `input` with one file, `a.feature`, with nothing parsed.
+fn one_file_in(input: &Path) -> InputTree {
+    let mut builder = InputTreeBuilder::listed(
+        input.to_path_buf(),
+        IgnoreRules::default(),
+        Revision::default(),
+    );
+    let root = builder.root();
+    builder.add_allowed_file(root, input.join("a.feature"));
+    builder.build()
 }
 
 /// Parses each file as a feature named after its name, or, while `failing`, gives the errors of
@@ -157,7 +171,7 @@ fn parsed(input: &Path, file: FileToParse, failing: bool) -> ParsedFile {
 }
 
 /// Makes a tree with one asset for each feature, named after the feature's path, and notes
-/// the versions it is given.
+/// the versions it is given and the assets of the last site tree, when it is given one.
 pub(crate) struct FakeConverter {
     pub(super) calls: Arc<Calls>,
 }
@@ -166,15 +180,21 @@ impl ConverterApi for FakeConverter {
     fn convert(
         &self,
         input_tree: &InputTree,
+        last: Option<&SiteTree>,
         settings: &Settings,
         built_versions: &BTreeSet<VersionName>,
     ) -> SiteTree {
-        let mut site = SiteTreeBuilder::new(page_frame(&settings.pages), None);
+        let version = SiteVersion {
+            name: None,
+            tag_names: TagNames::default(),
+        };
+        let mut site = SiteTreeBuilder::new(page_frame(&settings.pages), version);
         site.assets(input_tree.features().map(asset_of));
         let tree = site.build();
         let versions: Vec<_> = built_versions.iter().map(VersionName::as_str).collect();
+        let after = last.map_or_else(String::new, |last| format!(" after {}", asset_names(last)));
         self.calls.note(format!(
-            "converter.convert {} beside {}",
+            "converter.convert {} beside {}{after}",
             asset_names(&tree),
             versions.join(" ")
         ));
@@ -234,9 +254,9 @@ fn asset_names(tree: &SiteTree) -> String {
     names.join(" ")
 }
 
-/// The name of the asset that stands for `feature`.
-fn asset_of(feature: &ParsedFeature) -> String {
-    feature.path.display().to_string()
+/// The name of the asset that stands for `revised`'s feature.
+fn asset_of(revised: RevisedFeature<'_>) -> String {
+    revised.feature.path.display().to_string()
 }
 
 fn asset_name(file: &SiteNode) -> Option<&str> {

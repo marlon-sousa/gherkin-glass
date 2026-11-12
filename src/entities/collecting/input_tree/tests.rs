@@ -4,7 +4,13 @@ use std::path::Path;
 use gherkin::{Feature, GherkinEnv};
 
 use super::*;
+use crate::entities::{IgnoreRules, ParsedFeature};
 use crate::errors::{InputError, InputErrorKind};
+
+/// A builder of a tree whose root, `input`, was listed and has no `.ghg-ignore`.
+fn listed(input: &str) -> InputTreeBuilder {
+    InputTreeBuilder::listed(input.into(), IgnoreRules::default(), Revision::default())
+}
 
 fn error(path: &str, kind: InputErrorKind) -> InputError {
     InputError::new(Path::new("in"), &Path::new("in").join(path), None, kind)
@@ -19,12 +25,12 @@ fn feature(path: &str) -> ParsedFeature {
 /// A tree of `in` with `a.feature`, `b.feature` and `sub/c.feature` allowed, `notes.md` not
 /// allowed, and `locked`, a folder that could not be listed.
 fn tree() -> InputTree {
-    let mut builder = InputTreeBuilder::listed("in".into(), Vec::new());
+    let mut builder = listed("in");
     let root = builder.root();
     builder.add_allowed_file(root, "in/a.feature".into());
     builder.add_allowed_file(root, "in/b.feature".into());
     builder.add_file_not_allowed(root, "in/notes.md".into());
-    let sub = builder.add_listed_folder(root, "in/sub".into(), Vec::new());
+    let sub = builder.add_listed_folder(root, "in/sub".into(), IgnoreRules::default());
     builder.add_allowed_file(sub, "in/sub/c.feature".into());
     let unreadable = error(
         "locked",
@@ -56,8 +62,8 @@ fn parsed_with_b_broken(file: FileToParse) -> ParsedFile {
     }
 }
 
-fn feature_path(feature: &ParsedFeature) -> String {
-    feature.path.display().to_string()
+fn feature_path(revised: RevisedFeature<'_>) -> String {
+    revised.feature.path.display().to_string()
 }
 
 #[test]
@@ -103,7 +109,7 @@ fn every_error_the_tree_holds_is_reported_sorted_and_only_features_parsed_are_gi
 
 #[test]
 fn a_tree_whose_files_are_all_parsed_holds_no_error() {
-    let mut builder = InputTreeBuilder::listed("in".into(), Vec::new());
+    let mut builder = listed("in");
     let root = builder.root();
     builder.add_allowed_file(root, "in/a.feature".into());
     let mut tree = builder.build();
@@ -116,7 +122,7 @@ fn a_tree_whose_files_are_all_parsed_holds_no_error() {
 #[test]
 fn an_input_folder_that_could_not_be_listed_holds_only_its_error() {
     let missing = error("", InputErrorKind::InputMissing);
-    let tree = InputTree::unlisted_input("in".into(), missing.clone());
+    let tree = InputTree::unlisted_input("in".into(), missing.clone(), Revision::default());
     assert!(tree.allowed_files().is_empty());
     assert_eq!(tree.input_errors(), Some(InputErrors::new(vec![missing])));
 }
@@ -150,7 +156,7 @@ fn shown(error: &InputError) -> &str {
 
 #[test]
 fn a_file_handed_out_by_another_tree_changes_nothing() {
-    let mut builder = InputTreeBuilder::listed("other".into(), Vec::new());
+    let mut builder = listed("other");
     let root = builder.root();
     builder.add_allowed_file(root, "other/x.feature".into());
     let other = builder.build();

@@ -8,7 +8,7 @@ use rstest::rstest;
 
 use super::*;
 use crate::adapters::MemoryFiles;
-use crate::entities::{InputTreeBuilder, OutputContents};
+use crate::entities::{IgnoreRules, InputTreeBuilder, OutputContents, Revision};
 use crate::errors::BuildError;
 use crate::services::{Converter, ConverterApi};
 use fakes::*;
@@ -122,8 +122,9 @@ fn a_site_in_memory_checks_no_folder_and_has_no_versions() {
     };
     let built_versions = writer.check(&settings).expect("no check");
     assert!(built_versions.is_empty());
-    let empty = InputTreeBuilder::listed("in".into(), Vec::new()).build();
-    let site = Converter.convert(&empty, &settings, &built_versions);
+    let empty =
+        InputTreeBuilder::listed("in".into(), IgnoreRules::default(), Revision::default()).build();
+    let site = Converter.convert(&empty, None, &settings, &built_versions);
     let (_, ServedSite::Memory(files)) = writer.write(&settings, &site).expect("written") else {
         panic!("a site in memory");
     };

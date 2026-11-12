@@ -1,9 +1,12 @@
-//! Controller: ghg serve's watch, rebuilding from nothing for each change that calls for it, and watching again on the input the settings name.
+//! Controller: ghg serve's watch, rebuilding from the last build for the paths that changed, and from nothing, watching again on the input the settings name, when everything changed or the settings differ.
 
 use std::path::PathBuf;
 
+use super::building::{BuildOutcome, Built, Stopped};
 use super::{SiteController, SiteListener};
-use crate::entities::{BuildOptions, BuildSnapshot, Destination, InputChanges, Preview, Settings};
+use crate::entities::{
+    BuildOptions, BuildSnapshot, BuildStart, Destination, InputChanges, Preview, Settings,
+};
 use crate::errors::{BuildError, RebuildError, ServeError, WatchError};
 use crate::services::WatchedChanges;
 
@@ -30,41 +33,62 @@ impl Watching<'_> {
     /// the watching ends.
     pub(super) fn rebuild_on(&self, mut changes: WatchedChanges, mut last: BuildSnapshot) {
         while let Some(input_changes) = changes.next() {
-            if !self.calls_for_rebuild(&input_changes, &last) {
-                continue;
-            }
-            let Some(mut settings) = self.read_settings() else {
-                continue;
-            };
-            let watches_again =
-                input_changes == InputChanges::Everything || settings != last.settings;
-            if watches_again {
-                match self.watched_again(settings.input) {
-                    Ok(Some((watched, read))) => {
-                        changes = watched;
-                        settings = read;
-                    }
-                    // The configuration stops the rebuild, so the watching stays as it was.
-                    Ok(None) => continue,
-                    Err(error) => {
-                        self.listener.not_watched(&error);
-                        changes = self.config_watched_alone(changes);
-                        continue;
+            let settings = match input_changes {
+                InputChanges::Everything => self.read_settings(),
+                InputChanges::Paths(paths) => {
+                    let start = BuildStart::FromLast {
+                        last: &last,
+                        paths: &paths,
+                    };
+                    match self.controller.build_from(start, self.options) {
+                        BuildOutcome::SettingsChanged { left, settings } => {
+                            last = left;
+                            Some(settings)
+                        }
+                        outcome => {
+                            last = self.served(outcome, last);
+                            None
+                        }
                     }
                 }
-            }
-            last = self.rebuild_from_nothing(settings).unwrap_or(last);
+            };
+            let Some(settings) = settings else {
+                continue;
+            };
+            let settings = match self.watched_again(settings.input) {
+                Ok(Some((watched, read))) => {
+                    changes = watched;
+                    read
+                }
+                // The configuration stops the rebuild, so the watching stays as it was.
+                Ok(None) => continue,
+                Err(error) => {
+                    self.listener.not_watched(&error);
+                    changes = self.config_watched_alone(changes);
+                    continue;
+                }
+            };
+            let outcome = self
+                .controller
+                .build_from(BuildStart::FromNothing(settings), self.options);
+            last = self.served(outcome, last);
         }
     }
 
-    /// Whether `input_changes` call for a rebuild, judged against `last`.
-    fn calls_for_rebuild(&self, input_changes: &InputChanges, last: &BuildSnapshot) -> bool {
-        match input_changes {
-            InputChanges::Everything => true,
-            InputChanges::Paths(paths) => self
-                .controller
-                .input_collector
-                .calls_for_rebuild(&last.input_tree, paths),
+    /// Serves the site `outcome` built and tells the listener, or tells it what stopped the
+    /// build; what the next change is judged against, `last` when the build left nothing.
+    fn served(&self, outcome: BuildOutcome, last: BuildSnapshot) -> BuildSnapshot {
+        match outcome {
+            BuildOutcome::Built(Built { snapshot, site, .. }) => {
+                self.preview.replace(site);
+                self.listener.rebuilt();
+                snapshot
+            }
+            BuildOutcome::Stopped(Stopped { left, error }) => {
+                self.listener.not_rebuilt(&RebuildError { build: error });
+                left.unwrap_or(last)
+            }
+            BuildOutcome::NothingToBuild(left) | BuildOutcome::SettingsChanged { left, .. } => left,
         }
     }
 
@@ -113,24 +137,6 @@ impl Watching<'_> {
                 changes
             }
         }
-    }
-
-    /// Builds the site from nothing with `settings` and serves it, or says what stopped it;
-    /// what the next change is judged against, unless the output check stopped it.
-    fn rebuild_from_nothing(&self, settings: Settings) -> Option<BuildSnapshot> {
-        let read = self
-            .controller
-            .read_input(settings)
-            .map_err(BuildError::Output);
-        let (snapshot, built_versions) = self.reported(read)?;
-        let written = self
-            .controller
-            .convert_and_write(&snapshot, &built_versions);
-        if let Some((_, site)) = self.reported(written) {
-            self.preview.replace(site);
-            self.listener.rebuilt();
-        }
-        Some(snapshot)
     }
 
     /// What `result` holds, or nothing once the listener is told what stopped the rebuild.

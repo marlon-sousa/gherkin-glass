@@ -24,6 +24,11 @@ impl<'a> SiteFeaturePage<'a> {
         self.page
     }
 
+    /// The page's node of the tree it is in, for the builder to copy.
+    pub(super) fn tree_node(&self) -> NodeRef<'a, SiteNode> {
+        self.node
+    }
+
     /// The page's node, with the nodes above and below it.
     pub(crate) fn node(&self) -> SiteTreeNode<'a> {
         SiteTreeNode::new(self.node)

@@ -1,34 +1,37 @@
-//! Policy: the site tree of a site's features: its version, its folders with their pages, its page of step sentences, its tag pages, its folder tree's and search's data, and its assets, and for a site with versions, the versions the output folder holds and the versions page.
+//! Policy: the site tree of a site's features, made anew from the last one: its version, its folders with their pages, each feature's page kept from the last site tree when its file and the names of its tags are the same, its page of step sentences, its tag pages, its folder tree's and search's data, and its assets, and for a site with versions, the versions the output folder holds and the versions page.
 
 use std::borrow::Cow;
-use std::collections::BTreeSet;
+use std::collections::{BTreeSet, HashMap};
 
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 
 use crate::entities::{
-    FolderId, PageOptions, ParsedFeature, SiteAssets, SiteTree, SiteTreeBuilder, TagNames,
-    VersionName,
+    FolderId, PageContent, PageOptions, RevisedFeature, Revision, SiteAssets, SiteFeaturePage,
+    SiteTree, SiteTreeBuilder, SiteVersion, TagNames, VersionName,
 };
 use crate::policies::site::{
     build_folder_pages, build_folder_tree, build_page, build_sentences_page, build_tag_pages,
-    build_versions_page, name_tags, search_documents,
+    build_versions_page, name_tags, same_tag_names, search_documents,
 };
 use crate::policies::{page_address, page_frame};
 
 /// The tree of the site of `features`, each feature's page in its folder,
 /// the folders made once from the pages' addresses, and the views of the
 /// feature pages, such as the tag pages, made from the pages in the tree.
+/// A feature's page is copied from `last`, the last site tree, when it was
+/// converted from the same revision and every tag it writes keeps its name.
 /// `version` names the version the build makes, or is `None` for a site
 /// without versions, and `built_versions` are those the output folder
 /// already holds.
 pub(crate) fn site_tree(
-    features: &[ParsedFeature],
+    features: &[RevisedFeature<'_>],
+    last: Option<&SiteTree>,
     options: &PageOptions,
     version: Option<&VersionName>,
     built_versions: &BTreeSet<VersionName>,
 ) -> SiteTree {
-    let names = name_tags(features);
-    let mut site = site_with_feature_pages(features, options, &names, version);
+    let names = name_tags(features.iter().map(|revised| revised.feature));
+    let mut site = site_with_feature_pages(features, last, options, &names, version);
     let feature_pages: Vec<_> = site.every_feature_page().collect();
     let sentences = build_sentences_page(&feature_pages, options);
     let tag_pages = build_tag_pages(&feature_pages, &names, options);
@@ -48,25 +51,80 @@ pub(crate) fn site_tree(
 }
 
 /// The site tree being built, for the version `version` makes, with the page
-/// of each of `features` in its folder, its tags linked as `names` says.
+/// of each of `features` in its folder, its tags linked as `names` says,
+/// kept from `last` as `site_tree` says.
 pub(crate) fn site_with_feature_pages(
-    features: &[ParsedFeature],
+    features: &[RevisedFeature<'_>],
+    last: Option<&SiteTree>,
     options: &PageOptions,
     names: &TagNames,
     version: Option<&VersionName>,
 ) -> SiteTreeBuilder {
-    let mut site = SiteTreeBuilder::new(page_frame(options), version.cloned());
+    let site_version = SiteVersion {
+        name: version.cloned(),
+        tag_names: names.clone(),
+    };
+    let mut site = SiteTreeBuilder::new(page_frame(options), site_version);
+    let kept = KeptPages::of(last);
     let folders: Vec<_> = features
         .iter()
-        .map(|feature| folder_of(&mut site, feature))
+        .map(|revised| folder_of(&mut site, revised))
         .collect();
     // Collecting into a `Vec` keeps file order, whatever order the threads finish in.
     let pages: Vec<_> = features
         .par_iter()
-        .map(|feature| build_page(feature, options, names))
+        .map(|revised| match kept.page_of(*revised, names) {
+            Some(page) => FeaturePage::Kept(page),
+            None => FeaturePage::Built(Box::new(build_page(*revised, options, names))),
+        })
         .collect();
-    site.feature_pages(folders.into_iter().zip(pages));
+    for (folder, page) in folders.into_iter().zip(pages) {
+        match page {
+            FeaturePage::Kept(page) => site.kept_feature_pages([(folder, page)]),
+            FeaturePage::Built(content) => site.feature_pages([(folder, *content)]),
+        }
+    }
     site
+}
+
+/// A feature's page, kept from the last site tree or built.
+enum FeaturePage<'a> {
+    Kept(SiteFeaturePage<'a>),
+    Built(Box<PageContent>),
+}
+
+/// The feature pages of the last site tree, by the revision they were converted from, with the
+/// names of its tags' pages.
+struct KeptPages<'a> {
+    pages: HashMap<Revision, SiteFeaturePage<'a>>,
+    tag_names: Option<&'a TagNames>,
+}
+
+impl<'a> KeptPages<'a> {
+    fn of(last: Option<&'a SiteTree>) -> Self {
+        KeptPages {
+            pages: last
+                .into_iter()
+                .flat_map(SiteTree::feature_pages)
+                .map(|page| (page.page().revision, page))
+                .collect(),
+            tag_names: last
+                .and_then(SiteTree::version)
+                .map(|version| &version.tag_names),
+        }
+    }
+
+    /// The page of the last site tree converted from `revised`'s revision, when every tag it
+    /// writes has the same name in the last site tree as in `names`.
+    fn page_of(
+        &self,
+        revised: RevisedFeature<'_>,
+        names: &TagNames,
+    ) -> Option<SiteFeaturePage<'a>> {
+        let last_names = self.tag_names?;
+        let page = self.pages.get(&revised.revision)?;
+        same_tag_names(revised.feature, last_names, names).then_some(*page)
+    }
 }
 
 /// The versions `built_versions` the output folder holds, but `version`,
@@ -82,20 +140,68 @@ fn add_versions(
     site.versions_page_assets(SiteAssets::iter().map(Cow::into_owned));
 }
 
-/// The folder node of `feature`'s page, made when it is not there yet.
-fn folder_of(site: &mut SiteTreeBuilder, feature: &ParsedFeature) -> FolderId {
-    site.folder_at(&page_address(&feature.path).folders())
+/// The folder node of `revised`'s page, made when it is not there yet.
+fn folder_of(site: &mut SiteTreeBuilder, revised: &RevisedFeature<'_>) -> FolderId {
+    site.folder_at(&page_address(&revised.feature.path).folders())
 }
 
 #[cfg(test)]
 mod tests {
+    use rstest::rstest;
+
     use super::*;
     use crate::entities::{SiteNode, SiteTreeNode, VersionsList};
-    use crate::test_support::name;
+    use crate::test_support::{name, parsed_at};
+
+    /// The revision after the first, `steps` times.
+    fn revision(steps: usize) -> Revision {
+        (0..steps).fold(Revision::default(), |revision, _| revision.next())
+    }
+
+    #[rstest]
+    // A page converted from the revision its file still has, whose tags keep their names, is
+    // copied from the last site tree, so it still shows what the last text said.
+    #[case::the_same_revision(0, "@slow", "Last")]
+    #[case::a_new_revision(1, "@slow", "New")]
+    #[case::a_tag_renamed_by_another_file(0, "@Slow", "New")]
+    fn a_page_is_kept_from_the_last_site_tree_unless_its_file_or_its_tags_names_changed(
+        #[case] steps: usize,
+        #[case] other_tag: &str,
+        #[case] shown: &str,
+    ) {
+        let options = PageOptions::default();
+        let last_a = parsed_at("a.feature", "@slow\nFeature: Last\n");
+        let new_a = parsed_at("a.feature", "@slow\nFeature: New\n");
+        let last_b = parsed_at("b.feature", "@other\nFeature: B\n");
+        let new_b = parsed_at("b.feature", &format!("{other_tag}\nFeature: B\n"));
+        let revised = |feature, steps| RevisedFeature {
+            feature,
+            revision: revision(steps),
+        };
+        let last = site_tree(
+            &[revised(&last_a, 0), revised(&last_b, 5)],
+            None,
+            &options,
+            None,
+            &BTreeSet::new(),
+        );
+        let new = site_tree(
+            &[revised(&new_a, steps), revised(&new_b, 6)],
+            Some(&last),
+            &options,
+            None,
+            &BTreeSet::new(),
+        );
+        let names: Vec<_> = new
+            .feature_pages()
+            .map(|page| page.page().name.clone())
+            .collect();
+        assert_eq!(names, [shown, "B"]);
+    }
 
     #[test]
     fn an_empty_input_still_has_its_home_page() {
-        let tree = site_tree(&[], &PageOptions::default(), None, &BTreeSet::new());
+        let tree = site_tree(&[], None, &PageOptions::default(), None, &BTreeSet::new());
         assert!(tree.files().any(|node| is_the_home_page(node.value())));
         assert_eq!(tree.root_files().count(), 0);
     }
@@ -103,7 +209,13 @@ mod tests {
     #[test]
     fn a_versions_page_lists_every_version_once_the_one_built_among_them() {
         let built = BTreeSet::from([name("main"), name("v1.0.0")]);
-        let tree = site_tree(&[], &PageOptions::default(), Some(&name("main")), &built);
+        let tree = site_tree(
+            &[],
+            None,
+            &PageOptions::default(),
+            Some(&name("main")),
+            &built,
+        );
         let Some(page) = tree.root_files().next() else {
             panic!("the versions page first");
         };

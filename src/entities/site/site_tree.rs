@@ -5,12 +5,14 @@ mod site_folder;
 mod site_folder_page;
 mod site_tree_builder;
 mod site_tree_node;
+mod site_version;
 
 pub(crate) use site_feature_page::SiteFeaturePage;
 pub(crate) use site_folder::{FolderId, SiteFolder};
 pub(crate) use site_folder_page::SiteFolderPage;
 pub(crate) use site_tree_builder::SiteTreeBuilder;
 pub(crate) use site_tree_node::SiteTreeNode;
+pub(crate) use site_version::SiteVersion;
 
 use ego_tree::{NodeRef, Tree};
 
@@ -25,8 +27,8 @@ use crate::entities::{
 pub(crate) enum SiteNode {
     /// The site, which holds the frame every page shares.
     Site(PageFrame),
-    /// The version of the site the build makes, by its name, or `None` for a site without versions.
-    Version(Option<VersionName>),
+    /// The version of the site the build makes, which holds the names of its tags' pages.
+    Version(SiteVersion),
     /// A version the output folder already holds, which the build keeps, by its name.
     KeptVersion(VersionName),
     /// The page that lists every version, at the output folder's root.
@@ -131,6 +133,26 @@ impl SiteTree {
             .flat_map(|version| version.descendants())
             .filter(is_file)
             .map(SiteTreeNode::new)
+    }
+
+    /// The version the build makes.
+    pub(crate) fn version(&self) -> Option<&SiteVersion> {
+        self.tree
+            .root()
+            .children()
+            .find_map(|node| match node.value() {
+                SiteNode::Version(version) => Some(version),
+                _ => None,
+            })
+    }
+
+    /// Every feature page of the version the build makes, folder by folder from the input
+    /// folder in.
+    pub(crate) fn feature_pages(&self) -> impl Iterator<Item = SiteFeaturePage<'_>> {
+        self.tree
+            .root()
+            .descendants()
+            .filter_map(SiteFeaturePage::of)
     }
 
     /// The files beside the versions, at the output folder's root: the

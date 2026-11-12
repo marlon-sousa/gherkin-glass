@@ -1,6 +1,6 @@
-//! Entity: a feature page put in its folder by the site tree's builder, its blocks below it, a rule's background and scenarios in the rule, an outline's examples and examples as scenarios in the outline, each step in its block, and a step's table or doc string in the step.
+//! Entity: a feature page put in its folder by the site tree's builder, its blocks below it, a rule's background and scenarios in the rule, an outline's examples and examples as scenarios in the outline, each step in its block, and a step's table or doc string in the step, or copied from the last site tree with them.
 
-use ego_tree::{NodeId, NodeMut};
+use ego_tree::{NodeId, NodeMut, NodeRef};
 
 use crate::entities::{
     BackgroundContent, ExampleScenario, ExamplesAsScenarios, PageContent, RuleContent,
@@ -23,6 +23,25 @@ pub(super) fn place_feature_page(
         place_rule(&mut page, rule);
     }
     page.id()
+}
+
+/// `page`, a feature page of another site tree, put in `folder` with every node below it, which
+/// that tree's builder placed as `place_feature_page` does; the page node's id.
+pub(super) fn copy_feature_page(
+    folder: &mut NodeMut<'_, SiteNode>,
+    page: NodeRef<'_, SiteNode>,
+) -> NodeId {
+    let mut copy = folder.append(page.value().clone());
+    copy_children(&mut copy, page);
+    copy.id()
+}
+
+/// The nodes below `node`, put below `copy`, in their order.
+fn copy_children(copy: &mut NodeMut<'_, SiteNode>, node: NodeRef<'_, SiteNode>) {
+    for child in node.children() {
+        let mut child_copy = copy.append(child.value().clone());
+        copy_children(&mut child_copy, child);
+    }
 }
 
 /// `background` put in `parent`, a feature page or a rule, its steps below it.

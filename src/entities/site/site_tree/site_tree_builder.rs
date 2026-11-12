@@ -4,9 +4,9 @@ mod feature_page_nodes;
 
 use ego_tree::{NodeId, NodeMut, NodeRef, Tree};
 
-use feature_page_nodes::place_feature_page;
+use feature_page_nodes::{copy_feature_page, place_feature_page};
 
-use super::{FolderId, SiteFeaturePage, SiteFolder, SiteNode, SiteTree};
+use super::{FolderId, SiteFeaturePage, SiteFolder, SiteNode, SiteTree, SiteVersion};
 use crate::entities::{
     FolderPageContent, GroupContent, PageContent, PageFrame, SearchDocument, SentenceContent,
     SentencesPageContent, TagFeatureContent, TagPagesContent, TreeItem, VersionName, VersionsList,
@@ -26,9 +26,8 @@ pub(crate) struct SiteTreeBuilder {
 
 impl SiteTreeBuilder {
     /// A site tree with only the site, whose pages share `frame`, the version
-    /// it makes, named `version` unless the site has no versions, and the
-    /// version's input folder.
-    pub(crate) fn new(frame: PageFrame, version: Option<VersionName>) -> SiteTreeBuilder {
+    /// it makes, `version`, and the version's input folder.
+    pub(crate) fn new(frame: PageFrame, version: SiteVersion) -> SiteTreeBuilder {
         let mut tree = Tree::new(SiteNode::Site(frame));
         let mut site = tree.root_mut();
         let mut version_node = site.append(SiteNode::Version(version));
@@ -76,6 +75,18 @@ impl SiteTreeBuilder {
     ) {
         for (folder, content) in pages {
             let id = place_feature_page(&mut self.node_mut(folder.0), content);
+            self.feature_pages.push(id);
+        }
+    }
+
+    /// Each page of the last site tree put in the folder it is paired with, with its blocks, as it
+    /// was there.
+    pub(crate) fn kept_feature_pages<'a>(
+        &mut self,
+        pages: impl IntoIterator<Item = (FolderId, SiteFeaturePage<'a>)>,
+    ) {
+        for (folder, page) in pages {
+            let id = copy_feature_page(&mut self.node_mut(folder.0), page.tree_node());
             self.feature_pages.push(id);
         }
     }

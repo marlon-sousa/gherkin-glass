@@ -74,14 +74,14 @@ fn block_items(contents: &[ContentsEntry], page: &LinkAddress) -> Vec<TreeItem> 
 
 #[cfg(test)]
 mod tests {
-    use std::collections::{BTreeMap, BTreeSet};
+    use std::collections::BTreeMap;
     use std::path::PathBuf;
 
     use gherkin::{Feature, GherkinEnv};
 
     use super::*;
     use crate::entities::{PageOptions, ParsedFeature, SiteNode};
-    use crate::policies::site_tree;
+    use crate::test_support::site_from_nothing;
 
     /// The folder tree's items of the site of `files`, each a path and its text.
     fn tree(files: &[(&str, &str)]) -> Vec<TreeItem> {
@@ -101,7 +101,7 @@ mod tests {
                 )
             })
             .collect();
-        site_tree(&features, &options, None, &BTreeSet::new())
+        site_from_nothing(&features, &options)
             .files()
             .find_map(|file| match file.value() {
                 SiteNode::FolderTree(items) => Some(items.clone()),

@@ -9,7 +9,7 @@ use crate::entities::{
     StepPart, TableView, TagView,
 };
 use crate::policies::site::name_tags;
-use crate::test_support::tag_link;
+use crate::test_support::{revised, tag_link};
 
 /// The feature of `text`, in `billing/saque em conta.feature`.
 fn parsed(text: &str) -> ParsedFeature {
@@ -24,8 +24,8 @@ fn parsed(text: &str) -> ParsedFeature {
 
 fn page(text: &str, options: &PageOptions) -> PageContent {
     let parsed = parsed(text);
-    let tags = name_tags(std::slice::from_ref(&parsed));
-    build_page(&parsed, options, &tags)
+    let tags = name_tags([&parsed]);
+    build_page(revised(&parsed), options, &tags)
 }
 
 /// The blocks of a page of `FEATURE`: its background, its scenario and its rule.

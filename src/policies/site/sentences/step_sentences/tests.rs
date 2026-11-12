@@ -8,6 +8,7 @@ use gherkin::{Feature, GherkinEnv};
 use super::*;
 use crate::entities::{PageOptions, ParsedFeature, TagNames};
 use crate::policies::site::site_with_feature_pages;
+use crate::test_support::revised;
 
 #[test]
 fn a_kind_with_no_sentence_has_no_group() {
@@ -23,7 +24,8 @@ fn a_kind_with_no_sentence_has_no_group() {
         BTreeMap::new(),
     );
     let site = site_with_feature_pages(
-        &[parsed],
+        &[revised(&parsed)],
+        None,
         &PageOptions::default(),
         &TagNames::default(),
         None,

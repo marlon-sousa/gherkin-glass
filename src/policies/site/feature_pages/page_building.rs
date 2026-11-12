@@ -13,7 +13,7 @@ use i18n_embed_fl::fl;
 
 use crate::entities::{
     BackgroundsOption, HeadingLevel, OwnCrumb, Page, PageContent, PageOptions, PageWords,
-    ParsedFeature, SourceLink, TagNames, Trail, percent_encoded,
+    RevisedFeature, SourceLink, TagNames, Trail, percent_encoded,
 };
 use crate::policies::site::feature_pages::anchor_feature;
 use crate::policies::site::page_language;
@@ -23,13 +23,17 @@ use crate::policies::{CATALOGUE, page_address};
 /// the path goes; no message of the catalogue holds it.
 const PATH_MARK: &str = "\u{0}";
 
-/// The page of `parsed` with its blocks, each with its anchor. `tags` names
+/// The page of `revised` with its blocks, each with its anchor. `tags` names
 /// every tag of the site.
 pub(crate) fn build_page(
-    parsed: &ParsedFeature,
+    revised: RevisedFeature<'_>,
     options: &PageOptions,
     tags: &TagNames,
 ) -> PageContent {
+    let RevisedFeature {
+        feature: parsed,
+        revision,
+    } = revised;
     let anchored = anchor_feature(parsed);
     let feature = &parsed.feature;
     let path = slash_path(&parsed.path);
@@ -83,6 +87,7 @@ pub(crate) fn build_page(
         heading,
         name: feature.name.clone(),
         path: path.clone(),
+        revision,
         tags: builder.tags(&feature.tags),
         description: description(feature.description.as_deref()),
         source: options

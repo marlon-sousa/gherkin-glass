@@ -103,7 +103,7 @@ fn everything_changed_loads_the_settings_again_and_watches_again_before_it_rebui
 #[test]
 fn paths_rebuild_only_when_the_input_collector_says_they_call_for_it() {
     // Rule 65: judged against the last build's input tree before the settings are read again,
-    // and rebuilt without watching again.
+    // and rebuilt from the last build without watching again.
     let world = world();
     while_watching(&world, |events| {
         let collector = &world.input_collector;
@@ -111,7 +111,7 @@ fn paths_rebuild_only_when_the_input_collector_says_they_call_for_it() {
         world.server.change(paths(&["features/notes.txt"]));
         assert_eq!(
             calls_after(&world, UNTIL_WATCHING, 1),
-            ["input_collector.calls_for_rebuild features features/notes.txt"]
+            ["input_collector.collect_changes features features/notes.txt"]
         );
 
         collector
@@ -122,15 +122,17 @@ fn paths_rebuild_only_when_the_input_collector_says_they_call_for_it() {
             events.wait_for(2),
             ["listening at 127.0.0.1:8000", "rebuilt"]
         );
+        // Built from the last build: the output is not checked again, the input is not walked
+        // again from nothing, and the converter is given the last site tree.
         assert_eq!(
-            calls_after(&world, UNTIL_WATCHING + 1, 7),
-            then_a_build(
-                &[
-                    "input_collector.calls_for_rebuild features features/a.feature",
-                    "settings.load Memory",
-                ],
-                "features"
-            )
+            calls_after(&world, UNTIL_WATCHING + 1, 5),
+            [
+                "input_collector.collect_changes features features/a.feature",
+                "settings.load Memory",
+                "gherkin_parser.parse a.feature Refused",
+                "converter.convert a.feature beside v1.0.0 after a.feature",
+                "site_writer.write a.feature",
+            ]
         );
     });
 }
@@ -151,7 +153,7 @@ fn the_input_the_settings_name_is_watched_built_and_judged_from_then_on() {
             calls_after(&world, UNTIL_WATCHING, 9),
             then_a_build(
                 &[
-                    "input_collector.calls_for_rebuild features features/a.feature",
+                    "input_collector.collect_changes features features/a.feature",
                     "settings.load Memory",
                     "server.watch elsewhere ghg.toml",
                     "settings.load Memory",
@@ -171,7 +173,7 @@ fn the_input_the_settings_name_is_watched_built_and_judged_from_then_on() {
         assert_eq!(
             world.calls.taken()[count..count + 2],
             [
-                "input_collector.calls_for_rebuild other other/a.feature",
+                "input_collector.collect_changes other other/a.feature",
                 "settings.load Memory",
             ]
         );

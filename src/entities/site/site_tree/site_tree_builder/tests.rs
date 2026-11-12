@@ -1,12 +1,20 @@
 use std::collections::BTreeSet;
 
 use super::*;
-use crate::entities::PageOptions;
+use crate::entities::{PageOptions, TagNames};
 use crate::policies::{page_frame, site_tree};
-use crate::test_support::parsed_at;
+use crate::test_support::{parsed_at, revised, site_from_nothing};
 
 fn a_builder() -> SiteTreeBuilder {
-    SiteTreeBuilder::new(page_frame(&PageOptions::default()), None)
+    SiteTreeBuilder::new(page_frame(&PageOptions::default()), version(None))
+}
+
+/// The version named `name`, or of a site without versions, with no tag.
+fn version(name: Option<VersionName>) -> SiteVersion {
+    SiteVersion {
+        name,
+        tag_names: TagNames::default(),
+    }
 }
 
 /// Each node of `tree`, indented by its depth, by its kind and, for a folder or an asset, its name.
@@ -18,8 +26,10 @@ fn outline(tree: &SiteTree) -> Vec<String> {
             let depth = node.ancestors().count();
             let kind = match node.value() {
                 SiteNode::Site(_) => "site".to_string(),
-                SiteNode::Version(Some(name)) => format!("version {name}"),
-                SiteNode::Version(None) => "version".to_string(),
+                SiteNode::Version(SiteVersion {
+                    name: Some(name), ..
+                }) => format!("version {name}"),
+                SiteNode::Version(_) => "version".to_string(),
                 SiteNode::KeptVersion(name) => format!("kept version {name}"),
                 SiteNode::InputFolder => "input folder".to_string(),
                 SiteNode::Folder(name) => format!("folder {name}"),
@@ -138,14 +148,15 @@ fn a_folder_is_made_once_inside_the_folders_above_it() {
 #[test]
 fn a_version_is_named_by_the_build() {
     let name = VersionName::new("v1.0.0").expect("a version name");
-    let builder = SiteTreeBuilder::new(page_frame(&PageOptions::default()), Some(name));
+    let builder = SiteTreeBuilder::new(page_frame(&PageOptions::default()), version(Some(name)));
     assert_eq!(outline(&builder.build())[1], "  version v1.0.0");
 }
 
 #[test]
 fn the_kept_versions_and_the_versions_page_s_assets_sit_beside_the_version() {
     let name = VersionName::new("v2").expect("a version name");
-    let mut builder = SiteTreeBuilder::new(page_frame(&PageOptions::default()), Some(name));
+    let mut builder =
+        SiteTreeBuilder::new(page_frame(&PageOptions::default()), version(Some(name)));
     builder.kept_versions([VersionName::new("v1").expect("a version name")]);
     builder.versions_page_assets(["shared.css".to_string()]);
     builder.assets(["own.css".to_string()]);
@@ -203,7 +214,7 @@ Feature: F
         | 1 |
 ";
     let parsed = parsed_at("f.feature", text);
-    let tree = site_tree(&[parsed], &PageOptions::default(), None, &BTreeSet::new());
+    let tree = site_from_nothing(&[parsed], &PageOptions::default());
     let lines = outline(&tree);
     let start = lines
         .iter()
@@ -255,7 +266,8 @@ fn each_other_page_holds_its_entries_and_each_entry_what_it_lists() {
     );
     let version = VersionName::new("v1.0.0").expect("a version name");
     let tree = site_tree(
-        &[parsed],
+        &[revised(&parsed)],
+        None,
         &PageOptions::default(),
         Some(&version),
         &BTreeSet::new(),

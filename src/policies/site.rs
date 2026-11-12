@@ -25,6 +25,6 @@ use sentences::build_sentences_page;
 #[cfg(test)]
 use site_tree::site_with_feature_pages;
 use tag_linking::outside_link;
-use tag_naming::name_tags;
+use tag_naming::{name_tags, same_tag_names};
 use tag_pages::build_tag_pages;
 use versions::build_versions_page;

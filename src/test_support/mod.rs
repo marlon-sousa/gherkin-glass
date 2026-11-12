@@ -20,8 +20,8 @@ use regex_automata::meta::Regex;
 
 use crate::adapters::{GherkinCrate, InputFolderReader};
 use crate::entities::{
-    EntryKind, FolderEntry, InputTree, PageOptions, ParsedFeature, SiteFeaturePage, SiteTree,
-    TagLink, Unnamed,
+    EntryKind, FolderEntry, InputTree, PageOptions, ParsedFeature, RevisedFeature, Revision,
+    SiteFeaturePage, SiteTree, TagLink, Unnamed,
 };
 use crate::errors::InputErrors;
 use crate::policies::site_tree;
@@ -53,6 +53,32 @@ pub(crate) fn parsed_at(path: &str, text: &str) -> ParsedFeature {
     )
 }
 
+/// `feature`, as an input tree holds it with the first revision.
+pub(crate) fn revised(feature: &ParsedFeature) -> RevisedFeature<'_> {
+    RevisedFeature {
+        feature,
+        revision: Revision::default(),
+    }
+}
+
+/// Each of `features`, as [`revised`] gives it, for a build from nothing, which compares no
+/// revision.
+pub(crate) fn every_revised(features: &[ParsedFeature]) -> Vec<RevisedFeature<'_>> {
+    features.iter().map(revised).collect()
+}
+
+/// The site tree of `features`, built from nothing, for a site without versions, with the
+/// settings of every page `options`.
+pub(crate) fn site_from_nothing(features: &[ParsedFeature], options: &PageOptions) -> SiteTree {
+    site_tree(
+        &every_revised(features),
+        None,
+        options,
+        None,
+        &BTreeSet::new(),
+    )
+}
+
 /// The site tree of `features`, each a path below the input folder and its text, for a site
 /// without versions, with the settings of every page `options`.
 pub(crate) fn site_of(features: &[(&str, &str)], options: &PageOptions) -> SiteTree {
@@ -60,7 +86,7 @@ pub(crate) fn site_of(features: &[(&str, &str)], options: &PageOptions) -> SiteT
         .iter()
         .map(|(path, text)| parsed_at(path, text))
         .collect();
-    site_tree(&parsed, options, None, &BTreeSet::new())
+    site_from_nothing(&parsed, options)
 }
 
 /// Every feature page of `site`, folder by folder from the input folder in.
@@ -95,7 +121,10 @@ pub(crate) fn parsed_input(
 pub(crate) fn features_of(input_tree: &InputTree) -> Result<Vec<ParsedFeature>, InputErrors> {
     match input_tree.input_errors() {
         Some(errors) => Err(errors),
-        None => Ok(input_tree.features().cloned().collect()),
+        None => Ok(input_tree
+            .features()
+            .map(|revised| revised.feature.clone())
+            .collect()),
     }
 }
 

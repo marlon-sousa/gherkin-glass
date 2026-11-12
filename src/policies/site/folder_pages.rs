@@ -126,6 +126,7 @@ mod tests {
     use super::*;
     use crate::entities::{ParsedFeature, TagNames};
     use crate::policies::site::site_with_feature_pages;
+    use crate::test_support::every_revised;
 
     /// The folder pages of the site of `files`, each a path and its text.
     fn site(files: &[(&str, &str)]) -> Vec<FolderPageContent> {
@@ -142,7 +143,9 @@ mod tests {
                 )
             })
             .collect();
-        let builder = site_with_feature_pages(&features, &options, &TagNames::default(), None);
+        let features = every_revised(&features);
+        let builder =
+            site_with_feature_pages(&features, None, &options, &TagNames::default(), None);
         build_folder_pages(builder.folders(), &options)
             .into_iter()
             .map(|(_, page)| page)

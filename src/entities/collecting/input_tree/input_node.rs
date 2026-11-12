@@ -4,7 +4,7 @@ use std::path::PathBuf;
 use std::slice::from_ref;
 use std::sync::Arc;
 
-use crate::entities::ParsedFeature;
+use crate::entities::{IgnoreRules, ParsedFeature, Revision};
 use crate::errors::InputError;
 
 #[derive(Debug, Clone)]
@@ -28,16 +28,17 @@ pub(super) enum FolderState {
     NotAllowed,
     /// Allowed, but it could not be listed, so it has no children.
     Unlisted(InputError),
-    /// Listed, with the error met reading its `.ghg-ignore`, or the errors of its rules that are
-    /// not valid.
-    Listed(Vec<InputError>),
+    /// Listed, with the rules of its `.ghg-ignore`.
+    Listed(IgnoreRules),
 }
 
 #[derive(Debug, Clone)]
 pub(super) enum FileState {
     NotAllowed,
     NothingParsed,
-    Parsed(Arc<Result<ParsedFeature, Vec<InputError>>>),
+    /// What parsing gave, shared with the trees made from this one, and the revision the tree
+    /// gave the file when it took it in.
+    Parsed(Revision, Arc<Result<ParsedFeature, Vec<InputError>>>),
 }
 
 impl InputNode {
@@ -59,8 +60,8 @@ impl NodeKind {
     fn errors(&self) -> &[InputError] {
         match self {
             NodeKind::Folder(FolderState::Unlisted(error)) => from_ref(error),
-            NodeKind::Folder(FolderState::Listed(errors)) => errors,
-            NodeKind::File(FileState::Parsed(parsed)) => {
+            NodeKind::Folder(FolderState::Listed(ignore)) => &ignore.errors,
+            NodeKind::File(FileState::Parsed(_, parsed)) => {
                 parsed.as_ref().as_ref().err().map_or(&[], Vec::as_slice)
             }
             NodeKind::Folder(FolderState::NotAllowed)

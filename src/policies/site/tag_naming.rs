@@ -13,8 +13,17 @@ use crate::policies::site::{anchor_of, unique};
 const FALLBACK: &str = "tag";
 
 /// Every tag written in `features`, in tag order, each named.
-pub(crate) fn name_tags(features: &[ParsedFeature]) -> TagNames {
+pub(crate) fn name_tags<'a>(features: impl IntoIterator<Item = &'a ParsedFeature>) -> TagNames {
     name_each(&tags_of(features))
+}
+
+/// Whether every tag written in `parsed` has the same name in `last` as in `names`, so that its
+/// page links to the same tag pages.
+pub(crate) fn same_tag_names(parsed: &ParsedFeature, last: &TagNames, names: &TagNames) -> bool {
+    feature_tags(&parsed.feature).into_iter().all(|tag| {
+        let tag = format!("@{tag}");
+        last.name(&tag) == names.name(&tag)
+    })
 }
 
 /// Tag order: by the text lower-cased, then as written, each by character codes.
@@ -25,9 +34,9 @@ fn tag_order(a: &str, b: &str) -> Ordering {
 }
 
 /// Every tag written in `features`, once each, with its `@`, in tag order.
-fn tags_of(features: &[ParsedFeature]) -> Vec<String> {
+fn tags_of<'a>(features: impl IntoIterator<Item = &'a ParsedFeature>) -> Vec<String> {
     let mut tags: Vec<String> = features
-        .iter()
+        .into_iter()
         .flat_map(|parsed| feature_tags(&parsed.feature))
         .collect::<BTreeSet<_>>()
         .into_iter()

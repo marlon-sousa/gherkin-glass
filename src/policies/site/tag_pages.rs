@@ -165,6 +165,7 @@ mod tests {
     use super::*;
     use crate::entities::{ParsedFeature, SiteTreeBuilder};
     use crate::policies::site::{name_tags, site_with_feature_pages};
+    use crate::test_support::every_revised;
 
     const FEATURE: &str = "\
 @feature
@@ -202,7 +203,13 @@ Feature: F
             })
             .collect();
         let names = name_tags(&parsed);
-        let builder = site_with_feature_pages(&parsed, &PageOptions::default(), &names, None);
+        let builder = site_with_feature_pages(
+            &every_revised(&parsed),
+            None,
+            &PageOptions::default(),
+            &names,
+            None,
+        );
         (builder, names)
     }
 

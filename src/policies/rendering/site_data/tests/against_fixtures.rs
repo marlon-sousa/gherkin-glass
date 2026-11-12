@@ -1,6 +1,5 @@
 //! The search documents as written, checked against the fixture.
 
-use std::collections::BTreeSet;
 use std::fs;
 use std::path::PathBuf;
 
@@ -8,8 +7,7 @@ use serde_json::Value;
 
 use crate::entities::{PageOptions, SiteNode};
 use crate::policies::rendering::node_rendering::Render;
-use crate::policies::site_tree;
-use crate::test_support::{self, read_features};
+use crate::test_support::{self, read_features, site_from_nothing};
 
 fn fixture() -> PathBuf {
     test_support::fixture("search")
@@ -25,7 +23,7 @@ fn written_documents(node: &SiteNode) -> Option<String> {
 
 fn documents() -> String {
     let features = read_features(&fixture().join("features"));
-    let tree = site_tree(&features, &PageOptions::default(), None, &BTreeSet::new());
+    let tree = site_from_nothing(&features, &PageOptions::default());
     tree.files()
         .find_map(|node| written_documents(node.value()))
         .expect("a site has its search documents")
