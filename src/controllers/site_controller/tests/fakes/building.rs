@@ -1,15 +1,18 @@
 //! The fakes of the services a build runs: the settings service, the gherkin parser, the
 //! converter and the site writer.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 
 use gherkin::{Feature, GherkinEnv};
 
 use super::*;
-use crate::entities::{PageOptions, ParsedFeature, SiteNode, SiteTree, SiteTreeBuilder, Unnamed};
+use crate::entities::{
+    PageOptions, ParsedFeature, SiteNode, SiteTree, SiteTreeBuilder, Unnamed, VersionName,
+};
 use crate::policies::page_frame;
+use crate::test_support::name;
 
 /// Gives the settings of a build from the input `options` name, or `features`, into `site`, or,
 /// while `failing`, the errors of [`config_errors`].
@@ -85,24 +88,35 @@ impl GherkinParserApi for FakeGherkinParser {
     }
 }
 
-/// Makes a tree with one asset for each feature, named after the feature's path.
+/// Makes a tree with one asset for each feature, named after the feature's path, and notes
+/// the versions it is given.
 pub(crate) struct FakeConverter {
     pub(super) calls: Arc<Calls>,
 }
 
 impl ConverterApi for FakeConverter {
-    fn convert(&self, features: &[ParsedFeature], settings: &Settings) -> SiteTree {
+    fn convert(
+        &self,
+        features: &[ParsedFeature],
+        settings: &Settings,
+        built_versions: &BTreeSet<VersionName>,
+    ) -> SiteTree {
         let mut site = SiteTreeBuilder::new(page_frame(&settings.pages), None);
         site.assets(features.iter().map(asset_of));
         let tree = site.build();
-        self.calls
-            .note(format!("converter.convert {}", asset_names(&tree)));
+        let versions: Vec<_> = built_versions.iter().map(VersionName::as_str).collect();
+        self.calls.note(format!(
+            "converter.convert {} beside {}",
+            asset_names(&tree),
+            versions.join(" ")
+        ));
         tree
     }
 }
 
-/// Writes nothing: a site into a folder is that folder, and one in memory holds one empty file
-/// named after how many sites were written, `site 1` first. The check fails while
+/// Finds the version `v1.0.0` already in the output folder, and writes nothing: a site into a
+/// folder is that folder, and one in memory holds one empty file named after how many sites
+/// were written, `site 1` first. The check fails while
 /// `check_failing`, and the writing while `write_failing`, each with [`output_error`].
 #[derive(Default)]
 pub(crate) struct FakeSiteWriter {
@@ -113,13 +127,13 @@ pub(crate) struct FakeSiteWriter {
 }
 
 impl SiteWriterApi for FakeSiteWriter {
-    fn check(&self, settings: &Settings) -> Result<(), OutputError> {
+    fn check(&self, settings: &Settings) -> Result<BTreeSet<VersionName>, OutputError> {
         self.calls
             .note(format!("site_writer.check {:?}", settings.destination));
         if self.check_failing.load(Ordering::SeqCst) {
             return Err(output_error());
         }
-        Ok(())
+        Ok(BTreeSet::from([name("v1.0.0")]))
     }
 
     fn write(

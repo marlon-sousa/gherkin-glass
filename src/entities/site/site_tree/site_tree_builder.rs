@@ -1,11 +1,11 @@
-//! Entity: the site tree's builder, whose typed adds are the only way to put a node in the site tree, each kind under the kind it belongs to: the version under the site, the folders under the input folder, each page in its folder, and the version's other files under the version.
+//! Entity: the site tree's builder, whose typed adds are the only way to put a node in the site tree, each kind under the kind it belongs to: the versions, the versions page and its assets under the site, the folders under the input folder, each page in its folder, and the version's other files under the version.
 
 use ego_tree::{NodeId, NodeMut, NodeRef, Tree};
 
 use super::{FolderId, SiteFolder, SiteNode, SiteTree};
 use crate::entities::{
     FolderPage, Page, PageFrame, SearchDocument, SentencesPage, TagIndex, TagPage, TreeItem,
-    VersionName,
+    VersionName, VersionsPage,
 };
 
 /// A site tree being built, each add putting its nodes after those already
@@ -100,6 +100,20 @@ impl SiteTreeBuilder {
         self.version_files(names.into_iter().map(SiteNode::Asset));
     }
 
+    /// The versions the output folder already holds and the build keeps, by their names.
+    pub(crate) fn kept_versions(&mut self, names: impl IntoIterator<Item = VersionName>) {
+        self.site_nodes(names.into_iter().map(SiteNode::KeptVersion));
+    }
+
+    pub(crate) fn versions_page(&mut self, page: VersionsPage) {
+        self.site_nodes([SiteNode::VersionsPage(page)]);
+    }
+
+    /// The assets the versions page shares with every page, named `names` in their folder.
+    pub(crate) fn versions_page_assets(&mut self, names: impl IntoIterator<Item = String>) {
+        self.site_nodes(names.into_iter().map(SiteNode::Asset));
+    }
+
     pub(crate) fn build(self) -> SiteTree {
         SiteTree { tree: self.tree }
     }
@@ -109,6 +123,14 @@ impl SiteTreeBuilder {
         let mut version = self.node_mut(self.version);
         for node in nodes {
             version.append(node);
+        }
+    }
+
+    /// `nodes`, put in the site, after the nodes already there.
+    fn site_nodes(&mut self, nodes: impl IntoIterator<Item = SiteNode>) {
+        let mut site = self.tree.root_mut();
+        for node in nodes {
+            site.append(node);
         }
     }
 

@@ -126,8 +126,9 @@ pub(super) fn build(
     let features = input
         .parse(&settings.input, settings.unnamed)
         .expect("features");
-    site_writer.check(&settings)?;
-    let (_, served) = site_writer.write(&settings, &Converter.convert(&features, &settings))?;
+    let built_versions = site_writer.check(&settings)?;
+    let tree = Converter.convert(&features, &settings, &built_versions);
+    let (_, served) = site_writer.write(&settings, &tree)?;
     Ok(served)
 }
 

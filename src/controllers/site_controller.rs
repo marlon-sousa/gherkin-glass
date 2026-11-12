@@ -55,11 +55,11 @@ impl SiteController {
     /// Builds the site as `settings` say, and returns what the build says of
     /// it and the site as it is served.
     fn build_with(&self, settings: &Settings) -> Result<(BuiltSite, ServedSite), BuildError> {
-        self.site_writer.check(settings)?;
+        let built_versions = self.site_writer.check(settings)?;
         let features = self
             .gherkin_parser
             .parse(&settings.input, settings.unnamed)?;
-        let tree = self.converter.convert(&features, settings);
+        let tree = self.converter.convert(&features, settings, &built_versions);
         Ok(self.site_writer.write(settings, &tree)?)
     }
 

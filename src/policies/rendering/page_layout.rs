@@ -6,11 +6,11 @@ use super::node_rendering::{Render, page};
 use super::page_frame::TreeLandmark;
 use super::page_head::PageHead;
 use super::search_box::SearchBox;
-use crate::entities::{Breadcrumb, PageFrame, SearchWords};
+use crate::entities::{Breadcrumb, PageFrame};
 
 /// The site nodes every page of a version's site shows, rendered once for the build.
 pub(super) struct SitePieces<'a> {
-    search: &'a SearchWords,
+    page_frame: &'a PageFrame,
     stylesheet: String,
     frame: String,
     tree: String,
@@ -41,11 +41,23 @@ struct LayoutTemplate<'a> {
 impl<'a> SitePieces<'a> {
     pub(super) fn of(frame: &'a PageFrame) -> Self {
         SitePieces {
-            search: &frame.search,
+            page_frame: frame,
             stylesheet: frame.accents.render(),
             frame: frame.render(),
             tree: TreeLandmark { frame }.render(),
         }
+    }
+}
+
+impl SitePieces<'_> {
+    /// The frame every page shares, for a page that shows only some of its parts.
+    pub(super) fn page_frame(&self) -> &PageFrame {
+        self.page_frame
+    }
+
+    /// The themes' stylesheet, already rendered from the site's accents.
+    pub(super) fn stylesheet(&self) -> &str {
+        &self.stylesheet
     }
 }
 
@@ -64,7 +76,7 @@ pub(super) fn whole_page(site: &SitePieces<'_>, around: &PageAround<'_>, main: S
         breadcrumb: around.breadcrumb.render(),
         search: SearchBox {
             root: &around.root,
-            words: site.search,
+            words: &site.page_frame.search,
         }
         .render(),
         main,

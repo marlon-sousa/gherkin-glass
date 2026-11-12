@@ -17,6 +17,7 @@ fn outline(tree: &SiteTree) -> Vec<String> {
                 SiteNode::Site(_) => "site".to_string(),
                 SiteNode::Version(Some(name)) => format!("version {name}"),
                 SiteNode::Version(None) => "version".to_string(),
+                SiteNode::KeptVersion(name) => format!("kept version {name}"),
                 SiteNode::InputFolder => "input folder".to_string(),
                 SiteNode::Folder(name) => format!("folder {name}"),
                 SiteNode::FolderTree(_) => "folder tree".to_string(),
@@ -106,6 +107,35 @@ fn a_version_is_named_by_the_build() {
     let name = VersionName::new("v1.0.0").expect("a version name");
     let builder = SiteTreeBuilder::new(page_frame(&PageOptions::default()), Some(name));
     assert_eq!(outline(&builder.build())[1], "  version v1.0.0");
+}
+
+#[test]
+fn the_kept_versions_and_the_versions_page_s_assets_sit_beside_the_version() {
+    let name = VersionName::new("v2").expect("a version name");
+    let mut builder = SiteTreeBuilder::new(page_frame(&PageOptions::default()), Some(name));
+    builder.kept_versions([VersionName::new("v1").expect("a version name")]);
+    builder.versions_page_assets(["shared.css".to_string()]);
+    builder.assets(["own.css".to_string()]);
+    let tree = builder.build();
+    assert_eq!(
+        outline(&tree),
+        [
+            "site",
+            "  version v2",
+            "    input folder",
+            "    asset own.css",
+            "  kept version v1",
+            "  asset shared.css",
+        ]
+    );
+    assert_eq!(
+        tree.root_files().cloned().collect::<Vec<_>>(),
+        [SiteNode::Asset("shared.css".to_string())]
+    );
+    assert_eq!(
+        tree.files().cloned().collect::<Vec<_>>(),
+        [SiteNode::Asset("own.css".to_string())]
+    );
 }
 
 #[test]

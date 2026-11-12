@@ -75,7 +75,7 @@ fn block_items(contents: &[ContentsEntry], page: &LinkAddress) -> Vec<TreeItem> 
 
 #[cfg(test)]
 mod tests {
-    use std::collections::BTreeMap;
+    use std::collections::{BTreeMap, BTreeSet};
     use std::path::PathBuf;
 
     use gherkin::{Feature, GherkinEnv};
@@ -102,7 +102,7 @@ mod tests {
                 )
             })
             .collect();
-        site_tree(&features, &options)
+        site_tree(&features, &options, None, &BTreeSet::new())
             .files()
             .find_map(|file| match file {
                 SiteNode::FolderTree(items) => Some(items.clone()),

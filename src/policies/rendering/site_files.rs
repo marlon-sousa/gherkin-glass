@@ -13,14 +13,12 @@ use crate::entities::{
 /// on a four-core server, took about 70 ms to index each million bytes.
 const LARGE_SEARCH_DOCUMENTS: usize = 5_000_000;
 
-/// Every file of `tree`, in its order, in the site that `options` make.
+/// Every file of `tree`, in its order, in the site that `options` make: the
+/// version's, and those beside the versions, at the output folder's root.
 pub(crate) fn render_site(tree: &SiteTree, options: &PageOptions) -> SiteFiles {
     let site = SitePieces::of(tree.frame());
-    let nodes: Vec<_> = tree.files().collect();
-    let files: Vec<_> = nodes
-        .par_iter()
-        .filter_map(|node| render_file(node, &site))
-        .collect();
+    let files = render_files(tree.files(), &site);
+    let root_files = render_files(tree.root_files(), &site);
     let built = BuiltSite {
         large_search_documents: files
             .iter()
@@ -29,11 +27,28 @@ pub(crate) fn render_site(tree: &SiteTree, options: &PageOptions) -> SiteFiles {
             .filter(is_large),
         untitled: options.title.is_none(),
     };
-    SiteFiles { files, built }
+    SiteFiles {
+        files,
+        root_files,
+        built,
+    }
+}
+
+/// The file of each of `nodes`, in their order, rendered in parallel.
+fn render_files<'a>(
+    nodes: impl Iterator<Item = &'a SiteNode>,
+    site: &SitePieces<'_>,
+) -> Vec<SiteFile> {
+    let nodes: Vec<_> = nodes.collect();
+    // Collecting into a `Vec` keeps the files' order, whatever order the threads finish in.
+    nodes
+        .par_iter()
+        .filter_map(|node| render_file(node, site))
+        .collect()
 }
 
 /// The file of `node`; `None` for the site, a version and a folder, which
-/// hold the nodes that make files, and for an asset that is not there.
+/// make no file of their own, and for an asset that is not there.
 fn render_file(node: &SiteNode, site: &SitePieces<'_>) -> Option<SiteFile> {
     match node {
         SiteNode::FeaturePage(page) => Some(file(page, site)),
@@ -43,20 +58,18 @@ fn render_file(node: &SiteNode, site: &SitePieces<'_>) -> Option<SiteFile> {
         SiteNode::TagIndex(index) => Some(file(index, site)),
         SiteNode::TagPage(page) => Some(file(page, site)),
         SiteNode::SearchDocuments(documents) => Some(file(documents.as_slice(), site)),
+        SiteNode::VersionsPage(versions) => Some(file(versions, site)),
         SiteNode::Asset(name) => asset_file(name),
-        SiteNode::Site(_) | SiteNode::Version(_) | SiteNode::InputFolder | SiteNode::Folder(_) => {
-            None
-        }
+        SiteNode::Site(_)
+        | SiteNode::Version(_)
+        | SiteNode::KeptVersion(_)
+        | SiteNode::InputFolder
+        | SiteNode::Folder(_) => None,
     }
 }
 
 fn file(node: &(impl RenderFile + ?Sized), site: &SitePieces<'_>) -> SiteFile {
     SiteFile::text(node.address(), node.render_file(site))
-}
-
-/// The assets every site has.
-pub(super) fn assets() -> impl Iterator<Item = SiteFile> {
-    SiteAssets::iter().filter_map(|name| asset_file(&name))
 }
 
 /// The asset named `name`, as a file of the site.
@@ -79,7 +92,7 @@ fn is_large(size: &usize) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use std::collections::BTreeMap;
+    use std::collections::{BTreeMap, BTreeSet};
     use std::path::PathBuf;
 
     use gherkin::{Feature, GherkinEnv};
@@ -100,7 +113,11 @@ mod tests {
             BTreeMap::new(),
         );
         let options = PageOptions::default();
-        render_site(&site_tree(&[parsed], &options), &options).built
+        render_site(
+            &site_tree(&[parsed], &options, None, &BTreeSet::new()),
+            &options,
+        )
+        .built
     }
 
     #[rstest]

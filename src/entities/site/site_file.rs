@@ -20,6 +20,10 @@ impl SiteFile {
 
 /// Every file of a site, and what the build has to say of them.
 pub(crate) struct SiteFiles {
+    /// The version's files, or the whole site's when it has no versions.
     pub(crate) files: Vec<SiteFile>,
+    /// The files beside the versions, at the output folder's root: the
+    /// versions page and its assets, none for a site without versions.
+    pub(crate) root_files: Vec<SiteFile>,
     pub(crate) built: BuiltSite,
 }

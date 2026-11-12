@@ -1,127 +1,85 @@
-//! Policy: the versions page's HTML, from the versions an output folder holds.
-
-use std::fmt::{Display, Formatter, Result as FmtResult};
-use std::iter::once;
+//! Policy: the versions page's HTML, from its node of the site tree.
 
 use askama::Template;
-use i18n_embed::LanguageLoader;
-use i18n_embed_fl::fl;
 
-use super::node_rendering::{Render, page};
+use super::node_rendering::{Render, RenderFile, page};
 use super::page_frame::{SkipLink, ThemeControl};
 use super::page_head::PageHead;
-use super::site_files::assets;
-use crate::entities::{PageOptions, SiteAddress, SiteFile, VersionList, VersionName};
-use crate::policies::{CATALOGUE, page_frame};
+use super::page_layout::SitePieces;
+use crate::entities::{SiteAddress, VersionEntry, VersionsPage, VersionsWords};
 
 /// The versions page's address below the output folder.
 const VERSIONS_PAGE: &str = "index.html";
 
 #[derive(Template)]
 #[template(path = "versions_page.html")]
-struct VersionsTemplate {
-    language: String,
+struct VersionsTemplate<'a> {
+    language: &'a str,
     head: String,
     skip_link: String,
     theme_control: String,
-    words: Words,
-    development: Vec<Entry>,
-    releases: Vec<Entry>,
-    pre_releases: Vec<Entry>,
+    title: &'a str,
+    words: &'a VersionsWords,
+    development: &'a [VersionEntry],
+    releases: &'a [VersionEntry],
+    pre_releases: &'a [VersionEntry],
 }
 
-struct Words {
-    title: String,
-    development: String,
-    releases: String,
-    pre_releases: String,
-}
-
-/// A version in a list: its name, which is its folder's, and the words of its link.
-struct Entry {
-    name: VersionName,
-    words: String,
-}
-
-impl Display for Entry {
-    fn fmt(&self, formatter: &mut Formatter<'_>) -> FmtResult {
-        self.name.fmt(formatter)
+impl RenderFile for VersionsPage {
+    fn address(&self) -> SiteAddress {
+        SiteAddress::at_root(VERSIONS_PAGE)
     }
-}
 
-/// The files of the versions page, in the themes of `options`, those of the
-/// build that writes it: the page itself, and the assets it shares with every page.
-pub(crate) fn versions_page_files(list: &VersionList, options: &PageOptions) -> Vec<SiteFile> {
-    once(SiteFile::text(
-        SiteAddress::at_root(VERSIONS_PAGE),
-        render_versions_page(list, options),
-    ))
-    .chain(assets())
-    .collect()
-}
-
-fn render_versions_page(list: &VersionList, options: &PageOptions) -> String {
-    let entries = |names: &[VersionName], words: fn(&VersionName) -> String| {
-        names
-            .iter()
-            .map(|name| Entry {
-                name: name.clone(),
-                words: words(name),
-            })
-            .collect()
-    };
-    let title = fl!(CATALOGUE, "versions-title");
-    let frame = page_frame(options);
-    let template = VersionsTemplate {
-        // The page holds interface text only, in the catalogue's language.
-        language: CATALOGUE.current_language().to_string(),
-        head: PageHead {
-            title: &title,
-            root: "",
-            stylesheet: &options.accents.render(),
-        }
-        .render(),
-        skip_link: SkipLink { frame: &frame }.render(),
-        theme_control: ThemeControl { frame: &frame }.render(),
-        words: Words {
-            title,
-            development: fl!(CATALOGUE, "versions-development"),
-            releases: fl!(CATALOGUE, "versions-releases"),
-            pre_releases: fl!(CATALOGUE, "versions-pre-releases"),
-        },
-        development: entries(&list.development, |name| {
-            fl!(
-                CATALOGUE,
-                "versions-development-version",
-                name = name.as_str()
-            )
-        }),
-        releases: entries(&list.releases, VersionName::to_string),
-        pre_releases: entries(&list.pre_releases, VersionName::to_string),
-    };
-    page(&template)
+    fn render_file(&self, site: &SitePieces<'_>) -> String {
+        page(&VersionsTemplate {
+            language: &self.language,
+            head: PageHead {
+                title: &self.title,
+                root: "",
+                stylesheet: site.stylesheet(),
+            }
+            .render(),
+            skip_link: SkipLink {
+                frame: site.page_frame(),
+            }
+            .render(),
+            theme_control: ThemeControl {
+                frame: site.page_frame(),
+            }
+            .render(),
+            title: &self.title,
+            words: &self.words,
+            development: &self.development,
+            releases: &self.releases,
+            pre_releases: &self.pre_releases,
+        })
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use std::collections::BTreeSet;
 
-    fn names(names: &[&str]) -> Vec<VersionName> {
-        names
-            .iter()
-            .map(|name| VersionName::new(name).expect("a version name"))
-            .collect()
+    use super::*;
+    use crate::entities::{PageOptions, SiteNode, VersionName};
+    use crate::policies::site_tree;
+    use crate::test_support::name;
+
+    /// The versions page of a site whose build makes `version`, once the
+    /// output folder holds `others` too.
+    fn html(version: &str, others: &[&str]) -> String {
+        let options = PageOptions::default();
+        let built: BTreeSet<VersionName> = others.iter().copied().map(name).collect();
+        let tree = site_tree(&[], &options, Some(&name(version)), &built);
+        let Some(SiteNode::VersionsPage(versions)) = tree.root_files().next() else {
+            panic!("a site with versions has its versions page");
+        };
+        versions.render_file(&SitePieces::of(tree.frame()))
     }
 
     #[test]
     fn an_empty_list_is_left_out() {
-        let html = render_versions_page(
-            &VersionList {
-                releases: names(&["v1.0.0"]),
-                ..VersionList::default()
-            },
-            &PageOptions::default(),
-        );
+        let html = html("v1.0.0", &[]);
         assert!(html.contains("<h2 id=\"releases\">Releases</h2>"), "{html}");
         assert!(!html.contains("id=\"development\""), "{html}");
         assert!(!html.contains("id=\"pre-releases\""), "{html}");
@@ -134,14 +92,7 @@ mod tests {
 
     #[test]
     fn a_development_version_says_so_and_pre_releases_start_collapsed() {
-        let html = render_versions_page(
-            &VersionList {
-                development: names(&["main"]),
-                releases: Vec::new(),
-                pre_releases: names(&["v2.0.0-rc.1"]),
-            },
-            &PageOptions::default(),
-        );
+        let html = html("main", &["v2.0.0-rc.1"]);
         assert!(
             html.contains("<a href=\"main/index.html\">main, a development version</a>"),
             "{html}"

@@ -1,4 +1,4 @@
-//! Entity: the site tree the converter builds, before it is rendered: an ego-tree whose root is the site, with the frame every page shares, then the version the build makes, then that version's folders, from the input folder in, with their pages, and the version's files in no folder of the input, each node as the node of its kind.
+//! Entity: the site tree the converter builds, before it is rendered: an ego-tree whose root is the site, with the frame every page shares, then the version the build makes, the versions the output folder already holds and, for a site with versions, the versions page and its assets; then the version's folders, from the input folder in, with their pages, and the version's files in no folder of the input, each node as the node of its kind.
 
 mod site_folder;
 mod site_tree_builder;
@@ -10,7 +10,7 @@ use ego_tree::{NodeRef, Tree};
 
 use crate::entities::{
     FolderPage, Page, PageFrame, SearchDocument, SentencesPage, TagIndex, TagPage, TreeItem,
-    VersionName,
+    VersionName, VersionsPage,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -19,6 +19,10 @@ pub(crate) enum SiteNode {
     Site(PageFrame),
     /// The version of the site the build makes, by its name, or `None` for a site without versions.
     Version(Option<VersionName>),
+    /// A version the output folder already holds, which the build keeps, by its name.
+    KeptVersion(VersionName),
+    /// The page that lists every version, at the output folder's root.
+    VersionsPage(VersionsPage),
     /// The input folder, which holds the home page.
     InputFolder,
     /// A folder of the input, by its name, inside the input folder or another folder.
@@ -37,11 +41,15 @@ pub(crate) enum SiteNode {
 }
 
 impl SiteNode {
-    /// Whether the node makes a file of the site, rather than holding the nodes that do.
+    /// Whether the node makes a file of the site, rather than standing for the site, a version or a folder.
     fn is_file(&self) -> bool {
         !matches!(
             self,
-            SiteNode::Site(_) | SiteNode::Version(_) | SiteNode::InputFolder | SiteNode::Folder(_)
+            SiteNode::Site(_)
+                | SiteNode::Version(_)
+                | SiteNode::KeptVersion(_)
+                | SiteNode::InputFolder
+                | SiteNode::Folder(_)
         )
     }
 }
@@ -69,6 +77,16 @@ impl SiteTree {
             .children()
             .filter(is_version)
             .flat_map(|version| version.descendants())
+            .map(|node| node.value())
+            .filter(|node| node.is_file())
+    }
+
+    /// The files beside the versions, at the output folder's root: the
+    /// versions page and its assets, none for a site without versions.
+    pub(crate) fn root_files(&self) -> impl Iterator<Item = &SiteNode> {
+        self.tree
+            .root()
+            .children()
             .map(|node| node.value())
             .filter(|node| node.is_file())
     }

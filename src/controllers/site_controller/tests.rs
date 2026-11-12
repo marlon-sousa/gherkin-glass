@@ -14,7 +14,7 @@ fn a_build(destination: &str) -> Vec<String> {
     [
         format!("site_writer.check {destination}"),
         "gherkin_parser.parse features Refused".into(),
-        "converter.convert a.feature".into(),
+        "converter.convert a.feature beside v1.0.0".into(),
         "site_writer.write a.feature".into(),
     ]
     .into()
@@ -34,7 +34,7 @@ fn a_build_loads_the_settings_checks_the_output_then_parses_converts_and_writes(
             "settings.load Folder",
             "site_writer.check Folder",
             "gherkin_parser.parse specs Refused",
-            "converter.convert a.feature",
+            "converter.convert a.feature beside v1.0.0",
             "site_writer.write a.feature",
         ]
     );
