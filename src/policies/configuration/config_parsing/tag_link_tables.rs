@@ -4,10 +4,10 @@ use regex_automata::meta::Regex;
 use toml::Spanned;
 use toml::de::{DeTable, DeValue};
 
+use super::tag_patterns::{unknown_group, whole_tag_pattern};
 use super::{error_at, text};
 use crate::entities::TagLink;
 use crate::errors::{ConfigError, ConfigErrorKind, PatternErrorKind, ValueType};
-use crate::policies::{unknown_group, whole_tag_pattern};
 
 /// The keys of a table of `tag_links`, all needed.
 const TAG_LINK_KEYS: [&str; 3] = ["pattern", "address", "text"];

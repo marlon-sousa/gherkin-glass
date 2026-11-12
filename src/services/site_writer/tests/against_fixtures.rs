@@ -9,12 +9,12 @@ use rstest::rstest;
 use crate::adapters::{FolderFiles, MemoryFiles, OutputFolderStore};
 use crate::entities::{BuildTarget, Record, VersionName};
 use crate::errors::{OutputError, OutputErrorKind};
-use crate::fixtures::{self, copy_folder, scratch};
 use crate::policies::Moment;
 use crate::services::SiteWriter;
+use crate::test_support::{self, copy_folder, scratch};
 
 fn fixture() -> PathBuf {
-    fixtures::fixture("versions")
+    test_support::fixture("versions")
 }
 
 /// A fresh copy of the fixture's output folder, for a test that changes it.

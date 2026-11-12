@@ -6,7 +6,7 @@ use rstest::rstest;
 use super::*;
 use crate::entities::{Burst, ServeMode};
 use crate::errors::ListenErrorKind;
-use crate::fixtures::{FakeServer, FakeWatcher, changed};
+use crate::test_support::{FakeServer, FakeWatcher, changed};
 
 fn service(server: &Arc<FakeServer>, watcher: &Arc<FakeWatcher>) -> ServerService {
     ServerService::new(server.clone(), watcher.clone())

@@ -13,13 +13,13 @@ use crate::adapters::{
 use crate::controllers::SiteController;
 use crate::handlers::CommandLine;
 use crate::policies::cargo_plugin_arguments;
-use crate::services::{Converter, InputService, ServerService, SettingsService, SiteWriter};
+use crate::services::{Converter, GherkinParser, ServerService, SettingsService, SiteWriter};
 
 /// Runs ghg with `arguments`, those after the command's own name.
 pub fn run(arguments: impl IntoIterator<Item = OsString>) -> ExitCode {
     let site = SiteController::new(
         Arc::new(SettingsService::new(Arc::new(ConfigFileReader))),
-        Arc::new(InputService::new(
+        Arc::new(GherkinParser::new(
             Arc::new(InputFolderReader),
             Arc::new(GherkinCrate),
         )),

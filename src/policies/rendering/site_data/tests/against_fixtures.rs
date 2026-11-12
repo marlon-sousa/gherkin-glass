@@ -5,18 +5,30 @@ use std::path::PathBuf;
 
 use serde_json::Value;
 
-use crate::fixtures::{self, read_features};
+use crate::entities::{FileNode, PageOptions};
 use crate::policies::rendering::node_rendering::Render;
-use crate::policies::{anchor_feature, search_documents};
+use crate::policies::site_tree;
+use crate::test_support::{self, read_features};
 
 fn fixture() -> PathBuf {
-    fixtures::fixture("search")
+    test_support::fixture("search")
+}
+
+/// The search documents' file, when `node` is it.
+fn written_documents(node: &FileNode) -> Option<String> {
+    match node {
+        FileNode::SearchDocuments(documents) => Some(documents.render()),
+        _ => None,
+    }
 }
 
 fn documents() -> String {
     let features = read_features(&fixture().join("features"));
-    let anchored: Vec<_> = features.iter().map(anchor_feature).collect();
-    search_documents(&anchored).render()
+    let tree = site_tree(&features, &PageOptions::default());
+    tree.files
+        .iter()
+        .find_map(written_documents)
+        .expect("a site has its search documents")
 }
 
 #[test]

@@ -11,6 +11,7 @@ use crate::errors::{ConfigError, ConfigErrorKind, ValueType};
 mod accent_contrast;
 mod config_key;
 mod tag_link_tables;
+mod tag_patterns;
 
 use accent_contrast::check_accent;
 use config_key::{ConfigKey, SettingKey, accent_of};

@@ -8,11 +8,11 @@ mod composition_root;
 mod controllers;
 mod entities;
 mod errors;
-#[cfg(test)]
-mod fixtures;
 mod handlers;
 mod policies;
 mod ports;
 mod services;
+#[cfg(test)]
+mod test_support;
 
 pub use composition_root::{run, run_cargo_plugin};
