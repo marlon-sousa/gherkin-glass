@@ -1,4 +1,4 @@
-//! Which files the input service reads, checked against the fixtures.
+//! Which files the gherkin parser reads, checked against the fixtures.
 
 use super::*;
 

@@ -9,7 +9,7 @@ use crate::entities::{
     BuildOptions, BuiltSite, Destination, Preview, ServeMode, ServeOptions, ServedSite, Settings,
 };
 use crate::errors::{BuildError, RebuildError, ServeError};
-use crate::services::{ConverterApi, ParserApi, ServerApi, SettingsApi, SiteWriterApi};
+use crate::services::{ConverterApi, GherkinParserApi, ServerApi, SettingsApi, SiteWriterApi};
 
 /// What the handlers ask of gherkin-glass.
 pub(crate) trait SiteApi {
@@ -29,25 +29,25 @@ pub(crate) trait SiteListener {
 
 pub(crate) struct SiteController {
     settings: Arc<dyn SettingsApi>,
-    parser: Arc<dyn ParserApi>,
+    gherkin_parser: Arc<dyn GherkinParserApi>,
     converter: Arc<dyn ConverterApi>,
-    writer: Arc<dyn SiteWriterApi>,
+    site_writer: Arc<dyn SiteWriterApi>,
     server: Arc<dyn ServerApi>,
 }
 
 impl SiteController {
     pub(crate) fn new(
         settings: Arc<dyn SettingsApi>,
-        parser: Arc<dyn ParserApi>,
+        gherkin_parser: Arc<dyn GherkinParserApi>,
         converter: Arc<dyn ConverterApi>,
-        writer: Arc<dyn SiteWriterApi>,
+        site_writer: Arc<dyn SiteWriterApi>,
         server: Arc<dyn ServerApi>,
     ) -> Self {
         SiteController {
             settings,
-            parser,
+            gherkin_parser,
             converter,
-            writer,
+            site_writer,
             server,
         }
     }
@@ -55,10 +55,12 @@ impl SiteController {
     /// Builds the site as `settings` say, and returns what the build says of
     /// it and the site as it is served.
     fn build_with(&self, settings: &Settings) -> Result<(BuiltSite, ServedSite), BuildError> {
-        self.writer.check(settings)?;
-        let features = self.parser.read(&settings.input, settings.unnamed)?;
+        self.site_writer.check(settings)?;
+        let features = self
+            .gherkin_parser
+            .parse(&settings.input, settings.unnamed)?;
         let tree = self.converter.convert(&features, settings);
-        Ok(self.writer.write(settings, &tree)?)
+        Ok(self.site_writer.write(settings, &tree)?)
     }
 
     fn rebuild_and_serve(
@@ -101,7 +103,7 @@ impl SiteApi for SiteController {
             .load(&options.build, options.mode.destination())
             .map_err(BuildError::Config)?;
         let config = self.settings.config_file(&options.build);
-        let selected = |input: &Path| self.parser.paths(input);
+        let selected = |input: &Path| self.gherkin_parser.paths(input);
         // Watching starts before the first build, so that a change made
         // during it is not missed; what stops the build is said first.
         let rebuilds = options

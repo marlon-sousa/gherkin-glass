@@ -48,7 +48,7 @@ fn read_with(
             .map(|(path, text)| (PathBuf::from(path), text.to_string()))
             .collect(),
     );
-    InputService::new(Arc::new(folders), Arc::new(parser)).read(Path::new("in"), unnamed)
+    GherkinParser::new(Arc::new(folders), Arc::new(parser)).parse(Path::new("in"), unnamed)
 }
 
 #[test]

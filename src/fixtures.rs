@@ -17,7 +17,7 @@ use crate::adapters::{GherkinCrate, InputFolderReader};
 use crate::entities::{EntryKind, FolderEntry, ParsedFeature, TagLink, Unnamed};
 use crate::errors::InputErrors;
 use crate::ports::InputFolders;
-use crate::services::{InputService, ParserApi};
+use crate::services::{GherkinParser, GherkinParserApi};
 
 pub(crate) use output::{folder, name, set, two_versions};
 pub(crate) use serving::{FakeServer, FakeWatcher, changed};
@@ -40,11 +40,11 @@ pub(crate) fn fixture(name: &str) -> PathBuf {
         .join(name)
 }
 
-/// The features of the folder `input`, or the errors found, read by the input service over the
+/// The features of the folder `input`, or the errors found, parsed by the gherkin parser over the
 /// real file system, as the command reads them.
 pub(crate) fn read_input(input: &Path) -> Result<Vec<ParsedFeature>, InputErrors> {
-    InputService::new(Arc::new(InputFolderReader), Arc::new(GherkinCrate))
-        .read(input, Unnamed::Allowed)
+    GherkinParser::new(Arc::new(InputFolderReader), Arc::new(GherkinCrate))
+        .parse(input, Unnamed::Allowed)
 }
 
 /// The features of the folder `input`, which reads with no error.

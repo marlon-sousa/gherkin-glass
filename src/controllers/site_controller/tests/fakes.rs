@@ -12,7 +12,7 @@ use crate::entities::{EntryKind, FolderEntry, OutputContents, RawFeature, Record
 use crate::errors::{InputErrorKind, ParseError};
 use crate::fixtures::{FakeServer, FakeWatcher};
 use crate::ports::{ConfigReader, FeatureParser, FileWriter, InputFolders, OutputFolders};
-use crate::services::{Converter, InputService, ServerService, SettingsService, SiteWriter};
+use crate::services::{Converter, GherkinParser, ServerService, SettingsService, SiteWriter};
 
 /// Configuration files held in memory; any other path is not found.
 struct ConfigFiles {
@@ -160,7 +160,7 @@ impl World {
             .collect();
         SiteController::new(
             Arc::new(SettingsService::new(Arc::new(ConfigFiles { files }))),
-            Arc::new(InputService::new(self.input.clone(), self.input.clone())),
+            Arc::new(GherkinParser::new(self.input.clone(), self.input.clone())),
             Arc::new(Converter),
             Arc::new(SiteWriter::new(
                 Arc::new(Folders {

@@ -1,4 +1,4 @@
-//! What the input service reads of a feature, checked against the fixtures.
+//! What the gherkin parser reads of a feature, checked against the fixtures.
 
 use super::*;
 

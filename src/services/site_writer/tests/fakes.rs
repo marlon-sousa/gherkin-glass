@@ -11,7 +11,7 @@ use crate::entities::{OutputContents, PageOptions, RawFeature, Unnamed};
 use crate::errors::{BuildError, ParseError};
 pub(super) use crate::fixtures::{MemoryFolders, folder, name, set, two_versions};
 use crate::ports::FeatureParser;
-use crate::services::{Converter, ConverterApi, InputService, ParserApi};
+use crate::services::{Converter, ConverterApi, GherkinParser, GherkinParserApi};
 
 /// An output folder held in memory. Each look into it takes the next of
 /// `looks`, and the last one again once they run out; `None` cannot be read.
@@ -120,11 +120,11 @@ pub(super) fn build(
     writer: Arc<FakeWriter>,
 ) -> Result<ServedSite, BuildError> {
     let folders_in = MemoryFolders::with_files_in(Path::new("in"), &files);
-    let input = InputService::new(Arc::new(folders_in), Arc::new(FakeParser));
+    let input = GherkinParser::new(Arc::new(folders_in), Arc::new(FakeParser));
     let settings = settings(Destination::Folder, version);
     let site_writer = SiteWriter::new(folders, writer, Arc::new(FakeWriter::default()));
     let features = input
-        .read(&settings.input, settings.unnamed)
+        .parse(&settings.input, settings.unnamed)
         .expect("features");
     site_writer.check(&settings)?;
     let (_, served) = site_writer.write(&settings, &Converter.convert(&features, &settings))?;

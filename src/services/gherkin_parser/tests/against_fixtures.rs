@@ -1,4 +1,4 @@
-//! The input service over the real file system, checked against the fixtures.
+//! The gherkin parser over the real file system, checked against the fixtures.
 
 mod constructs;
 mod doc_strings;
