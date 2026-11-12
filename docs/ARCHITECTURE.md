@@ -9,9 +9,10 @@ The build this document describes, one `build` that starts from nothing or from 
 - a build starts only from nothing, and leaves nothing for the next one, with no `BuildStart` or `BuildSnapshot`, until layers 7 and 8;
 - the input tree's file nodes hold no revision, and its folder nodes hold the errors of their `.ghg-ignore` but not its parsed rules, until layer 8, which reads them;
 - `ghg serve --watch` starts watching before the first build and walks the whole input again for each burst, and the `serving` stage, not `collecting`, decides which paths of a burst call for a rebuild, until layer 7;
+- the watch stays on the input `ghg serve` started with, so the code does not yet do what BEHAVIOUR.md rules 65 and 68 say of watching again, until layer 7;
 - every build reads, parses and converts every file, until layer 8, and renders every file, until layer 9.
 
-Two places still describe the code as it is today. In this document, "Folders and files", rule 4, still says the `serving` stage decides which changes call for a rebuild, and does not yet say that an entity holding the parts of several stages, `BuildSnapshot` and `BuildStart`, sits at the top of `entities/`. In BEHAVIOUR.md, rule 65 still says the folders watched are those `ghg serve` started with, and rule 68 that a watch that cannot start ends `ghg serve`, until layer 6 gives them their new text.
+One place in this document still describes the code as it is today: "Folders and files", rule 4, still says the `serving` stage decides which changes call for a rebuild, and does not yet say that an entity holding the parts of several stages, `BuildSnapshot` and `BuildStart`, sits at the top of `entities/`.
 
 ## The guiding principle
 
