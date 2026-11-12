@@ -1,3 +1,5 @@
+use rstest::rstest;
+
 use super::*;
 use crate::entities::{PageOptions, SiteTree};
 use crate::test_support::{feature_pages, site_of};
@@ -114,4 +116,39 @@ fn an_outline_holds_its_examples_and_each_block_its_steps() {
             .parent()
             .is_some_and(|rule| matches!(rule.value(), SiteNode::Rule(_)))
     );
+}
+
+/// Whether the page of `before` has the same subtree as the page of `after`, each converted
+/// into a site tree of its own.
+fn same_page(before: &str, after: &str) -> bool {
+    let (before, after) = (site(before), site(after));
+    let ([before], [after]) = (&feature_pages(&before)[..], &feature_pages(&after)[..]) else {
+        panic!("one page each");
+    };
+    before.node().same_subtree_as(after.node())
+}
+
+#[rstest]
+#[case::the_same_text(FEATURE, FEATURE, true)]
+#[case::a_step_changed(
+    "Feature: F\n  Scenario: A\n    Given x\n",
+    "Feature: F\n  Scenario: A\n    Given y\n",
+    false
+)]
+#[case::a_scenario_added(
+    "Feature: F\n  Scenario: A\n    Given x\n",
+    "Feature: F\n  Scenario: A\n    Given x\n\n  Scenario: B\n",
+    false
+)]
+#[case::a_step_moved_to_another_scenario(
+    "Feature: F\n  Scenario: A\n    Given x\n\n  Scenario: B\n",
+    "Feature: F\n  Scenario: A\n\n  Scenario: B\n    Given x\n",
+    false
+)]
+fn a_page_has_the_same_subtree_as_another_tree_s_only_with_the_same_nodes_in_the_same_shape(
+    #[case] before: &str,
+    #[case] after: &str,
+    #[case] same: bool,
+) {
+    assert_eq!(same_page(before, after), same);
 }

@@ -131,7 +131,7 @@ fn paths_rebuild_only_when_the_input_collector_says_they_call_for_it() {
                 "settings.load Memory",
                 "gherkin_parser.parse a.feature Refused",
                 "converter.convert a.feature beside v1.0.0 after a.feature",
-                "site_writer.write a.feature",
+                "site_writer.write a.feature after a.feature",
             ]
         );
     });

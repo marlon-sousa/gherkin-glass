@@ -10,8 +10,8 @@ use gherkin::{Feature, GherkinEnv};
 use super::*;
 use crate::entities::{
     CollectedChanges, FileToParse, IgnoreRules, InputTree, InputTreeBuilder, PageOptions,
-    ParsedFeature, ParsedFile, RevisedFeature, Revision, Settings, SiteNode, SiteTree,
-    SiteTreeBuilder, SiteVersion, TagNames, Unnamed, VersionName,
+    ParsedFeature, ParsedFile, RenderedSite, RevisedFeature, Revision, Settings, SiteFiles,
+    SiteNode, SiteTree, SiteTreeBuilder, SiteVersion, TagNames, Unnamed, VersionName,
 };
 use crate::policies::page_frame;
 use crate::test_support::name;
@@ -204,7 +204,8 @@ impl ConverterApi for FakeConverter {
 
 /// Finds the version `v1.0.0` already in the output folder, and writes nothing: a site into a
 /// folder is that folder, and one in memory holds one empty file named after how many sites
-/// were written, `site 1` first. The check fails while
+/// were written, `site 1` first. It renders no file, and notes the assets of the last site
+/// tree it is given, when it is given one. The check fails while
 /// `check_failing`, and the writing while `write_failing`, each with [`output_error`].
 #[derive(Default)]
 pub(crate) struct FakeSiteWriter {
@@ -227,10 +228,14 @@ impl SiteWriterApi for FakeSiteWriter {
     fn write(
         &self,
         settings: &Settings,
-        tree: &SiteTree,
-    ) -> Result<(BuiltSite, ServedSite), OutputError> {
+        tree: SiteTree,
+        last: Option<&RenderedSite>,
+    ) -> Result<(ServedSite, RenderedSite), OutputError> {
+        let after = last.map_or_else(String::new, |last| {
+            format!(" after {}", asset_names(&last.tree))
+        });
         self.calls
-            .note(format!("site_writer.write {}", asset_names(tree)));
+            .note(format!("site_writer.write {}{after}", asset_names(&tree)));
         if self.write_failing.load(Ordering::SeqCst) {
             return Err(output_error());
         }
@@ -241,7 +246,12 @@ impl SiteWriterApi for FakeSiteWriter {
                 ServedSite::Memory(BTreeMap::from([(format!("site {number}"), Arc::from([]))]))
             }
         };
-        Ok((built_site(), site))
+        let files = SiteFiles {
+            files: Vec::new(),
+            root_files: Vec::new(),
+            built: built_site(),
+        };
+        Ok((site, RenderedSite { tree, files }))
     }
 }
 

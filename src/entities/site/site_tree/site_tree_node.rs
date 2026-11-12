@@ -1,6 +1,7 @@
 //! Entity: a node of the site tree as the stages that read it see it: its value, the nodes below it, and what it finds among the nodes above it.
 
 use ego_tree::NodeRef;
+use ego_tree::iter::Edge;
 
 use super::site_folder::folder_name;
 use super::{SiteFeaturePage, SiteFolderPage, SiteNode};
@@ -39,6 +40,14 @@ impl<'a> SiteTreeNode<'a> {
     /// The examples blocks directly below this node, an outline's, in the order they were put in.
     pub(crate) fn examples(&self) -> impl Iterator<Item = &'a ExamplesBlock> + use<'a> {
         self.node.children().filter_map(examples_of)
+    }
+
+    /// Whether `other`, a node of this tree or of another, has the same value as this one, and
+    /// the same nodes below it, with the same values in the same shape. ego-tree's node
+    /// references compare by identity, so both are walked together, each node by its value.
+    pub(crate) fn same_subtree_as(&self, other: SiteTreeNode<'_>) -> bool {
+        let values = self.node.traverse().map(opened_value);
+        values.eq(other.node.traverse().map(opened_value))
     }
 
     pub(crate) fn is_step(&self) -> bool {
@@ -90,6 +99,15 @@ impl<'a> SiteTreeNode<'a> {
 
     fn self_and_ancestors(&self) -> impl Iterator<Item = NodeRef<'a, SiteNode>> + use<'a> {
         [self.node].into_iter().chain(self.node.ancestors())
+    }
+}
+
+/// The value of the node `edge` opens, and `None` where it closes one, so that the shape of
+/// the nodes walked is compared with their values.
+fn opened_value(edge: Edge<'_, SiteNode>) -> Option<&SiteNode> {
+    match edge {
+        Edge::Open(node) => Some(node.value()),
+        Edge::Close(_) => None,
     }
 }
 

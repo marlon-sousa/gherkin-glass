@@ -131,7 +131,7 @@ pub(super) fn build(
     let site_writer = SiteWriter::new(folders, writer, Arc::new(FakeWriter::default()));
     let built_versions = site_writer.check(&settings)?;
     let tree = Converter.convert(&input_tree, None, &settings, &built_versions);
-    let (_, served) = site_writer.write(&settings, &tree)?;
+    let (served, _) = site_writer.write(&settings, tree, None)?;
     Ok(served)
 }
 

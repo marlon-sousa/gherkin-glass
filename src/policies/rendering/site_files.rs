@@ -1,4 +1,6 @@
-//! Policy: every file of a site rendered from its tree, each file node through the rendering trait, and what the build has to say of them.
+//! Policy: every file of a site rendered from its tree, each file node through the rendering trait unless the last site rendered holds its file, and what the build has to say of them.
+
+mod last_files;
 
 use std::sync::Arc;
 
@@ -8,8 +10,10 @@ use super::node_rendering::{NodeOf, RenderFile};
 use super::page_layout::SitePieces;
 use super::site_data::{SEARCH_DOCUMENTS, asset};
 use crate::entities::{
-    BuiltSite, PageOptions, SiteAssets, SiteFile, SiteFiles, SiteNode, SiteTree, SiteTreeNode,
+    BuiltSite, PageOptions, RenderedSite, SiteAssets, SiteFile, SiteFiles, SiteNode, SiteTree,
+    SiteTreeNode,
 };
+use last_files::LastFiles;
 
 /// Above this size, search can be slow to start. MiniSearch 7.2.0, in Node 22
 /// on a four-core server, took about 70 ms to index each million bytes.
@@ -17,10 +21,20 @@ const LARGE_SEARCH_DOCUMENTS: usize = 5_000_000;
 
 /// Every file of `tree`, in its order, in the site that `options` make: the
 /// version's, and those beside the versions, at the output folder's root.
-pub(crate) fn render_site(tree: &SiteTree, options: &PageOptions) -> SiteFiles {
+/// A file whose node has the same subtree as the node of the file at the same
+/// address in `last`, the site the last build rendered, is kept from it rather
+/// than rendered again.
+pub(crate) fn render_site(
+    tree: &SiteTree,
+    last: Option<&RenderedSite>,
+    options: &PageOptions,
+) -> SiteFiles {
     let site = SitePieces::of(tree.frame());
-    let files = render_files(tree.files(), &site);
-    let root_files = render_files(tree.root_files(), &site);
+    let last_files = last.map(|last| LastFiles::of(last.tree.files(), &last.files.files));
+    let last_root_files =
+        last.map(|last| LastFiles::of(last.tree.root_files(), &last.files.root_files));
+    let files = render_files(tree.files(), last_files.as_ref(), &site);
+    let root_files = render_files(tree.root_files(), last_root_files.as_ref(), &site);
     let built = BuiltSite {
         large_search_documents: files
             .iter()
@@ -36,34 +50,52 @@ pub(crate) fn render_site(tree: &SiteTree, options: &PageOptions) -> SiteFiles {
     }
 }
 
-/// The file of each of `nodes`, in their order, rendered in parallel.
+/// The file of each of `nodes`, in their order, rendered in parallel, unless
+/// it is kept from `last`.
 fn render_files<'a>(
     nodes: impl Iterator<Item = SiteTreeNode<'a>>,
+    last: Option<&LastFiles<'_>>,
     site: &SitePieces<'_>,
 ) -> Vec<SiteFile> {
     let nodes: Vec<_> = nodes.collect();
     // Collecting into a `Vec` keeps the files' order, whatever order the threads finish in.
     nodes
         .par_iter()
-        .filter_map(|node| render_file(*node, site))
+        .filter_map(|node| render_file(*node, last, site))
         .collect()
 }
 
-/// The file of `node`; `None` for the site, a version, a folder and a part
-/// of a page, which make no file of their own, and for an asset that is not
-/// there.
-fn render_file(node: SiteTreeNode<'_>, site: &SitePieces<'_>) -> Option<SiteFile> {
+/// The file of `node`, kept from `last` when its node there is unchanged; `None` for the
+/// site, a version, a folder and a part of a page, which make no file of their
+/// own, and for an asset that is not there.
+fn render_file(
+    node: SiteTreeNode<'_>,
+    last: Option<&LastFiles<'_>>,
+    site: &SitePieces<'_>,
+) -> Option<SiteFile> {
+    if let SiteNode::Asset(name) = node.value() {
+        return asset_file(name);
+    }
+    let renderer = file_renderer(node)?;
+    let address = renderer.address();
+    let kept_file = last.and_then(|last| last.file(&address, node));
+    Some(kept_file.unwrap_or_else(|| SiteFile::text(address, renderer.render_file(site))))
+}
+
+/// What renders the file of `node`; `None` for an asset, which is not
+/// rendered, and for the site, a version, a folder and a part of a page.
+fn file_renderer<'a>(node: SiteTreeNode<'a>) -> Option<Box<dyn RenderFile + 'a>> {
     match node.value() {
-        SiteNode::FeaturePage(_) => node.feature_page().map(|feature| file(&feature, site)),
-        SiteNode::FolderPage(_) => node.folder_page().map(|folder| file(&folder, site)),
-        SiteNode::SentencesPage(value) => Some(file(&NodeOf { value, node }, site)),
-        SiteNode::FolderTree(items) => Some(file(items.as_slice(), site)),
-        SiteNode::TagIndex(value) => Some(file(&NodeOf { value, node }, site)),
-        SiteNode::TagPage(value) => Some(file(&NodeOf { value, node }, site)),
-        SiteNode::SearchDocuments(documents) => Some(file(documents.as_slice(), site)),
-        SiteNode::VersionsPage(value) => Some(file(&NodeOf { value, node }, site)),
-        SiteNode::Asset(name) => asset_file(name),
-        SiteNode::Site(_)
+        SiteNode::FeaturePage(_) => node.feature_page().map(boxed),
+        SiteNode::FolderPage(_) => node.folder_page().map(boxed),
+        SiteNode::SentencesPage(value) => Some(boxed(NodeOf { value, node })),
+        SiteNode::FolderTree(items) => Some(boxed(items.as_slice())),
+        SiteNode::TagIndex(value) => Some(boxed(NodeOf { value, node })),
+        SiteNode::TagPage(value) => Some(boxed(NodeOf { value, node })),
+        SiteNode::SearchDocuments(documents) => Some(boxed(documents.as_slice())),
+        SiteNode::VersionsPage(value) => Some(boxed(NodeOf { value, node })),
+        SiteNode::Asset(_)
+        | SiteNode::Site(_)
         | SiteNode::Version(_)
         | SiteNode::KeptVersion(_)
         | SiteNode::InputFolder
@@ -90,8 +122,8 @@ fn render_file(node: SiteTreeNode<'_>, site: &SitePieces<'_>) -> Option<SiteFile
     }
 }
 
-fn file(node: &(impl RenderFile + ?Sized), site: &SitePieces<'_>) -> SiteFile {
-    SiteFile::text(node.address(), node.render_file(site))
+fn boxed<'a>(file: impl RenderFile + 'a) -> Box<dyn RenderFile + 'a> {
+    Box::new(file)
 }
 
 /// The asset named `name`, as a file of the site.
@@ -113,44 +145,4 @@ fn is_large(size: &usize) -> bool {
 }
 
 #[cfg(test)]
-mod tests {
-    use std::collections::BTreeMap;
-    use std::path::PathBuf;
-
-    use gherkin::{Feature, GherkinEnv};
-    use rstest::rstest;
-
-    use super::*;
-    use crate::entities::ParsedFeature;
-    use crate::test_support::site_from_nothing;
-
-    /// The site of one feature named `name`.
-    fn built(name: &str) -> BuiltSite {
-        let feature =
-            Feature::parse(format!("Feature: {name}\n"), GherkinEnv::default()).expect("parses");
-        let parsed = ParsedFeature::new(
-            PathBuf::from("a.feature"),
-            feature,
-            "en".to_string(),
-            BTreeMap::new(),
-        );
-        let options = PageOptions::default();
-        render_site(&site_from_nothing(&[parsed], &options), &options).built
-    }
-
-    #[rstest]
-    #[case::small(1, false)]
-    #[case::large(LARGE_SEARCH_DOCUMENTS, true)]
-    fn only_search_documents_above_the_size_are_reported(
-        #[case] name_length: usize,
-        #[case] reported: bool,
-    ) {
-        let built = built(&"a".repeat(name_length));
-        assert_eq!(built.large_search_documents.is_some(), reported);
-        assert!(
-            built
-                .large_search_documents
-                .is_none_or(|size| is_large(&size))
-        );
-    }
-}
+mod tests;

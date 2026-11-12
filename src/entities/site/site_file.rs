@@ -21,6 +21,7 @@ impl SiteFile {
 }
 
 /// Every file of a site, and what the build has to say of them.
+#[derive(Debug)]
 pub(crate) struct SiteFiles {
     /// The version's files, or the whole site's when it has no versions.
     pub(crate) files: Vec<SiteFile>,

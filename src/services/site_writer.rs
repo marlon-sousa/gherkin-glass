@@ -1,4 +1,4 @@
-//! Service: the site writer, rendering the site tree and writing its files into its output folder, with or without versions, once the folder is safe, or into memory.
+//! Service: the site writer, rendering the site tree, keeping from the last site the file of every node that has not changed, and writing its files into its output folder, with or without versions, once the folder is safe, or into memory.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::io::Error as IoError;
@@ -6,7 +6,7 @@ use std::path::Path;
 use std::sync::Arc;
 
 use crate::entities::{
-    BuildFolder, BuildTarget, BuiltSite, Destination, FilePath, Record, ServedSite, Settings,
+    BuildFolder, BuildTarget, Destination, FilePath, Record, RenderedSite, ServedSite, Settings,
     SiteFile, SiteFiles, SiteTree, VersionName,
 };
 use crate::errors::{OutputError, OutputErrorKind};
@@ -21,16 +21,19 @@ pub(crate) trait SiteWriterApi: Send + Sync {
     /// check and has no versions.
     fn check(&self, settings: &Settings) -> Result<BTreeSet<VersionName>, OutputError>;
 
-    /// Renders every file of `tree` and writes it where the settings say, and
-    /// returns what the build has to say of the site, and the site as it is
-    /// served. Into the output folder, it is written as the version its
-    /// settings name, or without versions when they name none, once the folder
-    /// is checked again; in memory, as a site without versions.
+    /// Renders every file of `tree`, except one whose node is unchanged since
+    /// `last`, the site the last build rendered, which it keeps from there,
+    /// and writes it where the settings say. It returns the site as it is
+    /// served, and `tree` with the files rendered from it, which hold what the
+    /// build has to say of the site. Into the output folder, it is written as
+    /// the version its settings name, or without versions when they name none,
+    /// once the folder is checked again; in memory, as a site without versions.
     fn write(
         &self,
         settings: &Settings,
-        tree: &SiteTree,
-    ) -> Result<(BuiltSite, ServedSite), OutputError>;
+        tree: SiteTree,
+        last: Option<&RenderedSite>,
+    ) -> Result<(ServedSite, RenderedSite), OutputError>;
 }
 
 pub(crate) struct SiteWriter {
@@ -153,11 +156,12 @@ impl SiteWriterApi for SiteWriter {
     fn write(
         &self,
         settings: &Settings,
-        tree: &SiteTree,
-    ) -> Result<(BuiltSite, ServedSite), OutputError> {
-        let site = render_site(tree, &settings.pages);
-        let served = self.write_site(settings, &site)?;
-        Ok((site.built, served))
+        tree: SiteTree,
+        last: Option<&RenderedSite>,
+    ) -> Result<(ServedSite, RenderedSite), OutputError> {
+        let files = render_site(&tree, last, &settings.pages);
+        let served = self.write_site(settings, &files)?;
+        Ok((served, RenderedSite { tree, files }))
     }
 }
 

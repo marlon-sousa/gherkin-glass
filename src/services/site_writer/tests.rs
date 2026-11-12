@@ -125,7 +125,8 @@ fn a_site_in_memory_checks_no_folder_and_has_no_versions() {
     let empty =
         InputTreeBuilder::listed("in".into(), IgnoreRules::default(), Revision::default()).build();
     let site = Converter.convert(&empty, None, &settings, &built_versions);
-    let (_, ServedSite::Memory(files)) = writer.write(&settings, &site).expect("written") else {
+    let (ServedSite::Memory(files), _) = writer.write(&settings, site, None).expect("written")
+    else {
         panic!("a site in memory");
     };
     assert!(files.contains_key("index.html"));
