@@ -6,8 +6,8 @@ use i18n_embed::LanguageLoader;
 use i18n_embed_fl::fl;
 
 use crate::entities::{
-    Block, BlockKind, LinkAddress, Page, PageOptions, TagFeature, TagIndex, TagIndexEntry,
-    TagNames, TagPage, TagScenario, TagView,
+    FeatureBlock, LinkAddress, Page, PageOptions, ScenarioBlock, TagFeature, TagIndex,
+    TagIndexEntry, TagNames, TagPage, TagScenario, TagView,
 };
 use crate::policies::{CATALOGUE, breadcrumb, outside_link, page_frame, site_title};
 
@@ -91,8 +91,8 @@ pub(crate) fn build_tag_page(
                         };
                         let (before, after) = around_mark(&words);
                         TagScenario {
-                            address: LinkAddress::to(&page_address).at(&scenario.anchor),
-                            heading: scenario.heading(),
+                            address: LinkAddress::to(&page_address).at(&scenario.heading.anchor),
+                            heading: scenario.heading.text(),
                             before,
                             after,
                         }
@@ -133,35 +133,39 @@ enum Through {
 }
 
 /// The scenarios of `page` that carry `tag`, in the order of the file.
-fn carriers<'a>(page: &'a Page, tag: &str) -> Vec<(&'a Block, Through)> {
+fn carriers<'a>(page: &'a Page, tag: &str) -> Vec<(&'a ScenarioBlock, Through)> {
     let feature = has(&page.tags, tag);
-    let mut found = Vec::new();
-    let mut add = |block: &'a Block, rule: bool| {
-        let through = if has(&block.tags, tag) {
+    let carrier = |scenario: &'a ScenarioBlock, rule: bool| {
+        let through = if has(&scenario.tags, tag) {
             Through::Itself
-        } else if block.blocks.iter().any(|examples| has(&examples.tags, tag)) {
+        } else if scenario
+            .examples
+            .iter()
+            .any(|examples| has(&examples.tags, tag))
+        {
             Through::Examples
         } else if rule {
             Through::Rule
         } else if feature {
             Through::Feature
         } else {
-            return;
+            return None;
         };
-        found.push((block, through));
+        Some((scenario, through))
     };
+    let mut found = Vec::new();
     for block in &page.blocks {
-        match block.kind {
-            BlockKind::Scenario => add(block, false),
-            BlockKind::Rule => {
-                let rule = has(&block.tags, tag);
-                for inner in &block.blocks {
-                    if inner.kind == BlockKind::Scenario {
-                        add(inner, rule);
-                    }
-                }
+        match block {
+            FeatureBlock::Scenario(scenario) => found.extend(carrier(scenario, false)),
+            FeatureBlock::Rule(rule) => {
+                let tagged = has(&rule.tags, tag);
+                found.extend(
+                    rule.scenarios
+                        .iter()
+                        .filter_map(|scenario| carrier(scenario, tagged)),
+                );
             }
-            BlockKind::Background | BlockKind::Examples | BlockKind::ExamplesAsScenarios => {}
+            FeatureBlock::Background(_) => {}
         }
     }
     found
@@ -169,12 +173,19 @@ fn carriers<'a>(page: &'a Page, tag: &str) -> Vec<(&'a Block, Through)> {
 
 /// Whether `tag` is written anywhere on `page`.
 fn writes(page: &Page, tag: &str) -> bool {
-    fn in_blocks(blocks: &[Block], tag: &str) -> bool {
-        blocks
-            .iter()
-            .any(|block| has(&block.tags, tag) || in_blocks(&block.blocks, tag))
-    }
-    has(&page.tags, tag) || in_blocks(&page.blocks, tag)
+    let in_scenario = |scenario: &ScenarioBlock| {
+        has(&scenario.tags, tag)
+            || scenario
+                .examples
+                .iter()
+                .any(|examples| has(&examples.tags, tag))
+    };
+    let in_block = |block: &FeatureBlock| match block {
+        FeatureBlock::Background(_) => false,
+        FeatureBlock::Rule(rule) => has(&rule.tags, tag) || rule.scenarios.iter().any(in_scenario),
+        FeatureBlock::Scenario(scenario) => in_scenario(scenario),
+    };
+    has(&page.tags, tag) || page.blocks.iter().any(in_block)
 }
 
 fn has(tags: &[TagView], tag: &str) -> bool {

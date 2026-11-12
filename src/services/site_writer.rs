@@ -1,4 +1,4 @@
-//! Service: the site writer, writing a site into its output folder, with or without versions, once the folder is safe, or into memory.
+//! Service: the site writer, rendering the site tree and writing its files into its output folder, with or without versions, once the folder is safe, or into memory.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::io::Error as IoError;
@@ -7,14 +7,32 @@ use std::path::Path;
 use std::sync::Arc;
 
 use crate::entities::{
-    BuildFolder, BuildTarget, Destination, FilePath, Record, ServedSite, Settings, SiteAddress,
-    SiteFile, SiteFiles, VersionName,
+    BuildFolder, BuildTarget, BuiltSite, Destination, FilePath, Record, ServedSite, Settings,
+    SiteAddress, SiteFile, SiteTree, VersionName,
 };
 use crate::errors::{OutputError, OutputErrorKind};
 use crate::policies::{
-    Moment, VERSIONS_PAGE, assets, order_versions, output_safety, render_versions_page,
+    Moment, VERSIONS_PAGE, assets, order_versions, output_safety, render_site, render_versions_page,
 };
 use crate::ports::{FileWriter, OutputFolders};
+
+/// What the controller asks of the site writer.
+pub(crate) trait SiteWriterApi: Send + Sync {
+    /// Checks, before the input is read, that the site may be built into the
+    /// output folder; a site built in memory needs no check.
+    fn check(&self, settings: &Settings) -> Result<(), OutputError>;
+
+    /// Renders every file of `tree` and writes it where the settings say, and
+    /// returns what the build has to say of the site, and the site as it is
+    /// served. Into the output folder, it is written as the version its
+    /// settings name, or without versions when they name none, once the folder
+    /// is checked again; in memory, as a site without versions.
+    fn write(
+        &self,
+        settings: &Settings,
+        tree: &SiteTree,
+    ) -> Result<(BuiltSite, ServedSite), OutputError>;
+}
 
 pub(crate) struct SiteWriter {
     folders: Arc<dyn OutputFolders>,
@@ -37,45 +55,29 @@ impl SiteWriter {
         }
     }
 
-    /// Checks, before the input is read, that the site may be built into the
-    /// output folder; a site built in memory needs no check.
-    pub(crate) fn check(&self, settings: &Settings) -> Result<(), OutputError> {
-        if settings.destination == Destination::Memory {
-            return Ok(());
-        }
-        let moment = Moment::Checking {
-            replace: settings.replace,
-        };
-        self.check_folder(&settings.output, &target(settings), moment)
-            .map(drop)
-    }
-
-    /// Writes `site` where the settings say, and returns it as it is served.
-    /// Into the output folder, it is written as the version its settings name,
-    /// or without versions when they name none, once the folder is checked
-    /// again; in memory, as a site without versions.
-    pub(crate) fn write(
+    /// Writes `files` where the settings say, and returns the site as it is served.
+    fn write_site(
         &self,
         settings: &Settings,
-        site: SiteFiles,
+        files: &[SiteFile],
     ) -> Result<ServedSite, OutputError> {
         let output = &settings.output;
         if settings.destination == Destination::Memory {
             // A site that was not taken, if any, is dropped, so that nothing of it is served.
             self.memory_files.site(output);
-            write_files(self.memory_files.as_ref(), output, &site.files)?;
+            write_files(self.memory_files.as_ref(), output, files)?;
             return Ok(self.memory_files.site(output));
         }
         let folder = self.check_folder(output, &target(settings), Moment::Writing)?;
-        let files = paths(&site.files);
+        let written = paths(files);
         match folder.target() {
             BuildTarget::Site => {
                 self.clear(&folder)?;
-                self.mark(&folder, &Record::Site(files))?;
-                write_files(self.folder_files.as_ref(), output, &site.files)?;
+                self.mark(&folder, &Record::Site(written))?;
+                write_files(self.folder_files.as_ref(), output, files)?;
             }
             BuildTarget::Version(name) => {
-                let versions = versions(&folder, name, &files);
+                let versions = versions(&folder, name, &written);
                 let page = render_versions_page(
                     &order_versions(versions.keys().cloned()),
                     &settings.pages,
@@ -93,7 +95,7 @@ impl SiteWriter {
                 write_files(
                     self.folder_files.as_ref(),
                     &output.join(name.as_str()),
-                    &site.files,
+                    files,
                 )?;
                 write_files(self.folder_files.as_ref(), output, &page_files)?;
             }
@@ -146,6 +148,29 @@ impl SiteWriter {
         self.folders
             .record(folder.output(), record)
             .map_err(|io| cannot_write(folder, None, &io))
+    }
+}
+
+impl SiteWriterApi for SiteWriter {
+    fn check(&self, settings: &Settings) -> Result<(), OutputError> {
+        if settings.destination == Destination::Memory {
+            return Ok(());
+        }
+        let moment = Moment::Checking {
+            replace: settings.replace,
+        };
+        self.check_folder(&settings.output, &target(settings), moment)
+            .map(drop)
+    }
+
+    fn write(
+        &self,
+        settings: &Settings,
+        tree: &SiteTree,
+    ) -> Result<(BuiltSite, ServedSite), OutputError> {
+        let site = render_site(tree);
+        let served = self.write_site(settings, &site.files)?;
+        Ok((site.built, served))
     }
 }
 

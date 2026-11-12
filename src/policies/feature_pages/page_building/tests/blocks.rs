@@ -9,10 +9,10 @@ fn headings_read_the_keyword_and_the_name_at_their_levels() {
         "Feature: Refunds, billing/saque em conta.feature"
     );
     assert_eq!(page.address.as_str(), "billing/saque em conta.html");
-    let top: Vec<_> = page
-        .blocks
-        .iter()
-        .map(|b| (b.level.number(), b.heading(), b.anchor.as_str()))
+    let (background, scenario, rule) = blocks(&page);
+    let top: Vec<_> = [&background.heading, &scenario.heading, &rule.heading]
+        .into_iter()
+        .map(|h| (h.level.number(), h.text(), h.anchor.as_str()))
         .collect();
     assert_eq!(
         top,
@@ -22,16 +22,18 @@ fn headings_read_the_keyword_and_the_name_at_their_levels() {
             (2, "Rule: R".to_string(), "r"),
         ]
     );
-    let rule = &page.blocks[2];
-    let inside: Vec<_> = rule
-        .blocks
-        .iter()
-        .map(|b| (b.level.number(), b.anchor.as_str()))
+    let (background, outline) = in_rule(rule);
+    let inside: Vec<_> = [&background.heading, &outline.heading]
+        .into_iter()
+        .map(|h| (h.level.number(), h.anchor.as_str()))
         .collect();
     assert_eq!(inside, [(3, "in-the-rule"), (3, "inside")]);
-    let examples = &rule.blocks[1].blocks[0];
+    let examples = &outline.examples[0];
     assert_eq!(
-        (examples.level.number(), examples.heading().as_str()),
+        (
+            examples.heading.level.number(),
+            examples.heading.text().as_str()
+        ),
         (4, "Examples")
     );
     assert_eq!(
@@ -46,36 +48,30 @@ fn headings_read_the_keyword_and_the_name_at_their_levels() {
 #[test]
 fn an_outline_shows_its_rows_as_scenarios_in_a_collapsed_block() {
     let page = page(FEATURE, &PageOptions::default());
-    let outline = &page.blocks[2].blocks[1];
-    let section = &outline.blocks[1];
+    let (_, outline) = in_rule(blocks(&page).2);
+    let section = outline.as_scenarios.as_ref().expect("rows");
+    let heading = &section.heading;
     assert_eq!(
         (
-            section.kind,
-            section.level.number(),
-            section.anchor.as_str(),
-            section.heading().as_str(),
-            section.collapsed
+            heading.level.number(),
+            heading.anchor.as_str(),
+            heading.text().as_str(),
+            heading.collapsed
         ),
-        (
-            BlockKind::ExamplesAsScenarios,
-            4,
-            "inside_scenarios",
-            "Examples as scenarios: Inside",
-            true
-        )
+        (4, "inside_scenarios", "Examples as scenarios: Inside", true)
     );
-    let row = &section.blocks[0];
+    let row = &section.scenarios[0];
     assert_eq!(
         (
-            row.level.number(),
-            row.anchor.as_str(),
-            row.heading().as_str()
+            row.heading.level.number(),
+            row.heading.anchor.as_str(),
+            row.heading.text().as_str()
         ),
         (5, "inside-row-1", "Inside (n: 1)")
     );
     assert_eq!(row.steps[0].parts, [StepPart::Number("1".into())]);
-    let isolated: Vec<_> = section
-        .heading_parts
+    let isolated: Vec<_> = heading
+        .parts
         .iter()
         .map(|part| (part.text.as_str(), part.isolated))
         .collect();
@@ -84,7 +80,8 @@ fn an_outline_shows_its_rows_as_scenarios_in_a_collapsed_block() {
         [("Examples as scenarios: ", false), ("Inside", true)]
     );
     let isolated: Vec<_> = row
-        .heading_parts
+        .heading
+        .parts
         .iter()
         .map(|part| (part.text.as_str(), part.isolated))
         .collect();
@@ -104,22 +101,26 @@ fn an_outline_shows_its_rows_as_scenarios_in_a_collapsed_block() {
         ..PageOptions::default()
     };
     let page = self::page(FEATURE, &scenarios);
-    assert!(page.blocks[2].blocks[1].blocks[1].blocks[0].collapsed);
+    let (_, outline) = in_rule(blocks(&page).2);
+    let as_scenarios = outline.as_scenarios.as_ref().expect("rows");
+    assert!(as_scenarios.scenarios[0].heading.collapsed);
 }
 
 #[test]
 fn the_settings_choose_which_blocks_start_collapsed() {
     let collapsed = |options: &PageOptions| {
         let page = page(FEATURE, options);
-        let rule = &page.blocks[2];
+        let (background, scenario, rule) = blocks(&page);
+        let (rule_background, outline) = in_rule(rule);
         [
-            page.blocks[0].collapsed,
-            page.blocks[1].collapsed,
-            rule.collapsed,
-            rule.blocks[0].collapsed,
-            rule.blocks[1].collapsed,
-            rule.blocks[1].blocks[0].collapsed,
+            &background.heading,
+            &scenario.heading,
+            &rule.heading,
+            &rule_background.heading,
+            &outline.heading,
+            &outline.examples[0].heading,
         ]
+        .map(|heading| heading.collapsed)
     };
     assert_eq!(collapsed(&PageOptions::default()), [false; 6]);
     let rules = PageOptions {

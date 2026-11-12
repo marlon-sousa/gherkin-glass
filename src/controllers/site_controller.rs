@@ -2,13 +2,14 @@
 
 use std::net::SocketAddr;
 use std::path::Path;
+use std::sync::Arc;
 use std::thread::park;
 
 use crate::entities::{
     BuildOptions, BuiltSite, Destination, Preview, ServeMode, ServeOptions, ServedSite, Settings,
 };
 use crate::errors::{BuildError, RebuildError, ServeError};
-use crate::services::{Converter, InputService, ServerService, SettingsService, SiteWriter};
+use crate::services::{ConverterApi, ParserApi, ServerApi, SettingsApi, SiteWriterApi};
 
 /// What the handlers ask of gherkin-glass.
 pub(crate) trait SiteApi {
@@ -27,20 +28,20 @@ pub(crate) trait SiteListener {
 }
 
 pub(crate) struct SiteController {
-    settings: SettingsService,
-    parser: InputService,
-    converter: Converter,
-    writer: SiteWriter,
-    server: ServerService,
+    settings: Arc<dyn SettingsApi>,
+    parser: Arc<dyn ParserApi>,
+    converter: Arc<dyn ConverterApi>,
+    writer: Arc<dyn SiteWriterApi>,
+    server: Arc<dyn ServerApi>,
 }
 
 impl SiteController {
     pub(crate) fn new(
-        settings: SettingsService,
-        parser: InputService,
-        converter: Converter,
-        writer: SiteWriter,
-        server: ServerService,
+        settings: Arc<dyn SettingsApi>,
+        parser: Arc<dyn ParserApi>,
+        converter: Arc<dyn ConverterApi>,
+        writer: Arc<dyn SiteWriterApi>,
+        server: Arc<dyn ServerApi>,
     ) -> Self {
         SiteController {
             settings,
@@ -56,9 +57,8 @@ impl SiteController {
     fn build_with(&self, settings: &Settings) -> Result<(BuiltSite, ServedSite), BuildError> {
         self.writer.check(settings)?;
         let features = self.parser.read(&settings.input, settings.unnamed)?;
-        let site = self.converter.convert(&features, settings);
-        let built = site.built;
-        Ok((built, self.writer.write(settings, site)?))
+        let tree = self.converter.convert(&features, settings);
+        Ok(self.writer.write(settings, &tree)?)
     }
 
     fn rebuild_and_serve(
@@ -100,7 +100,7 @@ impl SiteApi for SiteController {
             .settings
             .load(&options.build, options.mode.destination())
             .map_err(BuildError::Config)?;
-        let config = SettingsService::config_file(&options.build);
+        let config = self.settings.config_file(&options.build);
         let selected = |input: &Path| self.parser.paths(input);
         // Watching starts before the first build, so that a change made
         // during it is not missed; what stops the build is said first.

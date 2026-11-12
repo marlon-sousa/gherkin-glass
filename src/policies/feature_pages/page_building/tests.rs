@@ -5,7 +5,8 @@ use gherkin::{Feature, GherkinEnv};
 
 use super::*;
 use crate::entities::{
-    LinkAddress, OutsideLink, ParsedFeature, StepPart, TableView, TagLink, TagView,
+    BackgroundBlock, LinkAddress, OutsideLink, ParsedFeature, RuleBlock, StepPart, TableView,
+    TagLink, TagView,
 };
 use crate::policies::{anchor_feature, name_tags, tags_of, whole_tag_pattern};
 
@@ -19,6 +20,27 @@ fn page(text: &str, options: &PageOptions) -> Page {
     );
     let tags = name_tags(&tags_of(std::slice::from_ref(&parsed)));
     build_page(&anchor_feature(&parsed), options, &tags)
+}
+
+/// The blocks of a page of `FEATURE`: its background, its scenario and its rule.
+fn blocks(page: &Page) -> (&BackgroundBlock, &ScenarioBlock, &RuleBlock) {
+    let [
+        FeatureBlock::Background(background),
+        FeatureBlock::Scenario(scenario),
+        FeatureBlock::Rule(rule),
+    ] = page.blocks.as_slice()
+    else {
+        panic!("{:?}", page.blocks);
+    };
+    (background, scenario, rule)
+}
+
+/// The rule's own background, and its outline.
+fn in_rule(rule: &RuleBlock) -> (&BackgroundBlock, &ScenarioBlock) {
+    let (Some(background), [outline]) = (&rule.background, rule.scenarios.as_slice()) else {
+        panic!("{rule:?}");
+    };
+    (background, outline)
 }
 
 const FEATURE: &str = "\
@@ -122,13 +144,13 @@ fn every_tag_links_its_page_and_the_first_outside_link_that_matches() {
     };
     let page = page(FEATURE, &options);
     assert_eq!(page.tags[0].outside, None);
-    let rule = &page.blocks[2];
-    let views: Vec<_> = [&page.tags, &page.blocks[1].tags, &rule.tags]
+    let (_, scenario, rule) = blocks(&page);
+    let views: Vec<_> = [&page.tags, &scenario.tags, &rule.tags]
         .into_iter()
         .flatten()
         .collect();
     assert_eq!(views.len(), 1);
-    let examples = &rule.blocks[1].blocks[0];
+    let examples = &in_rule(rule).1.examples[0];
     let tag = &examples.tags[0];
     assert_eq!(tag.address.to_string(), "../tags/in-rule.html");
     assert_eq!(

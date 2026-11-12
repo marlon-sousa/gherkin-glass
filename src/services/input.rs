@@ -16,6 +16,19 @@ use crate::policies::{
 };
 use crate::ports::{FeatureParser, InputFolders};
 
+/// What the controller asks of the gherkin parser.
+pub(crate) trait ParserApi: Send + Sync {
+    /// The paths of the files the `.ghg-ignore` rules select under
+    /// `input`, sorted, without reading them.
+    fn paths(&self, input: &Path) -> Vec<PathBuf>;
+
+    /// The features under `input`, sorted by path, or every error found:
+    /// those met while collecting, the files whose page another has, those
+    /// of every file parsed, and, when `unnamed` is refused, every block
+    /// that needs a name and has none.
+    fn read(&self, input: &Path, unnamed: Unnamed) -> Result<Vec<ParsedFeature>, InputErrors>;
+}
+
 #[derive(Clone)]
 pub(crate) struct InputService {
     folders: Arc<dyn InputFolders>,
@@ -25,38 +38,6 @@ pub(crate) struct InputService {
 impl InputService {
     pub(crate) fn new(folders: Arc<dyn InputFolders>, parser: Arc<dyn FeatureParser>) -> Self {
         InputService { folders, parser }
-    }
-
-    /// The paths of the files the `.ghg-ignore` rules select under
-    /// `input`, sorted, without reading them.
-    pub(crate) fn paths(&self, input: &Path) -> Vec<PathBuf> {
-        walk_input(self.folders.as_ref(), input).paths
-    }
-
-    /// The features under `input`, sorted by path, or every error found:
-    /// those met while collecting, the files whose page another has, those
-    /// of every file parsed, and, when `unnamed` is refused, every block
-    /// that needs a name and has none.
-    pub(crate) fn read(
-        &self,
-        input: &Path,
-        unnamed: Unnamed,
-    ) -> Result<Vec<ParsedFeature>, InputErrors> {
-        let collected = walk_input(self.folders.as_ref(), input);
-        let mut errors = collected.errors;
-        errors.extend(page_collisions(input, &collected.paths));
-        // Collecting into a `Vec` keeps file order, whatever order the threads finish in.
-        let (failed, features): (Vec<_>, Vec<_>) = collected
-            .paths
-            .par_iter()
-            .map(|path| self.parse(input, path, unnamed))
-            .partition_map(Either::from);
-        errors.extend(failed.into_iter().flatten());
-        if errors.is_empty() {
-            Ok(features)
-        } else {
-            Err(InputErrors::new(errors))
-        }
     }
 
     fn parse(
@@ -91,6 +72,30 @@ impl InputService {
             language,
             media_types,
         ))
+    }
+}
+
+impl ParserApi for InputService {
+    fn paths(&self, input: &Path) -> Vec<PathBuf> {
+        walk_input(self.folders.as_ref(), input).paths
+    }
+
+    fn read(&self, input: &Path, unnamed: Unnamed) -> Result<Vec<ParsedFeature>, InputErrors> {
+        let collected = walk_input(self.folders.as_ref(), input);
+        let mut errors = collected.errors;
+        errors.extend(page_collisions(input, &collected.paths));
+        // Collecting into a `Vec` keeps file order, whatever order the threads finish in.
+        let (failed, features): (Vec<_>, Vec<_>) = collected
+            .paths
+            .par_iter()
+            .map(|path| self.parse(input, path, unnamed))
+            .partition_map(Either::from);
+        errors.extend(failed.into_iter().flatten());
+        if errors.is_empty() {
+            Ok(features)
+        } else {
+            Err(InputErrors::new(errors))
+        }
     }
 }
 

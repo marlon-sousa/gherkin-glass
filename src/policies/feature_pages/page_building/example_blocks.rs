@@ -3,26 +3,31 @@
 use gherkin::{Examples, Scenario};
 use i18n_embed_fl::fl;
 
-use super::block_building::{Builder, block, description, worded_block};
+use super::block_building::{Builder, block_heading, description, worded_heading};
 use super::heading_words::{TEXT_MARKS, heading, isolated, plain, worded_parts};
 use super::step_views::{filled_step_views, table};
-use crate::entities::{Anchored, AnchoredScenario, Block, BlockKind, HeadingLevel};
+use crate::entities::{
+    Anchored, AnchoredScenario, ExamplesAsScenarios, ExamplesBlock, HeadingLevel, ScenarioBlock,
+};
 use crate::policies::{CATALOGUE, ExampleRow, example_rows};
 
 impl Builder<'_> {
-    pub(super) fn examples(&self, anchored: &Anchored<'_, Examples>, level: HeadingLevel) -> Block {
+    pub(super) fn examples(
+        &self,
+        anchored: &Anchored<'_, Examples>,
+        level: HeadingLevel,
+    ) -> ExamplesBlock {
         let examples = anchored.block;
-        Block {
-            tags: self.tags(&examples.tags),
-            description: description(examples.description.as_deref()),
-            table: examples.table.as_ref().map(table),
-            ..block(
-                BlockKind::Examples,
+        ExamplesBlock {
+            heading: block_heading(
                 level,
                 &anchored.anchor,
                 heading(&examples.keyword, examples.name.as_deref().unwrap_or("")),
                 false,
-            )
+            ),
+            tags: self.tags(&examples.tags),
+            description: description(examples.description.as_deref()),
+            table: examples.table.as_ref().map(table),
         }
     }
 
@@ -30,7 +35,7 @@ impl Builder<'_> {
         &self,
         anchored: &AnchoredScenario<'_>,
         level: HeadingLevel,
-    ) -> Option<Block> {
+    ) -> Option<ExamplesAsScenarios> {
         let outline = anchored.scenario;
         let rows = example_rows(outline);
         if rows.is_empty() {
@@ -38,20 +43,19 @@ impl Builder<'_> {
         }
         let outline_anchor = &anchored.anchor;
         let words = fl!(CATALOGUE, "examples-as-scenarios", name = TEXT_MARKS[0]);
-        let blocks = rows
+        let scenarios = rows
             .iter()
             .zip(&anchored.rows)
             .map(|(row, anchor)| self.example_scenario(outline, anchor, row, level.below()))
             .collect();
-        Some(Block {
-            blocks,
-            ..worded_block(
-                BlockKind::ExamplesAsScenarios,
+        Some(ExamplesAsScenarios {
+            heading: worded_heading(
                 level,
                 &format!("{outline_anchor}_scenarios"),
                 worded_parts(&words, &[isolated(outline_name(outline))]),
                 true,
-            )
+            ),
+            scenarios,
         })
     }
 
@@ -61,7 +65,7 @@ impl Builder<'_> {
         anchor: &str,
         row: &ExampleRow<'_>,
         level: HeadingLevel,
-    ) -> Block {
+    ) -> ScenarioBlock {
         let value_words = fl!(
             CATALOGUE,
             "example-value",
@@ -80,16 +84,15 @@ impl Builder<'_> {
             name = TEXT_MARKS[0],
             values = TEXT_MARKS[1]
         );
-        Block {
-            steps: filled_step_views(self.parsed, &outline.steps, row),
-            ..worded_block(
-                BlockKind::Scenario,
+        ScenarioBlock::of_steps(
+            worded_heading(
                 level,
                 anchor,
                 worded_parts(&words, &[isolated(outline_name(outline)), values]),
                 self.options.collapse_scenarios,
-            )
-        }
+            ),
+            filled_step_views(self.parsed, &outline.steps, row),
+        )
     }
 }
 
