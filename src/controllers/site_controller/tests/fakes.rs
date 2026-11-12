@@ -1,240 +1,160 @@
-use std::collections::{BTreeMap, BTreeSet};
-use std::io::{Error as IoError, ErrorKind, Result as IoResult};
-use std::mem::take;
-use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+//! The controller's fakes: one for each service it drives, each noting what it was asked in one
+//! list they share, so that a test sees the order of the calls, and a listener that records what
+//! it was told.
+
+mod building;
+mod serving;
+
+use std::path::PathBuf;
+use std::sync::atomic::Ordering;
 use std::sync::{Arc, Mutex, PoisonError};
-use std::thread::sleep;
-use std::time::{Duration, Instant};
 
 use super::*;
-use crate::entities::{EntryKind, FolderEntry, OutputContents, RawFeature, Record};
-use crate::errors::{InputErrorKind, ParseError};
-use crate::ports::{ConfigReader, FeatureParser, FileWriter, InputFolders, OutputFolders};
-use crate::services::{Converter, GherkinParser, ServerService, SettingsService, SiteWriter};
-use crate::test_support::{FakeServer, FakeWatcher};
+use crate::errors::{
+    ConfigError, ConfigErrorKind, ConfigErrors, InputError, InputErrorKind, InputErrors,
+    ListenErrorKind, OutputError, OutputErrorKind,
+};
+use building::{FakeConverter, FakeGherkinParser, FakeSettingsService, FakeSiteWriter};
+use serving::FakeServerService;
+pub(super) use serving::Recorded;
 
-/// Configuration files held in memory; any other path is not found.
-struct ConfigFiles {
-    files: BTreeMap<PathBuf, String>,
-}
-
-impl ConfigReader for ConfigFiles {
-    fn read(&self, path: &Path) -> IoResult<String> {
-        self.files
-            .get(path)
-            .cloned()
-            .ok_or_else(|| IoError::new(ErrorKind::NotFound, "not found"))
-    }
-}
-
-/// An input with no features, or, while `failing`, one file, `a.feature`,
-/// in whatever folder is read, which fails with that folder in its message;
-/// `listed` counts how often a folder was listed.
+/// The calls every fake of one controller was asked, in order, each as the fake's name, the
+/// method's and what it was handed.
 #[derive(Default)]
-pub(super) struct Input {
-    pub(super) failing: AtomicBool,
-    pub(super) listed: AtomicUsize,
+pub(super) struct Calls {
+    calls: Mutex<Vec<String>>,
 }
 
-impl InputFolders for Input {
-    fn list(&self, folder: &Path) -> IoResult<Vec<FolderEntry>> {
-        self.listed.fetch_add(1, Ordering::SeqCst);
-        if !self.failing.load(Ordering::SeqCst) {
-            return Ok(Vec::new());
-        }
-        Ok(vec![FolderEntry {
-            path: folder.join("a.feature"),
-            kind: EntryKind::File,
-        }])
-    }
-
-    fn read(&self, _: &Path) -> IoResult<String> {
-        Err(IoError::new(ErrorKind::NotFound, "not found"))
-    }
-}
-
-impl FeatureParser for Input {
-    fn parse(&self, path: &Path) -> Result<RawFeature, ParseError> {
-        Err(ParseError {
-            line: Some(1),
-            kind: InputErrorKind::Parser {
-                message: format!("read in {}", path.parent().unwrap_or(path).display()),
-            },
-        })
-    }
-}
-
-/// Output folders that all hold the same contents; `touched` counts every
-/// change made to one.
-struct Folders {
-    contents: OutputContents,
-    touched: Arc<AtomicUsize>,
-}
-
-impl Folders {
-    fn touch(&self) -> IoResult<()> {
-        self.touched.fetch_add(1, Ordering::SeqCst);
-        Ok(())
-    }
-}
-
-impl OutputFolders for Folders {
-    fn contents(&self, _: &Path) -> IoResult<OutputContents> {
-        Ok(self.contents.clone())
-    }
-
-    fn clear(&self, _: &Path) -> IoResult<()> {
-        self.touch()
-    }
-
-    fn remove(&self, _: &Path) -> IoResult<()> {
-        self.touch()
-    }
-
-    fn record(&self, _: &Path, _: &Record) -> IoResult<()> {
-        self.touch()
-    }
-}
-
-/// Keeps what is written in memory until the site is taken.
-#[derive(Default)]
-pub(super) struct Recorder {
-    pub(super) files: Mutex<BTreeMap<String, Vec<u8>>>,
-}
-
-impl FileWriter for Recorder {
-    fn write(&self, _: &Path, file: &str, contents: &[u8]) -> IoResult<()> {
-        self.files
+impl Calls {
+    fn note(&self, call: String) {
+        self.calls
             .lock()
             .unwrap_or_else(PoisonError::into_inner)
-            .insert(file.to_string(), contents.to_vec());
-        Ok(())
+            .push(call);
     }
 
-    fn site(&self, _: &Path) -> ServedSite {
-        ServedSite::Memory(take(
-            &mut *self.files.lock().unwrap_or_else(PoisonError::into_inner),
-        ))
-    }
-}
-
-/// Writes nothing, as if into the output folder; `touched` counts the files written.
-pub(super) struct NoFolder {
-    touched: Arc<AtomicUsize>,
-}
-
-impl FileWriter for NoFolder {
-    fn write(&self, _: &Path, _: &str, _: &[u8]) -> IoResult<()> {
-        self.touched.fetch_add(1, Ordering::SeqCst);
-        Ok(())
-    }
-
-    fn site(&self, output: &Path) -> ServedSite {
-        ServedSite::Folder(output.to_path_buf())
+    /// The calls so far.
+    pub(super) fn taken(&self) -> Vec<String> {
+        self.calls
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .clone()
     }
 }
 
-/// What the controller is wired to: its input, its server, its watcher and
-/// its memory; `touched` counts every change made to an output folder.
-#[derive(Default)]
+/// The stage of a build that fails.
+pub(super) enum Failing {
+    Settings,
+    OutputCheck,
+    Input,
+    Writing,
+}
+
+/// The fakes one controller is given, sharing the list of their calls.
 pub(super) struct World {
-    pub(super) input: Arc<Input>,
-    pub(super) server: Arc<FakeServer>,
-    pub(super) watcher: Arc<FakeWatcher>,
-    pub(super) memory: Arc<Recorder>,
-    pub(super) touched: Arc<AtomicUsize>,
+    pub(super) calls: Arc<Calls>,
+    pub(super) settings: Arc<FakeSettingsService>,
+    pub(super) gherkin_parser: Arc<FakeGherkinParser>,
+    pub(super) converter: Arc<FakeConverter>,
+    pub(super) site_writer: Arc<FakeSiteWriter>,
+    pub(super) server: Arc<FakeServerService>,
 }
 
 impl World {
-    /// A controller over this world, with the configuration `files`, and
-    /// output folders that all hold `contents`.
-    pub(super) fn controller(
-        &self,
-        files: &[(&str, &str)],
-        contents: OutputContents,
-    ) -> SiteController {
-        let files = files
-            .iter()
-            .map(|(path, text)| (PathBuf::from(path), text.to_string()))
-            .collect();
+    /// A controller of these fakes.
+    pub(super) fn controller(&self) -> SiteController {
         SiteController::new(
-            Arc::new(SettingsService::new(Arc::new(ConfigFiles { files }))),
-            Arc::new(GherkinParser::new(self.input.clone(), self.input.clone())),
-            Arc::new(Converter),
-            Arc::new(SiteWriter::new(
-                Arc::new(Folders {
-                    contents,
-                    touched: self.touched.clone(),
-                }),
-                Arc::new(NoFolder {
-                    touched: self.touched.clone(),
-                }),
-                self.memory.clone(),
-            )),
-            Arc::new(ServerService::new(
-                self.server.clone(),
-                self.watcher.clone(),
-            )),
+            self.settings.clone(),
+            self.gherkin_parser.clone(),
+            self.converter.clone(),
+            self.site_writer.clone(),
+            self.server.clone(),
         )
     }
-}
 
-/// Records each event it is told of.
-#[derive(Default)]
-pub(super) struct Recorded {
-    events: Mutex<Vec<String>>,
-}
-
-impl SiteListener for Recorded {
-    fn listening(&self, address: SocketAddr) {
-        self.push(format!("listening at {address}"));
-    }
-    fn rebuilt(&self) {
-        self.push("rebuilt".into());
-    }
-    fn not_rebuilt(&self, error: &RebuildError) {
-        self.push(format!("not rebuilt: {error:?}"));
+    /// Makes `failing` fail from now on.
+    pub(super) fn fail(&self, failing: Failing) {
+        let flag = match failing {
+            Failing::Settings => &self.settings.failing,
+            Failing::OutputCheck => &self.site_writer.check_failing,
+            Failing::Input => &self.gherkin_parser.failing,
+            Failing::Writing => &self.site_writer.write_failing,
+        };
+        flag.store(true, Ordering::SeqCst);
     }
 }
 
-impl Recorded {
-    fn push(&self, event: String) {
-        self.events
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .push(event);
-    }
-
-    /// The events so far, once there are `count` of them.
-    pub(super) fn wait_for(&self, count: usize) -> Vec<String> {
-        let deadline = Instant::now() + Duration::from_secs(10);
-        loop {
-            let events = self
-                .events
-                .lock()
-                .unwrap_or_else(PoisonError::into_inner)
-                .clone();
-            if events.len() >= count || Instant::now() > deadline {
-                return events;
-            }
-            sleep(Duration::from_millis(5));
-        }
-    }
-}
-
-/// A folder holding a file ghg did not write, and no marker.
-pub(super) fn not_a_site() -> OutputContents {
-    OutputContents::Folder {
-        files: ["notes.txt".to_string()].into(),
-        folders: BTreeSet::new(),
-        record: None,
+/// Fakes that each do what they are asked, until a test makes one fail.
+pub(super) fn world() -> World {
+    let calls = Arc::new(Calls::default());
+    World {
+        settings: Arc::new(FakeSettingsService {
+            calls: calls.clone(),
+            ..FakeSettingsService::default()
+        }),
+        gherkin_parser: Arc::new(FakeGherkinParser {
+            calls: calls.clone(),
+            ..FakeGherkinParser::default()
+        }),
+        converter: Arc::new(FakeConverter {
+            calls: calls.clone(),
+        }),
+        site_writer: Arc::new(FakeSiteWriter {
+            calls: calls.clone(),
+            ..FakeSiteWriter::default()
+        }),
+        server: Arc::new(FakeServerService {
+            calls: calls.clone(),
+            ..FakeServerService::default()
+        }),
+        calls,
     }
 }
 
-pub(super) fn wait_until(done: impl Fn() -> bool) {
-    let deadline = Instant::now() + Duration::from_secs(10);
-    while !done() && Instant::now() < deadline {
-        sleep(Duration::from_millis(5));
+/// What the fake site writer says of every site it writes.
+pub(super) fn built_site() -> BuiltSite {
+    BuiltSite {
+        large_search_documents: None,
+        untitled: true,
+    }
+}
+
+pub(super) fn config_errors() -> ConfigErrors {
+    ConfigErrors {
+        file: PathBuf::from("ghg.toml"),
+        errors: vec![ConfigError {
+            line: Some(1),
+            kind: ConfigErrorKind::UnknownKey {
+                key: "inputs".into(),
+            },
+        }],
+    }
+}
+
+pub(super) fn input_errors() -> InputErrors {
+    let input = Path::new("features");
+    InputErrors::new(vec![InputError::new(
+        input,
+        &input.join("a.feature"),
+        None,
+        InputErrorKind::CannotBeRead {
+            reason: "denied".into(),
+        },
+    )])
+}
+
+pub(super) fn output_error() -> OutputError {
+    OutputError {
+        output: PathBuf::from("site"),
+        version: None,
+        kind: OutputErrorKind::NotASite,
+    }
+}
+
+pub(super) fn listen_error() -> ServeError {
+    ServeError::Listen {
+        host: "127.0.0.1".into(),
+        port: 8000,
+        kind: ListenErrorKind::PortTaken,
     }
 }
