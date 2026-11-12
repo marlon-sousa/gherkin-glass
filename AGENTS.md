@@ -21,6 +21,7 @@ The manual for anyone, human or agent, changing gherkin-glass. [CONTRIBUTING.md]
 7. **Mark agent comments.** A comment an agent writes on GitHub says it is an agent's.
 8. **Check a library before ruling it in or out.** Before saying that a crate or a package can or cannot do something, read its source or its documentation at the version we would use. Look for its override and extension points, not only its defaults. The issue or pull request says what was checked: the file and line, or the documentation page.
 9. **The plain crate before its internals.** A crate's public face, such as `regex`, comes before the crates it is built from, such as `regex-automata` and `regex-syntax`. The internals are used only where the plain crate cannot do what is needed, and the pull request says why, naming the file and line of the plain crate's source, as rule 8 asks.
+10. **One question at a time.** A question for the maintainer is asked in plain prose, one decision at a time, with the option recommended and why. The answer is recorded on its issue, as CONTRIBUTING.md, "Issues come first", describes, before the next question is asked.
 
 ## Reviewing a change
 

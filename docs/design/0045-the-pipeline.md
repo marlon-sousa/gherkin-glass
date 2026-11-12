@@ -12,6 +12,19 @@ gherkin-glass collects its feature files already parsed, converts them into one 
 
 The code is moved to this shape layer by layer, and every layer keeps every page byte for byte, as the fixtures' and the example suite's committed sites check.
 
+## How the code moves there
+
+The redesign is built as a stack of six layers, each saying `Refs #45` and reviewed before it opens, once this note has merged:
+
+1. the input walk moves into the gherkin parser, behind the `InputFolders` port;
+2. the handler and the controller split, and the server service comes in, with its channel and the handler's listener;
+3. the destination goes into the settings, with the `FileWriter` port and its two adapters;
+4. the tree's node types come in, and the converter produces them, still feeding today's templates;
+5. the rendering trait comes in over the nodes, and the templates move beside them;
+6. the folders move into their stages.
+
+Each layer is meant to keep every page byte for byte. An intermediate layer that cannot keep a test passing may disable it for its CI to run, saying so in its description; the last layer has every test enabled and passing.
+
 ## What else was considered
 
 - **The stages as the top folders, each with its own roles.** That would show the pipeline first, but it would spread each role across several places and undo the folders by role, then by area. Instead the roles stay on top, and the stages are the areas of `entities/` and `policies/`.

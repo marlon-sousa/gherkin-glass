@@ -15,7 +15,7 @@ Every change starts as an issue, and is agreed in the issue before any code is w
 - **A feature** says what is wanted and why. It can be short; the details are worked out in the issue.
 - **A bug** says what happened, what was expected, and the smallest feature file that shows it.
 
-Once an issue is agreed, every decision taken in its comments is written into its body, which then binds the work. The comments stay as the history of how each decision was reached, and nothing in them may contradict the body.
+A decision the maintainer takes about an issue, wherever it is taken, such as in a chat, is recorded at once as a comment on the issue, headed "Decided so far (continued)", dated, attributed to the maintainer, and saying so when an agent wrote it. Once an issue is agreed, every decision taken in its comments is written into its body, which then binds the work. The comments stay as the history of how each decision was reached, and nothing in them may contradict the body.
 
 Issues carry one of these labels: `feature`, `bug`, `docs` or `process`.
 
