@@ -22,7 +22,6 @@ const VERSIONS_PAGE: &str = "index.html";
 struct VersionsTemplate {
     language: String,
     head: String,
-    /// The page has no folder tree.
     skip_link: String,
     theme_control: String,
     words: Words,
