@@ -83,7 +83,8 @@ impl GherkinParserApi for GherkinParser {
     fn parse(&self, input: &Path, unnamed: Unnamed) -> Result<Vec<ParsedFeature>, InputErrors> {
         let collected = walk_input(self.folders.as_ref(), input);
         let mut errors = collected.errors;
-        errors.extend(page_collisions(input, &collected.paths));
+        let clashes = page_collisions(input, &collected.paths);
+        errors.extend(clashes.into_iter().map(|clash| clash.error));
         // Collecting into a `Vec` keeps file order, whatever order the threads finish in.
         let (failed, features): (Vec<_>, Vec<_>) = collected
             .paths

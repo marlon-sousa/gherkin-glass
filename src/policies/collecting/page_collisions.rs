@@ -3,13 +3,13 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
 
-use crate::entities::{SiteAddress, TAGS_FOLDER};
+use crate::entities::{PageClash, SiteAddress, TAGS_FOLDER};
 use crate::errors::{InputError, InputErrorKind};
 use crate::policies::{FOLDER_PAGE, SENTENCES_PAGE, page_address};
 
-/// Every error of the pages of `paths`, files under `input` in path order: those of
+/// Every clash of the pages of `paths`, files under `input` in path order: those of
 /// [`same_folder_pages`], of [`same_file_pages`], then of [`pages_in_tags_folder`].
-pub(crate) fn page_collisions(input: &Path, paths: &[PathBuf]) -> Vec<InputError> {
+pub(crate) fn page_collisions(input: &Path, paths: &[PathBuf]) -> Vec<PageClash> {
     let pages: Vec<_> = paths.iter().map(|path| Page::of(input, path)).collect();
     [
         same_folder_pages(input, &pages),
@@ -37,60 +37,75 @@ impl<'a> Page<'a> {
     fn keyed(&self) -> (String, &'a Path) {
         (self.address.to_string().to_lowercase(), self.path)
     }
+
+    /// The folders it is in below the input folder, outermost first, each as its path from the
+    /// input folder in the site, with `/` between folders, and as its path in the input.
+    fn enclosing_folders(&self) -> Vec<(String, PathBuf)> {
+        let folders = self.address.folders();
+        let mut paths: Vec<_> = self
+            .path
+            .ancestors()
+            .skip(1)
+            .take(folders.len())
+            .map(Path::to_path_buf)
+            .collect();
+        paths.reverse();
+        (1..=folders.len())
+            .filter_map(|depth| folders.get(..depth))
+            .map(|outer| outer.join("/"))
+            .zip(paths)
+            .collect()
+    }
+
+    fn clash(&self, input: &Path, kind: InputErrorKind) -> PageClash {
+        PageClash {
+            path: self.path.to_path_buf(),
+            error: InputError::new(input, self.path, None, kind),
+        }
+    }
 }
 
 /// Every folder whose page an earlier folder in path order has, compared without regard to case.
-fn same_folder_pages(input: &Path, pages: &[Page<'_>]) -> Vec<InputError> {
-    let mut folders: Vec<String> = pages
-        .iter()
-        .flat_map(|page| enclosing_folders(&page.address))
-        .collect();
+fn same_folder_pages(input: &Path, pages: &[Page<'_>]) -> Vec<PageClash> {
+    let mut folders: Vec<(String, PathBuf)> =
+        pages.iter().flat_map(Page::enclosing_folders).collect();
     let mut seen = BTreeSet::new();
-    folders.retain(|folder| seen.insert(folder.clone()));
-    let first: BTreeMap<String, &str> = folders
-        .iter()
-        .rev()
-        .map(String::as_str)
-        .map(without_case)
-        .collect();
+    folders.retain(|(folder, _)| seen.insert(folder.clone()));
+    let first: BTreeMap<String, &str> = folders.iter().rev().map(without_case).collect();
     folders
         .iter()
         .filter_map(|folder| folder_clash(input, folder, &first))
         .collect()
 }
 
-/// The folders a page is in, outermost first, each as its path from the input folder.
-fn enclosing_folders(page: &SiteAddress) -> Vec<String> {
-    let folders = page.folders();
-    (1..=folders.len())
-        .filter_map(|depth| folders.get(..depth))
-        .map(|outer| outer.join("/"))
-        .collect()
-}
-
-fn without_case(folder: &str) -> (String, &str) {
+fn without_case((folder, _): &(String, PathBuf)) -> (String, &str) {
     (folder.to_lowercase(), folder)
 }
 
-/// The error of `folder` when `first`, keyed without regard to case, holds another spelling of it.
-fn folder_clash(input: &Path, folder: &str, first: &BTreeMap<String, &str>) -> Option<InputError> {
+/// The clash of `folder` when `first`, keyed without regard to case, holds another spelling of it.
+fn folder_clash(
+    input: &Path,
+    (folder, path): &(String, PathBuf),
+    first: &BTreeMap<String, &str>,
+) -> Option<PageClash> {
     let earlier = *first.get(&folder.to_lowercase())?;
-    (earlier != folder).then(|| {
-        InputError::new(
+    (earlier != folder).then(|| PageClash {
+        path: path.clone(),
+        error: InputError::new(
             input,
-            &input.join(folder),
+            path,
             None,
             InputErrorKind::SameFolderPage {
                 page: format!("{folder}/{FOLDER_PAGE}"),
                 first: earlier.to_string(),
             },
-        )
+        ),
     })
 }
 
 /// Every file whose page, compared without regard to case, is a folder's page or the page of
 /// step sentences, or one an earlier file in path order already has.
-fn same_file_pages(input: &Path, pages: &[Page<'_>]) -> Vec<InputError> {
+fn same_file_pages(input: &Path, pages: &[Page<'_>]) -> Vec<PageClash> {
     let first: BTreeMap<String, &Path> = pages
         .iter()
         .rev()
@@ -107,14 +122,10 @@ fn is_a_feature_s_own(page: &&Page<'_>) -> bool {
     reserved(&page.address).is_none()
 }
 
-fn file_clash(
-    input: &Path,
-    page: &Page<'_>,
-    first: &BTreeMap<String, &Path>,
-) -> Option<InputError> {
+fn file_clash(input: &Path, page: &Page<'_>, first: &BTreeMap<String, &Path>) -> Option<PageClash> {
     reserved(&page.address)
         .or_else(|| same_as_earlier(input, page, first))
-        .map(|kind| InputError::new(input, page.path, None, kind))
+        .map(|kind| page.clash(input, kind))
 }
 
 /// What is wrong with a page at the place of the page of step sentences or of a folder's page,
@@ -148,24 +159,18 @@ fn same_as_earlier(
 
 /// Every file whose page would be in the folder of the tag pages, its name compared without
 /// regard to case, as the other pages are.
-fn pages_in_tags_folder(input: &Path, pages: &[Page<'_>]) -> Vec<InputError> {
+fn pages_in_tags_folder(input: &Path, pages: &[Page<'_>]) -> Vec<PageClash> {
     pages
         .iter()
         .filter_map(|page| in_tags_folder(input, page))
         .collect()
 }
 
-fn in_tags_folder(input: &Path, page: &Page<'_>) -> Option<InputError> {
+fn in_tags_folder(input: &Path, page: &Page<'_>) -> Option<PageClash> {
     let folder = *page.address.folders().first()?;
     (folder.to_lowercase() == TAGS_FOLDER).then(|| {
-        InputError::new(
-            input,
-            page.path,
-            None,
-            InputErrorKind::InTagsFolder {
-                page: page.address.to_string(),
-            },
-        )
+        let page_address = page.address.to_string();
+        page.clash(input, InputErrorKind::InTagsFolder { page: page_address })
     })
 }
 
@@ -181,7 +186,11 @@ mod tests {
     fn collisions(paths: &[&str]) -> Vec<(String, InputErrorKind)> {
         let input = Path::new("in");
         let paths: Vec<_> = paths.iter().map(|path| input.join(path)).collect();
-        InputErrors::new(page_collisions(input, &paths))
+        let errors: Vec<_> = page_collisions(input, &paths)
+            .into_iter()
+            .map(|clash| clash.error)
+            .collect();
+        InputErrors::new(errors)
             .as_slice()
             .iter()
             .map(|error| (error.path.clone(), error.kind.clone()))
@@ -242,7 +251,7 @@ mod tests {
         let paths = [input.join("INDEX.feature"), input.join("a/b/index.story")];
         let kinds: Vec<_> = page_collisions(input, &paths)
             .into_iter()
-            .map(|error| error.kind)
+            .map(|clash| clash.error.kind)
             .collect();
         assert_eq!(
             kinds,
@@ -257,5 +266,21 @@ mod tests {
                 },
             ]
         );
+    }
+
+    #[test]
+    fn each_clash_names_the_path_of_its_file_or_folder_in_the_input() {
+        let input = Path::new("in");
+        let paths = [
+            input.join("A/b/x.feature"),
+            input.join("a/y.feature"),
+            input.join("tags.feature"),
+            input.join("Tags/c.feature"),
+        ];
+        let found: Vec<_> = page_collisions(input, &paths)
+            .into_iter()
+            .map(|clash| clash.path)
+            .collect();
+        assert_eq!(found, [input.join("a"), input.join("Tags/c.feature")]);
     }
 }
