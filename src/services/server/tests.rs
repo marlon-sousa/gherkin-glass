@@ -11,24 +11,29 @@ fn service(server: &Arc<FakeServer>, watcher: &Arc<FakeWatcher>) -> ServerServic
     ServerService::new(server.clone(), watcher.clone())
 }
 
+fn watch_the_input(server: &ServerService) -> Result<WatchedChanges, WatchError> {
+    server.watch(Path::new("features"), Path::new("ghg.toml"))
+}
+
+fn watch_the_configuration(server: &ServerService) -> Result<WatchedChanges, WatchError> {
+    server.watch_config(Path::new("ghg.toml"))
+}
+
 #[rstest]
 // Rule 65: the input and the configuration file are watched, or the configuration file alone,
 // and every burst waiting is merged into one.
 #[case::the_input_and_the_configuration(
-    true,
+    watch_the_input,
     &[Watched::Folder(PathBuf::from("features")), Watched::File(PathBuf::from("ghg.toml"))]
 )]
-#[case::the_configuration_alone(false, &[Watched::File(PathBuf::from("ghg.toml"))])]
-fn the_bursts_waiting_are_handed_back_merged(#[case] input: bool, #[case] watched: &[Watched]) {
+#[case::the_configuration_alone(watch_the_configuration, &[Watched::File(PathBuf::from("ghg.toml"))])]
+fn the_bursts_waiting_are_handed_back_merged(
+    #[case] watch: fn(&ServerService) -> Result<WatchedChanges, WatchError>,
+    #[case] watched: &[Watched],
+) {
     let watcher = Arc::new(FakeWatcher::default());
     let server = service(&Arc::new(FakeServer::default()), &watcher);
-    let config = Path::new("ghg.toml");
-    let mut changes = if input {
-        server.watch(Path::new("features"), config)
-    } else {
-        server.watch_config(config)
-    }
-    .expect("watching");
+    let mut changes = watch(&server).expect("watching");
     assert_eq!(*watcher.watched.lock().expect("lock"), watched);
     let sender = watcher.sender().expect("watching");
     sender.send(changed("features/b.feature")).expect("sent");

@@ -1,5 +1,6 @@
 //! Policy: the bursts of changes waiting under `--watch`, merged into one.
 
+use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 
 use crate::entities::{Burst, InputChanges};
@@ -11,13 +12,8 @@ pub(crate) fn merged_bursts(bursts: &[Burst], config: &Path) -> InputChanges {
     let Some(named) = named else {
         return InputChanges::Everything;
     };
-    let mut paths = named.concat();
-    paths.sort();
-    paths.dedup();
-    if paths
-        .binary_search_by(|path| path.as_path().cmp(config))
-        .is_ok()
-    {
+    let paths: BTreeSet<PathBuf> = named.concat().into_iter().collect();
+    if paths.contains(config) {
         return InputChanges::Everything;
     }
     InputChanges::Paths(paths)

@@ -17,12 +17,14 @@ use crate::test_support::name;
 
 /// Gives the settings of a build from the input the configuration names, once a test sets it, or
 /// else from the one `options` name, or `features`, into `site`, or, while `failing`, the errors
-/// of [`config_errors`].
+/// of [`config_errors`]. Once it has given them, the configuration names `next_configured_input`,
+/// when a test sets it, as though the configuration file was saved meanwhile.
 #[derive(Default)]
 pub(crate) struct FakeSettingsService {
     pub(super) calls: Arc<Calls>,
     pub(crate) failing: AtomicBool,
     pub(crate) configured_input: Mutex<Option<PathBuf>>,
+    pub(crate) next_configured_input: Mutex<Option<PathBuf>>,
 }
 
 impl SettingsApi for FakeSettingsService {
@@ -43,11 +45,19 @@ impl SettingsApi for FakeSettingsService {
         if self.failing.load(Ordering::SeqCst) {
             return Err(config_errors());
         }
-        let configured = self
+        let mut configured_input = self
             .configured_input
             .lock()
+            .unwrap_or_else(PoisonError::into_inner);
+        let configured = configured_input.clone();
+        if let Some(next) = self
+            .next_configured_input
+            .lock()
             .unwrap_or_else(PoisonError::into_inner)
-            .clone();
+            .take()
+        {
+            *configured_input = Some(next);
+        }
         Ok(Settings {
             input: configured
                 .or_else(|| options.input.clone())
@@ -80,7 +90,9 @@ impl InputCollectorApi for FakeInputCollector {
         builder.build()
     }
 
-    fn calls_for_rebuild(&self, last: &InputTree, paths: &[PathBuf]) -> bool {
+    fn calls_for_rebuild(&self, last: &InputTree, paths: &BTreeSet<PathBuf>) -> bool {
+        // Read before the call is noted, since a test changes it once it sees the call.
+        let calls_for_it = !self.nothing_read_changes.load(Ordering::SeqCst);
         let paths: Vec<_> = paths
             .iter()
             .map(|path| path.display().to_string())
@@ -90,7 +102,7 @@ impl InputCollectorApi for FakeInputCollector {
             last.input_folder().display(),
             paths.join(" ")
         ));
-        !self.nothing_read_changes.load(Ordering::SeqCst)
+        calls_for_it
     }
 }
 

@@ -68,9 +68,13 @@ fn everything_changed_loads_the_settings_again_and_watches_again_before_it_rebui
         world.server.change(InputChanges::Everything);
         assert_eq!(events.wait_for(2)[1], "rebuilt");
         assert_eq!(
-            calls_after(&world, UNTIL_WATCHING, 7),
+            calls_after(&world, UNTIL_WATCHING, 8),
             then_a_build(
-                &["settings.load Memory", "server.watch features ghg.toml"],
+                &[
+                    "settings.load Memory",
+                    "server.watch features ghg.toml",
+                    "settings.load Memory",
+                ],
                 "features"
             )
         );
@@ -144,12 +148,13 @@ fn the_input_the_settings_name_is_watched_built_and_judged_from_then_on() {
         world.server.change(paths(&["features/a.feature"]));
         assert_eq!(events.wait_for(2)[1], "rebuilt");
         assert_eq!(
-            calls_after(&world, UNTIL_WATCHING, 8),
+            calls_after(&world, UNTIL_WATCHING, 9),
             then_a_build(
                 &[
                     "input_collector.calls_for_rebuild features features/a.feature",
                     "settings.load Memory",
                     "server.watch elsewhere ghg.toml",
+                    "settings.load Memory",
                 ],
                 "elsewhere"
             )
@@ -218,5 +223,31 @@ fn when_not_even_the_configuration_file_can_be_watched_the_last_watch_is_kept() 
         server.watch_failing.store(false, Ordering::SeqCst);
         server.change(InputChanges::Everything);
         assert_eq!(events.wait_for(4)[3], "rebuilt");
+    });
+}
+
+#[test]
+fn a_configuration_saved_while_watching_again_is_watched_and_built_from() {
+    // Rule 65: the settings are read again once the new watch has started, so that a change to
+    // the configuration file saved before it started is not lost.
+    let world = world();
+    while_watching(&world, |events| {
+        *world.settings.configured_input.lock().expect("lock") = Some("elsewhere".into());
+        *world.settings.next_configured_input.lock().expect("lock") = Some("other".into());
+        world.server.change(InputChanges::Everything);
+        assert_eq!(events.wait_for(2)[1], "rebuilt");
+        assert_eq!(
+            calls_after(&world, UNTIL_WATCHING, 10),
+            then_a_build(
+                &[
+                    "settings.load Memory",
+                    "server.watch elsewhere ghg.toml",
+                    "settings.load Memory",
+                    "server.watch other ghg.toml",
+                    "settings.load Memory",
+                ],
+                "other"
+            )
+        );
     });
 }

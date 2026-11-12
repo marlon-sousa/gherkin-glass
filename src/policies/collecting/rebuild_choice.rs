@@ -1,5 +1,6 @@
 //! Policy: whether the paths that changed under `--watch` call for a rebuild.
 
+use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 
 use crate::entities::IGNORE_FILE;
@@ -7,27 +8,27 @@ use crate::entities::IGNORE_FILE;
 /// What a build reads: the files the `.ghg-ignore` rules allow in the input, before the changes
 /// and after them.
 pub(crate) struct Read<'a> {
-    pub before: &'a [PathBuf],
-    pub after: &'a [PathBuf],
+    pub(crate) before: &'a [PathBuf],
+    pub(crate) after: &'a [PathBuf],
 }
 
-/// Paths that changed call for a rebuild when one of them may have changed what a build reads:
-/// a `.ghg-ignore` file, a file the rules allow, whether it was there before the changes or only
-/// after them, or a folder whose allowed files differ before and after, such as one moved in or
-/// removed. A folder whose allowed files are the same, which some systems report when a file
-/// inside it is made, does not.
-pub(crate) fn calls_for_rebuild(paths: &[PathBuf], read: &Read) -> bool {
-    paths.iter().any(|path| matters(path, read))
-}
+impl Read<'_> {
+    /// Paths that changed call for a rebuild when one of them may have changed what a build
+    /// reads: a `.ghg-ignore` file, a file the rules allow, whether it was there before the
+    /// changes or only after them, or a folder whose allowed files differ before and after, such
+    /// as one moved in or removed. A folder whose allowed files are the same, which some systems
+    /// report when a file inside it is made, does not.
+    pub(crate) fn calls_for_rebuild(&self, paths: &BTreeSet<PathBuf>) -> bool {
+        paths.iter().any(|path| self.matters(path))
+    }
 
-fn matters(path: &Path, read: &Read) -> bool {
-    path.file_name() == Some(IGNORE_FILE.as_ref())
-        || read
-            .before
-            .iter()
-            .chain(read.after)
-            .any(|file| file == path)
-        || under(path, read.before).ne(under(path, read.after))
+    fn matters(&self, path: &Path) -> bool {
+        let file = path.to_path_buf();
+        path.file_name() == Some(IGNORE_FILE.as_ref())
+            || self.before.contains(&file)
+            || self.after.contains(&file)
+            || under(path, self.before).ne(under(path, self.after))
+    }
 }
 
 /// The files of `files` inside the folder `folder`.
@@ -70,7 +71,9 @@ mod tests {
             before: &before,
             after: &after,
         };
-        let changed = paths(&["features/notes.txt~", changed]);
-        assert_eq!(calls_for_rebuild(&changed, &read), rebuilds);
+        let changed: BTreeSet<_> = paths(&["features/notes.txt~", changed])
+            .into_iter()
+            .collect();
+        assert_eq!(read.calls_for_rebuild(&changed), rebuilds);
     }
 }

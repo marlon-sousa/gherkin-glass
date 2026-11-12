@@ -2,13 +2,14 @@
 
 mod input_walk;
 
+use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use input_walk::walk_input;
 
 use crate::entities::InputTree;
-use crate::policies::{Read, calls_for_rebuild, page_collisions};
+use crate::policies::{Read, page_collisions};
 use crate::ports::InputFolders;
 
 /// What the controller asks of the input collector.
@@ -19,7 +20,7 @@ pub(crate) trait InputCollectorApi: Send + Sync {
 
     /// Whether `paths`, which changed in the input of `last`, the tree of the last build, call
     /// for a rebuild, judged against the input walked again from nothing.
-    fn calls_for_rebuild(&self, last: &InputTree, paths: &[PathBuf]) -> bool;
+    fn calls_for_rebuild(&self, last: &InputTree, paths: &BTreeSet<PathBuf>) -> bool;
 }
 
 pub(crate) struct InputCollector {
@@ -40,13 +41,13 @@ impl InputCollectorApi for InputCollector {
         input_tree
     }
 
-    fn calls_for_rebuild(&self, last: &InputTree, paths: &[PathBuf]) -> bool {
+    fn calls_for_rebuild(&self, last: &InputTree, paths: &BTreeSet<PathBuf>) -> bool {
         let walked = walk_input(self.input_folders.as_ref(), last.input_folder());
         let read = Read {
             before: &last.allowed_files(),
             after: &walked.allowed_files(),
         };
-        calls_for_rebuild(paths, &read)
+        read.calls_for_rebuild(paths)
     }
 }
 

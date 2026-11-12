@@ -163,6 +163,14 @@ fn eventually(what: &str, mut check: impl FnMut() -> bool) {
     }
 }
 
+/// Checks that `build` still gives the number `number` once a change, had it been seen, would
+/// have been rebuilt.
+fn still_built(build: impl Fn() -> String, number: &str) {
+    // Longer than a burst takes to end and be looked at.
+    sleep(Duration::from_millis(1000));
+    assert_eq!(build(), number);
+}
+
 /// `--no-build` serves the `site` fixture, the configured output folder.
 fn serve_site() -> Serving {
     serve(
@@ -558,9 +566,7 @@ fn watching_rebuilds_only_for_changes_a_build_reads() {
     write(folder.join("features/notes.txt"), "notes").expect("written");
     write(folder.join("features/.withdraw.feature.swp"), "").expect("written");
     write(folder.join("ghg.toml~"), "").expect("written");
-    // Longer than a burst takes to end and be looked at.
-    sleep(Duration::from_millis(1000));
-    assert_eq!(build(), "1");
+    still_built(build, "1");
 
     let outside = folder.join("outside/more");
     create_dir_all(&outside).expect("folder");
@@ -633,9 +639,7 @@ fn watching_follows_the_input_the_configuration_file_names() {
     let withdraw = folder.join("features/withdraw.feature");
     let source = read_to_string(&withdraw).expect("read");
     write(&withdraw, source.replace("20", "30")).expect("written");
-    // Longer than a burst takes to end and be looked at.
-    sleep(Duration::from_millis(1000));
-    assert_eq!(build(), "2");
+    still_built(build, "2");
 
     let deposit = folder.join("elsewhere/deposit.feature");
     let source = read_to_string(&deposit).expect("read");
@@ -673,8 +677,7 @@ fn a_watch_that_cannot_start_again_keeps_the_last_site_served_and_the_configurat
     let withdraw = folder.join("features/withdraw.feature");
     let source = read_to_string(&withdraw).expect("read");
     write(&withdraw, source.replace("20", "30")).expect("written");
-    sleep(Duration::from_millis(1000));
-    assert_eq!(build(), "1");
+    still_built(build, "1");
 
     write(folder.join("ghg.toml"), "input = \"features\"\n").expect("written");
     eventually("a rebuild after ghg.toml was mended", || build() == "2");

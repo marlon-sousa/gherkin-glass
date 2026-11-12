@@ -4,7 +4,7 @@ use std::path::PathBuf;
 
 use super::{SiteController, SiteListener};
 use crate::entities::{BuildOptions, BuildSnapshot, Destination, InputChanges, Preview, Settings};
-use crate::errors::{BuildError, RebuildError, ServeError};
+use crate::errors::{BuildError, RebuildError, ServeError, WatchError};
 use crate::services::WatchedChanges;
 
 /// What ghg serve watches with: the controller, the options it was started with, the
@@ -30,14 +30,23 @@ impl Watching<'_> {
     /// the watching ends.
     pub(super) fn rebuild_on(&self, mut changes: WatchedChanges, mut last: BuildSnapshot) {
         while let Some(input_changes) = changes.next() {
-            let Some(settings) = self.settings_again(&input_changes, &last) else {
+            if !self.calls_for_rebuild(&input_changes, &last) {
+                continue;
+            }
+            let Some(mut settings) = self.read_settings() else {
                 continue;
             };
             let watches_again =
                 input_changes == InputChanges::Everything || settings != last.settings;
             if watches_again {
-                match self.controller.server.watch(&settings.input, &self.config) {
-                    Ok(watched) => changes = watched,
+                match self.watched_again(settings.input) {
+                    Ok((watched, read)) => {
+                        changes = watched;
+                        let Some(read) = read else {
+                            continue;
+                        };
+                        settings = read;
+                    }
                     Err(error) => {
                         self.listener.not_watched(&error);
                         changes = self.config_watched_alone(changes);
@@ -49,27 +58,42 @@ impl Watching<'_> {
         }
     }
 
-    /// The settings read again, when `input_changes` call for a rebuild, judged against `last`,
-    /// and the configuration does not stop it.
-    fn settings_again(
-        &self,
-        input_changes: &InputChanges,
-        last: &BuildSnapshot,
-    ) -> Option<Settings> {
-        if let InputChanges::Paths(paths) = input_changes
-            && !self
+    /// Whether `input_changes` call for a rebuild, judged against `last`.
+    fn calls_for_rebuild(&self, input_changes: &InputChanges, last: &BuildSnapshot) -> bool {
+        match input_changes {
+            InputChanges::Everything => true,
+            InputChanges::Paths(paths) => self
                 .controller
                 .input_collector
-                .calls_for_rebuild(&last.input_tree, paths)
-        {
-            return None;
+                .calls_for_rebuild(&last.input_tree, paths),
         }
+    }
+
+    /// The settings read again, or nothing once the listener is told what stops the rebuild.
+    fn read_settings(&self) -> Option<Settings> {
         let settings = self
             .controller
             .settings
             .load(self.options, Destination::Memory)
             .map_err(BuildError::Config);
         self.reported(settings)
+    }
+
+    /// A new watch of `input` and the configuration file, with the settings read once it has
+    /// started, watching again while they name another input, so that a change to the
+    /// configuration file saved before the watch started is never lost; the settings are nothing
+    /// once the listener is told what stops the rebuild.
+    fn watched_again(
+        &self,
+        mut input: PathBuf,
+    ) -> Result<(WatchedChanges, Option<Settings>), WatchError> {
+        loop {
+            let watched = self.controller.server.watch(&input, &self.config)?;
+            match self.read_settings() {
+                Some(settings) if settings.input != input => input = settings.input,
+                settings => return Ok((watched, settings)),
+            }
+        }
     }
 
     /// The configuration file watched alone, or, when even it cannot be watched, `changes`, the

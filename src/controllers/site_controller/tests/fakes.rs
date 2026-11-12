@@ -48,14 +48,19 @@ impl Calls {
 
     /// The calls so far, once `count` of them were made, or after ten seconds.
     pub(super) fn wait_for(&self, count: usize) -> Vec<String> {
-        let deadline = Instant::now() + Duration::from_secs(10);
-        loop {
-            let calls = self.taken();
-            if calls.len() >= count || Instant::now() > deadline {
-                return calls;
-            }
-            sleep(Duration::from_millis(5));
+        waited_for(count, || self.taken())
+    }
+}
+
+/// What `so_far` gives, once it holds `count` items, or after ten seconds.
+fn waited_for(count: usize, so_far: impl Fn() -> Vec<String>) -> Vec<String> {
+    let deadline = Instant::now() + Duration::from_secs(10);
+    loop {
+        let items = so_far();
+        if items.len() >= count || Instant::now() > deadline {
+            return items;
         }
+        sleep(Duration::from_millis(5));
     }
 }
 

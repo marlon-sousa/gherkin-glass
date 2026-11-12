@@ -3,8 +3,6 @@
 use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::{Sender, channel};
-use std::thread::sleep;
-use std::time::{Duration, Instant};
 
 use super::*;
 use crate::entities::{InputChanges, Preview, Served};
@@ -137,17 +135,13 @@ impl Recorded {
 
     /// The events so far, once there are `count` of them, or after ten seconds.
     pub(crate) fn wait_for(&self, count: usize) -> Vec<String> {
-        let deadline = Instant::now() + Duration::from_secs(10);
-        loop {
-            let events = self
-                .events
-                .lock()
-                .unwrap_or_else(PoisonError::into_inner)
-                .clone();
-            if events.len() >= count || Instant::now() > deadline {
-                return events;
-            }
-            sleep(Duration::from_millis(5));
-        }
+        waited_for(count, || self.taken())
+    }
+
+    fn taken(&self) -> Vec<String> {
+        self.events
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .clone()
     }
 }

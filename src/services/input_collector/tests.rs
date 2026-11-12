@@ -1,5 +1,6 @@
 mod against_fixtures;
 
+use std::collections::BTreeSet;
 use std::path::PathBuf;
 
 use rstest::rstest;
@@ -93,6 +94,6 @@ fn changes_call_for_a_rebuild_judged_against_the_last_tree(
     let last = InputCollector::new(Arc::new(last_input)).collect(Path::new("in"));
     let input = MemoryFolders::with_files(["in/kept.feature", "in/new.feature", "in/notes.txt"]);
     let input_collector = InputCollector::new(Arc::new(input));
-    let paths = [PathBuf::from(changed)];
+    let paths = BTreeSet::from([PathBuf::from(changed)]);
     assert_eq!(input_collector.calls_for_rebuild(&last, &paths), rebuilds);
 }
