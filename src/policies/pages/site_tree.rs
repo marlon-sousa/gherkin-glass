@@ -42,7 +42,7 @@ pub(crate) fn site_tree(features: &[ParsedFeature], options: &PageOptions) -> Si
         .chain([FileNode::SearchDocuments(documents)])
         .chain(SiteAssets::iter().map(Cow::into_owned).map(FileNode::Asset))
         .collect();
-    SiteTree { files }
+    SiteTree(files)
 }
 
 #[cfg(test)]
@@ -52,7 +52,7 @@ mod tests {
     #[test]
     fn an_empty_input_still_has_its_home_page() {
         let tree = site_tree(&[], &PageOptions::default());
-        assert!(tree.files.iter().any(is_the_home_page));
+        assert!(tree.0.iter().any(is_the_home_page));
     }
 
     fn is_the_home_page(node: &FileNode) -> bool {

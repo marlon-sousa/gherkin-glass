@@ -22,6 +22,4 @@ pub(crate) enum FileNode {
 
 /// Every file of a site, pages first, in file order.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct SiteTree {
-    pub(crate) files: Vec<FileNode>,
-}
+pub(crate) struct SiteTree(pub(crate) Vec<FileNode>);

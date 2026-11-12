@@ -17,7 +17,7 @@ const SEARCH_DOCUMENTS: &str = "search.json";
 
 /// Every file of `tree`, in its order, in the site that `options` make.
 pub(crate) fn render_site(tree: &SiteTree, options: &PageOptions) -> SiteFiles {
-    let files: Vec<_> = tree.files.par_iter().filter_map(render_file).collect();
+    let files: Vec<_> = tree.0.par_iter().filter_map(render_file).collect();
     let built = BuiltSite {
         large_search_documents: files
             .iter()

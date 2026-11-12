@@ -29,12 +29,12 @@ fn block_carriers<'a>(
     match block {
         FeatureBlock::Background(_) => Vec::new(),
         FeatureBlock::Rule(rule) => {
-            let inherited = has(&rule.tags, tag).then_some(Through::Rule);
+            let inherited = has(&rule.tags, tag)
+                .then_some(Through::Rule)
+                .or(feature_through(feature));
             rule.scenarios
                 .iter()
-                .filter_map(|scenario| {
-                    carrier(scenario, tag, inherited.or(feature_through(feature)))
-                })
+                .filter_map(|scenario| carrier(scenario, tag, inherited))
                 .collect()
         }
         FeatureBlock::Scenario(scenario) => carrier(scenario, tag, feature_through(feature))
