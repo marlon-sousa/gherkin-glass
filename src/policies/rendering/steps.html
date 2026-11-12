@@ -1,5 +1,5 @@
 <ol class="ghg-steps{% if let Some(introduction) = list.introduction %} ghg-inline" aria-labelledby="{{ introduction }}{% endif %}"{% if !list.shown %} hidden{% endif %}>
 {%- for step in list.steps.iter() %}
-{{ step.render()|safe }}
+{{ step|safe }}
 {%- endfor %}
 </ol>

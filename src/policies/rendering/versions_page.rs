@@ -71,7 +71,9 @@ mod tests {
         let options = PageOptions::default();
         let built: BTreeSet<VersionName> = others.iter().copied().map(name).collect();
         let tree = site_tree(&[], &options, Some(&name(version)), &built);
-        let Some(SiteNode::VersionsPage(versions)) = tree.root_files().next() else {
+        let Some(SiteNode::VersionsPage(versions)) =
+            tree.root_files().next().map(|node| node.value())
+        else {
             panic!("a site with versions has its versions page");
         };
         versions.render_file(&SitePieces::of(tree.frame()))

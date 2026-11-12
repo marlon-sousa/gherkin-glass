@@ -1,16 +1,21 @@
-//! Entity: the site tree the converter builds, before it is rendered: an ego-tree whose root is the site, with the frame every page shares, then the version the build makes, the versions the output folder already holds and, for a site with versions, the versions page and its assets; then the version's folders, from the input folder in, with their pages, and the version's files in no folder of the input, each node as the node of its kind.
+//! Entity: the site tree the converter builds, before it is rendered: an ego-tree whose root is the site, with the frame every page shares, then the version the build makes, the versions the output folder already holds and, for a site with versions, the versions page and its assets; then the version's folders, from the input folder in, with their pages, each feature page holding its blocks and their steps, and the version's files in no folder of the input, each node as the node of its kind.
 
+mod site_feature_page;
 mod site_folder;
 mod site_tree_builder;
+mod site_tree_node;
 
+pub(crate) use site_feature_page::SiteFeaturePage;
 pub(crate) use site_folder::{FolderId, SiteFolder};
 pub(crate) use site_tree_builder::SiteTreeBuilder;
+pub(crate) use site_tree_node::SiteTreeNode;
 
 use ego_tree::{NodeRef, Tree};
 
 use crate::entities::{
-    FolderPage, Page, PageFrame, SearchDocument, SentencesPage, TagIndex, TagPage, TreeItem,
-    VersionName, VersionsPage,
+    BackgroundBlock, BlockHeading, DocStringView, ExamplesBlock, FolderPage, Page, PageFrame,
+    RuleBlock, ScenarioBlock, SearchDocument, SentencesPage, StepView, TableView, TagIndex,
+    TagPage, TreeItem, VersionName, VersionsPage,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -27,7 +32,27 @@ pub(crate) enum SiteNode {
     InputFolder,
     /// A folder of the input, by its name, inside the input folder or another folder.
     Folder(String),
+    /// A feature's page, which holds its blocks.
     FeaturePage(Page),
+    /// A background, in its feature's page or its rule, which holds its steps.
+    Background(BackgroundBlock),
+    /// A rule, in its feature's page, which holds its background and its scenarios.
+    Rule(RuleBlock),
+    /// A scenario or an outline, in its feature's page or its rule, which
+    /// holds its steps, then an outline's examples and examples as scenarios.
+    Scenario(ScenarioBlock),
+    /// An examples block of an outline.
+    Examples(ExamplesBlock),
+    /// An outline's examples as scenarios, by its heading, which holds the scenario of each row.
+    ExamplesAsScenarios(BlockHeading),
+    /// The scenario one row of an outline's examples makes, by its heading, which holds its steps.
+    ExampleScenario(BlockHeading),
+    /// A step of a background or a scenario, which holds its data table or its doc string.
+    Step(StepView),
+    /// A step's data table.
+    StepTable(TableView),
+    /// A step's doc string.
+    DocString(DocStringView),
     FolderPage(FolderPage),
     SentencesPage(SentencesPage),
     /// The folder tree's data, which the pages' script builds the tree from.
@@ -41,15 +66,20 @@ pub(crate) enum SiteNode {
 }
 
 impl SiteNode {
-    /// Whether the node makes a file of the site, rather than standing for the site, a version or a folder.
+    /// Whether the node makes a file of the site, rather than standing for the
+    /// site, a version or a folder, or being part of a page.
     fn is_file(&self) -> bool {
-        !matches!(
+        matches!(
             self,
-            SiteNode::Site(_)
-                | SiteNode::Version(_)
-                | SiteNode::KeptVersion(_)
-                | SiteNode::InputFolder
-                | SiteNode::Folder(_)
+            SiteNode::VersionsPage(_)
+                | SiteNode::FeaturePage(_)
+                | SiteNode::FolderPage(_)
+                | SiteNode::SentencesPage(_)
+                | SiteNode::FolderTree(_)
+                | SiteNode::TagIndex(_)
+                | SiteNode::TagPage(_)
+                | SiteNode::SearchDocuments(_)
+                | SiteNode::Asset(_)
         )
     }
 }
@@ -71,25 +101,29 @@ impl SiteTree {
     }
 
     /// Every file of the version the build makes, folder by folder from the input folder in, then those in no folder of the input.
-    pub(crate) fn files(&self) -> impl Iterator<Item = &SiteNode> {
+    pub(crate) fn files(&self) -> impl Iterator<Item = SiteTreeNode<'_>> {
         self.tree
             .root()
             .children()
             .filter(is_version)
             .flat_map(|version| version.descendants())
-            .map(|node| node.value())
-            .filter(|node| node.is_file())
+            .filter(is_file)
+            .map(SiteTreeNode::new)
     }
 
     /// The files beside the versions, at the output folder's root: the
     /// versions page and its assets, none for a site without versions.
-    pub(crate) fn root_files(&self) -> impl Iterator<Item = &SiteNode> {
+    pub(crate) fn root_files(&self) -> impl Iterator<Item = SiteTreeNode<'_>> {
         self.tree
             .root()
             .children()
-            .map(|node| node.value())
-            .filter(|node| node.is_file())
+            .filter(is_file)
+            .map(SiteTreeNode::new)
     }
+}
+
+fn is_file(node: &NodeRef<'_, SiteNode>) -> bool {
+    node.value().is_file()
 }
 
 fn is_version(node: &NodeRef<'_, SiteNode>) -> bool {

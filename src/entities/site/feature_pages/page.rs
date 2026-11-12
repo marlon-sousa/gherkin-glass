@@ -1,8 +1,9 @@
 //! Entity: a feature's page, as its template shows it, every text in it as written or worded.
 
-use crate::entities::{Breadcrumb, FeatureBlock, LinkAddress, SiteAddress, StepPart};
+use crate::entities::{Breadcrumb, LinkAddress, SiteAddress, StepPart};
 
-/// One page of the site. Every `String` is text, escaped when it is rendered.
+/// A feature's page, its blocks the nodes below it in the site tree. Every
+/// `String` is text, escaped when it is rendered.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct Page {
     pub(crate) address: SiteAddress,
@@ -17,8 +18,6 @@ pub(crate) struct Page {
     pub(crate) tags: Vec<TagView>,
     pub(crate) description: Option<Paragraph>,
     pub(crate) source: Option<SourceLink>,
-    pub(crate) contents: Vec<ContentsEntry>,
-    pub(crate) blocks: Vec<FeatureBlock>,
     pub(crate) words: PageWords,
     /// The checkbox that switches how scenarios show their backgrounds, on a
     /// page with a background.
@@ -32,22 +31,6 @@ pub(crate) struct BackgroundsOption {
     pub(crate) inline: bool,
     /// Whether a scenario starts with a background's steps, so that the checkbox can act.
     pub(crate) enabled: bool,
-}
-
-/// A background whose steps a scenario starts with: shown inline as a list of
-/// them, or linked, as a link to the background.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct FromBackground {
-    /// The `id` of the introduction, which names the list of steps: the
-    /// scenario's anchor, `_background_` and the background's place, from 1.
-    pub(crate) id: String,
-    /// "From the background:" or "From the rule's background:".
-    pub(crate) introduction: String,
-    pub(crate) anchor: String,
-    pub(crate) heading: String,
-    pub(crate) steps: Vec<StepView>,
-    /// Whether the page is written showing the steps rather than the link.
-    pub(crate) inline: bool,
 }
 
 /// gherkin-glass's own words on a page, from the interface text catalogue.
@@ -94,14 +77,13 @@ pub(crate) struct ContentsEntry {
     pub(crate) entries: Vec<ContentsEntry>,
 }
 
+/// A step's keyword and text; its data table or its doc string is a node below it.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct StepView {
     /// As written, with the space after it when the language has one.
     pub(crate) keyword: String,
     /// The text after the keyword, in the parts its highlighting tells apart.
     pub(crate) parts: Vec<StepPart>,
-    pub(crate) table: Option<TableView>,
-    pub(crate) doc_string: Option<DocStringView>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -114,27 +96,4 @@ pub(crate) struct TableView {
 pub(crate) struct DocStringView {
     pub(crate) media_type: Option<String>,
     pub(crate) content: String,
-}
-
-impl Page {
-    pub(crate) fn rule_count(&self) -> usize {
-        self.blocks
-            .iter()
-            .filter(|block| matches!(block, FeatureBlock::Rule(_)))
-            .count()
-    }
-
-    /// Scenario outlines among them, and those inside rules.
-    pub(crate) fn scenario_count(&self) -> usize {
-        self.blocks.iter().map(scenarios_in).sum()
-    }
-}
-
-/// The scenarios `block` is or holds.
-fn scenarios_in(block: &FeatureBlock) -> usize {
-    match block {
-        FeatureBlock::Background(_) => 0,
-        FeatureBlock::Rule(rule) => rule.scenarios.len(),
-        FeatureBlock::Scenario(_) => 1,
-    }
 }

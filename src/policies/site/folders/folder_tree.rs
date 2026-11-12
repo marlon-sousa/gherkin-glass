@@ -104,7 +104,7 @@ mod tests {
             .collect();
         site_tree(&features, &options, None, &BTreeSet::new())
             .files()
-            .find_map(|file| match file {
+            .find_map(|file| match file.value() {
                 SiteNode::FolderTree(items) => Some(items.clone()),
                 _ => None,
             })

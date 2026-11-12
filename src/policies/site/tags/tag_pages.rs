@@ -8,7 +8,7 @@ use i18n_embed::LanguageLoader;
 use i18n_embed_fl::fl;
 
 use crate::entities::{
-    LinkAddress, Page, PageOptions, TagFeature, TagIndex, TagIndexEntry, TagNames, TagPage,
+    LinkAddress, PageContent, PageOptions, TagFeature, TagIndex, TagIndexEntry, TagNames, TagPage,
     TagScenario,
 };
 use crate::policies::CATALOGUE;
@@ -29,7 +29,7 @@ fn tag_pages_language() -> String {
 /// `tags` is every tag of the site in tag order, and `pages` every feature's page in path order.
 pub(crate) fn build_tag_index(
     tags: &[String],
-    pages: &[Page],
+    pages: &[PageContent],
     names: &TagNames,
     options: &PageOptions,
 ) -> TagIndex {
@@ -64,21 +64,22 @@ pub(crate) fn build_tag_index(
 
 pub(crate) fn build_tag_page(
     tag: &str,
-    pages: &[Page],
+    pages: &[PageContent],
     names: &TagNames,
     options: &PageOptions,
 ) -> TagPage {
     let language = tag_pages_language();
     let features = pages
         .iter()
-        .filter(|page| writes(page, tag))
-        .map(|page| {
+        .filter(|content| writes(content, tag))
+        .map(|content| {
+            let page = &content.page;
             let page_address = format!("{ROOT}{}", page.address);
             TagFeature {
                 address: LinkAddress::to(&page_address),
                 heading: page.title.clone(),
                 language: (page.language != language).then(|| page.language.clone()),
-                scenarios: carriers(page, tag)
+                scenarios: carriers(content, tag)
                     .into_iter()
                     .map(|(scenario, through)| {
                         let words = match through {
@@ -170,7 +171,7 @@ Feature: F
   Rule: Nothing
 ";
 
-    fn site(sources: &[(&str, &str)]) -> (Vec<String>, Vec<Page>, TagNames) {
+    fn site(sources: &[(&str, &str)]) -> (Vec<String>, Vec<PageContent>, TagNames) {
         let parsed: Vec<_> = sources
             .iter()
             .map(|(path, source)| {

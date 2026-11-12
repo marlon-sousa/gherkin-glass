@@ -1,32 +1,41 @@
-//! Policy: a feature's page, its content rendered from its template inside the page's layout.
+//! Policy: a feature's page, its content rendered from its template inside the page's layout, from the page node and the blocks below it.
 
 use askama::Template;
 
+use super::feature_block::blocks;
 use super::node_rendering::{Render, RenderFile, rendered};
 use super::page_layout::{PageAround, SitePieces, whole_page};
-use crate::entities::{Page, SiteAddress};
+use crate::entities::{ContentsEntry, Page, SiteAddress, SiteFeaturePage};
 
 #[derive(Template)]
 #[template(path = "feature_page.html")]
 struct FeatureTemplate<'a> {
     page: &'a Page,
+    contents: Vec<ContentsEntry>,
+    /// Its blocks, already rendered; empty for a page with none.
+    blocks: String,
 }
 
-impl RenderFile for Page {
+impl RenderFile for SiteFeaturePage<'_> {
     fn address(&self) -> SiteAddress {
-        self.address.clone()
+        self.page().address.clone()
     }
 
     fn render_file(&self, site: &SitePieces<'_>) -> String {
+        let page = self.page();
         whole_page(
             site,
             &PageAround {
-                language: &self.language,
-                title: &self.title,
-                root: self.address.root(),
-                breadcrumb: &self.breadcrumb,
+                language: &page.language,
+                title: &page.title,
+                root: page.address.root(),
+                breadcrumb: &page.breadcrumb,
             },
-            rendered(&FeatureTemplate { page: self }),
+            rendered(&FeatureTemplate {
+                page,
+                contents: self.contents(),
+                blocks: blocks(self.blocks()),
+            }),
         )
     }
 }

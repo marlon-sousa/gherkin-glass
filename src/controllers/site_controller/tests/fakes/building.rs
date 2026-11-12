@@ -159,7 +159,10 @@ impl SiteWriterApi for FakeSiteWriter {
 
 /// The names of the assets among the files of `tree`, joined with spaces.
 fn asset_names(tree: &SiteTree) -> String {
-    let names: Vec<_> = tree.files().filter_map(asset_name).collect();
+    let names: Vec<_> = tree
+        .files()
+        .filter_map(|file| asset_name(file.value()))
+        .collect();
     names.join(" ")
 }
 

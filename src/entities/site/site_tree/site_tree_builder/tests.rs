@@ -1,6 +1,11 @@
+use std::collections::{BTreeMap, BTreeSet};
+use std::path::PathBuf;
+
+use gherkin::{Feature, GherkinEnv};
+
 use super::*;
-use crate::entities::PageOptions;
-use crate::policies::page_frame;
+use crate::entities::{PageOptions, ParsedFeature};
+use crate::policies::{page_frame, site_tree};
 
 fn a_builder() -> SiteTreeBuilder {
     SiteTreeBuilder::new(page_frame(&PageOptions::default()), None)
@@ -23,6 +28,22 @@ fn outline(tree: &SiteTree) -> Vec<String> {
                 SiteNode::FolderTree(_) => "folder tree".to_string(),
                 SiteNode::SearchDocuments(_) => "search documents".to_string(),
                 SiteNode::Asset(name) => format!("asset {name}"),
+                SiteNode::FeaturePage(page) => format!("feature page {}", page.address),
+                SiteNode::FolderPage(page) => format!("folder page {}", page.address),
+                SiteNode::Background(block) => format!("background {}", block.heading.anchor),
+                SiteNode::Rule(block) => format!("rule {}", block.heading.anchor),
+                SiteNode::Scenario(block) => format!("scenario {}", block.heading.anchor),
+                SiteNode::Examples(block) => format!("examples {}", block.heading.anchor),
+                SiteNode::ExamplesAsScenarios(heading) => {
+                    format!("examples as scenarios {}", heading.anchor)
+                }
+                SiteNode::ExampleScenario(heading) => {
+                    format!("example scenario {}", heading.anchor)
+                }
+                SiteNode::Step(step) => format!("step {}", step.keyword.trim()),
+                SiteNode::StepTable(_) => "step table".to_string(),
+                SiteNode::DocString(_) => "doc string".to_string(),
+                SiteNode::SentencesPage(_) => "sentences page".to_string(),
                 other => format!("{other:?}"),
             };
             format!("{}{kind}", "  ".repeat(depth))
@@ -51,7 +72,9 @@ fn the_site_holds_its_version_which_holds_the_input_folder_then_its_other_files(
         ]
     );
     assert_eq!(
-        tree.files().cloned().collect::<Vec<_>>(),
+        tree.files()
+            .map(|node| node.value().clone())
+            .collect::<Vec<_>>(),
         [
             SiteNode::Asset("first.css".to_string()),
             SiteNode::FolderTree(Vec::new()),
@@ -129,11 +152,15 @@ fn the_kept_versions_and_the_versions_page_s_assets_sit_beside_the_version() {
         ]
     );
     assert_eq!(
-        tree.root_files().cloned().collect::<Vec<_>>(),
+        tree.root_files()
+            .map(|node| node.value().clone())
+            .collect::<Vec<_>>(),
         [SiteNode::Asset("shared.css".to_string())]
     );
     assert_eq!(
-        tree.files().cloned().collect::<Vec<_>>(),
+        tree.files()
+            .map(|node| node.value().clone())
+            .collect::<Vec<_>>(),
         [SiteNode::Asset("own.css".to_string())]
     );
 }
@@ -142,4 +169,64 @@ fn the_kept_versions_and_the_versions_page_s_assets_sit_beside_the_version() {
 fn the_frame_is_the_site_s() {
     let frame = page_frame(&PageOptions::default());
     assert_eq!(a_builder().build().frame(), &frame);
+}
+
+#[test]
+fn a_feature_page_holds_its_blocks_each_block_its_steps_and_each_step_its_table_or_doc_string() {
+    let text = "\
+Feature: F
+  Background:
+    Given a
+      | x |
+  Scenario: S
+    Given b
+      \"\"\"
+      text
+      \"\"\"
+  Rule: R
+    Background: B
+      Given c
+    Scenario Outline: O
+      Given <n>
+      Examples:
+        | n |
+        | 1 |
+";
+    let feature = Feature::parse(text, GherkinEnv::default()).expect("parses");
+    let parsed = ParsedFeature::new(
+        PathBuf::from("f.feature"),
+        feature,
+        "en".to_string(),
+        BTreeMap::new(),
+    );
+    let tree = site_tree(&[parsed], &PageOptions::default(), None, &BTreeSet::new());
+    let lines = outline(&tree);
+    let start = lines
+        .iter()
+        .position(|line| line.ends_with("feature page f.html"))
+        .expect("the feature page");
+    assert_eq!(
+        lines[start..start + 18],
+        [
+            "      feature page f.html",
+            "        background background",
+            "          step Given",
+            "            step table",
+            "        scenario s",
+            "          step Given",
+            "            doc string",
+            "        rule r",
+            "          background b",
+            "            step Given",
+            "          scenario o",
+            "            step Given",
+            "            examples examples",
+            "            examples as scenarios o_scenarios",
+            "              example scenario o-row-1",
+            "                step Given",
+            "      folder page index.html",
+            "    sentences page",
+        ]
+        .map(String::from)
+    );
 }

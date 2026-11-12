@@ -12,8 +12,8 @@ pub(crate) use heading_words::heading;
 use i18n_embed_fl::fl;
 
 use crate::entities::{
-    AnchoredFeature, BackgroundsOption, BlockHeading, ContentsEntry, FeatureBlock, HeadingLevel,
-    Page, PageOptions, PageWords, ScenarioBlock, SourceLink, TagNames, percent_encoded,
+    AnchoredFeature, BackgroundContent, BackgroundsOption, HeadingLevel, Page, PageContent,
+    PageOptions, PageWords, RuleContent, ScenarioContent, SourceLink, TagNames, percent_encoded,
 };
 use crate::policies::site::{breadcrumb, page_language, site_title};
 use crate::policies::{CATALOGUE, page_address};
@@ -22,14 +22,15 @@ use crate::policies::{CATALOGUE, page_address};
 /// the path goes; no message of the catalogue holds it.
 const PATH_MARK: &str = "\u{0}";
 
-/// `tags` names every tag of the site, and `folders` are the names of the
-/// folder nodes the page is in, from the outermost, for its breadcrumb.
+/// The page of `anchored` with its blocks. `tags` names every tag of the
+/// site, and `folders` are the names of the folder nodes the page is in,
+/// from the outermost, for its breadcrumb.
 pub(crate) fn build_page(
     anchored: &AnchoredFeature<'_>,
     options: &PageOptions,
     tags: &TagNames,
     folders: &[String],
-) -> Page {
+) -> PageContent {
     let parsed = anchored.parsed;
     let feature = &parsed.feature;
     let path = slash_path(&parsed.path);
@@ -41,41 +42,31 @@ pub(crate) fn build_page(
         tags,
         root: address.root(),
     };
-    let mut blocks = Vec::new();
-    if let Some(background) = &anchored.background {
-        blocks.push(FeatureBlock::Background(
-            builder.background(background, HeadingLevel::Two),
-        ));
-    }
-    let from_feature: Vec<_> = anchored
-        .background
+    let background = anchored.background.as_ref().map(|background| {
+        builder.background(
+            background,
+            HeadingLevel::Two,
+            fl!(CATALOGUE, "from-background"),
+        )
+    });
+    let scenarios: Vec<_> = anchored
+        .scenarios
         .iter()
-        .filter_map(|background| {
-            builder.background_steps(background, fl!(CATALOGUE, "from-background"))
-        })
+        .map(|scenario| builder.scenario(scenario, HeadingLevel::Two))
         .collect();
-    blocks.extend(
-        anchored
-            .scenarios
-            .iter()
-            .map(|s| builder.scenario(s, HeadingLevel::Two, &from_feature))
-            .map(FeatureBlock::Scenario),
-    );
-    blocks.extend(
-        anchored
-            .rules
-            .iter()
-            .map(|rule| builder.rule(rule, &from_feature))
-            .map(FeatureBlock::Rule),
-    );
+    let rules: Vec<_> = anchored
+        .rules
+        .iter()
+        .map(|rule| builder.rule(rule))
+        .collect();
     let has_background =
         feature.background.is_some() || feature.rules.iter().any(|rule| rule.background.is_some());
     let backgrounds_option = has_background.then(|| BackgroundsOption {
         label: fl!(CATALOGUE, "inline-backgrounds"),
         inline: options.inline_backgrounds,
-        enabled: any_background_steps(&blocks),
+        enabled: any_background_steps(background.as_ref(), &scenarios, &rules),
     });
-    Page {
+    let page = Page {
         breadcrumb: breadcrumb(
             &site_title(options),
             folders,
@@ -97,60 +88,38 @@ pub(crate) fn build_page(
             .source_link
             .as_deref()
             .map(|template| source_link(template, &path, feature.position.line)),
-        contents: contents(&blocks),
-        blocks,
         words: PageWords {
             contents: fl!(CATALOGUE, "page-contents"),
             collapse_all: fl!(CATALOGUE, "collapse-all"),
             expand_all: fl!(CATALOGUE, "expand-all"),
         },
         backgrounds_option,
+    };
+    PageContent {
+        page,
+        background,
+        scenarios,
+        rules,
     }
 }
 
-fn any_background_steps(blocks: &[FeatureBlock]) -> bool {
-    blocks.iter().any(has_background_steps)
+/// Whether a scenario starts with a background's steps: one beside a feature
+/// background that has steps, or in a rule whose background has steps.
+fn any_background_steps(
+    background: Option<&BackgroundContent>,
+    scenarios: &[ScenarioContent],
+    rules: &[RuleContent],
+) -> bool {
+    let feature_steps = has_steps(background);
+    let in_feature = !scenarios.is_empty() || rules.iter().any(|rule| !rule.scenarios.is_empty());
+    let in_rule = rules
+        .iter()
+        .any(|rule| has_steps(rule.background.as_ref()) && !rule.scenarios.is_empty());
+    (feature_steps && in_feature) || in_rule
 }
 
-/// Whether `block` is or holds a scenario that starts with a background's steps.
-fn has_background_steps(block: &FeatureBlock) -> bool {
-    match block {
-        FeatureBlock::Background(_) => false,
-        FeatureBlock::Rule(rule) => rule.scenarios.iter().any(starts_with_background),
-        FeatureBlock::Scenario(scenario) => starts_with_background(scenario),
-    }
-}
-
-fn starts_with_background(scenario: &ScenarioBlock) -> bool {
-    !scenario.backgrounds.is_empty()
-}
-
-/// Rules and scenarios are listed in a page's contents, and a rule's entry lists its scenarios.
-fn contents(blocks: &[FeatureBlock]) -> Vec<ContentsEntry> {
-    blocks.iter().filter_map(contents_entry).collect()
-}
-
-fn contents_entry(block: &FeatureBlock) -> Option<ContentsEntry> {
-    match block {
-        FeatureBlock::Background(_) => None,
-        FeatureBlock::Rule(rule) => Some(ContentsEntry {
-            entries: rule.scenarios.iter().map(scenario_entry).collect(),
-            ..entry(&rule.heading)
-        }),
-        FeatureBlock::Scenario(scenario) => Some(scenario_entry(scenario)),
-    }
-}
-
-fn scenario_entry(scenario: &ScenarioBlock) -> ContentsEntry {
-    entry(&scenario.heading)
-}
-
-fn entry(heading: &BlockHeading) -> ContentsEntry {
-    ContentsEntry {
-        anchor: heading.anchor.clone(),
-        heading: heading.text(),
-        entries: Vec::new(),
-    }
+fn has_steps(background: Option<&BackgroundContent>) -> bool {
+    background.is_some_and(|background| !background.steps.is_empty())
 }
 
 fn source_link(template: &str, path: &str, line: usize) -> SourceLink {

@@ -4,8 +4,8 @@ use i18n_embed::LanguageLoader;
 use i18n_embed_fl::fl;
 
 use crate::entities::{
-    FeatureEntry, FolderId, FolderLink, FolderPage, FolderWords, LinkAddress, Page, PageOptions,
-    SiteAddress, SiteFolder,
+    FeatureEntry, FolderId, FolderLink, FolderPage, FolderWords, LinkAddress, PageOptions,
+    SiteAddress, SiteFeaturePage, SiteFolder,
 };
 use crate::policies::site::{breadcrumb, site_title, tag_index_address};
 use crate::policies::{CATALOGUE, FOLDER_PAGE, SENTENCES_PAGE};
@@ -30,7 +30,7 @@ fn folder_page(folder: &SiteFolder<'_>, title: &str) -> (FolderId, FolderPage) {
         .filter_map(|subfolder| subfolder.name())
         .collect();
     subfolders.sort_unstable();
-    let mut features: Vec<&Page> = folder.feature_pages().collect();
+    let mut features: Vec<SiteFeaturePage<'_>> = folder.feature_pages().collect();
     features.sort_by(|a, b| file_name(a).cmp(file_name(b)));
     let page = FolderPage {
         address: SiteAddress::of(&names, FOLDER_PAGE),
@@ -57,7 +57,7 @@ fn folder_page(folder: &SiteFolder<'_>, title: &str) -> (FolderId, FolderPage) {
             name: fl!(CATALOGUE, "sentences-title"),
         }),
         folders: subfolders.into_iter().map(folder_link).collect(),
-        features: features.into_iter().map(feature_entry).collect(),
+        features: features.iter().map(feature_entry).collect(),
         words: FolderWords {
             folders: fl!(CATALOGUE, "folders"),
             features: fl!(CATALOGUE, "features"),
@@ -74,12 +74,13 @@ fn folder_link(name: &str) -> FolderLink {
     }
 }
 
-fn file_name(page: &Page) -> &str {
-    page.path.rsplit('/').next().unwrap_or_default()
+fn file_name<'a>(feature: &SiteFeaturePage<'a>) -> &'a str {
+    feature.page().path.rsplit('/').next().unwrap_or_default()
 }
 
-fn feature_entry(page: &Page) -> FeatureEntry {
-    let count = page.scenario_count();
+fn feature_entry(feature: &SiteFeaturePage<'_>) -> FeatureEntry {
+    let page = feature.page();
+    let count = feature.scenario_count();
     FeatureEntry {
         address: LinkAddress::to(page.address.file()),
         language: page.language.clone(),
@@ -91,16 +92,16 @@ fn feature_entry(page: &Page) -> FeatureEntry {
             count = count,
             feature = page.heading.as_str()
         ),
-        contents: page.contents.clone(),
+        contents: feature.contents(),
     }
 }
 
 /// The home page's, of every folder and feature inside the input folder
 /// `input`: folders, features, rules and scenarios.
 fn totals(input: &SiteFolder<'_>) -> Vec<String> {
-    let pages: Vec<&Page> = input.every_feature_page().collect();
-    let rules: usize = pages.iter().copied().map(Page::rule_count).sum();
-    let scenarios: usize = pages.iter().copied().map(Page::scenario_count).sum();
+    let pages: Vec<SiteFeaturePage<'_>> = input.every_feature_page().collect();
+    let rules: usize = pages.iter().map(SiteFeaturePage::rule_count).sum();
+    let scenarios: usize = pages.iter().map(SiteFeaturePage::scenario_count).sum();
     vec![
         fl!(
             CATALOGUE,

@@ -91,7 +91,7 @@ mod tests {
     #[test]
     fn an_empty_input_still_has_its_home_page() {
         let tree = site_tree(&[], &PageOptions::default(), None, &BTreeSet::new());
-        assert!(tree.files().any(is_the_home_page));
+        assert!(tree.files().any(|node| is_the_home_page(node.value())));
         assert_eq!(tree.root_files().count(), 0);
     }
 
@@ -99,7 +99,8 @@ mod tests {
     fn a_versions_page_lists_every_version_once_the_one_built_among_them() {
         let built = BTreeSet::from([name("main"), name("v1.0.0")]);
         let tree = site_tree(&[], &PageOptions::default(), Some(&name("main")), &built);
-        let Some(SiteNode::VersionsPage(page)) = tree.root_files().next() else {
+        let Some(SiteNode::VersionsPage(page)) = tree.root_files().next().map(|node| node.value())
+        else {
             panic!("the versions page first");
         };
         let names = |entries: &[VersionEntry]| -> Vec<VersionName> {
@@ -108,8 +109,12 @@ mod tests {
         assert_eq!(names(&page.development), [name("main")]);
         assert_eq!(names(&page.releases), [name("v1.0.0")]);
         assert!(page.pre_releases.is_empty());
-        assert!(tree.root_files().skip(1).all(is_an_asset));
-        assert!(tree.files().any(is_the_home_page));
+        assert!(
+            tree.root_files()
+                .skip(1)
+                .all(|node| is_an_asset(node.value()))
+        );
+        assert!(tree.files().any(|node| is_the_home_page(node.value())));
     }
 
     fn is_an_asset(node: &SiteNode) -> bool {

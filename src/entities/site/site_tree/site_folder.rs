@@ -2,8 +2,8 @@
 
 use ego_tree::{NodeId, NodeRef};
 
-use super::SiteNode;
-use crate::entities::{FolderPage, Page};
+use super::{SiteFeaturePage, SiteNode};
+use crate::entities::FolderPage;
 
 /// Which folder of the site tree being built a page goes in; only the builder
 /// that handed it out can use it.
@@ -51,17 +51,13 @@ impl<'a> SiteFolder<'a> {
     }
 
     /// The pages of the features directly in this folder, in the order they were put in it.
-    pub(crate) fn feature_pages(&self) -> impl Iterator<Item = &'a Page> + use<'a> {
-        self.node
-            .children()
-            .filter_map(|child| feature_page(child.value()))
+    pub(crate) fn feature_pages(&self) -> impl Iterator<Item = SiteFeaturePage<'a>> + use<'a> {
+        self.node.children().filter_map(SiteFeaturePage::of)
     }
 
     /// The pages of the features in this folder and every folder inside it, at any depth.
-    pub(crate) fn every_feature_page(&self) -> impl Iterator<Item = &'a Page> + use<'a> {
-        self.node
-            .descendants()
-            .filter_map(|node| feature_page(node.value()))
+    pub(crate) fn every_feature_page(&self) -> impl Iterator<Item = SiteFeaturePage<'a>> + use<'a> {
+        self.node.descendants().filter_map(SiteFeaturePage::of)
     }
 
     /// The folders inside this one, at any depth, this one left out.
@@ -105,13 +101,6 @@ fn folder_name(node: &SiteNode) -> Option<&str> {
 fn folder_page_of(node: &SiteNode) -> Option<&FolderPage> {
     match node {
         SiteNode::FolderPage(page) => Some(page),
-        _ => None,
-    }
-}
-
-fn feature_page(node: &SiteNode) -> Option<&Page> {
-    match node {
-        SiteNode::FeaturePage(page) => Some(page),
         _ => None,
     }
 }

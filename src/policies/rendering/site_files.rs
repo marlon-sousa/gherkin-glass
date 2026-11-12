@@ -6,7 +6,7 @@ use super::node_rendering::RenderFile;
 use super::page_layout::SitePieces;
 use super::site_data::{SEARCH_DOCUMENTS, asset};
 use crate::entities::{
-    BuiltSite, PageOptions, SiteAssets, SiteFile, SiteFiles, SiteNode, SiteTree,
+    BuiltSite, PageOptions, SiteAssets, SiteFile, SiteFiles, SiteNode, SiteTree, SiteTreeNode,
 };
 
 /// Above this size, search can be slow to start. MiniSearch 7.2.0, in Node 22
@@ -36,22 +36,23 @@ pub(crate) fn render_site(tree: &SiteTree, options: &PageOptions) -> SiteFiles {
 
 /// The file of each of `nodes`, in their order, rendered in parallel.
 fn render_files<'a>(
-    nodes: impl Iterator<Item = &'a SiteNode>,
+    nodes: impl Iterator<Item = SiteTreeNode<'a>>,
     site: &SitePieces<'_>,
 ) -> Vec<SiteFile> {
     let nodes: Vec<_> = nodes.collect();
     // Collecting into a `Vec` keeps the files' order, whatever order the threads finish in.
     nodes
         .par_iter()
-        .filter_map(|node| render_file(node, site))
+        .filter_map(|node| render_file(*node, site))
         .collect()
 }
 
-/// The file of `node`; `None` for the site, a version and a folder, which
-/// make no file of their own, and for an asset that is not there.
-fn render_file(node: &SiteNode, site: &SitePieces<'_>) -> Option<SiteFile> {
-    match node {
-        SiteNode::FeaturePage(page) => Some(file(page, site)),
+/// The file of `node`; `None` for the site, a version, a folder and a part
+/// of a page, which make no file of their own, and for an asset that is not
+/// there.
+fn render_file(node: SiteTreeNode<'_>, site: &SitePieces<'_>) -> Option<SiteFile> {
+    match node.value() {
+        SiteNode::FeaturePage(_) => node.feature_page().map(|feature| file(&feature, site)),
         SiteNode::FolderPage(folder) => Some(file(folder, site)),
         SiteNode::SentencesPage(page) => Some(file(page, site)),
         SiteNode::FolderTree(items) => Some(file(items.as_slice(), site)),
@@ -64,7 +65,16 @@ fn render_file(node: &SiteNode, site: &SitePieces<'_>) -> Option<SiteFile> {
         | SiteNode::Version(_)
         | SiteNode::KeptVersion(_)
         | SiteNode::InputFolder
-        | SiteNode::Folder(_) => None,
+        | SiteNode::Folder(_)
+        | SiteNode::Background(_)
+        | SiteNode::Rule(_)
+        | SiteNode::Scenario(_)
+        | SiteNode::Examples(_)
+        | SiteNode::ExamplesAsScenarios(_)
+        | SiteNode::ExampleScenario(_)
+        | SiteNode::Step(_)
+        | SiteNode::StepTable(_)
+        | SiteNode::DocString(_) => None,
     }
 }
 

@@ -27,7 +27,7 @@ fn documents() -> String {
     let features = read_features(&fixture().join("features"));
     let tree = site_tree(&features, &PageOptions::default(), None, &BTreeSet::new());
     tree.files()
-        .find_map(written_documents)
+        .find_map(|node| written_documents(node.value()))
         .expect("a site has its search documents")
 }
 
