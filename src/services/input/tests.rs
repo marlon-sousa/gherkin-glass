@@ -6,16 +6,9 @@ use std::path::PathBuf;
 use gherkin::{Feature, GherkinEnv};
 
 use super::*;
-use crate::entities::{CollectedInput, RawFeature};
+use crate::entities::RawFeature;
 use crate::errors::ParseError;
-
-struct FakeCollector(CollectedInput);
-
-impl InputCollector for FakeCollector {
-    fn collect(&self, _input: &Path) -> CollectedInput {
-        self.0.clone()
-    }
-}
+use crate::fixtures::MemoryFolders;
 
 /// Parses the text held for a path; a path with no text cannot be opened.
 struct FakeParser(BTreeMap<PathBuf, String>);
@@ -36,52 +29,46 @@ impl FeatureParser for FakeParser {
     }
 }
 
-fn read(
-    paths: &[&str],
-    errors: Vec<InputError>,
-    texts: &[(&str, &str)],
-) -> Result<Vec<ParsedFeature>, InputErrors> {
-    read_with(paths, errors, texts, Unnamed::Allowed)
+fn read(paths: &[&str], texts: &[(&str, &str)]) -> Result<Vec<ParsedFeature>, InputErrors> {
+    read_with(
+        MemoryFolders::with_files(paths.iter().copied()),
+        texts,
+        Unnamed::Allowed,
+    )
 }
 
 fn read_with(
-    paths: &[&str],
-    errors: Vec<InputError>,
+    folders: MemoryFolders,
     texts: &[(&str, &str)],
     unnamed: Unnamed,
 ) -> Result<Vec<ParsedFeature>, InputErrors> {
-    let collector = FakeCollector(CollectedInput {
-        paths: paths.iter().map(PathBuf::from).collect(),
-        errors,
-    });
     let parser = FakeParser(
         texts
             .iter()
             .map(|(path, text)| (PathBuf::from(path), text.to_string()))
             .collect(),
     );
-    InputService::new(Arc::new(collector), Arc::new(parser)).read(Path::new("in"), unnamed)
+    InputService::new(Arc::new(folders), Arc::new(parser)).read(Path::new("in"), unnamed)
 }
 
 #[test]
-fn the_errors_of_collecting_and_parsing_are_reported_together_sorted() {
-    // How the service combines the collector's errors with the parser's;
-    // the messages are the fakes' own.
-    let locked = InputError::new(
-        Path::new("in"),
-        Path::new("in/locked"),
-        None,
-        InputErrorKind::CannotBeListed {
-            reason: "permission denied".to_string(),
-        },
-    );
-    let errors = read(
-        &["in/a.feature", "in/b.feature", "in/c.feature"],
-        vec![locked],
+fn the_errors_of_walking_and_parsing_are_reported_together_sorted() {
+    // How the service combines the walk's errors with the parser's; the
+    // messages are the fakes' own.
+    let mut folders = MemoryFolders::with_files([
+        "in/a.feature",
+        "in/b.feature",
+        "in/c.feature",
+        "in/locked/d.feature",
+    ]);
+    folders.unlistable.insert(PathBuf::from("in/locked"));
+    let errors = read_with(
+        folders,
         &[
             ("in/a.feature", "Feature: A\n"),
             ("in/c.feature", "nothing\n"),
         ],
+        Unnamed::Allowed,
     )
     .expect_err("problems");
     assert_eq!(
@@ -103,19 +90,24 @@ fn refused_unnamed_blocks_are_reported_with_the_files_that_cannot_be_read() {
         ("in/c.feature", "Feature: C\n"),
     ];
     let paths = ["in/a.feature", "in/b.feature", "in/c.feature"];
-    let errors = read_with(&paths, Vec::new(), &texts, Unnamed::Refused).expect_err("problems");
+    let errors = read_with(MemoryFolders::with_files(paths), &texts, Unnamed::Refused)
+        .expect_err("problems");
     assert_eq!(
         errors.to_string(),
         "a.feature:1: The feature has no name, and allow_unnamed is false.\n\
          a.feature:4: The scenario has no name, and allow_unnamed is false.\n\
          b.feature:1: Syntax error.\n"
     );
-    let features = read_with(&paths[..1], Vec::new(), &texts, Unnamed::Allowed);
+    let features = read_with(
+        MemoryFolders::with_files(paths.into_iter().take(1)),
+        &texts,
+        Unnamed::Allowed,
+    );
     assert_eq!(features.expect("allowed").len(), 1);
 }
 
 #[test]
-fn features_keep_the_order_they_were_collected_in() {
+fn features_keep_the_order_of_their_paths() {
     let texts: Vec<_> = (0..50)
         .map(|n| (format!("in/{n:02}.feature"), format!("Feature: {n}\n")))
         .collect();
@@ -124,7 +116,7 @@ fn features_keep_the_order_they_were_collected_in() {
         .iter()
         .map(|(p, t)| (p.as_str(), t.as_str()))
         .collect();
-    let features = read(&paths, Vec::new(), &texts).expect("read");
+    let features = read(&paths, &texts).expect("read");
     let names: Vec<_> = features.iter().map(|f| f.feature.name.clone()).collect();
     let expected: Vec<_> = (0..50).map(|n| n.to_string()).collect();
     assert_eq!(names, expected);
@@ -134,7 +126,6 @@ fn features_keep_the_order_they_were_collected_in() {
 fn a_doc_string_is_corrected_and_its_path_made_relative() {
     let features = read(
         &["in/sub/a.feature"],
-        Vec::new(),
         &[(
             "in/sub/a.feature",
             "Feature: A\n  Scenario: S\n    Given text\n      \"\"\"md\n      Hi\n      \"\"\"\n",

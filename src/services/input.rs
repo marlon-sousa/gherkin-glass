@@ -1,8 +1,11 @@
-//! Service: reading the input, the collect and parse steps of a build.
+//! Service: the gherkin parser, walking the input and parsing the feature files it selects.
+
+mod input_walk;
 
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
+use input_walk::walk_input;
 use rayon::iter::Either;
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 
@@ -11,23 +14,23 @@ use crate::errors::{InputError, InputErrorKind, InputErrors};
 use crate::policies::{
     correct_doc_strings, correct_step_keywords, file_language, page_collisions, unnamed_blocks,
 };
-use crate::ports::{FeatureParser, InputCollector};
+use crate::ports::{FeatureParser, InputFolders};
 
 #[derive(Clone)]
 pub(crate) struct InputService {
-    collector: Arc<dyn InputCollector>,
+    folders: Arc<dyn InputFolders>,
     parser: Arc<dyn FeatureParser>,
 }
 
 impl InputService {
-    pub(crate) fn new(collector: Arc<dyn InputCollector>, parser: Arc<dyn FeatureParser>) -> Self {
-        InputService { collector, parser }
+    pub(crate) fn new(folders: Arc<dyn InputFolders>, parser: Arc<dyn FeatureParser>) -> Self {
+        InputService { folders, parser }
     }
 
     /// The paths of the files the `.ghg-ignore` rules select under
     /// `input`, sorted, without reading them.
     pub(crate) fn paths(&self, input: &Path) -> Vec<PathBuf> {
-        self.collector.collect(input).paths
+        walk_input(self.folders.as_ref(), input).paths
     }
 
     /// The features under `input`, sorted by path, or every error found:
@@ -39,7 +42,7 @@ impl InputService {
         input: &Path,
         unnamed: Unnamed,
     ) -> Result<Vec<ParsedFeature>, InputErrors> {
-        let collected = self.collector.collect(input);
+        let collected = walk_input(self.folders.as_ref(), input);
         let mut errors = collected.errors;
         errors.extend(page_collisions(input, &collected.paths));
         // Collecting into a `Vec` keeps file order, whatever order the threads finish in.

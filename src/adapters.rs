@@ -2,8 +2,8 @@
 
 mod config_file_reader;
 mod file_watcher;
-mod gherkin_parser;
-mod input_walker;
+mod gherkin_crate;
+mod input_folder_reader;
 mod memory_site;
 mod output_folder_store;
 mod preview_http;
@@ -12,8 +12,8 @@ mod standard_streams;
 
 pub(crate) use config_file_reader::ConfigFileReader;
 pub(crate) use file_watcher::FileWatcher;
-pub(crate) use gherkin_parser::GherkinParser;
-pub(crate) use input_walker::InputWalker;
+pub(crate) use gherkin_crate::GherkinCrate;
+pub(crate) use input_folder_reader::InputFolderReader;
 pub(crate) use memory_site::MemorySite;
 pub(crate) use output_folder_store::OutputFolderStore;
 pub(crate) use preview_http::HttpPreviewServer;

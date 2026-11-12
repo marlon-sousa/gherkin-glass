@@ -169,11 +169,11 @@ mod tests {
 
     use super::*;
     use crate::entities::{
-        Changes, CollectedInput, OutputContents, Preview, RawFeature, Record, Watched,
+        Changes, EntryKind, FolderEntry, OutputContents, Preview, RawFeature, Record, Watched,
     };
     use crate::errors::{InputErrorKind, ListenErrorKind, ParseError, ServeError, WatchError};
     use crate::ports::{
-        ChangeWatcher, FeatureParser, InputCollector, OutputFolders, PreviewServer, SiteRecorder,
+        ChangeWatcher, FeatureParser, InputFolders, OutputFolders, PreviewServer, SiteRecorder,
         SiteWriter,
     };
     use crate::services::InputService;
@@ -226,16 +226,20 @@ mod tests {
         }
     }
 
-    /// Finds one file in the input folder, `a.feature`, whatever the folder,
-    /// so the folder read shows in the report.
-    struct FakeCollector;
+    /// Lists one file in every folder, `a.feature`, whatever the folder, so
+    /// the folder read shows in the report.
+    struct OneFile;
 
-    impl InputCollector for FakeCollector {
-        fn collect(&self, input: &Path) -> CollectedInput {
-            CollectedInput {
-                paths: vec![input.join("a.feature")],
-                errors: Vec::new(),
-            }
+    impl InputFolders for OneFile {
+        fn list(&self, folder: &Path) -> IoResult<Vec<FolderEntry>> {
+            Ok(vec![FolderEntry {
+                path: folder.join("a.feature"),
+                kind: EntryKind::File,
+            }])
+        }
+
+        fn read(&self, _: &Path) -> IoResult<String> {
+            Err(IoError::new(ErrorKind::NotFound, "not found"))
         }
     }
 
@@ -259,7 +263,7 @@ mod tests {
             .map(|(path, text)| (PathBuf::from(path), text.to_string()))
             .collect();
         let files: Arc<FakeFiles> = Arc::new(FakeFiles(files));
-        let input = InputService::new(Arc::new(FakeCollector), Arc::new(FailingParser));
+        let input = InputService::new(Arc::new(OneFile), Arc::new(FailingParser));
         let site = || SiteService::new(input.clone(), Arc::new(NoRecorder));
         let output = OutputService::new(Arc::new(NoVersions));
         let preview = PreviewService::new(

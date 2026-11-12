@@ -5,6 +5,8 @@ use std::path::Path;
 use ignore::Match;
 use ignore::gitignore::{Gitignore, GitignoreBuilder};
 
+use crate::entities::EntryKind;
+
 pub(crate) const IGNORE_FILE: &str = ".ghg-ignore";
 
 /// Gitignore rules, where the last matching rule wins: leave out everything,
@@ -60,7 +62,8 @@ impl FileSelection {
     /// The last matching rule of the nearest `.ghg-ignore` file with a
     /// matching rule decides; the defaults decide when none matches. A
     /// `.ghg-ignore` file itself is always left out.
-    pub(crate) fn is_left_out(&self, path: &Path, is_folder: bool) -> bool {
+    pub(crate) fn is_left_out(&self, path: &Path, kind: EntryKind) -> bool {
+        let is_folder = kind == EntryKind::Folder;
         if !is_folder && path.file_name() == Some(IGNORE_FILE.as_ref()) {
             return true;
         }
@@ -118,32 +121,32 @@ mod tests {
     #[test]
     fn the_defaults_read_feature_files_and_leave_out_hidden_ones() {
         let defaults = selection(&[]);
-        assert!(!defaults.is_left_out(Path::new("in/a.feature"), false));
-        assert!(!defaults.is_left_out(Path::new("in/sub"), true));
-        assert!(defaults.is_left_out(Path::new("in/a.md"), false));
-        assert!(defaults.is_left_out(Path::new("in/.a.feature"), false));
-        assert!(defaults.is_left_out(Path::new("in/.git"), true));
+        assert!(!defaults.is_left_out(Path::new("in/a.feature"), EntryKind::File));
+        assert!(!defaults.is_left_out(Path::new("in/sub"), EntryKind::Folder));
+        assert!(defaults.is_left_out(Path::new("in/a.md"), EntryKind::File));
+        assert!(defaults.is_left_out(Path::new("in/.a.feature"), EntryKind::File));
+        assert!(defaults.is_left_out(Path::new("in/.git"), EntryKind::Folder));
     }
 
     #[test]
     fn the_nearest_ghg_ignore_with_a_matching_rule_decides() {
         let nested = selection(&[("in", "x.feature\n"), ("in/sub", "!x.feature\n")]);
-        assert!(!nested.is_left_out(Path::new("in/sub/x.feature"), false));
+        assert!(!nested.is_left_out(Path::new("in/sub/x.feature"), EntryKind::File));
         let outer_only = selection(&[("in", "x.feature\n"), ("in/sub", "y.feature\n")]);
-        assert!(outer_only.is_left_out(Path::new("in/sub/x.feature"), false));
+        assert!(outer_only.is_left_out(Path::new("in/sub/x.feature"), EntryKind::File));
     }
 
     #[test]
     fn a_ghg_ignore_file_is_left_out_whatever_the_rules_say() {
         let everything = selection(&[("in", "!.*\n!*\n")]);
-        assert!(everything.is_left_out(Path::new("in/.ghg-ignore"), false));
-        assert!(!everything.is_left_out(Path::new("in/.hidden.feature"), false));
+        assert!(everything.is_left_out(Path::new("in/.ghg-ignore"), EntryKind::File));
+        assert!(!everything.is_left_out(Path::new("in/.hidden.feature"), EntryKind::File));
     }
 
     #[test]
     fn a_folder_named_like_a_ghg_ignore_file_follows_the_rules() {
         let selection = selection(&[("in", "!.ghg-ignore/\n")]);
-        assert!(!selection.is_left_out(Path::new("in/.ghg-ignore"), true));
+        assert!(!selection.is_left_out(Path::new("in/.ghg-ignore"), EntryKind::Folder));
     }
 
     #[test]

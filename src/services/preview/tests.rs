@@ -65,9 +65,9 @@ fn watching_rebuilds_on_each_burst_and_keeps_the_last_good_site() {
         assert!(!files.contains_key("stale.html"));
 
         // A change no build reads is looked at, and rebuilds nothing.
-        let walked = input.collected.load(Ordering::SeqCst);
+        let walked = input.listed.load(Ordering::SeqCst);
         sender.send(changed("features/notes.txt")).expect("sent");
-        wait_until(|| input.collected.load(Ordering::SeqCst) > walked);
+        wait_until(|| input.listed.load(Ordering::SeqCst) > walked);
         assert_eq!(preview.current().number, 1);
 
         sender.send(changed("ghg.toml")).expect("sent");

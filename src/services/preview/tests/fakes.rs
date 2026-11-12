@@ -8,9 +8,9 @@ use std::thread::sleep;
 use std::time::{Duration, Instant};
 
 use super::*;
-use crate::entities::{Changes, CollectedInput, OutputContents, RawFeature, Record};
-use crate::errors::{InputError, InputErrorKind, ListenErrorKind, ParseError, WatchError};
-use crate::ports::{FeatureParser, InputCollector, OutputFolders, SiteWriter};
+use crate::entities::{Changes, EntryKind, FolderEntry, OutputContents, RawFeature, Record};
+use crate::errors::{InputErrorKind, ListenErrorKind, ParseError, WatchError};
+use crate::ports::{FeatureParser, InputFolders, OutputFolders, SiteWriter};
 use std::collections::{BTreeMap, BTreeSet};
 
 /// No configuration file.
@@ -22,33 +22,37 @@ impl ConfigReader for NoFile {
     }
 }
 
-/// An input with no features, or, while `failing`, one error;
-/// `collected` counts how often it was walked.
+/// An input with no features, or, while `failing`, one file that cannot be
+/// parsed; `listed` counts how often its folder was listed.
 #[derive(Default)]
 pub(super) struct Input {
     pub(super) failing: AtomicBool,
-    pub(super) collected: AtomicUsize,
+    pub(super) listed: AtomicUsize,
 }
 
-impl InputCollector for Input {
-    fn collect(&self, input: &Path) -> CollectedInput {
-        self.collected.fetch_add(1, Ordering::SeqCst);
-        let errors = if self.failing.load(Ordering::SeqCst) {
-            let kind = InputErrorKind::Changed;
-            vec![InputError::new(input, &input.join("a.feature"), None, kind)]
-        } else {
-            Vec::new()
-        };
-        CollectedInput {
-            paths: Vec::new(),
-            errors,
+impl InputFolders for Input {
+    fn list(&self, folder: &Path) -> IoResult<Vec<FolderEntry>> {
+        self.listed.fetch_add(1, Ordering::SeqCst);
+        if !self.failing.load(Ordering::SeqCst) {
+            return Ok(Vec::new());
         }
+        Ok(vec![FolderEntry {
+            path: folder.join("a.feature"),
+            kind: EntryKind::File,
+        }])
+    }
+
+    fn read(&self, _: &Path) -> IoResult<String> {
+        Err(IoError::new(ErrorKind::NotFound, "not found"))
     }
 }
 
 impl FeatureParser for Input {
     fn parse(&self, _: &Path) -> Result<RawFeature, ParseError> {
-        unreachable!("no feature is collected")
+        Err(ParseError {
+            line: None,
+            kind: InputErrorKind::Changed,
+        })
     }
 }
 
