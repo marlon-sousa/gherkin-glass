@@ -238,7 +238,7 @@ impl SiteWriterApi for FakeSiteWriter {
         let site = match settings.destination {
             Destination::Folder => ServedSite::Folder(settings.output.clone()),
             Destination::Memory => {
-                ServedSite::Memory(BTreeMap::from([(format!("site {number}"), Vec::new())]))
+                ServedSite::Memory(BTreeMap::from([(format!("site {number}"), Arc::from([]))]))
             }
         };
         Ok((built_site(), site))

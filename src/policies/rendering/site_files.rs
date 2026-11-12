@@ -1,5 +1,7 @@
 //! Policy: every file of a site rendered from its tree, each file node through the rendering trait, and what the build has to say of them.
 
+use std::sync::Arc;
+
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 
 use super::node_rendering::{NodeOf, RenderFile};
@@ -97,7 +99,7 @@ fn asset_file(name: &str) -> Option<SiteFile> {
     let file = SiteAssets::get(name)?;
     Some(SiteFile {
         address: asset(name),
-        contents: file.data.into_owned(),
+        contents: Arc::from(file.data),
     })
 }
 

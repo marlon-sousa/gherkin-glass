@@ -208,7 +208,7 @@ fn find(version: &Version, address: &str) -> Found {
     match &version.site {
         ServedSite::Memory(files) => {
             if let Some(body) = files.get(address) {
-                return Found::File(body.clone());
+                return Found::File(body.to_vec());
             }
             let folder = format!("{address}/");
             match files.range(folder.clone()..).next() {
@@ -254,8 +254,8 @@ mod tests {
 
     fn memory(mode: ServeMode) -> Preview {
         let files = BTreeMap::from([
-            ("a/index.html".to_string(), b"<p>a</p></body>".to_vec()),
-            ("a/s.js".to_string(), b"</body>".to_vec()),
+            ("a/index.html".to_string(), Arc::from(*b"<p>a</p></body>")),
+            ("a/s.js".to_string(), Arc::from(*b"</body>")),
         ]);
         let preview = Preview::new(mode, ServedSite::Memory(BTreeMap::new()));
         preview.replace(ServedSite::Memory(files));

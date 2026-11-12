@@ -12,7 +12,7 @@ use crate::entities::ServeMode;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) enum ServedSite {
     Folder(PathBuf),
-    Memory(BTreeMap<String, Vec<u8>>),
+    Memory(BTreeMap<String, Arc<[u8]>>),
 }
 
 /// One version of the site, numbered from 1.
@@ -80,7 +80,7 @@ mod tests {
     fn a_replaced_version_takes_the_next_number_and_an_old_one_stays_whole() {
         let preview = Preview::new(ServeMode::Watch, ServedSite::Memory(BTreeMap::new()));
         let first = preview.current();
-        let site = ServedSite::Memory(BTreeMap::from([("a.html".into(), b"a".to_vec())]));
+        let site = ServedSite::Memory(BTreeMap::from([("a.html".into(), Arc::from(*b"a"))]));
         assert_eq!(preview.replace(site.clone()), 2);
         assert_eq!(first.number, 1);
         assert_eq!(first.site, ServedSite::Memory(BTreeMap::new()));

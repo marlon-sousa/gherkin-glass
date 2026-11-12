@@ -98,7 +98,7 @@ pub(super) struct FakeWriter {
 }
 
 impl FileWriter for FakeWriter {
-    fn write(&self, output: &Path, file: &str, _contents: &[u8]) -> IoResult<()> {
+    fn write(&self, output: &Path, file: &str, _contents: &Arc<[u8]>) -> IoResult<()> {
         if self.fails == Some(file) {
             return Err(IoError::other("disk full"));
         }

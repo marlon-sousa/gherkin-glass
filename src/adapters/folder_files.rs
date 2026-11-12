@@ -3,6 +3,7 @@
 use std::fs::{create_dir_all, write};
 use std::io::Result as IoResult;
 use std::path::Path;
+use std::sync::Arc;
 
 use crate::entities::ServedSite;
 use crate::ports::FileWriter;
@@ -11,7 +12,7 @@ use crate::ports::FileWriter;
 pub(crate) struct FolderFiles;
 
 impl FileWriter for FolderFiles {
-    fn write(&self, output: &Path, file: &str, contents: &[u8]) -> IoResult<()> {
+    fn write(&self, output: &Path, file: &str, contents: &Arc<[u8]>) -> IoResult<()> {
         let path = file
             .split('/')
             .fold(output.to_path_buf(), |path, part| path.join(part));

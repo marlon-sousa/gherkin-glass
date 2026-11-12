@@ -4,7 +4,7 @@ use std::collections::BTreeMap;
 use std::io::Result as IoResult;
 use std::mem::take;
 use std::path::Path;
-use std::sync::{Mutex, PoisonError};
+use std::sync::{Arc, Mutex, PoisonError};
 
 use crate::entities::ServedSite;
 use crate::ports::FileWriter;
@@ -12,15 +12,15 @@ use crate::ports::FileWriter;
 /// `output` is left aside: nothing is written to disk.
 #[derive(Debug, Default)]
 pub(crate) struct MemoryFiles {
-    files: Mutex<BTreeMap<String, Vec<u8>>>,
+    files: Mutex<BTreeMap<String, Arc<[u8]>>>,
 }
 
 impl FileWriter for MemoryFiles {
-    fn write(&self, _output: &Path, file: &str, contents: &[u8]) -> IoResult<()> {
+    fn write(&self, _output: &Path, file: &str, contents: &Arc<[u8]>) -> IoResult<()> {
         self.files
             .lock()
             .unwrap_or_else(PoisonError::into_inner)
-            .insert(file.to_string(), contents.to_vec());
+            .insert(file.to_string(), Arc::clone(contents));
         Ok(())
     }
 
@@ -39,11 +39,15 @@ mod tests {
     fn taking_the_site_empties_it() {
         let files = MemoryFiles::default();
         let output = Path::new("site");
-        files.write(output, "a/b.html", b"b").expect("written");
-        files.write(output, "a/b.html", b"c").expect("written");
+        files
+            .write(output, "a/b.html", &Arc::from(*b"b"))
+            .expect("written");
+        files
+            .write(output, "a/b.html", &Arc::from(*b"c"))
+            .expect("written");
         assert_eq!(
             files.site(output),
-            ServedSite::Memory(BTreeMap::from([("a/b.html".to_string(), b"c".to_vec())]))
+            ServedSite::Memory(BTreeMap::from([("a/b.html".to_string(), Arc::from(*b"c"))]))
         );
         assert_eq!(files.site(output), ServedSite::Memory(BTreeMap::new()));
     }

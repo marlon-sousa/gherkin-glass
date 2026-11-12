@@ -81,7 +81,7 @@ fn everything_changed_loads_the_settings_again_and_watches_again_before_it_rebui
         assert_eq!(preview.current().number, 2);
         assert_eq!(
             preview.current().site,
-            ServedSite::Memory([("site 2".to_string(), Vec::new())].into())
+            ServedSite::Memory([("site 2".to_string(), Arc::from([]))].into())
         );
 
         world.fail(Failing::Input);
