@@ -23,7 +23,7 @@ Reading them is harder than it should be. They live in a repository, spread acro
 
 ## Status
 
-Not yet released. Until then, it can be built from the repository with `cargo install --git https://github.com/marlon-sousa/gherkin-glass --locked`, which installs `ghg` and `cargo-ghg` and needs [Rust](https://rustup.rs/).
+Not yet released. Until then, it can be built from the repository with `cargo install --git https://github.com/marlon-sousa/gherkin-glass gherkin-glass --locked`, which installs `ghg` and `cargo-ghg` and needs [Rust](https://rustup.rs/).
 
 ## Installing and running
 
@@ -102,10 +102,10 @@ ghg serve [options]
 | `--output <folder>` | `build` and `serve` | Writes the site into that folder, instead of the configuration's `output`. |
 | `--title <text>` | `build` and `serve` | The site's title, instead of the configuration's `title`. |
 | `--version-name <name>` | `build` and `serve` | Builds the site as that version, instead of the configuration's `version_name`. |
-| `--host <address>` | `ghg serve` | Listens on that address instead of `127.0.0.1`, such as `0.0.0.0` to be reached from other machines. |
-| `--port <number>` | `ghg serve` | Listens at that port instead of 8000. `0` lets the system choose a free one. |
-| `--no-build` | `ghg serve` | Serves the output folder as it is, without building it. |
-| `--watch` | `ghg serve` | Rebuilds the site whenever a feature file or the configuration changes, and reloads the pages open in the browser. |
+| `--host <address>` | `serve` | Listens on that address instead of `127.0.0.1`, such as `0.0.0.0` to be reached from other machines. |
+| `--port <number>` | `serve` | Listens at that port instead of 8000. `0` lets the system choose a free one. |
+| `--no-build` | `serve` | Serves the output folder as it is, without building it. |
+| `--watch` | `serve` | Rebuilds the site whenever a feature file or the configuration changes, and reloads the pages open in the browser. |
 
 An option on the command line wins over the configuration file's key, and the key wins over the default. `ghg --help` lists the commands and options, and `ghg --version` prints the version.
 
@@ -115,7 +115,7 @@ An option on the command line wins over the configuration file's key, and the ke
 
 A site is meant to be served by a web server, not opened from disk. Opened from disk, a browser does not run the page's script, so the folder tree, search and the reader options do not work. Every page opened from disk therefore first opens a dialog, "Opened from disk", that says the site is meant to be served and how to serve it; close it with its button, "I agree", or with Escape, to read the page.
 
-To look at a site on your own machine, use `ghg serve`. Without options, it builds the site into the output folder, as `ghg build` does, then serves it. With `--watch`, the site is built in memory and served from there, the output folder is left as it is, and the page you are reading reloads at the same heading after each change. With `--no-build`, ghg serves a site already built, such as one downloaded from a CI run.
+To look at a site on your own machine, use `ghg serve`. Without `--watch` or `--no-build`, it builds the site into the output folder, as `ghg build` does, then serves it. With `--watch`, the site is built in memory and served from there, the output folder is left as it is, and the page you are reading reloads at the same heading after each change. With `--no-build`, ghg serves a site already built, such as one downloaded from a CI run.
 
 To publish a site, put the output folder on any static web host, GitHub Pages included. Every link in a site is relative, so it works at any address, below a path such as `/<repository>/` too. GitHub Pages publishing from a branch runs Jekyll, which leaves out files whose names start with `_`, such as the page of `_draft.feature`; publish with GitHub's Pages action instead, or add a `.nojekyll` file beside the site on that branch, never inside the output folder.
 
@@ -132,7 +132,7 @@ So keep the output folder for the site alone, and put anything you want served b
 
 ### Versions
 
-One site can hold several versions of the same suite, so that readers read the version they use. Give each build a version name, with `--version-name` or `version_name`, such as `v1.2.0` or `main`. A version name is one folder name, of letters, digits, `.`, `-`, `_` and `+`. A name such as `1.2.0` or `v1.2.0` is a release, one such as `2.0.0-rc.1` a pre-release, and any other, such as `main`, a development version. Each version is written into a folder of its own in the output folder, such as `site/v1.2.0/`, and the output folder's `index.html` lists every version: development versions, releases newest first, and pre-releases, listed collapsed.
+One site can hold several versions of the same suite, so that readers read the version they use. Give each build a version name, with `--version-name` or `version_name`, such as `v1.2.0` or `main`. A version name is one folder name, of the letters `a` to `z` and `A` to `Z`, digits, `.`, `-`, `_` and `+`. A name such as `1.2.0` or `v1.2.0` is a release, one such as `2.0.0-rc.1` a pre-release, and any other, such as `main`, a development version. Each version is written into a folder of its own in the output folder, such as `site/v1.2.0/`, and the output folder's `index.html` lists every version: development versions, releases newest first, and pre-releases, listed collapsed.
 
 ghg does not read git. To build several versions, check each one out into a folder of its own and run ghg once for each, into the same output folder. Building a version again replaces it, unless `replace_existing_version` is `false`.
 
