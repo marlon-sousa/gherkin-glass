@@ -115,6 +115,11 @@ fn ghg_s_headings_go_below_the_last_heading_before_the_marker(
     Some(3),
     FrontPageErrorKind::MarkerNotAlone
 )]
+#[case::a_marker_in_a_table(
+    "# A\n\n| a |\n| - |\n| <!-- ghg:contents --> |\n",
+    Some(5),
+    FrontPageErrorKind::MarkerNotAlone
+)]
 #[case::a_marker_in_a_line_of_text(
     "# A\n\nSee <!-- ghg:contents --> here.\n",
     Some(3),
