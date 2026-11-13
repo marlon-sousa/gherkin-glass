@@ -49,7 +49,7 @@ Every pull request is reviewed by an independent reviewer before it is opened, o
 
 A pull request that changes what a page says or how it behaves carries a manual check with a screen reader in its description, as checkboxes, one per check, with the findings written on the unticked items, such as the screen reader's version and what was expected and heard.
 
-The report lists findings, each marked blocking or not, with its `file:line` and a fix, then a verdict: approve, or changes needed. A finding the author rejects goes back to the reviewer with the reason, and a blocking one closes only when the reviewer agrees or the maintainer decides. A pull request is reported ready to the maintainer only once both the review and the CI of its latest push have passed.
+The report lists findings, each marked blocking or not, with its `file:line` and a fix, then a verdict: approve, or changes needed. For item 19, it says whether the reviewer judged that the change can alter what a page looks like or how it lays out, and why. A finding the author rejects goes back to the reviewer with the reason, and a blocking one closes only when the reviewer agrees or the maintainer decides. A pull request is reported ready to the maintainer only once both the review and the CI of its latest push have passed.
 
 ## Building and testing
 
