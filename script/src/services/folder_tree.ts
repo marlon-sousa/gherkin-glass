@@ -14,7 +14,7 @@ export interface TreePlace {
 
 export async function startFolderTree(source: TreeSource, toggle: TreeSwitch, view: TreeView, width: WindowWidth, memory: Memory, place: TreePlace): Promise<void> {
   let checked = startChecked(toggle.configured(), memory.get(shownKey(place.sitePath)));
-  // The button's state is never remembered: every page starts with its content first.
+  // The button's state is never remembered.
   let open = false;
   let narrow = width.narrow();
   let usable = true;
