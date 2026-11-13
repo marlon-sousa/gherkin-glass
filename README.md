@@ -35,6 +35,8 @@ Once gherkin-glass is released, install it in one of these ways:
 - `cargo binstall gherkin-glass`, which downloads the released binary instead of building it;
 - or download the archive for your system from the [releases page](https://github.com/marlon-sousa/gherkin-glass/releases), check it against the release's `SHA256SUMS` if you wish, and put `ghg`, and `cargo-ghg` for `cargo ghg`, somewhere on your path. There are archives for Linux on x86-64 and ARM64, macOS on Intel and Apple silicon, and Windows on x86-64.
 
+An alpha or a beta, such as `0.1.0-alpha.1`, is not on crates.io, so `cargo install gherkin-glass` and `cargo binstall gherkin-glass` cannot install it. Install it from its archive on the releases page, build it with `cargo install --git https://github.com/marlon-sousa/gherkin-glass --tag v0.1.0-alpha.1 gherkin-glass --locked`, or install it in a GitHub Actions workflow with `uses: marlon-sousa/gherkin-glass@v0.1.0-alpha.1` and the input `version: 0.1.0-alpha.1`, as [docs/BEHAVIOUR.md](docs/BEHAVIOUR.md), "The GitHub Action", describes.
+
 Each way installs `ghg`, and `cargo-ghg`, which lets you run it as `cargo ghg` beside `cargo test`. `cargo ghg build` is the same as `ghg build`.
 
 Then, in the folder of your project, with your feature files in a folder named `features`:

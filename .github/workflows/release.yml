@@ -3,9 +3,11 @@ name: Release
 # docs/BEHAVIOUR.md, "Releases". Pushing a tag v<version> releases that
 # version. The gate and the checks of rust.yml run beside the release tools'
 # own tests, the five builds and the archives; crates.io waits for all of
-# them, and the GitHub release for crates.io. On a pull request that changes
-# how releases are made, the tests, builds and archives run, and nothing is
-# published. rust.yml packs the crate on every pull request.
+# them, and the GitHub release for crates.io. An alpha, a beta or any other
+# pre-release but a release candidate skips crates.io, and the GitHub release
+# then waits for the rest only. On a pull request that changes how releases
+# are made, the tests, builds and archives run, and nothing is published.
+# rust.yml packs the crate on every pull request.
 
 on:
   push:
@@ -44,12 +46,19 @@ jobs:
     name: release gate
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
+    outputs:
+      crates-io: ${{ steps.crates-io.outputs.publish }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
       - run: rustup toolchain install
       - run: .github/release/gate.sh "$TAG" "$GITHUB_SHA"
+      - name: Tell whether the version goes to crates.io
+        id: crates-io
+        run: |
+          publish=$(.github/release/crates-io.sh "$TAG")
+          echo "publish=$publish" >> "$GITHUB_OUTPUT"
 
   ci:
     name: checks
@@ -57,7 +66,7 @@ jobs:
     uses: ./.github/workflows/rust.yml
 
   release-tools:
-    name: release notes and gate, against their fixtures
+    name: release tools, against their fixtures
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -67,6 +76,7 @@ jobs:
       - run: .github/release/test-gate.sh
       - run: .github/release/test-check-archive.sh
       - run: .github/release/test-action-tag.sh
+      - run: .github/release/test-crates-io.sh
 
   build:
     name: build for ${{ matrix.target }}
@@ -148,9 +158,11 @@ jobs:
           if-no-files-found: error
 
   publish:
+    # docs/BEHAVIOUR.md, "Releases", rule 167: only a version without a
+    # pre-release part, or a release candidate, goes to crates.io.
     name: crates.io
-    if: github.event_name == 'push'
-    needs: [ci, archives]
+    if: github.event_name == 'push' && needs.gate.outputs.crates-io == 'true'
+    needs: [gate, ci, archives]
     runs-on: ubuntu-latest
     environment: crates-io
     permissions:
@@ -165,8 +177,16 @@ jobs:
 
   release:
     name: GitHub release
-    if: github.event_name == 'push'
-    needs: publish
+    # Runs once crates.io has published the version, or was skipped because
+    # the gate said the version does not go there, and every check and
+    # archive passed: a job whose needs failed is skipped too, so crates.io's
+    # being skipped alone does not say the rest passed.
+    if: >-
+      github.event_name == 'push' && !cancelled()
+      && needs.ci.result == 'success' && needs.archives.result == 'success'
+      && (needs.publish.result == 'success'
+        || (needs.publish.result == 'skipped' && needs.gate.outputs.crates-io == 'false'))
+    needs: [gate, ci, archives, publish]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -184,7 +204,9 @@ jobs:
     # docs/BEHAVIOUR.md, "The GitHub Action", rule 177: uses:
     # marlon-sousa/gherkin-glass@v1 runs the action of the newest 1.x release.
     name: the action's major version tag
-    if: github.event_name == 'push'
+    # The release's own result, not success(), which also counts crates.io
+    # when it was skipped.
+    if: github.event_name == 'push' && !cancelled() && needs.release.result == 'success'
     needs: release
     runs-on: ubuntu-latest
     permissions:
@@ -211,7 +233,8 @@ jobs:
     # docs/BEHAVIOUR.md, "The project's own site": the release's own version
     # of the site, added to the gh-pages branch.
     name: the project's own site
-    if: github.event_name == 'push'
+    # As for the action's tag: an alpha's site is published too.
+    if: github.event_name == 'push' && !cancelled() && needs.release.result == 'success'
     needs: release
     permissions:
       contents: write
