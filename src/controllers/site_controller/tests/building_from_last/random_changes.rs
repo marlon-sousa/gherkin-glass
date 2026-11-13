@@ -46,7 +46,13 @@ fn removed() -> impl Strategy<Value = Change> {
 }
 
 fn renamed() -> impl Strategy<Value = Change> {
-    (select(&FOLDERS[..]), select(&FOLDERS[..])).prop_map(|(from, to)| Change::Rename(from, to))
+    (select(&FOLDERS[..]), select(&FOLDERS[..]))
+        .prop_filter("a folder renamed to another path", differ)
+        .prop_map(|(from, to)| Change::Rename(from, to))
+}
+
+fn differ((from, to): &(&str, &str)) -> bool {
+    from != to
 }
 
 fn replaced() -> impl Strategy<Value = Change> {
@@ -70,6 +76,7 @@ fn change() -> impl Strategy<Value = Change> {
 }
 
 proptest! {
+    // Rules 1 to 3, 15, 65 and 67, over any sequence of changes.
     #[test]
     fn a_build_from_the_last_build_gives_the_site_a_build_from_nothing_gives_after_any_changes(
         changes in vec(change(), 1..8),

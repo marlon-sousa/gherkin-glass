@@ -97,8 +97,7 @@ fn a_build_from_the_last_build_gives_the_site_a_build_from_nothing_gives(
     builds_from_the_last_build_match_builds_from_nothing(changes);
 }
 
-/// Builds the input `START` makes, then, after each of `changes`, checks that the build from the
-/// last build gives the site the build from nothing gives, or stops on the same errors.
+/// Builds the input `START` makes, then applies each of `changes`.
 fn builds_from_the_last_build_match_builds_from_nothing(changes: &[Change]) {
     let input = Arc::new(ChangingInput::default());
     START.iter().for_each(|change| input.apply(change));

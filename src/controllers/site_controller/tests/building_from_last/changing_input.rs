@@ -111,7 +111,8 @@ pub(super) enum Change {
     Write(&'static str, &'static str),
     /// A file removed, or a folder with everything in it, by its path.
     Remove(&'static str),
-    /// A folder moved, with everything in it, by both its paths.
+    /// A folder moved, with everything in it, by both its paths, merged into the folder at the
+    /// second when there is one.
     Rename(&'static str, &'static str),
     /// A file made or changed in a folder, with its text, by the folder's path alone, as a
     /// watcher tells of a folder put in place of another.
