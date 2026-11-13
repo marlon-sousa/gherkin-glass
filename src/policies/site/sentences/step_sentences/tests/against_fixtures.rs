@@ -1,6 +1,6 @@
 //! The sentences found, checked against the fixture.
 
-use crate::entities::{PageOptions, StepKind, TagNames};
+use crate::entities::{PageOptions, SentenceUse, StepKind, TagNames};
 use crate::policies::site::sentences::find_step_sentences;
 use crate::policies::site::site_with_feature_pages;
 use crate::test_support::{every_revised, fixture, read_features};
@@ -29,24 +29,22 @@ fn found() -> Found {
                 .sentences
                 .into_iter()
                 .map(|sentence| {
-                    let uses = sentence
-                        .uses
-                        .into_iter()
-                        .map(|found| {
-                            (
-                                found.path.to_string(),
-                                found.anchor,
-                                found.line,
-                                found.values,
-                            )
-                        })
-                        .collect();
+                    let uses = sentence.uses.into_iter().map(use_of).collect();
                     (sentence.text, uses)
                 })
                 .collect();
             (group.kind, sentences)
         })
         .collect()
+}
+
+fn use_of(found: SentenceUse) -> Use {
+    (
+        found.path.to_string(),
+        found.anchor,
+        found.line,
+        found.values,
+    )
 }
 
 fn sentence(text: &str, uses: &[(&str, &str, usize, &[&str])]) -> (String, Vec<Use>) {

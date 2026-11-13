@@ -137,9 +137,9 @@ fn pieces(words: &str) -> Vec<Piece> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::path::Path;
 
+    use super::*;
     use crate::entities::{FeaturePath, Sentence, SentenceGroup, SiteAddress};
 
     #[test]

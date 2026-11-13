@@ -28,16 +28,13 @@ impl FeaturePath {
         &self.path
     }
 
-    /// The names of the folders the file is in, from the outermost, then the file's name.
     pub(crate) fn names(&self) -> Split<'_, char> {
         self.path.split('/')
     }
 
     /// The file's own name.
     pub(crate) fn file(&self) -> &str {
-        self.path
-            .rsplit_once('/')
-            .map_or(self.path.as_str(), |(_, file)| file)
+        self.names().next_back().unwrap_or_default()
     }
 }
 
@@ -57,20 +54,28 @@ mod tests {
     use super::*;
 
     #[rstest]
-    #[case::at_the_input_s_root(&["a.feature"], "a.feature", "a.feature")]
-    #[case::two_folders_down(&["billing", "refunds", "a b.feature"], "billing/refunds/a b.feature", "a b.feature")]
-    #[case::after_the_current_folder(&[".", "sub", "a.feature"], "sub/a.feature", "a.feature")]
+    #[case::at_the_input_s_root(&["a.feature"], "a.feature", &["a.feature"], "a.feature")]
+    #[case::two_folders_down(
+        &["billing", "refunds", "a b.feature"],
+        "billing/refunds/a b.feature",
+        &["billing", "refunds", "a b.feature"],
+        "a b.feature"
+    )]
+    #[case::after_the_current_folder(
+        &[".", "sub", "a.feature"],
+        "sub/a.feature",
+        &["sub", "a.feature"],
+        "a.feature"
+    )]
     fn a_feature_path_is_its_folders_then_its_file_joined_by_slashes(
         #[case] parts: &[&str],
         #[case] written: &str,
+        #[case] names: &[&str],
         #[case] file: &str,
     ) {
         let path = FeaturePath::below_input(&parts.iter().collect::<PathBuf>());
         assert_eq!(path.as_str(), written);
-        assert_eq!(
-            path.names().collect::<Vec<_>>(),
-            written.split('/').collect::<Vec<_>>()
-        );
+        assert_eq!(path.names().collect::<Vec<_>>(), names);
         assert_eq!(path.file(), file);
     }
 }
