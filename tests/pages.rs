@@ -583,7 +583,7 @@ fn the_home_page_has_the_site_s_title_and_totals() {
     };
     let titled = home("expected");
     assert!(titled.contains("<title>Banking &#38; &#60;more&#62;</title>"));
-    assert!(titled.contains("<h1>Banking &#38; &#60;more&#62;</h1>"));
+    assert!(titled.contains("<h1>Banking &amp; &lt;more&gt;</h1>"));
     assert!(titled.contains(
         "<ul class=\"ghg-totals\">\n<li>5 folders</li>\n<li>7 features</li>\n<li>3 rules</li>\n<li>11 scenarios</li>\n</ul>"
     ));

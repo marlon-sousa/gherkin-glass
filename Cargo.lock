@@ -442,6 +442,7 @@ dependencies = [
  "notify-debouncer-full",
  "proptest",
  "pulldown-cmark",
+ "pulldown-cmark-to-cmark",
  "rayon",
  "regex-automata",
  "regex-syntax",
@@ -1021,6 +1022,16 @@ name = "pulldown-cmark-escape"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "007d8adb5ddab6f8e3f491ac63566a7d5002cc7ed73901f72057943fa71ae1ae"
+
+[[package]]
+name = "pulldown-cmark-to-cmark"
+version = "23.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2fd139e09a9201c1f7c6832d637daead4460f969fa502de51986bfcb9f8da989"
+dependencies = [
+ "pulldown-cmark",
+ "unicase",
+]
 
 [[package]]
 name = "quote"

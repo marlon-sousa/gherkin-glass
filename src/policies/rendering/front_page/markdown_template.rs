@@ -7,7 +7,7 @@ use crate::entities::{FrontPageTemplate, HeadingLevel};
 use crate::errors::{FrontPageError, FrontPageErrorKind};
 
 /// Where ghg puts its own part of the page, on a line of its own.
-const MARKER: &str = "<!-- ghg:contents -->";
+pub(super) const MARKER: &str = "<!-- ghg:contents -->";
 
 /// A template as the front page shows it.
 #[derive(Debug)]
@@ -19,6 +19,9 @@ pub(super) struct MarkdownFrontPage {
     before: String,
     after: String,
 }
+
+/// The parser's options, which tables are read with.
+pub(super) const OPTIONS: Options = Options::ENABLE_TABLES;
 
 /// What stops a template, at the offset in its text where it is.
 type Refusal = (usize, FrontPageErrorKind);
@@ -48,7 +51,7 @@ impl MarkdownFrontPage {
             kind,
         };
         let mut reading = Reading::default();
-        Parser::new_ext(text, Options::ENABLE_TABLES)
+        Parser::new_ext(text, OPTIONS)
             .into_offset_iter()
             .try_for_each(|(event, range)| reading.read(event, range.start))
             .map_err(|(offset, kind)| error(Some(line_of(text, offset)), kind))?;
@@ -174,7 +177,6 @@ impl<'a> Reading<'a> {
     fn finished(self) -> Result<MarkdownFrontPage, FrontPageErrorKind> {
         let title = self
             .title
-            .map(|title| title.trim().to_string())
             .filter(|title| !title.is_empty())
             .ok_or(FrontPageErrorKind::NoTitle)?;
         let (after, level) = self.after.ok_or(FrontPageErrorKind::NoMarker)?;
