@@ -46,8 +46,8 @@ proptest! {
         assert_eq!(page.title, title);
     }
 
-    // Rule 184: no title stops a build. Rule 26 refuses an empty title, so a title has at
-    // least one character, of any kind, control characters included.
+    // Rule 184: no title stops a build. A title has at least one character, since an empty
+    // one is refused, but it may be of any kind, control characters included.
     #[test]
     fn no_title_stops_a_build(title in "(?s).{1,30}|[ \\t\\r\\n]{1,5}") {
         MarkdownFrontPage::of_own(&own_template(&title)).unwrap_or_else(|error| panic!("{error}"));

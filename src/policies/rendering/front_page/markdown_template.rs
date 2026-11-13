@@ -24,7 +24,7 @@ pub(super) struct MarkdownFrontPage {
 pub(super) const OPTIONS: Options = Options::ENABLE_TABLES;
 
 /// Whether a template's level-one heading must hold text.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 enum Title {
     Needed,
     MayBeBlank,
@@ -54,8 +54,8 @@ impl MarkdownFrontPage {
         Self::read(template, Title::Needed)
     }
 
-    /// ghg's own `template` read: its heading holds the site's title, which rule 26 lets be
-    /// only spaces, which Markdown reads as no text, so it needs no text.
+    /// ghg's own `template` read: its heading holds the site's title, which may be only
+    /// characters Markdown reads as blank, so it needs no text.
     pub(super) fn of_own(
         template: &FrontPageTemplate,
     ) -> Result<MarkdownFrontPage, FrontPageError> {
