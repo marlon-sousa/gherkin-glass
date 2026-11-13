@@ -1,9 +1,14 @@
-//! Policy: the frame every page of a version's site has: its skip link and its options, which the versions page shares, and the folder tree's empty landmark.
+//! Policy: the frame every page of a version's site has: its dialog for a page opened from disk, its skip link and its options, which the versions page shares, and the folder tree's empty landmark.
 
 use askama::Template;
 
 use super::node_rendering::{Render, rendered};
 use crate::entities::PageFrame;
+
+/// The dialog first in the page, opened only when the page is opened from disk.
+pub(super) struct DiskNotice<'a> {
+    pub(super) frame: &'a PageFrame,
+}
 
 /// The skip link to the page's main content.
 pub(super) struct SkipLink<'a> {
@@ -24,8 +29,15 @@ pub(super) struct TreeLandmark<'a> {
 #[template(path = "page_frame.html")]
 struct FrameTemplate<'a> {
     frame: &'a PageFrame,
+    disk_notice: String,
     skip_link: String,
     theme_control: String,
+}
+
+#[derive(Template)]
+#[template(path = "disk_notice.html")]
+struct DiskNoticeTemplate<'a> {
+    frame: &'a PageFrame,
 }
 
 #[derive(Template)]
@@ -50,9 +62,16 @@ impl Render for PageFrame {
     fn render(&self) -> String {
         rendered(&FrameTemplate {
             frame: self,
+            disk_notice: DiskNotice { frame: self }.render(),
             skip_link: SkipLink { frame: self }.render(),
             theme_control: ThemeControl { frame: self }.render(),
         })
+    }
+}
+
+impl Render for DiskNotice<'_> {
+    fn render(&self) -> String {
+        rendered(&DiskNoticeTemplate { frame: self.frame })
     }
 }
 

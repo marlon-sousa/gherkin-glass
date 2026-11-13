@@ -3,7 +3,8 @@
 // project-site, is built into a site, served with
 // ghg serve --no-build, and each page is checked with axe-core in the light
 // and the dark colour scheme and in each theme a reader can pick, then driven
-// with the keyboard.
+// with the keyboard, and found with the dialog for a page opened from disk
+// closed.
 //
 // Run from the repository's root, after cargo build and npm ci in script/,
 // with Playwright's Chromium installed:
@@ -17,7 +18,7 @@ import { availableParallelism, tmpdir } from "node:os";
 import { join, relative, resolve, sep } from "node:path";
 import assert from "node:assert/strict";
 import { partProblems } from "./part_contrast.mjs";
-import { axeSource, chromium, ghg, serve, stop } from "./support.mjs";
+import { axeSource, chromium, ghg, serve, stop, violations } from "./support.mjs";
 
 const fixtures = resolve("tests/fixtures");
 
@@ -78,11 +79,6 @@ const noSite = [
   "versions/broken",
 ];
 
-// The rules the check fails on: WCAG 2.2 A and AA, and the enhanced contrast
-// of AAA, leaving out the rules axe-core tags experimental or deprecated.
-const tags = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
-const extraRules = ["color-contrast-enhanced"];
-
 // The browser's colour scheme, light and dark, and each theme a reader can
 // pick on the page, Light and Dark, each picked once, in the other scheme.
 const passes = [
@@ -129,30 +125,6 @@ function build({ root, folder, args }, output) {
 
 // The address of a page below the site's address, its path's parts percent-encoded.
 const addressOf = (site, page) => new URL(page.split("/").map(encodeURIComponent).join("/"), site).href;
-
-// Runs axe-core on the page and returns its violations, each as one line per
-// element. axe-core must already be loaded in the page, as checkSite's
-// contexts load it.
-async function violations(page) {
-  const found = await page.evaluate(
-    async ({ tags, extraRules }) => {
-      const rules = window.axe
-        .getRules(tags)
-        .filter((rule) => !rule.tags.includes("experimental") && !rule.tags.includes("deprecated"))
-        .map((rule) => rule.ruleId)
-        .concat(extraRules);
-      const results = await window.axe.run(document, {
-        runOnly: { type: "rule", values: rules },
-        resultTypes: ["violations"],
-      });
-      return results.violations.flatMap((violation) =>
-        violation.nodes.map((node) => `${violation.id}: ${node.target.join(" ")}: ${node.failureSummary}`),
-      );
-    },
-    { tags, extraRules },
-  );
-  return found;
-}
 
 // What has focus, as a short description that tells the page's elements apart.
 const describeFocus = (page) =>
@@ -343,6 +315,10 @@ export async function checkSite(browser, folder) {
         }
         for (const line of await violations(page)) problems.push(`${path}, ${name}: ${line}`);
         if (name === "light") {
+          // docs/BEHAVIOUR.md, rule 182: a served page never opens the dialog.
+          const fromDisk = await page.evaluate(() => document.getElementById("ghg_from_disk")?.open);
+          if (fromDisk === undefined) problems.push(`${path}: the dialog for a page opened from disk is missing`);
+          if (fromDisk === true) problems.push(`${path}: the dialog for a page opened from disk is open`);
           for (const line of await keyboardProblems(page)) problems.push(`${path}: ${line}`);
           const found = await buttonProblems(page);
           if (found !== null) pressed += 1;

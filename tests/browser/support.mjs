@@ -1,5 +1,5 @@
 // What the browser checks share: Playwright and axe-core from script/'s Node
-// packages, the ghg binary, and ghg serve.
+// packages, the rules axe-core checks, the ghg binary, and ghg serve.
 
 import { spawn } from "node:child_process";
 import { createRequire } from "node:module";
@@ -11,6 +11,35 @@ const require = createRequire(resolve("script/package.json"));
 
 export const { chromium } = require("playwright");
 export const axeSource = require.resolve("axe-core/axe.min.js");
+
+// The rules the check fails on: WCAG 2.2 A and AA, and the enhanced contrast
+// of AAA, leaving out the rules axe-core tags experimental or deprecated.
+const tags = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
+const extraRules = ["color-contrast-enhanced"];
+
+// Runs axe-core on the page and returns its violations, each as one line per
+// element. axe-core must already be loaded in the page, as the checks'
+// contexts load it.
+export async function violations(page) {
+  const found = await page.evaluate(
+    async ({ tags, extraRules }) => {
+      const rules = window.axe
+        .getRules(tags)
+        .filter((rule) => !rule.tags.includes("experimental") && !rule.tags.includes("deprecated"))
+        .map((rule) => rule.ruleId)
+        .concat(extraRules);
+      const results = await window.axe.run(document, {
+        runOnly: { type: "rule", values: rules },
+        resultTypes: ["violations"],
+      });
+      return results.violations.flatMap((violation) =>
+        violation.nodes.map((node) => `${violation.id}: ${node.target.join(" ")}: ${node.failureSummary}`),
+      );
+    },
+    { tags, extraRules },
+  );
+  return found;
+}
 
 // GHG names another ghg binary than target/debug/ghg.
 export const ghg = resolve(process.env.GHG ?? "target/debug/ghg");
