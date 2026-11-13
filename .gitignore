@@ -1,2 +1,5 @@
 /target
 /script/node_modules
+
+# proptest saves the failures it finds here; each is kept instead as a named rstest case.
+/proptest-regressions/
