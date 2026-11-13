@@ -6,7 +6,7 @@ gherkin-glass turns a folder of feature files into a static website: a page for 
 
 ## Status
 
-The first version is built and not yet released. Until it is, you build gherkin-glass from this repository, as "Trying it from a clone" below describes. What it does is written in [docs/BEHAVIOUR.md](docs/BEHAVIOUR.md), and what is planned is in the [issues](https://github.com/marlon-sousa/gherkin-glass/issues). Once the first release is published, [the project's own site](https://marlon-sousa.github.io/gherkin-glass/) shows what each release makes of an example suite and of the test fixtures.
+Everything [docs/BEHAVIOUR.md](docs/BEHAVIOUR.md) describes is built, and nothing is released yet. Until the first release, you build gherkin-glass from this repository, as "Trying it from a clone" below describes. What is planned is in the [issues](https://github.com/marlon-sousa/gherkin-glass/issues). Once the first release is published, [the project's own site](https://marlon-sousa.github.io/gherkin-glass/) shows what each release makes of an example suite and of the test fixtures.
 
 ## Goals
 
@@ -18,7 +18,7 @@ The first version is built and not yet released. Until it is, you build gherkin-
 
 ## Trying it from a clone
 
-You need Rust through [rustup](https://rustup.rs/), version 1.28 or later. Nothing else: the pages' script is written in TypeScript, but its compiled form is committed, so building gherkin-glass needs no Node.
+You need [rustup](https://rustup.rs/) 1.28 or later, which installs Rust. Nothing else: the pages' script is written in TypeScript, but its compiled form is committed, so building gherkin-glass needs no Node.
 
 1. Clone the repository and go into it:
 
@@ -27,7 +27,7 @@ You need Rust through [rustup](https://rustup.rs/), version 1.28 or later. Nothi
    cd gherkin-glass
    ```
 
-2. Build it with `cargo build`. The first build installs the Rust version the repository pins in `rust-toolchain.toml`. The stylesheet and the script are built into the binary, which writes them into every site.
+2. Run `rustup toolchain install`, which installs the Rust version the repository pins in `rust-toolchain.toml`, then `cargo build`. The stylesheet and the script are built into the binary, which writes them into every site.
 
 3. Look at the example suite, in `project-site/features`:
 
@@ -55,11 +55,11 @@ Then:
 - `ghg serve` builds the site and serves it at <http://127.0.0.1:8000/>. Add `--watch` to rebuild the site whenever a feature file or `ghg.toml` changes, and reload the pages open in the browser. While watching, the site is built in memory, and the output folder is left as it is; `ghg build` writes it.
 - `ghg serve --no-build` serves the output folder as it is, such as a site you downloaded from a CI run.
 
-Every setting has a default, so `ghg.toml` is optional: without it, ghg reads `features` and writes `site`, both in the current folder. Each setting can also be given on the command line, such as `ghg build --input specs --title "Our features"`, and the command line wins. `ghg --help` lists the options, and [docs/BEHAVIOUR.md](docs/BEHAVIOUR.md), "The command line and its configuration", describes every option and every key of `ghg.toml`, such as collapsing rules and scenarios, linking each page to its source, linking tags to an issue tracker, the accent colours and building versions.
+Every setting has a default, so `ghg.toml` is optional: without it, ghg reads `features` and writes `site`, both in the current folder. `input`, `output`, `title` and `version_name` can also be given on the command line, as `--input`, `--output`, `--title` and `--version-name`, such as `ghg build --input specs --title "Our features"`, and the command line wins. The other settings are set only in `ghg.toml`. `ghg --help` lists the options, and [docs/BEHAVIOUR.md](docs/BEHAVIOUR.md), "The command line and its configuration", describes every option and every key of `ghg.toml`, such as collapsing rules and scenarios, linking each page to its source, linking tags to an issue tracker, the accent colours and building versions.
 
 ## A site must be served
 
-Open a site through a web server, never by opening its files straight from disk. A page opened from disk, with an address that starts with `file:`, still shows its content, but the browser refuses to run its script there, so the folder tree is empty, search does nothing, and the reader options do not work. The stylesheet is light, so such a page looks nearly unstyled too.
+Open a site through a web server, never by opening its files straight from disk. A page opened from disk, with an address that starts with `file:`, still shows its content, but the browser refuses to run its script there, so the folder tree is empty, search does nothing, and the reader options do not work. The stylesheet does little on its own, so such a page looks nearly unstyled too.
 
 To look at a site on your own machine, use `ghg serve`, or `ghg serve --no-build` for a site already built. To publish it, put the output folder on any static host, such as GitHub Pages; every link in a site is relative, so it works under any path. Why sites are served is explained in [design note 0026](docs/design/0026-sites-are-served.md).
 
@@ -80,16 +80,16 @@ Once the first version is released, it can be installed in three ways:
 
 - **Downloaded.** Each release on GitHub holds an archive for each platform, with `ghg` and `cargo-ghg` in it.
 - **Through cargo.** A Rust project can install it from [crates.io](https://crates.io/) with `cargo install gherkin-glass`, or download the release's binary with `cargo binstall gherkin-glass`. Either installs `ghg`, and `cargo-ghg`, so that `cargo ghg build` is `ghg build`, beside `cargo test`.
-- **In a GitHub Actions workflow.** The repository is also an action that installs `ghg` and, with `build: true`, builds a site in the workspace. Every option of `ghg build` is an input of the same name, such as `output` and `title`:
+- **In a GitHub Actions workflow.** The repository is also an action that installs `ghg` and, with `build: true`, builds a site in the workspace. Every option of `ghg build` that sets how a site is built, `config`, `input`, `output`, `title` and `version-name`, is an input of the same name:
 
   ```yaml
-  - uses: marlon-sousa/gherkin-glass@v1
+  - uses: marlon-sousa/gherkin-glass@v0.1.0
     with:
       build: true
       output: site
   ```
 
-  Before version 1.0, name a release's own tag instead of `v1`, such as `@v0.1.0`. [docs/BEHAVIOUR.md](docs/BEHAVIOUR.md), "The GitHub Action", describes every input.
+  Before version 1.0, the action is named by a release's own tag, such as `@v0.1.0`. From 1.0 on, `@v1` follows the newest 1.x release. [docs/BEHAVIOUR.md](docs/BEHAVIOUR.md), "The GitHub Action", describes every input.
 
 ## Working on gherkin-glass
 
@@ -97,9 +97,9 @@ How changes are proposed, agreed and reviewed is in [CONTRIBUTING.md](CONTRIBUTI
 
 ### What you need
 
-- **Rust**, through rustup 1.28 or later. Running `rustup toolchain install` in the repository installs the pinned version with its components, `rustfmt` and `clippy`. The tests also run on the minimum supported Rust version, the one `rust-version` names in `Cargo.toml`.
+- **Rust**, through rustup 1.28 or later. Running `rustup toolchain install` in the repository installs the pinned version with the components `rust-toolchain.toml` names. The tests also run on the minimum supported Rust version, the one `rust-version` names in `Cargo.toml`.
 - **cargo-deny 0.20.2**, for the dependency check: `cargo install cargo-deny --version 0.20.2 --locked`.
-- **Node**, at the version `script/.node-version` pins, with npm, only to change the pages' script, or to run the script check or the browser check. Plain `cargo build` and `cargo test` need none.
+- **Node**, at the version `script/.node-version` pins, with npm, to run `cargo xtask build`, `check`, `check-script` or `check-browser`. Plain `cargo build` and `cargo test` need none.
 
 ### The checks
 
@@ -121,15 +121,17 @@ These are the checks a pull request runs, from the repository's root:
 
 | Command | What it does | Needs Node |
 | --- | --- | --- |
-| `cargo xtask build` | Installs the Node packages from `script/package-lock.json`, type-checks and tests the script, and compiles it into `assets/gherkin-glass.js`. Then it writes the expected sites of the fixtures under `tests/fixtures/` and of the example suite, `project-site/expected`, again, and builds the release binary. | Yes |
+| `cargo xtask build` | Installs the Node packages from `script/package-lock.json`, type-checks and tests the script, and compiles it into `assets/gherkin-glass.js`. Then it writes again the expected sites of the fixtures `pages`, `backgrounds`, `tags` and `highlighting`, and of the example suite, `project-site/expected`, and builds the release binary. | Yes |
 | `cargo xtask check` | Runs every check above, then the script check and the browser check. | Yes |
 | `cargo xtask check-script` | Type-checks and tests the script, and fails when `assets/gherkin-glass.js` is not what `script/` compiles to. | Yes |
 | `cargo xtask check-browser` | Installs Playwright's headless Chromium, builds `ghg`, and checks the site of every fixture and of the example suite in it: axe-core in the light and the dark colour scheme, and the keyboard. It also checks that `ghg serve --watch` reloads a page. | Yes |
 | `cargo xtask comment-ratio [path ...]` | Counts the comment lines and the code lines of the Rust and TypeScript files given, or of every one git tracks, with the total last. A pull request's description carries the total for the files it touches. | No |
 
+Only `cargo xtask build` writes files to commit. The others write only what git ignores: the Node packages in `script/node_modules`, the script check's compiled copy in `target/xtask/`, `ghg` in `target/debug/`, and Playwright's Chromium in its cache in your home folder. `cargo xtask check` also installs the minimum supported Rust version with rustup, and `comment-ratio` only prints.
+
 ### Changing the pages
 
-The pages are rendered from Askama templates under `src/`, styled by `assets/gherkin-glass.css`, and driven by the TypeScript under `script/`. After changing any of them, run `cargo xtask build`, and commit what it writes with your sources: the compiled `assets/gherkin-glass.js` and the expected sites. A test compares every page ghg builds from a fixture with its expected site, byte for byte, so a change to any page shows in review. Then run `cargo xtask check-browser`, since a page that fails the accessibility check is a failing test.
+The pages are rendered from Askama templates in `src/policies/rendering/`, styled by `assets/gherkin-glass.css`, and driven by the TypeScript under `script/`. After changing any of them, run `cargo xtask build`, and commit what it writes with your sources: the compiled `assets/gherkin-glass.js` and the expected sites. A few fixtures keep a single expected page, such as `versions`, `step-sentences` and `no-steps`, which `cargo xtask build` does not write: their tests compare the page ghg builds with it, so a failing test shows the page to write again, which [tests/step_sentences.rs](tests/step_sentences.rs) says how to build for the step sentences. A test compares every page ghg builds from a fixture with its expected site, byte for byte, so a change to any page shows in review. Then run `cargo xtask check-browser`, since a page that fails the accessibility check is a failing test.
 
 ## How it is built
 
