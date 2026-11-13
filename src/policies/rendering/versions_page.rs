@@ -3,7 +3,7 @@
 use askama::Template;
 
 use super::node_rendering::{NodeOf, Render, RenderFile, page, pieces, rendered};
-use super::page_frame::{SkipLink, ThemeControl};
+use super::page_frame::{DiskNotice, SkipLink, ThemeControl};
 use super::page_head::PageHead;
 use super::page_layout::SitePieces;
 use crate::entities::{
@@ -18,6 +18,7 @@ const VERSIONS_PAGE: &str = "index.html";
 struct VersionsTemplate<'a> {
     language: &'a str,
     head: String,
+    disk_notice: String,
     skip_link: String,
     theme_control: String,
     title: &'a str,
@@ -55,6 +56,10 @@ impl RenderFile for NodeOf<'_, VersionsPage> {
                 title: &versions.title,
                 root: "",
                 stylesheet: site.stylesheet(),
+            }
+            .render(),
+            disk_notice: DiskNotice {
+                frame: site.page_frame(),
             }
             .render(),
             skip_link: SkipLink {
