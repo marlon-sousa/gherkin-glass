@@ -8,7 +8,7 @@ The first release, an alpha: a preview of gherkin-glass, released on GitHub only
 
 ### Added
 
-- ghg build turns a folder of Gherkin feature files, in any language Gherkin knows, into a static website: a page for every feature file and for every folder, with a heading and a stable link for every rule, scenario and background, and a breadcrumb on every page but the home page.
+- ghg build turns a folder of Gherkin feature files, in any language Gherkin knows, into a static website: a page for every feature file and for every folder, with a heading and a stable link for every rule, scenario and background, and a breadcrumb on every page but the versions page.
 - every feature file that cannot be read is reported, each as path:line: message, and then nothing is written.
 - .ghg-ignore files choose which files are read, with the rules of .gitignore, and hidden files are left out.
 - allow_unnamed lets a feature, rule or scenario have no name, or stops the build at one; a block without a name still gets a link.
