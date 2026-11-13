@@ -1,3 +1,4 @@
+use proptest::prelude::proptest;
 use rstest::rstest;
 
 use super::*;
@@ -27,10 +28,20 @@ fn the_site_s_title_is_read_back_as_plain_text(#[case] title: &str, #[case] h1: 
     );
 }
 
-#[test]
-fn a_title_of_spaces_still_builds() {
-    // Decision 18 of #102: no title stops a build, even one `--title` gives as spaces.
-    let page =
-        MarkdownFrontPage::of(&own_template("   ")).unwrap_or_else(|error| panic!("{error}"));
-    assert_eq!(page.title.trim(), "");
+proptest! {
+    // Decision 18 of #102: any title without spaces or line breaks at its ends, of any
+    // printable characters, is read back as it was given, and no title stops a build.
+    #[test]
+    fn any_title_is_read_back_as_given(title in "[^\\s\\p{C}]([^\\p{C}]{0,30}[^\\s\\p{C}])?") {
+        let page = MarkdownFrontPage::of(&own_template(&title))
+            .unwrap_or_else(|error| panic!("{error}"));
+        assert_eq!(page.title, title);
+    }
+
+    // Rule 26 refuses an empty title, so a title has at least one character, even if only
+    // spaces or line breaks.
+    #[test]
+    fn no_title_stops_a_build(title in "\\PC{1,30}|[ \\t\\r\\n]{1,5}") {
+        MarkdownFrontPage::of(&own_template(&title)).unwrap_or_else(|error| panic!("{error}"));
+    }
 }
