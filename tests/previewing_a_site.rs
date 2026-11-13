@@ -558,6 +558,31 @@ fn watching_rebuilds_on_a_change_and_keeps_the_last_site_that_built() {
 }
 
 #[test]
+fn watching_rebuilds_when_the_front_page_s_template_changes() {
+    // Rule 191: the template is watched as the configuration file is, at its path relative to
+    // the configuration file's folder, and read again for the rebuild.
+    let folder = built_copy("serve-watch-front-page");
+    create_dir_all(folder.join("docs")).expect("made");
+    let template = folder.join("docs/front.md");
+    write(&template, "# First words\n\n<!-- ghg:contents -->\n").expect("written");
+    write(
+        folder.join("ghg.toml"),
+        "input = \"features\"\nfront_page = \"docs/front.md\"\n",
+    )
+    .expect("written");
+    let serving = serve(&folder, &["--watch", "--port", "0"]);
+    let address = serving.address.clone();
+    let build = || get(&address, "/__ghg/build").text();
+    assert_eq!(build(), "1");
+    let home = get(&address, "/index.html").text();
+    assert!(home.contains("<h1>First words</h1>"), "{home}");
+    write(&template, "# Second words\n\n<!-- ghg:contents -->\n").expect("written");
+    eventually("a rebuild after the template changed", || build() == "2");
+    let home = get(&address, "/index.html").text();
+    assert!(home.contains("<h1>Second words</h1>"), "{home}");
+}
+
+#[test]
 fn watching_rebuilds_only_for_changes_a_build_reads() {
     let folder = built_copy("serve-watch-reads");
     let serving = serve(&folder, &["--watch", "--port", "0"]);

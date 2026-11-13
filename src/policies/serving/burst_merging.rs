@@ -1,19 +1,19 @@
 //! Policy: the bursts of changes waiting under `--watch`, merged into one.
 
 use std::collections::BTreeSet;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 use crate::entities::{Burst, InputChanges};
 
-/// Everything, when a burst may have missed changes or names the configuration file `config`,
-/// and otherwise every path the bursts named.
-pub(crate) fn merged_bursts(bursts: &[Burst], config: &Path) -> InputChanges {
+/// Everything, when a burst may have missed changes or names one of `settings_files`, the
+/// configuration file and the front page's template, and otherwise every path the bursts named.
+pub(crate) fn merged_bursts(bursts: &[Burst], settings_files: &[PathBuf]) -> InputChanges {
     let named: Option<Vec<&[PathBuf]>> = bursts.iter().map(changed_paths).collect();
     let Some(named) = named else {
         return InputChanges::Everything;
     };
     let paths: BTreeSet<PathBuf> = named.concat().into_iter().collect();
-    if paths.contains(config) {
+    if settings_files.iter().any(|file| paths.contains(file)) {
         return InputChanges::Everything;
     }
     InputChanges::Paths(paths)
@@ -51,6 +51,11 @@ mod tests {
         vec![changed("features/a.feature"), changed("ghg.toml")],
         InputChanges::Everything
     )]
+    // Rule 191: a change to the front page's template reads everything again too.
+    #[case::the_front_page_s_template(
+        vec![changed("features/a.feature"), changed("docs/front.md")],
+        InputChanges::Everything
+    )]
     #[case::changes_missed(
         vec![changed("features/a.feature"), Burst::Missed],
         InputChanges::Everything
@@ -63,6 +68,7 @@ mod tests {
         #[case] bursts: Vec<Burst>,
         #[case] merged: InputChanges,
     ) {
-        assert_eq!(merged_bursts(&bursts, Path::new("ghg.toml")), merged);
+        let settings_files = [PathBuf::from("ghg.toml"), PathBuf::from("docs/front.md")];
+        assert_eq!(merged_bursts(&bursts, &settings_files), merged);
     }
 }

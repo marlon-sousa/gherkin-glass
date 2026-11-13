@@ -108,6 +108,7 @@ fn builds_from_the_last_build_match_builds_from_nothing(changes: &[Change]) {
         Arc::new(Converter),
         Arc::new(SiteWriter::new(
             input.clone(),
+            input.clone(),
             Arc::new(MemoryFiles::default()),
             Arc::new(MemoryFiles::default()),
         )),

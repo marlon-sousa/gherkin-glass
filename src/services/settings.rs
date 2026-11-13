@@ -7,7 +7,7 @@ use std::sync::Arc;
 use crate::entities::{BuildOptions, Config, Destination, Settings};
 use crate::errors::{ConfigError, ConfigErrorKind, ConfigErrors};
 use crate::policies::{config_folder, parse_config, resolve_settings};
-use crate::ports::ConfigReader;
+use crate::ports::FileReader;
 
 /// The configuration file looked for in the current folder.
 const CONFIG_FILE: &str = "ghg.toml";
@@ -27,11 +27,11 @@ pub(crate) trait SettingsApi: Send + Sync {
 
 #[derive(Clone)]
 pub(crate) struct SettingsService {
-    reader: Arc<dyn ConfigReader>,
+    reader: Arc<dyn FileReader>,
 }
 
 impl SettingsService {
-    pub(crate) fn new(reader: Arc<dyn ConfigReader>) -> Self {
+    pub(crate) fn new(reader: Arc<dyn FileReader>) -> Self {
         SettingsService { reader }
     }
 }

@@ -1,10 +1,12 @@
-//! Entity: the site stage, the site tree and its nodes: a feature's page, the folders' pages and the folder tree, search, the step sentences, the tags, and the output folder and its versions, with what every need of the stage uses: the tree itself, its files and their addresses, the feature files' paths, the frame every page has and what each page has of its own in its breadcrumb, the settings of every page, and what a build that succeeded wrote.
+//! Entity: the site stage, the site tree and its nodes: a feature's page, the folders' pages and the folder tree, search, the step sentences, the tags, and the output folder and its versions, with what every need of the stage uses: the tree itself, its files and their addresses, the feature files' paths, the frame every page has and what each page has of its own in its breadcrumb, the settings of every page, the levels of the headings under a page's `h1`, the front page's template, and what a build that succeeded wrote.
 
 mod breadcrumb;
 mod built_site;
 mod feature_pages;
 mod feature_path;
 mod folders;
+mod front_page_template;
+mod heading_level;
 mod link_address;
 mod page_frame;
 mod page_options;
@@ -23,6 +25,8 @@ pub(crate) use built_site::BuiltSite;
 pub(crate) use feature_pages::*;
 pub(crate) use feature_path::FeaturePath;
 pub(crate) use folders::*;
+pub(crate) use front_page_template::FrontPageTemplate;
+pub(crate) use heading_level::HeadingLevel;
 pub(crate) use link_address::{LinkAddress, percent_encoded};
 pub(crate) use page_frame::{DiskNoticeWords, PageFrame};
 pub(crate) use page_options::PageOptions;

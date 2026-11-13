@@ -1,0 +1,6 @@
+# The front page from front.md, in a site without versions, written into
+# expected; versioned.toml builds it as a version, whose versions page is
+# expected-versions.html.
+title = "Banking"
+front_page = "front.md"
+output = "expected"

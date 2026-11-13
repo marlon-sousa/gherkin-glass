@@ -1,6 +1,6 @@
 //! Adapter: the ports' implementations that touch the world.
 
-mod config_file_reader;
+mod file_system_reader;
 mod file_watcher;
 mod folder_files;
 mod gherkin_crate;
@@ -10,7 +10,7 @@ mod output_folder_store;
 mod preview_http;
 mod standard_streams;
 
-pub(crate) use config_file_reader::ConfigFileReader;
+pub(crate) use file_system_reader::FileSystemReader;
 pub(crate) use file_watcher::FileWatcher;
 pub(crate) use folder_files::FolderFiles;
 pub(crate) use gherkin_crate::GherkinCrate;

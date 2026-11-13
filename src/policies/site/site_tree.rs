@@ -36,7 +36,7 @@ pub(crate) fn site_tree(
     let sentences = build_sentences_page(&feature_pages, options);
     let tag_pages = build_tag_pages(&feature_pages, &names, options);
     let documents = search_documents(&feature_pages);
-    let folder_pages = build_folder_pages(site.folders(), options);
+    let folder_pages = build_folder_pages(site.folders(), options, version);
     site.folder_pages(folder_pages);
     let folder_tree = build_folder_tree(site.input_folder());
     site.sentences_page(sentences);

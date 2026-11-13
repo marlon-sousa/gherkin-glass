@@ -1,4 +1,4 @@
-//! Service: the site writer, rendering the site tree, keeping from the last site the file of every node that has not changed, and writing its files into its output folder, with or without versions, once the folder is safe, or into memory.
+//! Service: the site writer, reading the front page's template, rendering the site tree, keeping from the last site the file of every node that has not changed, and writing its files into its output folder, with or without versions, once the folder is safe, or into memory.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::io::Error as IoError;
@@ -6,12 +6,12 @@ use std::path::Path;
 use std::sync::Arc;
 
 use crate::entities::{
-    BuildFolder, BuildTarget, Destination, FilePath, Record, RenderedSite, ServedSite, Settings,
-    SiteFile, SiteFiles, SiteTree, VersionName,
+    BuildFolder, BuildTarget, Destination, FilePath, FrontPageTemplate, Record, RenderedSite,
+    ServedSite, Settings, SiteFile, SiteFiles, SiteTree, VersionName,
 };
-use crate::errors::{OutputError, OutputErrorKind};
+use crate::errors::{BuildError, FrontPageError, FrontPageErrorKind, OutputError, OutputErrorKind};
 use crate::policies::{Moment, output_safety, render_site};
-use crate::ports::{FileWriter, OutputFolders};
+use crate::ports::{FileReader, FileWriter, OutputFolders};
 
 /// What the controller asks of the site writer.
 pub(crate) trait SiteWriterApi: Send + Sync {
@@ -21,9 +21,10 @@ pub(crate) trait SiteWriterApi: Send + Sync {
     /// check and has no versions.
     fn check(&self, settings: &Settings) -> Result<BTreeSet<VersionName>, OutputError>;
 
-    /// Renders every file of `tree`, except one whose node is unchanged since
+    /// Reads the front page's template the settings name, if any, then
+    /// renders every file of `tree`, except one whose node is unchanged since
     /// `last`, the site the last build rendered, which it keeps from there,
-    /// and writes it where the settings say. It returns the site as it is
+    /// and writes it where the settings say, once every file is rendered. It returns the site as it is
     /// served, and `tree` with the files rendered from it, which hold what the
     /// build has to say of the site. Into the output folder, it is written as
     /// the version its settings name, or without versions when they name none,
@@ -33,28 +34,47 @@ pub(crate) trait SiteWriterApi: Send + Sync {
         settings: &Settings,
         tree: SiteTree,
         last: Option<&RenderedSite>,
-    ) -> Result<(ServedSite, RenderedSite), OutputError>;
+    ) -> Result<(ServedSite, RenderedSite), BuildError>;
 }
 
 pub(crate) struct SiteWriter {
+    file_reader: Arc<dyn FileReader>,
     folders: Arc<dyn OutputFolders>,
     folder_files: Arc<dyn FileWriter>,
     memory_files: Arc<dyn FileWriter>,
 }
 
 impl SiteWriter {
-    /// `folder_files` writes into the output folder, and `memory_files` keeps
-    /// the site in memory; the destination of the settings chooses between them.
+    /// `file_reader` reads the front page's template, `folder_files` writes into
+    /// the output folder, and `memory_files` keeps the site in memory; the
+    /// destination of the settings chooses between the last two.
     pub(crate) fn new(
+        file_reader: Arc<dyn FileReader>,
         folders: Arc<dyn OutputFolders>,
         folder_files: Arc<dyn FileWriter>,
         memory_files: Arc<dyn FileWriter>,
     ) -> Self {
         SiteWriter {
+            file_reader,
             folders,
             folder_files,
             memory_files,
         }
+    }
+
+    /// The front page's template the settings name, read; `None` when they name none.
+    fn front_page(&self, settings: &Settings) -> Result<Option<FrontPageTemplate>, FrontPageError> {
+        let Some(file) = &settings.front_page else {
+            return Ok(None);
+        };
+        let text = self
+            .file_reader
+            .read(file)
+            .map_err(|io| unreadable_template(file, &io))?;
+        Ok(Some(FrontPageTemplate {
+            file: file.clone(),
+            text,
+        }))
     }
 
     /// Writes `site` where the settings say, and returns the site as it is served.
@@ -158,8 +178,9 @@ impl SiteWriterApi for SiteWriter {
         settings: &Settings,
         tree: SiteTree,
         last: Option<&RenderedSite>,
-    ) -> Result<(ServedSite, RenderedSite), OutputError> {
-        let files = render_site(&tree, last, &settings.pages);
+    ) -> Result<(ServedSite, RenderedSite), BuildError> {
+        let front_page = self.front_page(settings)?;
+        let files = render_site(&tree, last, &settings.pages, front_page.as_ref())?;
         let served = self.write_site(settings, &files)?;
         Ok((served, RenderedSite { tree, files }))
     }
@@ -260,6 +281,16 @@ fn file_not_written(output: &Path, file: &SiteFile, error: &IoError) -> OutputEr
         version: None,
         kind: OutputErrorKind::FileNotWritten {
             file: file.address.as_str().to_string(),
+            reason: error.to_string(),
+        },
+    }
+}
+
+fn unreadable_template(file: &Path, error: &IoError) -> FrontPageError {
+    FrontPageError {
+        file: file.to_path_buf(),
+        line: None,
+        kind: FrontPageErrorKind::CannotBeRead {
             reason: error.to_string(),
         },
     }

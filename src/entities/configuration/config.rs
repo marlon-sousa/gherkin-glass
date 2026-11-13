@@ -20,6 +20,8 @@ pub(crate) struct Config {
     pub(crate) accent_light: Option<Colour>,
     pub(crate) accent_dark: Option<Colour>,
     pub(crate) title: Option<String>,
+    /// The front page's template, relative to the configuration file's folder.
+    pub(crate) front_page: Option<PathBuf>,
     pub(crate) show_tree: Option<bool>,
     pub(crate) inline_backgrounds: Option<bool>,
     pub(crate) tag_links: Option<Vec<TagLink>>,

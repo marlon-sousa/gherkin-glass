@@ -15,4 +15,6 @@ pub(crate) struct Settings {
     pub(crate) version: Option<VersionName>,
     /// Whether an earlier build of the site, or of the version, is replaced.
     pub(crate) replace: bool,
+    /// The front page's template; `None` for ghg's own.
+    pub(crate) front_page: Option<PathBuf>,
 }

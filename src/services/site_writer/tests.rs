@@ -1,5 +1,6 @@
 mod against_fixtures;
 mod fakes;
+mod front_page;
 mod versioned;
 
 use std::sync::Mutex;
@@ -115,7 +116,12 @@ fn a_site_in_memory_checks_no_folder_and_has_no_versions() {
     memory
         .write(Path::new("site"), "stale.html", &Arc::from(*b""))
         .expect("written");
-    let writer = SiteWriter::new(folders.clone(), Arc::new(FakeWriter::default()), memory);
+    let writer = SiteWriter::new(
+        Arc::new(FakeTemplate::default()),
+        folders.clone(),
+        Arc::new(FakeWriter::default()),
+        memory,
+    );
     let settings = Settings {
         replace: false,
         ..settings(Destination::Memory, Some("v1.0.0"))

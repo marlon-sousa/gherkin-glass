@@ -5,6 +5,7 @@ use serde::Serialize;
 use super::node_rendering::{Render, RenderFile};
 use super::page_layout::SitePieces;
 use crate::entities::{ASSETS, SearchDocument, SearchKind, SiteAddress, TreeItem};
+use crate::errors::FrontPageError;
 
 /// In the folder of the assets, where the pages' script fetches them from.
 pub(super) const TREE_DATA: &str = "tree.json";
@@ -58,8 +59,8 @@ impl RenderFile for &[TreeItem] {
         asset(TREE_DATA)
     }
 
-    fn render_file(&self, _: &SitePieces<'_>) -> String {
-        self.render()
+    fn render_file(&self, _: &SitePieces<'_>) -> Result<String, FrontPageError> {
+        Ok(self.render())
     }
 }
 
@@ -75,8 +76,8 @@ impl RenderFile for &[SearchDocument] {
         asset(SEARCH_DOCUMENTS)
     }
 
-    fn render_file(&self, _: &SitePieces<'_>) -> String {
-        self.render()
+    fn render_file(&self, _: &SitePieces<'_>) -> Result<String, FrontPageError> {
+        Ok(self.render())
     }
 }
 

@@ -153,7 +153,7 @@ impl SiteController {
             }),
             Err(error) => Err(Box::new(Stopped {
                 left: Some(snapshot),
-                error: BuildError::Output(error),
+                error,
             })),
         }
     }

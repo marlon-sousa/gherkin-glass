@@ -13,6 +13,8 @@ pub(crate) struct FolderPage {
     /// The folder's name, or the site's title on the home page.
     pub(crate) heading: String,
     pub(crate) trail: Trail,
+    /// Whether it is the site's front page: the home page, in a site without versions.
+    pub(crate) front_page: bool,
     /// Only the home page's.
     pub(crate) totals: Vec<String>,
     /// Only the home page's: the link to the index of every tag.

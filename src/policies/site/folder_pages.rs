@@ -5,23 +5,34 @@ use i18n_embed_fl::fl;
 
 use crate::entities::{
     FeatureEntry, FolderId, FolderLink, FolderPage, FolderPageContent, FolderWords, LinkAddress,
-    PageOptions, SiteAddress, SiteFeaturePage, SiteFolder, Trail,
+    PageOptions, SiteAddress, SiteFeaturePage, SiteFolder, Trail, VersionName,
 };
 use crate::policies::{CATALOGUE, FOLDER_PAGE, SENTENCES_PAGE, site_title, tag_index_address};
 
 /// The page of each of `folders`, the input folder's first, the home page,
 /// each paired with its folder, made from the folders and feature pages the
-/// folder holds and from the folders above it.
+/// folder holds and from the folders above it. `version` names the version
+/// the build makes, `None` for a site without versions, whose home page is
+/// its front page.
 pub(crate) fn build_folder_pages<'a>(
     folders: impl Iterator<Item = SiteFolder<'a>>,
     options: &PageOptions,
+    version: Option<&VersionName>,
 ) -> Vec<(FolderId, FolderPageContent)> {
     let title = site_title(options);
-    folders.map(|folder| folder_page(&folder, &title)).collect()
+    let versioned = version.is_some();
+    folders
+        .map(|folder| folder_page(&folder, &title, versioned))
+        .collect()
 }
 
-/// The page of `folder`, in the site titled `title`, paired with the folder.
-fn folder_page(folder: &SiteFolder<'_>, title: &str) -> (FolderId, FolderPageContent) {
+/// The page of `folder`, in the site titled `title`, with versions or without,
+/// paired with the folder.
+fn folder_page(
+    folder: &SiteFolder<'_>,
+    title: &str,
+    versioned: bool,
+) -> (FolderId, FolderPageContent) {
     let names = folder.names();
     let home = folder.name().is_none();
     let mut subfolders: Vec<&str> = folder
@@ -46,6 +57,7 @@ fn folder_page(folder: &SiteFolder<'_>, title: &str) -> (FolderId, FolderPageCon
         },
         heading: names.last().cloned().unwrap_or_else(|| title.to_string()),
         trail: Trail::default(),
+        front_page: home && !versioned,
         totals: if home { totals(folder) } else { Vec::new() },
         tags: home.then(|| FolderLink {
             address: LinkAddress::to(tag_index_address().as_str()),
@@ -130,6 +142,14 @@ mod tests {
 
     /// The folder pages of the site of `files`, each a path and its text.
     fn site(files: &[(&str, &str)]) -> Vec<FolderPageContent> {
+        versioned_site(files, None)
+    }
+
+    /// The folder pages of the site of `files` that the build makes as `version`.
+    fn versioned_site(
+        files: &[(&str, &str)],
+        version: Option<&VersionName>,
+    ) -> Vec<FolderPageContent> {
         let options = PageOptions::default();
         let features: Vec<_> = files
             .iter()
@@ -146,7 +166,7 @@ mod tests {
         let features = every_revised(&features);
         let builder =
             site_with_feature_pages(&features, None, &options, &TagNames::default(), None);
-        build_folder_pages(builder.folders(), &options)
+        build_folder_pages(builder.folders(), &options, version)
             .into_iter()
             .map(|(_, page)| page)
             .collect()
@@ -169,6 +189,21 @@ Feature: Counted
       Given x
   Rule: Empty
 ";
+
+    #[test]
+    fn only_the_home_page_of_a_site_without_versions_is_its_front_page() {
+        // Rule 183: in a versioned build, the versions page is the front page instead.
+        let files = [("billing/a.feature", "Feature: A\n")];
+        let front_pages = |version: Option<&VersionName>| -> Vec<bool> {
+            versioned_site(&files, version)
+                .iter()
+                .map(|content| content.page.front_page)
+                .collect()
+        };
+        assert_eq!(front_pages(None), [true, false]);
+        let version = VersionName::new("v1.0.0").expect("a version name");
+        assert_eq!(front_pages(Some(&version)), [false, false]);
+    }
 
     #[test]
     fn every_folder_above_a_feature_has_a_page_the_home_page_first() {

@@ -20,6 +20,7 @@ pub(crate) struct BuildOptions {
     pub(crate) version_name: Option<VersionName>,
     pub(crate) output: Option<PathBuf>,
     pub(crate) title: Option<String>,
+    pub(crate) front_page: Option<PathBuf>,
 }
 
 /// The options of `ghg serve`: those of `ghg build`, and how it serves.

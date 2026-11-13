@@ -66,6 +66,7 @@ fn build() -> Result<(), String> {
         "backgrounds/linked.toml",
         "tags/ghg.toml",
         "highlighting/ghg.toml",
+        "front-page/ghg.toml",
     ] {
         let config = format!("tests/fixtures/{config}");
         cargo(&[

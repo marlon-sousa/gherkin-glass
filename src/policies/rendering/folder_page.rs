@@ -1,19 +1,26 @@
-//! Policy: a folder's page, and each subfolder and feature it lists, rendered from their templates inside the page's layout, from the page's node and the nodes below it.
+//! Policy: a folder's page, the front page among them, and each subfolder and feature it lists, rendered from their templates inside the page's layout, from the page's node and the nodes below it.
 
 use askama::Template;
 
 use super::breadcrumb::Place;
 use super::contents::Contents;
+use super::front_page::{PageMain, front_page};
 use super::node_rendering::{Render, RenderFile, pieces, rendered};
+use super::page_heading::PageHeading;
 use super::page_layout::{PageAround, SitePieces, whole_page};
 use crate::entities::{
-    FeatureEntry, FolderLink, FolderPage, SiteAddress, SiteFolderPage, SiteNode, SiteTreeNode,
+    FeatureEntry, FolderLink, FolderPage, HeadingLevel, SiteAddress, SiteFolderPage, SiteNode,
+    SiteTreeNode,
 };
+use crate::errors::FrontPageError;
 
+/// What a folder's page holds under its `h1`.
 #[derive(Template)]
 #[template(path = "folder_page.html")]
 struct FolderTemplate<'a> {
     folder: &'a FolderPage,
+    /// The level of its headings.
+    level: HeadingLevel,
     /// The links to its subfolders' pages, each already rendered.
     folders: Vec<String>,
     /// Its features' entries, each already rendered.
@@ -38,21 +45,36 @@ impl RenderFile for SiteFolderPage<'_> {
         self.page().address.clone()
     }
 
-    fn render_file(&self, site: &SitePieces<'_>) -> String {
+    fn render_file(&self, site: &SitePieces<'_>) -> Result<String, FrontPageError> {
         let folder = self.page();
-        whole_page(
+        let content = |level| {
+            rendered(&FolderTemplate {
+                folder,
+                level,
+                folders: pieces(self.node().children().filter(is_subfolder_link)),
+                features: pieces(self.node().children().filter(is_feature_entry)),
+            })
+        };
+        let page = if folder.front_page {
+            front_page(site.front_page(), &folder.title, content)?
+        } else {
+            PageMain {
+                title: folder.title.clone(),
+                main: rendered(&PageHeading {
+                    heading: &folder.heading,
+                    content: content(HeadingLevel::Two),
+                }),
+            }
+        };
+        Ok(whole_page(
             site,
             &PageAround {
                 language: &folder.language,
-                title: &folder.title,
+                title: &page.title,
                 place: Place::of(self.node(), &folder.trail),
             },
-            rendered(&FolderTemplate {
-                folder,
-                folders: pieces(self.node().children().filter(is_subfolder_link)),
-                features: pieces(self.node().children().filter(is_feature_entry)),
-            }),
-        )
+            page.main,
+        ))
     }
 }
 

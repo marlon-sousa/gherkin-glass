@@ -10,9 +10,10 @@ use super::node_rendering::{NodeOf, RenderFile};
 use super::page_layout::SitePieces;
 use super::site_data::{SEARCH_DOCUMENTS, asset};
 use crate::entities::{
-    BuiltSite, PageOptions, RenderedSite, SiteAssets, SiteFile, SiteFiles, SiteNode, SiteTree,
-    SiteTreeNode,
+    BuiltSite, FrontPageTemplate, PageOptions, RenderedSite, SiteAssets, SiteFile, SiteFiles,
+    SiteNode, SiteTree, SiteTreeNode,
 };
+use crate::errors::FrontPageError;
 use last_files::LastFiles;
 
 /// Above this size, search can be slow to start. MiniSearch 7.2.0, in Node 22
@@ -23,18 +24,20 @@ const LARGE_SEARCH_DOCUMENTS: usize = 5_000_000;
 /// version's, and those beside the versions, at the output folder's root.
 /// A file whose node has the same subtree as the node of the file at the same
 /// address in `last`, the site the last build rendered, is kept from it rather
-/// than rendered again.
+/// than rendered again. The front page is rendered from `front_page`, or from
+/// ghg's own template without it, unless the template breaks a rule.
 pub(crate) fn render_site(
     tree: &SiteTree,
     last: Option<&RenderedSite>,
     options: &PageOptions,
-) -> SiteFiles {
-    let site = SitePieces::of(tree.frame());
+    front_page: Option<&FrontPageTemplate>,
+) -> Result<SiteFiles, FrontPageError> {
+    let site = SitePieces::of(tree.frame(), front_page);
     let last_files = last.map(|last| LastFiles::of(last.tree.files(), &last.files.files));
     let last_root_files =
         last.map(|last| LastFiles::of(last.tree.root_files(), &last.files.root_files));
-    let files = render_files(tree.files(), last_files.as_ref(), &site);
-    let root_files = render_files(tree.root_files(), last_root_files.as_ref(), &site);
+    let files = render_files(tree.files(), last_files.as_ref(), &site)?;
+    let root_files = render_files(tree.root_files(), last_root_files.as_ref(), &site)?;
     let built = BuiltSite {
         large_search_documents: files
             .iter()
@@ -43,11 +46,11 @@ pub(crate) fn render_site(
             .filter(is_large),
         untitled: options.title.is_none(),
     };
-    SiteFiles {
+    Ok(SiteFiles {
         files,
         root_files,
         built,
-    }
+    })
 }
 
 /// The file of each of `nodes`, in their order, rendered in parallel, unless
@@ -56,7 +59,7 @@ fn render_files<'a>(
     nodes: impl Iterator<Item = SiteTreeNode<'a>>,
     last: Option<&LastFiles<'_>>,
     site: &SitePieces<'_>,
-) -> Vec<SiteFile> {
+) -> Result<Vec<SiteFile>, FrontPageError> {
     let nodes: Vec<_> = nodes.collect();
     // Collecting into a `Vec` keeps the files' order, whatever order the threads finish in.
     nodes
@@ -72,14 +75,20 @@ fn render_file(
     node: SiteTreeNode<'_>,
     last: Option<&LastFiles<'_>>,
     site: &SitePieces<'_>,
-) -> Option<SiteFile> {
+) -> Option<Result<SiteFile, FrontPageError>> {
     if let SiteNode::Asset(name) = node.value() {
-        return asset_file(name);
+        return asset_file(name).map(Ok);
     }
     let renderer = file_renderer(node)?;
     let address = renderer.address();
-    let kept_file = last.and_then(|last| last.file(&address, node));
-    Some(kept_file.unwrap_or_else(|| SiteFile::text(address, renderer.render_file(site))))
+    if let Some(kept_file) = last.and_then(|last| last.file(&address, node)) {
+        return Some(Ok(kept_file));
+    }
+    Some(
+        renderer
+            .render_file(site)
+            .map(|text| SiteFile::text(address, text)),
+    )
 }
 
 /// What renders the file of `node`; `None` for an asset, which is not
