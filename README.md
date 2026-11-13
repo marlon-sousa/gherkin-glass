@@ -2,6 +2,10 @@
 
 gherkin-glass turns a folder of Gherkin feature files into a static website that anyone can read, with or without a screen reader. It is one command, `ghg`, for Linux, macOS and Windows.
 
+<!-- site-only
+Its source, its issues and how to contribute are in [its repository on GitHub](https://github.com/marlon-sousa/gherkin-glass).
+-->
+
 ## Why it exists
 
 Gherkin is the plain-language format behaviour-driven development uses to describe how software should behave. A feature file names a feature and lists its scenarios, each a short sequence of steps such as `Given a customer named "Ana"`, `When she withdraws 50`, `Then her balance is 150`. Tools such as Cucumber run those steps as tests, but the files are written to be read by people: product owners, testers, developers and anyone who wants to know what the software does.
@@ -24,6 +28,12 @@ Reading them is harder than it should be. They live in a repository, spread acro
 ## Status
 
 The first release is an alpha, `0.1.0-alpha.1`: a preview, to try gherkin-glass and say what you think, before its first stable version. It is on the [releases page](https://github.com/marlon-sousa/gherkin-glass/releases), not yet on crates.io; the section Installing and running, below, says how to install it. The newest code, not yet released, can be built from the repository with `cargo install --git https://github.com/marlon-sousa/gherkin-glass gherkin-glass --locked`, which installs `ghg` and `cargo-ghg` and needs [Rust](https://rustup.rs/).
+
+<!-- site-only
+## The example suite
+
+Each version below is the example suite of gherkin-glass's repository, built with that version of gherkin-glass, to show what its pages look like.
+-->
 
 <!-- ghg:contents -->
 
@@ -166,6 +176,7 @@ What the suite covers, and how to read it.
 
 Without `front_page`, the front page has only its title and ghg's part, as without this setting. A file that cannot be read, or that breaks one of these rules, stops the build with a message naming the file, and the line when there is one, and nothing is written. With `ghg serve --watch`, a change to the file rebuilds the site.
 
+<!-- github-only -->
 ## Contributing
 
 ### Requirements
@@ -206,6 +217,8 @@ Every change starts as an issue. Open one that says what you want and why, or, f
 ### How it is built
 
 gherkin-glass is written in Rust, with the [`gherkin`](https://crates.io/crates/gherkin) parser from cucumber-rs. AI is part of how it is made: agents write code and documentation, and a human maintainer reviews everything before it is merged, under the terms of [A manifesto for software engineering with AI](https://marlon-sousa.com/blog/manifesto/).
+
+<!-- end github-only -->
 
 ## License
 
