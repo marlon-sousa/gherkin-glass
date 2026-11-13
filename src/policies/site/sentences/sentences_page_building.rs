@@ -138,7 +138,9 @@ fn pieces(words: &str) -> Vec<Piece> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::entities::{Sentence, SentenceGroup, SiteAddress};
+    use std::path::Path;
+
+    use crate::entities::{FeaturePath, Sentence, SentenceGroup, SiteAddress};
 
     #[test]
     fn a_message_is_cut_at_its_marks_in_the_order_it_puts_them() {
@@ -157,7 +159,7 @@ mod tests {
     fn the_count_is_a_plural_form() {
         let page = |uses: usize| {
             let found = SentenceUse {
-                path: "a.feature".to_string(),
+                path: FeaturePath::below_input(Path::new("a.feature")),
                 page: SiteAddress::of::<&str>(&[], "a.html"),
                 language: "en".to_string(),
                 anchor: "s".to_string(),

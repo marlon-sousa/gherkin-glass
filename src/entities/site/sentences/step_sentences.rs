@@ -1,6 +1,6 @@
 //! Entity: the distinct step sentences of the suite, grouped by the kind of step, with every step that uses each.
 
-use crate::entities::SiteAddress;
+use crate::entities::{FeaturePath, SiteAddress};
 
 /// Ordered as the groups are shown: Given, then When, then Then.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -33,8 +33,8 @@ pub(crate) struct Sentence {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct SentenceUse {
-    /// Of the step's feature file, relative to the input folder, with `/` between folders.
-    pub(crate) path: String,
+    /// Of the step's feature file.
+    pub(crate) path: FeaturePath,
     /// The address of the feature's page.
     pub(crate) page: SiteAddress,
     /// The `lang` of the feature's page.

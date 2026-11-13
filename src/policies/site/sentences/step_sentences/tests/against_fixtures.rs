@@ -32,7 +32,14 @@ fn found() -> Found {
                     let uses = sentence
                         .uses
                         .into_iter()
-                        .map(|found| (found.path, found.anchor, found.line, found.values))
+                        .map(|found| {
+                            (
+                                found.path.to_string(),
+                                found.anchor,
+                                found.line,
+                                found.values,
+                            )
+                        })
                         .collect();
                     (sentence.text, uses)
                 })
