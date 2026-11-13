@@ -133,6 +133,8 @@ fn a_versioned_build_replaces_its_version_and_writes_the_versions_page() {
     );
     assert!(!output.join("v1.0.0/sub").exists());
     assert!(output.join("assets/gherkin-glass.css").is_file());
+    // Rule 126: the icon too.
+    assert!(output.join("assets/gherkin-glass.svg").is_file());
     let page = read_to_string(output.join("index.html")).expect("read");
     let expected = read_to_string(fixture().join("expected/index.html")).expect("read");
     assert_eq!(
