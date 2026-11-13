@@ -2,7 +2,7 @@
 
 use std::path::PathBuf;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug)]
 pub(crate) struct FrontPageTemplate {
     /// As the settings give it, so that what is wrong with it names it so.
     pub(crate) file: PathBuf,

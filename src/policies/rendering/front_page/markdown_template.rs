@@ -1,11 +1,7 @@
 //! Policy: a front page's Markdown template parsed, checked and rendered by pulldown-cmark into the HTML before and after its marker, with the page's title and the level of ghg's own headings.
 
-use std::ops::Range;
-
 use pulldown_cmark::html::push_html;
-use pulldown_cmark::{
-    Event, HeadingLevel as MarkdownLevel, OffsetIter, Options, Parser, Tag, TagEnd,
-};
+use pulldown_cmark::{Event, HeadingLevel as MarkdownLevel, Options, Parser, Tag, TagEnd};
 
 use crate::entities::{FrontPageTemplate, HeadingLevel};
 use crate::errors::{FrontPageError, FrontPageErrorKind};
@@ -14,7 +10,7 @@ use crate::errors::{FrontPageError, FrontPageErrorKind};
 const MARKER: &str = "<!-- ghg:contents -->";
 
 /// A template as the front page shows it.
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug)]
 pub(super) struct MarkdownFrontPage {
     /// The text of its level-one heading.
     pub(super) title: String,
@@ -38,6 +34,8 @@ struct Reading<'a> {
     in_title: bool,
     /// How many elements are open around the next event.
     depth: usize,
+    /// The text of the HTML block being read, with the offset it starts at; `None` outside one.
+    open_html_block: Option<(String, usize)>,
 }
 
 impl MarkdownFrontPage {
@@ -49,13 +47,11 @@ impl MarkdownFrontPage {
             line,
             kind,
         };
-        let mut events = Parser::new_ext(text, Options::ENABLE_TABLES).into_offset_iter();
         let mut reading = Reading::default();
-        while let Some((event, range)) = events.next() {
-            reading
-                .read(event, range, &mut events)
-                .map_err(|(offset, kind)| error(Some(line_of(text, offset)), kind))?;
-        }
+        Parser::new_ext(text, Options::ENABLE_TABLES)
+            .into_offset_iter()
+            .try_for_each(|(event, range)| reading.read(event, range.start))
+            .map_err(|(offset, kind)| error(Some(line_of(text, offset)), kind))?;
         reading.finished().map_err(|kind| error(None, kind))
     }
 
@@ -70,23 +66,21 @@ impl MarkdownFrontPage {
 }
 
 impl<'a> Reading<'a> {
-    /// Takes `event`, at `range` of the text, and, for an HTML block, the rest of its events
-    /// from `events`.
-    fn read(
-        &mut self,
-        event: Event<'a>,
-        range: Range<usize>,
-        events: &mut OffsetIter<'a>,
-    ) -> Result<(), Refusal> {
+    /// Takes `event`, which starts at `offset` in the text. An HTML block's lines, and the
+    /// text pulldown-cmark puts for their indentation, are gathered until it ends.
+    fn read(&mut self, event: Event<'a>, offset: usize) -> Result<(), Refusal> {
+        if let Some((block, start)) = self.open_html_block.take() {
+            return self.in_html_block(block, start, event);
+        }
         match event {
             Event::Start(Tag::HtmlBlock) => {
-                let block: String = events.by_ref().map_while(html_text).collect();
-                self.html_block(block.trim(), range.start)
+                self.open_html_block = Some((String::new(), offset));
+                Ok(())
             }
-            Event::Html(html) | Event::InlineHtml(html) => inline_html(html.trim(), range.start),
+            Event::Html(html) | Event::InlineHtml(html) => inline_html(html.trim(), offset),
             Event::Start(tag) => {
                 if let Tag::Heading { level, .. } = &tag {
-                    self.heading(*level, range.start)?;
+                    self.heading(*level, offset)?;
                 }
                 self.depth += 1;
                 self.keep(Event::Start(tag));
@@ -106,6 +100,22 @@ impl<'a> Reading<'a> {
                 Ok(())
             }
         }
+    }
+
+    /// Takes `event` inside the HTML block that starts at `start` and holds `block` so far.
+    fn in_html_block(
+        &mut self,
+        mut block: String,
+        start: usize,
+        event: Event<'a>,
+    ) -> Result<(), Refusal> {
+        match event {
+            Event::End(TagEnd::HtmlBlock) => return self.html_block(block.trim(), start),
+            Event::Html(text) | Event::Text(text) => block.push_str(&text),
+            _ => {}
+        }
+        self.open_html_block = Some((block, start));
+        Ok(())
     }
 
     /// An HTML block holding `html`, at `offset`: the marker, a comment left out, or raw HTML.
@@ -162,7 +172,11 @@ impl<'a> Reading<'a> {
 
     /// The template, once it has a title and a marker.
     fn finished(self) -> Result<MarkdownFrontPage, FrontPageErrorKind> {
-        let title = self.title.ok_or(FrontPageErrorKind::NoTitle)?;
+        let title = self
+            .title
+            .map(|title| title.trim().to_string())
+            .filter(|title| !title.is_empty())
+            .ok_or(FrontPageErrorKind::NoTitle)?;
         let (after, level) = self.after.ok_or(FrontPageErrorKind::NoMarker)?;
         Ok(MarkdownFrontPage {
             title,
@@ -176,7 +190,7 @@ impl<'a> Reading<'a> {
 /// HTML that is not an HTML block of its own, `html` at `offset`: a comment, left out, or a
 /// marker that is not alone, or raw HTML, which stop the template.
 fn inline_html(html: &str, offset: usize) -> Result<(), Refusal> {
-    if html == MARKER {
+    if html.contains(MARKER) {
         return Err((offset, FrontPageErrorKind::MarkerNotAlone));
     }
     if is_comment(html) {
@@ -190,14 +204,6 @@ fn is_comment(html: &str) -> bool {
     html.strip_prefix("<!--")
         .and_then(|rest| rest.strip_suffix("-->"))
         .is_some_and(|inside| !inside.contains("-->"))
-}
-
-/// The text of a line of an HTML block, until the block ends.
-fn html_text<'a>((event, _): (Event<'a>, Range<usize>)) -> Option<String> {
-    match event {
-        Event::Html(html) => Some(html.into_string()),
-        _ => None,
-    }
 }
 
 /// The level of ghg's headings below one at `level`, `h2` below none; none below `h5` and `h6`.

@@ -162,7 +162,7 @@ What the suite covers, and how to read it.
 - Links are written exactly as the file has them, neither rewritten nor checked. A relative link is relative to the front page, so a link to a file of your repository, such as `LICENSE`, works on GitHub and not on the site; write the file's full address to reach it from both.
 - HTML written in the file, other than comments, is not allowed.
 
-Without `front_page`, the front page has only its title and ghg's part, as without this setting. A file that cannot be read, or that breaks one of these rules, stops the build with a message naming the file and the line, and nothing is written. With `ghg serve --watch`, a change to the file rebuilds the site.
+Without `front_page`, the front page has only its title and ghg's part, as without this setting. A file that cannot be read, or that breaks one of these rules, stops the build with a message naming the file, and the line when there is one, and nothing is written. With `ghg serve --watch`, a change to the file rebuilds the site.
 
 ## Contributing
 

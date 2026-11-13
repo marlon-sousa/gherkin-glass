@@ -51,6 +51,12 @@ fn a_marker_first_and_nothing_after_it_leave_no_blank_line() {
 }
 
 #[test]
+fn an_indented_marker_and_an_indented_comment_are_read_as_written_at_the_margin() {
+    let page = front_page("# T\n\n <!-- a note -->\n\n  <!-- ghg:contents -->\n");
+    assert_eq!(page.around("\n<p>ghg</p>"), "<h1>T</h1>\n<p>ghg</p>");
+}
+
+#[test]
 fn other_comments_are_left_out_and_links_kept_as_written() {
     // Rule 190.
     let page = front_page(
@@ -82,6 +88,12 @@ fn ghg_s_headings_go_below_the_last_heading_before_the_marker(
 #[rstest]
 // Rules 187 to 190: what stops a template, with its line when it has one.
 #[case::no_title("Text\n\n<!-- ghg:contents -->\n", None, FrontPageErrorKind::NoTitle)]
+#[case::an_empty_title("#\n\n<!-- ghg:contents -->\n", None, FrontPageErrorKind::NoTitle)]
+#[case::a_marker_with_text_after_it(
+    "# A\n\n<!-- ghg:contents --> here\n",
+    Some(3),
+    FrontPageErrorKind::MarkerNotAlone
+)]
 #[case::a_second_title(
     "# A\n\n<!-- ghg:contents -->\n\nB\n=\n",
     Some(5),

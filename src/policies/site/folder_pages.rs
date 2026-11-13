@@ -142,6 +142,14 @@ mod tests {
 
     /// The folder pages of the site of `files`, each a path and its text.
     fn site(files: &[(&str, &str)]) -> Vec<FolderPageContent> {
+        versioned_site(files, None)
+    }
+
+    /// The folder pages of the site of `files` that the build makes as `version`.
+    fn versioned_site(
+        files: &[(&str, &str)],
+        version: Option<&VersionName>,
+    ) -> Vec<FolderPageContent> {
         let options = PageOptions::default();
         let features: Vec<_> = files
             .iter()
@@ -158,7 +166,7 @@ mod tests {
         let features = every_revised(&features);
         let builder =
             site_with_feature_pages(&features, None, &options, &TagNames::default(), None);
-        build_folder_pages(builder.folders(), &options, None)
+        build_folder_pages(builder.folders(), &options, version)
             .into_iter()
             .map(|(_, page)| page)
             .collect()
@@ -181,6 +189,21 @@ Feature: Counted
       Given x
   Rule: Empty
 ";
+
+    #[test]
+    fn only_the_home_page_of_a_site_without_versions_is_its_front_page() {
+        // Rule 183: in a versioned build, the versions page is the front page instead.
+        let files = [("billing/a.feature", "Feature: A\n")];
+        let front_pages = |version: Option<&VersionName>| -> Vec<bool> {
+            versioned_site(&files, version)
+                .iter()
+                .map(|content| content.page.front_page)
+                .collect()
+        };
+        assert_eq!(front_pages(None), [true, false]);
+        let version = VersionName::new("v1.0.0").expect("a version name");
+        assert_eq!(front_pages(Some(&version)), [false, false]);
+    }
 
     #[test]
     fn every_folder_above_a_feature_has_a_page_the_home_page_first() {

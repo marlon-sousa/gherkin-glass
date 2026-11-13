@@ -1,4 +1,4 @@
-//! Policy: the rendering stage, the site writer's: each node of the site tree rendered into its piece of a page through one trait, beside its template, the versions page among them, the site's files from them, and whether the output folder is safe to write.
+//! Policy: the rendering stage, the site writer's: each node of the site tree rendered into its piece of a page through one trait, beside its template, the versions page among them, the front page from its Markdown template, the site's files from them, and whether the output folder is safe to write.
 
 mod breadcrumb;
 mod contents;
@@ -13,6 +13,7 @@ mod node_rendering;
 mod output_safety;
 mod page_frame;
 mod page_head;
+mod page_heading;
 mod page_layout;
 mod search_box;
 mod sentences_page;

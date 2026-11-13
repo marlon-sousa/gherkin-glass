@@ -4,8 +4,9 @@ use askama::Template;
 
 use super::breadcrumb::Place;
 use super::contents::Contents;
-use super::front_page::{PageHeading, PageMain, front_page};
+use super::front_page::{PageMain, front_page};
 use super::node_rendering::{Render, RenderFile, pieces, rendered};
+use super::page_heading::PageHeading;
 use super::page_layout::{PageAround, SitePieces, whole_page};
 use crate::entities::{
     FeatureEntry, FolderLink, FolderPage, HeadingLevel, SiteAddress, SiteFolderPage, SiteNode,

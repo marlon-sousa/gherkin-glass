@@ -1,8 +1,5 @@
 //! The front page, checked by building `tests/fixtures/front-page` and comparing what is
-//! written with what is committed beside it.
-//!
-//! `cargo run -- build --config tests/fixtures/front-page/ghg.toml` writes the expected site
-//! again after a change; `expected-versions.html` is written by hand.
+//! written with what is committed beside it, which tests/fixtures/README.md describes.
 
 #![expect(
     clippy::expect_used,
@@ -10,7 +7,7 @@
 )]
 
 use std::collections::BTreeMap;
-use std::fs::{read, read_dir, read_to_string, remove_dir_all};
+use std::fs::{create_dir_all, read, read_dir, read_to_string, remove_dir_all, write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 
@@ -146,5 +143,24 @@ fn a_template_with_raw_html_named_by_the_key_is_reported_as_the_settings_give_it
         text(&run.stderr),
         "raw-html.md:5: raw HTML cannot be written in a front page; only the marker <!-- ghg:contents --> and other comments can.\n"
     );
+    assert_eq!(run.status.code(), Some(1));
+}
+
+#[test]
+fn a_feature_file_that_cannot_be_read_is_reported_before_the_template() {
+    // Rule 186: the template is read only once the feature files are read and parsed.
+    let input = Path::new(env!("CARGO_TARGET_TMPDIR")).join("front-page-input");
+    let _ = remove_dir_all(&input);
+    create_dir_all(&input).expect("the input is made");
+    write(input.join("broken.feature"), "").expect("written");
+    let input = input.to_str().expect("UTF-8");
+    let (_, run) = build(
+        &fixture(),
+        &["--input", input, "--front-page", "nowhere.md"],
+        "feature-first",
+    );
+    let report = text(&run.stderr);
+    assert!(report.starts_with("broken.feature:"), "{report}");
+    assert!(!report.contains("nowhere.md"), "{report}");
     assert_eq!(run.status.code(), Some(1));
 }

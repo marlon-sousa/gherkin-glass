@@ -2,9 +2,8 @@
 
 mod markdown_template;
 
-use askama::Template;
-
 use super::node_rendering::rendered;
+use super::page_heading::PageHeading;
 use crate::entities::{FrontPageTemplate, HeadingLevel};
 use crate::errors::FrontPageError;
 use markdown_template::MarkdownFrontPage;
@@ -13,15 +12,6 @@ use markdown_template::MarkdownFrontPage;
 pub(super) struct PageMain {
     pub(super) title: String,
     pub(super) main: String,
-}
-
-/// The `h1` of a page, then its content, already rendered, which starts with its own line
-/// break when it is not empty.
-#[derive(Template)]
-#[template(path = "page_heading.html")]
-pub(super) struct PageHeading<'a> {
-    pub(super) heading: &'a str,
-    pub(super) content: String,
 }
 
 /// The front page rendered from `template`, or, without one, from ghg's own, whose `h1` and
