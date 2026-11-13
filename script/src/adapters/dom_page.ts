@@ -121,7 +121,6 @@ export class DomPage implements Page {
   }
 }
 
-/** What a background's `data-expanded-when-linked` says, which only a background whose steps a scenario starts with has. */
 function expandedWhenLinked(element: Element): boolean | null {
   switch (element.getAttribute("data-expanded-when-linked")) {
     case "true":

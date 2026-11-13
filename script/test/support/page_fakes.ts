@@ -1,4 +1,4 @@
-// Fake ports of the page, its backgrounds' checkbox and the browser's memory, for the tests of src/services/collapsing.ts.
+// Fake ports of the page, its backgrounds' checkbox and the browser's memory, for the tests of src/services/collapsing.ts, kept apart so that the test file stays short.
 
 import type { Backgrounds } from "../../src/ports/backgrounds.ts";
 import type { Memory } from "../../src/ports/memory.ts";

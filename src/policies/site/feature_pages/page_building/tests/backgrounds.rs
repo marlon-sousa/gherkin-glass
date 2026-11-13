@@ -85,3 +85,24 @@ fn a_background_starts_collapsed_with_the_inline_form_when_a_scenario_shows_its_
         (true, collapsed_when_linked.map(|_| true))
     );
 }
+
+/// Rule 51, for a rule's background, which only its rule's scenarios start with.
+#[rstest]
+#[case::with_its_scenarios(
+    "Feature: F\n  Rule: R\n    Background:\n      Given x\n    Scenario: S\n",
+    Some(false)
+)]
+#[case::with_scenarios_only_outside_it(
+    "Feature: F\n  Scenario: S\n    Given y\n\n  Rule: R\n    Background:\n      Given x\n",
+    None
+)]
+fn a_rule_s_background_follows_the_form_when_its_rule_has_scenarios(
+    #[case] text: &str,
+    #[case] collapsed_when_linked: Option<bool>,
+) {
+    let page = page(text, &PageOptions::default());
+    let rule = page.rules.first().expect("a rule");
+    let block = &rule.background.as_ref().expect("a background").block;
+    assert_eq!(block.collapsed_when_linked, collapsed_when_linked);
+    assert_eq!(block.heading.collapsed, collapsed_when_linked.is_some());
+}

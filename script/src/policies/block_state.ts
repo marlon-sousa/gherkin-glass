@@ -7,10 +7,7 @@ export function memoryKey(pagePath: string, anchor: string): string {
   return `gherkin-glass:${pagePath}#${anchor}`;
 }
 
-/**
- * Where a background whose steps a scenario starts with keeps its state while the page shows those steps inside each scenario.
- * `memoryKey` keeps its state for the linked form, and every other block's.
- */
+/** Where a background whose steps a scenario starts with keeps its state for the inline form; a page's path starts with `/`, so it never meets a key of `memoryKey`. */
 export function inlineMemoryKey(pagePath: string, anchor: string): string {
   return `gherkin-glass:inline:${pagePath}#${anchor}`;
 }
@@ -30,10 +27,7 @@ export function startState(configured: boolean, kept: string | null): boolean {
   return configured;
 }
 
-/**
- * The state a block starts in with the form shown, before what the reader chose: a background whose steps a scenario starts with
- * is collapsed with the inline form and as the page says with the linked one; any other block is as the page was written.
- */
+/** Before what the reader chose; `expandedWhenLinked` is null for a block whose state does not follow the form. */
 export function formStart(written: boolean, expandedWhenLinked: boolean | null, inline: boolean): boolean {
   if (expandedWhenLinked === null) {
     return written;

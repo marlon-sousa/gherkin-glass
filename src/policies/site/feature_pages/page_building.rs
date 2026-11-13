@@ -7,7 +7,7 @@ mod step_views;
 
 use std::path::{Component, Path};
 
-use block_building::{Builder, description};
+use block_building::{Builder, description, has_scenarios};
 use heading_words::heading;
 use i18n_embed_fl::fl;
 
@@ -50,8 +50,7 @@ pub(crate) fn build_page(
             background,
             HeadingLevel::Two,
             fl!(CATALOGUE, "from-background"),
-            !anchored.scenarios.is_empty()
-                || anchored.rules.iter().any(|rule| !rule.scenarios.is_empty()),
+            !anchored.scenarios.is_empty() || anchored.rules.iter().any(has_scenarios),
         )
     });
     let scenarios: Vec<_> = anchored

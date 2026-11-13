@@ -18,6 +18,8 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 use std::str::from_utf8;
 
+use rstest::rstest;
+
 fn fixtures() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures")
 }
@@ -142,30 +144,35 @@ fn every_page_with_a_background_has_the_checkbox() {
 // which the page keeps for the script; any other background is as
 // `collapse_scenarios` says in both.
 
-#[test]
-fn the_inline_form_starts_collapsed_the_backgrounds_whose_steps_scenarios_show() {
-    let block = |site: &str, page: &str| {
-        let html = read(fixtures().join("backgrounds").join(site).join(page)).expect("read");
-        let html = String::from_utf8(html).expect("UTF-8");
-        let start = html
-            .find("<div class=\"ghg-block ghg-background")
-            .expect("one");
-        html[start..].lines().take(2).collect::<Vec<_>>().join("\n")
-    };
-    let shown = |expanded: bool, when_linked: bool| {
+#[rstest]
+#[case::inline_shown("expected", "both.html", Some(true), false)]
+#[case::linked_shown("expected-linked", "both.html", Some(true), true)]
+#[case::inline_without_steps("expected", "no-steps.html", None, true)]
+#[case::linked_without_steps("expected-linked", "no-steps.html", None, true)]
+#[case::inline_without_scenarios("expected", "no-scenarios.html", None, true)]
+#[case::linked_without_scenarios("expected-linked", "no-scenarios.html", None, true)]
+fn the_inline_form_starts_collapsed_the_backgrounds_whose_steps_scenarios_show(
+    #[case] site: &str,
+    #[case] page: &str,
+    #[case] expanded_when_linked: Option<bool>,
+    #[case] expanded: bool,
+) {
+    let html = read(fixtures().join("backgrounds").join(site).join(page)).expect("read");
+    let html = String::from_utf8(html).expect("UTF-8");
+    let start = html
+        .find("<div class=\"ghg-block ghg-background")
+        .expect("one");
+    let block = html[start..].lines().take(2).collect::<Vec<_>>().join("\n");
+    let attribute = expanded_when_linked
+        .map(|state| format!(" data-expanded-when-linked=\"{state}\""))
+        .unwrap_or_default();
+    assert_eq!(
+        block,
         format!(
-            "<div class=\"ghg-block ghg-background\" data-expanded-when-linked=\"{when_linked}\">\n\
+            "<div class=\"ghg-block ghg-background\"{attribute}>\n\
              <h2 id=\"background\"><button type=\"button\" class=\"ghg-toggle\" aria-expanded=\"{expanded}\">Background</button></h2>"
         )
-    };
-    let alone = "<div class=\"ghg-block ghg-background\">\n\
-                 <h2 id=\"background\"><button type=\"button\" class=\"ghg-toggle\" aria-expanded=\"true\">Background</button></h2>";
-    assert_eq!(block("expected", "both.html"), shown(false, true));
-    assert_eq!(block("expected-linked", "both.html"), shown(true, true));
-    for site in ["expected", "expected-linked"] {
-        assert_eq!(block(site, "no-steps.html"), alone);
-        assert_eq!(block(site, "no-scenarios.html"), alone);
-    }
+    );
 }
 
 #[test]

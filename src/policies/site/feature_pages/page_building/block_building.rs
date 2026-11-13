@@ -72,7 +72,7 @@ impl Builder<'_> {
                     background,
                     HeadingLevel::Three,
                     fl!(CATALOGUE, "from-rule-background"),
-                    !anchored.scenarios.is_empty(),
+                    has_scenarios(anchored),
                 )
             }),
             scenarios: anchored
@@ -125,6 +125,10 @@ impl Builder<'_> {
             text,
         }
     }
+}
+
+pub(super) fn has_scenarios(rule: &AnchoredRule<'_>) -> bool {
+    !rule.scenarios.is_empty()
 }
 
 pub(super) fn block_heading(

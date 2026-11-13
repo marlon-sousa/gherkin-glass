@@ -1,4 +1,4 @@
-// Service: collapsing and expanding the blocks of a page, remembered page by page, and showing the backgrounds inside each scenario or linking to them, as the reader chose for the site.
+// Service: the states of a page's blocks, remembered page by page, with the form its backgrounds show, chosen for the site, which some of those states follow.
 
 import { formKey, rememberedForm, startForm } from "../policies/background_form.ts";
 import { formStart, inlineMemoryKey, memoryKey, remembered, startState } from "../policies/block_state.ts";
@@ -14,8 +14,7 @@ export interface BackgroundsOption {
 
 export function startCollapsing(page: Page, memory: Memory, pagePath: string, option: BackgroundsOption | null): void {
   const blocks = page.blocks();
-  // The backgrounds whose steps a scenario starts with, whose state follows the form shown.
-  const following = blocks.filter((block) => block.expandedWhenLinked !== null);
+  const followingTheForm = blocks.filter((block) => block.expandedWhenLinked !== null);
   let inline = false;
   const key = (block: Block): string =>
     inline && block.expandedWhenLinked !== null ? inlineMemoryKey(pagePath, block.anchor) : memoryKey(pagePath, block.anchor);
@@ -28,10 +27,10 @@ export function startCollapsing(page: Page, memory: Memory, pagePath: string, op
     const start = formStart(block.isExpanded(), block.expandedWhenLinked, inline);
     block.setExpanded(startState(start, memory.get(key(block))));
   };
-  // Another page of the site may have changed the choice while this one was left.
-  const showForm = (): void => {
+  // Another page of the site may have changed the choice while this one was left; with nothing remembered, `unchosen` stands.
+  const showForm = (unchosen: boolean): void => {
     if (option !== null) {
-      inline = startForm(option.backgrounds.writtenInline(), memory.get(formKey(option.siteRoot)));
+      inline = startForm(unchosen, memory.get(formKey(option.siteRoot)));
       option.backgrounds.setInline(inline);
     }
   };
@@ -45,7 +44,7 @@ export function startCollapsing(page: Page, memory: Memory, pagePath: string, op
     }
   };
 
-  showForm();
+  showForm(option?.backgrounds.writtenInline() ?? false);
   blocks.forEach(settle);
   const target = page.target();
   if (target !== null) {
@@ -61,13 +60,13 @@ export function startCollapsing(page: Page, memory: Memory, pagePath: string, op
       inline = switched;
       option.backgrounds.setInline(inline);
       memory.set(formKey(option.siteRoot), rememberedForm(inline));
-      following.forEach((block) => set(block, !inline));
+      followingTheForm.forEach((block) => set(block, !inline));
     });
     option.backgrounds.onReturn(() => {
       const shown = inline;
-      showForm();
+      showForm(shown);
       if (inline !== shown) {
-        following.forEach(settle);
+        followingTheForm.forEach(settle);
       }
     });
   }

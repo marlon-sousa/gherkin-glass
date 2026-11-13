@@ -171,13 +171,20 @@ test("a page shown again as it was left takes the form another page chose meanwh
   assert.deepEqual(states(page), [false, true, true]);
 });
 
-test("a memory that keeps nothing leaves the page as it was written, and switching still works", () => {
+test("a memory that keeps nothing leaves the page as it was written, and a switch stands when the page is shown again", () => {
   const [page, backgrounds] = startForms(false, FORGETFUL);
   assert.equal(backgrounds.inline, false);
   backgrounds.switched(true);
   assert.equal(backgrounds.inline, true);
   assert.deepEqual(states(page), [false, true, true]);
   backgrounds.returned();
-  assert.equal(backgrounds.inline, false);
+  assert.equal(backgrounds.inline, true);
+  assert.deepEqual(states(page), [false, true, true]);
+});
+
+test("a page shown again in the form it was left in keeps the backgrounds the reader changed", () => {
+  const [page, backgrounds] = startForms(true, FORGETFUL);
+  page.toggle(page.found[0]!);
+  backgrounds.returned();
   assert.deepEqual(states(page), [true, true, true]);
 });

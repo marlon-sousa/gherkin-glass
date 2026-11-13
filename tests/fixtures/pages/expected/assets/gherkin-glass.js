@@ -725,7 +725,7 @@ function formStart(written, expandedWhenLinked2, inline) {
 // src/services/collapsing.ts
 function startCollapsing(page2, memory2, pagePath, option) {
   const blocks = page2.blocks();
-  const following = blocks.filter((block) => block.expandedWhenLinked !== null);
+  const followingTheForm = blocks.filter((block) => block.expandedWhenLinked !== null);
   let inline = false;
   const key = (block) => inline && block.expandedWhenLinked !== null ? inlineMemoryKey(pagePath, block.anchor) : memoryKey(pagePath, block.anchor);
   const set = (block, expanded) => {
@@ -736,9 +736,9 @@ function startCollapsing(page2, memory2, pagePath, option) {
     const start = formStart(block.isExpanded(), block.expandedWhenLinked, inline);
     block.setExpanded(startState(start, memory2.get(key(block))));
   };
-  const showForm = () => {
+  const showForm = (unchosen) => {
     if (option !== null) {
-      inline = startForm(option.backgrounds.writtenInline(), memory2.get(formKey(option.siteRoot)));
+      inline = startForm(unchosen, memory2.get(formKey(option.siteRoot)));
       option.backgrounds.setInline(inline);
     }
   };
@@ -751,7 +751,7 @@ function startCollapsing(page2, memory2, pagePath, option) {
       block = block.parent;
     }
   };
-  showForm();
+  showForm(option?.backgrounds.writtenInline() ?? false);
   blocks.forEach(settle);
   const target = page2.target();
   if (target !== null) {
@@ -766,13 +766,13 @@ function startCollapsing(page2, memory2, pagePath, option) {
       inline = switched;
       option.backgrounds.setInline(inline);
       memory2.set(formKey(option.siteRoot), rememberedForm(inline));
-      following.forEach((block) => set(block, !inline));
+      followingTheForm.forEach((block) => set(block, !inline));
     });
     option.backgrounds.onReturn(() => {
       const shown = inline;
-      showForm();
+      showForm(shown);
       if (inline !== shown) {
-        following.forEach(settle);
+        followingTheForm.forEach(settle);
       }
     });
   }

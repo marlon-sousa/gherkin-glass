@@ -30,8 +30,6 @@ struct BlockView<'a> {
     anchor: &'a str,
     heading_parts: &'a [HeadingPart],
     collapsed: bool,
-    /// For a background whose steps a scenario starts with, whether it starts
-    /// collapsed with the linked form; `None` for any other block.
     collapsed_when_linked: Option<bool>,
     tags: &'a [TagView],
     description: &'a Option<Paragraph>,
