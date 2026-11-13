@@ -46,8 +46,10 @@ pub(crate) struct TagPage {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct TagFeature {
     pub(crate) address: LinkAddress,
-    /// The feature page's title.
-    pub(crate) heading: String,
+    /// The feature page's title, around its file's path, which is shown apart.
+    pub(crate) heading_before: String,
+    pub(crate) path: String,
+    pub(crate) heading_after: String,
     /// The feature page's `lang`, when it is not the tag page's.
     pub(crate) language: Option<String>,
 }

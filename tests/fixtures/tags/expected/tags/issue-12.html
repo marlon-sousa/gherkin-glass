@@ -63,7 +63,8 @@
 <script>if(location.protocol==="file:"){let d=document.getElementById("ghg_from_disk");d.showModal();d.focus()}</script>
 <a class="ghg-skip" href="#ghg_main">Skip to content</a>
 <div class="ghg-options">
-<input type="checkbox" id="ghg_show_tree" class="ghg-show-tree" aria-controls="ghg_tree" checked> <label for="ghg_show_tree">Show the folder tree</label>
+<span class="ghg-option ghg-tree-choice"><input type="checkbox" id="ghg_show_tree" class="ghg-show-tree" aria-controls="ghg_tree" checked> <label for="ghg_show_tree">Show the folder tree</label></span>
+<button type="button" class="ghg-tree-button" aria-expanded="false" aria-controls="ghg_tree">Folder tree</button>
 <fieldset class="ghg-theme">
 <legend>Theme</legend>
 <label><input type="radio" name="ghg-theme" value="system" checked> System</label>
@@ -89,12 +90,12 @@
 <main id="ghg_main">
 <h1>Tag <bdi>@issue-12</bdi></h1>
 <p><a class="ghg-tag-link" href="https://github.com/owner/repo/issues/12">Issue 12 on GitHub</a></p>
-<h2><a href="../accounts.html">Feature: Accounts, accounts.feature</a></h2>
+<h2><a href="../accounts.html">Feature: Accounts, <span class="ghg-tag-path">accounts.feature</span></a></h2>
 <ul class="ghg-tag-scenarios">
 <li><a href="../accounts.html#open-an-account"><bdi>Scenario: Open an account</bdi></a></li>
 <li><a href="../accounts.html#open-a-joint-account"><bdi>Scenario: Open a joint account</bdi></a></li>
 </ul>
-<h2><a href="../area/saque%20em%20conta.html" lang="pt">Funcionalidade: Saque em conta, area/saque em conta.feature</a></h2>
+<h2><a href="../area/saque%20em%20conta.html" lang="pt">Funcionalidade: Saque em conta, <span class="ghg-tag-path">area/saque em conta.feature</span></a></h2>
 <ul class="ghg-tag-scenarios">
 <li><a href="../area/saque%20em%20conta.html#saque-no-caixa" lang="pt"><bdi>Cenário: Saque no caixa</bdi></a></li>
 </ul>

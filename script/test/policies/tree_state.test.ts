@@ -1,17 +1,23 @@
-// The policy of src/policies/tree_state.ts: docs/BEHAVIOUR.md, rules 88 to 90 and 93.
+// The policy of src/policies/tree_state.ts: docs/BEHAVIOUR.md, rules 87 to 90 and 93.
 
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { pageAddress, pathTo, readTree, rootFrom, startExpanded, startShown } from "../../src/policies/tree_state.ts";
+import { pageAddress, pathTo, readTree, rootFrom, startChecked, startExpanded, treeShown } from "../../src/policies/tree_state.ts";
 
-test("the reader's choice wins, and without one a narrow window hides the tree", () => {
-  assert.equal(startShown(true, null, false), true);
-  assert.equal(startShown(false, null, false), false);
-  assert.equal(startShown(true, null, true), false);
-  assert.equal(startShown(false, "shown", true), true);
-  assert.equal(startShown(true, "hidden", false), false);
-  assert.equal(startShown(true, "something else", false), true);
+test("the reader's choice wins over the configuration for the checkbox", () => {
+  assert.equal(startChecked(true, null), true);
+  assert.equal(startChecked(false, null), false);
+  assert.equal(startChecked(false, "shown"), true);
+  assert.equal(startChecked(true, "hidden"), false);
+  assert.equal(startChecked(true, "something else"), true);
+});
+
+test("a narrow window shows the tree as the button says, any other as the checkbox does", () => {
+  assert.equal(treeShown(false, true, false), true);
+  assert.equal(treeShown(false, false, true), false);
+  assert.equal(treeShown(true, true, false), false);
+  assert.equal(treeShown(true, false, true), true);
 });
 
 test("an item on the path to the current page is expanded whatever was remembered", () => {

@@ -93,10 +93,18 @@ fn tag_page(
         .map(|feature| {
             let page = feature.page();
             let page_address = format!("{ROOT}{}", page.address);
+            let (heading_before, heading_after) = around_mark(&fl!(
+                CATALOGUE,
+                "page-title",
+                heading = page.heading.as_str(),
+                path = LINK_MARK
+            ));
             TagFeatureContent {
                 feature: TagFeature {
                     address: LinkAddress::to(&page_address),
-                    heading: page.title.clone(),
+                    heading_before,
+                    path: page.path.to_string(),
+                    heading_after,
                     language: (page.language != language).then(|| page.language.clone()),
                 },
                 scenarios: carriers(feature, tag)

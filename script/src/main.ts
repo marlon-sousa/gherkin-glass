@@ -4,10 +4,12 @@ import { DomBackgrounds } from "./adapters/dom_backgrounds.ts";
 import { DomPage } from "./adapters/dom_page.ts";
 import { DomSearchBox } from "./adapters/dom_search_box.ts";
 import { DomTheme } from "./adapters/dom_theme.ts";
-import { DomTree, DomTreeSwitch } from "./adapters/dom_tree.ts";
+import { DomTree } from "./adapters/dom_tree.ts";
+import { DomTreeSwitch } from "./adapters/dom_tree_switch.ts";
 import { FetchedDocuments } from "./adapters/fetched_documents.ts";
 import { FetchedTree } from "./adapters/fetched_tree.ts";
 import { LocalMemory } from "./adapters/local_memory.ts";
+import { MediaWidth } from "./adapters/media_width.ts";
 import { WindowTimer } from "./adapters/window_timer.ts";
 import { siteRoot } from "./policies/background_form.ts";
 import { NARROW, pageAddress } from "./policies/tree_state.ts";
@@ -30,11 +32,14 @@ startCollapsing(
 const site = new URL("../", import.meta.url);
 const sitePath = site.pathname;
 const page = pageAddress(sitePath, document.location.pathname);
-void startFolderTree(new FetchedTree(new URL("tree.json", import.meta.url)), new DomTreeSwitch(document), new DomTree(document, site, page), memory, {
-  sitePath,
-  page,
-  narrow: window.matchMedia(NARROW).matches,
-});
+void startFolderTree(
+  new FetchedTree(new URL("tree.json", import.meta.url)),
+  new DomTreeSwitch(document),
+  new DomTree(document, site, page),
+  new MediaWidth(window.matchMedia(NARROW)),
+  memory,
+  { sitePath, page },
+);
 const searchBox = DomSearchBox.find(document);
 if (searchBox !== null) {
   startSearching(searchBox, new FetchedDocuments(new URL("search.json", import.meta.url)), new WindowTimer());
