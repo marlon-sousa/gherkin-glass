@@ -18,6 +18,8 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 use std::str::from_utf8;
 
+use rstest::rstest;
+
 fn fixtures() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures")
 }
@@ -135,6 +137,43 @@ fn every_page_with_a_background_has_the_checkbox() {
     assert!(has("no-steps.html"));
     assert!(has("no-scenarios.html"));
     assert!(!has("none.html"));
+}
+
+// Rule 51: a background whose steps a scenario starts with starts collapsed
+// with the inline form, and as `collapse_scenarios` says with the linked one,
+// which the page keeps for the script; any other background is as
+// `collapse_scenarios` says in both.
+
+#[rstest]
+#[case::inline_shown("expected", "both.html", Some(true), false)]
+#[case::linked_shown("expected-linked", "both.html", Some(true), true)]
+#[case::inline_without_steps("expected", "no-steps.html", None, true)]
+#[case::linked_without_steps("expected-linked", "no-steps.html", None, true)]
+#[case::inline_without_scenarios("expected", "no-scenarios.html", None, true)]
+#[case::linked_without_scenarios("expected-linked", "no-scenarios.html", None, true)]
+fn the_inline_form_starts_collapsed_the_backgrounds_whose_steps_scenarios_show(
+    #[case] site: &str,
+    #[case] page: &str,
+    #[case] expanded_when_linked: Option<bool>,
+    #[case] expanded: bool,
+) {
+    let html = read(fixtures().join("backgrounds").join(site).join(page)).expect("read");
+    let html = String::from_utf8(html).expect("UTF-8");
+    let start = html
+        .find("<div class=\"ghg-block ghg-background")
+        .expect("one");
+    let block = html[start..].lines().take(2).collect::<Vec<_>>().join("\n");
+    let attribute = match expanded_when_linked {
+        Some(state) => format!(" data-expanded-when-linked=\"{state}\""),
+        None => String::new(),
+    };
+    assert_eq!(
+        block,
+        format!(
+            "<div class=\"ghg-block ghg-background\"{attribute}>\n\
+             <h2 id=\"background\"><button type=\"button\" class=\"ghg-toggle\" aria-expanded=\"{expanded}\">Background</button></h2>"
+        )
+    );
 }
 
 #[test]

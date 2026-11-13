@@ -11,7 +11,6 @@ import { LocalMemory } from "./adapters/local_memory.ts";
 import { WindowTimer } from "./adapters/window_timer.ts";
 import { siteRoot } from "./policies/background_form.ts";
 import { NARROW, pageAddress } from "./policies/tree_state.ts";
-import { startBackgrounds } from "./services/backgrounds.ts";
 import { startCollapsing } from "./services/collapsing.ts";
 import { startFolderTree } from "./services/folder_tree.ts";
 import { startSearching } from "./services/searching.ts";
@@ -19,7 +18,13 @@ import { startThemeSwitching } from "./services/theme_switching.ts";
 
 const memory = new LocalMemory();
 startThemeSwitching(new DomTheme(document), memory);
-startCollapsing(new DomPage(document), memory, document.location.pathname);
+const backgrounds = DomBackgrounds.of(document);
+startCollapsing(
+  new DomPage(document),
+  memory,
+  document.location.pathname,
+  backgrounds === null ? null : { backgrounds, siteRoot: siteRoot(import.meta.url) },
+);
 
 // The script is in the site's `assets/` folder.
 const site = new URL("../", import.meta.url);
@@ -33,8 +38,4 @@ void startFolderTree(new FetchedTree(new URL("tree.json", import.meta.url)), new
 const searchBox = DomSearchBox.find(document);
 if (searchBox !== null) {
   startSearching(searchBox, new FetchedDocuments(new URL("search.json", import.meta.url)), new WindowTimer());
-}
-const backgrounds = DomBackgrounds.of(document);
-if (backgrounds !== null) {
-  startBackgrounds(backgrounds, memory, siteRoot(import.meta.url));
 }
