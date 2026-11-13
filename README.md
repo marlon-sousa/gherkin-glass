@@ -23,7 +23,7 @@ Reading them is harder than it should be. They live in a repository, spread acro
 
 ## Status
 
-The first release is an alpha, `0.1.0-alpha.1`: a preview, to try gherkin-glass and say what you think, before its first stable version. It is on the [releases page](https://github.com/marlon-sousa/gherkin-glass/releases), not yet on crates.io; [Installing and running](#installing-and-running) says how to install it. The newest code, not yet released, can be built from the repository with `cargo install --git https://github.com/marlon-sousa/gherkin-glass gherkin-glass --locked`, which installs `ghg` and `cargo-ghg` and needs [Rust](https://rustup.rs/).
+The first release is an alpha, `0.1.0-alpha.1`: a preview, to try gherkin-glass and say what you think, before its first stable version. It is on the [releases page](https://github.com/marlon-sousa/gherkin-glass/releases), not yet on crates.io; the section Installing and running, below, says how to install it. The newest code, not yet released, can be built from the repository with `cargo install --git https://github.com/marlon-sousa/gherkin-glass gherkin-glass --locked`, which installs `ghg` and `cargo-ghg` and needs [Rust](https://rustup.rs/).
 
 <!-- ghg:contents -->
 
@@ -35,7 +35,7 @@ Once a stable version of gherkin-glass is released, install it in one of these w
 - `cargo binstall gherkin-glass`, which downloads the released binary instead of building it;
 - or download the archive for your system from the [releases page](https://github.com/marlon-sousa/gherkin-glass/releases), check it against the release's `SHA256SUMS` if you wish, and put `ghg`, and `cargo-ghg` for `cargo ghg`, somewhere on your path. There are archives for Linux on x86-64 and ARM64, macOS on Intel and Apple silicon, and Windows on x86-64.
 
-An alpha or a beta, such as `0.1.0-alpha.1`, is not on crates.io, so `cargo install gherkin-glass` and `cargo binstall gherkin-glass` cannot install it. Install it from its archive on the releases page, build it with `cargo install --git https://github.com/marlon-sousa/gherkin-glass --tag v0.1.0-alpha.1 gherkin-glass --locked`, or install it in a GitHub Actions workflow with `uses: marlon-sousa/gherkin-glass@v0.1.0-alpha.1` and the input `version: 0.1.0-alpha.1`, as [docs/BEHAVIOUR.md](docs/BEHAVIOUR.md), "The GitHub Action", describes.
+An alpha or a beta, such as `0.1.0-alpha.1`, is not on crates.io, so `cargo install gherkin-glass` and `cargo binstall gherkin-glass` cannot install it. Install it from its archive on the releases page, build it with `cargo install --git https://github.com/marlon-sousa/gherkin-glass --tag v0.1.0-alpha.1 gherkin-glass --locked`, or install it in a GitHub Actions workflow with `uses: marlon-sousa/gherkin-glass@v0.1.0-alpha.1` and the input `version: 0.1.0-alpha.1`, since without `version` the action installs only a stable release.
 
 Each way installs `ghg`, and `cargo-ghg`, which lets you run it as `cargo ghg` beside `cargo test`. `cargo ghg build` is the same as `ghg build`.
 
