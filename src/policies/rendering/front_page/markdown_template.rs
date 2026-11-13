@@ -23,6 +23,13 @@ pub(super) struct MarkdownFrontPage {
 /// The parser's options, which tables are read with.
 pub(super) const OPTIONS: Options = Options::ENABLE_TABLES;
 
+/// Whether a template's level-one heading must hold text.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Title {
+    Needed,
+    MayBeBlank,
+}
+
 /// What stops a template, at the offset in its text where it is.
 type Refusal = (usize, FrontPageErrorKind);
 
@@ -44,6 +51,21 @@ struct Reading<'a> {
 impl MarkdownFrontPage {
     /// `template` read, unless it breaks a rule of the front page.
     pub(super) fn of(template: &FrontPageTemplate) -> Result<MarkdownFrontPage, FrontPageError> {
+        Self::read(template, Title::Needed)
+    }
+
+    /// ghg's own `template` read: its heading holds the site's title, which rule 26 lets be
+    /// only spaces, which Markdown reads as no text, so it needs no text.
+    pub(super) fn of_own(
+        template: &FrontPageTemplate,
+    ) -> Result<MarkdownFrontPage, FrontPageError> {
+        Self::read(template, Title::MayBeBlank)
+    }
+
+    fn read(
+        template: &FrontPageTemplate,
+        title: Title,
+    ) -> Result<MarkdownFrontPage, FrontPageError> {
         let text = &template.text;
         let error = |line, kind| FrontPageError {
             file: template.file.clone(),
@@ -55,7 +77,7 @@ impl MarkdownFrontPage {
             .into_offset_iter()
             .try_for_each(|(event, range)| reading.read(event, range.start))
             .map_err(|(offset, kind)| error(Some(line_of(text, offset)), kind))?;
-        reading.finished().map_err(|kind| error(None, kind))
+        reading.finished(title).map_err(|kind| error(None, kind))
     }
 
     /// The page's main content, with `contents`, ghg's part already rendered, where the
@@ -173,11 +195,12 @@ impl<'a> Reading<'a> {
         }
     }
 
-    /// The template, once it has a title and a marker.
-    fn finished(self) -> Result<MarkdownFrontPage, FrontPageErrorKind> {
+    /// The template, once it has a title, with text unless `needs` says it may be blank,
+    /// and a marker.
+    fn finished(self, needs: Title) -> Result<MarkdownFrontPage, FrontPageErrorKind> {
         let title = self
             .title
-            .filter(|title| !title.is_empty())
+            .filter(|title| needs == Title::MayBeBlank || !title.is_empty())
             .ok_or(FrontPageErrorKind::NoTitle)?;
         let (after, level) = self.after.ok_or(FrontPageErrorKind::NoMarker)?;
         Ok(MarkdownFrontPage {

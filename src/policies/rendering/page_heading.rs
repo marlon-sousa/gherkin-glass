@@ -1,4 +1,4 @@
-//! Policy: a page's `h1` and the content under it, rendered from their template, as a folder's page and ghg's own front page write them.
+//! Policy: a page's `h1` and the content under it, rendered from their template, as a folder page that is not the front page writes them.
 
 use askama::Template;
 
