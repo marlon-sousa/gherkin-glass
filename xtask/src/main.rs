@@ -96,8 +96,6 @@ fn build() -> Result<(), String> {
         "--config",
         "project-site/ghg.toml",
     ])?;
-    // Every page names the version of ghg that wrote it, which the committed
-    // expected sites hold as a placeholder, so that a release changes none.
     let version = manifest_value("version")?;
     put_back_placeholder(&root().join("tests/fixtures"), &version)?;
     put_back_placeholder(&root().join("project-site/expected"), &version)?;

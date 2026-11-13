@@ -45,13 +45,10 @@ fn files(folder: &Path) -> BTreeMap<String, Vec<u8>> {
                 folders.push((entry.path(), format!("{name}/")));
             } else {
                 let file = read(entry.path()).expect("the file is read");
-                // A page names the version of ghg in its footer, which the
-                // committed sites hold as a placeholder.
-                let file = String::from_utf8(file).map_or_else(
-                    |error| error.into_bytes(),
-                    |text| with_version_placeholder(&text, env!("CARGO_PKG_VERSION")).into_bytes(),
+                found.insert(
+                    name,
+                    with_version_placeholder(file, env!("CARGO_PKG_VERSION")),
                 );
-                found.insert(name, file);
             }
         }
     }

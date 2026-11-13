@@ -9,7 +9,7 @@
     reason = "a test file's helpers are test code, which clippy.toml lets panic"
 )]
 
-use std::fs::{read_dir, read_to_string, remove_dir_all};
+use std::fs::{read, read_dir, read_to_string, remove_dir_all};
 use std::path::Path;
 use std::process::Command;
 
@@ -35,10 +35,11 @@ fn pages(name: &str) -> (String, String) {
     assert_eq!(String::from_utf8_lossy(&result.stderr), "");
     assert_eq!(result.status.code(), Some(0));
     (
-        with_version_placeholder(
-            &read_to_string(written.join("steps.html")).expect("the page is written"),
+        String::from_utf8(with_version_placeholder(
+            read(written.join("steps.html")).expect("the page is written"),
             env!("CARGO_PKG_VERSION"),
-        ),
+        ))
+        .expect("UTF-8"),
         read_to_string(fixture.join("expected/steps.html")).expect("the page is committed"),
     )
 }

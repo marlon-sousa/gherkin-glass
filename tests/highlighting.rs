@@ -2,7 +2,7 @@
 //!
 //! `cargo xtask build` writes the expected pages again after a change.
 
-use std::fs::{read_dir, read_to_string, remove_dir_all};
+use std::fs::{read, read_dir, read_to_string, remove_dir_all};
 use std::path::Path;
 use std::process::Command;
 
@@ -32,8 +32,9 @@ fn the_pages_show_the_highlighting_and_the_accents_as_the_expected_pages_do() {
         if !name.to_string_lossy().ends_with(".html") {
             continue;
         }
-        let page = read_to_string(written.join(&name)).expect("the page is written");
-        let page = with_version_placeholder(&page, env!("CARGO_PKG_VERSION"));
+        let page = read(written.join(&name)).expect("the page is written");
+        let page = String::from_utf8(with_version_placeholder(page, env!("CARGO_PKG_VERSION")))
+            .expect("UTF-8");
         assert!(
             page == read_to_string(expected.join(&name)).expect("read"),
             "{name:?} differs from the expected page:\n{page}"

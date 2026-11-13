@@ -67,6 +67,8 @@ struct TreeLandmarkTemplate<'a> {
 #[template(path = "page_footer.html")]
 struct PageFooterTemplate<'a> {
     frame: &'a PageFrame,
+    /// gherkin-glass's repository, as `Cargo.toml` names it.
+    repository: &'static str,
 }
 
 impl Render for PageFrame {
@@ -106,6 +108,9 @@ impl Render for TreeLandmark<'_> {
 
 impl Render for PageFooter<'_> {
     fn render(&self) -> String {
-        rendered(&PageFooterTemplate { frame: self.frame })
+        rendered(&PageFooterTemplate {
+            frame: self.frame,
+            repository: env!("CARGO_PKG_REPOSITORY"),
+        })
     }
 }
