@@ -160,7 +160,14 @@ fn every_page_has_one_h1_and_a_lang_and_its_content_in_its_html() {
         assert!(page.contains("<html lang=\""), "{name}");
         // Rule 32: the ids the page gives its own parts contain `_`, and
         // are exactly these; every other id is a block's, without one.
-        let own = ["ghg_from_disk", "ghg_show_tree", "ghg_tree", "ghg_main"];
+        let own = [
+            "ghg_from_disk",
+            "ghg_from_disk_title",
+            "ghg_from_disk_text",
+            "ghg_show_tree",
+            "ghg_tree",
+            "ghg_main",
+        ];
         let ids: Vec<&str> = page
             .split(" id=\"")
             .skip(1)
@@ -546,12 +553,12 @@ fn the_home_page_has_the_site_s_title_and_totals() {
     assert!(untitled.contains("<h1>Feature files</h1>"));
 }
 
-// Rules 86 to 88, 114 and 182: the notice for a page opened from disk, hidden,
+// Rules 86 to 88, 114 and 182: the dialog for a page opened from disk, closed,
 // then the skip link, the checkbox, the Theme control and the tree's landmark
 // come before the breadcrumb and the content, the tree shown as configured.
 
 #[test]
-fn every_page_starts_with_the_notice_then_the_skip_link_then_the_tree_then_the_breadcrumb() {
+fn every_page_starts_with_the_dialog_then_the_skip_link_then_the_tree_then_the_breadcrumb() {
     for (site, shown) in [("expected", true), ("expected-collapsed", false)] {
         for (name, page) in files(&fixtures().join("pages").join(site)) {
             if !name.ends_with(".html") {
@@ -562,11 +569,16 @@ fn every_page_starts_with_the_notice_then_the_skip_link_then_the_tree_then_the_b
             let checked = if shown { " checked" } else { "" };
             let hidden = if shown { "" } else { " hidden" };
             let start = format!(
-                "<p id=\"ghg_from_disk\" class=\"ghg-from-disk\" hidden>This site is meant to be served, \
+                "<dialog id=\"ghg_from_disk\" class=\"ghg-from-disk\" tabindex=\"-1\" \
+                 aria-labelledby=\"ghg_from_disk_title\" aria-describedby=\"ghg_from_disk_text\">\n\
+                 <p id=\"ghg_from_disk_title\" class=\"ghg-from-disk-title\">Opened from disk</p>\n\
+                 <p id=\"ghg_from_disk_text\">This site is meant to be served, \
                  so its folder tree and search do not work when a page is opened from disk. \
                  Run ghg serve in the folder of your ghg.toml, or serve the site&#39;s folder with any web server, \
                  then open the address it gives.</p>\n\
-                 <script>if(location.protocol===\"file:\")document.getElementById(\"ghg_from_disk\").hidden=false</script>\n\
+                 <form method=\"dialog\"><button>I agree</button></form>\n\
+                 </dialog>\n\
+                 <script>if(location.protocol===\"file:\"){{let d=document.getElementById(\"ghg_from_disk\");d.showModal();d.focus()}}</script>\n\
                  <a class=\"ghg-skip\" href=\"#ghg_main\">Skip to content</a>\n\
                  <div class=\"ghg-options\">\n\
                  <input type=\"checkbox\" id=\"ghg_show_tree\" class=\"ghg-show-tree\" aria-controls=\"ghg_tree\"{checked}> \

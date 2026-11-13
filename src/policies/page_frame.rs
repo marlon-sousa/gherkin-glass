@@ -2,7 +2,7 @@
 
 use i18n_embed_fl::fl;
 
-use crate::entities::{BreadcrumbWords, PageFrame, PageOptions};
+use crate::entities::{BreadcrumbWords, DiskNoticeWords, PageFrame, PageOptions};
 use crate::policies::{CATALOGUE, site_title};
 
 mod search_wording;
@@ -11,7 +11,11 @@ use search_wording::search_words;
 
 pub(crate) fn page_frame(options: &PageOptions) -> PageFrame {
     PageFrame {
-        opened_from_disk: fl!(CATALOGUE, "opened-from-disk"),
+        opened_from_disk: DiskNoticeWords {
+            title: fl!(CATALOGUE, "opened-from-disk-title"),
+            text: fl!(CATALOGUE, "opened-from-disk"),
+            agree: fl!(CATALOGUE, "opened-from-disk-agree"),
+        },
         skip_link: fl!(CATALOGUE, "skip-to-content"),
         show_tree: fl!(CATALOGUE, "show-folder-tree"),
         tree: fl!(CATALOGUE, "folder-tree"),
@@ -45,12 +49,14 @@ mod tests {
     }
 
     #[test]
-    fn the_notice_for_a_page_opened_from_disk_says_how_to_serve_the_site() {
-        let notice = page_frame(&PageOptions::default()).opened_from_disk;
+    fn the_dialog_for_a_page_opened_from_disk_says_how_to_serve_the_site() {
+        let words = page_frame(&PageOptions::default()).opened_from_disk;
+        assert_eq!(words.title, "Opened from disk");
         assert!(
-            notice.starts_with("This site is meant to be served,"),
-            "{notice}"
+            words.text.starts_with("This site is meant to be served,"),
+            "{}",
+            words.text
         );
-        assert!(notice.contains("Run ghg serve"), "{notice}");
+        assert_eq!(words.agree, "I agree");
     }
 }

@@ -1,2 +1,6 @@
-<p id="ghg_from_disk" class="ghg-from-disk" hidden>{{ frame.opened_from_disk }}</p>
-<script>if(location.protocol==="file:")document.getElementById("ghg_from_disk").hidden=false</script>
+<dialog id="ghg_from_disk" class="ghg-from-disk" tabindex="-1" aria-labelledby="ghg_from_disk_title" aria-describedby="ghg_from_disk_text">
+<p id="ghg_from_disk_title" class="ghg-from-disk-title">{{ frame.opened_from_disk.title }}</p>
+<p id="ghg_from_disk_text">{{ frame.opened_from_disk.text }}</p>
+<form method="dialog"><button>{{ frame.opened_from_disk.agree }}</button></form>
+</dialog>
+<script>if(location.protocol==="file:"){let d=document.getElementById("ghg_from_disk");d.showModal();d.focus()}</script>

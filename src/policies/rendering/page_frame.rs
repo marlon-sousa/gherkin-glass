@@ -1,11 +1,11 @@
-//! Policy: the frame every page of a version's site has: its notice for a page opened from disk, its skip link and its options, which the versions page shares, and the folder tree's empty landmark.
+//! Policy: the frame every page of a version's site has: its dialog for a page opened from disk, its skip link and its options, which the versions page shares, and the folder tree's empty landmark.
 
 use askama::Template;
 
 use super::node_rendering::{Render, rendered};
 use crate::entities::PageFrame;
 
-/// The notice first in the page, hidden unless the page is opened from disk.
+/// The dialog first in the page, opened only when the page is opened from disk.
 pub(super) struct DiskNotice<'a> {
     pub(super) frame: &'a PageFrame,
 }

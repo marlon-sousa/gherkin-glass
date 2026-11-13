@@ -232,9 +232,12 @@ serve-cannot-watch = ghg serve cannot watch { $path } for changes: { $reason }
 serve-not-found = Nothing is at this address in the site.
 serve-wrong-method = ghg serve answers only GET and HEAD requests.
 
-## First in every page, shown only when the page is opened from disk.
+## First in every page, the dialog opened only when the page is opened from
+## disk: its name, what it says, and its one button, which closes it.
 
+opened-from-disk-title = Opened from disk
 opened-from-disk = This site is meant to be served, so its folder tree and search do not work when a page is opened from disk. Run ghg serve in the folder of your ghg.toml, or serve the site's folder with any web server, then open the address it gives.
+opened-from-disk-agree = I agree
 
 ## Before every page's content: the link past the folder tree, the checkbox
 ## that shows or hides it, and the name of its landmark.

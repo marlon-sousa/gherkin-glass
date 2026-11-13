@@ -55,8 +55,12 @@
 <script type="module" src="../assets/gherkin-glass.js"></script>
 </head>
 <body>
-<p id="ghg_from_disk" class="ghg-from-disk" hidden>This site is meant to be served, so its folder tree and search do not work when a page is opened from disk. Run ghg serve in the folder of your ghg.toml, or serve the site&#39;s folder with any web server, then open the address it gives.</p>
-<script>if(location.protocol==="file:")document.getElementById("ghg_from_disk").hidden=false</script>
+<dialog id="ghg_from_disk" class="ghg-from-disk" tabindex="-1" aria-labelledby="ghg_from_disk_title" aria-describedby="ghg_from_disk_text">
+<p id="ghg_from_disk_title" class="ghg-from-disk-title">Opened from disk</p>
+<p id="ghg_from_disk_text">This site is meant to be served, so its folder tree and search do not work when a page is opened from disk. Run ghg serve in the folder of your ghg.toml, or serve the site&#39;s folder with any web server, then open the address it gives.</p>
+<form method="dialog"><button>I agree</button></form>
+</dialog>
+<script>if(location.protocol==="file:"){let d=document.getElementById("ghg_from_disk");d.showModal();d.focus()}</script>
 <a class="ghg-skip" href="#ghg_main">Skip to content</a>
 <div class="ghg-options">
 <input type="checkbox" id="ghg_show_tree" class="ghg-show-tree" aria-controls="ghg_tree"> <label for="ghg_show_tree">Show the folder tree</label>

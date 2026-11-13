@@ -152,7 +152,8 @@ figcaption {
   margin: 1rem 0;
 }
 
-.ghg-controls button {
+.ghg-controls button,
+.ghg-from-disk button {
   font: inherit;
   padding: 0.25rem 0.75rem;
   background: var(--ghg-surface);
@@ -221,10 +222,19 @@ figcaption {
 }
 
 .ghg-from-disk {
-  margin: 0;
-  padding: 0.5rem 1rem;
-  border-bottom: 2px solid var(--ghg-border);
-  background: var(--ghg-surface);
+  max-width: 36rem;
+  padding: 1rem 1.5rem;
+  border: 2px solid var(--ghg-border);
+  background: var(--ghg-background);
+  color: var(--ghg-text);
+}
+
+.ghg-from-disk::backdrop {
+  background: rgb(0 0 0 / 50%);
+}
+
+.ghg-from-disk-title {
+  font-weight: bold;
 }
 
 .ghg-options {
