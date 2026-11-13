@@ -7,7 +7,6 @@ use crate::entities::{Accents, BreadcrumbWords, SearchWords};
 pub(crate) struct DiskNoticeWords {
     /// The dialog's name.
     pub(crate) title: String,
-    /// What it says.
     pub(crate) text: String,
     /// Its one button, which closes it.
     pub(crate) agree: String,

@@ -1,9 +1,11 @@
 // docs/BEHAVIOUR.md, "A page opened from disk", rule 182, checked in Chromium
 // with Playwright: tests/fixtures/pages is built, and pages of it opened
 // straight from disk must open the dialog first in their body, with the focus
-// on the dialog itself, and its button closes it. The open dialog is held to the rules of
-// "Accessibility", in the light and the dark colour scheme. That a served page keeps it closed,
-// tests/browser/accessibility.mjs checks on every page.
+// on the dialog itself. I agree closes it on one page and Escape on the
+// other, and Tab then reaches the skip link. The open dialog is held to the
+// rules of "Accessibility", in the light and the dark colour scheme. That a
+// served page keeps it closed, tests/browser/accessibility.mjs checks on
+// every page.
 //
 // Run from the repository's root, after cargo build and npm ci in script/,
 // with Playwright's Chromium installed:
@@ -61,9 +63,20 @@ try {
       for (const line of await violations(page)) problems.push(`${path}, ${scheme}: ${line}`);
       // Last before closing, since it moves the focus.
       for (const line of (await partProblems(page)).lines) problems.push(`${path}, ${scheme}: ${line}`);
-      await page.focus("#ghg_from_disk button");
-      await page.keyboard.press("Enter");
-      assert.equal((await dialog()).open, false, `${path}: I agree does not close the dialog`);
+      // The home page's dialog closes with I agree, the other's with Escape.
+      const close = path === "index.html" ? "I agree" : "Escape";
+      if (close === "I agree") {
+        await page.focus("#ghg_from_disk button");
+        await page.keyboard.press("Enter");
+      } else {
+        await page.keyboard.press("Escape");
+      }
+      assert.equal((await dialog()).open, false, `${path}: ${close} does not close the dialog`);
+      await page.keyboard.press("Tab");
+      assert.ok(
+        await page.evaluate(() => document.activeElement.classList.contains("ghg-skip")),
+        `${path}: after ${close}, Tab does not reach the skip link`,
+      );
     }
     await context.close();
   }
@@ -72,4 +85,4 @@ try {
   await browser.close();
   rmSync(output, { recursive: true, force: true });
 }
-console.log("Pages opened from disk open the dialog, and I agree closes it.");
+console.log("Pages opened from disk open the dialog, and I agree and Escape close it.");
