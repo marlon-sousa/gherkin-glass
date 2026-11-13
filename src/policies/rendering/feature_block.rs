@@ -30,6 +30,7 @@ struct BlockView<'a> {
     anchor: &'a str,
     heading_parts: &'a [HeadingPart],
     collapsed: bool,
+    collapsed_when_linked: Option<bool>,
     tags: &'a [TagView],
     description: &'a Option<Paragraph>,
     table: &'a Option<TableView>,
@@ -62,6 +63,7 @@ impl Render for NodeOf<'_, BackgroundBlock> {
     fn render(&self) -> String {
         let view = BlockView {
             description: &self.value.description,
+            collapsed_when_linked: self.value.collapsed_when_linked,
             ..BlockView::of(BlockKind::Background, &self.value.heading)
         };
         block(view, self.node)
@@ -175,6 +177,7 @@ impl<'a> BlockView<'a> {
             anchor: &heading.anchor,
             heading_parts: &heading.parts,
             collapsed: heading.collapsed,
+            collapsed_when_linked: None,
             tags: &[],
             description: &None,
             table: &None,

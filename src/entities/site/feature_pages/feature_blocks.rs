@@ -29,6 +29,11 @@ pub(crate) struct BackgroundBlock {
     /// The words that introduce its steps in a scenario that starts with them:
     /// "From the background:" or "From the rule's background:".
     pub(crate) introduction: String,
+    /// For a background whose steps a scenario starts with, whether it starts
+    /// collapsed while the page shows the linked form; the inline form starts
+    /// it collapsed. `None` for any other background, whose state the form
+    /// does not change.
+    pub(crate) collapsed_when_linked: Option<bool>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

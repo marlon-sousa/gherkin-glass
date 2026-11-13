@@ -6,6 +6,8 @@ export interface Block {
   readonly anchor: string;
   /** The block it is inside, if any. */
   readonly parent: Block | null;
+  /** For a background whose steps a scenario starts with, whether it starts expanded with the linked form; null for any other block. */
+  readonly expandedWhenLinked: boolean | null;
   isExpanded(): boolean;
   setExpanded(expanded: boolean): void;
 }

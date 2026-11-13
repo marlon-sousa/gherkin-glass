@@ -105,9 +105,9 @@
 <button type="button" class="ghg-expand-all">Expand all</button>
 <label class="ghg-option"><input type="checkbox" class="ghg-inline-backgrounds" autocomplete="off" checked> Show backgrounds inside each scenario</label>
 </div>
-<div class="ghg-block ghg-background">
-<h2 id="background"><button type="button" class="ghg-toggle" aria-expanded="true">Background</button></h2>
-<div class="ghg-content">
+<div class="ghg-block ghg-background" data-expanded-when-linked="true">
+<h2 id="background"><button type="button" class="ghg-toggle" aria-expanded="false">Background</button></h2>
+<div class="ghg-content" hidden>
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span>an account with these balances:
 <table class="ghg-table">
@@ -157,9 +157,9 @@
 <div class="ghg-block ghg-rule">
 <h2 id="limits"><button type="button" class="ghg-toggle" aria-expanded="true">Rule: Limits</button></h2>
 <div class="ghg-content">
-<div class="ghg-block ghg-background">
-<h3 id="over-the-limit"><button type="button" class="ghg-toggle" aria-expanded="true">Background: Over the limit</button></h3>
-<div class="ghg-content">
+<div class="ghg-block ghg-background" data-expanded-when-linked="true">
+<h3 id="over-the-limit"><button type="button" class="ghg-toggle" aria-expanded="false">Background: Over the limit</button></h3>
+<div class="ghg-content" hidden>
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span>a limit of <span class="ghg-number">50</span></li>
 </ol>
