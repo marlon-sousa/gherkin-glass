@@ -23,13 +23,13 @@ Reading them is harder than it should be. They live in a repository, spread acro
 
 ## Status
 
-Not yet released. Until then, it can be built from the repository with `cargo install --git https://github.com/marlon-sousa/gherkin-glass gherkin-glass --locked`, which installs `ghg` and `cargo-ghg` and needs [Rust](https://rustup.rs/).
+The first release is an alpha, `0.1.0-alpha.1`: a preview, to try gherkin-glass and say what you think, before its first stable version. It is on the [releases page](https://github.com/marlon-sousa/gherkin-glass/releases), not yet on crates.io; [Installing and running](#installing-and-running) says how to install it. The newest code, not yet released, can be built from the repository with `cargo install --git https://github.com/marlon-sousa/gherkin-glass gherkin-glass --locked`, which installs `ghg` and `cargo-ghg` and needs [Rust](https://rustup.rs/).
 
 <!-- ghg:contents -->
 
 ## Installing and running
 
-Once gherkin-glass is released, install it in one of these ways:
+Once a stable version of gherkin-glass is released, install it in one of these ways:
 
 - `cargo install gherkin-glass`, which builds it with Rust's package manager;
 - `cargo binstall gherkin-glass`, which downloads the released binary instead of building it;
