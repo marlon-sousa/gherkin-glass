@@ -105,7 +105,7 @@
 <button type="button" class="ghg-expand-all">Expand all</button>
 <label class="ghg-option"><input type="checkbox" class="ghg-inline-backgrounds" autocomplete="off" checked> Show backgrounds inside each scenario</label>
 </div>
-<div class="ghg-block ghg-background" data-expanded-when-linked="true">
+<div class="ghg-block ghg-background" data-expanded-when-unchecked="true">
 <h2 id="background"><button type="button" class="ghg-toggle" aria-expanded="false">Background</button></h2>
 <div class="ghg-content" hidden>
 <ol class="ghg-steps">
@@ -129,9 +129,10 @@
 <div class="ghg-block ghg-scenario">
 <h2 id="outside-any-rule"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: Outside any rule</button></h2>
 <div class="ghg-content">
-<div class="ghg-from-background">
-<p id="outside-any-rule_background_1">From the background:<span class="ghg-linked" hidden> <a href="#background">Background</a></span></p>
-<ol class="ghg-steps ghg-inline" aria-labelledby="outside-any-rule_background_1">
+<div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
+<h3 id="outside-any-rule_background_1"><button type="button" class="ghg-toggle" aria-expanded="true">From the background</button></h3>
+<div class="ghg-content">
+<ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span>an account with these balances:
 <table class="ghg-table">
 <thead>
@@ -147,6 +148,7 @@
 <pre>Opened today.</pre>
 </figure></li>
 </ol>
+</div>
 </div>
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">When </span><span class="ghg-number">10</span> is moved</li>
@@ -157,7 +159,7 @@
 <div class="ghg-block ghg-rule">
 <h2 id="limits"><button type="button" class="ghg-toggle" aria-expanded="true">Rule: Limits</button></h2>
 <div class="ghg-content">
-<div class="ghg-block ghg-background" data-expanded-when-linked="true">
+<div class="ghg-block ghg-background" data-expanded-when-unchecked="true">
 <h3 id="over-the-limit"><button type="button" class="ghg-toggle" aria-expanded="false">Background: Over the limit</button></h3>
 <div class="ghg-content" hidden>
 <ol class="ghg-steps">
@@ -168,9 +170,10 @@
 <div class="ghg-block ghg-scenario">
 <h3 id="move-amount"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario Outline: Move &#60;amount&#62;</button></h3>
 <div class="ghg-content">
-<div class="ghg-from-background">
-<p id="move-amount_background_1">From the background:<span class="ghg-linked" hidden> <a href="#background">Background</a></span></p>
-<ol class="ghg-steps ghg-inline" aria-labelledby="move-amount_background_1">
+<div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
+<h4 id="move-amount_background_1"><button type="button" class="ghg-toggle" aria-expanded="true">From the background</button></h4>
+<div class="ghg-content">
+<ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span>an account with these balances:
 <table class="ghg-table">
 <thead>
@@ -187,11 +190,14 @@
 </figure></li>
 </ol>
 </div>
-<div class="ghg-from-background">
-<p id="move-amount_background_2">From the rule&#39;s background:<span class="ghg-linked" hidden> <a href="#over-the-limit">Background: Over the limit</a></span></p>
-<ol class="ghg-steps ghg-inline" aria-labelledby="move-amount_background_2">
+</div>
+<div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
+<h4 id="move-amount_background_2"><button type="button" class="ghg-toggle" aria-expanded="true">From the rule&#39;s background</button></h4>
+<div class="ghg-content">
+<ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span>a limit of <span class="ghg-number">50</span></li>
 </ol>
+</div>
 </div>
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">When </span><span class="ghg-placeholder">&#60;amount&#62;</span> is moved</li>
@@ -232,9 +238,10 @@
 <div class="ghg-block ghg-scenario">
 <h3 id="only-the-features-background"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: Only the feature&#39;s background</button></h3>
 <div class="ghg-content">
-<div class="ghg-from-background">
-<p id="only-the-features-background_background_1">From the background:<span class="ghg-linked" hidden> <a href="#background">Background</a></span></p>
-<ol class="ghg-steps ghg-inline" aria-labelledby="only-the-features-background_background_1">
+<div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
+<h4 id="only-the-features-background_background_1"><button type="button" class="ghg-toggle" aria-expanded="true">From the background</button></h4>
+<div class="ghg-content">
+<ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span>an account with these balances:
 <table class="ghg-table">
 <thead>
@@ -250,6 +257,7 @@
 <pre>Opened today.</pre>
 </figure></li>
 </ol>
+</div>
 </div>
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">Then </span>nothing changes</li>

@@ -1,7 +1,7 @@
-// Service: the states of a page's blocks, remembered page by page, with the form its backgrounds show, chosen for the site, which some of those states follow.
+// Service: the states of a page's blocks, remembered page by page, with the backgrounds' checkbox, chosen for the site, which the backgrounds' states follow.
 
 import { formKey, rememberedForm, startForm } from "../policies/background_form.ts";
-import { formStart, inlineMemoryKey, memoryKey, remembered, startState } from "../policies/block_state.ts";
+import { formStart, inlineMemoryKey, memoryKey, remembered, startState, switchedState } from "../policies/block_state.ts";
 import type { Backgrounds } from "../ports/backgrounds.ts";
 import type { Memory } from "../ports/memory.ts";
 import type { Block, Page } from "../ports/page.ts";
@@ -14,17 +14,17 @@ export interface BackgroundsOption {
 
 export function startCollapsing(page: Page, memory: Memory, pagePath: string, option: BackgroundsOption | null): void {
   const blocks = page.blocks();
-  const followingTheForm = blocks.filter((block) => block.expandedWhenLinked !== null);
+  const followingTheForm = blocks.filter((block) => block.expandedWhenUnchecked !== null);
   let inline = false;
   const key = (block: Block): string =>
-    inline && block.expandedWhenLinked !== null ? inlineMemoryKey(pagePath, block.anchor) : memoryKey(pagePath, block.anchor);
+    inline && block.expandedWhenUnchecked !== null ? inlineMemoryKey(pagePath, block.anchor) : memoryKey(pagePath, block.anchor);
   const set = (block: Block, expanded: boolean): void => {
     block.setExpanded(expanded);
     memory.set(key(block), remembered(expanded));
   };
-  // A block's state as the page was written is its state until it is first settled, and a background that follows the form ignores it.
+  // A block's state as the page was written is its state until it is first settled, and a background that follows the checkbox ignores it.
   const settle = (block: Block): void => {
-    const start = formStart(block.isExpanded(), block.expandedWhenLinked, inline);
+    const start = formStart(block.isExpanded(), block.expandedWhenUnchecked, block.inScenario, inline);
     block.setExpanded(startState(start, memory.get(key(block))));
   };
   // Another page of the site may have changed the choice while this one was left; with nothing remembered, `unchosen` stands.
@@ -60,7 +60,7 @@ export function startCollapsing(page: Page, memory: Memory, pagePath: string, op
       inline = switched;
       option.backgrounds.setInline(inline);
       memory.set(formKey(option.siteRoot), rememberedForm(inline));
-      followingTheForm.forEach((block) => set(block, !inline));
+      followingTheForm.forEach((block) => set(block, switchedState(block.inScenario, inline)));
     });
     option.backgrounds.onReturn(() => {
       const shown = inline;

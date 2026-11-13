@@ -112,7 +112,7 @@
 <div class="ghg-block ghg-rule">
 <h2 id="com-contexto"><button type="button" class="ghg-toggle" aria-expanded="true">Regra: Com contexto</button></h2>
 <div class="ghg-content">
-<div class="ghg-block ghg-background" data-expanded-when-linked="true">
+<div class="ghg-block ghg-background" data-expanded-when-unchecked="true">
 <h3 id="contexto"><button type="button" class="ghg-toggle" aria-expanded="true">Contexto</button></h3>
 <div class="ghg-content">
 <ol class="ghg-steps">
@@ -123,11 +123,13 @@
 <div class="ghg-block ghg-scenario">
 <h3 id="dentro-da-regra"><button type="button" class="ghg-toggle" aria-expanded="true">Cenário: Dentro da regra</button></h3>
 <div class="ghg-content">
-<div class="ghg-from-background">
-<p id="dentro-da-regra_background_1">From the rule&#39;s background:<span class="ghg-linked"> <a href="#contexto">Contexto</a></span></p>
-<ol class="ghg-steps ghg-inline" aria-labelledby="dentro-da-regra_background_1" hidden>
+<div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
+<h4 id="dentro-da-regra_background_1"><button type="button" class="ghg-toggle" aria-expanded="false">From the rule&#39;s background</button></h4>
+<div class="ghg-content" hidden>
+<ol class="ghg-steps">
 <li><span class="ghg-keyword">Dado </span>um cliente</li>
 </ol>
+</div>
 </div>
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">Então </span>algo muda</li>

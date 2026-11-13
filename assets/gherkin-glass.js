@@ -18,12 +18,6 @@ var DomBackgrounds = class _DomBackgrounds {
   }
   setInline(inline) {
     this.checkbox.checked = inline;
-    for (const steps of this.document.querySelectorAll(".ghg-from-background > .ghg-inline")) {
-      steps.hidden = !inline;
-    }
-    for (const link of this.document.querySelectorAll(".ghg-from-background .ghg-linked")) {
-      link.hidden = inline;
-    }
   }
   onSwitch(handler) {
     this.checkbox.addEventListener("change", () => handler(this.checkbox.checked));
@@ -41,15 +35,17 @@ var DomBackgrounds = class _DomBackgrounds {
 var DomBlock = class {
   anchor;
   parent;
-  expandedWhenLinked;
+  expandedWhenUnchecked;
+  inScenario;
   button;
   content;
-  constructor(anchor, button, content, parent, expandedWhenLinked2) {
+  constructor(anchor, button, content, parent, element) {
     this.anchor = anchor;
     this.button = button;
     this.content = content;
     this.parent = parent;
-    this.expandedWhenLinked = expandedWhenLinked2;
+    this.expandedWhenUnchecked = element === null ? null : expandedWhenUnchecked(element);
+    this.inScenario = element?.classList.contains("ghg-background-in-scenario") ?? false;
   }
   isExpanded() {
     return this.button.getAttribute("aria-expanded") === "true";
@@ -74,7 +70,7 @@ var DomPage = class {
       }
       const around = element.parentElement?.closest(".ghg-block");
       const parent = around ? byElement.get(around) ?? null : null;
-      const block = new DomBlock(heading.id, button, content, parent, expandedWhenLinked(element));
+      const block = new DomBlock(heading.id, button, content, parent, element);
       byElement.set(element, block);
       this.found.push(block);
     }
@@ -140,8 +136,8 @@ var DomPage = class {
     this.document.querySelector(selector)?.addEventListener("click", handler);
   }
 };
-function expandedWhenLinked(element) {
-  switch (element.getAttribute("data-expanded-when-linked")) {
+function expandedWhenUnchecked(element) {
+  switch (element.getAttribute("data-expanded-when-unchecked")) {
     case "true":
       return true;
     case "false":
@@ -715,25 +711,28 @@ function startState(configured, kept) {
   }
   return configured;
 }
-function formStart(written, expandedWhenLinked2, inline) {
-  if (expandedWhenLinked2 === null) {
+function formStart(written, expandedWhenUnchecked2, inScenario, inline) {
+  if (expandedWhenUnchecked2 === null) {
     return written;
   }
-  return !inline && expandedWhenLinked2;
+  return inline ? inScenario : expandedWhenUnchecked2;
+}
+function switchedState(inScenario, inline) {
+  return inline === inScenario;
 }
 
 // src/services/collapsing.ts
 function startCollapsing(page2, memory2, pagePath, option) {
   const blocks = page2.blocks();
-  const followingTheForm = blocks.filter((block) => block.expandedWhenLinked !== null);
+  const followingTheForm = blocks.filter((block) => block.expandedWhenUnchecked !== null);
   let inline = false;
-  const key = (block) => inline && block.expandedWhenLinked !== null ? inlineMemoryKey(pagePath, block.anchor) : memoryKey(pagePath, block.anchor);
+  const key = (block) => inline && block.expandedWhenUnchecked !== null ? inlineMemoryKey(pagePath, block.anchor) : memoryKey(pagePath, block.anchor);
   const set = (block, expanded) => {
     block.setExpanded(expanded);
     memory2.set(key(block), remembered(expanded));
   };
   const settle = (block) => {
-    const start = formStart(block.isExpanded(), block.expandedWhenLinked, inline);
+    const start = formStart(block.isExpanded(), block.expandedWhenUnchecked, block.inScenario, inline);
     block.setExpanded(startState(start, memory2.get(key(block))));
   };
   const showForm = (unchosen) => {
@@ -766,7 +765,7 @@ function startCollapsing(page2, memory2, pagePath, option) {
       inline = switched;
       option.backgrounds.setInline(inline);
       memory2.set(formKey(option.siteRoot), rememberedForm(inline));
-      followingTheForm.forEach((block) => set(block, !inline));
+      followingTheForm.forEach((block) => set(block, switchedState(block.inScenario, inline)));
     });
     option.backgrounds.onReturn(() => {
       const shown = inline;

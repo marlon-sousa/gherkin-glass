@@ -7,7 +7,6 @@ mod doc_string;
 mod feature_block;
 mod feature_page;
 mod folder_page;
-mod from_background;
 mod front_page;
 mod node_rendering;
 mod output_safety;

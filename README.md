@@ -77,7 +77,7 @@ text = "Issue $1 on GitHub"
 | `collapse_rules` | `true` or `false` | `false` | Whether rules start collapsed. |
 | `collapse_scenarios` | `true` or `false` | `false` | Whether scenarios, scenario outlines and backgrounds start collapsed. |
 | `show_tree` | `true` or `false` | `true` | Whether the folder tree is shown when a reader first opens the site. |
-| `inline_backgrounds` | `true` or `false` | `true` | Whether a scenario shows its backgrounds' steps inside it, or links to them. |
+| `inline_backgrounds` | `true` or `false` | `true` | Whether pages start with the backgrounds inside each scenario expanded and those in their own place collapsed, or the opposite. |
 | `tag_links` | a list of tables, each written `[[tag_links]]` | none | Links from tags to another site. Each table has a `pattern`, a regular expression matched against the whole tag with its `@`; an `address`; and a `text` for the link. In the address and the text, `$1` or `$name` is replaced by what that group of the pattern matched. |
 | `accent_light` | a colour, `#` and six or three hexadecimal digits, in quotes, such as `"#0b4f9c"` | `"#0b4f9c"` | The light theme's colour for links and the focus outline. It must reach a contrast of 7:1 against the theme's backgrounds. |
 | `accent_dark` | a colour, written as `accent_light`'s, such as `"#8cc4ff"` | `"#8cc4ff"` | The dark theme's colour for links and the focus outline, held to the same contrast. |

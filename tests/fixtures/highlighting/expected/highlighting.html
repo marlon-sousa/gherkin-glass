@@ -107,7 +107,7 @@
 <button type="button" class="ghg-expand-all">Expand all</button>
 <label class="ghg-option"><input type="checkbox" class="ghg-inline-backgrounds" autocomplete="off" checked> Show backgrounds inside each scenario</label>
 </div>
-<div class="ghg-block ghg-background" data-expanded-when-linked="true">
+<div class="ghg-block ghg-background" data-expanded-when-unchecked="true">
 <h2 id="background"><button type="button" class="ghg-toggle" aria-expanded="false">Background</button></h2>
 <div class="ghg-content" hidden>
 <ol class="ghg-steps">
@@ -118,11 +118,13 @@
 <div class="ghg-block ghg-scenario">
 <h2 id="parameters"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: Parameters</button></h2>
 <div class="ghg-content">
-<div class="ghg-from-background">
-<p id="parameters_background_1">From the background:<span class="ghg-linked" hidden> <a href="#background">Background</a></span></p>
-<ol class="ghg-steps ghg-inline" aria-labelledby="parameters_background_1">
+<div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
+<h3 id="parameters_background_1"><button type="button" class="ghg-toggle" aria-expanded="true">From the background</button></h3>
+<div class="ghg-content">
+<ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span>an account with <span class="ghg-number">100</span> and a <span class="ghg-parameter">&#34;&#60;amount&#62;&#34;</span> note</li>
 </ol>
+</div>
 </div>
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">When </span>the customer types <span class="ghg-parameter">&#34;hello 42&#34;</span> and <span class="ghg-parameter">&#34;&#34;</span></li>
@@ -135,11 +137,13 @@
 <div class="ghg-block ghg-scenario">
 <h2 id="numbers"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: Numbers</button></h2>
 <div class="ghg-content">
-<div class="ghg-from-background">
-<p id="numbers_background_1">From the background:<span class="ghg-linked" hidden> <a href="#background">Background</a></span></p>
-<ol class="ghg-steps ghg-inline" aria-labelledby="numbers_background_1">
+<div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
+<h3 id="numbers_background_1"><button type="button" class="ghg-toggle" aria-expanded="true">From the background</button></h3>
+<div class="ghg-content">
+<ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span>an account with <span class="ghg-number">100</span> and a <span class="ghg-parameter">&#34;&#60;amount&#62;&#34;</span> note</li>
 </ol>
+</div>
 </div>
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">Then </span>the balance is <span class="ghg-number">-3.5</span>, then <span class="ghg-number">1.000,50</span> or $<span class="ghg-number">7</span> on <span class="ghg-number">2026</span>-<span class="ghg-number">11</span>-<span class="ghg-number">10</span>.</li>
@@ -151,11 +155,13 @@
 <div class="ghg-block ghg-scenario">
 <h2 id="not-an-outline"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: Not an outline</button></h2>
 <div class="ghg-content">
-<div class="ghg-from-background">
-<p id="not-an-outline_background_1">From the background:<span class="ghg-linked" hidden> <a href="#background">Background</a></span></p>
-<ol class="ghg-steps ghg-inline" aria-labelledby="not-an-outline_background_1">
+<div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
+<h3 id="not-an-outline_background_1"><button type="button" class="ghg-toggle" aria-expanded="true">From the background</button></h3>
+<div class="ghg-content">
+<ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span>an account with <span class="ghg-number">100</span> and a <span class="ghg-parameter">&#34;&#60;amount&#62;&#34;</span> note</li>
 </ol>
+</div>
 </div>
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span>&#60;amount&#62; is plain here</li>
@@ -165,11 +171,13 @@
 <div class="ghg-block ghg-scenario">
 <h2 id="placeholders"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario Outline: Placeholders</button></h2>
 <div class="ghg-content">
-<div class="ghg-from-background">
-<p id="placeholders_background_1">From the background:<span class="ghg-linked" hidden> <a href="#background">Background</a></span></p>
-<ol class="ghg-steps ghg-inline" aria-labelledby="placeholders_background_1">
+<div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
+<h3 id="placeholders_background_1"><button type="button" class="ghg-toggle" aria-expanded="true">From the background</button></h3>
+<div class="ghg-content">
+<ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span>an account with <span class="ghg-number">100</span> and a <span class="ghg-parameter">&#34;&#60;amount&#62;&#34;</span> note</li>
 </ol>
+</div>
 </div>
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span><span class="ghg-placeholder">&#60;amount&#62;</span> in <span class="ghg-parameter">&#34;<span class="ghg-placeholder">&#60;currency&#62;</span> 3&#34;</span> and &#60;unknown&#62;</li>
@@ -210,11 +218,13 @@
 <div class="ghg-block ghg-scenario">
 <h3 id="in-a-rule"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: In a rule</button></h3>
 <div class="ghg-content">
-<div class="ghg-from-background">
-<p id="in-a-rule_background_1">From the background:<span class="ghg-linked" hidden> <a href="#background">Background</a></span></p>
-<ol class="ghg-steps ghg-inline" aria-labelledby="in-a-rule_background_1">
+<div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
+<h4 id="in-a-rule_background_1"><button type="button" class="ghg-toggle" aria-expanded="true">From the background</button></h4>
+<div class="ghg-content">
+<ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span>an account with <span class="ghg-number">100</span> and a <span class="ghg-parameter">&#34;&#60;amount&#62;&#34;</span> note</li>
 </ol>
+</div>
 </div>
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span><span class="ghg-number">2</span> <span class="ghg-parameter">&#34;items&#34;</span></li>

@@ -174,7 +174,7 @@ No dependency injection framework. Every collaborator is received through a cons
 
 ## Interface text
 
-gherkin-glass's own words, such as "Collapse all", "Skip to content", "From the background:", the tree's labels and every message on the command line, are in English only for now, but are written so that translating them later changes no code ([#4](https://github.com/marlon-sousa/gherkin-glass/issues/4), [#23](https://github.com/marlon-sousa/gherkin-glass/issues/23)).
+gherkin-glass's own words, such as "Collapse all", "Skip to content", "From the background", the tree's labels and every message on the command line, are in English only for now, but are written so that translating them later changes no code ([#4](https://github.com/marlon-sousa/gherkin-glass/issues/4), [#23](https://github.com/marlon-sousa/gherkin-glass/issues/23)).
 
 - **The catalogue is in [Fluent](https://projectfluent.org/)**: one `.ftl` file per language, `messages/en/gherkin-glass.ftl` for English, the only language for now. A translation is a new file beside it, which translators can work on in Weblate, whose documentation lists Fluent as a supported format since its version 4.8.
 - **It is embedded with [`rust-embed`](https://crates.io/crates/rust-embed)**, a struct deriving `RustEmbed` over `messages/`, **loaded with [`i18n-embed`](https://crates.io/crates/i18n-embed)**, with its `fluent-system` feature, **and read with the `fl!` macro of [`i18n-embed-fl`](https://crates.io/crates/i18n-embed-fl)**. All three are MIT; the Rust `age` crate (rage) is built the same way.

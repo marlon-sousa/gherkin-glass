@@ -5,16 +5,18 @@ import type { Block, Page } from "../ports/page.ts";
 class DomBlock implements Block {
   readonly anchor: string;
   readonly parent: Block | null;
-  readonly expandedWhenLinked: boolean | null;
+  readonly expandedWhenUnchecked: boolean | null;
+  readonly inScenario: boolean;
   readonly button: HTMLButtonElement;
   private readonly content: HTMLElement;
 
-  constructor(anchor: string, button: HTMLButtonElement, content: HTMLElement, parent: Block | null, expandedWhenLinked: boolean | null) {
+  constructor(anchor: string, button: HTMLButtonElement, content: HTMLElement, parent: Block | null, element: Element | null) {
     this.anchor = anchor;
     this.button = button;
     this.content = content;
     this.parent = parent;
-    this.expandedWhenLinked = expandedWhenLinked;
+    this.expandedWhenUnchecked = element === null ? null : expandedWhenUnchecked(element);
+    this.inScenario = element?.classList.contains("ghg-background-in-scenario") ?? false;
   }
 
   isExpanded(): boolean {
@@ -43,7 +45,7 @@ export class DomPage implements Page {
       }
       const around = element.parentElement?.closest(".ghg-block");
       const parent = around ? (byElement.get(around) ?? null) : null;
-      const block = new DomBlock(heading.id, button, content, parent, expandedWhenLinked(element));
+      const block = new DomBlock(heading.id, button, content, parent, element);
       byElement.set(element, block);
       this.found.push(block);
     }
@@ -121,8 +123,8 @@ export class DomPage implements Page {
   }
 }
 
-function expandedWhenLinked(element: Element): boolean | null {
-  switch (element.getAttribute("data-expanded-when-linked")) {
+function expandedWhenUnchecked(element: Element): boolean | null {
+  switch (element.getAttribute("data-expanded-when-unchecked")) {
     case "true":
       return true;
     case "false":

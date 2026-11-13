@@ -7,7 +7,7 @@ export function memoryKey(pagePath: string, anchor: string): string {
   return `gherkin-glass:${pagePath}#${anchor}`;
 }
 
-/** Where a background whose steps a scenario starts with keeps its state for the inline form; a page's path starts with `/`, so it never meets a key of `memoryKey`. */
+/** Where a background whose state the backgrounds' checkbox sets keeps it for the checked box; a page's path starts with `/`, so it never meets a key of `memoryKey`. */
 export function inlineMemoryKey(pagePath: string, anchor: string): string {
   return `gherkin-glass:inline:${pagePath}#${anchor}`;
 }
@@ -27,10 +27,15 @@ export function startState(configured: boolean, kept: string | null): boolean {
   return configured;
 }
 
-/** Before what the reader chose; `expandedWhenLinked` is null for a block whose state does not follow the form. */
-export function formStart(written: boolean, expandedWhenLinked: boolean | null, inline: boolean): boolean {
-  if (expandedWhenLinked === null) {
+/** Before what the reader chose; `expandedWhenUnchecked` is null for a block whose state does not follow the checkbox, and `inScenario` says whether the checked box expands it. */
+export function formStart(written: boolean, expandedWhenUnchecked: boolean | null, inScenario: boolean, inline: boolean): boolean {
+  if (expandedWhenUnchecked === null) {
     return written;
   }
-  return !inline && expandedWhenLinked;
+  return inline ? inScenario : expandedWhenUnchecked;
+}
+
+/** The state the checkbox, checked when `inline`, sets a background to: the checked box expands those inside the scenarios and collapses those in their own place. */
+export function switchedState(inScenario: boolean, inline: boolean): boolean {
+  return inline === inScenario;
 }

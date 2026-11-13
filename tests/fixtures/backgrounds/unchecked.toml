@@ -1,0 +1,4 @@
+# The same pages, with the checkbox "Show backgrounds inside each scenario" unchecked.
+inline_backgrounds = false
+output = "expected-unchecked"
+title = "Backgrounds"

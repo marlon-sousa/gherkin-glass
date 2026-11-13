@@ -50,15 +50,19 @@ fn a_suite_with_no_step_has_a_page_that_says_so() {
 }
 
 #[test]
-fn a_background_s_steps_are_listed_once_whether_inline_or_linked() {
-    // Rule 140: the backgrounds fixture's two sites, written inline and linked.
+fn a_background_s_steps_are_listed_once_whether_the_box_is_checked_or_not() {
+    // Rule 140: the backgrounds fixture's two sites, written with the checkbox checked and unchecked.
     let fixture = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/backgrounds");
-    let inline = read_to_string(fixture.join("expected/steps.html")).expect("committed");
-    let linked = read_to_string(fixture.join("expected-linked/steps.html")).expect("committed");
-    assert!(inline == linked, "the two forms list the same sentences");
+    let checked = read_to_string(fixture.join("expected/steps.html")).expect("committed");
+    let unchecked =
+        read_to_string(fixture.join("expected-unchecked/steps.html")).expect("committed");
+    assert!(
+        checked == unchecked,
+        "the two sites list the same sentences"
+    );
     let background = "<h3>a limit of 50</h3>\n<p>Used once.</p>\n<ul>\n\
                       <li><a href=\"both.html#over-the-limit\">";
-    assert!(inline.contains(background), "{inline}");
+    assert!(checked.contains(background), "{checked}");
 }
 
 #[test]

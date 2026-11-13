@@ -24,15 +24,16 @@ pub(crate) struct Page {
     pub(crate) description: Option<Paragraph>,
     pub(crate) source: Option<SourceLink>,
     pub(crate) words: PageWords,
-    /// The checkbox that switches how scenarios show their backgrounds, on a
-    /// page with a background.
+    /// The checkbox that chooses whether the backgrounds inside the scenarios or
+    /// those in their own place are expanded, on a page with a background.
     pub(crate) backgrounds_option: Option<BackgroundsOption>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct BackgroundsOption {
     pub(crate) label: String,
-    /// Whether the page is written with each scenario showing its backgrounds' steps.
+    /// Whether the page is written with the box checked, the backgrounds inside
+    /// each scenario expanded.
     pub(crate) inline: bool,
 }
 

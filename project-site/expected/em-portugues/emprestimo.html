@@ -105,7 +105,7 @@
 <button type="button" class="ghg-expand-all">Expand all</button>
 <label class="ghg-option"><input type="checkbox" class="ghg-inline-backgrounds" autocomplete="off" checked> Show backgrounds inside each scenario</label>
 </div>
-<div class="ghg-block ghg-background" data-expanded-when-linked="true">
+<div class="ghg-block ghg-background" data-expanded-when-unchecked="true">
 <h2 id="uma-sócia-no-balcão"><button type="button" class="ghg-toggle" aria-expanded="false">Contexto: Uma sócia no balcão</button></h2>
 <div class="ghg-content" hidden>
 <ol class="ghg-steps">
@@ -116,11 +116,13 @@
 <div class="ghg-block ghg-scenario">
 <h2 id="empréstimo-de-um-livro-na-estante"><button type="button" class="ghg-toggle" aria-expanded="true">Cenário: Empréstimo de um livro na estante</button></h2>
 <div class="ghg-content">
-<div class="ghg-from-background">
-<p id="empréstimo-de-um-livro-na-estante_background_1">From the background:<span class="ghg-linked" hidden> <a href="#uma-sócia-no-balcão">Contexto: Uma sócia no balcão</a></span></p>
-<ol class="ghg-steps ghg-inline" aria-labelledby="empréstimo-de-um-livro-na-estante_background_1">
+<div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
+<h3 id="empréstimo-de-um-livro-na-estante_background_1"><button type="button" class="ghg-toggle" aria-expanded="true">From the background</button></h3>
+<div class="ghg-content">
+<ol class="ghg-steps">
 <li><span class="ghg-keyword">Dado </span>uma sócia chamada <span class="ghg-parameter">&#34;Ana&#34;</span> com o cartão <span class="ghg-number">1024</span></li>
 </ol>
+</div>
 </div>
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">Dado </span>que o livro <span class="ghg-parameter">&#34;Dom Casmurro&#34;</span> está na estante</li>
@@ -132,11 +134,13 @@
 <div class="ghg-block ghg-scenario">
 <h2 id="quanto-tempo-dura-um-empréstimo"><button type="button" class="ghg-toggle" aria-expanded="true">Esquema do Cenário: Quanto tempo dura um empréstimo</button></h2>
 <div class="ghg-content">
-<div class="ghg-from-background">
-<p id="quanto-tempo-dura-um-empréstimo_background_1">From the background:<span class="ghg-linked" hidden> <a href="#uma-sócia-no-balcão">Contexto: Uma sócia no balcão</a></span></p>
-<ol class="ghg-steps ghg-inline" aria-labelledby="quanto-tempo-dura-um-empréstimo_background_1">
+<div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
+<h3 id="quanto-tempo-dura-um-empréstimo_background_1"><button type="button" class="ghg-toggle" aria-expanded="true">From the background</button></h3>
+<div class="ghg-content">
+<ol class="ghg-steps">
 <li><span class="ghg-keyword">Dado </span>uma sócia chamada <span class="ghg-parameter">&#34;Ana&#34;</span> com o cartão <span class="ghg-number">1024</span></li>
 </ol>
+</div>
 </div>
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">Dado </span>que o livro <span class="ghg-parameter">&#34;<span class="ghg-placeholder">&#60;título&#62;</span>&#34;</span> está na estante</li>

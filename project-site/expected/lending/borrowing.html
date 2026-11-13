@@ -117,7 +117,7 @@ Each member may hold a few books at a time, for a few weeks each.</p>
 <button type="button" class="ghg-expand-all">Expand all</button>
 <label class="ghg-option"><input type="checkbox" class="ghg-inline-backgrounds" autocomplete="off" checked> Show backgrounds inside each scenario</label>
 </div>
-<div class="ghg-block ghg-background" data-expanded-when-linked="true">
+<div class="ghg-block ghg-background" data-expanded-when-unchecked="true">
 <h2 id="a-member-at-the-desk"><button type="button" class="ghg-toggle" aria-expanded="false">Background: A member at the desk</button></h2>
 <div class="ghg-content" hidden>
 <ol class="ghg-steps">
@@ -132,12 +132,14 @@ Each member may hold a few books at a time, for a few weeks each.</p>
 <div class="ghg-description">
 <p>A book on the shelf can be borrowed at once.</p>
 </div>
-<div class="ghg-from-background">
-<p id="borrowing-a-book-that-is-on-the-shelf_background_1">From the background:<span class="ghg-linked" hidden> <a href="#a-member-at-the-desk">Background: A member at the desk</a></span></p>
-<ol class="ghg-steps ghg-inline" aria-labelledby="borrowing-a-book-that-is-on-the-shelf_background_1">
+<div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
+<h3 id="borrowing-a-book-that-is-on-the-shelf_background_1"><button type="button" class="ghg-toggle" aria-expanded="true">From the background</button></h3>
+<div class="ghg-content">
+<ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span>a member named <span class="ghg-parameter">&#34;Ana&#34;</span> with card number <span class="ghg-number">1024</span></li>
 <li><span class="ghg-keyword">And </span>the library is open</li>
 </ol>
+</div>
 </div>
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span>the book <span class="ghg-parameter">&#34;The Hobbit&#34;</span> is on the shelf</li>
@@ -153,12 +155,14 @@ Each member may hold a few books at a time, for a few weeks each.</p>
 <ul class="ghg-tags">
 <li><a href="../tags/slow.html">@slow</a></li>
 </ul>
-<div class="ghg-from-background">
-<p id="borrowing-several-books-at-once_background_1">From the background:<span class="ghg-linked" hidden> <a href="#a-member-at-the-desk">Background: A member at the desk</a></span></p>
-<ol class="ghg-steps ghg-inline" aria-labelledby="borrowing-several-books-at-once_background_1">
+<div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
+<h3 id="borrowing-several-books-at-once_background_1"><button type="button" class="ghg-toggle" aria-expanded="true">From the background</button></h3>
+<div class="ghg-content">
+<ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span>a member named <span class="ghg-parameter">&#34;Ana&#34;</span> with card number <span class="ghg-number">1024</span></li>
 <li><span class="ghg-keyword">And </span>the library is open</li>
 </ol>
+</div>
 </div>
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span>these books are on the shelf:
@@ -183,12 +187,14 @@ Each member may hold a few books at a time, for a few weeks each.</p>
 <ul class="ghg-tags">
 <li><a href="../tags/outline.html">@outline</a></li>
 </ul>
-<div class="ghg-from-background">
-<p id="how-long-a-loan-lasts_background_1">From the background:<span class="ghg-linked" hidden> <a href="#a-member-at-the-desk">Background: A member at the desk</a></span></p>
-<ol class="ghg-steps ghg-inline" aria-labelledby="how-long-a-loan-lasts_background_1">
+<div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
+<h3 id="how-long-a-loan-lasts_background_1"><button type="button" class="ghg-toggle" aria-expanded="true">From the background</button></h3>
+<div class="ghg-content">
+<ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span>a member named <span class="ghg-parameter">&#34;Ana&#34;</span> with card number <span class="ghg-number">1024</span></li>
 <li><span class="ghg-keyword">And </span>the library is open</li>
 </ol>
+</div>
 </div>
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span>the book <span class="ghg-parameter">&#34;<span class="ghg-placeholder">&#60;title&#62;</span>&#34;</span> is on the shelf</li>
@@ -271,7 +277,7 @@ Each member may hold a few books at a time, for a few weeks each.</p>
 <div class="ghg-description">
 <p>The limit keeps books on the shelves for everyone.</p>
 </div>
-<div class="ghg-block ghg-background" data-expanded-when-linked="true">
+<div class="ghg-block ghg-background" data-expanded-when-unchecked="true">
 <h3 id="a-member-near-the-limit"><button type="button" class="ghg-toggle" aria-expanded="false">Background: A member near the limit</button></h3>
 <div class="ghg-content" hidden>
 <ol class="ghg-steps">
@@ -282,18 +288,22 @@ Each member may hold a few books at a time, for a few weeks each.</p>
 <div class="ghg-block ghg-scenario">
 <h3 id="borrowing-over-the-limit-is-refused"><button type="button" class="ghg-toggle" aria-expanded="true">Example: Borrowing over the limit is refused</button></h3>
 <div class="ghg-content">
-<div class="ghg-from-background">
-<p id="borrowing-over-the-limit-is-refused_background_1">From the background:<span class="ghg-linked" hidden> <a href="#a-member-at-the-desk">Background: A member at the desk</a></span></p>
-<ol class="ghg-steps ghg-inline" aria-labelledby="borrowing-over-the-limit-is-refused_background_1">
+<div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
+<h4 id="borrowing-over-the-limit-is-refused_background_1"><button type="button" class="ghg-toggle" aria-expanded="true">From the background</button></h4>
+<div class="ghg-content">
+<ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span>a member named <span class="ghg-parameter">&#34;Ana&#34;</span> with card number <span class="ghg-number">1024</span></li>
 <li><span class="ghg-keyword">And </span>the library is open</li>
 </ol>
 </div>
-<div class="ghg-from-background">
-<p id="borrowing-over-the-limit-is-refused_background_2">From the rule&#39;s background:<span class="ghg-linked" hidden> <a href="#a-member-near-the-limit">Background: A member near the limit</a></span></p>
-<ol class="ghg-steps ghg-inline" aria-labelledby="borrowing-over-the-limit-is-refused_background_2">
+</div>
+<div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
+<h4 id="borrowing-over-the-limit-is-refused_background_2"><button type="button" class="ghg-toggle" aria-expanded="true">From the rule&#39;s background</button></h4>
+<div class="ghg-content">
+<ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span><span class="ghg-parameter">&#34;Ana&#34;</span> holds <span class="ghg-number">5</span> books</li>
 </ol>
+</div>
 </div>
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span>the book <span class="ghg-parameter">&#34;Emma&#34;</span> is on the shelf</li>
@@ -306,18 +316,22 @@ Each member may hold a few books at a time, for a few weeks each.</p>
 <div class="ghg-block ghg-scenario">
 <h3 id="returning-a-book-makes-room-for-another"><button type="button" class="ghg-toggle" aria-expanded="true">Example: Returning a book makes room for another</button></h3>
 <div class="ghg-content">
-<div class="ghg-from-background">
-<p id="returning-a-book-makes-room-for-another_background_1">From the background:<span class="ghg-linked" hidden> <a href="#a-member-at-the-desk">Background: A member at the desk</a></span></p>
-<ol class="ghg-steps ghg-inline" aria-labelledby="returning-a-book-makes-room-for-another_background_1">
+<div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
+<h4 id="returning-a-book-makes-room-for-another_background_1"><button type="button" class="ghg-toggle" aria-expanded="true">From the background</button></h4>
+<div class="ghg-content">
+<ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span>a member named <span class="ghg-parameter">&#34;Ana&#34;</span> with card number <span class="ghg-number">1024</span></li>
 <li><span class="ghg-keyword">And </span>the library is open</li>
 </ol>
 </div>
-<div class="ghg-from-background">
-<p id="returning-a-book-makes-room-for-another_background_2">From the rule&#39;s background:<span class="ghg-linked" hidden> <a href="#a-member-near-the-limit">Background: A member near the limit</a></span></p>
-<ol class="ghg-steps ghg-inline" aria-labelledby="returning-a-book-makes-room-for-another_background_2">
+</div>
+<div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
+<h4 id="returning-a-book-makes-room-for-another_background_2"><button type="button" class="ghg-toggle" aria-expanded="true">From the rule&#39;s background</button></h4>
+<div class="ghg-content">
+<ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span><span class="ghg-parameter">&#34;Ana&#34;</span> holds <span class="ghg-number">5</span> books</li>
 </ol>
+</div>
 </div>
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span><span class="ghg-parameter">&#34;Ana&#34;</span> returns <span class="ghg-parameter">&#34;The Hobbit&#34;</span></li>
@@ -341,12 +355,14 @@ Each member may hold a few books at a time, for a few weeks each.</p>
 <ul class="ghg-tags">
 <li><a href="../tags/queue.html">@queue</a></li>
 </ul>
-<div class="ghg-from-background">
-<p id="a-book-on-hold-cannot-be-borrowed-by-someone-else_background_1">From the background:<span class="ghg-linked" hidden> <a href="#a-member-at-the-desk">Background: A member at the desk</a></span></p>
-<ol class="ghg-steps ghg-inline" aria-labelledby="a-book-on-hold-cannot-be-borrowed-by-someone-else_background_1">
+<div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
+<h4 id="a-book-on-hold-cannot-be-borrowed-by-someone-else_background_1"><button type="button" class="ghg-toggle" aria-expanded="true">From the background</button></h4>
+<div class="ghg-content">
+<ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span>a member named <span class="ghg-parameter">&#34;Ana&#34;</span> with card number <span class="ghg-number">1024</span></li>
 <li><span class="ghg-keyword">And </span>the library is open</li>
 </ol>
+</div>
 </div>
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span><span class="ghg-parameter">&#34;Bea&#34;</span> asked to hold <span class="ghg-parameter">&#34;Emma&#34;</span></li>

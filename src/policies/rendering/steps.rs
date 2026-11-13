@@ -5,14 +5,6 @@ use askama::Template;
 use super::node_rendering::{NodeOf, Render, pieces, rendered};
 use crate::entities::{SiteTreeNode, StepPart, StepView};
 
-/// Steps as one list, each already rendered.
-pub(super) struct StepList<'a> {
-    pub(super) steps: Vec<String>,
-    /// The `id` of the words that introduce a background's steps in a scenario.
-    pub(super) introduction: Option<&'a str>,
-    pub(super) shown: bool,
-}
-
 #[derive(Template)]
 #[template(path = "step.html")]
 struct StepTemplate<'a> {
@@ -21,16 +13,16 @@ struct StepTemplate<'a> {
     attachments: Vec<String>,
 }
 
+/// Steps as one list, each already rendered.
 #[derive(Template)]
 #[template(path = "steps.html")]
-struct StepsTemplate<'a> {
-    list: &'a StepList<'a>,
+struct StepsTemplate {
+    steps: Vec<String>,
 }
 
-impl Render for StepList<'_> {
-    fn render(&self) -> String {
-        rendered(&StepsTemplate { list: self })
-    }
+/// `steps`, each already rendered, as one numbered list.
+pub(super) fn step_list(steps: Vec<String>) -> String {
+    rendered(&StepsTemplate { steps })
 }
 
 /// Each step node directly below `block`, rendered, in order.
