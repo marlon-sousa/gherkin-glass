@@ -59,7 +59,7 @@ Every setting has a default, so `ghg.toml` is optional: without it, ghg reads `f
 
 ## A site must be served
 
-Open a site through a web server, never by opening its files straight from disk. A page opened from disk, with an address that starts with `file:`, still shows its content, but the browser refuses to run its script there, so the folder tree is empty, search does nothing, and the reader options do not work. The stylesheet does little on its own, so such a page looks nearly unstyled too. So every page opened from disk first opens a dialog that says so and how to serve the site; close it with its button, I agree, or with Escape, to read the page.
+Open a site through a web server, never by opening its files straight from disk. A page opened from disk, with an address that starts with `file:`, still shows its content, but the browser refuses to run its script there, so the folder tree is empty, search does nothing, and the reader options do not work. The stylesheet does little on its own, so such a page looks nearly unstyled too. Every page opened from disk therefore first opens a dialog, "Opened from disk", that says the site is meant to be served and how to serve it; close it with its button, "I agree", or with Escape, to read the page.
 
 To look at a site on your own machine, use `ghg serve`, or `ghg serve --no-build` for a site already built. To publish it, put the output folder on any static host, such as GitHub Pages; every link in a site is relative, so it works under any path. Why sites are served is explained in [design note 0026](docs/design/0026-sites-are-served.md).
 
