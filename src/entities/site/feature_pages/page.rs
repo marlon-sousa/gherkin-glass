@@ -1,14 +1,13 @@
 //! Entity: a feature's page, as its template shows it, every text in it as written or worded.
 
-use crate::entities::{LinkAddress, Revision, SiteAddress, StepKind, StepPart, Trail};
+use crate::entities::{FeaturePath, LinkAddress, Revision, SiteAddress, StepKind, StepPart, Trail};
 
 /// A feature's page, its blocks the nodes below it in the site tree. Every
 /// `String` is text, escaped when it is rendered.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct Page {
     pub(crate) address: SiteAddress,
-    /// The feature file's, below the input folder, with `/` between folders.
-    pub(crate) path: String,
+    pub(crate) path: FeaturePath,
     /// The revision of the file's node of the input tree the page was converted from, which a
     /// later build compares with the node's to keep the page; a revision is given to one file
     /// once, so it names the file too.
@@ -69,7 +68,7 @@ pub(crate) struct SourceLink {
     pub(crate) address: String,
     /// The words before and after the file's path, which is isolated in the markup.
     pub(crate) before: String,
-    pub(crate) path: String,
+    pub(crate) path: FeaturePath,
     pub(crate) after: String,
 }
 

@@ -127,7 +127,7 @@ fn header(table: &TableView) -> &[String] {
 
 /// The order of the pages of `a` and `b`, by their paths, folder by folder.
 fn path_order(a: &SiteFeaturePage<'_>, b: &SiteFeaturePage<'_>) -> Ordering {
-    a.page().path.split('/').cmp(b.page().path.split('/'))
+    a.page().path.names().cmp(b.page().path.names())
 }
 
 #[cfg(test)]

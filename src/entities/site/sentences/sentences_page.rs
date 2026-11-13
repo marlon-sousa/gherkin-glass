@@ -1,6 +1,6 @@
 //! Entity: the page of step sentences, as its template shows it, every text in it as written or worded: its nodes and its content as the site stage builds it, with what is below each node.
 
-use crate::entities::{LinkAddress, Trail};
+use crate::entities::{FeaturePath, LinkAddress, Trail};
 
 /// Every `String` is text, escaped when it is rendered.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -41,7 +41,7 @@ pub(crate) struct UseView {
     /// The item's words, around the link and the values; empty when the step has none.
     pub(crate) item: Vec<Piece>,
     pub(crate) heading: String,
-    pub(crate) path: String,
+    pub(crate) path: FeaturePath,
     /// As written.
     pub(crate) values: Vec<String>,
     /// Between two values, such as `, `.

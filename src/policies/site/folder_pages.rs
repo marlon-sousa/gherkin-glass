@@ -77,7 +77,7 @@ fn folder_link(name: &str) -> FolderLink {
 }
 
 fn file_name<'a>(feature: &SiteFeaturePage<'a>) -> &'a str {
-    feature.page().path.rsplit('/').next().unwrap_or_default()
+    feature.page().path.file()
 }
 
 fn feature_entry(feature: &SiteFeaturePage<'_>) -> FeatureEntry {

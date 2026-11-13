@@ -5,15 +5,13 @@ mod example_blocks;
 mod heading_words;
 mod step_views;
 
-use std::path::{Component, Path};
-
 use block_building::{Builder, description, has_scenarios};
 use heading_words::heading;
 use i18n_embed_fl::fl;
 
 use crate::entities::{
-    BackgroundsOption, HeadingLevel, OwnCrumb, Page, PageContent, PageOptions, PageWords,
-    RevisedFeature, SourceLink, TagNames, Trail, percent_encoded,
+    BackgroundsOption, FeaturePath, HeadingLevel, OwnCrumb, Page, PageContent, PageOptions,
+    PageWords, RevisedFeature, SourceLink, TagNames, Trail, percent_encoded,
 };
 use crate::policies::site::feature_pages::anchor_feature;
 use crate::policies::site::page_language;
@@ -36,7 +34,7 @@ pub(crate) fn build_page(
     } = revised;
     let anchored = anchor_feature(parsed);
     let feature = &parsed.feature;
-    let path = slash_path(&parsed.path);
+    let path = FeaturePath::below_input(&parsed.path);
     let address = page_address(&parsed.path);
     let heading = heading(&feature.keyword, &feature.name);
     let builder = Builder {
@@ -110,32 +108,17 @@ pub(crate) fn build_page(
     }
 }
 
-fn source_link(template: &str, path: &str, line: usize) -> SourceLink {
+fn source_link(template: &str, path: &FeaturePath, line: usize) -> SourceLink {
     let address = template
-        .replace("{path}", &percent_encoded(path))
+        .replace("{path}", &percent_encoded(path.as_str()))
         .replace("{line}", &line.to_string());
     let words = fl!(CATALOGUE, "source-link", path = PATH_MARK);
     let (before, after) = words.split_once(PATH_MARK).unwrap_or((&words, ""));
     SourceLink {
         address,
         before: before.to_string(),
-        path: path.to_string(),
+        path: path.clone(),
         after: after.to_string(),
-    }
-}
-
-/// The parts of a path relative to the input folder, joined by `/`.
-fn slash_path(path: &Path) -> String {
-    path.components()
-        .filter_map(normal_name)
-        .collect::<Vec<_>>()
-        .join("/")
-}
-
-fn normal_name(part: Component<'_>) -> Option<String> {
-    match part {
-        Component::Normal(name) => Some(name.to_string_lossy().into_owned()),
-        _ => None,
     }
 }
 
