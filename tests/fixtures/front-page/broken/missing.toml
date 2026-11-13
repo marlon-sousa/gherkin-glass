@@ -1,0 +1,3 @@
+# A template that does not exist, which stops the build.
+input = "../features"
+front_page = "nowhere.md"

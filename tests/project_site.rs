@@ -612,3 +612,34 @@ fn a_release_publishes_what_ghg_builds_and_keeps_the_earlier_ones() {
         );
     }
 }
+
+#[test]
+fn every_release_s_site_opens_on_the_readme_of_its_tag() {
+    // Rule 192: the README holds the marker and builds as the versions page's template, and
+    // the release passes it to the build.
+    let site = scratch("readme-front-page").join("site");
+    let output = Command::new(env!("CARGO_BIN_EXE_ghg"))
+        .args(["build", "--title", "gherkin-glass examples", "--input"])
+        .arg(repository().join("project-site/features"))
+        .arg("--front-page")
+        .arg(repository().join("README.md"))
+        .args(["--version-name", "v0.1.0", "--output"])
+        .arg(&site)
+        .output()
+        .expect("ghg runs");
+    assert_eq!(text(&output.stderr), "");
+    assert!(output.status.success());
+    let page = read_to_string(site.join("index.html")).expect("the versions page is read");
+    assert!(page.contains("<title>gherkin-glass</title>"), "{page}");
+    assert!(
+        page.contains("<h2>Status</h2>\n<p>Not yet released."),
+        "{page}"
+    );
+    assert!(page.contains("<h3 id=\"releases\">Releases</h3>"), "{page}");
+    let workflow = read_to_string(repository().join(".github/workflows/site.yml"))
+        .expect("the site's workflow is read");
+    assert!(
+        workflow.contains("\n          front-page: README.md\n"),
+        "{workflow}"
+    );
+}

@@ -27,6 +27,7 @@ pub(super) enum TextKey {
     Output,
     SourceLink,
     Title,
+    FrontPage,
 }
 
 /// A key whose value is true or false.
@@ -49,6 +50,7 @@ impl ConfigKey {
             "output" => SettingKey::Text(TextKey::Output),
             "source_link" => SettingKey::Text(TextKey::SourceLink),
             "title" => SettingKey::Text(TextKey::Title),
+            "front_page" => SettingKey::Text(TextKey::FrontPage),
             "version_name" => SettingKey::VersionName,
             "allow_unnamed" => SettingKey::Flag(FlagKey::AllowUnnamed),
             "collapse_rules" => SettingKey::Flag(FlagKey::CollapseRules),
@@ -71,6 +73,7 @@ impl TextKey {
             TextKey::Output => config.output = Some(PathBuf::from(text)),
             TextKey::SourceLink => config.source_link = Some(text.to_string()),
             TextKey::Title => config.title = Some(text.to_string()),
+            TextKey::FrontPage => config.front_page = Some(PathBuf::from(text)),
         }
     }
 }

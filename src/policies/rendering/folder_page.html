@@ -1,4 +1,3 @@
-<h1>{{ folder.heading }}</h1>
 {%- if !folder.totals.is_empty() %}
 <ul class="ghg-totals">
 {%- for total in folder.totals %}
@@ -13,7 +12,7 @@
 <p class="ghg-sentences"><a href="{{ sentences.address }}">{{ sentences.name }}</a></p>
 {%- endif %}
 {%- if !folders.is_empty() %}
-<h2>{{ folder.words.folders }}</h2>
+<h{{ level.number() }}>{{ folder.words.folders }}</h{{ level.number() }}>
 <ul class="ghg-folders">
 {%- for subfolder in folders %}
 {{ subfolder|safe }}
@@ -21,7 +20,7 @@
 </ul>
 {%- endif %}
 {%- if !features.is_empty() %}
-<h2>{{ folder.words.features }}</h2>
+<h{{ level.number() }}>{{ folder.words.features }}</h{{ level.number() }}>
 <ul class="ghg-features">
 {%- for feature in features %}
 {{ feature|safe }}

@@ -20,7 +20,7 @@ use crate::test_support::name;
 /// else from the one `options` name, or `features`, into `site`, or, while `failing`, the errors
 /// of [`config_errors`]. Once it has given them, the configuration names `next_configured_input`,
 /// when a test sets it, as though the configuration file was saved meanwhile, and fails from then
-/// on when a test sets `failing_next`.
+/// on when a test sets `failing_next`. Its front page's template is `front_page`.
 #[derive(Default)]
 pub(crate) struct FakeSettingsService {
     pub(super) calls: Arc<Calls>,
@@ -28,6 +28,7 @@ pub(crate) struct FakeSettingsService {
     pub(crate) failing_next: AtomicBool,
     pub(crate) configured_input: Mutex<Option<PathBuf>>,
     pub(crate) next_configured_input: Mutex<Option<PathBuf>>,
+    pub(crate) front_page: Mutex<Option<PathBuf>>,
 }
 
 impl SettingsApi for FakeSettingsService {
@@ -74,6 +75,11 @@ impl SettingsApi for FakeSettingsService {
             pages: PageOptions::default(),
             version: None,
             replace: true,
+            front_page: self
+                .front_page
+                .lock()
+                .unwrap_or_else(PoisonError::into_inner)
+                .clone(),
         })
     }
 }
@@ -230,14 +236,14 @@ impl SiteWriterApi for FakeSiteWriter {
         settings: &Settings,
         tree: SiteTree,
         last: Option<&RenderedSite>,
-    ) -> Result<(ServedSite, RenderedSite), OutputError> {
+    ) -> Result<(ServedSite, RenderedSite), BuildError> {
         let after = last.map_or_else(String::new, |last| {
             format!(" after {}", asset_names(&last.tree))
         });
         self.calls
             .note(format!("site_writer.write {}{after}", asset_names(&tree)));
         if self.write_failing.load(Ordering::SeqCst) {
-            return Err(output_error());
+            return Err(BuildError::Output(output_error()));
         }
         let number = self.written.fetch_add(1, Ordering::SeqCst) + 1;
         let site = match settings.destination {

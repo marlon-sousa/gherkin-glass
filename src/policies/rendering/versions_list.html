@@ -1,6 +1,6 @@
 {%- if collapsed -%}
 <div class="ghg-block">
-<h2 id="{{ id }}"><button type="button" class="ghg-toggle" aria-expanded="false">{{ heading }}</button></h2>
+<h{{ level.number() }} id="{{ id }}"><button type="button" class="ghg-toggle" aria-expanded="false">{{ heading }}</button></h{{ level.number() }}>
 <div class="ghg-content" hidden>
 <ul class="ghg-versions">
 {%- for entry in entries %}
@@ -10,7 +10,7 @@
 </div>
 </div>
 {%- else -%}
-<h2 id="{{ id }}">{{ heading }}</h2>
+<h{{ level.number() }} id="{{ id }}">{{ heading }}</h{{ level.number() }}>
 <ul class="ghg-versions">
 {%- for entry in entries %}
 {{ entry|safe }}

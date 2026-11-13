@@ -6,6 +6,7 @@ use super::breadcrumb::Place;
 use super::node_rendering::{NodeOf, Render, RenderFile, pieces, rendered};
 use super::page_layout::{PageAround, SitePieces, whole_page};
 use crate::entities::{GroupView, SentenceView, SentencesPage, SiteAddress, UseView};
+use crate::errors::FrontPageError;
 use crate::policies::SENTENCES_PAGE;
 
 #[derive(Template)]
@@ -43,9 +44,9 @@ impl RenderFile for NodeOf<'_, SentencesPage> {
         SiteAddress::at_root(SENTENCES_PAGE)
     }
 
-    fn render_file(&self, site: &SitePieces<'_>) -> String {
+    fn render_file(&self, site: &SitePieces<'_>) -> Result<String, FrontPageError> {
         let page = self.value;
-        whole_page(
+        Ok(whole_page(
             site,
             &PageAround {
                 language: &page.language,
@@ -56,7 +57,7 @@ impl RenderFile for NodeOf<'_, SentencesPage> {
                 page,
                 groups: pieces(self.node.children()),
             }),
-        )
+        ))
     }
 }
 

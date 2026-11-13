@@ -12,7 +12,14 @@ fn service(server: &Arc<FakeServer>, watcher: &Arc<FakeWatcher>) -> ServerServic
 }
 
 fn watch_the_input(server: &ServerService) -> Result<WatchedChanges, WatchError> {
-    server.watch(Path::new("features"), Path::new("ghg.toml"))
+    server.watch(Path::new("features"), &[PathBuf::from("ghg.toml")])
+}
+
+fn watch_the_input_and_a_template(server: &ServerService) -> Result<WatchedChanges, WatchError> {
+    server.watch(
+        Path::new("features"),
+        &[PathBuf::from("ghg.toml"), PathBuf::from("front.md")],
+    )
 }
 
 fn watch_the_configuration(server: &ServerService) -> Result<WatchedChanges, WatchError> {
@@ -25,6 +32,15 @@ fn watch_the_configuration(server: &ServerService) -> Result<WatchedChanges, Wat
 #[case::the_input_and_the_configuration(
     watch_the_input,
     &[Watched::Folder(PathBuf::from("features")), Watched::File(PathBuf::from("ghg.toml"))]
+)]
+// Rule 191: and the front page's template beside the configuration file.
+#[case::the_front_page_s_template_too(
+    watch_the_input_and_a_template,
+    &[
+        Watched::Folder(PathBuf::from("features")),
+        Watched::File(PathBuf::from("ghg.toml")),
+        Watched::File(PathBuf::from("front.md")),
+    ]
 )]
 #[case::the_configuration_alone(watch_the_configuration, &[Watched::File(PathBuf::from("ghg.toml"))])]
 fn the_bursts_waiting_are_handed_back_merged(
@@ -55,7 +71,7 @@ fn changes_missed_while_starting_are_everything() {
     });
     let server = service(&Arc::new(FakeServer::default()), &watcher);
     let mut changes = server
-        .watch(Path::new("features"), Path::new("ghg.toml"))
+        .watch(Path::new("features"), &[PathBuf::from("ghg.toml")])
         .expect("watching");
     drop(watcher.sender());
     assert_eq!(changes.next(), Some(InputChanges::Everything));
@@ -71,7 +87,7 @@ fn a_watch_that_cannot_start_says_where() {
     });
     let server = service(&Arc::new(FakeServer::default()), &watcher);
     let error = server
-        .watch(Path::new("features"), Path::new("ghg.toml"))
+        .watch(Path::new("features"), &[PathBuf::from("ghg.toml")])
         .err();
     assert_eq!(
         error,

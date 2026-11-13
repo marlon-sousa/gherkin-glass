@@ -39,6 +39,10 @@ inputs:
     description: The --version-name option of ghg build, the version of the suite the site is built as. Left out when empty.
     required: false
     default: ""
+  front-page:
+    description: The --front-page option of ghg build, the Markdown template of the site's front page. Left out when empty.
+    required: false
+    default: ""
 
 runs:
   using: composite
@@ -59,10 +63,11 @@ runs:
       env:
         GHG_BIN: ${{ steps.install.outputs.bin }}
         GHG_ACTION_PATH: ${{ github.action_path }}
-        GHG_OPTIONS: config input output title version-name
+        GHG_OPTIONS: config input output title version-name front-page
         GHG_OPTION_CONFIG: ${{ inputs.config }}
         GHG_OPTION_INPUT: ${{ inputs.input }}
         GHG_OPTION_OUTPUT: ${{ inputs.output }}
         GHG_OPTION_TITLE: ${{ inputs.title }}
         GHG_OPTION_VERSION_NAME: ${{ inputs.version-name }}
+        GHG_OPTION_FRONT_PAGE: ${{ inputs.front-page }}
       run: bash "$GHG_ACTION_PATH/action/build.sh"

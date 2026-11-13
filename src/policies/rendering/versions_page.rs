@@ -1,14 +1,17 @@
-//! Policy: the versions page's HTML, its lists and each of their entries rendered from their templates, from its node of the site tree and the nodes below it.
+//! Policy: the versions page's HTML, a front page, its lists and each of their entries rendered from their templates, from its node of the site tree and the nodes below it.
 
 use askama::Template;
 
+use super::front_page::front_page;
 use super::node_rendering::{NodeOf, Render, RenderFile, page, pieces, rendered};
 use super::page_frame::{DiskNotice, SkipLink, ThemeControl};
 use super::page_head::PageHead;
 use super::page_layout::SitePieces;
 use crate::entities::{
-    SiteAddress, SiteNode, SiteTreeNode, VersionEntry, VersionsList, VersionsPage, VersionsWords,
+    HeadingLevel, SiteAddress, SiteNode, SiteTreeNode, VersionEntry, VersionsList, VersionsPage,
+    VersionsWords,
 };
+use crate::errors::FrontPageError;
 
 /// The versions page's address below the output folder.
 const VERSIONS_PAGE: &str = "index.html";
@@ -21,8 +24,14 @@ struct VersionsTemplate<'a> {
     disk_notice: String,
     skip_link: String,
     theme_control: String,
-    title: &'a str,
-    /// Its lists that hold a version, each already rendered.
+    /// Its main content, already rendered.
+    main: String,
+}
+
+/// The lists that hold a version, each already rendered.
+#[derive(Template)]
+#[template(path = "versions_lists.html")]
+struct VersionsListsTemplate {
     lists: Vec<String>,
 }
 
@@ -30,6 +39,7 @@ struct VersionsTemplate<'a> {
 #[template(path = "versions_list.html")]
 struct VersionsListTemplate<'a> {
     heading: &'a str,
+    level: HeadingLevel,
     id: &'a str,
     /// Whether the list starts collapsed, as the pre-releases do.
     collapsed: bool,
@@ -48,12 +58,23 @@ impl RenderFile for NodeOf<'_, VersionsPage> {
         SiteAddress::at_root(VERSIONS_PAGE)
     }
 
-    fn render_file(&self, site: &SitePieces<'_>) -> String {
+    fn render_file(&self, site: &SitePieces<'_>) -> Result<String, FrontPageError> {
         let versions = self.value;
-        page(&VersionsTemplate {
+        let lists = |level| {
+            rendered(&VersionsListsTemplate {
+                lists: self
+                    .node
+                    .children()
+                    .filter(holds_a_version)
+                    .map(|list| list_at(list, level))
+                    .collect(),
+            })
+        };
+        let front = front_page(site.front_page(), &versions.title, lists)?;
+        Ok(page(&VersionsTemplate {
             language: &versions.language,
             head: PageHead {
-                title: &versions.title,
+                title: &front.title,
                 root: "",
                 stylesheet: site.stylesheet(),
             }
@@ -70,26 +91,45 @@ impl RenderFile for NodeOf<'_, VersionsPage> {
                 frame: site.page_frame(),
             }
             .render(),
-            title: &versions.title,
-            lists: pieces(self.node.children().filter(holds_a_version)),
-        })
+            main: front.main,
+        }))
     }
 }
 
-impl Render for NodeOf<'_, VersionsList> {
+/// A list of versions, with its headings at `level`.
+struct VersionsListAt<'a> {
+    list: NodeOf<'a, VersionsList>,
+    level: HeadingLevel,
+}
+
+impl Render for VersionsListAt<'_> {
     fn render(&self) -> String {
-        let words = self.node.parent().and_then(versions_words);
-        let (heading, id) = match self.value {
+        let NodeOf { value, node } = &self.list;
+        let words = node.parent().and_then(versions_words);
+        let (heading, id) = match value {
             VersionsList::Development => (words.map(|words| &words.development), "development"),
             VersionsList::Releases => (words.map(|words| &words.releases), "releases"),
             VersionsList::PreReleases => (words.map(|words| &words.pre_releases), "pre-releases"),
         };
         rendered(&VersionsListTemplate {
             heading: heading.map_or("", String::as_str),
+            level: self.level,
             id,
-            collapsed: *self.value == VersionsList::PreReleases,
-            entries: pieces(self.node.children()),
+            collapsed: **value == VersionsList::PreReleases,
+            entries: pieces(node.children()),
         })
+    }
+}
+
+/// The piece of `node`, a list of versions, with its headings at `level`.
+fn list_at(node: SiteTreeNode<'_>, level: HeadingLevel) -> String {
+    match node.value() {
+        SiteNode::VersionsList(value) => VersionsListAt {
+            list: NodeOf { value, node },
+            level,
+        }
+        .render(),
+        _ => String::new(),
     }
 }
 
@@ -136,7 +176,8 @@ mod tests {
             value: versions,
             node,
         }
-        .render_file(&SitePieces::of(tree.frame()))
+        .render_file(&SitePieces::of(tree.frame(), None))
+        .expect("ghg's own front page renders")
     }
 
     #[test]

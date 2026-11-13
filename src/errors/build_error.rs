@@ -1,8 +1,8 @@
-//! Error: what stops a build, a versioned one included, from its configuration to its output folder.
+//! Error: what stops a build, a versioned one included, from its configuration to its output folder and its front page.
 
 use thiserror::Error;
 
-use super::{ConfigErrors, InputErrors, OutputError};
+use super::{ConfigErrors, FrontPageError, InputErrors, OutputError};
 
 #[derive(Debug, Clone, PartialEq, Eq, Error)]
 pub(crate) enum BuildError {
@@ -12,4 +12,6 @@ pub(crate) enum BuildError {
     Input(#[from] InputErrors),
     #[error(transparent)]
     Output(#[from] OutputError),
+    #[error(transparent)]
+    FrontPage(#[from] FrontPageError),
 }

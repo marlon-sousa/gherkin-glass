@@ -1,0 +1,14 @@
+{
+  "files": [
+    "assets/gherkin-glass.css",
+    "assets/gherkin-glass.js",
+    "assets/search.json",
+    "assets/tree.json",
+    "billing/index.html",
+    "billing/refunds.html",
+    "index.html",
+    "steps.html",
+    "tags/index.html",
+    "welcome.html"
+  ]
+}

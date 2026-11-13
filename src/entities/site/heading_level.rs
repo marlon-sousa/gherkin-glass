@@ -1,6 +1,5 @@
-//! Entity: the level of a block's heading on a feature's page.
+//! Entity: the level of a heading under a page's `h1`, a block's on a feature's page or one of ghg's own on the front page.
 
-/// The level of a block's heading, under the page's `h1`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum HeadingLevel {
     Two,

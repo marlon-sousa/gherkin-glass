@@ -1,7 +1,7 @@
 //! Service: the server, serving a site and, under `--watch`, handing back the changes waiting, merged.
 
 use std::iter::{from_fn, once};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use i18n_embed_fl::fl;
@@ -20,10 +20,12 @@ const DEFAULT_PORT: u16 = 8000;
 
 /// What the controller asks of the server.
 pub(crate) trait ServerApi: Send + Sync {
-    /// Starts watching the folder `input` and the configuration file `config`. Each item is
-    /// every burst of changes waiting, merged into one; it waits for one, and ends when the
-    /// watching does. Dropping it stops the watching, and drops the bursts it still holds.
-    fn watch(&self, input: &Path, config: &Path) -> Result<WatchedChanges, WatchError>;
+    /// Starts watching the folder `input` and `settings_files`, the configuration file and the
+    /// front page's template. Each item is every burst of changes waiting, merged into one; it
+    /// waits for one, and ends when the watching does. Dropping it stops the watching, and
+    /// drops the bursts it still holds.
+    fn watch(&self, input: &Path, settings_files: &[PathBuf])
+    -> Result<WatchedChanges, WatchError>;
 
     /// Starts watching the configuration file `config` alone, as [`ServerApi::watch`] does.
     fn watch_config(&self, config: &Path) -> Result<WatchedChanges, WatchError>;
@@ -48,27 +50,31 @@ impl ServerService {
     fn watched_changes(
         &self,
         watched: &[Watched],
-        config: &Path,
+        settings_files: &[PathBuf],
     ) -> Result<WatchedChanges, WatchError> {
         let changes = self.watcher.watch(watched)?;
-        let config = config.to_path_buf();
+        let settings_files = settings_files.to_vec();
         Ok(Box::new(from_fn(move || {
-            changes_waiting(&changes, &config)
+            changes_waiting(&changes, &settings_files)
         })))
     }
 }
 
 impl ServerApi for ServerService {
-    fn watch(&self, input: &Path, config: &Path) -> Result<WatchedChanges, WatchError> {
-        let watched = [
-            Watched::Folder(input.to_path_buf()),
-            Watched::File(config.to_path_buf()),
-        ];
-        self.watched_changes(&watched, config)
+    fn watch(
+        &self,
+        input: &Path,
+        settings_files: &[PathBuf],
+    ) -> Result<WatchedChanges, WatchError> {
+        let watched: Vec<_> = once(Watched::Folder(input.to_path_buf()))
+            .chain(settings_files.iter().cloned().map(Watched::File))
+            .collect();
+        self.watched_changes(&watched, settings_files)
     }
 
     fn watch_config(&self, config: &Path) -> Result<WatchedChanges, WatchError> {
-        self.watched_changes(&[Watched::File(config.to_path_buf())], config)
+        let config = config.to_path_buf();
+        self.watched_changes(&[Watched::File(config.clone())], &[config])
     }
 
     fn serve(&self, site: ServedSite, options: &ServeOptions) -> Result<Served, ServeError> {
@@ -88,10 +94,10 @@ impl ServerApi for ServerService {
 }
 
 /// Every burst of `changes` waiting, merged, once one comes; nothing once the watching ends.
-fn changes_waiting(changes: &Changes, config: &Path) -> Option<InputChanges> {
+fn changes_waiting(changes: &Changes, settings_files: &[PathBuf]) -> Option<InputChanges> {
     let burst = changes.bursts.recv().ok()?;
     let bursts: Vec<_> = once(burst).chain(changes.bursts.try_iter()).collect();
-    Some(merged_bursts(&bursts, config))
+    Some(merged_bursts(&bursts, settings_files))
 }
 
 fn words() -> ServerWords {

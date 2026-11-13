@@ -49,6 +49,8 @@ const builds = [
   { folder: "no-steps", args: ["--input", "."] },
   { folder: "search/features", args: ["--input", ".", "--title", "Search"] },
   { folder: "action", args: [] },
+  { folder: "front-page", args: ["--config", "ghg.toml"] },
+  { folder: "front-page", args: ["--config", "versioned.toml"] },
   { root: ".", folder: "project-site", args: ["--config", "ghg.toml"] },
 ];
 
@@ -77,6 +79,8 @@ const noSite = [
   "accessibility/failing",
   "versions/bad-name",
   "versions/broken",
+  "front-page/expected",
+  "front-page/broken",
 ];
 
 // The browser's colour scheme, light and dark, and each theme a reader can

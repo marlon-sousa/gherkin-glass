@@ -18,6 +18,7 @@ help =
       --output <folder>: the folder to write the site into, instead of the configuration's output.
       --title <text>: the site's title, instead of the configuration's title.
       --version-name <name>: builds the site as the version of that name, instead of the configuration's version_name.
+      --front-page <file>: the Markdown template of the site's front page, instead of the configuration's front_page.
 
     Options of ghg serve only:
       --host <address>: the address to listen on, instead of 127.0.0.1.
@@ -142,6 +143,18 @@ site-not-a-site = this is not a site ghg built, so it is left as it is. Build in
 output-cannot-be-read = cannot be read: { $reason }
 output-cannot-be-written = cannot be written: { $reason }
 output-not-safe = ghg did not write this, so the output folder is left as it is.
+
+## What stops a build writing its front page, said of the front page's
+## template. $reason is the operating system's words.
+
+front-page-cannot-be-read = cannot be read: { $reason }
+front-page-no-title = has no level-one heading, written with one #, for the front page's title.
+front-page-second-title = holds a second level-one heading, but a front page has one only.
+front-page-no-marker = has no marker <!-- ghg:contents --> on a line of its own, where ghg puts its part of the front page.
+front-page-second-marker = holds a second marker <!-- ghg:contents -->, but ghg puts its part of the front page in one place only.
+front-page-marker-not-alone = the marker <!-- ghg:contents --> must be on a line of its own, outside any list, quote or table.
+front-page-marker-too-deep = the marker <!-- ghg:contents --> follows a level 5 or level 6 heading, so ghg's own headings would have no level below it.
+front-page-raw-html = raw HTML cannot be written in a front page; only the marker <!-- ghg:contents --> and other comments can.
 
 ## What stops a versioned build, said of the version's folder, or of the
 ## output folder. replace_existing_version is a key, never translated.

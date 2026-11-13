@@ -3,6 +3,7 @@
 mod argument_error;
 mod build_error;
 mod config_error;
+mod front_page_error;
 mod input_error;
 mod input_error_kind;
 mod output_error;
@@ -18,6 +19,7 @@ pub(crate) use build_error::BuildError;
 pub(crate) use config_error::{
     AccentShortfall, ConfigError, ConfigErrorKind, ConfigErrors, PatternErrorKind, ValueType,
 };
+pub(crate) use front_page_error::{FrontPageError, FrontPageErrorKind};
 pub(crate) use input_error::{InputError, InputErrors};
 pub(crate) use input_error_kind::{InputErrorKind, UnnamedBlock};
 pub(crate) use output_error::{OutputError, OutputErrorKind};

@@ -50,6 +50,8 @@ struct BuildArguments {
     title: Option<String>,
     #[arg(long, allow_hyphen_values = true, value_parser = OsStringValueParser::new().try_map(version_name))]
     version_name: Option<VersionName>,
+    #[arg(long, allow_hyphen_values = true)]
+    front_page: Option<PathBuf>,
     /// What follows `--`, which no command takes.
     #[arg(last = true)]
     after_the_options: Vec<OsString>,
@@ -96,6 +98,7 @@ impl BuildArguments {
             version_name: self.version_name,
             output: self.output,
             title: self.title,
+            front_page: self.front_page,
         })
     }
 }

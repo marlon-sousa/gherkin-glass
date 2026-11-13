@@ -1,4 +1,4 @@
-//! The site writer's fakes: an output folder held in memory, a parser and a writer.
+//! The site writer's fakes: an output folder held in memory, a parser, a writer and a front page's template.
 
 use std::io::{ErrorKind, Result as IoResult};
 use std::path::PathBuf;
@@ -9,7 +9,7 @@ use gherkin::{Feature, GherkinEnv};
 use super::*;
 use crate::entities::{OutputContents, PageOptions, RawFeature, Unnamed};
 use crate::errors::{BuildError, ParseError};
-use crate::ports::FeatureParser;
+use crate::ports::{FeatureParser, FileReader};
 use crate::services::{Converter, ConverterApi};
 use crate::test_support::parsed_input;
 pub(super) use crate::test_support::{MemoryFolders, folder, name, set, two_versions};
@@ -112,6 +112,20 @@ impl FileWriter for FakeWriter {
     }
 }
 
+/// A front page's template, `text`, whatever its path; none when `text` is `None`.
+#[derive(Default)]
+pub(super) struct FakeTemplate {
+    pub(super) text: Option<&'static str>,
+}
+
+impl FileReader for FakeTemplate {
+    fn read(&self, _: &Path) -> IoResult<String> {
+        self.text
+            .map(str::to_string)
+            .ok_or_else(|| IoError::from(ErrorKind::NotFound))
+    }
+}
+
 /// Has the site writer check `site` and write into it the site of the
 /// features `files`, as the version `version` when there is one.
 pub(super) fn build(
@@ -128,7 +142,12 @@ pub(super) fn build(
         &settings.input,
         settings.unnamed,
     );
-    let site_writer = SiteWriter::new(folders, writer, Arc::new(FakeWriter::default()));
+    let site_writer = SiteWriter::new(
+        Arc::new(FakeTemplate::default()),
+        folders,
+        writer,
+        Arc::new(FakeWriter::default()),
+    );
     let built_versions = site_writer.check(&settings)?;
     let tree = Converter.convert(&input_tree, None, &settings, &built_versions);
     let (served, _) = site_writer.write(&settings, tree, None)?;
@@ -146,6 +165,7 @@ pub(super) fn settings(destination: Destination, version: Option<&str>) -> Setti
         pages: PageOptions::default(),
         version: version.map(name),
         replace: true,
+        front_page: None,
     }
 }
 

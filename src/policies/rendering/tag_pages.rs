@@ -8,6 +8,7 @@ use super::page_layout::{PageAround, SitePieces, whole_page};
 use crate::entities::{
     SiteAddress, SiteNode, SiteTreeNode, TagFeature, TagIndex, TagIndexEntry, TagPage, TagScenario,
 };
+use crate::errors::FrontPageError;
 
 #[derive(Template)]
 #[template(path = "tag_index.html")]
@@ -54,9 +55,9 @@ impl RenderFile for NodeOf<'_, TagIndex> {
         self.value.address.clone()
     }
 
-    fn render_file(&self, site: &SitePieces<'_>) -> String {
+    fn render_file(&self, site: &SitePieces<'_>) -> Result<String, FrontPageError> {
         let index = self.value;
-        whole_page(
+        Ok(whole_page(
             site,
             &PageAround {
                 language: &index.language,
@@ -67,7 +68,7 @@ impl RenderFile for NodeOf<'_, TagIndex> {
                 index,
                 entries: pieces(self.node.children()),
             }),
-        )
+        ))
     }
 }
 
@@ -82,9 +83,9 @@ impl RenderFile for NodeOf<'_, TagPage> {
         self.value.address.clone()
     }
 
-    fn render_file(&self, site: &SitePieces<'_>) -> String {
+    fn render_file(&self, site: &SitePieces<'_>) -> Result<String, FrontPageError> {
         let page = self.value;
-        whole_page(
+        Ok(whole_page(
             site,
             &PageAround {
                 language: &page.language,
@@ -95,7 +96,7 @@ impl RenderFile for NodeOf<'_, TagPage> {
                 page,
                 features: pieces(self.node.children()),
             }),
-        )
+        ))
     }
 }
 

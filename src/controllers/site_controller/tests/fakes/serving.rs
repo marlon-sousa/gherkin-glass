@@ -25,8 +25,16 @@ pub(crate) struct FakeServerService {
 }
 
 impl ServerApi for FakeServerService {
-    fn watch(&self, input: &Path, config: &Path) -> Result<WatchedChanges, WatchError> {
-        let call = format!("server.watch {} {}", input.display(), config.display());
+    fn watch(
+        &self,
+        input: &Path,
+        settings_files: &[PathBuf],
+    ) -> Result<WatchedChanges, WatchError> {
+        let files: Vec<_> = settings_files
+            .iter()
+            .map(|file| file.display().to_string())
+            .collect();
+        let call = format!("server.watch {} {}", input.display(), files.join(" "));
         self.watched(call, input, &self.watch_failing)
     }
 

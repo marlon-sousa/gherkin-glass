@@ -4,8 +4,8 @@ name: Site
 # release workflow calls this once a release is published, with the release's
 # tag as version, from a job that grants contents: write, since a called
 # workflow cannot have more permissions than its caller. It builds the site of
-# that version with the project's own action and the released binary, and adds
-# it to the gh-pages branch.
+# that version with the project's own action and the released binary, with the
+# tag's README as the site's front page, and adds it to the gh-pages branch.
 
 on:
   workflow_call:
@@ -47,6 +47,7 @@ jobs:
           input: ${{ runner.temp }}/input
           output: ${{ runner.temp }}/site
           version-name: ${{ inputs.version }}
+          front-page: README.md
       - name: Publish the version's folder and the versions page
         run: project-site/publish.sh publish "$RUNNER_TEMP/pages" "$RUNNER_TEMP/site" "$VERSION"
         env:

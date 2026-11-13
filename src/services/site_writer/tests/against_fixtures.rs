@@ -6,7 +6,7 @@ use std::sync::Arc;
 
 use rstest::rstest;
 
-use crate::adapters::{FolderFiles, MemoryFiles, OutputFolderStore};
+use crate::adapters::{FileSystemReader, FolderFiles, MemoryFiles, OutputFolderStore};
 use crate::entities::{BuildTarget, Record, VersionName};
 use crate::errors::{OutputError, OutputErrorKind};
 use crate::policies::Moment;
@@ -41,6 +41,7 @@ fn check(
     moment: Moment,
 ) -> Result<Option<Record>, OutputError> {
     let writer = SiteWriter::new(
+        Arc::new(FileSystemReader),
         Arc::new(OutputFolderStore),
         Arc::new(FolderFiles),
         Arc::new(MemoryFiles::default()),

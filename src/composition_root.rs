@@ -7,7 +7,7 @@ use std::process::ExitCode;
 use std::sync::Arc;
 
 use crate::adapters::{
-    ConfigFileReader, FileWatcher, FolderFiles, GherkinCrate, HttpPreviewServer, InputFolderReader,
+    FileSystemReader, FileWatcher, FolderFiles, GherkinCrate, HttpPreviewServer, InputFolderReader,
     MemoryFiles, OutputFolderStore, StandardStreams,
 };
 use crate::controllers::SiteController;
@@ -20,11 +20,12 @@ use crate::services::{
 /// Runs ghg with `arguments`, those after the command's own name.
 pub fn run(arguments: impl IntoIterator<Item = OsString>) -> ExitCode {
     let site = SiteController::new(
-        Arc::new(SettingsService::new(Arc::new(ConfigFileReader))),
+        Arc::new(SettingsService::new(Arc::new(FileSystemReader))),
         Arc::new(InputCollector::new(Arc::new(InputFolderReader))),
         Arc::new(GherkinParser::new(Arc::new(GherkinCrate))),
         Arc::new(Converter),
         Arc::new(SiteWriter::new(
+            Arc::new(FileSystemReader),
             Arc::new(OutputFolderStore),
             Arc::new(FolderFiles),
             Arc::new(MemoryFiles::default()),

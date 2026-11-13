@@ -229,6 +229,29 @@ fn when_not_even_the_configuration_file_can_be_watched_the_last_watch_is_kept() 
 }
 
 #[test]
+fn the_front_page_s_template_is_watched_beside_the_configuration_file() {
+    // Rule 191: a configuration that names a template is watched again with it, beside the
+    // configuration file.
+    let world = world();
+    while_watching(&world, |events| {
+        *world.settings.front_page.lock().expect("lock") = Some("front.md".into());
+        world.server.change(InputChanges::Everything);
+        assert_eq!(events.wait_for(2)[1], "rebuilt");
+        assert_eq!(
+            calls_after(&world, UNTIL_WATCHING, 8),
+            then_a_build(
+                &[
+                    "settings.load Memory",
+                    "server.watch features ghg.toml front.md",
+                    "settings.load Memory",
+                ],
+                "features"
+            )
+        );
+    });
+}
+
+#[test]
 fn a_configuration_saved_while_watching_again_is_watched_and_built_from() {
     // Rule 65: the settings are read again once the new watch has started, so that a change to
     // the configuration file saved before it started is not lost.

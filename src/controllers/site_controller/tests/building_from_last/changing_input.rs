@@ -10,7 +10,7 @@ use gherkin::{Feature, GherkinEnv};
 
 use crate::entities::{FolderEntry, OutputContents, RawFeature, Record};
 use crate::errors::{InputErrorKind, ParseError};
-use crate::ports::{ConfigReader, FeatureParser, InputFolders, OutputFolders};
+use crate::ports::{FeatureParser, FileReader, InputFolders, OutputFolders};
 use crate::test_support::MemoryFolders;
 
 /// An input held in memory that a test changes between builds, read by the input collector and
@@ -75,7 +75,7 @@ impl FeatureParser for ChangingInput {
     }
 }
 
-impl ConfigReader for ChangingInput {
+impl FileReader for ChangingInput {
     fn read(&self, _: &Path) -> IoResult<String> {
         Err(not_found())
     }

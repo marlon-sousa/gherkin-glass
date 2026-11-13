@@ -25,6 +25,8 @@ Reading them is harder than it should be. They live in a repository, spread acro
 
 Not yet released. Until then, it can be built from the repository with `cargo install --git https://github.com/marlon-sousa/gherkin-glass gherkin-glass --locked`, which installs `ghg` and `cargo-ghg` and needs [Rust](https://rustup.rs/).
 
+<!-- ghg:contents -->
+
 ## Installing and running
 
 Once gherkin-glass is released, install it in one of these ways:
@@ -79,6 +81,7 @@ text = "Issue $1 on GitHub"
 | `accent_dark` | a colour, written as `accent_light`'s, such as `"#8cc4ff"` | `"#8cc4ff"` | The dark theme's colour for links and the focus outline, held to the same contrast. |
 | `version_name` | text | none | Builds the site as a version of that name, as "Versions" below describes. |
 | `replace_existing_version` | `true` or `false` | `true` | Whether a build replaces the site, or the version, that an earlier build wrote in the output folder. When `false`, it stops instead. |
+| `front_page` | a path | none | A Markdown file that introduces the site on its front page, as "The front page" below describes. |
 
 A key ghg does not know, or a value of the wrong kind, stops the run with a message naming the file and the line, so that nothing is silently ignored.
 
@@ -102,10 +105,11 @@ ghg serve [options]
 | `--output <folder>` | `build` and `serve` | Writes the site into that folder, instead of the configuration's `output`. |
 | `--title <text>` | `build` and `serve` | The site's title, instead of the configuration's `title`. |
 | `--version-name <name>` | `build` and `serve` | Builds the site as that version, instead of the configuration's `version_name`. |
+| `--front-page <file>` | `build` and `serve` | The Markdown file of the site's front page, instead of the configuration's `front_page`. |
 | `--host <address>` | `serve` | Listens on that address instead of `127.0.0.1`, such as `0.0.0.0` to be reached from other machines. |
 | `--port <number>` | `serve` | Listens at that port instead of 8000. `0` lets the system choose a free one. |
 | `--no-build` | `serve` | Serves the output folder as it is, without building it. |
-| `--watch` | `serve` | Rebuilds the site whenever a feature file or the configuration changes, and reloads the pages open in the browser. |
+| `--watch` | `serve` | Rebuilds the site whenever a feature file, the configuration or the front page's Markdown file changes, and reloads the pages open in the browser. |
 
 An option on the command line wins over the configuration file's key, and the key wins over the default. `ghg --help` lists the commands and options, and `ghg --version` prints the version.
 
@@ -135,6 +139,30 @@ So keep the output folder for the site alone, and put anything you want served b
 One site can hold several versions of the same suite, so that readers read the version they use. Give each build a version name, with `--version-name` or `version_name`, such as `v1.2.0` or `main`. A version name is one folder name, of the letters `a` to `z` and `A` to `Z`, digits, `.`, `-`, `_` and `+`. A name such as `1.2.0` or `v1.2.0` is a release, one such as `2.0.0-rc.1` a pre-release, and any other, such as `main`, a development version. Each version is written into a folder of its own in the output folder, such as `site/v1.2.0/`, and the output folder's `index.html` lists every version: development versions, releases newest first, and pre-releases, listed collapsed.
 
 ghg does not read git. To build several versions, check each one out into a folder of its own and run ghg once for each, into the same output folder. Building a version again replaces it, unless `replace_existing_version` is `false`.
+
+### The front page
+
+The front page is the page at the root of the output folder: the home page, or, when the site has versions, the page that lists them. It can open with an introduction you write in Markdown, such as your project's README, named by `front_page` or `--front-page`. Every other page, each version's own home page included, stays as ghg writes it.
+
+Write the comment `<!-- ghg:contents -->` on a line of its own where ghg's part of the page goes: the totals, folders and features of a home page, or the lists of versions. Markdown viewers such as GitHub's do not show the comment, so a README that holds it reads as before there.
+
+```markdown
+# Our features
+
+What the suite covers, and how to read it.
+
+## Versions
+
+<!-- ghg:contents -->
+```
+
+- The file holds one level-one heading, written with one `#`, which becomes the page's title.
+- ghg's own headings, such as "Folders" or "Releases", go one level below the last heading before the comment, so in the example above they are level three. The comment cannot follow a level 5 or level 6 heading, and it cannot be inside a list, a quote or a table.
+- Everything Markdown writes is kept, GitHub's tables included. Other comments are left out of the page.
+- Links are written exactly as the file has them, neither rewritten nor checked. A relative link is relative to the front page, so a link to a file of your repository, such as `LICENSE`, works on GitHub and not on the site; write the file's full address to reach it from both.
+- HTML written in the file, other than comments, is not allowed.
+
+Without `front_page`, the front page has only its title and ghg's part, as without this setting. A file that cannot be read, or that breaks one of these rules, stops the build with a message naming the file and the line, and nothing is written. With `ghg serve --watch`, a change to the file rebuilds the site.
 
 ## Contributing
 
@@ -167,7 +195,7 @@ Every word gherkin-glass writes itself, on the pages and on the command line, su
 - No template, Rust code or script writes interface text inline. The pages' templates receive their words from Rust, and the script receives its own, such as the search box's messages, from attributes the page carries, so the script holds no words.
 - A message is a whole sentence with named placeholders, such as `{ $feature }, a feature in { $folder }`, never pieces joined together, since word order differs between languages. A count is a plural form chosen by Fluent, never a word with an `s` added.
 
-Changing what a string says changes what gherkin-glass promises, so it starts as an issue too, as below. To add or change a string, edit it in the catalogue, use it by its id, and run `cargo xtask build` when it changes what pages say, so that the expected sites the tests compare against are written again. A few expected pages are not rebuilt by it, those of the step sentences and of the versions page, under `tests/fixtures/step-sentences`, `tests/fixtures/no-steps` and `tests/fixtures/versions`; update those by hand.
+Changing what a string says changes what gherkin-glass promises, so it starts as an issue too, as below. To add or change a string, edit it in the catalogue, use it by its id, and run `cargo xtask build` when it changes what pages say, so that the expected sites the tests compare against are written again. A few expected pages are not rebuilt by it, those of the step sentences and of the versions page, under `tests/fixtures/step-sentences`, `tests/fixtures/no-steps` and `tests/fixtures/versions`, and the versions page of `tests/fixtures/front-page`; update those by hand.
 
 ### How changes are made
 
@@ -181,8 +209,8 @@ gherkin-glass is written in Rust, with the [`gherkin`](https://crates.io/crates/
 
 Licensed under either of
 
-- Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or <https://www.apache.org/licenses/LICENSE-2.0>)
-- MIT license ([LICENSE-MIT](LICENSE-MIT) or <https://opensource.org/licenses/MIT>)
+- Apache License, Version 2.0 ([LICENSE-APACHE](https://github.com/marlon-sousa/gherkin-glass/blob/main/LICENSE-APACHE) or <https://www.apache.org/licenses/LICENSE-2.0>)
+- MIT license ([LICENSE-MIT](https://github.com/marlon-sousa/gherkin-glass/blob/main/LICENSE-MIT) or <https://opensource.org/licenses/MIT>)
 
 at your option.
 

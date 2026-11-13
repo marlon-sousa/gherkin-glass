@@ -12,7 +12,7 @@ struct ConfigFiles {
     files: BTreeMap<PathBuf, Option<String>>,
 }
 
-impl ConfigReader for ConfigFiles {
+impl FileReader for ConfigFiles {
     fn read(&self, path: &Path) -> IoResult<String> {
         match self.files.get(path) {
             Some(Some(text)) => Ok(text.clone()),

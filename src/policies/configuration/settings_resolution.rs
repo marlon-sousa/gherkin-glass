@@ -44,6 +44,10 @@ pub(crate) fn resolve_settings(
         unnamed,
         version,
         replace: config.replace_existing_version.unwrap_or(true),
+        front_page: options
+            .front_page
+            .clone()
+            .or_else(|| config.front_page.as_ref().map(|set| folder.join(set))),
         pages: PageOptions {
             title: options.title.clone().or_else(|| config.title.clone()),
             source_link: config.source_link.clone(),

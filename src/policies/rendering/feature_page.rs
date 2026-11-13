@@ -6,6 +6,7 @@ use super::breadcrumb::Place;
 use super::node_rendering::{Render, RenderFile, pieces, rendered};
 use super::page_layout::{PageAround, SitePieces, whole_page};
 use crate::entities::{ContentsEntry, Page, SiteAddress, SiteFeaturePage, SiteTreeNode};
+use crate::errors::FrontPageError;
 
 #[derive(Template)]
 #[template(path = "feature_page.html")]
@@ -24,9 +25,9 @@ impl RenderFile for SiteFeaturePage<'_> {
         self.page().address.clone()
     }
 
-    fn render_file(&self, site: &SitePieces<'_>) -> String {
+    fn render_file(&self, site: &SitePieces<'_>) -> Result<String, FrontPageError> {
         let page = self.page();
-        whole_page(
+        Ok(whole_page(
             site,
             &PageAround {
                 language: &page.language,
@@ -39,7 +40,7 @@ impl RenderFile for SiteFeaturePage<'_> {
                 blocks: pieces(self.blocks()).join("\n"),
                 backgrounds_enabled: self.scenarios().any(starts_with_a_background),
             }),
-        )
+        ))
     }
 }
 
@@ -77,7 +78,9 @@ mod tests {
         let [page] = feature_pages(&site)[..] else {
             panic!("one page");
         };
-        let html = page.render_file(&SitePieces::of(site.frame()));
+        let html = page
+            .render_file(&SitePieces::of(site.frame(), None))
+            .expect("a feature's page renders");
         assert!(html.contains("ghg-inline-backgrounds"), "{html}");
         assert_eq!(!html.contains(" disabled>"), enabled, "{html}");
     }

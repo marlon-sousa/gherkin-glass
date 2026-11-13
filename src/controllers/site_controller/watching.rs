@@ -1,5 +1,6 @@
 //! Controller: ghg serve's watch, rebuilding from the last build for the paths that changed, and from nothing, watching again on the input the settings name, when everything changed or the settings differ.
 
+use std::iter::once;
 use std::path::PathBuf;
 
 use super::building::{BuildOutcome, Built, Stopped};
@@ -21,12 +22,21 @@ pub(super) struct Watching<'a> {
 }
 
 impl Watching<'_> {
-    /// Starts watching the input of `first`, the first build, and the configuration file.
+    /// Starts watching the input of `first`, the first build, the configuration file and the
+    /// front page's template.
     pub(super) fn start(&self, first: &BuildSnapshot) -> Result<WatchedChanges, ServeError> {
+        self.watch(&first.settings).map_err(ServeError::Watch)
+    }
+
+    /// Starts watching the input `settings` name, the configuration file and the front page's
+    /// template they name.
+    fn watch(&self, settings: &Settings) -> Result<WatchedChanges, WatchError> {
+        let settings_files: Vec<_> = once(self.config.clone())
+            .chain(settings.front_page.clone())
+            .collect();
         self.controller
             .server
-            .watch(&first.settings.input, &self.config)
-            .map_err(ServeError::Watch)
+            .watch(&settings.input, &settings_files)
     }
 
     /// Rebuilds for each of `changes` that calls for it, `last` being the first build, until
@@ -55,7 +65,7 @@ impl Watching<'_> {
             let Some(settings) = settings else {
                 continue;
             };
-            let settings = match self.watched_again(settings.input) {
+            let settings = match self.watched_again(settings) {
                 Ok(Some((watched, read))) => {
                     changes = watched;
                     read
@@ -104,19 +114,20 @@ impl Watching<'_> {
             .map_err(BuildError::Config)
     }
 
-    /// A new watch of `input` and the configuration file, with the settings read once it has
-    /// started, watching again while they name another input, so that a change to the
-    /// configuration file saved before the watch started is never lost; or nothing, once the
-    /// listener is told what stops the rebuild, the new watch dropped.
+    /// A new watch of the input and the front page's template `settings` name, and of the
+    /// configuration file, with the settings read once it has started, watching again while
+    /// they name another input or template, so that a change to the configuration file saved
+    /// before the watch started is never lost; or nothing, once the listener is told what
+    /// stops the rebuild, the new watch dropped.
     fn watched_again(
         &self,
-        mut input: PathBuf,
+        mut settings: Settings,
     ) -> Result<Option<(WatchedChanges, Settings)>, WatchError> {
         loop {
-            let watched = self.controller.server.watch(&input, &self.config)?;
+            let watched = self.watch(&settings)?;
             match self.load_settings() {
-                Ok(settings) if settings.input != input => input = settings.input,
-                Ok(settings) => return Ok(Some((watched, settings))),
+                Ok(read) if watches_other_files(&read, &settings) => settings = read,
+                Ok(read) => return Ok(Some((watched, read))),
                 Err(build) => {
                     // Dropped before the listener is told, so that only the last watch is left.
                     drop(watched);
@@ -149,4 +160,9 @@ impl Watching<'_> {
             }
         }
     }
+}
+
+/// Whether `read` names another input or front page's template than `watched`.
+fn watches_other_files(read: &Settings, watched: &Settings) -> bool {
+    read.input != watched.input || read.front_page != watched.front_page
 }
