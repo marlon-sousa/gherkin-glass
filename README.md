@@ -1,71 +1,126 @@
 # gherkin-glass
 
-A static viewer for Gherkin `.feature` files that anyone can read, with or without a screen reader.
+gherkin-glass turns a folder of Gherkin feature files into a static website that anyone can read, with or without a screen reader. It is one command, `ghg`, for Linux, macOS and Windows.
 
-gherkin-glass turns a folder of feature files into a static website: a page for every feature, a heading and a stable link for every scenario, an index for every tag, and a page for every folder. The content is in the HTML of each page, and a stylesheet, a script and the data they share, written once with the site, style the pages and drive their interactive parts. The site is meant to be served, by any static web server or host, GitHub Pages included, or by `ghg serve` on your own machine. It ships as a single binary for Linux, macOS and Windows.
+## Why it exists
+
+Gherkin is the plain-language format behaviour-driven development uses to describe how software should behave. A feature file names a feature and lists its scenarios, each a short sequence of steps such as `Given a customer named "Ana"`, `When she withdraws 50`, `Then her balance is 150`. Tools such as Cucumber run those steps as tests, but the files are written to be read by people: product owners, testers, developers and anyone who wants to know what the software does.
+
+Reading them is harder than it should be. They live in a repository, spread across folders, and are opened one at a time in an editor. gherkin-glass makes those use cases easy to read, browse, search and link to, for everyone, including people who use a screen reader or only a keyboard.
+
+## What you get
+
+- A page for every feature file and for every folder, with a folder tree beside them.
+- A heading and a stable link for every rule, scenario and background, so that a link to a scenario keeps working as long as its file and its name do.
+- A page for every tag, listing the features and scenarios that carry it, and optional links from tags to another site, such as an issue tracker.
+- A page of step sentences, listing every step and where it is used.
+- Search across features, rules and scenarios.
+- Every Gherkin construct: rules, backgrounds, scenario outlines and their examples, shown as scenarios too, data tables, doc strings, tags, descriptions, and every spoken language Gherkin supports.
+- Highlighting of keywords, quoted parameters, placeholders and numbers in steps, which never carries meaning on its own.
+- Reader options the browser remembers: a light or a dark theme, showing or hiding the folder tree, showing a background's steps inside each scenario or once at the top, and collapsing rules and scenarios.
+- Pages checked for accessibility on every change: headings in order, real tables and lists, a skip link, everything reachable with the keyboard, and a contrast of at least 7:1 for text in both themes.
 
 ## Status
 
-Everything [docs/BEHAVIOUR.md](docs/BEHAVIOUR.md) describes is built, and nothing is released yet. Until the first release, you build gherkin-glass from this repository, as "Trying it from a clone" below describes. What is planned is in the [issues](https://github.com/marlon-sousa/gherkin-glass/issues). Once the first release is published, [the project's own site](https://marlon-sousa.github.io/gherkin-glass/) shows what each release makes of an example suite and of the test fixtures.
+Not yet released.
 
-## Goals
+## Installing and running
 
-- **Readable by everyone.** Headings in order, real tables, lists for steps, and a skip link. Colour and highlighting help, but never carry meaning on their own. Accessibility is checked on every pull request.
-- **Links that last.** A scenario's address comes from its file and its name, by a documented rule, so a link keeps working as long as both do.
-- **Reader options.** Readers can choose to show a background's steps inside each scenario or once at the top, and to show or hide the folder tree. Rules and scenarios can be collapsed from their headings, and the browser remembers every choice.
-- **Every Gherkin construct.** Rules, backgrounds, scenario outlines and their examples, data tables, doc strings, tags, descriptions, and every spoken language Gherkin supports.
-- **One file to install.** A single binary, configured by a TOML file, that also runs as a GitHub Action.
+Once gherkin-glass is released, install it in one of these ways:
 
-## Trying it from a clone
+- `cargo install gherkin-glass`, which builds it with Rust's package manager;
+- `cargo binstall gherkin-glass`, which downloads the released binary instead of building it;
+- or download the archive for your system from the repository's releases page, and put `ghg` somewhere on your path. There are archives for Linux on x86-64 and ARM64, macOS on Intel and Apple silicon, and Windows on x86-64.
 
-You need [rustup](https://rustup.rs/) 1.28 or later, which installs Rust. Nothing else: the pages' script is written in TypeScript, but its compiled form is committed, so building gherkin-glass needs no Node.
+Each way installs `ghg`, and `cargo-ghg`, which lets you run it as `cargo ghg` beside `cargo test`. `cargo ghg build` is the same as `ghg build`.
 
-1. Clone the repository and go into it:
+Then, in the folder of your project, with your feature files in a folder named `features`:
 
-   ```sh
-   git clone https://github.com/marlon-sousa/gherkin-glass.git
-   cd gherkin-glass
-   ```
+```sh
+ghg build
+ghg serve
+```
 
-2. Run `rustup toolchain install`, which installs the Rust version the repository pins in `rust-toolchain.toml`, then `cargo build`. The stylesheet and the script are built into the binary, which writes them into every site.
+`ghg build` writes the site into a folder named `site`, and `ghg serve` serves it at <http://127.0.0.1:8000/>. Open that address in a browser, and press Control+C to stop.
 
-3. Look at the example suite, in `project-site/features`:
+## Usage
 
-   ```sh
-   cargo run -- serve --config project-site/ghg.toml --watch
-   ```
+### The configuration file
 
-   Then open <http://127.0.0.1:8000/> in a browser, and press Control+C in the terminal to stop. With `--watch`, the site is built in memory and nothing is written to disk, and the page reloads when you change a feature file. Without it, `ghg serve` writes the site into the configuration's output folder first, which for the example suite is the committed `project-site/expected`.
-
-4. To have the `ghg` command everywhere, install it from the clone with `cargo install --path . --locked`. That installs `ghg`, and `cargo-ghg`, which lets cargo run it as `cargo ghg`.
-
-## Using it on your own features
-
-In the folder of your project, write a `ghg.toml`:
+ghg reads its settings from `ghg.toml`, a [TOML](https://toml.io/) file in the folder you run it from, or the file `--config` names. The file is optional: every setting has a default. Paths in it are relative to the folder the file is in, wherever you run ghg from.
 
 ```toml
 input = "features"
 output = "site"
 title = "Our features"
+source_link = "https://github.com/owner/repo/blob/main/features/{path}#L{line}"
+collapse_scenarios = true
+
+[[tag_links]]
+pattern = '@issue-(\d+)'
+address = "https://github.com/owner/repo/issues/$1"
+text = "Issue $1 on GitHub"
 ```
 
-Then:
+| Key | Takes | Default | What it sets |
+| --- | --- | --- | --- |
+| `input` | a path | `features` | The folder of feature files to read. It must exist. |
+| `output` | a path | `site` | The folder the site is written into. |
+| `title` | text | `Feature files` | The site's title, shown on its home page and in every breadcrumb. |
+| `allow_unnamed` | `true` or `false` | `true` | Whether a feature, rule or scenario may have no name. When `false`, one without a name stops the build. |
+| `source_link` | text | none | The address of each feature file's source, so that each page links to its file. `{path}` is replaced by the file's path and `{line}` by the line of its feature. |
+| `collapse_rules` | `true` or `false` | `false` | Whether rules start collapsed. |
+| `collapse_scenarios` | `true` or `false` | `false` | Whether scenarios, scenario outlines and backgrounds start collapsed. |
+| `show_tree` | `true` or `false` | `true` | Whether the folder tree is shown when a reader first opens the site. |
+| `inline_backgrounds` | `true` or `false` | `true` | Whether a scenario shows its backgrounds' steps inside it, or links to them. |
+| `tag_links` | a list of tables, each written `[[tag_links]]` | none | Links from tags to another site. Each table has a `pattern`, a regular expression matched against the whole tag with its `@`; an `address`; and a `text` for the link. In the address and the text, `$1` or `$name` is replaced by what that group of the pattern matched. |
+| `accent_light` | a colour, such as `"#0b4f9c"` | `"#0b4f9c"` | The light theme's colour for links and the focus outline. It must reach a contrast of 7:1 against the theme's backgrounds. |
+| `accent_dark` | a colour, such as `"#8cc4ff"` | `"#8cc4ff"` | The dark theme's colour for links and the focus outline, held to the same contrast. |
+| `version_name` | text | none | Builds the site as a version of that name, as "Versions" below describes. |
+| `replace_existing_version` | `true` or `false` | `true` | Whether a build replaces the site, or the version, that an earlier build wrote in the output folder. When `false`, it stops instead. |
 
-- `ghg build` reads every `.feature` file under `features`, and writes the site into `site`, or reports every file it cannot read and writes nothing.
-- `ghg serve` builds the site and serves it at <http://127.0.0.1:8000/>. Add `--watch` to rebuild the site whenever a feature file or `ghg.toml` changes, and reload the pages open in the browser. While watching, the site is built in memory, and the output folder is left as it is; `ghg build` writes it.
-- `ghg serve --no-build` serves the output folder as it is, such as a site you downloaded from a CI run.
+A key ghg does not know, or a value of the wrong kind, stops the run with a message naming the file and the line, so that nothing is silently ignored.
 
-Every setting has a default, so `ghg.toml` is optional: without it, ghg reads `features` and writes `site`, both in the current folder. `input`, `output`, `title` and `version_name` can also be given on the command line, as `--input`, `--output`, `--title` and `--version-name`, such as `ghg build --input specs --title "Our features"`, and the command line wins. The other settings are set only in `ghg.toml`. `ghg --help` lists the options, and [docs/BEHAVIOUR.md](docs/BEHAVIOUR.md), "The command line and its configuration", describes every option and every key of `ghg.toml`, such as collapsing rules and scenarios, linking each page to its source, linking tags to an issue tracker, the accent colours and building versions.
+### Which files are read
 
-## A site must be served
+ghg reads every file whose name ends in `.feature` under the input folder, and leaves out hidden files and folders, those whose names start with a dot. A file named `.ghg-ignore`, in any folder of the input, changes that with the same rules as a `.gitignore` file: `drafts/` leaves a folder out, and `!*.story` reads files ending in `.story` too.
 
-Open a site through a web server, never by opening its files straight from disk. A page opened from disk, with an address that starts with `file:`, still shows its content, but the browser refuses to run its script there, so the folder tree is empty, search does nothing, and the reader options do not work. The stylesheet does little on its own, so such a page looks nearly unstyled too. Every page opened from disk therefore first opens a dialog, "Opened from disk", that says the site is meant to be served and how to serve it; close it with its button, "I agree", or with Escape, to read the page.
+When a file cannot be read, such as one with a syntax mistake, ghg reports every such file, each as `<path>:<line>: <message>`, and writes nothing.
 
-To look at a site on your own machine, use `ghg serve`, or `ghg serve --no-build` for a site already built. To publish it, put the output folder on any static host, such as GitHub Pages; every link in a site is relative, so it works under any path. Why sites are served is explained in [design note 0026](docs/design/0026-sites-are-served.md).
+### The command line
 
-## The output folder belongs to ghg
+```text
+ghg build [options]
+ghg serve [options]
+```
 
-`ghg build` writes the site into its output folder, `site` unless you name another, and marks that folder as its own with a file at its root, `ghg-site.json`, or `ghg-versions.json` when it builds versions. From then on the output folder, and every folder in it, belongs to ghg: any build may empty it and write it again, so anything you put there by hand can be lost.
+| Option | Of | What it does |
+| --- | --- | --- |
+| `--config <file>` | both | Reads that configuration file instead of `ghg.toml` in the current folder. |
+| `--input <folder>` | both | Reads that folder, instead of the configuration's `input`. |
+| `--output <folder>` | both | Writes the site into that folder, instead of the configuration's `output`. |
+| `--title <text>` | both | The site's title, instead of the configuration's `title`. |
+| `--version-name <name>` | both | Builds the site as that version, instead of the configuration's `version_name`. |
+| `--host <address>` | `ghg serve` | Listens on that address instead of `127.0.0.1`, such as `0.0.0.0` to be reached from other machines. |
+| `--port <number>` | `ghg serve` | Listens at that port instead of 8000. `0` lets the system choose a free one. |
+| `--no-build` | `ghg serve` | Serves the output folder as it is, without building it. |
+| `--watch` | `ghg serve` | Rebuilds the site whenever a feature file or the configuration changes, and reloads the pages open in the browser. |
+
+An option on the command line wins over the configuration file's key, and the key wins over the default. `ghg --help` lists the commands and options, and `ghg --version` prints the version.
+
+`ghg build` exits with status 0 when it wrote the site, 1 when the configuration or a feature file stopped it, and 2 for a mistake on the command line.
+
+### Looking at a site and publishing it
+
+A site is meant to be served by a web server, not opened from disk. Opened from disk, a browser does not run the page's script, so the folder tree, search and the reader options do not work. Every page opened from disk therefore first opens a dialog, "Opened from disk", that says the site is meant to be served and how to serve it; close it with its button, "I agree", or with Escape, to read the page.
+
+To look at a site on your own machine, use `ghg serve`. With `--watch`, the site is built in memory and served from there, the output folder is left as it is, and the page you are reading reloads at the same heading after each change. With `--no-build`, ghg serves a site already built, such as one downloaded from a CI run.
+
+To publish a site, put the output folder on any static web host, GitHub Pages included. Every link in a site is relative, so it works at any address, below a path such as `/<repository>/` too.
+
+### The output folder belongs to ghg
+
+`ghg build` marks the output folder as its own with a file at its root, `ghg-site.json`, or `ghg-versions.json` when it builds versions. From then on the output folder, and every folder in it, belongs to ghg: any build may empty it and write it again, so anything you put there by hand can be lost.
 
 To keep that from happening by mistake:
 
@@ -74,70 +129,41 @@ To keep that from happening by mistake:
 
 So keep the output folder for the site alone, and put anything you want served beside it somewhere else.
 
-## Installing a release
+### Versions
 
-Once the first version is released, it can be installed in three ways:
+One site can hold several versions of the same suite, so that readers read the version they use. Give each build a version name, with `--version-name` or `version_name`, such as `v1.2.0` or `main`. Each version is written into a folder of its own in the output folder, such as `site/v1.2.0/`, and the output folder's `index.html` lists every version: development versions, releases newest first, and pre-releases.
 
-- **Downloaded.** Each release on GitHub holds an archive for each platform, with `ghg` and `cargo-ghg` in it.
-- **Through cargo.** A Rust project can install it from [crates.io](https://crates.io/) with `cargo install gherkin-glass`, or download the release's binary with `cargo binstall gherkin-glass`. Either installs `ghg`, and `cargo-ghg`, so that `cargo ghg build` is `ghg build`, beside `cargo test`.
-- **In a GitHub Actions workflow.** The repository is also an action that installs `ghg` and, with `build: true`, builds a site in the workspace. Every option of `ghg build` that sets how a site is built, `config`, `input`, `output`, `title` and `version-name`, is an input of the same name:
+ghg does not read git. To build several versions, check each one out into a folder of its own and run ghg once for each, into the same output folder. Building a version again replaces it, unless `replace_existing_version` is `false`.
 
-  ```yaml
-  - uses: marlon-sousa/gherkin-glass@v0.1.0
-    with:
-      build: true
-      output: site
-  ```
+## Contributing
 
-  Before version 1.0, the action is named by a release's own tag, such as `@v0.1.0`. From 1.0 on, `@v1` follows the newest 1.x release. [docs/BEHAVIOUR.md](docs/BEHAVIOUR.md), "The GitHub Action", describes every input.
+### Requirements
 
-## Working on gherkin-glass
-
-How changes are proposed, agreed and reviewed is in [CONTRIBUTING.md](CONTRIBUTING.md), and how the code is organised is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). This section is what you run.
-
-### What you need
-
-- **Rust**, through rustup 1.28 or later. Running `rustup toolchain install` in the repository installs the pinned version with the components `rust-toolchain.toml` names. The tests also run on the minimum supported Rust version, the one `rust-version` names in `Cargo.toml`.
+- **Rust**, through [rustup](https://rustup.rs/) 1.28 or later. In the repository, `rustup toolchain install` installs the Rust version the repository pins, with its components.
+- **Node**, at the version `script/.node-version` names, with npm, only to change the pages' script or stylesheet. The script is TypeScript, in `script/`, and its compiled form, `assets/gherkin-glass.js`, is committed.
 - **cargo-deny 0.20.2**, for the dependency check: `cargo install cargo-deny --version 0.20.2 --locked`.
-- **Node**, at the version `script/.node-version` pins, with npm, to run `cargo xtask build`, `check`, `check-script` or `check-browser`. Plain `cargo build` and `cargo test` need none.
 
-### The checks
-
-These are the checks a pull request runs, from the repository's root:
-
-- `cargo fmt --all --check`, the formatting;
-- `cargo clippy --workspace --all-targets --locked -- -D warnings`, the lints, with every warning an error;
-- `cargo test --workspace --locked`, the tests;
-- `RUSTDOCFLAGS="-D warnings" cargo doc --workspace --no-deps --document-private-items --locked`, the documentation, where a broken link fails;
-- `cargo deny check`, the dependencies' licences, advisories and sources;
-- `cargo publish --dry-run --locked --allow-dirty`, the crate built from its package alone, as crates.io would receive it;
-- `cargo +<version> test --locked`, the tests again with the minimum supported Rust version, once `rustup toolchain install <version> --profile minimal` has installed it.
-
-`cargo xtask check` runs all of them, then the script check and the browser check, as CI does.
+If you don't change the pages' script or stylesheet, Rust is enough: `cargo build` builds `ghg`, `cargo test` runs the tests, and `cargo run -- serve --config project-site/ghg.toml --watch` serves the repository's example suite at <http://127.0.0.1:8000/>.
 
 ### The xtask commands
 
-`cargo xtask` runs the repository's own tasks, from the `xtask` crate. `cargo xtask --help` lists them.
+`cargo xtask` runs the repository's own tasks. `cargo xtask --help` lists them.
 
 | Command | What it does | Needs Node |
 | --- | --- | --- |
-| `cargo xtask build` | Installs the Node packages from `script/package-lock.json`, type-checks and tests the script, and compiles it into `assets/gherkin-glass.js`. Then it writes again the expected sites of the fixtures `pages`, `backgrounds`, `tags` and `highlighting`, and of the example suite, `project-site/expected`, and builds the release binary. | Yes |
-| `cargo xtask check` | Runs every check above, then the script check and the browser check. | Yes |
-| `cargo xtask check-script` | Type-checks and tests the script, and fails when `assets/gherkin-glass.js` is not what `script/` compiles to. | Yes |
-| `cargo xtask check-browser` | Installs Playwright's headless Chromium, builds `ghg`, and checks the site of every fixture and of the example suite in it: axe-core in the light and the dark colour scheme, and the keyboard. It also checks that `ghg serve --watch` reloads a page. | Yes |
-| `cargo xtask comment-ratio [path ...]` | Counts the comment lines and the code lines of the Rust and TypeScript files given, or of every one git tracks, with the total last. A pull request's description carries the total for the files it touches. | No |
+| `cargo xtask build` | Type-checks, tests and compiles the script into `assets/gherkin-glass.js`, writes again the expected pages the tests compare against, and builds the release binary. Run it after changing the script, the stylesheet or a page's template, and commit what it writes. | Yes |
+| `cargo xtask check` | Runs every check a pull request runs: formatting, lints, tests on the pinned and the minimum supported Rust, documentation, dependencies, the package, the script check and the browser check. | Yes |
+| `cargo xtask check-script` | Type-checks and tests the script, and fails when the committed `assets/gherkin-glass.js` is not what `script/` compiles to. | Yes |
+| `cargo xtask check-browser` | Installs a headless Chromium and checks every test site in it: accessibility in both colour schemes, the keyboard, pages opened from disk, and the reload of `ghg serve --watch`. | Yes |
+| `cargo xtask comment-ratio [path ...]` | Counts the comment lines and the code lines of the Rust and TypeScript files given, or of every one in the repository. | No |
 
-Only `cargo xtask build` writes files to commit. The others write only what git ignores: the Node packages in `script/node_modules`, the script check's compiled copy in `target/xtask/`, `ghg` in `target/debug/`, and Playwright's Chromium in its cache in your home folder. `cargo xtask check` also installs the minimum supported Rust version with rustup, and `comment-ratio` only prints.
+### How changes are made
 
-### Changing the pages
+Every change starts as an issue. Open one that says what you want and why, or, for a bug, what happened, what you expected and the smallest feature file that shows it. The maintainers then design the plan with you in the issue, and work starts only once it is agreed: a pull request that names its issue.
 
-The pages are rendered from Askama templates in `src/policies/rendering/`, styled by `assets/gherkin-glass.css`, and driven by the TypeScript under `script/`. After changing any of them, run `cargo xtask build`, and commit what it writes with your sources: the compiled `assets/gherkin-glass.js` and the expected sites. A few fixtures keep a single expected page, such as `versions`, `step-sentences` and `no-steps`, which `cargo xtask build` does not write: their tests compare the page ghg builds with it, so a failing test shows which page to write again; [tests/step_sentences.rs](tests/step_sentences.rs) says how the step sentences page is built. A test compares every page ghg builds from a fixture with its expected site, byte for byte, so a change to any page shows in review. Then run `cargo xtask check-browser`, since a page that fails the accessibility check is a failing test.
+### How it is built
 
-## How it is built
-
-gherkin-glass is written in Rust, with the [`gherkin`](https://crates.io/crates/gherkin) parser from cucumber-rs.
-
-AI is part of how it is made. Agents write code and documentation, and a human maintainer reviews everything before it is merged, under the terms of [A manifesto for software engineering with AI](https://marlon-sousa.com/blog/manifesto/). How to contribute is in [CONTRIBUTING.md](CONTRIBUTING.md).
+gherkin-glass is written in Rust, with the [`gherkin`](https://crates.io/crates/gherkin) parser from cucumber-rs. AI is part of how it is made: agents write code and documentation, and a human maintainer reviews everything before it is merged, under the terms of [A manifesto for software engineering with AI](https://marlon-sousa.com/blog/manifesto/).
 
 ## License
 
