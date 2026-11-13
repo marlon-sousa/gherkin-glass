@@ -15,7 +15,8 @@ Start a separate agent with the most capable model available, at high effort. Wi
 2. Which commits to review, as revisions it can diff, the issue they belong to, and the draft commit messages and pull request description.
 3. That AGENTS.md, CONTRIBUTING.md, docs/BEHAVIOUR.md and docs/ARCHITECTURE.md bind the change, with the issue's body.
 4. The section "Reviewing a change" of AGENTS.md, in full. The reviewer works through every item of its checklist, listing every place in the diff where an item applies.
-5. The report it returns, as that section describes it.
+5. The visual check of item 19. The reviewer first judges whether the change can alter what a page looks like or how it lays out: a change to the stylesheet, a template, the script or the pages' text can, and one that cannot reach a page, such as renaming a variable in a policy, cannot. The check is expensive, so it runs only when the change can; the report says which the reviewer judged, and why. When it runs, the reviewer builds the sites in its worktree, serves them with `ghg serve`, and drives Chromium with the Playwright already installed in the session, saving the screenshots under the scratchpad directory and looking at each of them.
+6. The report it returns, as that section describes it.
 
 Give it the code and the issue, never your own conclusions about them.
 
