@@ -23,17 +23,17 @@ pub(super) struct Builder<'a> {
 
 impl Builder<'_> {
     /// `introduction` is the words that introduce its steps in a scenario that
-    /// starts with them, and `has_scenarios` whether any scenario is below the
+    /// starts with them, and `scenarios_below` whether any scenario is below the
     /// block it opens, the feature or the rule.
     pub(super) fn background(
         &self,
         anchored: &Anchored<'_, Background>,
         level: HeadingLevel,
         introduction: String,
-        has_scenarios: bool,
+        scenarios_below: bool,
     ) -> BackgroundContent {
         let background = anchored.block;
-        let collapsed_when_linked = (has_scenarios && !background.steps.is_empty())
+        let collapsed_when_linked = (scenarios_below && !background.steps.is_empty())
             .then_some(self.options.collapse_scenarios);
         let collapsed = (collapsed_when_linked.is_some() && self.options.inline_backgrounds)
             || self.options.collapse_scenarios;

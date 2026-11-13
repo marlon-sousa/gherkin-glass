@@ -163,9 +163,10 @@ fn the_inline_form_starts_collapsed_the_backgrounds_whose_steps_scenarios_show(
         .find("<div class=\"ghg-block ghg-background")
         .expect("one");
     let block = html[start..].lines().take(2).collect::<Vec<_>>().join("\n");
-    let attribute = expanded_when_linked
-        .map(|state| format!(" data-expanded-when-linked=\"{state}\""))
-        .unwrap_or_default();
+    let attribute = match expanded_when_linked {
+        Some(state) => format!(" data-expanded-when-linked=\"{state}\""),
+        None => String::new(),
+    };
     assert_eq!(
         block,
         format!(
