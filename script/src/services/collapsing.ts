@@ -1,14 +1,39 @@
-// Service: collapsing and expanding the blocks of a page, remembered page by page.
+// Service: collapsing and expanding the blocks of a page, remembered page by page, and showing the backgrounds inside each scenario or linking to them, as the reader chose for the site.
 
-import { memoryKey, remembered, startState } from "../policies/block_state.ts";
+import { formKey, rememberedForm, startForm } from "../policies/background_form.ts";
+import { formStart, inlineMemoryKey, memoryKey, remembered, startState } from "../policies/block_state.ts";
+import type { Backgrounds } from "../ports/backgrounds.ts";
 import type { Memory } from "../ports/memory.ts";
 import type { Block, Page } from "../ports/page.ts";
 
-export function startCollapsing(page: Page, memory: Memory, pagePath: string): void {
+/** The checkbox of a page with a background, and the site whose pages share the reader's choice. */
+export interface BackgroundsOption {
+  readonly backgrounds: Backgrounds;
+  readonly siteRoot: string;
+}
+
+export function startCollapsing(page: Page, memory: Memory, pagePath: string, option: BackgroundsOption | null): void {
   const blocks = page.blocks();
+  // The backgrounds whose steps a scenario starts with, whose state follows the form shown.
+  const following = blocks.filter((block) => block.expandedWhenLinked !== null);
+  let inline = false;
+  const key = (block: Block): string =>
+    inline && block.expandedWhenLinked !== null ? inlineMemoryKey(pagePath, block.anchor) : memoryKey(pagePath, block.anchor);
   const set = (block: Block, expanded: boolean): void => {
     block.setExpanded(expanded);
-    memory.set(memoryKey(pagePath, block.anchor), remembered(expanded));
+    memory.set(key(block), remembered(expanded));
+  };
+  // A block's state as the page was written is its state until it is first settled, and a background that follows the form ignores it.
+  const settle = (block: Block): void => {
+    const start = formStart(block.isExpanded(), block.expandedWhenLinked, inline);
+    block.setExpanded(startState(start, memory.get(key(block))));
+  };
+  // Another page of the site may have changed the choice while this one was left.
+  const showForm = (): void => {
+    if (option !== null) {
+      inline = startForm(option.backgrounds.writtenInline(), memory.get(formKey(option.siteRoot)));
+      option.backgrounds.setInline(inline);
+    }
   };
   const reveal = (anchor: string): void => {
     let block = blocks.find((found) => found.anchor === anchor) ?? null;
@@ -20,10 +45,8 @@ export function startCollapsing(page: Page, memory: Memory, pagePath: string): v
     }
   };
 
-  for (const block of blocks) {
-    const kept = memory.get(memoryKey(pagePath, block.anchor));
-    block.setExpanded(startState(block.isExpanded(), kept));
-  }
+  showForm();
+  blocks.forEach(settle);
   const target = page.target();
   if (target !== null) {
     reveal(target);
@@ -33,4 +56,19 @@ export function startCollapsing(page: Page, memory: Memory, pagePath: string): v
   page.onCollapseAll(() => blocks.forEach((block) => set(block, false)));
   page.onExpandAll(() => blocks.forEach((block) => set(block, true)));
   page.onFollow(reveal);
+  if (option !== null) {
+    option.backgrounds.onSwitch((switched) => {
+      inline = switched;
+      option.backgrounds.setInline(inline);
+      memory.set(formKey(option.siteRoot), rememberedForm(inline));
+      following.forEach((block) => set(block, !inline));
+    });
+    option.backgrounds.onReturn(() => {
+      const shown = inline;
+      showForm();
+      if (inline !== shown) {
+        following.forEach(settle);
+      }
+    });
+  }
 }

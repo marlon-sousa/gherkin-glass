@@ -22,24 +22,32 @@ pub(super) struct Builder<'a> {
 }
 
 impl Builder<'_> {
-    /// `introduction` is the words that introduce its steps in a scenario that starts with them.
+    /// `introduction` is the words that introduce its steps in a scenario that
+    /// starts with them, and `has_scenarios` whether any scenario is below the
+    /// block it opens, the feature or the rule.
     pub(super) fn background(
         &self,
         anchored: &Anchored<'_, Background>,
         level: HeadingLevel,
         introduction: String,
+        has_scenarios: bool,
     ) -> BackgroundContent {
         let background = anchored.block;
+        let collapsed_when_linked = (has_scenarios && !background.steps.is_empty())
+            .then_some(self.options.collapse_scenarios);
+        let collapsed = (collapsed_when_linked.is_some() && self.options.inline_backgrounds)
+            || self.options.collapse_scenarios;
         BackgroundContent {
             block: BackgroundBlock {
                 heading: block_heading(
                     level,
                     &anchored.anchor,
                     heading(&background.keyword, &background.name),
-                    self.options.collapse_scenarios,
+                    collapsed,
                 ),
                 description: description(background.description.as_deref()),
                 introduction,
+                collapsed_when_linked,
             },
             steps: step_contents(self.parsed, &background.steps, None),
         }
@@ -64,6 +72,7 @@ impl Builder<'_> {
                     background,
                     HeadingLevel::Three,
                     fl!(CATALOGUE, "from-rule-background"),
+                    !anchored.scenarios.is_empty(),
                 )
             }),
             scenarios: anchored

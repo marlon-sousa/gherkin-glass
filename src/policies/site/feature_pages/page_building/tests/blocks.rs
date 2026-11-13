@@ -126,15 +126,24 @@ fn the_settings_choose_which_blocks_start_collapsed() {
         ]
         .map(|heading| heading.collapsed)
     };
-    assert_eq!(collapsed(&PageOptions::default()), [false; 6]);
+    // Rule 51: the inline form, the default, collapses the backgrounds.
+    assert_eq!(
+        collapsed(&PageOptions::default()),
+        [true, false, false, true, false, false]
+    );
+    let linked = PageOptions {
+        inline_backgrounds: false,
+        ..PageOptions::default()
+    };
+    assert_eq!(collapsed(&linked), [false; 6]);
     let rules = PageOptions {
         collapse_rules: true,
-        ..PageOptions::default()
+        ..linked.clone()
     };
     assert_eq!(collapsed(&rules), [false, false, true, false, false, false]);
     let scenarios = PageOptions {
         collapse_scenarios: true,
-        ..PageOptions::default()
+        ..linked
     };
     assert_eq!(
         collapsed(&scenarios),

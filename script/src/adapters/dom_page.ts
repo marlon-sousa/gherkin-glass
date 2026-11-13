@@ -5,14 +5,16 @@ import type { Block, Page } from "../ports/page.ts";
 class DomBlock implements Block {
   readonly anchor: string;
   readonly parent: Block | null;
+  readonly expandedWhenLinked: boolean | null;
   readonly button: HTMLButtonElement;
   private readonly content: HTMLElement;
 
-  constructor(anchor: string, button: HTMLButtonElement, content: HTMLElement, parent: Block | null) {
+  constructor(anchor: string, button: HTMLButtonElement, content: HTMLElement, parent: Block | null, expandedWhenLinked: boolean | null) {
     this.anchor = anchor;
     this.button = button;
     this.content = content;
     this.parent = parent;
+    this.expandedWhenLinked = expandedWhenLinked;
   }
 
   isExpanded(): boolean {
@@ -41,7 +43,7 @@ export class DomPage implements Page {
       }
       const around = element.parentElement?.closest(".ghg-block");
       const parent = around ? (byElement.get(around) ?? null) : null;
-      const block = new DomBlock(heading.id, button, content, parent);
+      const block = new DomBlock(heading.id, button, content, parent, expandedWhenLinked(element));
       byElement.set(element, block);
       this.found.push(block);
     }
@@ -53,7 +55,7 @@ export class DomPage implements Page {
       if (!link || !button || !content) {
         continue;
       }
-      this.found.push(new DomBlock(link.getAttribute("href") ?? "", button, content, null));
+      this.found.push(new DomBlock(link.getAttribute("href") ?? "", button, content, null, null));
     }
   }
 
@@ -116,6 +118,18 @@ export class DomPage implements Page {
 
   private onClick(selector: string, handler: () => void): void {
     this.document.querySelector(selector)?.addEventListener("click", handler);
+  }
+}
+
+/** What a background's `data-expanded-when-linked` says, which only a background whose steps a scenario starts with has. */
+function expandedWhenLinked(element: Element): boolean | null {
+  switch (element.getAttribute("data-expanded-when-linked")) {
+    case "true":
+      return true;
+    case "false":
+      return false;
+    default:
+      return null;
   }
 }
 

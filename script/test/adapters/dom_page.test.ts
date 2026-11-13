@@ -7,6 +7,7 @@ import { test } from "node:test";
 
 import { Window } from "happy-dom";
 
+import { DomBackgrounds } from "../../src/adapters/dom_backgrounds.ts";
 import { DomPage } from "../../src/adapters/dom_page.ts";
 import { LocalMemory } from "../../src/adapters/local_memory.ts";
 import { startCollapsing } from "../../src/services/collapsing.ts";
@@ -20,7 +21,9 @@ function open(hash = "", memory: Memory = new Map() as unknown as Memory): Windo
   window.document.write(readFileSync(PAGE, "utf8"));
   const kept = new Map<string, string>();
   const store: Memory = memory instanceof Map ? { get: (key) => kept.get(key) ?? null, set: (key, value) => void kept.set(key, value) } : memory;
-  startCollapsing(new DomPage(window.document as unknown as Document), store, window.location.pathname);
+  const document = window.document as unknown as Document;
+  const backgrounds = DomBackgrounds.of(document);
+  startCollapsing(new DomPage(document), store, window.location.pathname, backgrounds && { backgrounds, siteRoot: "/site/" });
   return window;
 }
 
@@ -50,6 +53,15 @@ test("every block of the page is found, with the blocks it is inside", () => {
     ["rule", null],
     ["refund-a-refund", "rule"],
   ]);
+  // Only a background whose steps a scenario starts with says its state with the linked form.
+  const following = page.blocks().filter((block) => block.expandedWhenLinked !== null);
+  assert.deepEqual(
+    following.map((block) => [block.anchor, block.expandedWhenLinked]),
+    [
+      ["background", true],
+      ["an-old-order", true],
+    ],
+  );
 });
 
 test("an outline's examples as scenarios start collapsed, and a link to a row's scenario expands them", () => {
@@ -152,7 +164,7 @@ function openFolder(kept: Map<string, string>): Window {
   const window = new Window({ url: "https://example.com/site/billing/index.html" });
   window.document.write(readFileSync(FOLDER, "utf8"));
   const memory: Memory = { get: (key) => kept.get(key) ?? null, set: (key, value) => void kept.set(key, value) };
-  startCollapsing(new DomPage(window.document as unknown as Document), memory, window.location.pathname);
+  startCollapsing(new DomPage(window.document as unknown as Document), memory, window.location.pathname, null);
   return window;
 }
 

@@ -9,7 +9,6 @@ import { Window } from "happy-dom";
 
 import { DomBackgrounds } from "../../src/adapters/dom_backgrounds.ts";
 import { DomPage } from "../../src/adapters/dom_page.ts";
-import { startBackgrounds } from "../../src/services/backgrounds.ts";
 import { startCollapsing } from "../../src/services/collapsing.ts";
 import type { Memory } from "../../src/ports/memory.ts";
 
@@ -19,11 +18,8 @@ function open(site: string, page: string, memory: Memory = keeping()): Window {
   const window = new Window({ url: `https://example.com/site/${page}` });
   window.document.write(readFileSync(new URL(`${site}/${page}`, SITES), "utf8"));
   const document = window.document as unknown as Document;
-  startCollapsing(new DomPage(document), memory, window.location.pathname);
   const backgrounds = DomBackgrounds.of(document);
-  if (backgrounds !== null) {
-    startBackgrounds(backgrounds, memory, "/site/");
-  }
+  startCollapsing(new DomPage(document), memory, window.location.pathname, backgrounds && { backgrounds, siteRoot: "/site/" });
   return window;
 }
 
@@ -82,7 +78,7 @@ test("a checkbox a browser restored is set back to the form the page shows", () 
   const document = window.document as unknown as Document;
   const box = checkbox(window);
   box.checked = false;
-  startBackgrounds(DomBackgrounds.of(document)!, keeping(), "/site/");
+  startCollapsing(new DomPage(document), keeping(), "/site/both.html", { backgrounds: DomBackgrounds.of(document)!, siteRoot: "/site/" });
   assert.equal(box.checked, true);
   assert.ok(forms(window).every(([steps, link]) => steps && !link));
 });
@@ -124,4 +120,33 @@ test("following a link to a background expands it", () => {
   assert.equal(heading.getAttribute("aria-expanded"), "false");
   (window.document.querySelector(".ghg-linked a[href='#background']") as unknown as HTMLElement).click();
   assert.equal(heading.getAttribute("aria-expanded"), "true");
+});
+
+const backgroundsExpanded = (window: Window): boolean[] =>
+  [...window.document.querySelectorAll(".ghg-background > :is(h2, h3) > button")].map((button) => button.getAttribute("aria-expanded") === "true");
+
+test("the backgrounds whose steps show inside each scenario are collapsed, and the checkbox collapses or expands them all", () => {
+  const window = open("expected", "both.html");
+  assert.deepEqual(backgroundsExpanded(window), [false, false]);
+  const box = checkbox(window);
+  box.click();
+  assert.deepEqual(backgroundsExpanded(window), [true, true]);
+  (window.document.querySelector("#background > button") as unknown as HTMLElement).click();
+  assert.deepEqual(backgroundsExpanded(window), [false, true]);
+  box.click();
+  assert.deepEqual(backgroundsExpanded(window), [false, false]);
+  box.click();
+  assert.deepEqual(backgroundsExpanded(window), [true, true]);
+});
+
+test("a page written linked collapses its backgrounds when the inline form was chosen on another page", () => {
+  const kept = new Map<string, string>([["gherkin-glass:/site/:backgrounds", "inline"]]);
+  assert.deepEqual(backgroundsExpanded(open("expected-linked", "both.html", keeping(kept))), [false, false]);
+  assert.deepEqual(backgroundsExpanded(open("expected-linked", "both.html")), [true, true]);
+});
+
+test("a background whose steps no scenario starts with is not collapsed by the inline form", () => {
+  for (const page of ["no-steps.html", "no-scenarios.html"]) {
+    assert.deepEqual(backgroundsExpanded(open("expected", page)), [true], page);
+  }
 });

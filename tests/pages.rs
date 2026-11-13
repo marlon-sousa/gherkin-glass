@@ -137,6 +137,37 @@ fn every_page_with_a_background_has_the_checkbox() {
     assert!(!has("none.html"));
 }
 
+// Rule 51: a background whose steps a scenario starts with starts collapsed
+// with the inline form, and as `collapse_scenarios` says with the linked one,
+// which the page keeps for the script; any other background is as
+// `collapse_scenarios` says in both.
+
+#[test]
+fn the_inline_form_starts_collapsed_the_backgrounds_whose_steps_scenarios_show() {
+    let block = |site: &str, page: &str| {
+        let html = read(fixtures().join("backgrounds").join(site).join(page)).expect("read");
+        let html = String::from_utf8(html).expect("UTF-8");
+        let start = html
+            .find("<div class=\"ghg-block ghg-background")
+            .expect("one");
+        html[start..].lines().take(2).collect::<Vec<_>>().join("\n")
+    };
+    let shown = |expanded: bool, when_linked: bool| {
+        format!(
+            "<div class=\"ghg-block ghg-background\" data-expanded-when-linked=\"{when_linked}\">\n\
+             <h2 id=\"background\"><button type=\"button\" class=\"ghg-toggle\" aria-expanded=\"{expanded}\">Background</button></h2>"
+        )
+    };
+    let alone = "<div class=\"ghg-block ghg-background\">\n\
+                 <h2 id=\"background\"><button type=\"button\" class=\"ghg-toggle\" aria-expanded=\"true\">Background</button></h2>";
+    assert_eq!(block("expected", "both.html"), shown(false, true));
+    assert_eq!(block("expected-linked", "both.html"), shown(true, true));
+    for site in ["expected", "expected-linked"] {
+        assert_eq!(block(site, "no-steps.html"), alone);
+        assert_eq!(block(site, "no-scenarios.html"), alone);
+    }
+}
+
 #[test]
 fn the_assets_are_the_ones_built_into_ghg() {
     let expected = fixtures().join("pages/expected/assets");

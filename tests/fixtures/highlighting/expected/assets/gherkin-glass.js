@@ -41,13 +41,15 @@ var DomBackgrounds = class _DomBackgrounds {
 var DomBlock = class {
   anchor;
   parent;
+  expandedWhenLinked;
   button;
   content;
-  constructor(anchor, button, content, parent) {
+  constructor(anchor, button, content, parent, expandedWhenLinked2) {
     this.anchor = anchor;
     this.button = button;
     this.content = content;
     this.parent = parent;
+    this.expandedWhenLinked = expandedWhenLinked2;
   }
   isExpanded() {
     return this.button.getAttribute("aria-expanded") === "true";
@@ -72,7 +74,7 @@ var DomPage = class {
       }
       const around = element.parentElement?.closest(".ghg-block");
       const parent = around ? byElement.get(around) ?? null : null;
-      const block = new DomBlock(heading.id, button, content, parent);
+      const block = new DomBlock(heading.id, button, content, parent, expandedWhenLinked(element));
       byElement.set(element, block);
       this.found.push(block);
     }
@@ -83,7 +85,7 @@ var DomPage = class {
       if (!link || !button || !content) {
         continue;
       }
-      this.found.push(new DomBlock(link.getAttribute("href") ?? "", button, content, null));
+      this.found.push(new DomBlock(link.getAttribute("href") ?? "", button, content, null, null));
     }
   }
   blocks() {
@@ -138,6 +140,16 @@ var DomPage = class {
     this.document.querySelector(selector)?.addEventListener("click", handler);
   }
 };
+function expandedWhenLinked(element) {
+  switch (element.getAttribute("data-expanded-when-linked")) {
+    case "true":
+      return true;
+    case "false":
+      return false;
+    default:
+      return null;
+  }
+}
 function anchorOf(hash) {
   if (!hash.startsWith("#") || hash.length === 1) {
     return null;
@@ -682,23 +694,14 @@ function startForm(configured, kept) {
   return configured;
 }
 
-// src/services/backgrounds.ts
-function startBackgrounds(backgrounds2, memory2, siteRoot2) {
-  const key = formKey(siteRoot2);
-  const show = () => backgrounds2.setInline(startForm(backgrounds2.writtenInline(), memory2.get(key)));
-  show();
-  backgrounds2.onSwitch((inline) => {
-    backgrounds2.setInline(inline);
-    memory2.set(key, rememberedForm(inline));
-  });
-  backgrounds2.onReturn(show);
-}
-
 // src/policies/block_state.ts
 var EXPANDED2 = "expanded";
 var COLLAPSED2 = "collapsed";
 function memoryKey(pagePath, anchor) {
   return `gherkin-glass:${pagePath}#${anchor}`;
+}
+function inlineMemoryKey(pagePath, anchor) {
+  return `gherkin-glass:inline:${pagePath}#${anchor}`;
 }
 function remembered(expanded) {
   return expanded ? EXPANDED2 : COLLAPSED2;
@@ -712,13 +715,32 @@ function startState(configured, kept) {
   }
   return configured;
 }
+function formStart(written, expandedWhenLinked2, inline) {
+  if (expandedWhenLinked2 === null) {
+    return written;
+  }
+  return !inline && expandedWhenLinked2;
+}
 
 // src/services/collapsing.ts
-function startCollapsing(page2, memory2, pagePath) {
+function startCollapsing(page2, memory2, pagePath, option) {
   const blocks = page2.blocks();
+  const following = blocks.filter((block) => block.expandedWhenLinked !== null);
+  let inline = false;
+  const key = (block) => inline && block.expandedWhenLinked !== null ? inlineMemoryKey(pagePath, block.anchor) : memoryKey(pagePath, block.anchor);
   const set = (block, expanded) => {
     block.setExpanded(expanded);
-    memory2.set(memoryKey(pagePath, block.anchor), remembered(expanded));
+    memory2.set(key(block), remembered(expanded));
+  };
+  const settle = (block) => {
+    const start = formStart(block.isExpanded(), block.expandedWhenLinked, inline);
+    block.setExpanded(startState(start, memory2.get(key(block))));
+  };
+  const showForm = () => {
+    if (option !== null) {
+      inline = startForm(option.backgrounds.writtenInline(), memory2.get(formKey(option.siteRoot)));
+      option.backgrounds.setInline(inline);
+    }
   };
   const reveal = (anchor) => {
     let block = blocks.find((found) => found.anchor === anchor) ?? null;
@@ -729,10 +751,8 @@ function startCollapsing(page2, memory2, pagePath) {
       block = block.parent;
     }
   };
-  for (const block of blocks) {
-    const kept = memory2.get(memoryKey(pagePath, block.anchor));
-    block.setExpanded(startState(block.isExpanded(), kept));
-  }
+  showForm();
+  blocks.forEach(settle);
   const target = page2.target();
   if (target !== null) {
     reveal(target);
@@ -741,6 +761,21 @@ function startCollapsing(page2, memory2, pagePath) {
   page2.onCollapseAll(() => blocks.forEach((block) => set(block, false)));
   page2.onExpandAll(() => blocks.forEach((block) => set(block, true)));
   page2.onFollow(reveal);
+  if (option !== null) {
+    option.backgrounds.onSwitch((switched) => {
+      inline = switched;
+      option.backgrounds.setInline(inline);
+      memory2.set(formKey(option.siteRoot), rememberedForm(inline));
+      following.forEach((block) => set(block, !inline));
+    });
+    option.backgrounds.onReturn(() => {
+      const shown = inline;
+      showForm();
+      if (inline !== shown) {
+        following.forEach(settle);
+      }
+    });
+  }
 }
 
 // src/services/folder_tree.ts
@@ -2731,7 +2766,13 @@ function startThemeSwitching(theme, memory2) {
 // src/main.ts
 var memory = new LocalMemory();
 startThemeSwitching(new DomTheme(document), memory);
-startCollapsing(new DomPage(document), memory, document.location.pathname);
+var backgrounds = DomBackgrounds.of(document);
+startCollapsing(
+  new DomPage(document),
+  memory,
+  document.location.pathname,
+  backgrounds === null ? null : { backgrounds, siteRoot: siteRoot(import.meta.url) }
+);
 var site = new URL("../", import.meta.url);
 var sitePath = site.pathname;
 var page = pageAddress(sitePath, document.location.pathname);
@@ -2743,8 +2784,4 @@ void startFolderTree(new FetchedTree(new URL("tree.json", import.meta.url)), new
 var searchBox = DomSearchBox.find(document);
 if (searchBox !== null) {
   startSearching(searchBox, new FetchedDocuments(new URL("search.json", import.meta.url)), new WindowTimer());
-}
-var backgrounds = DomBackgrounds.of(document);
-if (backgrounds !== null) {
-  startBackgrounds(backgrounds, memory, siteRoot(import.meta.url));
 }

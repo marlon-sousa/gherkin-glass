@@ -50,6 +50,8 @@ pub(crate) fn build_page(
             background,
             HeadingLevel::Two,
             fl!(CATALOGUE, "from-background"),
+            !anchored.scenarios.is_empty()
+                || anchored.rules.iter().any(|rule| !rule.scenarios.is_empty()),
         )
     });
     let scenarios: Vec<_> = anchored
