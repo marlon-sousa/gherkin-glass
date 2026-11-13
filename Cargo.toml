@@ -84,5 +84,6 @@ pkg-url = "{ repo }/releases/download/v{ version }/ghg-v{ version }-{ target }.z
 pkg-fmt = "zip"
 
 [dev-dependencies]
+proptest = { version = "1.12.0", default-features = false, features = ["std"] }
 rstest = { version = "0.28.0", default-features = false }
 yaml-rust2 = "0.13.0"
