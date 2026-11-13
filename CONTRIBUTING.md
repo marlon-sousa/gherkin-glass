@@ -94,9 +94,9 @@ A release starts as a pull request, titled "Release <version>", whose commit `ch
 2. writes the version's section at the top of `CHANGELOG.md`, starting from what `git cliff --unreleased --tag v<version> --strip all` prints, which is the heading `## [<version>]` and the entries of the commits since the last release;
 3. reconciles those entries, since a commit's entries cannot change once it merges: entries a later commit made untrue become one that says what the release holds, entries that say the same thing merge, and a change a user meets that carries no entry gets one.
 
-A pre-release is named with a dot before its number, such as `0.1.0-alpha.1`, `0.1.0-beta.2` or `0.2.0-rc.1`, so that Semantic Versioning compares the number as a number, and `alpha.10` comes after `alpha.9`. Only a version without a pre-release part and a release candidate, `rc.N`, go to crates.io. An alpha, a beta or any other pre-release is released on GitHub only, with its archives, its checksums and its version of the project's site ([#101](https://github.com/marlon-sousa/gherkin-glass/issues/101)). So it cannot be installed with `cargo install gherkin-glass`, nor with `cargo binstall gherkin-glass`, which read crates.io; it is installed from its archives, through the action by naming its version, or built with `cargo install --git` at its tag.
-
 The template is written for git-cliff 2.14.2, which installs with `cargo install git-cliff --version 2.14.2 --locked` or `pip install git-cliff==2.14.2`.
+
+A pre-release is named with a dot before its number, such as `0.1.0-alpha.1`, `0.1.0-beta.2` or `0.2.0-rc.1`, so that Semantic Versioning compares the number as a number, and `alpha.10` comes after `alpha.9`. Only a version without a pre-release part and a release candidate, `rc.N`, go to crates.io. An alpha, a beta or any other pre-release is released on GitHub only, with its archives, its checksums and its version of the project's site ([#101](https://github.com/marlon-sousa/gherkin-glass/issues/101)). So it cannot be installed with `cargo install gherkin-glass`, nor with `cargo binstall gherkin-glass`, which read crates.io; it is installed from its archives, through the action by naming its version, or built with `cargo install --git` at its tag.
 
 ### Tagging it
 
