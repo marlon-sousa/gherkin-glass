@@ -27,13 +27,19 @@ expect v0.1.0-alpha.1 false
 expect v0.1.0-alpha false
 expect v0.1.0-beta.1 false
 expect v1.0.0-beta.2 false
-# Nor is any other pre-release, even one whose name starts with rc.
+# Nor is any other pre-release, even one whose first identifier only starts
+# with rc, or that holds rc later.
 expect v1.0.0-dev.1 false
 expect v1.0.0-rc1 false
 expect v1.0.0-rcx.1 false
 expect v1.0.0-alpha.rc.1 false
-# A pre-release part may follow rc only after a dot.
+# An empty identifier is no pre-release part of a release candidate.
 expect v1.0.0-rc. false
+expect v1.0.0-rc..1 false
+# Build metadata is not a pre-release part.
+expect v1.0.0+build.5 true
+expect v1.0.0-rc.1+build.5 true
+expect v1.0.0-alpha.1+build.5 false
 
 if [ "$failures" -gt 0 ]; then
     echo "$failures cases of crates-io.sh failed." >&2

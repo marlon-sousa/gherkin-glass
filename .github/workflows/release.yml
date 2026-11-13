@@ -5,9 +5,9 @@ name: Release
 # own tests, the five builds and the archives; crates.io waits for all of
 # them, and the GitHub release for crates.io. An alpha, a beta or any other
 # pre-release but a release candidate skips crates.io, and the GitHub release
-# then waits for the rest only. On a pull request that changes
-# how releases are made, the tests, builds and archives run, and nothing is
-# published. rust.yml packs the crate on every pull request.
+# then waits for the rest only. On a pull request that changes how releases
+# are made, the tests, builds and archives run, and nothing is published.
+# rust.yml packs the crate on every pull request.
 
 on:
   push:
@@ -56,7 +56,9 @@ jobs:
       - run: .github/release/gate.sh "$TAG" "$GITHUB_SHA"
       - name: Tell whether the version goes to crates.io
         id: crates-io
-        run: echo "publish=$(.github/release/crates-io.sh "$TAG")" >> "$GITHUB_OUTPUT"
+        run: |
+          publish=$(.github/release/crates-io.sh "$TAG")
+          echo "publish=$publish" >> "$GITHUB_OUTPUT"
 
   ci:
     name: checks
@@ -64,7 +66,7 @@ jobs:
     uses: ./.github/workflows/rust.yml
 
   release-tools:
-    name: release notes and gate, against their fixtures
+    name: release tools, against their fixtures
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -175,14 +177,16 @@ jobs:
 
   release:
     name: GitHub release
-    # Runs once crates.io has published the version or was skipped for it,
-    # and every check and archive passed: a job whose needs failed is skipped
-    # too, so crates.io's being skipped alone does not say the rest passed.
+    # Runs once crates.io has published the version, or was skipped because
+    # the gate said the version does not go there, and every check and
+    # archive passed: a job whose needs failed is skipped too, so crates.io's
+    # being skipped alone does not say the rest passed.
     if: >-
       github.event_name == 'push' && !cancelled()
       && needs.ci.result == 'success' && needs.archives.result == 'success'
-      && (needs.publish.result == 'success' || needs.publish.result == 'skipped')
-    needs: [ci, archives, publish]
+      && (needs.publish.result == 'success'
+        || (needs.publish.result == 'skipped' && needs.gate.outputs.crates-io == 'false'))
+    needs: [gate, ci, archives, publish]
     runs-on: ubuntu-latest
     permissions:
       contents: write

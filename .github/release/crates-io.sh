@@ -8,7 +8,10 @@
 set -euo pipefail
 
 tag=$1
-if [[ $tag =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-rc(\..+)?)?$ ]]; then
+# A pre-release part is identifiers separated by dots, and build metadata,
+# after a +, is not part of it.
+identifiers='[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*'
+if [[ $tag =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-rc(\.$identifiers)?)?(\+$identifiers)?$ ]]; then
     echo true
 else
     echo false
