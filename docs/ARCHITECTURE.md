@@ -20,7 +20,7 @@ Ports and adapters. The pure part of gherkin-glass, which decides what the site 
 - **`assets/`**, the files the binary embeds and writes into every site: the stylesheet, and the script compiled from `script/`.
 - **`messages/`**, the Fluent catalogue of gherkin-glass's own interface text, one folder per language, embedded in the binary, and **`i18n.toml`** at the crate's root, which tells the `fl!` macro where the catalogue is and which language it checks against (see "Interface text").
 - **`action.yml`** and **`action/`**, the GitHub Action that installs `ghg` and builds a site with it ([#17](https://github.com/marlon-sousa/gherkin-glass/issues/17)): a composite action whose steps run the bash scripts in `action/`, each saying its role in a comment on its first lines, as a module does.
-- **`project-site/`**, the project's own site ([#19](https://github.com/marlon-sousa/gherkin-glass/issues/19)): the example suite it shows, with its site as ghg builds it, the list of fixtures it leaves out, and the scripts that gather its input and publish each release to the `gh-pages` branch, which `.github/workflows/site.yml` runs.
+- **`project-site/`**, the project's own site ([#19](https://github.com/marlon-sousa/gherkin-glass/issues/19)): the example suite it shows, with its site as ghg builds it, the list of fixtures it leaves out, and the scripts that gather its input, make its front page from the README and publish each release to the `gh-pages` branch, which `.github/workflows/site.yml` runs.
 - **`.claude/skills/`**, the procedures an agent follows to review a change, write a commit, follow a stack and keep this document true. They add no rule of their own: each points at the rules it follows.
 - **`tests/`**, the crate's integration tests, and `tests/fixtures/`, the feature files every rule of BEHAVIOUR.md is checked against.
 
@@ -174,7 +174,7 @@ No dependency injection framework. Every collaborator is received through a cons
 
 ## Interface text
 
-gherkin-glass's own words, such as "Collapse all", "Skip to content", "From the background:", the tree's labels and every message on the command line, are in English only for now, but are written so that translating them later changes no code ([#4](https://github.com/marlon-sousa/gherkin-glass/issues/4), [#23](https://github.com/marlon-sousa/gherkin-glass/issues/23)).
+gherkin-glass's own words, such as "Collapse all", "Skip to content", "From the background", the tree's labels and every message on the command line, are in English only for now, but are written so that translating them later changes no code ([#4](https://github.com/marlon-sousa/gherkin-glass/issues/4), [#23](https://github.com/marlon-sousa/gherkin-glass/issues/23)).
 
 - **The catalogue is in [Fluent](https://projectfluent.org/)**: one `.ftl` file per language, `messages/en/gherkin-glass.ftl` for English, the only language for now. A translation is a new file beside it, which translators can work on in Weblate, whose documentation lists Fluent as a supported format since its version 4.8.
 - **It is embedded with [`rust-embed`](https://crates.io/crates/rust-embed)**, a struct deriving `RustEmbed` over `messages/`, **loaded with [`i18n-embed`](https://crates.io/crates/i18n-embed)**, with its `fluent-system` feature, **and read with the `fl!` macro of [`i18n-embed-fl`](https://crates.io/crates/i18n-embed-fl)**. All three are MIT; the Rust `age` crate (rage) is built the same way.

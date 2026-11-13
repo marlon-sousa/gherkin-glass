@@ -6,8 +6,10 @@ export interface Block {
   readonly anchor: string;
   /** The block it is inside, if any. */
   readonly parent: Block | null;
-  /** For a background whose steps a scenario starts with, whether it starts expanded with the linked form; null for any other block. */
-  readonly expandedWhenLinked: boolean | null;
+  /** For a background whose state the backgrounds' checkbox sets, whether it starts expanded while the box is unchecked; null for any other block. */
+  readonly expandedWhenUnchecked: boolean | null;
+  /** Whether it is a background inside a scenario, which the checked box expands, rather than one in its own place, which the checked box collapses. */
+  readonly inScenario: boolean;
   isExpanded(): boolean;
   setExpanded(expanded: boolean): void;
 }

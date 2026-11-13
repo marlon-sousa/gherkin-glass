@@ -126,7 +126,7 @@ fn the_settings_choose_which_blocks_start_collapsed() {
         ]
         .map(|heading| heading.collapsed)
     };
-    // Rule 51: the inline form, the default, collapses the backgrounds.
+    // Rule 51: the checked box, the default, collapses the backgrounds in their own place.
     assert_eq!(
         collapsed(&PageOptions::default()),
         [true, false, false, true, false, false]

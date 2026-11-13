@@ -16,7 +16,8 @@ pub(crate) struct PageOptions {
     pub(crate) collapse_scenarios: bool,
     /// Whether the folder tree is shown when a reader first opens the site.
     pub(crate) show_tree: bool,
-    /// Whether the page is written with each scenario showing its backgrounds' steps, or linking to them.
+    /// Whether the page is written with its backgrounds' checkbox checked, so
+    /// that the backgrounds inside each scenario are expanded, or unchecked.
     pub(crate) inline_backgrounds: bool,
     /// In the order of the configuration, the first that matches a tag winning.
     pub(crate) tag_links: Vec<TagLink>,

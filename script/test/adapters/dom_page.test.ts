@@ -38,7 +38,9 @@ test("every block of the page is found, with the blocks it is inside", () => {
   assert.deepEqual(found, [
     ["background", null],
     ["refund-a-card-payment", null],
+    ["refund-a-card-payment_background_1", "refund-a-card-payment"],
     ["refund-count-items", null],
+    ["refund-count-items_background_1", "refund-count-items"],
     ["cheap", "refund-count-items"],
     ["examples", "refund-count-items"],
     ["refund-count-items_scenarios", "refund-count-items"],
@@ -46,20 +48,32 @@ test("every block of the page is found, with the blocks it is inside", () => {
     ["refunds-after-thirty-days", null],
     ["an-old-order", "refunds-after-thirty-days"],
     ["store-credit", "refunds-after-thirty-days"],
+    ["store-credit_background_1", "store-credit"],
+    ["store-credit_background_2", "store-credit"],
     ["refund-again-count-times", "refunds-after-thirty-days"],
+    ["refund-again-count-times_background_1", "refund-again-count-times"],
+    ["refund-again-count-times_background_2", "refund-again-count-times"],
     ["again", "refund-again-count-times"],
     ["refund-again-count-times_scenarios", "refund-again-count-times"],
     ["refund-again-count-times-row-1", "refund-again-count-times_scenarios"],
     ["rule", null],
     ["refund-a-refund", "rule"],
+    ["refund-a-refund_background_1", "refund-a-refund"],
   ]);
-  // Only a background whose steps a scenario starts with says its state with the linked form.
-  const following = page.blocks().filter((block) => block.expandedWhenLinked !== null);
+  // Only a background whose state the checkbox sets says its state while the box is unchecked, and whether it is inside a scenario.
+  const following = page.blocks().filter((block) => block.expandedWhenUnchecked !== null);
   assert.deepEqual(
-    following.map((block) => [block.anchor, block.expandedWhenLinked]),
+    following.map((block) => [block.anchor, block.expandedWhenUnchecked, block.inScenario]),
     [
-      ["background", true],
-      ["an-old-order", true],
+      ["background", true, false],
+      ["refund-a-card-payment_background_1", false, true],
+      ["refund-count-items_background_1", false, true],
+      ["an-old-order", true, false],
+      ["store-credit_background_1", false, true],
+      ["store-credit_background_2", false, true],
+      ["refund-again-count-times_background_1", false, true],
+      ["refund-again-count-times_background_2", false, true],
+      ["refund-a-refund_background_1", false, true],
     ],
   );
 });

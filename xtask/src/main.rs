@@ -63,7 +63,7 @@ fn build() -> Result<(), String> {
         "pages/ghg.toml",
         "pages/collapsed.toml",
         "backgrounds/ghg.toml",
-        "backgrounds/linked.toml",
+        "backgrounds/unchecked.toml",
         "tags/ghg.toml",
         "highlighting/ghg.toml",
         "front-page/ghg.toml",

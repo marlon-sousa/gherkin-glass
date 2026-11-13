@@ -3,7 +3,7 @@
 //!
 //! `cargo run -- build --config tests/fixtures/pages/ghg.toml`, and again with
 //! `collapsed.toml`, writes the expected sites again after a change, and so
-//! do `tests/fixtures/backgrounds/ghg.toml` and `linked.toml` for
+//! do `tests/fixtures/backgrounds/ghg.toml` and `unchecked.toml` for
 //! "Backgrounds".
 
 #![expect(
@@ -111,18 +111,18 @@ fn the_settings_start_rules_scenarios_and_backgrounds_collapsed() {
     assert_same_site("collapsed.toml", "expected-collapsed");
 }
 
-// "Backgrounds", rules 94 to 99: each scenario with its backgrounds' steps, or
-// links to them, and the checkbox on every page with a background, disabled
+// "Backgrounds", rules 94 to 99: each scenario with a block of each background
+// it starts with, and the checkbox on every page with a background, disabled
 // where no scenario starts with one's steps.
 
 #[test]
-fn scenarios_show_their_backgrounds_inline_by_default() {
+fn scenarios_hold_their_backgrounds_expanded_by_default() {
     assert_same_site_of("backgrounds", "ghg.toml", "expected");
 }
 
 #[test]
-fn scenarios_link_to_their_backgrounds_when_inline_backgrounds_is_false() {
-    assert_same_site_of("backgrounds", "linked.toml", "expected-linked");
+fn scenarios_hold_their_backgrounds_collapsed_when_inline_backgrounds_is_false() {
+    assert_same_site_of("backgrounds", "unchecked.toml", "expected-unchecked");
 }
 
 #[test]
@@ -139,32 +139,31 @@ fn every_page_with_a_background_has_the_checkbox() {
     assert!(!has("none.html"));
 }
 
-// Rule 51: a background whose steps a scenario starts with starts collapsed
-// with the inline form, and as `collapse_scenarios` says with the linked one,
-// which the page keeps for the script; any other background is as
-// `collapse_scenarios` says in both.
+// Rule 51: a background whose steps a scenario starts with starts collapsed in
+// its own place while the checkbox is checked, and as `collapse_scenarios` says
+// while it is unchecked, which the page keeps for the script; any other
+// background is as `collapse_scenarios` says either way.
 
 #[rstest]
-#[case::inline_shown("expected", "both.html", Some(true), false)]
-#[case::linked_shown("expected-linked", "both.html", Some(true), true)]
-#[case::inline_without_steps("expected", "no-steps.html", None, true)]
-#[case::linked_without_steps("expected-linked", "no-steps.html", None, true)]
-#[case::inline_without_scenarios("expected", "no-scenarios.html", None, true)]
-#[case::linked_without_scenarios("expected-linked", "no-scenarios.html", None, true)]
-fn the_inline_form_starts_collapsed_the_backgrounds_whose_steps_scenarios_show(
+#[case::checked_held_inside("expected", "both.html", Some(true), false)]
+#[case::unchecked_held_inside("expected-unchecked", "both.html", Some(true), true)]
+#[case::checked_without_steps("expected", "no-steps.html", None, true)]
+#[case::unchecked_without_steps("expected-unchecked", "no-steps.html", None, true)]
+#[case::checked_without_scenarios("expected", "no-scenarios.html", None, true)]
+#[case::unchecked_without_scenarios("expected-unchecked", "no-scenarios.html", None, true)]
+fn the_checked_box_starts_collapsed_the_backgrounds_whose_steps_scenarios_hold(
     #[case] site: &str,
     #[case] page: &str,
-    #[case] expanded_when_linked: Option<bool>,
+    #[case] expanded_when_unchecked: Option<bool>,
     #[case] expanded: bool,
 ) {
-    let html = read(fixtures().join("backgrounds").join(site).join(page)).expect("read");
-    let html = String::from_utf8(html).expect("UTF-8");
+    let html = backgrounds_page(site, page);
     let start = html
         .find("<div class=\"ghg-block ghg-background")
         .expect("one");
     let block = html[start..].lines().take(2).collect::<Vec<_>>().join("\n");
-    let attribute = match expanded_when_linked {
-        Some(state) => format!(" data-expanded-when-linked=\"{state}\""),
+    let attribute = match expanded_when_unchecked {
+        Some(state) => format!(" data-expanded-when-unchecked=\"{state}\""),
         None => String::new(),
     };
     assert_eq!(
@@ -174,6 +173,101 @@ fn the_inline_form_starts_collapsed_the_backgrounds_whose_steps_scenarios_show(
              <h2 id=\"background\"><button type=\"button\" class=\"ghg-toggle\" aria-expanded=\"{expanded}\">Background</button></h2>"
         )
     );
+}
+
+// Rules 51 and 95: each background inside a scenario is a block one level below
+// it, expanded while the checkbox is checked and collapsed while it is not.
+
+#[rstest]
+#[case::checked_feature_s_background(
+    "expected",
+    true,
+    "outside-any-rule_background_1",
+    3,
+    "From the background"
+)]
+#[case::checked_rule_s_background(
+    "expected",
+    true,
+    "move-amount_background_2",
+    4,
+    "From the rule&#39;s background"
+)]
+#[case::unchecked_feature_s_background(
+    "expected-unchecked",
+    false,
+    "outside-any-rule_background_1",
+    3,
+    "From the background"
+)]
+#[case::unchecked_rule_s_background(
+    "expected-unchecked",
+    false,
+    "move-amount_background_2",
+    4,
+    "From the rule&#39;s background"
+)]
+fn the_backgrounds_inside_a_scenario_follow_the_box(
+    #[case] site: &str,
+    #[case] expanded: bool,
+    #[case] id: &str,
+    #[case] level: u8,
+    #[case] heading: &str,
+) {
+    let html = backgrounds_page(site, "both.html");
+    let hidden = if expanded { "" } else { " hidden" };
+    let block = format!(
+        "<div class=\"ghg-block ghg-background-in-scenario\" data-expanded-when-unchecked=\"false\">\n\
+         <h{level} id=\"{id}\"><button type=\"button\" class=\"ghg-toggle\" aria-expanded=\"{expanded}\">{heading}</button></h{level}>\n\
+         <div class=\"ghg-content\"{hidden}>"
+    );
+    assert!(html.contains(&block), "{block}");
+}
+
+// Rule 95: after the backgrounds a scenario holds, its own steps are headed
+// "From the scenario", at the level of those backgrounds, in English whatever
+// the file's language.
+
+#[rstest]
+#[case::outside_any_rule(
+    "both.html",
+    3,
+    "When </span><span class=\"ghg-number\">10</span> is moved"
+)]
+#[case::in_an_outline_under_a_rule("both.html", 4, "When </span><span class=\"ghg-placeholder\">")]
+#[case::under_a_rule("both.html", 4, "Then </span>nothing changes")]
+#[case::in_portuguese("regra.html", 4, "Então </span>")]
+fn a_scenario_s_own_steps_are_headed_after_its_backgrounds(
+    #[case] page: &str,
+    #[case] level: u8,
+    #[case] step: &str,
+) {
+    let headed = format!(
+        "<h{level} class=\"ghg-steps-heading\">From the scenario</h{level}>\n\
+         <ol class=\"ghg-steps\">\n\
+         <li><span class=\"ghg-keyword\">{step}"
+    );
+    assert!(
+        backgrounds_page("expected", page).contains(&headed),
+        "{headed}"
+    );
+}
+
+// Rule 95: a scenario with no steps of its own has no heading for them.
+
+#[test]
+fn a_scenario_without_steps_of_its_own_has_no_heading_for_them() {
+    let html = backgrounds_page("expected", "both.html");
+    let start = html
+        .find("<h3 id=\"nothing-of-its-own\">")
+        .expect("the scenario");
+    assert!(!html[start..].contains("ghg-steps-heading"));
+}
+
+/// The page `page` of the backgrounds fixture's expected site `site`.
+fn backgrounds_page(site: &str, page: &str) -> String {
+    let html = read(fixtures().join("backgrounds").join(site).join(page)).expect("read");
+    String::from_utf8(html).expect("UTF-8")
 }
 
 #[test]

@@ -106,7 +106,7 @@
 <button type="button" class="ghg-expand-all">Expand all</button>
 <label class="ghg-option"><input type="checkbox" class="ghg-inline-backgrounds" autocomplete="off" checked> Show backgrounds inside each scenario</label>
 </div>
-<div class="ghg-block ghg-background" data-expanded-when-linked="true">
+<div class="ghg-block ghg-background" data-expanded-when-unchecked="true">
 <h2 id="background"><button type="button" class="ghg-toggle" aria-expanded="false">Background</button></h2>
 <div class="ghg-content" hidden>
 <ol class="ghg-steps">
@@ -127,9 +127,10 @@
 <div class="ghg-block ghg-scenario">
 <h2 id="searching-by-title"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: Searching by title</button></h2>
 <div class="ghg-content">
-<div class="ghg-from-background">
-<p id="searching-by-title_background_1">From the background:<span class="ghg-linked" hidden> <a href="#background">Background</a></span></p>
-<ol class="ghg-steps ghg-inline" aria-labelledby="searching-by-title_background_1">
+<div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
+<h3 id="searching-by-title_background_1"><button type="button" class="ghg-toggle" aria-expanded="true">From the background</button></h3>
+<div class="ghg-content">
+<ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span>the catalogue holds these books:
 <table class="ghg-table">
 <thead>
@@ -143,6 +144,8 @@
 </table></li>
 </ol>
 </div>
+</div>
+<h3 class="ghg-steps-heading">From the scenario</h3>
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">When </span>someone searches for <span class="ghg-parameter">&#34;hobbit&#34;</span></li>
 <li><span class="ghg-keyword">Then </span>the results are:
@@ -160,9 +163,10 @@
 <div class="ghg-block ghg-scenario">
 <h2 id="searching-by-author"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: Searching by author</button></h2>
 <div class="ghg-content">
-<div class="ghg-from-background">
-<p id="searching-by-author_background_1">From the background:<span class="ghg-linked" hidden> <a href="#background">Background</a></span></p>
-<ol class="ghg-steps ghg-inline" aria-labelledby="searching-by-author_background_1">
+<div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
+<h3 id="searching-by-author_background_1"><button type="button" class="ghg-toggle" aria-expanded="true">From the background</button></h3>
+<div class="ghg-content">
+<ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span>the catalogue holds these books:
 <table class="ghg-table">
 <thead>
@@ -176,6 +180,8 @@
 </table></li>
 </ol>
 </div>
+</div>
+<h3 class="ghg-steps-heading">From the scenario</h3>
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">When </span>someone searches for <span class="ghg-parameter">&#34;Eliot&#34;</span></li>
 <li><span class="ghg-keyword">Then </span>the results are:
@@ -193,9 +199,10 @@
 <div class="ghg-block ghg-scenario">
 <h2 id="a-search-that-finds-nothing"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: A search that finds nothing</button></h2>
 <div class="ghg-content">
-<div class="ghg-from-background">
-<p id="a-search-that-finds-nothing_background_1">From the background:<span class="ghg-linked" hidden> <a href="#background">Background</a></span></p>
-<ol class="ghg-steps ghg-inline" aria-labelledby="a-search-that-finds-nothing_background_1">
+<div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
+<h3 id="a-search-that-finds-nothing_background_1"><button type="button" class="ghg-toggle" aria-expanded="true">From the background</button></h3>
+<div class="ghg-content">
+<ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span>the catalogue holds these books:
 <table class="ghg-table">
 <thead>
@@ -209,6 +216,8 @@
 </table></li>
 </ol>
 </div>
+</div>
+<h3 class="ghg-steps-heading">From the scenario</h3>
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">When </span>someone searches for <span class="ghg-parameter">&#34;dragons&#34;</span></li>
 <li><span class="ghg-keyword">Then </span>the results are empty</li>

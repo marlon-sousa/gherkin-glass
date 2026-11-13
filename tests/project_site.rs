@@ -12,6 +12,7 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 
 use gherkin::{Feature, GherkinEnv, Scenario, Step};
+use rstest::rstest;
 use serde_json::Value;
 
 fn repository() -> &'static Path {
@@ -613,16 +614,23 @@ fn a_release_publishes_what_ghg_builds_and_keeps_the_earlier_ones() {
     }
 }
 
+#[cfg(unix)]
 #[test]
 fn every_release_s_site_opens_on_the_readme_of_its_tag() {
-    // Rule 192: the README holds the marker and builds as the versions page's template, and
-    // the release passes it to the build.
-    let site = scratch("readme-front-page").join("site");
+    // Rules 192 and 193: the front page made from the README holds the marker, after the
+    // part only the site shows, and without the part only GitHub shows, and builds as the
+    // versions page's template; the release makes it and passes it to the build.
+    let scratch = scratch("readme-front-page");
+    let front_page = scratch.join("front-page.md");
+    let made = front_page_of(&repository().join("README.md"), &front_page);
+    assert_eq!(text(&made.stderr), "");
+    assert!(made.status.success());
+    let site = scratch.join("site");
     let output = Command::new(env!("CARGO_BIN_EXE_ghg"))
         .args(["build", "--title", "gherkin-glass examples", "--input"])
         .arg(repository().join("project-site/features"))
         .arg("--front-page")
-        .arg(repository().join("README.md"))
+        .arg(&front_page)
         .args(["--version-name", "v0.1.0", "--output"])
         .arg(&site)
         .output()
@@ -631,12 +639,109 @@ fn every_release_s_site_opens_on_the_readme_of_its_tag() {
     assert!(output.status.success());
     let page = read_to_string(site.join("index.html")).expect("the versions page is read");
     assert!(page.contains("<title>gherkin-glass</title>"), "{page}");
+    assert!(
+        page.contains(
+            "<a href=\"https://github.com/marlon-sousa/gherkin-glass\">its repository on GitHub</a>"
+        ),
+        "{page}"
+    );
     assert!(page.contains("<h2>Status</h2>\n<p>"), "{page}");
+    assert!(
+        page.contains("<h2>The example suite</h2>\n<p>Each version below"),
+        "{page}"
+    );
     assert!(page.contains("<h3 id=\"releases\">Releases</h3>"), "{page}");
+    assert!(!page.contains("Contributing"), "{page}");
     let workflow = read_to_string(repository().join(".github/workflows/site.yml"))
         .expect("the site's workflow is read");
     assert!(
-        workflow.contains("\n          front-page: README.md\n"),
+        workflow.contains(
+            "\n        run: project-site/front-page.sh README.md \"$RUNNER_TEMP/front-page.md\"\n"
+        ),
         "{workflow}"
     );
+    assert!(
+        workflow.contains("\n          front-page: ${{ runner.temp }}/front-page.md\n"),
+        "{workflow}"
+    );
+}
+
+/// Rule 193: each part marked for one place is kept or left out with its marks, and every
+/// other line is kept as it is.
+#[cfg(unix)]
+#[test]
+fn the_front_page_keeps_the_site_s_parts_and_leaves_out_github_s() {
+    let scratch = scratch("front-page-marks");
+    let readme = scratch.join("README.md");
+    write(
+        &readme,
+        "# Title\n\n<!-- site-only\nOn the site.\n-->\n\
+         <!-- github-only -->\nOn GitHub.\n<!-- end github-only -->\n\
+         <!-- ghg:contents -->\nEverywhere.\n",
+    )
+    .unwrap();
+    let front_page = scratch.join("front-page.md");
+    let output = front_page_of(&readme, &front_page);
+    assert_eq!(text(&output.stderr), "");
+    assert!(output.status.success());
+    assert_eq!(
+        read_to_string(&front_page).unwrap(),
+        "# Title\n\nOn the site.\n<!-- ghg:contents -->\nEverywhere.\n"
+    );
+}
+
+/// Rule 193: a mark out of place stops the script, naming its line, and nothing is written.
+#[cfg(unix)]
+#[rstest]
+#[case::nested(
+    "nested",
+    "<!-- site-only\n<!-- github-only -->\n",
+    "2: a GitHub-only part opens inside another part."
+)]
+#[case::nested_site(
+    "nested-site",
+    "<!-- github-only -->\n<!-- site-only\n",
+    "2: a site-only part opens inside another part."
+)]
+#[case::never_closed(
+    "never-closed",
+    "# Title\n<!-- site-only\nText.\n",
+    "2: this part is never closed."
+)]
+#[case::closing_alone("closing-alone", "# Title\n-->\n", "2: --> closes no site-only part.")]
+#[case::closing_the_other(
+    "closing-the-other",
+    "<!-- github-only -->\n-->\n",
+    "2: --> closes no site-only part."
+)]
+#[case::end_alone(
+    "end-alone",
+    "<!-- end github-only -->\n",
+    "1: <!-- end github-only --> closes no GitHub-only part."
+)]
+fn a_mark_out_of_place_stops_the_front_page(
+    #[case] name: &str,
+    #[case] readme_text: &str,
+    #[case] message: &str,
+) {
+    let scratch = scratch(&format!("front-page-{name}"));
+    let readme = scratch.join("README.md");
+    write(&readme, readme_text).unwrap();
+    let front_page = scratch.join("front-page.md");
+    let output = front_page_of(&readme, &front_page);
+    assert!(!output.status.success());
+    assert_eq!(
+        text(&output.stderr),
+        format!("{}:{message}\n", readme.display())
+    );
+    assert!(!front_page.exists());
+}
+
+/// `project-site/front-page.sh`, writing the front page made from `readme` into `front_page`.
+fn front_page_of(readme: &Path, front_page: &Path) -> Output {
+    Command::new(repository().join("project-site/front-page.sh"))
+        .arg(readme)
+        .arg(front_page)
+        .output()
+        .expect("the script runs")
 }

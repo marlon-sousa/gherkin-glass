@@ -38,6 +38,8 @@ jobs:
         run: project-site/publish.sh open "$RUNNER_TEMP/pages" "$RUNNER_TEMP/site"
       - name: Gather the example suite and the fixtures
         run: project-site/assemble-input.sh "$RUNNER_TEMP/input"
+      - name: Write the front page from the README
+        run: project-site/front-page.sh README.md "$RUNNER_TEMP/front-page.md"
       - name: Build the site with the project's own action
         uses: ./
         with:
@@ -47,7 +49,7 @@ jobs:
           input: ${{ runner.temp }}/input
           output: ${{ runner.temp }}/site
           version-name: ${{ inputs.version }}
-          front-page: README.md
+          front-page: ${{ runner.temp }}/front-page.md
       - name: Publish the version's folder and the versions page
         run: project-site/publish.sh publish "$RUNNER_TEMP/pages" "$RUNNER_TEMP/site" "$VERSION"
         env:

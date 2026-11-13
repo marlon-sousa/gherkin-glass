@@ -26,3 +26,5 @@ Feature: Transfers
   Rule: No background of its own
     Scenario: Only the feature's background
       Then nothing changes
+
+    Scenario: Nothing of its own

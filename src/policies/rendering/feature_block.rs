@@ -1,21 +1,23 @@
-//! Policy: the blocks of a feature's page, each kind of block node rendered through the rendering trait into the one template of a block, with the backgrounds a scenario starts with, its steps and the blocks below it.
+//! Policy: the blocks of a feature's page, each kind of block node rendered through the rendering trait into the one template of a block, with the backgrounds a scenario starts with, each a block of its own, its steps and the blocks below it.
 
 use askama::Template;
 
-use super::from_background::FromBackground;
 use super::node_rendering::{NodeOf, Render, pieces, rendered};
-use super::steps::{StepList, steps_of};
+use super::steps::{step_list, steps_of};
 use crate::entities::{
-    BackgroundBlock, BlockHeading, ExamplesBlock, HeadingLevel, HeadingPart, Paragraph, RuleBlock,
-    ScenarioBlock, SiteTreeNode, TableView, TagView,
+    BackgroundBlock, BackgroundsOption, BlockHeading, ExamplesBlock, HeadingLevel, HeadingPart,
+    Paragraph, RuleBlock, ScenarioBlock, SiteTreeNode, TableView, TagView,
 };
 
 #[derive(Template)]
 #[template(path = "feature_block.html")]
 struct BlockTemplate<'a> {
     block: BlockView<'a>,
-    /// The backgrounds a scenario starts with, already rendered.
+    /// The blocks of the backgrounds a scenario starts with, already rendered.
     backgrounds: Vec<String>,
+    /// The heading of a scenario's own steps, after the backgrounds it holds;
+    /// `None` when it holds none or has no steps of its own.
+    steps_heading: Option<StepsHeading<'a>>,
     /// The block's own steps, already rendered; empty for a block with none.
     steps: String,
     /// The blocks below it, already rendered.
@@ -30,15 +32,25 @@ struct BlockView<'a> {
     anchor: &'a str,
     heading_parts: &'a [HeadingPart],
     collapsed: bool,
-    collapsed_when_linked: Option<bool>,
+    /// For a background whose state the page's checkbox sets, whether it is
+    /// collapsed while the box is unchecked; `None` for any other block.
+    collapsed_when_unchecked: Option<bool>,
     tags: &'a [TagView],
     description: &'a Option<Paragraph>,
     table: &'a Option<TableView>,
 }
 
+/// A heading with no button.
+struct StepsHeading<'a> {
+    level: HeadingLevel,
+    text: &'a str,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum BlockKind {
     Background,
+    /// A background inside a scenario that starts with its steps.
+    BackgroundInScenario,
     Rule,
     Scenario,
     Examples,
@@ -63,7 +75,7 @@ impl Render for NodeOf<'_, BackgroundBlock> {
     fn render(&self) -> String {
         let view = BlockView {
             description: &self.value.description,
-            collapsed_when_linked: self.value.collapsed_when_linked,
+            collapsed_when_unchecked: self.value.collapsed_when_unchecked,
             ..BlockView::of(BlockKind::Background, &self.value.heading)
         };
         block(view, self.node)
@@ -121,9 +133,16 @@ impl Render for ExampleScenarioNode<'_> {
 
 /// The block `view` of `node`, with its backgrounds, its steps and the blocks below it.
 fn block(view: BlockView<'_>, node: SiteTreeNode<'_>) -> String {
+    let option = node
+        .feature_page()
+        .and_then(|feature| feature.page().backgrounds_option.as_ref());
+    let backgrounds = backgrounds_in_scenario(node, &view, option.is_some_and(|o| o.inline));
+    let steps = own_steps(node);
+    let steps_heading = steps_heading(option, view.level.below(), &backgrounds, &steps);
     rendered(&BlockTemplate {
-        backgrounds: from_backgrounds(node, view.anchor),
-        steps: own_steps(node),
+        backgrounds,
+        steps_heading,
+        steps,
         blocks: pieces(node.children().filter(is_block)).join("\n"),
         block: view,
     })
@@ -133,25 +152,63 @@ fn is_block(node: &SiteTreeNode<'_>) -> bool {
     !node.is_step()
 }
 
-/// The backgrounds the scenario `node`, at `anchor`, starts with; none for
-/// any other block.
-fn from_backgrounds(node: SiteTreeNode<'_>, anchor: &str) -> Vec<String> {
-    let inline = node
-        .feature_page()
-        .and_then(|feature| feature.page().backgrounds_option.as_ref())
-        .is_some_and(|option| option.inline);
+/// The blocks of the backgrounds the scenario `node`, headed by `scenario`,
+/// starts with, each one level below it and expanded while the page's
+/// checkbox is `checked`; none for any other block.
+fn backgrounds_in_scenario(
+    node: SiteTreeNode<'_>,
+    scenario: &BlockView<'_>,
+    checked: bool,
+) -> Vec<String> {
     node.backgrounds()
         .into_iter()
         .zip(1..)
-        .map(|((background, node), place)| FromBackground {
-            background,
-            node,
-            scenario: anchor,
-            place,
-            inline,
+        .map(|((background, background_node), place)| {
+            background_in_scenario(background, background_node, scenario, place, checked)
         })
-        .map(|from| from.render())
         .collect()
+}
+
+/// The block of `background`, the `place`th the scenario headed by `scenario`
+/// starts with, counted from 1, holding the steps below `background_node`;
+/// it is expanded while the page's checkbox is `checked`.
+fn background_in_scenario(
+    background: &BackgroundBlock,
+    background_node: SiteTreeNode<'_>,
+    scenario: &BlockView<'_>,
+    place: usize,
+    checked: bool,
+) -> String {
+    let heading = BlockHeading {
+        level: scenario.level.below(),
+        anchor: format!("{}_background_{place}", scenario.anchor),
+        parts: vec![HeadingPart {
+            text: background.heading_in_scenario.clone(),
+            isolated: false,
+        }],
+        collapsed: !checked,
+    };
+    let view = BlockView {
+        collapsed_when_unchecked: Some(true),
+        ..BlockView::of(BlockKind::BackgroundInScenario, &heading)
+    };
+    block(view, background_node)
+}
+
+/// The heading, at `level`, of a scenario's `steps` after its `backgrounds`,
+/// in the words of the page's `option`; `None` when the page has no
+/// background, or either is empty.
+fn steps_heading<'a>(
+    option: Option<&'a BackgroundsOption>,
+    level: HeadingLevel,
+    backgrounds: &[String],
+    steps: &str,
+) -> Option<StepsHeading<'a>> {
+    let option = option?;
+    (!backgrounds.is_empty() && !steps.is_empty()).then(|| StepsHeading {
+        level,
+        text: &option.steps_heading,
+    })
 }
 
 /// The steps directly below `node`, as one list; empty when it has none.
@@ -160,12 +217,7 @@ fn own_steps(node: SiteTreeNode<'_>) -> String {
     if steps.is_empty() {
         return String::new();
     }
-    StepList {
-        steps,
-        introduction: None,
-        shown: true,
-    }
-    .render()
+    step_list(steps)
 }
 
 impl<'a> BlockView<'a> {
@@ -177,7 +229,7 @@ impl<'a> BlockView<'a> {
             anchor: &heading.anchor,
             heading_parts: &heading.parts,
             collapsed: heading.collapsed,
-            collapsed_when_linked: None,
+            collapsed_when_unchecked: None,
             tags: &[],
             description: &None,
             table: &None,
@@ -190,6 +242,7 @@ impl BlockKind {
     fn class(self) -> &'static str {
         match self {
             BlockKind::Background => "ghg-background",
+            BlockKind::BackgroundInScenario => "ghg-background-in-scenario",
             BlockKind::Rule => "ghg-rule",
             BlockKind::Scenario => "ghg-scenario",
             BlockKind::Examples => "ghg-examples",

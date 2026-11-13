@@ -1,4 +1,4 @@
-<div class="ghg-block {{ block.kind.class() }}"{% if let Some(collapsed) = block.collapsed_when_linked %} data-expanded-when-linked="{{ !collapsed }}"{% endif %}>
+<div class="ghg-block {{ block.kind.class() }}"{% if let Some(collapsed) = block.collapsed_when_unchecked %} data-expanded-when-unchecked="{{ !collapsed }}"{% endif %}>
 <h{{ block.level.number() }} id="{{ block.anchor }}"><button type="button" class="ghg-toggle" aria-expanded="{{ !block.collapsed }}">{% for part in block.heading_parts %}{% if part.isolated %}<bdi>{{ part.text }}</bdi>{% else %}{{ part.text }}{% endif %}{% endfor %}</button></h{{ block.level.number() }}>
 <div class="ghg-content"{% if block.collapsed %} hidden{% endif %}>
 {%- if !block.tags.is_empty() %}
@@ -10,6 +10,9 @@
 {%- for from in backgrounds %}
 {{ from|safe }}
 {%- endfor %}
+{%- if let Some(heading) = steps_heading %}
+<h{{ heading.level.number() }} class="ghg-steps-heading">{{ heading.text }}</h{{ heading.level.number() }}>
+{%- endif %}
 {%- if !steps.is_empty() %}
 {{ steps|safe }}
 {%- endif %}

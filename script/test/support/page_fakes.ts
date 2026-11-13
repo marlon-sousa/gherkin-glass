@@ -7,14 +7,16 @@ import type { Block, Page } from "../../src/ports/page.ts";
 export class FakeBlock implements Block {
   readonly anchor: string;
   readonly parent: Block | null;
-  readonly expandedWhenLinked: boolean | null;
+  readonly expandedWhenUnchecked: boolean | null;
+  readonly inScenario: boolean;
   private expanded: boolean;
 
-  constructor(anchor: string, parent: Block | null, expanded = true, expandedWhenLinked: boolean | null = null) {
+  constructor(anchor: string, parent: Block | null, expanded = true, expandedWhenUnchecked: boolean | null = null, inScenario = false) {
     this.anchor = anchor;
     this.parent = parent;
     this.expanded = expanded;
-    this.expandedWhenLinked = expandedWhenLinked;
+    this.expandedWhenUnchecked = expandedWhenUnchecked;
+    this.inScenario = inScenario;
   }
 
   isExpanded(): boolean {

@@ -1,4 +1,4 @@
-// Adapter: the backgrounds port over the page's markup, as feature_block.html, from_background.html and feature_page.html in src/policies/rendering write it.
+// Adapter: the backgrounds port over the page's checkbox, as feature_page.html in src/policies/rendering writes it.
 
 import type { Backgrounds } from "../ports/backgrounds.ts";
 
@@ -24,12 +24,6 @@ export class DomBackgrounds implements Backgrounds {
 
   setInline(inline: boolean): void {
     this.checkbox.checked = inline;
-    for (const steps of this.document.querySelectorAll<HTMLElement>(".ghg-from-background > .ghg-inline")) {
-      steps.hidden = !inline;
-    }
-    for (const link of this.document.querySelectorAll<HTMLElement>(".ghg-from-background .ghg-linked")) {
-      link.hidden = inline;
-    }
   }
 
   onSwitch(handler: (inline: boolean) => void): void {

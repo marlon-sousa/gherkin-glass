@@ -26,14 +26,14 @@ pub(crate) struct HeadingPart {
 pub(crate) struct BackgroundBlock {
     pub(crate) heading: BlockHeading,
     pub(crate) description: Option<Paragraph>,
-    /// The words that introduce its steps in a scenario that starts with them:
-    /// "From the background:" or "From the rule's background:".
-    pub(crate) introduction: String,
+    /// The heading of the block that holds its steps in a scenario that starts
+    /// with them: "From the background" or "From the rule's background".
+    pub(crate) heading_in_scenario: String,
     /// For a background whose steps a scenario starts with, whether it starts
-    /// collapsed while the page shows the linked form; the inline form starts
-    /// it collapsed. `None` for any other background, whose state the form
-    /// does not change.
-    pub(crate) collapsed_when_linked: Option<bool>,
+    /// collapsed in its own place while the page's checkbox is unchecked; the
+    /// checked box starts it collapsed. `None` for any other background, whose
+    /// state the checkbox does not change.
+    pub(crate) collapsed_when_unchecked: Option<bool>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

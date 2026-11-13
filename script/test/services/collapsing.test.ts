@@ -85,15 +85,21 @@ test("a memory that keeps nothing leaves the page working", () => {
   assert.equal(page.found[0]!.isExpanded(), false);
 });
 
-// The backgrounds' forms, rules 97 to 99, and the state of the backgrounds whose steps a scenario starts with, rules 51, 54 and 98.
+// The backgrounds' checkbox, rules 97 to 99, and the state of the backgrounds it sets, in their own place and inside the scenarios, rules 51, 54 and 98.
 
 const SITE = "/site/";
 const FORM = "gherkin-glass:/site/:backgrounds";
 const inlineKey = (anchor: string): string => `gherkin-glass:inline:${PATH}#${anchor}`;
 
-/** A feature's background whose steps its scenario starts with, collapsed as a page written inline writes it, and a rule's background no scenario starts with. */
+/** A feature's background whose steps its scenario starts with, collapsed as a page written with the box checked writes it, its scenario, a rule's background no scenario starts with, and the background inside the scenario, expanded as that page writes it. */
 function withBackgrounds(written: boolean): FakeBlock[] {
-  return [new FakeBlock("background", null, !written, true), new FakeBlock("scenario", null), new FakeBlock("rule-background", null)];
+  const scenario = new FakeBlock("scenario", null);
+  return [
+    new FakeBlock("background", null, !written, true),
+    scenario,
+    new FakeBlock("rule-background", null),
+    new FakeBlock("scenario_background_1", scenario, written, false, true),
+  ];
 }
 
 function startForms(written: boolean, memory: FakeMemory | typeof FORGETFUL = new FakeMemory()): [FakePage, FakeBackgrounds] {
@@ -103,45 +109,47 @@ function startForms(written: boolean, memory: FakeMemory | typeof FORGETFUL = ne
   return [page, backgrounds];
 }
 
-test("the page keeps the form it was written in when nothing is remembered, with the backgrounds in its state", () => {
+test("the page keeps the box as it was written when nothing is remembered, with the backgrounds in its states", () => {
   const [inline, inlineForm] = startForms(true);
   assert.equal(inlineForm.inline, true);
-  assert.deepEqual(states(inline), [false, true, true]);
+  assert.deepEqual(states(inline), [false, true, true, true]);
   const [linked, linkedForm] = startForms(false);
   assert.equal(linkedForm.inline, false);
-  assert.deepEqual(states(linked), [true, true, true]);
+  assert.deepEqual(states(linked), [true, true, true, false]);
 });
 
-test("a remembered form wins over the form the page was written in, and brings its backgrounds' state", () => {
+test("a remembered state of the box wins over the one the page was written with, and brings its backgrounds' states", () => {
   const linkedMemory = new FakeMemory();
   linkedMemory.set(FORM, "linked");
   const [linked, linkedForm] = startForms(true, linkedMemory);
   assert.equal(linkedForm.inline, false);
-  assert.deepEqual(states(linked), [true, true, true]);
+  assert.deepEqual(states(linked), [true, true, true, false]);
   const inlineMemory = new FakeMemory();
   inlineMemory.set(FORM, "inline");
   const [inline, inlineForm] = startForms(false, inlineMemory);
   assert.equal(inlineForm.inline, true);
-  assert.deepEqual(states(inline), [false, true, true]);
+  assert.deepEqual(states(inline), [false, true, true, true]);
 });
 
-test("switching shows the other form for the site, and collapses or expands every background whose steps it moves", () => {
+test("switching is remembered for the site, and expands the backgrounds on one side and collapses those on the other", () => {
   const memory = new FakeMemory();
   const [page, backgrounds] = startForms(true, memory);
   page.toggle(page.found[2]!);
   backgrounds.switched(false);
   assert.equal(backgrounds.inline, false);
   assert.equal(memory.get(FORM), "linked");
-  assert.deepEqual(states(page), [true, true, false]);
+  assert.deepEqual(states(page), [true, true, false, false]);
   assert.equal(memory.get(key("background")), "expanded");
+  assert.equal(memory.get(key("scenario_background_1")), "collapsed");
   backgrounds.switched(true);
   assert.equal(backgrounds.inline, true);
   assert.equal(memory.get(FORM), "inline");
-  assert.deepEqual(states(page), [false, true, false]);
+  assert.deepEqual(states(page), [false, true, false, true]);
   assert.equal(memory.get(inlineKey("background")), "collapsed");
+  assert.equal(memory.get(inlineKey("scenario_background_1")), "expanded");
 });
 
-test("a background's state is remembered for each form apart", () => {
+test("a background's state is remembered for each state of the box apart", () => {
   const memory = new FakeMemory();
   const [page, backgrounds] = startForms(true, memory);
   const background = page.found[0]!;
@@ -161,14 +169,14 @@ test("a background's state is remembered for each form apart", () => {
   assert.equal(inline.found[0]!.isExpanded(), true);
 });
 
-test("a page shown again as it was left takes the form another page chose meanwhile, with its backgrounds' state", () => {
+test("a page shown again as it was left takes the box's state another page chose meanwhile, with its backgrounds' states", () => {
   const memory = new FakeMemory();
   const [page, backgrounds] = startForms(true, memory);
   backgrounds.switched(false);
   memory.set(FORM, "inline");
   backgrounds.returned();
   assert.equal(backgrounds.inline, true);
-  assert.deepEqual(states(page), [false, true, true]);
+  assert.deepEqual(states(page), [false, true, true, true]);
 });
 
 test("a memory that keeps nothing leaves the page as it was written, and a switch stands when the page is shown again", () => {
@@ -176,15 +184,15 @@ test("a memory that keeps nothing leaves the page as it was written, and a switc
   assert.equal(backgrounds.inline, false);
   backgrounds.switched(true);
   assert.equal(backgrounds.inline, true);
-  assert.deepEqual(states(page), [false, true, true]);
+  assert.deepEqual(states(page), [false, true, true, true]);
   backgrounds.returned();
   assert.equal(backgrounds.inline, true);
-  assert.deepEqual(states(page), [false, true, true]);
+  assert.deepEqual(states(page), [false, true, true, true]);
 });
 
-test("a page shown again in the form it was left in keeps the backgrounds the reader changed", () => {
+test("a page shown again with the box as it was left keeps the backgrounds the reader changed", () => {
   const [page, backgrounds] = startForms(true, FORGETFUL);
   page.toggle(page.found[0]!);
   backgrounds.returned();
-  assert.deepEqual(states(page), [true, true, true]);
+  assert.deepEqual(states(page), [true, true, true, true]);
 });
