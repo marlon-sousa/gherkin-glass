@@ -27,7 +27,7 @@ Feature: Borrowing books
 
   @outline
   Scenario Outline: How long a loan lasts
-    Given the book "<title>" is on the shelf
+    Given "<title>" is on the shelf
     When "Ana" borrows "<title>"
     Then "<title>" is due back in <days> days
 
