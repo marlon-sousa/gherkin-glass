@@ -1,10 +1,11 @@
-//! Entity: what every page has around its content, a feature's or a folder's: the skip link, the folder tree's checkbox and the tree's landmark, the Theme control, the search box, the words every breadcrumb has, and the themes' colours.
+//! Entity: what every page has around its content, a feature's or a folder's: the notice shown when it is opened from disk, the skip link, the folder tree's checkbox and the tree's landmark, the Theme control, the search box, the words every breadcrumb has, and the themes' colours.
 
 use crate::entities::{Accents, BreadcrumbWords, SearchWords};
 
 /// Every `String` is text, escaped when it is rendered.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct PageFrame {
+    pub(crate) opened_from_disk: String,
     pub(crate) skip_link: String,
     pub(crate) show_tree: String,
     /// The name of the tree's landmark, and of the tree the script builds in it.

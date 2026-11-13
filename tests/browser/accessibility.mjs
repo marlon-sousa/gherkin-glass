@@ -343,6 +343,10 @@ export async function checkSite(browser, folder) {
         }
         for (const line of await violations(page)) problems.push(`${path}, ${name}: ${line}`);
         if (name === "light") {
+          // docs/BEHAVIOUR.md, rule 182: a served page never shows the notice.
+          if (await page.evaluate(() => !document.getElementById("ghg_from_disk")?.hidden)) {
+            problems.push(`${path}: the notice for a page opened from disk is not hidden`);
+          }
           for (const line of await keyboardProblems(page)) problems.push(`${path}: ${line}`);
           const found = await buttonProblems(page);
           if (found !== null) pressed += 1;

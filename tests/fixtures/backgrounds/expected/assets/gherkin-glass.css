@@ -220,6 +220,13 @@ figcaption {
   top: 0.5rem;
 }
 
+.ghg-from-disk {
+  margin: 0;
+  padding: 0.5rem 1rem;
+  border-bottom: 2px solid var(--ghg-border);
+  background: var(--ghg-surface);
+}
+
 .ghg-options {
   padding: 0.5rem 1rem 0;
 }

@@ -11,6 +11,7 @@ use search_wording::search_words;
 
 pub(crate) fn page_frame(options: &PageOptions) -> PageFrame {
     PageFrame {
+        opened_from_disk: fl!(CATALOGUE, "opened-from-disk"),
         skip_link: fl!(CATALOGUE, "skip-to-content"),
         show_tree: fl!(CATALOGUE, "show-folder-tree"),
         tree: fl!(CATALOGUE, "folder-tree"),
@@ -41,5 +42,15 @@ mod tests {
         };
         assert!(!page_frame(&hidden).tree_shown);
         assert_eq!(page_frame(&hidden).skip_link, "Skip to content");
+    }
+
+    #[test]
+    fn the_notice_for_a_page_opened_from_disk_says_how_to_serve_the_site() {
+        let notice = page_frame(&PageOptions::default()).opened_from_disk;
+        assert!(
+            notice.starts_with("This site is meant to be served,"),
+            "{notice}"
+        );
+        assert!(notice.contains("Run ghg serve"), "{notice}");
     }
 }
