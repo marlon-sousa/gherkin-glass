@@ -9,6 +9,11 @@ use std::fs::{copy, create_dir_all, read_dir, read_to_string, remove_dir_all, wr
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
+#[path = "support/version_placeholder.rs"]
+mod version_placeholder;
+
+use version_placeholder::with_version_placeholder;
+
 fn fixture() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/versions")
 }
@@ -130,7 +135,10 @@ fn a_versioned_build_replaces_its_version_and_writes_the_versions_page() {
     assert!(output.join("assets/gherkin-glass.css").is_file());
     let page = read_to_string(output.join("index.html")).expect("read");
     let expected = read_to_string(fixture().join("expected/index.html")).expect("read");
-    assert_eq!(page, expected);
+    assert_eq!(
+        with_version_placeholder(&page, env!("CARGO_PKG_VERSION")),
+        expected
+    );
 }
 
 #[test]

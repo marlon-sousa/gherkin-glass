@@ -2,6 +2,7 @@
 
 mod checks;
 mod comment_ratio;
+mod expected_sites;
 
 use std::env::consts::EXE_SUFFIX;
 use std::env::{args, var_os};
@@ -11,6 +12,7 @@ use std::process::{Command, ExitCode};
 
 use checks::{CARGO_CHECKS, MINIMUM_RUST_TEST};
 use comment_ratio::Lines;
+use expected_sites::put_back_placeholder;
 
 const USAGE: &str = "\
 Usage: cargo xtask <command>
@@ -94,6 +96,11 @@ fn build() -> Result<(), String> {
         "--config",
         "project-site/ghg.toml",
     ])?;
+    // Every page names the version of ghg that wrote it, which the committed
+    // expected sites hold as a placeholder, so that a release changes none.
+    let version = manifest_value("version")?;
+    put_back_placeholder(&root().join("tests/fixtures"), &version)?;
+    put_back_placeholder(&root().join("project-site/expected"), &version)?;
     cargo(&[
         "build",
         "--release",
@@ -258,14 +265,20 @@ fn run(command: &mut Command) -> Result<(), String> {
 
 /// `rust-version` of the crate's `Cargo.toml`.
 fn minimum_rust() -> Result<String, String> {
+    manifest_value("rust-version")
+}
+
+/// The first value of `key` in the crate's `Cargo.toml`, its package's.
+fn manifest_value(key: &str) -> Result<String, String> {
     let manifest = root().join("Cargo.toml");
     let text =
         read_to_string(&manifest).map_err(|error| format!("{}: {error}", manifest.display()))?;
+    let start = format!("{key} = \"");
     text.lines()
-        .find_map(|line| line.strip_prefix("rust-version = \""))
+        .find_map(|line| line.strip_prefix(start.as_str()))
         .and_then(|rest| rest.strip_suffix('"'))
         .map(str::to_string)
-        .ok_or_else(|| format!("{}: no rust-version", manifest.display()))
+        .ok_or_else(|| format!("{}: no {key}", manifest.display()))
 }
 
 /// Cargo's target folder, `CARGO_TARGET_DIR` when it is set, relative to the repository's root.

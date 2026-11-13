@@ -11,6 +11,11 @@ use std::fs::{create_dir_all, read, read_dir, read_to_string, remove_dir_all, wr
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 
+#[path = "support/version_placeholder.rs"]
+mod version_placeholder;
+
+use version_placeholder::with_version_placeholder;
+
 fn fixture() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/front-page")
 }
@@ -44,7 +49,14 @@ fn files(folder: &Path) -> BTreeMap<String, Vec<u8>> {
             if entry.path().is_dir() {
                 folders.push((entry.path(), format!("{name}/")));
             } else {
-                found.insert(name, read(entry.path()).expect("the file is read"));
+                let file = read(entry.path()).expect("the file is read");
+                // A page names the version of ghg in its footer, which the
+                // committed sites hold as a placeholder.
+                let file = String::from_utf8(file).map_or_else(
+                    |error| error.into_bytes(),
+                    |text| with_version_placeholder(&text, env!("CARGO_PKG_VERSION")).into_bytes(),
+                );
+                found.insert(name, file);
             }
         }
     }
@@ -90,7 +102,10 @@ fn the_versions_page_of_a_versioned_build_is_written_from_the_template() {
     assert_eq!(run.status.code(), Some(0));
     let page = |path: &Path| read_to_string(path).expect("the page is read");
     assert_eq!(
-        page(&written.join("index.html")),
+        with_version_placeholder(
+            &page(&written.join("index.html")),
+            env!("CARGO_PKG_VERSION")
+        ),
         page(&fixture().join("expected-versions.html"))
     );
     let home = page(&written.join("v1.0.0/index.html"));

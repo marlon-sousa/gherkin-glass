@@ -2,9 +2,14 @@
 //!
 //! `cargo xtask build` writes the expected pages again after a change.
 
-use std::fs::{read, read_dir, remove_dir_all};
+use std::fs::{read_dir, read_to_string, remove_dir_all};
 use std::path::Path;
 use std::process::Command;
+
+#[path = "support/version_placeholder.rs"]
+mod version_placeholder;
+
+use version_placeholder::with_version_placeholder;
 
 // Rules 109 and 118: each part in its own element, and the configured accents in the page's head.
 
@@ -27,13 +32,12 @@ fn the_pages_show_the_highlighting_and_the_accents_as_the_expected_pages_do() {
         if !name.to_string_lossy().ends_with(".html") {
             continue;
         }
-        let page = read(written.join(&name)).expect("the page is written");
+        let page = read_to_string(written.join(&name)).expect("the page is written");
+        let page = with_version_placeholder(&page, env!("CARGO_PKG_VERSION"));
         assert!(
-            page == read(expected.join(&name)).expect("read"),
-            "{name:?} differs from the expected page:\n{}",
-            String::from_utf8_lossy(&page)
+            page == read_to_string(expected.join(&name)).expect("read"),
+            "{name:?} differs from the expected page:\n{page}"
         );
-        let page = String::from_utf8_lossy(&page);
         assert!(page.contains("  --ghg-accent: #5a1e8c;\n"), "{name:?}");
         assert!(page.contains("  --ghg-accent: #ffcc88;\n"), "{name:?}");
         pages += 1;

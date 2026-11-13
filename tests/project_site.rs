@@ -15,6 +15,11 @@ use gherkin::{Feature, GherkinEnv, Scenario, Step};
 use rstest::rstest;
 use serde_json::Value;
 
+#[path = "support/version_placeholder.rs"]
+mod version_placeholder;
+
+use version_placeholder::with_version_placeholder;
+
 fn repository() -> &'static Path {
     Path::new(env!("CARGO_MANIFEST_DIR"))
 }
@@ -78,7 +83,14 @@ fn files(folder: &Path) -> BTreeMap<String, Vec<u8>> {
             if entry.path().is_dir() {
                 folders.push((entry.path(), format!("{name}/")));
             } else {
-                found.insert(name, read(entry.path()).expect("the file is read"));
+                let file = read(entry.path()).expect("the file is read");
+                // A page names the version of ghg in its footer, which the
+                // committed sites hold as a placeholder.
+                let file = String::from_utf8(file).map_or_else(
+                    |error| error.into_bytes(),
+                    |text| with_version_placeholder(&text, env!("CARGO_PKG_VERSION")).into_bytes(),
+                );
+                found.insert(name, file);
             }
         }
     }

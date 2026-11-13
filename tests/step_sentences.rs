@@ -13,6 +13,11 @@ use std::fs::{read_dir, read_to_string, remove_dir_all};
 use std::path::Path;
 use std::process::Command;
 
+#[path = "support/version_placeholder.rs"]
+mod version_placeholder;
+
+use version_placeholder::with_version_placeholder;
+
 /// The page of step sentences `ghg build` writes for the fixture `name`,
 /// and the one committed beside it.
 fn pages(name: &str) -> (String, String) {
@@ -30,7 +35,10 @@ fn pages(name: &str) -> (String, String) {
     assert_eq!(String::from_utf8_lossy(&result.stderr), "");
     assert_eq!(result.status.code(), Some(0));
     (
-        read_to_string(written.join("steps.html")).expect("the page is written"),
+        with_version_placeholder(
+            &read_to_string(written.join("steps.html")).expect("the page is written"),
+            env!("CARGO_PKG_VERSION"),
+        ),
         read_to_string(fixture.join("expected/steps.html")).expect("the page is committed"),
     )
 }
