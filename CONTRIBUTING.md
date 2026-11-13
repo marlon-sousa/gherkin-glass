@@ -100,14 +100,16 @@ The template is written for git-cliff 2.14.2, which installs with `cargo install
 
 Once the pull request has merged, a maintainer runs `cargo publish --dry-run --locked` at the commit the merge put on `main`, then tags that commit and pushes the tag, such as `git tag -a v0.1.0 <commit> -m "gherkin-glass 0.1.0"` and `git push origin v0.1.0`. Only maintainers push tags.
 
-The release workflow, `.github/workflows/release.yml`, then runs these jobs. Publishing to crates.io waits for all the others before it, and the GitHub release waits for crates.io:
+A pre-release is named with a dot before its number, such as `0.1.0-alpha.1`, `0.1.0-beta.2` or `0.2.0-rc.1`, so that Semantic Versioning compares the number as a number, and `alpha.10` comes after `alpha.9`. Only a version without a pre-release part and a release candidate, `rc.N`, go to crates.io. An alpha, a beta or any other pre-release is released on GitHub only, with its archives, its checksums and its version of the project's site ([#101](https://github.com/marlon-sousa/gherkin-glass/issues/101)). So it cannot be installed with `cargo install`, nor with a plain `cargo binstall gherkin-glass`, which reads the crate's manifest from crates.io; it is installed from its archives, or through the action, by naming its version.
 
-1. **release gate** refuses the tag unless it is `v` and the version in `Cargo.toml`, its commit is on `main`, and `CHANGELOG.md` has notes for the version;
+The release workflow, `.github/workflows/release.yml`, then runs these jobs. Publishing to crates.io waits for all the others before it, and the GitHub release waits for crates.io, or, for a version crates.io does not get, for the checks and the archives:
+
+1. **release gate** refuses the tag unless it is `v` and the version in `Cargo.toml`, its commit is on `main`, and `CHANGELOG.md` has notes for the version, and tells whether the version goes to crates.io;
 2. **checks** runs every check of `.github/workflows/rust.yml`, the formatting, the lints, the tests, the script's checks and the browser check, again on the tagged commit, since their run on `main` after a merge blocks nothing;
-3. **release tools** tries the release gate, the changelog template and the archive check against their fixtures;
+3. **release tools** tries the release gate, the changelog template, the archive check, the action's tag and which versions go to crates.io against their fixtures;
 4. **builds**, one for each platform: Linux on x86-64 and ARM64, statically linked with musl; macOS on Apple silicon and on Intel, both built on Apple silicon; and Windows on x86-64, with the C runtime linked in. Each checks its binaries need nothing installed, packs them with the licence files, and checks the archive;
 5. **archives** checks there is one archive for each platform where `cargo binstall` looks for it, and writes `SHA256SUMS` and checks the archives against it;
-6. **crates.io**, in the `crates-io` environment, publishes the crate with the `publish-crates` action of [itinera-dev/actions](https://github.com/itinera-dev/actions), through crates.io's trusted publishing, unless that version is there already;
+6. **crates.io**, in the `crates-io` environment, publishes the crate with the `publish-crates` action of [itinera-dev/actions](https://github.com/itinera-dev/actions), through crates.io's trusted publishing, unless that version is there already; it is skipped for an alpha, a beta or any other pre-release but a release candidate;
 7. **GitHub release** creates the release with the `create-release` action of itinera-dev/actions, with the version's section of `CHANGELOG.md` as its notes, a pre-release for a version such as `0.2.0-rc.1`, and the archives and `SHA256SUMS` attached.
 
 A pull request that changes how releases are made runs the same builds, archives and checks, and packs the crate, without publishing anything.
