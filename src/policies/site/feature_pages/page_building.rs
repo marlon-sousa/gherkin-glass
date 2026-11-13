@@ -66,6 +66,7 @@ pub(crate) fn build_page(
     let backgrounds_option = has_background.then(|| BackgroundsOption {
         label: fl!(CATALOGUE, "inline-backgrounds"),
         inline: options.inline_backgrounds,
+        steps_heading: fl!(CATALOGUE, "from-scenario"),
     });
     let page = Page {
         trail: Trail {

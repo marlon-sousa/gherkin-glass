@@ -36,13 +36,13 @@ const inside = (window: Window): boolean[] =>
 test("a page written with the box checked expands every background inside a scenario", () => {
   const window = open("expected", "both.html");
   assert.equal(checkbox(window).checked, true);
-  assert.deepEqual(inside(window), [true, true, true, true]);
+  assert.deepEqual(inside(window), [true, true, true, true, true]);
 });
 
 test("a page written with the box unchecked collapses every background inside a scenario", () => {
   const window = open("expected-unchecked", "both.html");
   assert.equal(checkbox(window).checked, false);
-  assert.deepEqual(inside(window), [false, false, false, false]);
+  assert.deepEqual(inside(window), [false, false, false, false, false]);
 });
 
 test("unchecking the checkbox collapses the backgrounds inside the scenarios, checking it expands them again, and the focus stays on it", () => {
@@ -51,9 +51,9 @@ test("unchecking the checkbox collapses the backgrounds inside the scenarios, ch
   box.focus();
   box.click();
   assert.equal(box.checked, false);
-  assert.deepEqual(inside(window), [false, false, false, false]);
+  assert.deepEqual(inside(window), [false, false, false, false, false]);
   box.click();
-  assert.deepEqual(inside(window), [true, true, true, true]);
+  assert.deepEqual(inside(window), [true, true, true, true, true]);
   assert.equal(window.document.activeElement, box as unknown);
 });
 
@@ -73,7 +73,7 @@ test("a checkbox a browser restored is set back to the state the page shows", ()
   box.checked = false;
   startCollapsing(new DomPage(document), keeping(), "/site/both.html", { backgrounds: DomBackgrounds.of(document)!, siteRoot: "/site/" });
   assert.equal(box.checked, true);
-  assert.deepEqual(inside(window), [true, true, true, true]);
+  assert.deepEqual(inside(window), [true, true, true, true, true]);
 });
 
 test("a page with a background no scenario starts with has the checkbox disabled, and a page with no background has none", () => {
@@ -96,6 +96,7 @@ test("each background inside a scenario is a block one level below the scenario,
     ["move-amount_background_1", 1, "From the background"],
     ["move-amount_background_2", 1, "From the rule's background"],
     ["only-the-features-background_background_1", 1, "From the background"],
+    ["nothing-of-its-own_background_1", 1, "From the background"],
   ]);
 });
 
@@ -108,7 +109,7 @@ test("a page shown again from the browser's cache takes the choice made on anoth
   Object.defineProperty(event, "persisted", { value: true });
   window.dispatchEvent(event as unknown as InstanceType<typeof window.Event>);
   assert.equal(checkbox(window).checked, true);
-  assert.deepEqual(inside(window), [true, true, true, true]);
+  assert.deepEqual(inside(window), [true, true, true, true, true]);
 });
 
 test("following a link to a background expands it", () => {

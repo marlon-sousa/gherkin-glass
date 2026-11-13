@@ -10,6 +10,9 @@
 {%- for from in backgrounds %}
 {{ from|safe }}
 {%- endfor %}
+{%- if let Some(heading) = steps_heading %}
+<h{{ heading.level.number() }} class="ghg-steps-heading">{{ heading.text }}</h{{ heading.level.number() }}>
+{%- endif %}
 {%- if !steps.is_empty() %}
 {{ steps|safe }}
 {%- endif %}

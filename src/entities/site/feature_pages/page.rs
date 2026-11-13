@@ -24,8 +24,9 @@ pub(crate) struct Page {
     pub(crate) description: Option<Paragraph>,
     pub(crate) source: Option<SourceLink>,
     pub(crate) words: PageWords,
-    /// The checkbox that chooses whether the backgrounds inside the scenarios or
-    /// those in their own place are expanded, on a page with a background.
+    /// On a page with a background, the checkbox that chooses whether the
+    /// backgrounds inside the scenarios or those in their own place are
+    /// expanded, and the heading of a scenario's steps after those inside it.
     pub(crate) backgrounds_option: Option<BackgroundsOption>,
 }
 
@@ -35,6 +36,7 @@ pub(crate) struct BackgroundsOption {
     /// Whether the page is written with the box checked, the backgrounds inside
     /// each scenario expanded.
     pub(crate) inline: bool,
+    pub(crate) steps_heading: String,
 }
 
 /// gherkin-glass's own words on a page, from the interface text catalogue.

@@ -97,6 +97,7 @@
 <li><a href="#no-background-of-its-own">Rule: No background of its own</a>
 <ul>
 <li><a href="#only-the-features-background">Scenario: Only the feature&#39;s background</a></li>
+<li><a href="#nothing-of-its-own">Scenario: Nothing of its own</a></li>
 </ul></li>
 </ul>
 </nav>
@@ -150,6 +151,7 @@
 </ol>
 </div>
 </div>
+<h3 class="ghg-steps-heading">From the scenario</h3>
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">When </span><span class="ghg-number">10</span> is moved</li>
 <li><span class="ghg-keyword">Then </span>the balance is <span class="ghg-number">90</span></li>
@@ -199,6 +201,7 @@
 </ol>
 </div>
 </div>
+<h4 class="ghg-steps-heading">From the scenario</h4>
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">When </span><span class="ghg-placeholder">&#60;amount&#62;</span> is moved</li>
 </ol>
@@ -259,9 +262,36 @@
 </ol>
 </div>
 </div>
+<h4 class="ghg-steps-heading">From the scenario</h4>
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">Then </span>nothing changes</li>
 </ol>
+</div>
+</div>
+<div class="ghg-block ghg-scenario">
+<h3 id="nothing-of-its-own"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: Nothing of its own</button></h3>
+<div class="ghg-content">
+<div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
+<h4 id="nothing-of-its-own_background_1"><button type="button" class="ghg-toggle" aria-expanded="true">From the background</button></h4>
+<div class="ghg-content">
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>an account with these balances:
+<table class="ghg-table">
+<thead>
+<tr><th scope="col">account</th><th scope="col">balance</th></tr>
+</thead>
+<tbody>
+<tr><td>current</td><td>100</td></tr>
+</tbody>
+</table></li>
+<li><span class="ghg-keyword">And </span>a note
+<figure class="ghg-doc-string">
+<figcaption>text</figcaption>
+<pre>Opened today.</pre>
+</figure></li>
+</ol>
+</div>
+</div>
 </div>
 </div>
 </div>

@@ -259,11 +259,13 @@ skip-to-content = Skip to content
 show-folder-tree = Show the folder tree
 folder-tree = Folder tree
 
-## The heading of each background a scenario holds, and the checkbox that
-## chooses whether those or the backgrounds in their own place are expanded.
+## The heading of each background a scenario holds, the heading of the
+## scenario's own steps after them, and the checkbox that chooses whether
+## those or the backgrounds in their own place are expanded.
 
 from-background = From the background
 from-rule-background = From the rule's background
+from-scenario = From the scenario
 inline-backgrounds = Show backgrounds inside each scenario
 ## The tag pages. $tag is a tag as written, with its @, $scenario a
 ## scenario's heading, and $count a number of scenarios.

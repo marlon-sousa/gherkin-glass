@@ -386,3 +386,12 @@ figcaption {
 .ghg-background-in-scenario pre {
   background: var(--ghg-background);
 }
+
+/* The heading of a scenario's own steps, after its backgrounds, close to the steps it heads. */
+.ghg-steps-heading {
+  margin: 0.75rem 0 0.25rem;
+}
+
+.ghg-steps-heading + .ghg-steps {
+  margin-top: 0.25rem;
+}

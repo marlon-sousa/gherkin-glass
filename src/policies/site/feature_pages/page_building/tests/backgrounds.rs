@@ -10,6 +10,7 @@ fn a_feature_s_and_a_rule_s_background_are_headed_each_in_its_own_words() {
         Some(BackgroundsOption {
             label: "Show backgrounds inside each scenario".into(),
             inline: true,
+            steps_heading: "From the scenario".into(),
         })
     );
     let (background, _, rule) = blocks(&page);

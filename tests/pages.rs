@@ -157,8 +157,7 @@ fn the_checked_box_starts_collapsed_the_backgrounds_whose_steps_scenarios_hold(
     #[case] expanded_when_unchecked: Option<bool>,
     #[case] expanded: bool,
 ) {
-    let html = read(fixtures().join("backgrounds").join(site).join(page)).expect("read");
-    let html = String::from_utf8(html).expect("UTF-8");
+    let html = backgrounds_page(site, page);
     let start = html
         .find("<div class=\"ghg-block ghg-background")
         .expect("one");
@@ -215,8 +214,7 @@ fn the_backgrounds_inside_a_scenario_follow_the_box(
     #[case] level: u8,
     #[case] heading: &str,
 ) {
-    let html = read(fixtures().join("backgrounds").join(site).join("both.html")).expect("read");
-    let html = String::from_utf8(html).expect("UTF-8");
+    let html = backgrounds_page(site, "both.html");
     let hidden = if expanded { "" } else { " hidden" };
     let block = format!(
         "<div class=\"ghg-block ghg-background-in-scenario\" data-expanded-when-unchecked=\"false\">\n\
@@ -224,6 +222,52 @@ fn the_backgrounds_inside_a_scenario_follow_the_box(
          <div class=\"ghg-content\"{hidden}>"
     );
     assert!(html.contains(&block), "{block}");
+}
+
+// Rule 95: after the backgrounds a scenario holds, its own steps are headed
+// "From the scenario", at the level of those backgrounds, in English whatever
+// the file's language.
+
+#[rstest]
+#[case::outside_any_rule(
+    "both.html",
+    3,
+    "When </span><span class=\"ghg-number\">10</span> is moved"
+)]
+#[case::in_an_outline_under_a_rule("both.html", 4, "When </span><span class=\"ghg-placeholder\">")]
+#[case::under_a_rule("both.html", 4, "Then </span>nothing changes")]
+#[case::in_portuguese("regra.html", 4, "Então </span>")]
+fn a_scenario_s_own_steps_are_headed_after_its_backgrounds(
+    #[case] page: &str,
+    #[case] level: u8,
+    #[case] step: &str,
+) {
+    let headed = format!(
+        "<h{level} class=\"ghg-steps-heading\">From the scenario</h{level}>\n\
+         <ol class=\"ghg-steps\">\n\
+         <li><span class=\"ghg-keyword\">{step}"
+    );
+    assert!(
+        backgrounds_page("expected", page).contains(&headed),
+        "{headed}"
+    );
+}
+
+// Rule 95: a scenario with no steps of its own has no heading for them.
+
+#[test]
+fn a_scenario_without_steps_of_its_own_has_no_heading_for_them() {
+    let html = backgrounds_page("expected", "both.html");
+    let start = html
+        .find("<h3 id=\"nothing-of-its-own\">")
+        .expect("the scenario");
+    assert!(!html[start..].contains("ghg-steps-heading"));
+}
+
+/// The page `page` of the backgrounds fixture's expected site `site`.
+fn backgrounds_page(site: &str, page: &str) -> String {
+    let html = read(fixtures().join("backgrounds").join(site).join(page)).expect("read");
+    String::from_utf8(html).expect("UTF-8")
 }
 
 #[test]
