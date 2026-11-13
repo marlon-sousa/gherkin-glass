@@ -330,14 +330,19 @@ figcaption {
 
 .ghg-search-field {
   font: inherit;
+  margin-left: 0.25rem;
   width: 20rem;
   max-width: 100%;
   box-sizing: border-box;
 }
 
-/* No margin, so that the status, empty until the reader searches, takes no room. */
+/* No margin while it is empty, until the reader searches, so that it takes no room. */
 .ghg-search-status {
   margin: 0;
+}
+
+.ghg-search-status:not(:empty) {
+  margin-top: 0.5rem;
 }
 
 .ghg-search-results {
@@ -408,6 +413,7 @@ figcaption {
   .ghg-search-field {
     display: block;
     width: 100%;
+    margin: 0.5rem 0 0;
   }
 
   .ghg-layout {
