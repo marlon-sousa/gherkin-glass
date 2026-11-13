@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>gherkin-glass</title>
+<script>try{var t=localStorage.getItem("gherkin-glass:theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}</script>
+<style>
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+  --ghg-background: #ffffff;
+  --ghg-surface: #f2f2f2;
+  --ghg-text: #1a1a1a;
+  --ghg-muted: #474747;
+  --ghg-border: #757575;
+  --ghg-accent: #0b4f9c;
+  --ghg-keyword: #6a1b9a;
+  --ghg-parameter: #14521a;
+  --ghg-number: #8a3000;
+  --ghg-placeholder: #00575e;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ghg-background: #141414;
+    --ghg-surface: #222222;
+    --ghg-text: #ececec;
+    --ghg-muted: #c4c4c4;
+    --ghg-border: #8f8f8f;
+    --ghg-accent: #8cc4ff;
+    --ghg-keyword: #e1b3ff;
+    --ghg-parameter: #9fe0a8;
+    --ghg-number: #ffbf8a;
+    --ghg-placeholder: #7fdbe0;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ghg-background: #141414;
+  --ghg-surface: #222222;
+  --ghg-text: #ececec;
+  --ghg-muted: #c4c4c4;
+  --ghg-border: #8f8f8f;
+  --ghg-accent: #8cc4ff;
+  --ghg-keyword: #e1b3ff;
+  --ghg-parameter: #9fe0a8;
+  --ghg-number: #ffbf8a;
+  --ghg-placeholder: #7fdbe0;
+}
+</style>
+<link rel="stylesheet" href="assets/gherkin-glass.css">
+<script type="module" src="assets/gherkin-glass.js"></script>
+</head>
+<body>
+<dialog id="ghg_from_disk" class="ghg-from-disk" tabindex="-1" aria-labelledby="ghg_from_disk_title" aria-describedby="ghg_from_disk_text">
+<p id="ghg_from_disk_title" class="ghg-from-disk-title">Opened from disk</p>
+<p id="ghg_from_disk_text">This site is meant to be served, so its folder tree and search do not work when a page is opened from disk. Run ghg serve in the folder of your ghg.toml, or serve the site&#39;s folder with any web server, then open the address it gives.</p>
+<form method="dialog"><button>I agree</button></form>
+</dialog>
+<script>if(location.protocol==="file:"){let d=document.getElementById("ghg_from_disk");d.showModal();d.focus()}</script>
+<a class="ghg-skip" href="#ghg_main">Skip to content</a>
+<div class="ghg-options">
+<fieldset class="ghg-theme">
+<legend>Theme</legend>
+<label><input type="radio" name="ghg-theme" value="system" checked> System</label>
+<label><input type="radio" name="ghg-theme" value="light"> Light</label>
+<label><input type="radio" name="ghg-theme" value="dark"> Dark</label>
+</fieldset>
+</div>
+<main id="ghg_main">
+<h1>gherkin-glass</h1>
+<p>gherkin-glass turns a folder of Gherkin feature files into a static website that anyone can read, with or without a screen reader. It is one command, <code>ghg</code>, for Linux, macOS and Windows.</p>
+<h2>Why it exists</h2>
+<p>Gherkin is the plain-language format behaviour-driven development uses to describe how software should behave. A feature file names a feature and lists its scenarios, each a short sequence of steps such as <code>Given a customer named "Ana"</code>, <code>When she withdraws 50</code>, <code>Then her balance is 150</code>. Tools such as Cucumber run those steps as tests, but the files are written to be read by people: product owners, testers, developers and anyone who wants to know what the software does.</p>
+<p>Reading them is harder than it should be. They live in a repository, spread across folders, and are opened one at a time in an editor. gherkin-glass makes those use cases easy to read, browse, search and link to, for everyone, including people who use a screen reader or only a keyboard.</p>
+<h2>What you get</h2>
+<ul>
+<li>A page for every feature file and for every folder, with a folder tree beside them.</li>
+<li>A heading and a stable link for every rule, scenario and background, so that a link to a scenario keeps working as long as its file and its name do, and no block before it on its page takes the same name.</li>
+<li>A page for every tag, listing the features and scenarios that carry it, and optional links from tags to another site, such as an issue tracker.</li>
+<li>A page of step sentences, listing every distinct step sentence, with quoted values and placeholders as slots, and where it is used.</li>
+<li>Search across features, rules and scenarios.</li>
+<li>Every Gherkin construct: rules, backgrounds, scenario outlines and their examples, shown as scenarios too, data tables, doc strings, tags, descriptions, and every spoken language Gherkin supports.</li>
+<li>Highlighting of keywords, quoted parameters, placeholders and numbers in steps, which never carries meaning on its own.</li>
+<li>Reader options the browser remembers: a light or a dark theme, or the system's, showing or hiding the folder tree, showing a background's steps inside each scenario or once at the top, and collapsing rules and scenarios.</li>
+<li>Pages built for assistive technology: headings in order, real tables and lists, and a skip link.</li>
+<li>Pages checked in a browser on every change, against WCAG 2.2 at levels A and AA and a contrast of at least 7:1, in both colour schemes and with the keyboard alone.</li>
+</ul>
+<h2>Status</h2>
+<p>The first release is an alpha, <code>0.1.0-alpha.1</code>: a preview, to try gherkin-glass and say what you think, before its first stable version. It is on the <a href="https://github.com/marlon-sousa/gherkin-glass/releases">releases page</a>, not yet on crates.io; the section Installing and running, below, says how to install it. The newest code, not yet released, can be built from the repository with <code>cargo install --git https://github.com/marlon-sousa/gherkin-glass gherkin-glass --locked</code>, which installs <code>ghg</code> and <code>cargo-ghg</code> and needs <a href="https://rustup.rs/">Rust</a>.</p>
+<div class="ghg-block">
+<h3 id="pre-releases"><button type="button" class="ghg-toggle" aria-expanded="false">Pre-releases</button></h3>
+<div class="ghg-content" hidden>
+<ul class="ghg-versions">
+<li><a href="v0.1.0-alpha.1/index.html">v0.1.0-alpha.1</a></li>
+</ul>
+</div>
+</div>
+<h2>Installing and running</h2>
+<p>Once a stable version of gherkin-glass is released, install it in one of these ways:</p>
+<ul>
+<li><code>cargo install gherkin-glass</code>, which builds it with Rust's package manager;</li>
+<li><code>cargo binstall gherkin-glass</code>, which downloads the released binary instead of building it;</li>
+<li>or download the archive for your system from the <a href="https://github.com/marlon-sousa/gherkin-glass/releases">releases page</a>, check it against the release's <code>SHA256SUMS</code> if you wish, and put <code>ghg</code>, and <code>cargo-ghg</code> for <code>cargo ghg</code>, somewhere on your path. There are archives for Linux on x86-64 and ARM64, macOS on Intel and Apple silicon, and Windows on x86-64.</li>
+</ul>
+<p>An alpha or a beta, such as <code>0.1.0-alpha.1</code>, is not on crates.io, so <code>cargo install gherkin-glass</code> and <code>cargo binstall gherkin-glass</code> cannot install it. Install it from its archive on the releases page, build it with <code>cargo install --git https://github.com/marlon-sousa/gherkin-glass --tag v0.1.0-alpha.1 gherkin-glass --locked</code>, or install it in a GitHub Actions workflow with <code>uses: marlon-sousa/gherkin-glass@v0.1.0-alpha.1</code> and the input <code>version: 0.1.0-alpha.1</code>, since without <code>version</code> the action installs only a stable release.</p>
+<p>Each way installs <code>ghg</code>, and <code>cargo-ghg</code>, which lets you run it as <code>cargo ghg</code> beside <code>cargo test</code>. <code>cargo ghg build</code> is the same as <code>ghg build</code>.</p>
+<p>Then, in the folder of your project, with your feature files in a folder named <code>features</code>:</p>
+<pre><code class="language-sh">ghg build
+ghg serve
+</code></pre>
+<p><code>ghg build</code> writes the site into a folder named <code>site</code>. <code>ghg serve</code> builds it the same way, then serves it at <a href="http://127.0.0.1:8000/">http://127.0.0.1:8000/</a>. Open that address in a browser, and press Control+C to stop.</p>
+<h2>Usage</h2>
+<h3>The configuration file</h3>
+<p>ghg reads its settings from <code>ghg.toml</code>, a <a href="https://toml.io/">TOML</a> file in the folder you run it from, or the file <code>--config</code> names. The file is optional: every setting has a default. Paths in it are relative to the folder the file is in, wherever you run ghg from.</p>
+<pre><code class="language-toml">input = "features"
+output = "site"
+title = "Our features"
+source_link = "https://github.com/owner/repo/blob/main/features/{path}#L{line}"
+collapse_scenarios = true
+
+[[tag_links]]
+pattern = '@issue-(\d+)'
+address = "https://github.com/owner/repo/issues/$1"
+text = "Issue $1 on GitHub"
+</code></pre>
+<table><thead><tr><th>Key</th><th>Takes</th><th>Default</th><th>What it sets</th></tr></thead><tbody>
+<tr><td><code>input</code></td><td>a path</td><td><code>features</code></td><td>The folder of feature files to read. It must exist.</td></tr>
+<tr><td><code>output</code></td><td>a path</td><td><code>site</code></td><td>The folder the site is written into.</td></tr>
+<tr><td><code>title</code></td><td>text</td><td><code>Feature files</code></td><td>The site's title, shown on its home page and in every breadcrumb.</td></tr>
+<tr><td><code>allow_unnamed</code></td><td><code>true</code> or <code>false</code></td><td><code>true</code></td><td>Whether a feature, rule or scenario may have no name. When <code>false</code>, one without a name stops the build.</td></tr>
+<tr><td><code>source_link</code></td><td>text</td><td>none</td><td>The address of each feature file's source, so that each page links to its file. <code>{path}</code> is replaced by the file's path below the input folder, percent-encoded, and <code>{line}</code> by the line of its feature; the link reads <code>Source: &lt;path&gt;</code>.</td></tr>
+<tr><td><code>collapse_rules</code></td><td><code>true</code> or <code>false</code></td><td><code>false</code></td><td>Whether rules start collapsed.</td></tr>
+<tr><td><code>collapse_scenarios</code></td><td><code>true</code> or <code>false</code></td><td><code>false</code></td><td>Whether scenarios, scenario outlines and backgrounds start collapsed.</td></tr>
+<tr><td><code>show_tree</code></td><td><code>true</code> or <code>false</code></td><td><code>true</code></td><td>Whether the folder tree is shown when a reader first opens the site.</td></tr>
+<tr><td><code>inline_backgrounds</code></td><td><code>true</code> or <code>false</code></td><td><code>true</code></td><td>Whether a scenario shows its backgrounds' steps inside it, or links to them.</td></tr>
+<tr><td><code>tag_links</code></td><td>a list of tables, each written <code>[[tag_links]]</code></td><td>none</td><td>Links from tags to another site. Each table has a <code>pattern</code>, a regular expression matched against the whole tag with its <code>@</code>; an <code>address</code>; and a <code>text</code> for the link. In the address and the text, <code>$1</code> or <code>$name</code> is replaced by what that group of the pattern matched.</td></tr>
+<tr><td><code>accent_light</code></td><td>a colour, <code>#</code> and six or three hexadecimal digits, in quotes, such as <code>"#0b4f9c"</code></td><td><code>"#0b4f9c"</code></td><td>The light theme's colour for links and the focus outline. It must reach a contrast of 7:1 against the theme's backgrounds.</td></tr>
+<tr><td><code>accent_dark</code></td><td>a colour, written as <code>accent_light</code>'s, such as <code>"#8cc4ff"</code></td><td><code>"#8cc4ff"</code></td><td>The dark theme's colour for links and the focus outline, held to the same contrast.</td></tr>
+<tr><td><code>version_name</code></td><td>text</td><td>none</td><td>Builds the site as a version of that name, as "Versions" below describes.</td></tr>
+<tr><td><code>replace_existing_version</code></td><td><code>true</code> or <code>false</code></td><td><code>true</code></td><td>Whether a build replaces the site, or the version, that an earlier build wrote in the output folder. When <code>false</code>, it stops instead.</td></tr>
+<tr><td><code>front_page</code></td><td>a path</td><td>none</td><td>A Markdown file that introduces the site on its front page, as "The front page" below describes.</td></tr>
+</tbody></table>
+<p>A key ghg does not know, or a value of the wrong kind, stops the run with a message naming the file and the line, so that nothing is silently ignored.</p>
+<h3>Which files are read</h3>
+<p>ghg reads every file whose name ends in <code>.feature</code> under the input folder, and leaves out hidden files and folders, those whose names start with a dot. A file named <code>.ghg-ignore</code>, in any folder of the input, changes that with the same rules as a <code>.gitignore</code> file: <code>drafts/</code> leaves a folder out, and <code>!*.story</code> reads files ending in <code>.story</code> too. No other file decides what is read: <code>.gitignore</code> files are not used.</p>
+<p>When a file cannot be read, such as one with a syntax mistake, ghg reports every such file, each as <code>&lt;path&gt;:&lt;line&gt;: &lt;message&gt;</code>, and writes nothing.</p>
+<h3>The command line</h3>
+<pre><code class="language-text">ghg build [options]
+ghg serve [options]
+</code></pre>
+<table><thead><tr><th>Option</th><th>Command</th><th>What it does</th></tr></thead><tbody>
+<tr><td><code>--config &lt;file&gt;</code></td><td><code>build</code> and <code>serve</code></td><td>Reads that configuration file instead of <code>ghg.toml</code> in the current folder.</td></tr>
+<tr><td><code>--input &lt;folder&gt;</code></td><td><code>build</code> and <code>serve</code></td><td>Reads that folder, instead of the configuration's <code>input</code>.</td></tr>
+<tr><td><code>--output &lt;folder&gt;</code></td><td><code>build</code> and <code>serve</code></td><td>Writes the site into that folder, instead of the configuration's <code>output</code>.</td></tr>
+<tr><td><code>--title &lt;text&gt;</code></td><td><code>build</code> and <code>serve</code></td><td>The site's title, instead of the configuration's <code>title</code>.</td></tr>
+<tr><td><code>--version-name &lt;name&gt;</code></td><td><code>build</code> and <code>serve</code></td><td>Builds the site as that version, instead of the configuration's <code>version_name</code>.</td></tr>
+<tr><td><code>--front-page &lt;file&gt;</code></td><td><code>build</code> and <code>serve</code></td><td>The Markdown file of the site's front page, instead of the configuration's <code>front_page</code>.</td></tr>
+<tr><td><code>--host &lt;address&gt;</code></td><td><code>serve</code></td><td>Listens on that address instead of <code>127.0.0.1</code>, such as <code>0.0.0.0</code> to be reached from other machines.</td></tr>
+<tr><td><code>--port &lt;number&gt;</code></td><td><code>serve</code></td><td>Listens at that port instead of 8000. <code>0</code> lets the system choose a free one.</td></tr>
+<tr><td><code>--no-build</code></td><td><code>serve</code></td><td>Serves the output folder as it is, without building it.</td></tr>
+<tr><td><code>--watch</code></td><td><code>serve</code></td><td>Rebuilds the site whenever a feature file, the configuration or the front page's Markdown file changes, and reloads the pages open in the browser.</td></tr>
+</tbody></table>
+<p>An option on the command line wins over the configuration file's key, and the key wins over the default. <code>ghg --help</code> lists the commands and options, and <code>ghg --version</code> prints the version.</p>
+<p><code>ghg build</code> exits with status 0 when it wrote the site, 1 when the configuration, a feature file or the output folder stopped it, and 2 for a mistake on the command line. <code>ghg serve</code> exits the same way, and with 1 when it cannot listen, such as on a port already in use.</p>
+<h3>Looking at a site and publishing it</h3>
+<p>A site is meant to be served by a web server, not opened from disk. Opened from disk, a browser does not run the page's script, so the folder tree, search and the reader options do not work. Every page opened from disk therefore first opens a dialog, "Opened from disk", that says the site is meant to be served and how to serve it; close it with its button, "I agree", or with Escape, to read the page.</p>
+<p>To look at a site on your own machine, use <code>ghg serve</code>. Without <code>--watch</code> or <code>--no-build</code>, it builds the site into the output folder, as <code>ghg build</code> does, then serves it. With <code>--watch</code>, the site is built in memory and served from there, the output folder is left as it is, and the page you are reading reloads at the same heading after each change. With <code>--no-build</code>, ghg serves a site already built, such as one downloaded from a CI run.</p>
+<p>To publish a site, put the output folder on any static web host, GitHub Pages included. Every link in a site is relative, so it works at any address, below a path such as <code>/&lt;repository&gt;/</code> too. GitHub Pages publishing from a branch runs Jekyll, which leaves out files whose names start with <code>_</code>, such as the page of <code>_draft.feature</code>; publish with GitHub's Pages action instead, or add a <code>.nojekyll</code> file beside the site on that branch, never inside the output folder.</p>
+<h3>The output folder belongs to ghg</h3>
+<p><code>ghg build</code> marks the output folder as its own with a file at its root, <code>ghg-site.json</code>, or <code>ghg-versions.json</code> when it builds versions. From then on the output folder, and every folder in it, belongs to ghg: any build may empty it and write it again, so anything you put there by hand can be lost.</p>
+<p>To keep that from happening by mistake:</p>
+<ul>
+<li>ghg marks an output folder only when it is missing or empty. It refuses to build into a folder that holds anything and no marker.</li>
+<li>Before every build, ghg checks that a marked folder holds only what it wrote there. When it holds anything else, ghg names it and stops, before reading the features, and writes and deletes nothing.</li>
+</ul>
+<p>So keep the output folder for the site alone, and put anything you want served beside it somewhere else.</p>
+<h3>Versions</h3>
+<p>One site can hold several versions of the same suite, so that readers read the version they use. Give each build a version name, with <code>--version-name</code> or <code>version_name</code>, such as <code>v1.2.0</code> or <code>main</code>. A version name is one folder name, of the letters <code>a</code> to <code>z</code> and <code>A</code> to <code>Z</code>, digits, <code>.</code>, <code>-</code>, <code>_</code> and <code>+</code>. A name such as <code>1.2.0</code> or <code>v1.2.0</code> is a release, one such as <code>2.0.0-rc.1</code> a pre-release, and any other, such as <code>main</code>, a development version. Each version is written into a folder of its own in the output folder, such as <code>site/v1.2.0/</code>, and the output folder's <code>index.html</code> lists every version: development versions, releases newest first, and pre-releases, listed collapsed.</p>
+<p>ghg does not read git. To build several versions, check each one out into a folder of its own and run ghg once for each, into the same output folder. Building a version again replaces it, unless <code>replace_existing_version</code> is <code>false</code>.</p>
+<h3>The front page</h3>
+<p>The front page is the page at the root of the output folder: the home page, or, when the site has versions, the page that lists them. It can open with an introduction you write in Markdown, such as your project's README, named by <code>front_page</code> or <code>--front-page</code>. Every other page, each version's own home page included, stays as ghg writes it.</p>
+<p>Write the comment <code>&lt;!-- ghg:contents --&gt;</code> on a line of its own where ghg's part of the page goes: the totals, folders and features of a home page, or the lists of versions. Markdown viewers such as GitHub's do not show the comment, so a README that holds it reads as before there.</p>
+<pre><code class="language-markdown"># Our features
+
+What the suite covers, and how to read it.
+
+## Versions
+
+&lt;!-- ghg:contents --&gt;
+</code></pre>
+<ul>
+<li>The file holds one level-one heading, written with one <code>#</code>, which becomes the page's title.</li>
+<li>ghg's own headings, such as "Folders" or "Releases", go one level below the last heading before the comment, so in the example above they are level three. The comment cannot follow a level 5 or level 6 heading, and it cannot be inside a list, a quote or a table.</li>
+<li>Everything Markdown writes is kept, GitHub's tables included. Other comments are left out of the page.</li>
+<li>Links are written exactly as the file has them, neither rewritten nor checked. A relative link is relative to the front page, so a link to a file of your repository, such as <code>LICENSE</code>, works on GitHub and not on the site; write the file's full address to reach it from both.</li>
+<li>HTML written in the file, other than comments, is not allowed.</li>
+</ul>
+<p>Without <code>front_page</code>, the front page has only its title and ghg's part, as without this setting. A file that cannot be read, or that breaks one of these rules, stops the build with a message naming the file, and the line when there is one, and nothing is written. With <code>ghg serve --watch</code>, a change to the file rebuilds the site.</p>
+<h2>Contributing</h2>
+<h3>Requirements</h3>
+<ul>
+<li><strong>Rust</strong>, through <a href="https://rustup.rs/">rustup</a> 1.28 or later. In the repository, <code>rustup toolchain install</code> installs the Rust version the repository pins, with its components.</li>
+<li><strong>Node</strong>, at the version <code>script/.node-version</code> names, with npm, only to change the frontend: the pages' script, stylesheet, templates or interface text. Those changes need <code>cargo xtask build</code>, and the browser check, which both need Node. The script is TypeScript, in <code>script/</code>, and its compiled form, <code>assets/gherkin-glass.js</code>, is committed.</li>
+<li><strong>cargo-deny 0.20.2</strong>, for the dependency check: <code>cargo install cargo-deny --version 0.20.2 --locked</code>.</li>
+</ul>
+<p>If you don't change the frontend, Rust is enough: <code>cargo build</code> builds <code>ghg</code>, <code>cargo test</code> runs the tests, and <code>cargo run -- serve --config project-site/ghg.toml --watch</code> serves the repository's example suite at <a href="http://127.0.0.1:8000/">http://127.0.0.1:8000/</a>.</p>
+<h3>The xtask commands</h3>
+<p><code>cargo xtask</code> runs the repository's own tasks. <code>cargo xtask --help</code> lists them.</p>
+<table><thead><tr><th>Command</th><th>What it does</th><th>Needs Node</th></tr></thead><tbody>
+<tr><td><code>cargo xtask build</code></td><td>Type-checks, tests and compiles the script into <code>assets/gherkin-glass.js</code>, writes again the expected sites of the test fixtures and of the example suite, and builds the release binary. Run it after changing the script, the stylesheet, a template or interface text, and commit what it writes.</td><td>Yes</td></tr>
+<tr><td><code>cargo xtask check</code></td><td>Runs every check a pull request runs: formatting, lints, tests on the pinned and the minimum supported Rust, documentation, dependencies, the package, the script check and the browser check.</td><td>Yes</td></tr>
+<tr><td><code>cargo xtask check-script</code></td><td>Type-checks and tests the script, and fails when the committed <code>assets/gherkin-glass.js</code> is not what <code>script/</code> compiles to.</td><td>Yes</td></tr>
+<tr><td><code>cargo xtask check-browser</code></td><td>Installs a headless Chromium and checks every test site in it: accessibility in both colour schemes, the keyboard, pages opened from disk, and the reload of <code>ghg serve --watch</code>.</td><td>Yes</td></tr>
+<tr><td><code>cargo xtask comment-ratio [path ...]</code></td><td>Counts the comment lines and the code lines of the Rust and TypeScript files given, or of every one in the repository.</td><td>No</td></tr>
+</tbody></table>
+<h3>Interface text and localization</h3>
+<p>Every word gherkin-glass writes itself, on the pages and on the command line, such as "Skip to content", "Collapse all" or a message about a mistake in <code>ghg.toml</code>, comes from one catalogue of strings. Feature files are shown as written, in their own language; only gherkin-glass's own words come from the catalogue.</p>
+<ul>
+<li>The catalogue is in <a href="https://projectfluent.org/">Fluent</a>, in <code>messages/en/gherkin-glass.ftl</code>, and built into the binary. English is the only language for now; a translation would be a new file in a folder of its own beside <code>en/</code>, but choosing the language is not built yet.</li>
+<li>Code reads a string by its id, with the <code>fl!</code> macro, such as <code>fl!(CATALOGUE, "skip-to-content")</code>. <code>fl!</code> checks at compile time that the id exists in the English catalogue and that its arguments are the ones the message takes, so a missing string is a build error, not a broken page. It checks only arguments passed by name, so arguments are always passed by name.</li>
+<li>No template, Rust code or script writes interface text inline. The pages' templates receive their words from Rust, and the script receives its own, such as the search box's messages, from attributes the page carries, so the script holds no words.</li>
+<li>A message is a whole sentence with named placeholders, such as <code>{ $feature }, a feature in { $folder }</code>, never pieces joined together, since word order differs between languages. A count is a plural form chosen by Fluent, never a word with an <code>s</code> added.</li>
+</ul>
+<p>Changing what a string says changes what gherkin-glass promises, so it starts as an issue too, as below. To add or change a string, edit it in the catalogue, use it by its id, and run <code>cargo xtask build</code> when it changes what pages say, so that the expected sites the tests compare against are written again. A few expected pages are not rebuilt by it, those of the step sentences and of the versions page, under <code>tests/fixtures/step-sentences</code>, <code>tests/fixtures/no-steps</code> and <code>tests/fixtures/versions</code>, and the versions page of <code>tests/fixtures/front-page</code>; update those by hand.</p>
+<h3>How changes are made</h3>
+<p>Every change starts as an issue. Open one that says what you want and why, or, for a bug, what happened, what you expected and the smallest feature file that shows it. The maintainers then design the plan with you in the issue, and work starts only once it is agreed: a pull request that names its issue.</p>
+<h3>How it is built</h3>
+<p>gherkin-glass is written in Rust, with the <a href="https://crates.io/crates/gherkin"><code>gherkin</code></a> parser from cucumber-rs. AI is part of how it is made: agents write code and documentation, and a human maintainer reviews everything before it is merged, under the terms of <a href="https://marlon-sousa.com/blog/manifesto/">A manifesto for software engineering with AI</a>.</p>
+<h2>License</h2>
+<p>Licensed under either of</p>
+<ul>
+<li>Apache License, Version 2.0 (<a href="https://github.com/marlon-sousa/gherkin-glass/blob/main/LICENSE-APACHE">LICENSE-APACHE</a> or <a href="https://www.apache.org/licenses/LICENSE-2.0">https://www.apache.org/licenses/LICENSE-2.0</a>)</li>
+<li>MIT license (<a href="https://github.com/marlon-sousa/gherkin-glass/blob/main/LICENSE-MIT">LICENSE-MIT</a> or <a href="https://opensource.org/licenses/MIT">https://opensource.org/licenses/MIT</a>)</li>
+</ul>
+<p>at your option.</p>
+<h3>Contribution</h3>
+<p>Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
+dual licensed as above, without any additional terms or conditions.</p>
+</main>
+</body>
+</html>

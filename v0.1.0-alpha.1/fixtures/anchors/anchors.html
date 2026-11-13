@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Feature: Anchors, fixtures/anchors/anchors.feature</title>
+<script>try{var t=localStorage.getItem("gherkin-glass:theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}</script>
+<style>
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+  --ghg-background: #ffffff;
+  --ghg-surface: #f2f2f2;
+  --ghg-text: #1a1a1a;
+  --ghg-muted: #474747;
+  --ghg-border: #757575;
+  --ghg-accent: #0b4f9c;
+  --ghg-keyword: #6a1b9a;
+  --ghg-parameter: #14521a;
+  --ghg-number: #8a3000;
+  --ghg-placeholder: #00575e;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ghg-background: #141414;
+    --ghg-surface: #222222;
+    --ghg-text: #ececec;
+    --ghg-muted: #c4c4c4;
+    --ghg-border: #8f8f8f;
+    --ghg-accent: #8cc4ff;
+    --ghg-keyword: #e1b3ff;
+    --ghg-parameter: #9fe0a8;
+    --ghg-number: #ffbf8a;
+    --ghg-placeholder: #7fdbe0;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ghg-background: #141414;
+  --ghg-surface: #222222;
+  --ghg-text: #ececec;
+  --ghg-muted: #c4c4c4;
+  --ghg-border: #8f8f8f;
+  --ghg-accent: #8cc4ff;
+  --ghg-keyword: #e1b3ff;
+  --ghg-parameter: #9fe0a8;
+  --ghg-number: #ffbf8a;
+  --ghg-placeholder: #7fdbe0;
+}
+</style>
+<link rel="stylesheet" href="../../assets/gherkin-glass.css">
+<script type="module" src="../../assets/gherkin-glass.js"></script>
+</head>
+<body>
+<dialog id="ghg_from_disk" class="ghg-from-disk" tabindex="-1" aria-labelledby="ghg_from_disk_title" aria-describedby="ghg_from_disk_text">
+<p id="ghg_from_disk_title" class="ghg-from-disk-title">Opened from disk</p>
+<p id="ghg_from_disk_text">This site is meant to be served, so its folder tree and search do not work when a page is opened from disk. Run ghg serve in the folder of your ghg.toml, or serve the site&#39;s folder with any web server, then open the address it gives.</p>
+<form method="dialog"><button>I agree</button></form>
+</dialog>
+<script>if(location.protocol==="file:"){let d=document.getElementById("ghg_from_disk");d.showModal();d.focus()}</script>
+<a class="ghg-skip" href="#ghg_main">Skip to content</a>
+<div class="ghg-options">
+<input type="checkbox" id="ghg_show_tree" class="ghg-show-tree" aria-controls="ghg_tree" checked> <label for="ghg_show_tree">Show the folder tree</label>
+<fieldset class="ghg-theme">
+<legend>Theme</legend>
+<label><input type="radio" name="ghg-theme" value="system" checked> System</label>
+<label><input type="radio" name="ghg-theme" value="light"> Light</label>
+<label><input type="radio" name="ghg-theme" value="dark"> Dark</label>
+</fieldset>
+</div>
+<div class="ghg-layout">
+<nav id="ghg_tree" class="ghg-tree" aria-label="Folder tree"></nav>
+<div class="ghg-page">
+<nav class="ghg-breadcrumb" aria-label="Breadcrumb">
+<ol>
+<li><a href="../../index.html">gherkin-glass examples</a></li>
+<li><a href="../index.html">fixtures</a></li>
+<li><a href="index.html">anchors</a></li>
+<li><a href="anchors.html" aria-current="page">Feature: Anchors</a></li>
+</ol>
+</nav>
+<form class="ghg-search" role="search" data-root="../../" data-shown="50" data-loading="Loading search." data-failed="Search could not be loaded." data-none="No results." data-count="Results: {count}." data-count-limited="Results: {count}. The first 50 are listed." data-no-name="no name" data-feature="{name}, feature" data-rule="{name}, rule in {feature}" data-scenario="{name}, scenario in {feature}" data-scenario-in-rule="{name}, scenario in {rule}, {feature}" data-scenario-outline="{name}, scenario outline in {feature}" data-scenario-outline-in-rule="{name}, scenario outline in {rule}, {feature}">
+<label>Search features, rules and scenarios <input type="search" class="ghg-search-field" autocomplete="off" spellcheck="false" enterkeyhint="search"></label>
+<p class="ghg-search-status" role="status"></p>
+<ol class="ghg-search-results" hidden></ol>
+</form>
+<main id="ghg_main">
+<h1>Feature: Anchors</h1>
+<nav class="ghg-contents" aria-label="Contents">
+<ul>
+<li><a href="#withdraw-cash-quickly">Scenario: Withdraw  Cash, quickly!</a></li>
+<li><a href="#the-customers-card">Scenario: The customer&#39;s card</a></li>
+<li><a href="#the-customers-card-2">Scenario: The customer’s card</a></li>
+<li><a href="#scenario">Scenario: ???</a></li>
+<li><a href="#step-2-pay">Scenario: Step 2: pay</a></li>
+<li><a href="#withdraw-cash">Scenario Outline: Withdraw cash</a></li>
+<li><a href="#withdraw-cash-row-2">Scenario: Withdraw cash row 2</a></li>
+<li><a href="#rule">Rule</a>
+<ul>
+<li><a href="#withdraw-cash-2">Scenario: Withdraw cash</a></li>
+</ul></li>
+<li><a href="#étape-spéciale">Rule: Étape SPÉCIALE</a>
+<ul>
+<li><a href="#scenario-2">Scenario: Scenario</a></li>
+<li><a href="#anchors">Scenario: Anchors</a></li>
+<li><a href="#étape-finale">Scenario: ÉTAPE FINALE</a></li>
+<li><a href="#हिन्दी-में">Scenario: हिन्दी में</a></li>
+<li><a href="#love">Scenario: ❤️ love</a></li>
+<li><a href="#می‌خواهم">Scenario: می‌خواهم</a></li>
+<li><a href="#headers-only">Scenario Outline: Headers only</a></li>
+</ul></li>
+</ul>
+</nav>
+<div class="ghg-controls">
+<button type="button" class="ghg-collapse-all">Collapse all</button>
+<button type="button" class="ghg-expand-all">Expand all</button>
+<label class="ghg-option"><input type="checkbox" class="ghg-inline-backgrounds" autocomplete="off" checked> Show backgrounds inside each scenario</label>
+</div>
+<div class="ghg-block ghg-background" data-expanded-when-linked="true">
+<h2 id="background"><button type="button" class="ghg-toggle" aria-expanded="false">Background</button></h2>
+<div class="ghg-content" hidden>
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>a customer</li>
+</ol>
+</div>
+</div>
+<div class="ghg-block ghg-scenario">
+<h2 id="withdraw-cash-quickly"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: Withdraw  Cash, quickly!</button></h2>
+<div class="ghg-content">
+<div class="ghg-from-background">
+<p id="withdraw-cash-quickly_background_1">From the background:<span class="ghg-linked" hidden> <a href="#background">Background</a></span></p>
+<ol class="ghg-steps ghg-inline" aria-labelledby="withdraw-cash-quickly_background_1">
+<li><span class="ghg-keyword">Given </span>a customer</li>
+</ol>
+</div>
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>an account</li>
+</ol>
+</div>
+</div>
+<div class="ghg-block ghg-scenario">
+<h2 id="the-customers-card"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: The customer&#39;s card</button></h2>
+<div class="ghg-content">
+<div class="ghg-from-background">
+<p id="the-customers-card_background_1">From the background:<span class="ghg-linked" hidden> <a href="#background">Background</a></span></p>
+<ol class="ghg-steps ghg-inline" aria-labelledby="the-customers-card_background_1">
+<li><span class="ghg-keyword">Given </span>a customer</li>
+</ol>
+</div>
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>a card</li>
+</ol>
+</div>
+</div>
+<div class="ghg-block ghg-scenario">
+<h2 id="the-customers-card-2"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: The customer’s card</button></h2>
+<div class="ghg-content">
+<div class="ghg-from-background">
+<p id="the-customers-card-2_background_1">From the background:<span class="ghg-linked" hidden> <a href="#background">Background</a></span></p>
+<ol class="ghg-steps ghg-inline" aria-labelledby="the-customers-card-2_background_1">
+<li><span class="ghg-keyword">Given </span>a customer</li>
+</ol>
+</div>
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>another card</li>
+</ol>
+</div>
+</div>
+<div class="ghg-block ghg-scenario">
+<h2 id="scenario"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: ???</button></h2>
+<div class="ghg-content">
+<div class="ghg-from-background">
+<p id="scenario_background_1">From the background:<span class="ghg-linked" hidden> <a href="#background">Background</a></span></p>
+<ol class="ghg-steps ghg-inline" aria-labelledby="scenario_background_1">
+<li><span class="ghg-keyword">Given </span>a customer</li>
+</ol>
+</div>
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>nothing to name it by</li>
+</ol>
+</div>
+</div>
+<div class="ghg-block ghg-scenario">
+<h2 id="step-2-pay"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: Step 2: pay</button></h2>
+<div class="ghg-content">
+<div class="ghg-from-background">
+<p id="step-2-pay_background_1">From the background:<span class="ghg-linked" hidden> <a href="#background">Background</a></span></p>
+<ol class="ghg-steps ghg-inline" aria-labelledby="step-2-pay_background_1">
+<li><span class="ghg-keyword">Given </span>a customer</li>
+</ol>
+</div>
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>a payment</li>
+</ol>
+</div>
+</div>
+<div class="ghg-block ghg-scenario">
+<h2 id="withdraw-cash"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario Outline: Withdraw cash</button></h2>
+<div class="ghg-content">
+<div class="ghg-from-background">
+<p id="withdraw-cash_background_1">From the background:<span class="ghg-linked" hidden> <a href="#background">Background</a></span></p>
+<ol class="ghg-steps ghg-inline" aria-labelledby="withdraw-cash_background_1">
+<li><span class="ghg-keyword">Given </span>a customer</li>
+</ol>
+</div>
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span><span class="ghg-placeholder">&#60;amount&#62;</span></li>
+</ol>
+<div class="ghg-block ghg-examples">
+<h3 id="examples"><button type="button" class="ghg-toggle" aria-expanded="true">Examples</button></h3>
+<div class="ghg-content">
+<table class="ghg-table">
+<thead>
+<tr><th scope="col">amount</th></tr>
+</thead>
+<tbody>
+<tr><td>10</td></tr>
+<tr><td>20</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="ghg-block ghg-examples">
+<h3 id="large-amounts"><button type="button" class="ghg-toggle" aria-expanded="true">Examples: Large amounts</button></h3>
+<div class="ghg-content">
+<table class="ghg-table">
+<thead>
+<tr><th scope="col">amount</th></tr>
+</thead>
+<tbody>
+<tr><td>1000</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="ghg-block ghg-examples-as-scenarios">
+<h3 id="withdraw-cash_scenarios"><button type="button" class="ghg-toggle" aria-expanded="false">Examples as scenarios: <bdi>Withdraw cash</bdi></button></h3>
+<div class="ghg-content" hidden>
+<div class="ghg-block ghg-scenario">
+<h4 id="withdraw-cash-row-1"><button type="button" class="ghg-toggle" aria-expanded="true"><bdi>Withdraw cash</bdi> (<bdi>amount</bdi>: <bdi>10</bdi>)</button></h4>
+<div class="ghg-content">
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span><span class="ghg-number">10</span></li>
+</ol>
+</div>
+</div>
+<div class="ghg-block ghg-scenario">
+<h4 id="withdraw-cash-row-2-2"><button type="button" class="ghg-toggle" aria-expanded="true"><bdi>Withdraw cash</bdi> (<bdi>amount</bdi>: <bdi>20</bdi>)</button></h4>
+<div class="ghg-content">
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span><span class="ghg-number">20</span></li>
+</ol>
+</div>
+</div>
+<div class="ghg-block ghg-scenario">
+<h4 id="withdraw-cash-row-3"><button type="button" class="ghg-toggle" aria-expanded="true"><bdi>Withdraw cash</bdi> (<bdi>amount</bdi>: <bdi>1000</bdi>)</button></h4>
+<div class="ghg-content">
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span><span class="ghg-number">1000</span></li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="ghg-block ghg-scenario">
+<h2 id="withdraw-cash-row-2"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: Withdraw cash row 2</button></h2>
+<div class="ghg-content">
+<div class="ghg-from-background">
+<p id="withdraw-cash-row-2_background_1">From the background:<span class="ghg-linked" hidden> <a href="#background">Background</a></span></p>
+<ol class="ghg-steps ghg-inline" aria-labelledby="withdraw-cash-row-2_background_1">
+<li><span class="ghg-keyword">Given </span>a customer</li>
+</ol>
+</div>
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>a name like a row&#39;s anchor</li>
+</ol>
+</div>
+</div>
+<div class="ghg-block ghg-rule">
+<h2 id="rule"><button type="button" class="ghg-toggle" aria-expanded="true">Rule</button></h2>
+<div class="ghg-content">
+<div class="ghg-block ghg-background" data-expanded-when-linked="true">
+<h3 id="background-2"><button type="button" class="ghg-toggle" aria-expanded="false">Background</button></h3>
+<div class="ghg-content" hidden>
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>a rule&#39;s background</li>
+</ol>
+</div>
+</div>
+<div class="ghg-block ghg-scenario">
+<h3 id="withdraw-cash-2"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: Withdraw cash</button></h3>
+<div class="ghg-content">
+<div class="ghg-from-background">
+<p id="withdraw-cash-2_background_1">From the background:<span class="ghg-linked" hidden> <a href="#background">Background</a></span></p>
+<ol class="ghg-steps ghg-inline" aria-labelledby="withdraw-cash-2_background_1">
+<li><span class="ghg-keyword">Given </span>a customer</li>
+</ol>
+</div>
+<div class="ghg-from-background">
+<p id="withdraw-cash-2_background_2">From the rule&#39;s background:<span class="ghg-linked" hidden> <a href="#background-2">Background</a></span></p>
+<ol class="ghg-steps ghg-inline" aria-labelledby="withdraw-cash-2_background_2">
+<li><span class="ghg-keyword">Given </span>a rule&#39;s background</li>
+</ol>
+</div>
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>a repeated name</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div class="ghg-block ghg-rule">
+<h2 id="étape-spéciale"><button type="button" class="ghg-toggle" aria-expanded="true">Rule: Étape SPÉCIALE</button></h2>
+<div class="ghg-content">
+<div class="ghg-block ghg-scenario">
+<h3 id="scenario-2"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: Scenario</button></h3>
+<div class="ghg-content">
+<div class="ghg-from-background">
+<p id="scenario-2_background_1">From the background:<span class="ghg-linked" hidden> <a href="#background">Background</a></span></p>
+<ol class="ghg-steps ghg-inline" aria-labelledby="scenario-2_background_1">
+<li><span class="ghg-keyword">Given </span>a customer</li>
+</ol>
+</div>
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>a name like the keyword</li>
+</ol>
+</div>
+</div>
+<div class="ghg-block ghg-scenario">
+<h3 id="anchors"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: Anchors</button></h3>
+<div class="ghg-content">
+<div class="ghg-from-background">
+<p id="anchors_background_1">From the background:<span class="ghg-linked" hidden> <a href="#background">Background</a></span></p>
+<ol class="ghg-steps ghg-inline" aria-labelledby="anchors_background_1">
+<li><span class="ghg-keyword">Given </span>a customer</li>
+</ol>
+</div>
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>the feature&#39;s own name, which has no anchor</li>
+</ol>
+</div>
+</div>
+<div class="ghg-block ghg-scenario">
+<h3 id="étape-finale"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: ÉTAPE FINALE</button></h3>
+<div class="ghg-content">
+<div class="ghg-from-background">
+<p id="étape-finale_background_1">From the background:<span class="ghg-linked" hidden> <a href="#background">Background</a></span></p>
+<ol class="ghg-steps ghg-inline" aria-labelledby="étape-finale_background_1">
+<li><span class="ghg-keyword">Given </span>a customer</li>
+</ol>
+</div>
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>a name written with a combining accent</li>
+</ol>
+</div>
+</div>
+<div class="ghg-block ghg-scenario">
+<h3 id="हिन्दी-में"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: हिन्दी में</button></h3>
+<div class="ghg-content">
+<div class="ghg-from-background">
+<p id="हिन्दी-में_background_1">From the background:<span class="ghg-linked" hidden> <a href="#background">Background</a></span></p>
+<ol class="ghg-steps ghg-inline" aria-labelledby="हिन्दी-में_background_1">
+<li><span class="ghg-keyword">Given </span>a customer</li>
+</ol>
+</div>
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>a name in Devanagari, with its virama</li>
+</ol>
+</div>
+</div>
+<div class="ghg-block ghg-scenario">
+<h3 id="love"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: ❤️ love</button></h3>
+<div class="ghg-content">
+<div class="ghg-from-background">
+<p id="love_background_1">From the background:<span class="ghg-linked" hidden> <a href="#background">Background</a></span></p>
+<ol class="ghg-steps ghg-inline" aria-labelledby="love_background_1">
+<li><span class="ghg-keyword">Given </span>a customer</li>
+</ol>
+</div>
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>an emoji with its variation selector</li>
+</ol>
+</div>
+</div>
+<div class="ghg-block ghg-scenario">
+<h3 id="می‌خواهم"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: می‌خواهم</button></h3>
+<div class="ghg-content">
+<div class="ghg-from-background">
+<p id="می‌خواهم_background_1">From the background:<span class="ghg-linked" hidden> <a href="#background">Background</a></span></p>
+<ol class="ghg-steps ghg-inline" aria-labelledby="می‌خواهم_background_1">
+<li><span class="ghg-keyword">Given </span>a customer</li>
+</ol>
+</div>
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>a Persian word with its zero width non-joiner</li>
+</ol>
+</div>
+</div>
+<div class="ghg-block ghg-scenario">
+<h3 id="headers-only"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario Outline: Headers only</button></h3>
+<div class="ghg-content">
+<div class="ghg-from-background">
+<p id="headers-only_background_1">From the background:<span class="ghg-linked" hidden> <a href="#background">Background</a></span></p>
+<ol class="ghg-steps ghg-inline" aria-labelledby="headers-only_background_1">
+<li><span class="ghg-keyword">Given </span>a customer</li>
+</ol>
+</div>
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span><span class="ghg-placeholder">&#60;n&#62;</span></li>
+</ol>
+<div class="ghg-block ghg-examples">
+<h4 id="examples-2"><button type="button" class="ghg-toggle" aria-expanded="true">Examples</button></h4>
+<div class="ghg-content">
+<table class="ghg-table">
+<thead>
+<tr><th scope="col">n</th></tr>
+</thead>
+</table>
+</div>
+</div>
+<div class="ghg-block ghg-examples">
+<h4 id="no-table"><button type="button" class="ghg-toggle" aria-expanded="true">Examples: No table</button></h4>
+<div class="ghg-content">
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</div>
+</body>
+</html>

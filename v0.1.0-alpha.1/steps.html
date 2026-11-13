@@ -1,0 +1,1051 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Step sentences, gherkin-glass examples</title>
+<script>try{var t=localStorage.getItem("gherkin-glass:theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}</script>
+<style>
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+  --ghg-background: #ffffff;
+  --ghg-surface: #f2f2f2;
+  --ghg-text: #1a1a1a;
+  --ghg-muted: #474747;
+  --ghg-border: #757575;
+  --ghg-accent: #0b4f9c;
+  --ghg-keyword: #6a1b9a;
+  --ghg-parameter: #14521a;
+  --ghg-number: #8a3000;
+  --ghg-placeholder: #00575e;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ghg-background: #141414;
+    --ghg-surface: #222222;
+    --ghg-text: #ececec;
+    --ghg-muted: #c4c4c4;
+    --ghg-border: #8f8f8f;
+    --ghg-accent: #8cc4ff;
+    --ghg-keyword: #e1b3ff;
+    --ghg-parameter: #9fe0a8;
+    --ghg-number: #ffbf8a;
+    --ghg-placeholder: #7fdbe0;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ghg-background: #141414;
+  --ghg-surface: #222222;
+  --ghg-text: #ececec;
+  --ghg-muted: #c4c4c4;
+  --ghg-border: #8f8f8f;
+  --ghg-accent: #8cc4ff;
+  --ghg-keyword: #e1b3ff;
+  --ghg-parameter: #9fe0a8;
+  --ghg-number: #ffbf8a;
+  --ghg-placeholder: #7fdbe0;
+}
+</style>
+<link rel="stylesheet" href="assets/gherkin-glass.css">
+<script type="module" src="assets/gherkin-glass.js"></script>
+</head>
+<body>
+<dialog id="ghg_from_disk" class="ghg-from-disk" tabindex="-1" aria-labelledby="ghg_from_disk_title" aria-describedby="ghg_from_disk_text">
+<p id="ghg_from_disk_title" class="ghg-from-disk-title">Opened from disk</p>
+<p id="ghg_from_disk_text">This site is meant to be served, so its folder tree and search do not work when a page is opened from disk. Run ghg serve in the folder of your ghg.toml, or serve the site&#39;s folder with any web server, then open the address it gives.</p>
+<form method="dialog"><button>I agree</button></form>
+</dialog>
+<script>if(location.protocol==="file:"){let d=document.getElementById("ghg_from_disk");d.showModal();d.focus()}</script>
+<a class="ghg-skip" href="#ghg_main">Skip to content</a>
+<div class="ghg-options">
+<input type="checkbox" id="ghg_show_tree" class="ghg-show-tree" aria-controls="ghg_tree" checked> <label for="ghg_show_tree">Show the folder tree</label>
+<fieldset class="ghg-theme">
+<legend>Theme</legend>
+<label><input type="radio" name="ghg-theme" value="system" checked> System</label>
+<label><input type="radio" name="ghg-theme" value="light"> Light</label>
+<label><input type="radio" name="ghg-theme" value="dark"> Dark</label>
+</fieldset>
+</div>
+<div class="ghg-layout">
+<nav id="ghg_tree" class="ghg-tree" aria-label="Folder tree"></nav>
+<div class="ghg-page">
+<nav class="ghg-breadcrumb" aria-label="Breadcrumb">
+<ol>
+<li><a href="index.html">gherkin-glass examples</a></li>
+<li><a href="steps.html" aria-current="page">Step sentences</a></li>
+</ol>
+</nav>
+<form class="ghg-search" role="search" data-root="" data-shown="50" data-loading="Loading search." data-failed="Search could not be loaded." data-none="No results." data-count="Results: {count}." data-count-limited="Results: {count}. The first 50 are listed." data-no-name="no name" data-feature="{name}, feature" data-rule="{name}, rule in {feature}" data-scenario="{name}, scenario in {feature}" data-scenario-in-rule="{name}, scenario in {rule}, {feature}" data-scenario-outline="{name}, scenario outline in {feature}" data-scenario-outline-in-rule="{name}, scenario outline in {rule}, {feature}">
+<label>Search features, rules and scenarios <input type="search" class="ghg-search-field" autocomplete="off" spellcheck="false" enterkeyhint="search"></label>
+<p class="ghg-search-status" role="status"></p>
+<ol class="ghg-search-results" hidden></ol>
+</form>
+<main id="ghg_main">
+<h1>Step sentences</h1>
+<h2>Given</h2>
+<h3>&#34;…&#34;</h3>
+<p>Used 5 times.</p>
+<ul>
+<li><a href="fixtures/anchors/anchors.html#withdraw-cash"><bdi>Scenario Outline: Withdraw cash</bdi>, <bdi>fixtures/anchors/anchors.feature</bdi></a>, with <bdi>&#60;amount&#62;</bdi></li>
+<li><a href="fixtures/anchors/anchors.html#headers-only"><bdi>Scenario Outline: Headers only</bdi>, <bdi>fixtures/anchors/anchors.feature</bdi></a>, with <bdi>&#60;n&#62;</bdi></li>
+<li><a href="fixtures/anchors/em-portugues.html#esquema-do-cenário"><bdi lang="pt">Esquema do Cenário</bdi>, <bdi>fixtures/anchors/em-portugues.feature</bdi></a>, with <bdi lang="pt">&#60;valor&#62;</bdi></li>
+<li><a href="fixtures/anchors/emoji.html#scenario-outline"><bdi lang="und">📖</bdi>, <bdi>fixtures/anchors/emoji.feature</bdi></a>, with <bdi lang="und">&#60;n&#62;</bdi></li>
+<li><a href="fixtures/pages/features/outlines.html#nothing-to-produce"><bdi>Scenario Outline: Nothing to produce</bdi>, <bdi>fixtures/pages/features/outlines.feature</bdi></a>, with <bdi>&#60;x&#62;</bdi></li>
+</ul>
+<h3>&#34;…&#34; accounts</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/tags/features/accounts.html#close-count-accounts"><bdi>Scenario Outline: Close &#60;count&#62; accounts</bdi>, <bdi>fixtures/tags/features/accounts.feature</bdi></a>, with <bdi>&#60;count&#62;</bdi></li>
+</ul>
+<h3>&#34;…&#34; and &#34;…&#34;</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/pages/features/outlines.html#scenario-outline"><bdi>Scenario Outline</bdi>, <bdi>fixtures/pages/features/outlines.feature</bdi></a>, with <bdi>&#60;x&#62;</bdi>, <bdi>&#60;y&#62;</bdi></li>
+</ul>
+<h3>&#34;…&#34; asked to hold &#34;…&#34;</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="lending/borrowing.html#a-book-on-hold-cannot-be-borrowed-by-someone-else"><bdi>Scenario: A book on hold cannot be borrowed by someone else</bdi>, <bdi>lending/borrowing.feature</bdi></a>, with <bdi>&#34;Bea&#34;</bdi>, <bdi>&#34;Emma&#34;</bdi></li>
+</ul>
+<h3>&#34;…&#34; borrowed &#34;…&#34; 10 days ago</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="lending/returning.html#returning-a-book-on-time"><bdi>Scenario: Returning a book on time</bdi>, <bdi>lending/returning.feature</bdi></a>, with <bdi>&#34;Ana&#34;</bdi>, <bdi>&#34;The Hobbit&#34;</bdi></li>
+</ul>
+<h3>&#34;…&#34; borrowed &#34;…&#34; 30 days ago</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="lending/returning.html#returning-a-book-late"><bdi>Scenario: Returning a book late</bdi>, <bdi>lending/returning.feature</bdi></a>, with <bdi>&#34;Ana&#34;</bdi>, <bdi>&#34;The Hobbit&#34;</bdi></li>
+</ul>
+<h3>&#34;…&#34; borrowed the &#34;…&#34; &#34;…&#34; &#34;…&#34; days ago</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="lending/returning.html#fines-for-each-kind-of-item"><bdi>Scenario Outline: Fines for each kind of item</bdi>, <bdi>lending/returning.feature</bdi></a>, with <bdi>&#34;Ana&#34;</bdi>, <bdi>&#60;kind&#62;</bdi>, <bdi>&#34;&#60;title&#62;&#34;</bdi>, <bdi>&#60;days&#62;</bdi></li>
+</ul>
+<h3>&#34;…&#34; holds 5 books</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="lending/borrowing.html#a-member-near-the-limit"><bdi>Background: A member near the limit</bdi>, <bdi>lending/borrowing.feature</bdi></a>, with <bdi>&#34;Ana&#34;</bdi></li>
+</ul>
+<h3>&#34;…&#34; in &#34;…&#34; and &#60;unknown&#62;</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/highlighting/highlighting.html#placeholders"><bdi>Scenario Outline: Placeholders</bdi>, <bdi>fixtures/highlighting/highlighting.feature</bdi></a>, with <bdi>&#60;amount&#62;</bdi>, <bdi>&#34;&#60;currency&#62; 3&#34;</bdi></li>
+</ul>
+<h3>&#34;…&#34; items</h3>
+<p>Used 2 times.</p>
+<ul>
+<li><a href="fixtures/constructs/every-construct.html#an-outline-with-two-named-examples"><bdi>Scenario Outline: An outline with two named examples</bdi>, <bdi>fixtures/constructs/every-construct.feature</bdi></a>, with <bdi>&#60;count&#62;</bdi></li>
+<li><a href="fixtures/pages/features/billing/refunds.html#refund-count-items"><bdi>Scenario Outline: Refund &#60;count&#62; items</bdi>, <bdi>fixtures/pages/features/billing/refunds.feature</bdi></a>, with <bdi>&#60;count&#62;</bdi></li>
+</ul>
+<h3>&#34;…&#34; refunds</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/pages/features/billing/refunds.html#refund-again-count-times"><bdi>Scenario Outline: Refund again &#60;count&#62; times</bdi>, <bdi>fixtures/pages/features/billing/refunds.feature</bdi></a>, with <bdi>&#60;count&#62;</bdi></li>
+</ul>
+<h3>&#34;…&#34; returns &#34;…&#34;</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="lending/borrowing.html#returning-a-book-makes-room-for-another"><bdi>Example: Returning a book makes room for another</bdi>, <bdi>lending/borrowing.feature</bdi></a>, with <bdi>&#34;Ana&#34;</bdi>, <bdi>&#34;The Hobbit&#34;</bdi></li>
+</ul>
+<h3>2 &#34;…&#34;</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/highlighting/highlighting.html#in-a-rule"><bdi>Scenario: In a rule</bdi>, <bdi>fixtures/highlighting/highlighting.feature</bdi></a>, with <bdi>&#34;items&#34;</bdi></li>
+</ul>
+<h3>&#60;amount&#62; is plain here</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/highlighting/highlighting.html#not-an-outline"><bdi>Scenario: Not an outline</bdi>, <bdi>fixtures/highlighting/highlighting.feature</bdi></a></li>
+</ul>
+<h3>a background step with a doc string</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/doc-strings/doc-strings.html#background"><bdi>Background</bdi>, <bdi>fixtures/doc-strings/doc-strings.feature</bdi></a></li>
+</ul>
+<h3>a balance of &#34;…&#34;</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/pages/features/outlines.html#withdraw-cash"><bdi>Scenario Outline: Withdraw cash</bdi>, <bdi>fixtures/pages/features/outlines.feature</bdi></a>, with <bdi>&#60;balance&#62;</bdi></li>
+</ul>
+<h3>a card</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/anchors/anchors.html#the-customers-card"><bdi>Scenario: The customer&#39;s card</bdi>, <bdi>fixtures/anchors/anchors.feature</bdi></a></li>
+</ul>
+<h3>a customer</h3>
+<p>Used 2 times.</p>
+<ul>
+<li><a href="fixtures/anchors/anchors.html#background"><bdi>Background</bdi>, <bdi>fixtures/anchors/anchors.feature</bdi></a></li>
+<li><a href="fixtures/tags/features/accounts.html#open-an-account"><bdi>Scenario: Open an account</bdi>, <bdi>fixtures/tags/features/accounts.feature</bdi></a></li>
+</ul>
+<h3>a customer named &#34;…&#34;</h3>
+<p>Used 2 times.</p>
+<ul>
+<li><a href="fixtures/constructs/every-construct.html#a-logged-in-customer"><bdi>Background: A logged in customer</bdi>, <bdi>fixtures/constructs/every-construct.feature</bdi></a>, with <bdi>&#34;Ana&#34;</bdi></li>
+<li><a href="fixtures/pages/features/billing/refunds.html#background"><bdi>Background</bdi>, <bdi>fixtures/pages/features/billing/refunds.feature</bdi></a>, with <bdi>&#34;Ana&#34;</bdi></li>
+</ul>
+<h3>a customer paid 50</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/front-page/features/billing/refunds.html#a-customer-is-refunded"><bdi>Scenario: A customer is refunded</bdi>, <bdi>fixtures/front-page/features/billing/refunds.feature</bdi></a></li>
+</ul>
+<h3>a limit of 50</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/backgrounds/features/both.html#over-the-limit"><bdi>Background: Over the limit</bdi>, <bdi>fixtures/backgrounds/features/both.feature</bdi></a></li>
+</ul>
+<h3>a member named &#34;…&#34; with card number 1024</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="lending/borrowing.html#a-member-at-the-desk"><bdi>Background: A member at the desk</bdi>, <bdi>lending/borrowing.feature</bdi></a>, with <bdi>&#34;Ana&#34;</bdi></li>
+</ul>
+<h3>a member of staff is signed in</h3>
+<p>Used 3 times.</p>
+<ul>
+<li><a href="catalogue/records/adding-a-book.html#adding-a-book-from-its-record"><bdi>Scenario: Adding a book from its record</bdi>, <bdi>catalogue/records/adding-a-book.feature</bdi></a></li>
+<li><a href="catalogue/records/adding-a-book.html#a-record-in-the-librarys-own-format"><bdi>Scenario: A record in the library&#39;s own format</bdi>, <bdi>catalogue/records/adding-a-book.feature</bdi></a></li>
+<li><a href="catalogue/records/adding-a-book.html#a-record-with-a-mistake-is-refused"><bdi>Scenario: A record with a mistake is refused</bdi>, <bdi>catalogue/records/adding-a-book.feature</bdi></a></li>
+</ul>
+<h3>a name in Devanagari, with its virama</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/anchors/anchors.html#हिन्दी-में"><bdi>Scenario: हिन्दी में</bdi>, <bdi>fixtures/anchors/anchors.feature</bdi></a></li>
+</ul>
+<h3>a name like a row&#39;s anchor</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/anchors/anchors.html#withdraw-cash-row-2"><bdi>Scenario: Withdraw cash row 2</bdi>, <bdi>fixtures/anchors/anchors.feature</bdi></a></li>
+</ul>
+<h3>a name like the keyword</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/anchors/anchors.html#scenario-2"><bdi>Scenario: Scenario</bdi>, <bdi>fixtures/anchors/anchors.feature</bdi></a></li>
+</ul>
+<h3 lang="und">a name of nothing but an emoji</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/anchors/emoji.html#scenario-2"><bdi lang="und">📕: 🙂</bdi>, <bdi>fixtures/anchors/emoji.feature</bdi></a></li>
+</ul>
+<h3>a name written with a combining accent</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/anchors/anchors.html#étape-finale"><bdi>Scenario: ÉTAPE FINALE</bdi>, <bdi>fixtures/anchors/anchors.feature</bdi></a></li>
+</ul>
+<h3>a note</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/backgrounds/features/both.html#background"><bdi>Background</bdi>, <bdi>fixtures/backgrounds/features/both.feature</bdi></a></li>
+</ul>
+<h3>a payment</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/anchors/anchors.html#step-2-pay"><bdi>Scenario: Step 2: pay</bdi>, <bdi>fixtures/anchors/anchors.feature</bdi></a></li>
+</ul>
+<h3>a Persian word with its zero width non-joiner</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/anchors/anchors.html#می‌خواهم"><bdi>Scenario: می‌خواهم</bdi>, <bdi>fixtures/anchors/anchors.feature</bdi></a></li>
+</ul>
+<h3>a repeated name</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/anchors/anchors.html#withdraw-cash-2"><bdi>Scenario: Withdraw cash</bdi>, <bdi>fixtures/anchors/anchors.feature</bdi></a></li>
+</ul>
+<h3>a request body</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/doc-strings/doc-strings.html#a-media-type-nested-indentation-and-an-escaped-delimiter"><bdi>Scenario: A media type, nested indentation and an escaped delimiter</bdi>, <bdi>fixtures/doc-strings/doc-strings.feature</bdi></a></li>
+</ul>
+<h3>a rule&#39;s background</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/anchors/anchors.html#background-2"><bdi>Background</bdi>, <bdi>fixtures/anchors/anchors.feature</bdi></a></li>
+</ul>
+<h3>a snippet</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/doc-strings/doc-strings.html#backticks-with-their-own-escape"><bdi>Scenario: Backticks, with their own escape</bdi>, <bdi>fixtures/doc-strings/doc-strings.feature</bdi></a></li>
+</ul>
+<h3>a star step</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/step-sentences/accounts-old.html#star-steps"><bdi>Scenario: Star steps</bdi>, <bdi>fixtures/step-sentences/accounts-old.feature</bdi></a></li>
+</ul>
+<h3>a step after a star</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/step-sentences/accounts-old.html#star-steps"><bdi>Scenario: Star steps</bdi>, <bdi>fixtures/step-sentences/accounts-old.feature</bdi></a></li>
+</ul>
+<h3>a step in a rule</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/doc-strings/doc-strings.html#a-doc-string-inside-a-rule"><bdi>Example: A doc string inside a rule</bdi>, <bdi>fixtures/doc-strings/doc-strings.feature</bdi></a></li>
+</ul>
+<h3>a step no scenario starts with</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/backgrounds/features/no-scenarios.html#background"><bdi>Background</bdi>, <bdi>fixtures/backgrounds/features/no-scenarios.feature</bdi></a></li>
+</ul>
+<h3>a step with a doc string</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/constructs/every-construct.html#a-scenario-inside-the-rule"><bdi>Example: A scenario inside the rule</bdi>, <bdi>fixtures/constructs/every-construct.feature</bdi></a></li>
+</ul>
+<h3>a step with a doc string:</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/step-sentences/accounts-old.html#star-steps"><bdi>Scenario: Star steps</bdi>, <bdi>fixtures/step-sentences/accounts-old.feature</bdi></a></li>
+</ul>
+<h3>a step with a table:</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/step-sentences/accounts-old.html#star-steps"><bdi>Scenario: Star steps</bdi>, <bdi>fixtures/step-sentences/accounts-old.feature</bdi></a></li>
+</ul>
+<h3>an account</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/anchors/anchors.html#withdraw-cash-quickly"><bdi>Scenario: Withdraw  Cash, quickly!</bdi>, <bdi>fixtures/anchors/anchors.feature</bdi></a></li>
+</ul>
+<h3>an account with 100 and a &#34;…&#34; note</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/highlighting/highlighting.html#background"><bdi>Background</bdi>, <bdi>fixtures/highlighting/highlighting.feature</bdi></a>, with <bdi>&#34;&#60;amount&#62;&#34;</bdi></li>
+</ul>
+<h3>an account with these balances:</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/backgrounds/features/both.html#background"><bdi>Background</bdi>, <bdi>fixtures/backgrounds/features/both.feature</bdi></a></li>
+</ul>
+<h3>an emoji with its variation selector</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/anchors/anchors.html#love"><bdi>Scenario: ❤️ love</bdi>, <bdi>fixtures/anchors/anchors.feature</bdi></a></li>
+</ul>
+<h3>an order from forty days ago</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/pages/features/billing/refunds.html#an-old-order"><bdi>Background: An old order</bdi>, <bdi>fixtures/pages/features/billing/refunds.feature</bdi></a></li>
+</ul>
+<h3>an order with these lines:</h3>
+<p>Used 2 times.</p>
+<ul>
+<li><a href="fixtures/constructs/every-construct.html#a-plain-scenario"><bdi>Scenario: A plain scenario</bdi>, <bdi>fixtures/constructs/every-construct.feature</bdi></a></li>
+<li><a href="fixtures/pages/features/billing/refunds.html#refund-a-card-payment"><bdi>Scenario: Refund a card payment</bdi>, <bdi>fixtures/pages/features/billing/refunds.feature</bdi></a></li>
+</ul>
+<h3 lang="und">an unnamed background</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/anchors/emoji.html#background"><bdi lang="und">💤</bdi>, <bdi>fixtures/anchors/emoji.feature</bdi></a></li>
+</ul>
+<h3 lang="und">an unnamed scenario</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/anchors/emoji.html#scenario"><bdi lang="und">📕</bdi>, <bdi>fixtures/anchors/emoji.feature</bdi></a></li>
+</ul>
+<h3>another card</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/anchors/anchors.html#the-customers-card-2"><bdi>Scenario: The customer’s card</bdi>, <bdi>fixtures/anchors/anchors.feature</bdi></a></li>
+</ul>
+<h3>nothing to name it by</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/anchors/anchors.html#scenario"><bdi>Scenario: ???</bdi>, <bdi>fixtures/anchors/anchors.feature</bdi></a></li>
+</ul>
+<h3 lang="pt">o usuário &#34;…&#34; entra</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/step-sentences/em-portugues.html#ana-entra"><bdi lang="pt">Cenário: Ana entra</bdi>, <bdi>fixtures/step-sentences/em-portugues.feature</bdi></a>, with <bdi lang="pt">&#34;ana&#34;</bdi></li>
+</ul>
+<h3 lang="pt">que o livro &#34;…&#34; está na estante</h3>
+<p>Used 2 times.</p>
+<ul>
+<li><a href="em-portugues/emprestimo.html#empréstimo-de-um-livro-na-estante"><bdi lang="pt">Cenário: Empréstimo de um livro na estante</bdi>, <bdi>em-portugues/emprestimo.feature</bdi></a>, with <bdi lang="pt">&#34;Dom Casmurro&#34;</bdi></li>
+<li><a href="em-portugues/emprestimo.html#quanto-tempo-dura-um-empréstimo"><bdi lang="pt">Esquema do Cenário: Quanto tempo dura um empréstimo</bdi>, <bdi>em-portugues/emprestimo.feature</bdi></a>, with <bdi lang="pt">&#34;&#60;título&#62;&#34;</bdi></li>
+</ul>
+<h3 lang="pt">que o saldo é 100</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/search/features/saque.html#saque-com-saldo"><bdi lang="pt">Cenário: Saque com saldo</bdi>, <bdi>fixtures/search/features/saque.feature</bdi></a></li>
+</ul>
+<h3 lang="und">something</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/pages/features/emoji.html#a-scenario"><bdi lang="und">📕: A scenario</bdi>, <bdi>fixtures/pages/features/emoji.feature</bdi></a></li>
+</ul>
+<h3>text with a tab and a hash</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/doc-strings/doc-strings.html#tabs-and-a-delimiter-after-a-hash-inside-the-content"><bdi>Scenario: Tabs, and a delimiter after a hash inside the content</bdi>, <bdi>fixtures/doc-strings/doc-strings.feature</bdi></a></li>
+</ul>
+<h3>text with blank lines</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/doc-strings/doc-strings.html#blank-lines-and-a-comment-between-the-step-and-its-doc-string"><bdi>Scenario: Blank lines, and a comment between the step and its doc string</bdi>, <bdi>fixtures/doc-strings/doc-strings.feature</bdi></a></li>
+</ul>
+<h3>the balance is 100</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/search/features/banking/withdraw.html#withdraw-within-the-balance"><bdi>Scenario: Withdraw within the balance</bdi>, <bdi>fixtures/search/features/banking/withdraw.feature</bdi></a></li>
+</ul>
+<h3>the book &#34;…&#34; is on the shelf</h3>
+<p>Used 5 times.</p>
+<ul>
+<li><a href="lending/borrowing.html#borrowing-a-book-that-is-on-the-shelf"><bdi>Scenario: Borrowing a book that is on the shelf</bdi>, <bdi>lending/borrowing.feature</bdi></a>, with <bdi>&#34;The Hobbit&#34;</bdi></li>
+<li><a href="lending/borrowing.html#how-long-a-loan-lasts"><bdi>Scenario Outline: How long a loan lasts</bdi>, <bdi>lending/borrowing.feature</bdi></a>, with <bdi>&#34;&#60;title&#62;&#34;</bdi></li>
+<li><a href="lending/borrowing.html#borrowing-over-the-limit-is-refused"><bdi>Example: Borrowing over the limit is refused</bdi>, <bdi>lending/borrowing.feature</bdi></a>, with <bdi>&#34;Emma&#34;</bdi></li>
+<li><a href="lending/borrowing.html#returning-a-book-makes-room-for-another"><bdi>Example: Returning a book makes room for another</bdi>, <bdi>lending/borrowing.feature</bdi></a>, with <bdi>&#34;Emma&#34;</bdi></li>
+<li><a href="lending/borrowing.html#a-book-on-hold-cannot-be-borrowed-by-someone-else"><bdi>Scenario: A book on hold cannot be borrowed by someone else</bdi>, <bdi>lending/borrowing.feature</bdi></a>, with <bdi>&#34;Emma&#34;</bdi></li>
+</ul>
+<h3>the catalogue holds these books:</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="catalogue/searching.html#background"><bdi>Background</bdi>, <bdi>catalogue/searching.feature</bdi></a></li>
+</ul>
+<h3>the customer has an account</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/search/features/banking/withdraw.html#background"><bdi>Background</bdi>, <bdi>fixtures/search/features/banking/withdraw.feature</bdi></a></li>
+</ul>
+<h3>the customer&#39;s &#39;name&#39; is plain</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/highlighting/highlighting.html#parameters"><bdi>Scenario: Parameters</bdi>, <bdi>fixtures/highlighting/highlighting.feature</bdi></a></li>
+</ul>
+<h3>the daily limit is 500</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/search/features/banking/withdraw.html#background-2"><bdi>Background</bdi>, <bdi>fixtures/search/features/banking/withdraw.feature</bdi></a></li>
+</ul>
+<h3>the feature&#39;s own name, which has no anchor</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/anchors/anchors.html#anchors"><bdi>Scenario: Anchors</bdi>, <bdi>fixtures/anchors/anchors.feature</bdi></a></li>
+</ul>
+<h3>the file .github/read-again.feature</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/input-files/.github/read-again.html#present"><bdi>Scenario: Present</bdi>, <bdi>fixtures/input-files/.github/read-again.feature</bdi></a></li>
+</ul>
+<h3>the file ignored-by-gitignore/read.feature</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/input-files/ignored-by-gitignore/read.html#present"><bdi>Scenario: Present</bdi>, <bdi>fixtures/input-files/ignored-by-gitignore/read.feature</bdi></a></li>
+</ul>
+<h3>the file read-despite-ignore.feature</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/input-files/read-despite-ignore.html#present"><bdi>Scenario: Present</bdi>, <bdi>fixtures/input-files/read-despite-ignore.feature</bdi></a></li>
+</ul>
+<h3>the file read.feature</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/input-files/read.html#present"><bdi>Scenario: Present</bdi>, <bdi>fixtures/input-files/read.feature</bdi></a></li>
+</ul>
+<h3>the file stories/read.story</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/input-files/stories/read.html#present"><bdi>Scenario: Present</bdi>, <bdi>fixtures/input-files/stories/read.story</bdi></a></li>
+</ul>
+<h3>the file sub/deeper/read-again.feature</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/input-files/sub/deeper/read-again.html#present"><bdi>Scenario: Present</bdi>, <bdi>fixtures/input-files/sub/deeper/read-again.feature</bdi></a></li>
+</ul>
+<h3>the file sub/deeper/read.feature</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/input-files/sub/deeper/read.html#present"><bdi>Scenario: Present</bdi>, <bdi>fixtures/input-files/sub/deeper/read.feature</bdi></a></li>
+</ul>
+<h3>the file sub/read.feature</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/input-files/sub/read.html#present"><bdi>Scenario: Present</bdi>, <bdi>fixtures/input-files/sub/read.feature</bdi></a></li>
+</ul>
+<h3>the first step is an and</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/step-sentences/money.html#starting-with-and"><bdi>Scenario: Starting with and</bdi>, <bdi>fixtures/step-sentences/money.feature</bdi></a></li>
+</ul>
+<h3>the library is open</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="lending/borrowing.html#a-member-at-the-desk"><bdi>Background: A member at the desk</bdi>, <bdi>lending/borrowing.feature</bdi></a></li>
+</ul>
+<h3>the order is saved</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/constructs/every-construct.html#a-plain-scenario"><bdi>Scenario: A plain scenario</bdi>, <bdi>fixtures/constructs/every-construct.feature</bdi></a></li>
+</ul>
+<h3>the rule applies</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/constructs/every-construct.html#inside-the-rule"><bdi>Background: Inside the rule</bdi>, <bdi>fixtures/constructs/every-construct.feature</bdi></a></li>
+</ul>
+<h3>the site is served</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/front-page/features/welcome.html#a-visitor-opens-the-front-page"><bdi>Scenario: A visitor opens the front page</bdi>, <bdi>fixtures/front-page/features/welcome.feature</bdi></a></li>
+</ul>
+<h3>the user &#34;…&#34; and &#34;…&#34; meet</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/step-sentences/accounts-old.html#two-examples"><bdi>Scenario Outline: Two examples</bdi>, <bdi>fixtures/step-sentences/accounts-old.feature</bdi></a>, with <bdi>&#60;first&#62;</bdi>, <bdi>&#60;second&#62;</bdi></li>
+</ul>
+<h3>the user &#34;…&#34; exists</h3>
+<p>Used 5 times.</p>
+<ul>
+<li><a href="fixtures/step-sentences/accounts/logging-in.html#background"><bdi>Background</bdi>, <bdi>fixtures/step-sentences/accounts/logging-in.feature</bdi></a>, with <bdi>&#34;ana&#34;</bdi></li>
+<li><a href="fixtures/step-sentences/accounts/logging-in.html#anyone-logs-in"><bdi>Scenario Outline: Anyone logs in</bdi>, <bdi>fixtures/step-sentences/accounts/logging-in.feature</bdi></a>, with <bdi>&#34;&#60;name&#62;&#34;</bdi></li>
+<li><a href="fixtures/step-sentences/accounts-old.html#star-steps"><bdi>Scenario: Star steps</bdi>, <bdi>fixtures/step-sentences/accounts-old.feature</bdi></a>, with <bdi>&#34;fay&#34;</bdi></li>
+<li><a href="fixtures/step-sentences/em-portugues.html#gil"><bdi lang="pt">Cenário: Gil</bdi>, <bdi>fixtures/step-sentences/em-portugues.feature</bdi></a>, with <bdi lang="pt">&#34;gil&#34;</bdi></li>
+<li><a href="fixtures/step-sentences/money.html#background"><bdi>Background</bdi>, <bdi>fixtures/step-sentences/money.feature</bdi></a>, with <bdi>&#34;dan&#34;</bdi></li>
+</ul>
+<h3>the user &#34;…&#34; logs in</h3>
+<p>Used 3 times.</p>
+<ul>
+<li><a href="fixtures/step-sentences/accounts/logging-in.html#ana-logs-in"><bdi>Scenario: Ana logs in</bdi>, <bdi>fixtures/step-sentences/accounts/logging-in.feature</bdi></a>, with <bdi>&#34;ana&#34;</bdi></li>
+<li><a href="fixtures/step-sentences/accounts/logging-in.html#bia-logs-in"><bdi>Scenario: Bia logs in</bdi>, <bdi>fixtures/step-sentences/accounts/logging-in.feature</bdi></a>, with <bdi>&#34;bia&#34;</bdi></li>
+<li><a href="fixtures/step-sentences/accounts/logging-in.html#anyone-logs-in"><bdi>Scenario Outline: Anyone logs in</bdi>, <bdi>fixtures/step-sentences/accounts/logging-in.feature</bdi></a>, with <bdi>&#60;name&#62;</bdi></li>
+</ul>
+<h3>these books are on the shelf:</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="lending/borrowing.html#borrowing-several-books-at-once"><bdi>Scenario: Borrowing several books at once</bdi>, <bdi>lending/borrowing.feature</bdi></a></li>
+</ul>
+<h3>two customers</h3>
+<p>Used 2 times.</p>
+<ul>
+<li><a href="fixtures/tags/features/accounts.html#open-a-joint-account"><bdi>Scenario: Open a joint account</bdi>, <bdi>fixtures/tags/features/accounts.feature</bdi></a></li>
+<li><a href="fixtures/tags/features/accounts.html#close-a-joint-account"><bdi>Scenario: Close a joint account</bdi>, <bdi>fixtures/tags/features/accounts.feature</bdi></a></li>
+</ul>
+<h3 lang="pt">um cliente</h3>
+<p>Used 4 times.</p>
+<ul>
+<li><a href="fixtures/anchors/em-portugues.html#contexto"><bdi lang="pt">Contexto</bdi>, <bdi>fixtures/anchors/em-portugues.feature</bdi></a></li>
+<li><a href="fixtures/backgrounds/features/regra.html#contexto"><bdi lang="pt">Contexto</bdi>, <bdi>fixtures/backgrounds/features/regra.feature</bdi></a></li>
+<li><a href="fixtures/constructs/em-portugues.html#contexto"><bdi lang="pt">Contexto</bdi>, <bdi>fixtures/constructs/em-portugues.feature</bdi></a></li>
+<li><a href="fixtures/tags/features/area/saque%20em%20conta.html#saque-no-caixa"><bdi lang="pt">Cenário: Saque no caixa</bdi>, <bdi>fixtures/tags/features/area/saque em conta.feature</bdi></a></li>
+</ul>
+<h3 lang="pt">uma conta</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/anchors/em-portugues.html#saque-em-conta-poupança"><bdi lang="pt">Cenário: Saque em conta poupança</bdi>, <bdi>fixtures/anchors/em-portugues.feature</bdi></a></li>
+</ul>
+<h3 lang="pt">uma conta com 100 reais</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/highlighting/destaque.html#saque"><bdi lang="pt">Cenário: Saque</bdi>, <bdi>fixtures/highlighting/destaque.feature</bdi></a></li>
+</ul>
+<h3 lang="pt">uma conta com saldo</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/pages/features/saque%20em%20conta%20poupan%C3%A7a.html#saque-com-saldo"><bdi lang="pt">Cenário: Saque com saldo</bdi>, <bdi>fixtures/pages/features/saque em conta poupança.feature</bdi></a></li>
+</ul>
+<h3 lang="pt">uma sócia chamada &#34;…&#34; com o cartão 1024</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="em-portugues/emprestimo.html#uma-sócia-no-balcão"><bdi lang="pt">Contexto: Uma sócia no balcão</bdi>, <bdi>em-portugues/emprestimo.feature</bdi></a>, with <bdi lang="pt">&#34;Ana&#34;</bdi></li>
+</ul>
+<h3>uneven text</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/doc-strings/doc-strings.html#a-line-indented-less-than-the-delimiter"><bdi>Scenario: A line indented less than the delimiter</bdi>, <bdi>fixtures/doc-strings/doc-strings.feature</bdi></a></li>
+</ul>
+<h2>When</h2>
+<h3>&#34;…&#34; borrows &#34;…&#34;</h3>
+<p>Used 5 times.</p>
+<ul>
+<li><a href="lending/borrowing.html#borrowing-a-book-that-is-on-the-shelf"><bdi>Scenario: Borrowing a book that is on the shelf</bdi>, <bdi>lending/borrowing.feature</bdi></a>, with <bdi>&#34;Ana&#34;</bdi>, <bdi>&#34;The Hobbit&#34;</bdi></li>
+<li><a href="lending/borrowing.html#how-long-a-loan-lasts"><bdi>Scenario Outline: How long a loan lasts</bdi>, <bdi>lending/borrowing.feature</bdi></a>, with <bdi>&#34;Ana&#34;</bdi>, <bdi>&#34;&#60;title&#62;&#34;</bdi></li>
+<li><a href="lending/borrowing.html#borrowing-over-the-limit-is-refused"><bdi>Example: Borrowing over the limit is refused</bdi>, <bdi>lending/borrowing.feature</bdi></a>, with <bdi>&#34;Ana&#34;</bdi>, <bdi>&#34;Emma&#34;</bdi></li>
+<li><a href="lending/borrowing.html#returning-a-book-makes-room-for-another"><bdi>Example: Returning a book makes room for another</bdi>, <bdi>lending/borrowing.feature</bdi></a>, with <bdi>&#34;Ana&#34;</bdi>, <bdi>&#34;Emma&#34;</bdi></li>
+<li><a href="lending/borrowing.html#a-book-on-hold-cannot-be-borrowed-by-someone-else"><bdi>Scenario: A book on hold cannot be borrowed by someone else</bdi>, <bdi>lending/borrowing.feature</bdi></a>, with <bdi>&#34;Ana&#34;</bdi>, <bdi>&#34;Emma&#34;</bdi></li>
+</ul>
+<h3>&#34;…&#34; borrows every book on the shelf</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="lending/borrowing.html#borrowing-several-books-at-once"><bdi>Scenario: Borrowing several books at once</bdi>, <bdi>lending/borrowing.feature</bdi></a>, with <bdi>&#34;Ana&#34;</bdi></li>
+</ul>
+<h3>&#34;…&#34; is moved</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/backgrounds/features/both.html#move-amount"><bdi>Scenario Outline: Move &#60;amount&#62;</bdi>, <bdi>fixtures/backgrounds/features/both.feature</bdi></a>, with <bdi>&#60;amount&#62;</bdi></li>
+</ul>
+<h3>&#34;…&#34; is withdrawn by &#60;who&#62;</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/pages/features/outlines.html#withdraw-cash"><bdi>Scenario Outline: Withdraw cash</bdi>, <bdi>fixtures/pages/features/outlines.feature</bdi></a>, with <bdi>&#60;amount&#62;</bdi></li>
+</ul>
+<h3 lang="pt">&#34;…&#34; leva &#34;…&#34;</h3>
+<p>Used 2 times.</p>
+<ul>
+<li><a href="em-portugues/emprestimo.html#empréstimo-de-um-livro-na-estante"><bdi lang="pt">Cenário: Empréstimo de um livro na estante</bdi>, <bdi>em-portugues/emprestimo.feature</bdi></a>, with <bdi lang="pt">&#34;Ana&#34;</bdi>, <bdi lang="pt">&#34;Dom Casmurro&#34;</bdi></li>
+<li><a href="em-portugues/emprestimo.html#quanto-tempo-dura-um-empréstimo"><bdi lang="pt">Esquema do Cenário: Quanto tempo dura um empréstimo</bdi>, <bdi>em-portugues/emprestimo.feature</bdi></a>, with <bdi lang="pt">&#34;Ana&#34;</bdi>, <bdi lang="pt">&#34;&#60;título&#62;&#34;</bdi></li>
+</ul>
+<h3>&#34;…&#34; returns &#34;…&#34;</h3>
+<p>Used 3 times.</p>
+<ul>
+<li><a href="lending/returning.html#returning-a-book-on-time"><bdi>Scenario: Returning a book on time</bdi>, <bdi>lending/returning.feature</bdi></a>, with <bdi>&#34;Ana&#34;</bdi>, <bdi>&#34;The Hobbit&#34;</bdi></li>
+<li><a href="lending/returning.html#returning-a-book-late"><bdi>Scenario: Returning a book late</bdi>, <bdi>lending/returning.feature</bdi></a>, with <bdi>&#34;Ana&#34;</bdi>, <bdi>&#34;The Hobbit&#34;</bdi></li>
+<li><a href="lending/returning.html#fines-for-each-kind-of-item"><bdi>Scenario Outline: Fines for each kind of item</bdi>, <bdi>lending/returning.feature</bdi></a>, with <bdi>&#34;Ana&#34;</bdi>, <bdi>&#34;&#60;title&#62;&#34;</bdi></li>
+</ul>
+<h3>10 is moved</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/backgrounds/features/both.html#outside-any-rule"><bdi>Scenario: Outside any rule</bdi>, <bdi>fixtures/backgrounds/features/both.feature</bdi></a></li>
+</ul>
+<h3>a &#34;lone quote stays plain</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/highlighting/highlighting.html#parameters"><bdi>Scenario: Parameters</bdi>, <bdi>fixtures/highlighting/highlighting.feature</bdi></a></li>
+</ul>
+<h3>a visitor opens its address</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/front-page/features/welcome.html#a-visitor-opens-the-front-page"><bdi>Scenario: A visitor opens the front page</bdi>, <bdi>fixtures/front-page/features/welcome.feature</bdi></a></li>
+</ul>
+<h3 lang="pt">ela abre a conta</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/step-sentences/em-portugues.html#ana-entra"><bdi lang="pt">Cenário: Ana entra</bdi>, <bdi>fixtures/step-sentences/em-portugues.feature</bdi></a></li>
+</ul>
+<h3>I withdraw &#34;…&#34;</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/step-sentences/accounts/logging-in.html#anyone-logs-in"><bdi>Scenario Outline: Anyone logs in</bdi>, <bdi>fixtures/step-sentences/accounts/logging-in.feature</bdi></a>, with <bdi>&#60;amount&#62;</bdi></li>
+</ul>
+<h3>I withdraw 10</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/step-sentences/money.html#withdraw"><bdi>Scenario: Withdraw</bdi>, <bdi>fixtures/step-sentences/money.feature</bdi></a></li>
+</ul>
+<h3>I withdraw 20</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/step-sentences/money.html#withdraw"><bdi>Scenario: Withdraw</bdi>, <bdi>fixtures/step-sentences/money.feature</bdi></a></li>
+</ul>
+<h3 lang="pt">o cliente compra</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/constructs/em-portugues.html#um-cenário"><bdi lang="pt">Cenário: Um cenário</bdi>, <bdi>fixtures/constructs/em-portugues.feature</bdi></a></li>
+</ul>
+<h3 lang="pt">o cliente saca 20</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/highlighting/destaque.html#saque"><bdi lang="pt">Cenário: Saque</bdi>, <bdi>fixtures/highlighting/destaque.feature</bdi></a></li>
+</ul>
+<h3 lang="pt">o cliente saca 40</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/search/features/saque.html#saque-com-saldo"><bdi lang="pt">Cenário: Saque com saldo</bdi>, <bdi>fixtures/search/features/saque.feature</bdi></a></li>
+</ul>
+<h3>she opens her account</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/step-sentences/accounts/logging-in.html#ana-logs-in"><bdi>Scenario: Ana logs in</bdi>, <bdi>fixtures/step-sentences/accounts/logging-in.feature</bdi></a></li>
+</ul>
+<h3>someone searches for &#34;…&#34;</h3>
+<p>Used 3 times.</p>
+<ul>
+<li><a href="catalogue/searching.html#searching-by-title"><bdi>Scenario: Searching by title</bdi>, <bdi>catalogue/searching.feature</bdi></a>, with <bdi>&#34;hobbit&#34;</bdi></li>
+<li><a href="catalogue/searching.html#searching-by-author"><bdi>Scenario: Searching by author</bdi>, <bdi>catalogue/searching.feature</bdi></a>, with <bdi>&#34;Eliot&#34;</bdi></li>
+<li><a href="catalogue/searching.html#a-search-that-finds-nothing"><bdi>Scenario: A search that finds nothing</bdi>, <bdi>catalogue/searching.feature</bdi></a>, with <bdi>&#34;dragons&#34;</bdi></li>
+</ul>
+<h3>the customer asks for &#60; 5 &#62;</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/highlighting/highlighting.html#placeholders"><bdi>Scenario Outline: Placeholders</bdi>, <bdi>fixtures/highlighting/highlighting.feature</bdi></a></li>
+</ul>
+<h3>the customer pays &#34;…&#34;</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/search/features/unnamed.html#pay-amount"><bdi>Scenario Outline: Pay &#60;amount&#62;</bdi>, <bdi>fixtures/search/features/unnamed.feature</bdi></a>, with <bdi>&#60;amount&#62;</bdi></li>
+</ul>
+<h3>the customer types &#34;…&#34;</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/highlighting/highlighting.html#parameters"><bdi>Scenario: Parameters</bdi>, <bdi>fixtures/highlighting/highlighting.feature</bdi></a>, with <bdi>&#34;a \&#34;quoted\&#34; word&#34;</bdi></li>
+</ul>
+<h3>the customer types &#34;…&#34; and &#34;…&#34;</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/highlighting/highlighting.html#parameters"><bdi>Scenario: Parameters</bdi>, <bdi>fixtures/highlighting/highlighting.feature</bdi></a>, with <bdi>&#34;hello 42&#34;</bdi>, <bdi>&#34;&#34;</bdi></li>
+</ul>
+<h3>the customer withdraws &#34;…&#34;</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/search/features/banking/withdraw.html#withdraw-an-amount"><bdi>Scenario Outline: Withdraw an amount</bdi>, <bdi>fixtures/search/features/banking/withdraw.feature</bdi></a>, with <bdi>&#60;amount&#62;</bdi></li>
+</ul>
+<h3>the customer withdraws 40</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/search/features/banking/withdraw.html#withdraw-within-the-balance"><bdi>Scenario: Withdraw within the balance</bdi>, <bdi>fixtures/search/features/banking/withdraw.feature</bdi></a></li>
+</ul>
+<h3>the customer withdraws 500</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/search/features/banking/withdraw.html#scenario"><bdi>Scenario</bdi>, <bdi>fixtures/search/features/banking/withdraw.feature</bdi></a></li>
+</ul>
+<h3>the customer withdraws 600</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/search/features/banking/withdraw.html#withdraw-over-the-limit"><bdi>Scenario: Withdraw over the limit</bdi>, <bdi>fixtures/search/features/banking/withdraw.feature</bdi></a></li>
+</ul>
+<h3>the old account is opened</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/step-sentences/accounts-old.html#star-steps"><bdi>Scenario: Star steps</bdi>, <bdi>fixtures/step-sentences/accounts-old.feature</bdi></a></li>
+</ul>
+<h3>the order is placed</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/constructs/every-construct.html#a-plain-scenario"><bdi>Scenario: A plain scenario</bdi>, <bdi>fixtures/constructs/every-construct.feature</bdi></a></li>
+</ul>
+<h3>the order is refunded</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/pages/features/billing/refunds.html#refund-a-card-payment"><bdi>Scenario: Refund a card payment</bdi>, <bdi>fixtures/pages/features/billing/refunds.feature</bdi></a></li>
+</ul>
+<h3>the payment is refunded</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/front-page/features/billing/refunds.html#a-customer-is-refunded"><bdi>Scenario: A customer is refunded</bdi>, <bdi>fixtures/front-page/features/billing/refunds.feature</bdi></a></li>
+</ul>
+<h3>the user &#34;…&#34; logs in</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/step-sentences/money.html#eve-logs-in"><bdi>Scenario: Eve logs in</bdi>, <bdi>fixtures/step-sentences/money.feature</bdi></a>, with <bdi>&#34;eve&#34;</bdi></li>
+</ul>
+<h3>they add a book with this record:</h3>
+<p>Used 3 times.</p>
+<ul>
+<li><a href="catalogue/records/adding-a-book.html#adding-a-book-from-its-record"><bdi>Scenario: Adding a book from its record</bdi>, <bdi>catalogue/records/adding-a-book.feature</bdi></a></li>
+<li><a href="catalogue/records/adding-a-book.html#a-record-in-the-librarys-own-format"><bdi>Scenario: A record in the library&#39;s own format</bdi>, <bdi>catalogue/records/adding-a-book.feature</bdi></a></li>
+<li><a href="catalogue/records/adding-a-book.html#a-record-with-a-mistake-is-refused"><bdi>Scenario: A record with a mistake is refused</bdi>, <bdi>catalogue/records/adding-a-book.feature</bdi></a></li>
+</ul>
+<h2>Then</h2>
+<h3 lang="pt">&#34;…&#34; deve voltar em &#34;…&#34; dias</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="em-portugues/emprestimo.html#quanto-tempo-dura-um-empréstimo"><bdi lang="pt">Esquema do Cenário: Quanto tempo dura um empréstimo</bdi>, <bdi>em-portugues/emprestimo.feature</bdi></a>, with <bdi lang="pt">&#34;&#60;título&#62;&#34;</bdi>, <bdi lang="pt">&#60;dias&#62;</bdi></li>
+</ul>
+<h3 lang="pt">&#34;…&#34; deve voltar em 21 dias</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="em-portugues/emprestimo.html#empréstimo-de-um-livro-na-estante"><bdi lang="pt">Cenário: Empréstimo de um livro na estante</bdi>, <bdi>em-portugues/emprestimo.feature</bdi></a>, with <bdi lang="pt">&#34;Dom Casmurro&#34;</bdi></li>
+</ul>
+<h3>&#34;…&#34; holds 1 book</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="lending/borrowing.html#borrowing-a-book-that-is-on-the-shelf"><bdi>Scenario: Borrowing a book that is on the shelf</bdi>, <bdi>lending/borrowing.feature</bdi></a>, with <bdi>&#34;Ana&#34;</bdi></li>
+</ul>
+<h3>&#34;…&#34; holds 3 books</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="lending/borrowing.html#borrowing-several-books-at-once"><bdi>Scenario: Borrowing several books at once</bdi>, <bdi>lending/borrowing.feature</bdi></a>, with <bdi>&#34;Ana&#34;</bdi></li>
+</ul>
+<h3>&#34;…&#34; holds 5 books</h3>
+<p>Used 2 times.</p>
+<ul>
+<li><a href="lending/borrowing.html#borrowing-over-the-limit-is-refused"><bdi>Example: Borrowing over the limit is refused</bdi>, <bdi>lending/borrowing.feature</bdi></a>, with <bdi>&#34;Ana&#34;</bdi></li>
+<li><a href="lending/borrowing.html#returning-a-book-makes-room-for-another"><bdi>Example: Returning a book makes room for another</bdi>, <bdi>lending/borrowing.feature</bdi></a>, with <bdi>&#34;Ana&#34;</bdi></li>
+</ul>
+<h3>&#34;…&#34; is due back in &#34;…&#34; days</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="lending/borrowing.html#how-long-a-loan-lasts"><bdi>Scenario Outline: How long a loan lasts</bdi>, <bdi>lending/borrowing.feature</bdi></a>, with <bdi>&#34;&#60;title&#62;&#34;</bdi>, <bdi>&#60;days&#62;</bdi></li>
+</ul>
+<h3>&#34;…&#34; is due back in 21 days</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="lending/borrowing.html#borrowing-a-book-that-is-on-the-shelf"><bdi>Scenario: Borrowing a book that is on the shelf</bdi>, <bdi>lending/borrowing.feature</bdi></a>, with <bdi>&#34;The Hobbit&#34;</bdi></li>
+</ul>
+<h3>&#34;…&#34; is on the shelf</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="lending/returning.html#returning-a-book-on-time"><bdi>Scenario: Returning a book on time</bdi>, <bdi>lending/returning.feature</bdi></a>, with <bdi>&#34;The Hobbit&#34;</bdi></li>
+</ul>
+<h3>&#34;…&#34; owes &#34;…&#34; in fines</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="lending/returning.html#fines-for-each-kind-of-item"><bdi>Scenario Outline: Fines for each kind of item</bdi>, <bdi>lending/returning.feature</bdi></a>, with <bdi>&#34;Ana&#34;</bdi>, <bdi>&#60;fine&#62;</bdi></li>
+</ul>
+<h3>&#34;…&#34; owes 0.90 in fines</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="lending/returning.html#returning-a-book-late"><bdi>Scenario: Returning a book late</bdi>, <bdi>lending/returning.feature</bdi></a>, with <bdi>&#34;Ana&#34;</bdi></li>
+</ul>
+<h3>&#34;…&#34; owes nothing</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="lending/returning.html#returning-a-book-on-time"><bdi>Scenario: Returning a book on time</bdi>, <bdi>lending/returning.feature</bdi></a>, with <bdi>&#34;Ana&#34;</bdi></li>
+</ul>
+<h3 lang="pt">a compra é registrada</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/constructs/em-portugues.html#um-cenário"><bdi lang="pt">Cenário: Um cenário</bdi>, <bdi>fixtures/constructs/em-portugues.feature</bdi></a></li>
+</ul>
+<h3>a note is kept</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/pages/features/billing/refunds.html#refund-a-card-payment"><bdi>Scenario: Refund a card payment</bdi>, <bdi>fixtures/pages/features/billing/refunds.feature</bdi></a></li>
+</ul>
+<h3>a receipt is sent</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/constructs/every-construct.html#a-plain-scenario"><bdi>Scenario: A plain scenario</bdi>, <bdi>fixtures/constructs/every-construct.feature</bdi></a></li>
+</ul>
+<h3 lang="pt">algo muda</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/backgrounds/features/regra.html#dentro-da-regra"><bdi lang="pt">Cenário: Dentro da regra</bdi>, <bdi>fixtures/backgrounds/features/regra.feature</bdi></a></li>
+</ul>
+<h3 lang="pt">ela não vê &#34;…&#34;</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/step-sentences/em-portugues.html#ana-entra"><bdi lang="pt">Cenário: Ana entra</bdi>, <bdi>fixtures/step-sentences/em-portugues.feature</bdi></a>, with <bdi lang="pt">&#34;Erro&#34;</bdi></li>
+</ul>
+<h3 lang="pt">ela vê &#34;…&#34;</h3>
+<p>Used 2 times.</p>
+<ul>
+<li><a href="fixtures/step-sentences/em-portugues.html#ana-entra"><bdi lang="pt">Cenário: Ana entra</bdi>, <bdi>fixtures/step-sentences/em-portugues.feature</bdi></a>, with <bdi lang="pt">&#34;Bem-vinda&#34;</bdi></li>
+<li><a href="fixtures/step-sentences/em-portugues.html#ana-entra"><bdi lang="pt">Cenário: Ana entra</bdi>, <bdi>fixtures/step-sentences/em-portugues.feature</bdi></a>, with <bdi lang="pt">&#34;Bem-vinda&#34;</bdi></li>
+</ul>
+<h3>it is refused</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/pages/features/billing/refunds.html#refund-a-refund"><bdi>Scenario: Refund a refund</bdi>, <bdi>fixtures/pages/features/billing/refunds.feature</bdi></a></li>
+</ul>
+<h3>it is shown</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/step-sentences/accounts-old.html#star-steps"><bdi>Scenario: Star steps</bdi>, <bdi>fixtures/step-sentences/accounts-old.feature</bdi></a></li>
+</ul>
+<h3>it reads on its own</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/backgrounds/features/none.html#alone"><bdi>Scenario: Alone</bdi>, <bdi>fixtures/backgrounds/features/none.feature</bdi></a></li>
+</ul>
+<h3 lang="pt">nada muda</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/backgrounds/features/regra.html#fora-da-regra"><bdi lang="pt">Cenário: Fora da regra</bdi>, <bdi>fixtures/backgrounds/features/regra.feature</bdi></a></li>
+</ul>
+<h3>no error is shown</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/constructs/every-construct.html#a-plain-scenario"><bdi>Scenario: A plain scenario</bdi>, <bdi>fixtures/constructs/every-construct.feature</bdi></a></li>
+</ul>
+<h3>nothing changes</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/backgrounds/features/both.html#only-the-features-background"><bdi>Scenario: Only the feature&#39;s background</bdi>, <bdi>fixtures/backgrounds/features/both.feature</bdi></a></li>
+</ul>
+<h3>nothing comes before this step</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/backgrounds/features/no-steps.html#nothing-to-show"><bdi>Scenario: Nothing to show</bdi>, <bdi>fixtures/backgrounds/features/no-steps.feature</bdi></a></li>
+</ul>
+<h3>nothing is charged twice</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/constructs/every-construct.html#a-plain-scenario"><bdi>Scenario: A plain scenario</bdi>, <bdi>fixtures/constructs/every-construct.feature</bdi></a></li>
+</ul>
+<h3 lang="pt">o saldo é 60</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/search/features/saque.html#saque-com-saldo"><bdi lang="pt">Cenário: Saque com saldo</bdi>, <bdi>fixtures/search/features/saque.feature</bdi></a></li>
+</ul>
+<h3 lang="pt">o saque é feito</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/pages/features/saque%20em%20conta%20poupan%C3%A7a.html#saque-com-saldo"><bdi lang="pt">Cenário: Saque com saldo</bdi>, <bdi>fixtures/pages/features/saque em conta poupança.feature</bdi></a></li>
+</ul>
+<h3>R2D2 is 3rd in v1.2, 2.x, x_1 and item-4</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/highlighting/highlighting.html#numbers"><bdi>Scenario: Numbers</bdi>, <bdi>fixtures/highlighting/highlighting.feature</bdi></a></li>
+</ul>
+<h3>She sees &#34;…&#34;</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/step-sentences/accounts/logging-in.html#bia-logs-in"><bdi>Scenario: Bia logs in</bdi>, <bdi>fixtures/step-sentences/accounts/logging-in.feature</bdi></a>, with <bdi>&#34;Welcome&#34;</bdi></li>
+</ul>
+<h3>she sees &#34;…&#34;</h3>
+<p>Used 2 times.</p>
+<ul>
+<li><a href="fixtures/step-sentences/accounts/logging-in.html#ana-logs-in"><bdi>Scenario: Ana logs in</bdi>, <bdi>fixtures/step-sentences/accounts/logging-in.feature</bdi></a>, with <bdi>&#34;Welcome&#34;</bdi></li>
+<li><a href="fixtures/step-sentences/accounts/logging-in.html#ana-logs-in"><bdi>Scenario: Ana logs in</bdi>, <bdi>fixtures/step-sentences/accounts/logging-in.feature</bdi></a>, with <bdi>&#34;Welcome&#34;</bdi></li>
+</ul>
+<h3>store credit is given</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/pages/features/billing/refunds.html#store-credit"><bdi>Example: Store credit</bdi>, <bdi>fixtures/pages/features/billing/refunds.feature</bdi></a></li>
+</ul>
+<h3>the account shows</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/pages/features/outlines.html#withdraw-cash"><bdi>Scenario Outline: Withdraw cash</bdi>, <bdi>fixtures/pages/features/outlines.feature</bdi></a></li>
+</ul>
+<h3>the balance is &#34;…&#34;</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/search/features/banking/withdraw.html#withdraw-an-amount"><bdi>Scenario Outline: Withdraw an amount</bdi>, <bdi>fixtures/search/features/banking/withdraw.feature</bdi></a>, with <bdi>&#60;balance&#62;</bdi></li>
+</ul>
+<h3>the balance is -3.5, then 1.000,50 or $7 on 2026-11-10.</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/highlighting/highlighting.html#numbers"><bdi>Scenario: Numbers</bdi>, <bdi>fixtures/highlighting/highlighting.feature</bdi></a></li>
+</ul>
+<h3>the balance is 90</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/backgrounds/features/both.html#outside-any-rule"><bdi>Scenario: Outside any rule</bdi>, <bdi>fixtures/backgrounds/features/both.feature</bdi></a></li>
+</ul>
+<h3>the balance is &#60; 0 and &#60;unknown&#62;</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/step-sentences/accounts/logging-in.html#anyone-logs-in"><bdi>Scenario Outline: Anyone logs in</bdi>, <bdi>fixtures/step-sentences/accounts/logging-in.feature</bdi></a></li>
+</ul>
+<h3>the book &#34;…&#34; is on the shelf</h3>
+<p>Used 2 times.</p>
+<ul>
+<li><a href="catalogue/records/adding-a-book.html#adding-a-book-from-its-record"><bdi>Scenario: Adding a book from its record</bdi>, <bdi>catalogue/records/adding-a-book.feature</bdi></a>, with <bdi>&#34;Emma&#34;</bdi></li>
+<li><a href="catalogue/records/adding-a-book.html#a-record-in-the-librarys-own-format"><bdi>Scenario: A record in the library&#39;s own format</bdi>, <bdi>catalogue/records/adding-a-book.feature</bdi></a>, with <bdi>&#34;The Hobbit&#34;</bdi></li>
+</ul>
+<h3>the café is paid</h3>
+<p>Used 2 times.</p>
+<ul>
+<li><a href="fixtures/step-sentences/money.html#withdraw"><bdi>Scenario: Withdraw</bdi>, <bdi>fixtures/step-sentences/money.feature</bdi></a></li>
+<li><a href="fixtures/step-sentences/money.html#starting-with-and"><bdi>Scenario: Starting with and</bdi>, <bdi>fixtures/step-sentences/money.feature</bdi></a></li>
+</ul>
+<h3>the card gets</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/pages/features/billing/refunds.html#refund-a-card-payment"><bdi>Scenario: Refund a card payment</bdi>, <bdi>fixtures/pages/features/billing/refunds.feature</bdi></a></li>
+</ul>
+<h3>the customer&#39;s balance grows by 50</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/front-page/features/billing/refunds.html#a-customer-is-refunded"><bdi>Scenario: A customer is refunded</bdi>, <bdi>fixtures/front-page/features/billing/refunds.feature</bdi></a></li>
+</ul>
+<h3>the front page introduces the suite</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/front-page/features/welcome.html#a-visitor-opens-the-front-page"><bdi>Scenario: A visitor opens the front page</bdi>, <bdi>fixtures/front-page/features/welcome.feature</bdi></a></li>
+</ul>
+<h3>the loan is refused with &#34;…&#34;</h3>
+<p>Used 2 times.</p>
+<ul>
+<li><a href="lending/borrowing.html#borrowing-over-the-limit-is-refused"><bdi>Example: Borrowing over the limit is refused</bdi>, <bdi>lending/borrowing.feature</bdi></a>, with <bdi>&#34;You already hold 5 books.&#34;</bdi></li>
+<li><a href="lending/borrowing.html#a-book-on-hold-cannot-be-borrowed-by-someone-else"><bdi>Scenario: A book on hold cannot be borrowed by someone else</bdi>, <bdi>lending/borrowing.feature</bdi></a>, with <bdi>&#34;Emma is on hold for another member.&#34;</bdi></li>
+</ul>
+<h3>the note says &#34;…&#34; and &#34;…&#34;</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/step-sentences/money.html#withdraw"><bdi>Scenario: Withdraw</bdi>, <bdi>fixtures/step-sentences/money.feature</bdi></a>, with <bdi>&#34;&#34;</bdi>, <bdi>&#34;it&#39;s done&#34;</bdi></li>
+</ul>
+<h3>the page says &#34;…&#34;</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="catalogue/searching.html#a-search-that-finds-nothing"><bdi>Scenario: A search that finds nothing</bdi>, <bdi>catalogue/searching.feature</bdi></a>, with <bdi>&#34;Nothing matches dragons.&#34;</bdi></li>
+</ul>
+<h3>the quote in &#34;…&#34; closes after b</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/highlighting/highlighting.html#numbers"><bdi>Scenario: Numbers</bdi>, <bdi>fixtures/highlighting/highlighting.feature</bdi></a>, with <bdi>&#34;a\\&#34; b&#34;</bdi></li>
+</ul>
+<h3>the receipt reads</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/pages/features/outlines.html#withdraw-cash"><bdi>Scenario Outline: Withdraw cash</bdi>, <bdi>fixtures/pages/features/outlines.feature</bdi></a></li>
+</ul>
+<h3>the receipt reads:</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="lending/returning.html#returning-a-book-late"><bdi>Scenario: Returning a book late</bdi>, <bdi>lending/returning.feature</bdi></a></li>
+</ul>
+<h3>the receipt says</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/search/features/banking/withdraw.html#withdraw-within-the-balance"><bdi>Scenario: Withdraw within the balance</bdi>, <bdi>fixtures/search/features/banking/withdraw.feature</bdi></a></li>
+</ul>
+<h3>the record is refused with &#34;…&#34;</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="catalogue/records/adding-a-book.html#a-record-with-a-mistake-is-refused"><bdi>Scenario: A record with a mistake is refused</bdi>, <bdi>catalogue/records/adding-a-book.feature</bdi></a>, with <bdi>&#34;A book needs a title.&#34;</bdi></li>
+</ul>
+<h3>the results are empty</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="catalogue/searching.html#a-search-that-finds-nothing"><bdi>Scenario: A search that finds nothing</bdi>, <bdi>catalogue/searching.feature</bdi></a></li>
+</ul>
+<h3>the results are:</h3>
+<p>Used 2 times.</p>
+<ul>
+<li><a href="catalogue/searching.html#searching-by-title"><bdi>Scenario: Searching by title</bdi>, <bdi>catalogue/searching.feature</bdi></a></li>
+<li><a href="catalogue/searching.html#searching-by-author"><bdi>Scenario: Searching by author</bdi>, <bdi>catalogue/searching.feature</bdi></a></li>
+</ul>
+<h3>the screen shows &#60;&#62; for &#34;…&#34;</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/step-sentences/escapes.html#quotes-after-a-backslash"><bdi>Scenario Outline: Quotes after a backslash</bdi>, <bdi>fixtures/step-sentences/escapes.feature</bdi></a>, with <bdi>&#60;name&#62;</bdi></li>
+</ul>
+<h3>the screen shows \&#34;hi\&#34; and &#34;…&#34; for &#34;…&#34;</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/step-sentences/escapes.html#quotes-after-a-backslash"><bdi>Scenario Outline: Quotes after a backslash</bdi>, <bdi>fixtures/step-sentences/escapes.feature</bdi></a>, with <bdi>&#34;a \&#34; b&#34;</bdi>, <bdi>&#60;name&#62;</bdi></li>
+</ul>
+<h3>the screen shows “hi”</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/step-sentences/money.html#withdraw"><bdi>Scenario: Withdraw</bdi>, <bdi>fixtures/step-sentences/money.feature</bdi></a></li>
+</ul>
+<h3>the total is &#34;…&#34;</h3>
+<p>Used 2 times.</p>
+<ul>
+<li><a href="fixtures/constructs/every-construct.html#an-outline-with-two-named-examples"><bdi>Scenario Outline: An outline with two named examples</bdi>, <bdi>fixtures/constructs/every-construct.feature</bdi></a>, with <bdi>&#60;total&#62;</bdi></li>
+<li><a href="fixtures/pages/features/billing/refunds.html#refund-count-items"><bdi>Scenario Outline: Refund &#60;count&#62; items</bdi>, <bdi>fixtures/pages/features/billing/refunds.feature</bdi></a>, with <bdi>&#60;total&#62;</bdi></li>
+</ul>
+<h3>the totals add up</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/pages/features/reports/monthly/totals.html#totals-add-up"><bdi>Scenario: Totals add up</bdi>, <bdi>fixtures/pages/features/reports/monthly/totals.feature</bdi></a></li>
+</ul>
+<h3>the user &#60;name&#62; logs in</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/step-sentences/money.html#eve-logs-in"><bdi>Scenario: Eve logs in</bdi>, <bdi>fixtures/step-sentences/money.feature</bdi></a></li>
+</ul>
+<h3>the user&#39;s card is &#34;kept</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/step-sentences/money.html#withdraw"><bdi>Scenario: Withdraw</bdi>, <bdi>fixtures/step-sentences/money.feature</bdi></a></li>
+</ul>
+<h3>the withdrawal is accepted</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/search/features/banking/withdraw.html#scenario"><bdi>Scenario</bdi>, <bdi>fixtures/search/features/banking/withdraw.feature</bdi></a></li>
+</ul>
+<h3>the withdrawal is refused</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/search/features/banking/withdraw.html#withdraw-over-the-limit"><bdi>Scenario: Withdraw over the limit</bdi>, <bdi>fixtures/search/features/banking/withdraw.feature</bdi></a></li>
+</ul>
+<h3 lang="pt">um recibo é enviado</h3>
+<p>Used once.</p>
+<ul>
+<li><a href="fixtures/constructs/em-portugues.html#um-cenário"><bdi lang="pt">Cenário: Um cenário</bdi>, <bdi>fixtures/constructs/em-portugues.feature</bdi></a></li>
+</ul>
+</main>
+</div>
+</div>
+</body>
+</html>

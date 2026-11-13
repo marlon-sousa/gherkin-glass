@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Feature: Accounts, fixtures/tags/features/accounts.feature</title>
+<script>try{var t=localStorage.getItem("gherkin-glass:theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}</script>
+<style>
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+  --ghg-background: #ffffff;
+  --ghg-surface: #f2f2f2;
+  --ghg-text: #1a1a1a;
+  --ghg-muted: #474747;
+  --ghg-border: #757575;
+  --ghg-accent: #0b4f9c;
+  --ghg-keyword: #6a1b9a;
+  --ghg-parameter: #14521a;
+  --ghg-number: #8a3000;
+  --ghg-placeholder: #00575e;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ghg-background: #141414;
+    --ghg-surface: #222222;
+    --ghg-text: #ececec;
+    --ghg-muted: #c4c4c4;
+    --ghg-border: #8f8f8f;
+    --ghg-accent: #8cc4ff;
+    --ghg-keyword: #e1b3ff;
+    --ghg-parameter: #9fe0a8;
+    --ghg-number: #ffbf8a;
+    --ghg-placeholder: #7fdbe0;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ghg-background: #141414;
+  --ghg-surface: #222222;
+  --ghg-text: #ececec;
+  --ghg-muted: #c4c4c4;
+  --ghg-border: #8f8f8f;
+  --ghg-accent: #8cc4ff;
+  --ghg-keyword: #e1b3ff;
+  --ghg-parameter: #9fe0a8;
+  --ghg-number: #ffbf8a;
+  --ghg-placeholder: #7fdbe0;
+}
+</style>
+<link rel="stylesheet" href="../../../assets/gherkin-glass.css">
+<script type="module" src="../../../assets/gherkin-glass.js"></script>
+</head>
+<body>
+<dialog id="ghg_from_disk" class="ghg-from-disk" tabindex="-1" aria-labelledby="ghg_from_disk_title" aria-describedby="ghg_from_disk_text">
+<p id="ghg_from_disk_title" class="ghg-from-disk-title">Opened from disk</p>
+<p id="ghg_from_disk_text">This site is meant to be served, so its folder tree and search do not work when a page is opened from disk. Run ghg serve in the folder of your ghg.toml, or serve the site&#39;s folder with any web server, then open the address it gives.</p>
+<form method="dialog"><button>I agree</button></form>
+</dialog>
+<script>if(location.protocol==="file:"){let d=document.getElementById("ghg_from_disk");d.showModal();d.focus()}</script>
+<a class="ghg-skip" href="#ghg_main">Skip to content</a>
+<div class="ghg-options">
+<input type="checkbox" id="ghg_show_tree" class="ghg-show-tree" aria-controls="ghg_tree" checked> <label for="ghg_show_tree">Show the folder tree</label>
+<fieldset class="ghg-theme">
+<legend>Theme</legend>
+<label><input type="radio" name="ghg-theme" value="system" checked> System</label>
+<label><input type="radio" name="ghg-theme" value="light"> Light</label>
+<label><input type="radio" name="ghg-theme" value="dark"> Dark</label>
+</fieldset>
+</div>
+<div class="ghg-layout">
+<nav id="ghg_tree" class="ghg-tree" aria-label="Folder tree"></nav>
+<div class="ghg-page">
+<nav class="ghg-breadcrumb" aria-label="Breadcrumb">
+<ol>
+<li><a href="../../../index.html">gherkin-glass examples</a></li>
+<li><a href="../../index.html">fixtures</a></li>
+<li><a href="../index.html">tags</a></li>
+<li><a href="index.html">features</a></li>
+<li><a href="accounts.html" aria-current="page">Feature: Accounts</a></li>
+</ol>
+</nav>
+<form class="ghg-search" role="search" data-root="../../../" data-shown="50" data-loading="Loading search." data-failed="Search could not be loaded." data-none="No results." data-count="Results: {count}." data-count-limited="Results: {count}. The first 50 are listed." data-no-name="no name" data-feature="{name}, feature" data-rule="{name}, rule in {feature}" data-scenario="{name}, scenario in {feature}" data-scenario-in-rule="{name}, scenario in {rule}, {feature}" data-scenario-outline="{name}, scenario outline in {feature}" data-scenario-outline-in-rule="{name}, scenario outline in {rule}, {feature}">
+<label>Search features, rules and scenarios <input type="search" class="ghg-search-field" autocomplete="off" spellcheck="false" enterkeyhint="search"></label>
+<p class="ghg-search-status" role="status"></p>
+<ol class="ghg-search-results" hidden></ol>
+</form>
+<main id="ghg_main">
+<h1>Feature: Accounts</h1>
+<ul class="ghg-tags">
+<li><a href="../../../tags/slow.html">@Slow</a></li>
+<li><a href="../../../tags/slow-2.html">@slow</a></li>
+<li><a href="../../../tags/index-2.html">@index</a></li>
+</ul>
+<div class="ghg-description">
+<p>Tags that share their name once lower-cased, and one named as the index.</p>
+</div>
+<nav class="ghg-contents" aria-label="Contents">
+<ul>
+<li><a href="#open-an-account">Scenario: Open an account</a></li>
+<li><a href="#close-count-accounts">Scenario Outline: Close &#60;count&#62; accounts</a></li>
+<li><a href="#joint-accounts">Rule: Joint accounts</a>
+<ul>
+<li><a href="#open-a-joint-account">Scenario: Open a joint account</a></li>
+<li><a href="#close-a-joint-account">Scenario: Close a joint account</a></li>
+</ul></li>
+<li><a href="#nothing-yet">Rule: Nothing yet</a></li>
+</ul>
+</nav>
+<div class="ghg-controls">
+<button type="button" class="ghg-collapse-all">Collapse all</button>
+<button type="button" class="ghg-expand-all">Expand all</button>
+</div>
+<div class="ghg-block ghg-scenario">
+<h2 id="open-an-account"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: Open an account</button></h2>
+<div class="ghg-content">
+<ul class="ghg-tags">
+<li><a href="../../../tags/issue-12.html">@issue-12</a></li>
+<li><a href="../../../tags/needs-db.html">@needs:db</a></li>
+</ul>
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>a customer</li>
+</ol>
+</div>
+</div>
+<div class="ghg-block ghg-scenario">
+<h2 id="close-count-accounts"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario Outline: Close &#60;count&#62; accounts</button></h2>
+<div class="ghg-content">
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span><span class="ghg-placeholder">&#60;count&#62;</span> accounts</li>
+</ol>
+<div class="ghg-block ghg-examples">
+<h3 id="many"><button type="button" class="ghg-toggle" aria-expanded="true">Examples: Many</button></h3>
+<div class="ghg-content">
+<ul class="ghg-tags">
+<li><a href="../../../tags/ticket-%C3%A7-1-2.html">@ticket:ç/1#2</a></li>
+</ul>
+<table class="ghg-table">
+<thead>
+<tr><th scope="col">count</th></tr>
+</thead>
+<tbody>
+<tr><td>2</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="ghg-block ghg-examples">
+<h3 id="none"><button type="button" class="ghg-toggle" aria-expanded="true">Examples: None</button></h3>
+<div class="ghg-content">
+<table class="ghg-table">
+<thead>
+<tr><th scope="col">count</th></tr>
+</thead>
+</table>
+</div>
+</div>
+<div class="ghg-block ghg-examples-as-scenarios">
+<h3 id="close-count-accounts_scenarios"><button type="button" class="ghg-toggle" aria-expanded="false">Examples as scenarios: <bdi>Close &#60;count&#62; accounts</bdi></button></h3>
+<div class="ghg-content" hidden>
+<div class="ghg-block ghg-scenario">
+<h4 id="close-count-accounts-row-1"><button type="button" class="ghg-toggle" aria-expanded="true"><bdi>Close &#60;count&#62; accounts</bdi> (<bdi>count</bdi>: <bdi>2</bdi>)</button></h4>
+<div class="ghg-content">
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span><span class="ghg-number">2</span> accounts</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="ghg-block ghg-rule">
+<h2 id="joint-accounts"><button type="button" class="ghg-toggle" aria-expanded="true">Rule: Joint accounts</button></h2>
+<div class="ghg-content">
+<ul class="ghg-tags">
+<li><a href="../../../tags/issue-7.html">@issue-7</a></li>
+</ul>
+<div class="ghg-block ghg-scenario">
+<h3 id="open-a-joint-account"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: Open a joint account</button></h3>
+<div class="ghg-content">
+<ul class="ghg-tags">
+<li><a href="../../../tags/issue-12.html">@issue-12</a></li>
+</ul>
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>two customers</li>
+</ol>
+</div>
+</div>
+<div class="ghg-block ghg-scenario">
+<h3 id="close-a-joint-account"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: Close a joint account</button></h3>
+<div class="ghg-content">
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>two customers</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div class="ghg-block ghg-rule">
+<h2 id="nothing-yet"><button type="button" class="ghg-toggle" aria-expanded="true">Rule: Nothing yet</button></h2>
+<div class="ghg-content">
+<ul class="ghg-tags">
+<li><a href="../../../tags/needs-db.html">@needs:db</a></li>
+</ul>
+</div>
+</div>
+</main>
+</div>
+</div>
+</body>
+</html>

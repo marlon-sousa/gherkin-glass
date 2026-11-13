@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Feature: Every construct, fixtures/constructs/every-construct.feature</title>
+<script>try{var t=localStorage.getItem("gherkin-glass:theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}</script>
+<style>
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+  --ghg-background: #ffffff;
+  --ghg-surface: #f2f2f2;
+  --ghg-text: #1a1a1a;
+  --ghg-muted: #474747;
+  --ghg-border: #757575;
+  --ghg-accent: #0b4f9c;
+  --ghg-keyword: #6a1b9a;
+  --ghg-parameter: #14521a;
+  --ghg-number: #8a3000;
+  --ghg-placeholder: #00575e;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ghg-background: #141414;
+    --ghg-surface: #222222;
+    --ghg-text: #ececec;
+    --ghg-muted: #c4c4c4;
+    --ghg-border: #8f8f8f;
+    --ghg-accent: #8cc4ff;
+    --ghg-keyword: #e1b3ff;
+    --ghg-parameter: #9fe0a8;
+    --ghg-number: #ffbf8a;
+    --ghg-placeholder: #7fdbe0;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ghg-background: #141414;
+  --ghg-surface: #222222;
+  --ghg-text: #ececec;
+  --ghg-muted: #c4c4c4;
+  --ghg-border: #8f8f8f;
+  --ghg-accent: #8cc4ff;
+  --ghg-keyword: #e1b3ff;
+  --ghg-parameter: #9fe0a8;
+  --ghg-number: #ffbf8a;
+  --ghg-placeholder: #7fdbe0;
+}
+</style>
+<link rel="stylesheet" href="../../assets/gherkin-glass.css">
+<script type="module" src="../../assets/gherkin-glass.js"></script>
+</head>
+<body>
+<dialog id="ghg_from_disk" class="ghg-from-disk" tabindex="-1" aria-labelledby="ghg_from_disk_title" aria-describedby="ghg_from_disk_text">
+<p id="ghg_from_disk_title" class="ghg-from-disk-title">Opened from disk</p>
+<p id="ghg_from_disk_text">This site is meant to be served, so its folder tree and search do not work when a page is opened from disk. Run ghg serve in the folder of your ghg.toml, or serve the site&#39;s folder with any web server, then open the address it gives.</p>
+<form method="dialog"><button>I agree</button></form>
+</dialog>
+<script>if(location.protocol==="file:"){let d=document.getElementById("ghg_from_disk");d.showModal();d.focus()}</script>
+<a class="ghg-skip" href="#ghg_main">Skip to content</a>
+<div class="ghg-options">
+<input type="checkbox" id="ghg_show_tree" class="ghg-show-tree" aria-controls="ghg_tree" checked> <label for="ghg_show_tree">Show the folder tree</label>
+<fieldset class="ghg-theme">
+<legend>Theme</legend>
+<label><input type="radio" name="ghg-theme" value="system" checked> System</label>
+<label><input type="radio" name="ghg-theme" value="light"> Light</label>
+<label><input type="radio" name="ghg-theme" value="dark"> Dark</label>
+</fieldset>
+</div>
+<div class="ghg-layout">
+<nav id="ghg_tree" class="ghg-tree" aria-label="Folder tree"></nav>
+<div class="ghg-page">
+<nav class="ghg-breadcrumb" aria-label="Breadcrumb">
+<ol>
+<li><a href="../../index.html">gherkin-glass examples</a></li>
+<li><a href="../index.html">fixtures</a></li>
+<li><a href="index.html">constructs</a></li>
+<li><a href="every-construct.html" aria-current="page">Feature: Every construct</a></li>
+</ol>
+</nav>
+<form class="ghg-search" role="search" data-root="../../" data-shown="50" data-loading="Loading search." data-failed="Search could not be loaded." data-none="No results." data-count="Results: {count}." data-count-limited="Results: {count}. The first 50 are listed." data-no-name="no name" data-feature="{name}, feature" data-rule="{name}, rule in {feature}" data-scenario="{name}, scenario in {feature}" data-scenario-in-rule="{name}, scenario in {rule}, {feature}" data-scenario-outline="{name}, scenario outline in {feature}" data-scenario-outline-in-rule="{name}, scenario outline in {rule}, {feature}">
+<label>Search features, rules and scenarios <input type="search" class="ghg-search-field" autocomplete="off" spellcheck="false" enterkeyhint="search"></label>
+<p class="ghg-search-status" role="status"></p>
+<ol class="ghg-search-results" hidden></ol>
+</form>
+<main id="ghg_main">
+<h1>Feature: Every construct</h1>
+<ul class="ghg-tags">
+<li><a href="../../tags/billing.html">@billing</a></li>
+<li><a href="../../tags/slow-2.html">@slow</a></li>
+</ul>
+<div class="ghg-description">
+<p>A description of the feature,<br>
+over two lines.</p>
+</div>
+<nav class="ghg-contents" aria-label="Contents">
+<ul>
+<li><a href="#a-plain-scenario">Scenario: A plain scenario</a></li>
+<li><a href="#an-outline-with-two-named-examples">Scenario Outline: An outline with two named examples</a></li>
+<li><a href="#a-rule-with-its-own-background">Rule: A rule with its own background</a>
+<ul>
+<li><a href="#a-scenario-inside-the-rule">Example: A scenario inside the rule</a></li>
+</ul></li>
+</ul>
+</nav>
+<div class="ghg-controls">
+<button type="button" class="ghg-collapse-all">Collapse all</button>
+<button type="button" class="ghg-expand-all">Expand all</button>
+<label class="ghg-option"><input type="checkbox" class="ghg-inline-backgrounds" autocomplete="off" checked> Show backgrounds inside each scenario</label>
+</div>
+<div class="ghg-block ghg-background" data-expanded-when-linked="true">
+<h2 id="a-logged-in-customer"><button type="button" class="ghg-toggle" aria-expanded="false">Background: A logged in customer</button></h2>
+<div class="ghg-content" hidden>
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>a customer named <span class="ghg-parameter">&#34;Ana&#34;</span></li>
+</ol>
+</div>
+</div>
+<div class="ghg-block ghg-scenario">
+<h2 id="a-plain-scenario"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: A plain scenario</button></h2>
+<div class="ghg-content">
+<div class="ghg-description">
+<p>A description of the scenario.</p>
+</div>
+<div class="ghg-from-background">
+<p id="a-plain-scenario_background_1">From the background:<span class="ghg-linked" hidden> <a href="#a-logged-in-customer">Background: A logged in customer</a></span></p>
+<ol class="ghg-steps ghg-inline" aria-labelledby="a-plain-scenario_background_1">
+<li><span class="ghg-keyword">Given </span>a customer named <span class="ghg-parameter">&#34;Ana&#34;</span></li>
+</ol>
+</div>
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>an order with these lines:
+<table class="ghg-table">
+<thead>
+<tr><th scope="col">item</th><th scope="col">price</th></tr>
+</thead>
+<tbody>
+<tr><td>pen</td><td>1.50</td></tr>
+<tr><td>a | b</td><td>2</td></tr>
+</tbody>
+</table></li>
+<li><span class="ghg-keyword">When </span>the order is placed</li>
+<li><span class="ghg-keyword">Then </span>a receipt is sent</li>
+<li><span class="ghg-keyword">And </span>no error is shown</li>
+<li><span class="ghg-keyword">But </span>nothing is charged twice</li>
+<li><span class="ghg-keyword">* </span>the order is saved</li>
+</ol>
+</div>
+</div>
+<div class="ghg-block ghg-scenario">
+<h2 id="an-outline-with-two-named-examples"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario Outline: An outline with two named examples</button></h2>
+<div class="ghg-content">
+<ul class="ghg-tags">
+<li><a href="../../tags/outline.html">@outline</a></li>
+</ul>
+<div class="ghg-from-background">
+<p id="an-outline-with-two-named-examples_background_1">From the background:<span class="ghg-linked" hidden> <a href="#a-logged-in-customer">Background: A logged in customer</a></span></p>
+<ol class="ghg-steps ghg-inline" aria-labelledby="an-outline-with-two-named-examples_background_1">
+<li><span class="ghg-keyword">Given </span>a customer named <span class="ghg-parameter">&#34;Ana&#34;</span></li>
+</ol>
+</div>
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span><span class="ghg-placeholder">&#60;count&#62;</span> items</li>
+<li><span class="ghg-keyword">Then </span>the total is <span class="ghg-placeholder">&#60;total&#62;</span></li>
+</ol>
+<div class="ghg-block ghg-examples">
+<h3 id="cheap"><button type="button" class="ghg-toggle" aria-expanded="true">Examples: Cheap</button></h3>
+<div class="ghg-content">
+<ul class="ghg-tags">
+<li><a href="../../tags/cheap.html">@cheap</a></li>
+</ul>
+<table class="ghg-table">
+<thead>
+<tr><th scope="col">count</th><th scope="col">total</th></tr>
+</thead>
+<tbody>
+<tr><td>1</td><td>2</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="ghg-block ghg-examples">
+<h3 id="expensive"><button type="button" class="ghg-toggle" aria-expanded="true">Examples: Expensive</button></h3>
+<div class="ghg-content">
+<table class="ghg-table">
+<thead>
+<tr><th scope="col">count</th><th scope="col">total</th></tr>
+</thead>
+<tbody>
+<tr><td>9</td><td>90</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="ghg-block ghg-examples-as-scenarios">
+<h3 id="an-outline-with-two-named-examples_scenarios"><button type="button" class="ghg-toggle" aria-expanded="false">Examples as scenarios: <bdi>An outline with two named examples</bdi></button></h3>
+<div class="ghg-content" hidden>
+<div class="ghg-block ghg-scenario">
+<h4 id="an-outline-with-two-named-examples-row-1"><button type="button" class="ghg-toggle" aria-expanded="true"><bdi>An outline with two named examples</bdi> (<bdi>count</bdi>: <bdi>1</bdi>, <bdi>total</bdi>: <bdi>2</bdi>)</button></h4>
+<div class="ghg-content">
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span><span class="ghg-number">1</span> items</li>
+<li><span class="ghg-keyword">Then </span>the total is <span class="ghg-number">2</span></li>
+</ol>
+</div>
+</div>
+<div class="ghg-block ghg-scenario">
+<h4 id="an-outline-with-two-named-examples-row-2"><button type="button" class="ghg-toggle" aria-expanded="true"><bdi>An outline with two named examples</bdi> (<bdi>count</bdi>: <bdi>9</bdi>, <bdi>total</bdi>: <bdi>90</bdi>)</button></h4>
+<div class="ghg-content">
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span><span class="ghg-number">9</span> items</li>
+<li><span class="ghg-keyword">Then </span>the total is <span class="ghg-number">90</span></li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="ghg-block ghg-rule">
+<h2 id="a-rule-with-its-own-background"><button type="button" class="ghg-toggle" aria-expanded="true">Rule: A rule with its own background</button></h2>
+<div class="ghg-content">
+<div class="ghg-description">
+<p>The rule&#39;s description.</p>
+</div>
+<div class="ghg-block ghg-background" data-expanded-when-linked="true">
+<h3 id="inside-the-rule"><button type="button" class="ghg-toggle" aria-expanded="false">Background: Inside the rule</button></h3>
+<div class="ghg-content" hidden>
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>the rule applies</li>
+</ol>
+</div>
+</div>
+<div class="ghg-block ghg-scenario">
+<h3 id="a-scenario-inside-the-rule"><button type="button" class="ghg-toggle" aria-expanded="true">Example: A scenario inside the rule</button></h3>
+<div class="ghg-content">
+<ul class="ghg-tags">
+<li><a href="../../tags/in-rule.html">@in-rule</a></li>
+</ul>
+<div class="ghg-from-background">
+<p id="a-scenario-inside-the-rule_background_1">From the background:<span class="ghg-linked" hidden> <a href="#a-logged-in-customer">Background: A logged in customer</a></span></p>
+<ol class="ghg-steps ghg-inline" aria-labelledby="a-scenario-inside-the-rule_background_1">
+<li><span class="ghg-keyword">Given </span>a customer named <span class="ghg-parameter">&#34;Ana&#34;</span></li>
+</ol>
+</div>
+<div class="ghg-from-background">
+<p id="a-scenario-inside-the-rule_background_2">From the rule&#39;s background:<span class="ghg-linked" hidden> <a href="#inside-the-rule">Background: Inside the rule</a></span></p>
+<ol class="ghg-steps ghg-inline" aria-labelledby="a-scenario-inside-the-rule_background_2">
+<li><span class="ghg-keyword">Given </span>the rule applies</li>
+</ol>
+</div>
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>a step with a doc string
+<pre class="ghg-doc-string">Some text.</pre></li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</div>
+</body>
+</html>
