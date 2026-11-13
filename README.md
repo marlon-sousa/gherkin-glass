@@ -157,6 +157,17 @@ If you don't change the pages' script or stylesheet, Rust is enough: `cargo buil
 | `cargo xtask check-browser` | Installs a headless Chromium and checks every test site in it: accessibility in both colour schemes, the keyboard, pages opened from disk, and the reload of `ghg serve --watch`. | Yes |
 | `cargo xtask comment-ratio [path ...]` | Counts the comment lines and the code lines of the Rust and TypeScript files given, or of every one in the repository. | No |
 
+### Interface text and localization
+
+Every word gherkin-glass writes itself, on the pages and on the command line, such as "Skip to content", "Collapse all" or a message about a mistake in `ghg.toml`, comes from one catalogue of strings. Feature files are shown as written, in their own language; only gherkin-glass's own words come from the catalogue.
+
+- The catalogue is in [Fluent](https://projectfluent.org/), in `messages/en/gherkin-glass.ftl`, and built into the binary. English is the only language for now; a translation is a new file in a folder of its own beside `en/`.
+- Code reads a string by its id, with the `fl!` macro, such as `fl!(CATALOGUE, "skip-to-content")`. `fl!` checks at compile time that the id exists in the English catalogue and that its arguments are the ones the message takes, so a missing string is a build error, not a broken page.
+- No template, Rust code or script writes interface text inline. The pages' templates receive their words from Rust, and the script receives its own, such as the search box's messages, from attributes the page carries, so the script holds no words.
+- A message is a whole sentence with named placeholders, such as `{ $feature }, a feature in { $folder }`, never pieces joined together, since word order differs between languages. A count is a plural form chosen by Fluent, never a word with an `s` added.
+
+To add or change a string, edit it in the catalogue, use it by its id, and run `cargo xtask build` when it changes what pages say, so that the expected pages the tests compare against are written again.
+
 ### How changes are made
 
 Every change starts as an issue. Open one that says what you want and why, or, for a bug, what happened, what you expected and the smallest feature file that shows it. The maintainers then design the plan with you in the issue, and work starts only once it is agreed: a pull request that names its issue.
