@@ -42,12 +42,14 @@ pub(crate) struct TagPage {
     pub(crate) no_scenario: String,
 }
 
-/// A feature that writes the tag, on its page.
+/// A feature that writes the tag, on its page, its heading the feature page's
+/// title, in the words before and after its file's path, which is shown apart.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct TagFeature {
     pub(crate) address: LinkAddress,
-    /// The feature page's title.
-    pub(crate) heading: String,
+    pub(crate) heading_before: String,
+    pub(crate) path: String,
+    pub(crate) heading_after: String,
     /// The feature page's `lang`, when it is not the tag page's.
     pub(crate) language: Option<String>,
 }

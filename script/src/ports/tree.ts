@@ -1,4 +1,4 @@
-// Port: the folder tree, its checkbox, and where its data comes from.
+// Port: the folder tree, its checkbox and its button, and where its data comes from.
 
 /** One item of the tree, as `assets/tree.json` holds it. */
 export interface TreeItem {
@@ -15,14 +15,29 @@ export interface TreeSource {
   load(): Promise<readonly TreeItem[] | null>;
 }
 
-/** The checkbox, and the landmark it shows or hides. */
+/**
+ * The checkbox a wide window shows, the button a narrow one shows in its
+ * place, and the landmark they show or hide.
+ */
 export interface TreeSwitch {
-  /** As the page's HTML was written, from the configuration. */
+  /** Whether the checkbox is checked as the page's HTML was written, from the configuration. */
   configured(): boolean;
+  setChecked(checked: boolean): void;
+  /** Says on the button whether the tree is shown. */
+  setOpen(open: boolean): void;
   setShown(shown: boolean): void;
-  /** The tree cannot be shown: the checkbox is disabled and the landmark hidden. */
+  /** The tree cannot be shown: the checkbox and the button are disabled. */
   disable(): void;
-  onChange(handler: (shown: boolean) => void): void;
+  /** The reader checked or unchecked the checkbox. */
+  onChange(handler: (checked: boolean) => void): void;
+  /** The reader pressed the button. */
+  onPress(handler: () => void): void;
+  /** The reader pressed Escape inside the tree. */
+  onEscape(handler: () => void): void;
+  /** Whether the keyboard focus is inside the tree's landmark. */
+  holdsFocus(): boolean;
+  focusButton(): void;
+  focusCheckbox(): void;
 }
 
 export interface TreeView {

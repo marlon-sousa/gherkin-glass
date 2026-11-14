@@ -90,41 +90,7 @@ fn tag_page(
     let features = pages
         .iter()
         .filter(|feature| writes(feature, tag))
-        .map(|feature| {
-            let page = feature.page();
-            let page_address = format!("{ROOT}{}", page.address);
-            TagFeatureContent {
-                feature: TagFeature {
-                    address: LinkAddress::to(&page_address),
-                    heading: page.title.clone(),
-                    language: (page.language != language).then(|| page.language.clone()),
-                },
-                scenarios: carriers(feature, tag)
-                    .into_iter()
-                    .map(|(scenario, through)| {
-                        let words = match through {
-                            Through::Itself => LINK_MARK.to_string(),
-                            Through::Examples => {
-                                fl!(CATALOGUE, "tag-through-examples", scenario = LINK_MARK)
-                            }
-                            Through::Rule => {
-                                fl!(CATALOGUE, "tag-through-rule", scenario = LINK_MARK)
-                            }
-                            Through::Feature => {
-                                fl!(CATALOGUE, "tag-through-feature", scenario = LINK_MARK)
-                            }
-                        };
-                        let (before, after) = around_mark(&words);
-                        TagScenario {
-                            address: LinkAddress::to(&page_address).at(&scenario.heading.anchor),
-                            heading: scenario.heading.text(),
-                            before,
-                            after,
-                        }
-                    })
-                    .collect(),
-            }
-        })
+        .map(|feature| tag_feature(feature, tag, &language))
         .collect();
     let (heading_before, heading_after) =
         around_mark(&fl!(CATALOGUE, "tag-page-title", tag = LINK_MARK));
@@ -148,6 +114,51 @@ fn tag_page(
         no_scenario: fl!(CATALOGUE, "tag-no-scenario"),
     };
     TagPageContent { page, features }
+}
+
+/// A feature that writes `tag`, with its scenarios that carry it, on the tag's page in `language`.
+fn tag_feature(feature: &SiteFeaturePage<'_>, tag: &str, language: &str) -> TagFeatureContent {
+    let page = feature.page();
+    let page_address = format!("{ROOT}{}", page.address);
+    let (heading_before, heading_after) = around_mark(&fl!(
+        CATALOGUE,
+        "page-title",
+        heading = page.heading.as_str(),
+        path = LINK_MARK
+    ));
+    TagFeatureContent {
+        feature: TagFeature {
+            address: LinkAddress::to(&page_address),
+            heading_before,
+            path: page.path.to_string(),
+            heading_after,
+            language: (page.language != language).then(|| page.language.clone()),
+        },
+        scenarios: carriers(feature, tag)
+            .into_iter()
+            .map(|(scenario, through)| {
+                let words = match through {
+                    Through::Itself => LINK_MARK.to_string(),
+                    Through::Examples => {
+                        fl!(CATALOGUE, "tag-through-examples", scenario = LINK_MARK)
+                    }
+                    Through::Rule => {
+                        fl!(CATALOGUE, "tag-through-rule", scenario = LINK_MARK)
+                    }
+                    Through::Feature => {
+                        fl!(CATALOGUE, "tag-through-feature", scenario = LINK_MARK)
+                    }
+                };
+                let (before, after) = around_mark(&words);
+                TagScenario {
+                    address: LinkAddress::to(&page_address).at(&scenario.heading.anchor),
+                    heading: scenario.heading.text(),
+                    before,
+                    after,
+                }
+            })
+            .collect(),
+    }
 }
 
 fn around_mark(words: &str) -> (String, String) {

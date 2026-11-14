@@ -18,7 +18,7 @@ pub(crate) struct PageFrame {
     pub(crate) opened_from_disk: DiskNoticeWords,
     pub(crate) skip_link: String,
     pub(crate) show_tree: String,
-    /// The name of the tree's landmark, and of the tree the script builds in it.
+    /// The name of the tree's landmark and of the tree the script builds in it, and the words of the button that shows it on a narrow window.
     pub(crate) tree: String,
     /// As the configuration says, before the script reads the reader's choice.
     pub(crate) tree_shown: bool,

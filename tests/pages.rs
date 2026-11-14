@@ -687,11 +687,11 @@ fn the_home_page_has_the_site_s_title_and_totals() {
 }
 
 // Rules 86 to 88, 114 and 182: the dialog for a page opened from disk, closed,
-// then the skip link, the checkbox, the Theme control and the tree's landmark
+// then the skip link, the checkbox and the button, the Theme control and the tree's landmark
 // come before the breadcrumb and the content, the tree shown as configured.
 
 #[test]
-fn every_page_starts_with_the_dialog_then_the_skip_link_then_the_tree_then_the_breadcrumb() {
+fn every_page_starts_with_the_dialog_skip_link_tree_controls_tree_and_breadcrumb() {
     for (site, shown) in [("expected", true), ("expected-collapsed", false)] {
         for (name, page) in files(&fixtures().join("pages").join(site)) {
             if !name.ends_with(".html") {
@@ -714,8 +714,10 @@ fn every_page_starts_with_the_dialog_then_the_skip_link_then_the_tree_then_the_b
                  <script>if(location.protocol===\"file:\"){{let d=document.getElementById(\"ghg_from_disk\");d.showModal();d.focus()}}</script>\n\
                  <a class=\"ghg-skip\" href=\"#ghg_main\">Skip to content</a>\n\
                  <div class=\"ghg-options\">\n\
+                 <span class=\"ghg-option ghg-tree-choice\">\
                  <input type=\"checkbox\" id=\"ghg_show_tree\" class=\"ghg-show-tree\" aria-controls=\"ghg_tree\"{checked}> \
-                 <label for=\"ghg_show_tree\">Show the folder tree</label>\n\
+                 <label for=\"ghg_show_tree\">Show the folder tree</label></span>\n\
+                 <button type=\"button\" class=\"ghg-tree-button\" aria-expanded=\"false\" aria-controls=\"ghg_tree\">Folder tree</button>\n\
                  <fieldset class=\"ghg-theme\">\n\
                  <legend>Theme</legend>\n\
                  <label><input type=\"radio\" name=\"ghg-theme\" value=\"system\" checked> System</label>\n\

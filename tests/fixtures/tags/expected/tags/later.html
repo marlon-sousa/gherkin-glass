@@ -63,7 +63,8 @@
 <script>if(location.protocol==="file:"){let d=document.getElementById("ghg_from_disk");d.showModal();d.focus()}</script>
 <a class="ghg-skip" href="#ghg_main">Skip to content</a>
 <div class="ghg-options">
-<input type="checkbox" id="ghg_show_tree" class="ghg-show-tree" aria-controls="ghg_tree" checked> <label for="ghg_show_tree">Show the folder tree</label>
+<span class="ghg-option ghg-tree-choice"><input type="checkbox" id="ghg_show_tree" class="ghg-show-tree" aria-controls="ghg_tree" checked> <label for="ghg_show_tree">Show the folder tree</label></span>
+<button type="button" class="ghg-tree-button" aria-expanded="false" aria-controls="ghg_tree">Folder tree</button>
 <fieldset class="ghg-theme">
 <legend>Theme</legend>
 <label><input type="radio" name="ghg-theme" value="system" checked> System</label>
@@ -88,7 +89,7 @@
 </form>
 <main id="ghg_main">
 <h1>Tag <bdi>@later</bdi></h1>
-<h2><a href="../area/notes.html">Feature: Notes with no scenarios, area/notes.feature</a></h2>
+<h2><a href="../area/notes.html">Feature: Notes with no scenarios, <span class="ghg-tag-path">area/notes.feature</span></a></h2>
 <p>None of its scenarios carries the tag.</p>
 </main>
 </div>

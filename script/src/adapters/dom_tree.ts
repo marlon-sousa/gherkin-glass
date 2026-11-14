@@ -1,42 +1,7 @@
-// Adapter: the tree switch and the tree view over the page's markup, as src/policies/rendering/page_layout.html and page_frame.html write it, the tree built as the WAI-ARIA Navigation Treeview example builds it.
+// Adapter: the tree view over the page's markup, as src/policies/rendering/page_layout.html writes it, the tree built as the WAI-ARIA Navigation Treeview example builds it.
 
 import { rootFrom } from "../policies/tree_state.ts";
-import type { TreeItem, TreeSwitch, TreeView } from "../ports/tree.ts";
-
-export class DomTreeSwitch implements TreeSwitch {
-  private readonly checkbox: HTMLInputElement | null;
-  private readonly landmark: HTMLElement | null;
-
-  constructor(document: Document) {
-    this.checkbox = document.querySelector<HTMLInputElement>("input.ghg-show-tree");
-    this.landmark = document.querySelector<HTMLElement>("nav.ghg-tree");
-  }
-
-  configured(): boolean {
-    return this.checkbox?.checked ?? false;
-  }
-
-  setShown(shown: boolean): void {
-    if (this.checkbox) {
-      this.checkbox.checked = shown;
-    }
-    if (this.landmark) {
-      this.landmark.hidden = !shown;
-    }
-  }
-
-  disable(): void {
-    this.setShown(false);
-    if (this.checkbox) {
-      this.checkbox.disabled = true;
-    }
-  }
-
-  onChange(handler: (shown: boolean) => void): void {
-    const checkbox = this.checkbox;
-    checkbox?.addEventListener("change", () => handler(checkbox.checked));
-  }
-}
+import type { TreeItem, TreeView } from "../ports/tree.ts";
 
 /** An item of the tree as the page shows it. */
 interface TreeNode {

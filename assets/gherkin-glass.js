@@ -328,14 +328,17 @@ function rememberedShown(shown) {
 function rememberedExpanded(expanded) {
   return expanded ? EXPANDED : COLLAPSED;
 }
-function startShown(configured, kept, narrow) {
+function startChecked(configured, kept) {
   if (kept === SHOWN) {
     return true;
   }
   if (kept === HIDDEN) {
     return false;
   }
-  return configured && !narrow;
+  return configured;
+}
+function treeShown(narrow, checked, open) {
+  return narrow ? open : checked;
 }
 function startExpanded(onPath, kept) {
   return onPath || kept === EXPANDED;
@@ -386,35 +389,6 @@ function decoded(path) {
 }
 
 // src/adapters/dom_tree.ts
-var DomTreeSwitch = class {
-  checkbox;
-  landmark;
-  constructor(document2) {
-    this.checkbox = document2.querySelector("input.ghg-show-tree");
-    this.landmark = document2.querySelector("nav.ghg-tree");
-  }
-  configured() {
-    return this.checkbox?.checked ?? false;
-  }
-  setShown(shown) {
-    if (this.checkbox) {
-      this.checkbox.checked = shown;
-    }
-    if (this.landmark) {
-      this.landmark.hidden = !shown;
-    }
-  }
-  disable() {
-    this.setShown(false);
-    if (this.checkbox) {
-      this.checkbox.disabled = true;
-    }
-  }
-  onChange(handler) {
-    const checkbox = this.checkbox;
-    checkbox?.addEventListener("change", () => handler(checkbox.checked));
-  }
-};
 var DomTree = class {
   document;
   landmark;
@@ -595,6 +569,65 @@ var DomTree = class {
   }
 };
 
+// src/adapters/dom_tree_switch.ts
+var DomTreeSwitch = class {
+  checkbox;
+  button;
+  landmark;
+  constructor(document2) {
+    this.checkbox = document2.querySelector("input.ghg-show-tree");
+    this.button = document2.querySelector("button.ghg-tree-button");
+    this.landmark = document2.querySelector("nav.ghg-tree");
+  }
+  configured() {
+    return this.checkbox?.checked ?? false;
+  }
+  setChecked(checked) {
+    if (this.checkbox) {
+      this.checkbox.checked = checked;
+    }
+  }
+  setOpen(open) {
+    this.button?.setAttribute("aria-expanded", String(open));
+  }
+  setShown(shown) {
+    if (this.landmark) {
+      this.landmark.hidden = !shown;
+    }
+  }
+  disable() {
+    if (this.checkbox) {
+      this.checkbox.disabled = true;
+    }
+    if (this.button) {
+      this.button.disabled = true;
+    }
+  }
+  onChange(handler) {
+    const checkbox = this.checkbox;
+    checkbox?.addEventListener("change", () => handler(checkbox.checked));
+  }
+  onPress(handler) {
+    this.button?.addEventListener("click", () => handler());
+  }
+  onEscape(handler) {
+    this.landmark?.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        handler();
+      }
+    });
+  }
+  holdsFocus() {
+    return this.landmark?.contains(this.landmark.ownerDocument.activeElement) ?? false;
+  }
+  focusButton() {
+    this.button?.focus();
+  }
+  focusCheckbox() {
+    this.checkbox?.focus();
+  }
+};
+
 // src/adapters/fetched_documents.ts
 var FetchedDocuments = class {
   address;
@@ -647,6 +680,20 @@ var LocalMemory = class {
       window.localStorage.setItem(key, value);
     } catch {
     }
+  }
+};
+
+// src/adapters/media_width.ts
+var MediaWidth = class {
+  query;
+  constructor(query) {
+    this.query = query;
+  }
+  narrow() {
+    return this.query.matches;
+  }
+  onChange(handler) {
+    this.query.addEventListener("change", (event) => handler(event.matches));
   }
 };
 
@@ -778,16 +825,51 @@ function startCollapsing(page2, memory2, pagePath, option) {
 }
 
 // src/services/folder_tree.ts
-async function startFolderTree(source, toggle, view, memory2, place) {
-  const shown = startShown(toggle.configured(), memory2.get(shownKey(place.sitePath)), place.narrow);
-  toggle.setShown(shown);
+async function startFolderTree(source, toggle, view, width, memory2, place) {
+  let checked = startChecked(toggle.configured(), memory2.get(shownKey(place.sitePath)));
+  let open = false;
+  let narrow = width.narrow();
+  let usable = true;
+  const show = () => {
+    toggle.setChecked(usable && checked);
+    toggle.setOpen(usable && open);
+    toggle.setShown(usable && treeShown(narrow, checked, open));
+  };
+  show();
   toggle.onChange((chosen) => {
-    toggle.setShown(chosen);
+    checked = chosen;
     memory2.set(shownKey(place.sitePath), rememberedShown(chosen));
+    show();
+  });
+  toggle.onPress(() => {
+    open = !open;
+    show();
+  });
+  toggle.onEscape(() => {
+    if (narrow && open) {
+      open = false;
+      show();
+      toggle.focusButton();
+    }
+  });
+  width.onChange((now) => {
+    const focusInTree = toggle.holdsFocus();
+    narrow = now;
+    open = false;
+    show();
+    if (focusInTree && !treeShown(narrow, checked, open)) {
+      if (narrow) {
+        toggle.focusButton();
+      } else {
+        toggle.focusCheckbox();
+      }
+    }
   });
   const items = await source.load();
   if (items === null) {
+    usable = false;
     toggle.disable();
+    show();
     return;
   }
   const path = place.page === null ? [] : pathTo(items, place.page);
@@ -2775,11 +2857,14 @@ startCollapsing(
 var site = new URL("../", import.meta.url);
 var sitePath = site.pathname;
 var page = pageAddress(sitePath, document.location.pathname);
-void startFolderTree(new FetchedTree(new URL("tree.json", import.meta.url)), new DomTreeSwitch(document), new DomTree(document, site, page), memory, {
-  sitePath,
-  page,
-  narrow: window.matchMedia(NARROW).matches
-});
+void startFolderTree(
+  new FetchedTree(new URL("tree.json", import.meta.url)),
+  new DomTreeSwitch(document),
+  new DomTree(document, site, page),
+  new MediaWidth(window.matchMedia(NARROW)),
+  memory,
+  { sitePath, page }
+);
 var searchBox = DomSearchBox.find(document);
 if (searchBox !== null) {
   startSearching(searchBox, new FetchedDocuments(new URL("search.json", import.meta.url)), new WindowTimer());

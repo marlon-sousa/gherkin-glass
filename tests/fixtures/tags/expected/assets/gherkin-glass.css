@@ -4,6 +4,11 @@
 /* The colours are the themes' tokens, --ghg-*, which every page defines in
    its head, since the accent colours are set for each site. */
 
+/* The content column stays in place whether a page scrolls or not. */
+html {
+  scrollbar-gutter: stable;
+}
+
 body {
   margin: 0;
   background: var(--ghg-background);
@@ -15,7 +20,11 @@ body {
 main {
   max-width: 60rem;
   margin: 0 auto;
-  padding: 1rem;
+  padding: 0 1rem 1rem;
+}
+
+main > :first-child {
+  margin-top: 1rem;
 }
 
 /* A link is underlined, so that colour is not all that tells it apart. */
@@ -148,6 +157,8 @@ figcaption {
 
 .ghg-controls {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 0.5rem;
   margin: 1rem 0;
 }
@@ -179,7 +190,7 @@ figcaption {
   padding: 0;
 }
 
-.ghg-breadcrumb li + li::before {
+.ghg-breadcrumb li:not(:last-child)::after {
   content: "";
   display: inline-block;
   height: 0.8em;
@@ -237,16 +248,122 @@ figcaption {
   font-weight: bold;
 }
 
+/* The reader's options, a bar across the top of the page. */
 .ghg-options {
-  padding: 0.5rem 1rem 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.5rem;
+  padding: 0.5rem 1rem;
+  background: var(--ghg-surface);
+  border-bottom: 1px solid var(--ghg-border);
 }
 
+.ghg-show-tree {
+  accent-color: var(--ghg-accent);
+}
+
+/* The legend reads before its radio buttons, on their line. */
 .ghg-theme {
-  display: inline-flex;
+  display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 0.25rem 1rem;
-  margin: 0 0 0 1rem;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.ghg-theme legend {
+  float: left;
+  padding: 0;
+  margin-right: 0.25rem;
+  font-weight: bold;
+}
+
+.ghg-tree-button {
+  display: none;
+  font: inherit;
+  padding: 0.25rem 0.75rem;
+  background: var(--ghg-background);
+  color: var(--ghg-text);
   border: 1px solid var(--ghg-border);
+  border-radius: 0.25rem;
+  cursor: pointer;
+}
+
+.ghg-tree-button::before {
+  content: "";
+  display: inline-block;
+  width: 0;
+  height: 0;
+  margin-right: 0.5em;
+  vertical-align: middle;
+  border-style: solid;
+  border-width: 0.4em 0 0.4em 0.6em;
+  border-color: transparent transparent transparent currentColor;
+  transition: transform 0.1s;
+}
+
+.ghg-tree-button[aria-expanded="true"]::before {
+  transform: rotate(90deg);
+}
+
+@media (forced-colors: active) {
+  .ghg-tree-button::before {
+    forced-color-adjust: none;
+    border-color: transparent transparent transparent ButtonText;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ghg-tree-button::before {
+    transition: none;
+  }
+}
+
+/* The search form and its results take the column of the breadcrumb and the content. */
+.ghg-search {
+  max-width: 60rem;
+  margin: 0 auto;
+  padding: 0.75rem 1rem 0;
+}
+
+.ghg-search-field {
+  font: inherit;
+  margin-left: 0.25rem;
+  width: 20rem;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* No margin while it is empty, until the reader searches, so that it takes no room. */
+.ghg-search-status {
+  margin: 0;
+}
+
+.ghg-search-status:not(:empty) {
+  margin-top: 0.5rem;
+}
+
+.ghg-search-results {
+  margin: 0.5rem 0 0;
+  padding: 0.5rem 1rem 0.5rem 2.5rem;
+  background: var(--ghg-surface);
+  border: 1px solid var(--ghg-border);
+}
+
+.ghg-search-results li {
+  margin: 0.25rem 0;
+}
+
+/* On a tag's page, a feature's heading shows its file's path smaller and muted;
+   the words read the same. */
+.ghg-tag-path {
+  font-size: 0.8em;
+  font-weight: normal;
+  color: var(--ghg-muted);
 }
 
 .ghg-theme input {
@@ -280,7 +397,27 @@ figcaption {
   min-width: 0;
 }
 
+/* A narrow window shows the button in place of the checkbox. */
 @media not all and (min-width: 48em) {
+  /* Two classes, to win over .ghg-option's display below. */
+  .ghg-option.ghg-tree-choice {
+    display: none;
+  }
+
+  .ghg-tree-button {
+    display: inline-block;
+  }
+
+  .ghg-search label {
+    display: block;
+  }
+
+  .ghg-search-field {
+    display: block;
+    width: 100%;
+    margin: 0.5rem 0 0;
+  }
+
   .ghg-layout {
     display: block;
   }
@@ -304,7 +441,8 @@ figcaption {
   padding-left: 1rem;
 }
 
-/* An item without a marker starts where the text of one with a marker does. */
+/* Every item's text starts at the same place, with a marker or without, and
+   its wrapped lines line up with its first. */
 .ghg-treeview [role="treeitem"] {
   display: block;
   padding: 0.125rem 0.25rem 0.125rem 1.75rem;
@@ -313,10 +451,6 @@ figcaption {
 
 .ghg-treeview [role="treeitem"]:hover {
   text-decoration: underline;
-}
-
-.ghg-treeview [role="treeitem"][aria-owns] {
-  padding-left: 0.25rem;
 }
 
 .ghg-treeview [aria-current="page"] {
@@ -328,6 +462,7 @@ figcaption {
   /* At least 24 by 24 pixels, as WCAG 2.2's target size asks. */
   width: 1.5rem;
   min-height: 1.5rem;
+  margin-left: -1.5rem;
   text-align: center;
   cursor: pointer;
 }
