@@ -1,12 +1,10 @@
 //! Adapter: the stop signals port over the operating system's signals, with ctrlc.
 
 use std::process::exit;
-use std::sync::mpsc::channel;
-use std::thread::spawn;
 
 use ctrlc::{Error as CtrlcError, set_handler};
 
-use crate::entities::StopRequests;
+use crate::entities::StopTeller;
 use crate::errors::SignalsError;
 use crate::ports::StopSignals;
 
@@ -20,23 +18,12 @@ const INTERRUPTED: i32 = 130;
 pub(crate) struct CtrlcSignals;
 
 impl StopSignals for CtrlcSignals {
-    fn listen(&self) -> Result<StopRequests, SignalsError> {
-        let (sender, requests) = channel();
-        set_handler(move || {
-            // A run that no longer waits for a request needs none.
-            let _ = sender.send(());
-        })
-        .map_err(signals_error)?;
-        Ok(StopRequests::new(requests))
+    fn listen(&self, tell: StopTeller) -> Result<(), SignalsError> {
+        set_handler(tell).map_err(signals_error)
     }
 
-    fn end_on_another(&self, requests: StopRequests) {
-        requests.leave_those_that_came();
-        spawn(move || {
-            if requests.another() {
-                exit(INTERRUPTED);
-            }
-        });
+    fn end_at_once(&self) {
+        exit(INTERRUPTED);
     }
 }
 

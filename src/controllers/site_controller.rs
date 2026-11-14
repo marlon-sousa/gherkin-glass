@@ -11,7 +11,6 @@ use watching::Watching;
 
 use crate::entities::{
     BuildOptions, BuiltSite, Destination, ServeMode, ServeOptions, Served, ServedSite, Settings,
-    StopRequests,
 };
 use crate::errors::{BuildError, RebuildError, ServeError, WatchError};
 use crate::services::{
@@ -64,42 +63,36 @@ impl SiteController {
         }
     }
 
-    /// The first build of ghg serve, from nothing with `settings`, or nothing when `stops` were
-    /// asked while it ran.
-    fn first_build(
-        &self,
-        settings: Settings,
-        stops: &StopRequests,
-    ) -> Result<Option<Built>, ServeError> {
+    /// The first build of ghg serve, from nothing with `settings`, or nothing when ghg serve
+    /// was asked to stop while it ran.
+    fn first_build(&self, settings: Settings) -> Result<Option<Built>, ServeError> {
         let first = self
             .build_from_nothing(settings)
             .map_err(|stopped| stopped.error)?;
-        Ok((!stops.asked()).then_some(first))
+        Ok((!self.server.asked_to_stop()).then_some(first))
     }
 
-    /// Serves `site` as `options` say, tells `listener` where, and waits until `stops` are
-    /// asked.
+    /// Serves `site` as `options` say, tells `listener` where, and waits until ghg serve is
+    /// asked to stop.
     fn serve_until_asked(
         &self,
         site: ServedSite,
         options: &ServeOptions,
         listener: &dyn SiteListener,
-        stops: &StopRequests,
     ) -> Result<Served, ServeError> {
         let served = self.server.serve(site, options)?;
         listener.listening(served.listening.address);
-        stops.wait();
+        self.server.wait_for_stop();
         Ok(served)
     }
 
-    /// Serves the site `first` built under `--watch`, and rebuilds on each change until
-    /// `stops` are asked or the watching ends.
+    /// Serves the site `first` built under `--watch`, and rebuilds on each change until ghg
+    /// serve is asked to stop or the watching ends.
     fn serve_and_watch(
         &self,
         first: Built,
         options: &ServeOptions,
         listener: &dyn SiteListener,
-        stops: &StopRequests,
     ) -> Result<Served, ServeError> {
         let served = self.server.serve(first.site, options)?;
         let watching = Watching {
@@ -108,7 +101,6 @@ impl SiteController {
             config: self.settings.config_file(&options.build),
             preview: &served.preview,
             listener,
-            stops,
         };
         let changes = watching.start(&first.snapshot)?;
         // Said once watching, so that a change made from then on is seen.
@@ -132,7 +124,7 @@ impl SiteApi for SiteController {
 
     fn serve(&self, options: &ServeOptions, listener: &dyn SiteListener) -> Result<(), ServeError> {
         // Before the first build, so that a request to stop during it lets it finish.
-        let stops = self.server.stop_requests()?;
+        self.server.listen_for_stops()?;
         let settings = self
             .settings
             .load(&options.build, options.mode.destination())
@@ -140,19 +132,19 @@ impl SiteApi for SiteController {
         let served = match options.mode {
             ServeMode::Folder => {
                 let site = ServedSite::Folder(settings.output.clone());
-                Some(self.serve_until_asked(site, options, listener, &stops)?)
+                Some(self.serve_until_asked(site, options, listener)?)
             }
             ServeMode::Build => self
-                .first_build(settings, &stops)?
-                .map(|first| self.serve_until_asked(first.site, options, listener, &stops))
+                .first_build(settings)?
+                .map(|first| self.serve_until_asked(first.site, options, listener))
                 .transpose()?,
             ServeMode::Watch => self
-                .first_build(settings, &stops)?
-                .map(|first| self.serve_and_watch(first, options, listener, &stops))
+                .first_build(settings)?
+                .map(|first| self.serve_and_watch(first, options, listener))
                 .transpose()?,
         };
         if let Some(served) = served {
-            self.server.stop(served, stops);
+            self.server.stop(served);
         }
         Ok(())
     }

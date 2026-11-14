@@ -7,8 +7,8 @@ use std::process::ExitCode;
 use std::sync::Arc;
 
 use crate::adapters::{
-    CtrlcSignals, FileSystemReader, FileWatcher, FolderFiles, GherkinCrate, HttpPreviewServer,
-    InputFolderReader, MemoryFiles, OutputFolderStore, StandardStreams,
+    CrossbeamEventWaiter, CtrlcSignals, FileSystemReader, FileWatcher, FolderFiles, GherkinCrate,
+    HttpPreviewServer, InputFolderReader, MemoryFiles, OutputFolderStore, StandardStreams,
 };
 use crate::controllers::SiteController;
 use crate::handlers::CommandLine;
@@ -34,6 +34,7 @@ pub fn run(arguments: impl IntoIterator<Item = OsString>) -> ExitCode {
             Arc::new(HttpPreviewServer),
             Arc::new(FileWatcher),
             Arc::new(CtrlcSignals),
+            Arc::new(CrossbeamEventWaiter::default()),
         )),
     );
     let reply = CommandLine::new(Arc::new(site), Arc::new(StandardStreams)).run(arguments);

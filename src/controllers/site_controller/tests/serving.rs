@@ -51,7 +51,7 @@ fn serve_builds_as_its_mode_says_then_serves(
         Err(listen_error())
     );
     let expected: Vec<String> = [
-        "server.stop_requests".to_string(),
+        "server.listen_for_stops".to_string(),
         format!("settings.load {destination}"),
     ]
     .into_iter()
@@ -166,7 +166,7 @@ fn a_request_to_stop_during_the_first_build_lets_it_finish_then_serves_nothing(
     let outcome = world.controller().serve(&serve_options(mode), &events);
     assert_eq!(outcome, Ok(()));
     let expected: Vec<String> = [
-        "server.stop_requests".to_string(),
+        "server.listen_for_stops".to_string(),
         format!("settings.load {destination}"),
     ]
     .into_iter()
@@ -209,5 +209,5 @@ fn signals_that_cannot_be_listened_for_stop_serve_before_anything() {
             reason: "not permitted".into()
         }))
     );
-    assert_eq!(world.calls.taken(), ["server.stop_requests"]);
+    assert_eq!(world.calls.taken(), ["server.listen_for_stops"]);
 }

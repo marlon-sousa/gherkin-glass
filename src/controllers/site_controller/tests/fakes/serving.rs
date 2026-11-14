@@ -5,13 +5,13 @@ use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::mpsc::{IntoIter, Sender, channel};
 
 use super::*;
-use crate::entities::{InputChanges, Listening, Preview, Served, StopRequests};
+use crate::entities::{InputChanges, Listening, Preview, Served};
 use crate::errors::WatchError;
-use crate::ports::StopSignals;
+use crate::ports::{ServeEventWaiter, StopSignals};
 use crate::services::WatchedChanges;
-use crate::test_support::{Counted, FakeSignals};
+use crate::test_support::{Counted, FakeSignals, FakeWaiter};
 
-/// Listens for the requests to stop with `signals`; serves at 127.0.0.1, port 8000, keeping
+/// Listens for the requests to stop with `signals`, and waits for them with `waiter`; serves at 127.0.0.1, port 8000, keeping
 /// the preview, unless `listen_failing`, and counts the sites no longer served; watches, unless
 /// `watch_failing`, keeping the sender of each watch's changes, and counts the watches dropped.
 /// The configuration file alone is watched even while `watch_failing`, unless
@@ -20,6 +20,7 @@ use crate::test_support::{Counted, FakeSignals};
 pub(crate) struct FakeServerService {
     pub(super) calls: Arc<Calls>,
     pub(crate) signals: FakeSignals,
+    pub(crate) waiter: FakeWaiter,
     pub(crate) no_longer_served: Arc<AtomicUsize>,
     pub(crate) listen_failing: AtomicBool,
     pub(crate) watch_failing: AtomicBool,
@@ -30,17 +31,26 @@ pub(crate) struct FakeServerService {
 }
 
 impl ServerApi for FakeServerService {
-    fn stop_requests(&self) -> Result<StopRequests, ServeError> {
-        self.calls.note("server.stop_requests".into());
-        self.signals.listen().map_err(ServeError::Signals)
+    fn listen_for_stops(&self) -> Result<(), ServeError> {
+        self.calls.note("server.listen_for_stops".into());
+        self.signals
+            .listen(self.waiter.stop_teller())
+            .map_err(ServeError::Signals)
     }
 
-    fn watch<'a>(
+    fn asked_to_stop(&self) -> bool {
+        self.waiter.asked_to_stop()
+    }
+
+    fn wait_for_stop(&self) {
+        self.waiter.wait_for_stop();
+    }
+
+    fn watch(
         &self,
         input: &Path,
         settings_files: &[PathBuf],
-        _: &'a StopRequests,
-    ) -> Result<WatchedChanges<'a>, WatchError> {
+    ) -> Result<WatchedChanges, WatchError> {
         let files: Vec<_> = settings_files
             .iter()
             .map(|file| file.display().to_string())
@@ -49,11 +59,7 @@ impl ServerApi for FakeServerService {
         self.watched(call, input, &self.watch_failing)
     }
 
-    fn watch_config<'a>(
-        &self,
-        config: &Path,
-        _: &'a StopRequests,
-    ) -> Result<WatchedChanges<'a>, WatchError> {
+    fn watch_config(&self, config: &Path) -> Result<WatchedChanges, WatchError> {
         let call = format!("server.watch_config {}", config.display());
         self.watched(call, config, &self.config_watch_failing)
     }
@@ -76,9 +82,10 @@ impl ServerApi for FakeServerService {
         })
     }
 
-    fn stop(&self, served: Served, stops: StopRequests) {
+    fn stop(&self, served: Served) {
         self.calls.note("server.stop".into());
-        self.signals.end_on_another(stops);
+        // As if another request came as soon as it was listened for.
+        self.signals.end_at_once();
         drop(served);
     }
 }
@@ -91,7 +98,7 @@ impl FakeServerService {
         call: String,
         path: &Path,
         failing: &AtomicBool,
-    ) -> Result<WatchedChanges<'static>, WatchError> {
+    ) -> Result<WatchedChanges, WatchError> {
         if failing.load(Ordering::SeqCst) {
             self.calls.note(call);
             return Err(watch_error(path));
