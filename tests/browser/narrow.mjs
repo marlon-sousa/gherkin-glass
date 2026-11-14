@@ -4,7 +4,8 @@
 // and Escape in the tree hides it again, with the focus on the button, and on
 // a wide window resized to narrow and back without a reload, where the
 // checkbox and the button change places at once, and the focus, when it was
-// in a tree the resize hides, moves to the control shown. The page is held to
+// in a tree the resize hides, or on the checkbox or the button it hides,
+// moves to the control shown. The page is held to
 // the rules of "Accessibility" with the tree shown on a narrow window, in the
 // light and the dark colour scheme.
 //
@@ -110,6 +111,14 @@ try {
   await page.setViewportSize(WIDE);
   await page.waitForFunction(() => document.querySelector("nav.ghg-tree").hidden);
   expect("resized to wide with the focus in the tree", await seen(page), { checkbox: true, tree: false, focus: "checkbox" });
+  // So does a resize that hides the checkbox or the button with the focus on it.
+  await page.locator("input.ghg-show-tree").focus();
+  await page.setViewportSize(NARROW);
+  await page.waitForFunction(() => document.activeElement?.matches("button.ghg-tree-button"));
+  expect("resized to narrow with the focus on the checkbox", await seen(page), { checkbox: false, button: true, focus: "button" });
+  await page.setViewportSize(WIDE);
+  await page.waitForFunction(() => document.activeElement?.matches("input.ghg-show-tree"));
+  expect("resized to wide with the focus on the button", await seen(page), { checkbox: true, button: false, focus: "checkbox" });
   await context.close();
 } finally {
   if (running) await stop(running.server);

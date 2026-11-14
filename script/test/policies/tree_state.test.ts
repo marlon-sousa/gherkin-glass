@@ -3,7 +3,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { pageAddress, pathTo, readTree, rootFrom, startChecked, startExpanded, treeShown } from "../../src/policies/tree_state.ts";
+import { focusHidden, pageAddress, pathTo, readTree, rootFrom, startChecked, startExpanded, treeShown } from "../../src/policies/tree_state.ts";
 
 test("the reader's choice wins over the configuration for the checkbox", () => {
   assert.equal(startChecked(true, null), true);
@@ -55,4 +55,14 @@ test("data that is not a list of items is no tree", () => {
   assert.equal(readTree({ items: [] }), null);
   assert.equal(readTree([{ text: "a" }]), null);
   assert.equal(readTree([{ text: "a", address: "a.html", items: [{ text: 1, address: "b" }] }]), null);
+});
+
+test("a resize hides the tree once it is not shown, the checkbox on a narrow window and the button on a wide one", () => {
+  assert.equal(focusHidden("tree", true, false), true);
+  assert.equal(focusHidden("tree", false, true), false);
+  assert.equal(focusHidden("checkbox", true, true), true);
+  assert.equal(focusHidden("checkbox", false, false), false);
+  assert.equal(focusHidden("button", false, true), true);
+  assert.equal(focusHidden("button", true, false), false);
+  assert.equal(focusHidden(null, true, false), false);
 });

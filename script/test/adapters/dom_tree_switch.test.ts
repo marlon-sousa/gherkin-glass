@@ -73,15 +73,41 @@ test("Escape inside the tree hides it and puts the focus on the button", async (
   assert.equal(window.document.activeElement, button(window) as unknown);
 });
 
-test("the switch knows whether the focus is in the tree, and puts it on the checkbox", async () => {
+test("the switch knows whether the focus is in the tree, on the checkbox or on the button, and moves it", async () => {
   const window = await open(false);
   const toggle = new DomTreeSwitch(window.document as unknown as Document);
-  assert.equal(toggle.holdsFocus(), false);
+  assert.equal(toggle.focus(), null);
   (window.document.querySelector('[role="treeitem"][tabindex="0"]') as unknown as HTMLElement).focus();
-  assert.equal(toggle.holdsFocus(), true);
+  assert.equal(toggle.focus(), "tree");
   toggle.focusCheckbox();
   assert.equal(window.document.activeElement, checkbox(window) as unknown);
-  assert.equal(toggle.holdsFocus(), false);
+  assert.equal(toggle.focus(), "checkbox");
+  toggle.focusButton();
+  assert.equal(toggle.focus(), "button");
+});
+
+test("a control hidden with the focus on it, which drops the focus to the body, is where the focus was", async () => {
+  const window = await open(false);
+  const toggle = new DomTreeSwitch(window.document as unknown as Document);
+  const box = checkbox(window);
+  box.focus();
+  // The stylesheet hides it on a narrow window, before the resize is reported.
+  box.checkVisibility = () => false;
+  box.blur();
+  assert.equal(window.document.activeElement, window.document.body as unknown);
+  assert.equal(toggle.focus(), "checkbox");
+  toggle.focusButton();
+  assert.equal(toggle.focus(), "button");
+});
+
+test("a control blurred while still shown, as by a click elsewhere, is not where the focus is", async () => {
+  const window = await open(false);
+  const toggle = new DomTreeSwitch(window.document as unknown as Document);
+  const box = checkbox(window);
+  box.focus();
+  box.checkVisibility = () => true;
+  box.blur();
+  assert.equal(toggle.focus(), null);
 });
 
 test("data that cannot be loaded leaves the checkbox and the button disabled and the tree hidden and empty", async () => {

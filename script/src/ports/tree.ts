@@ -11,6 +11,9 @@ export interface TreeItem {
   readonly items?: readonly TreeItem[];
 }
 
+/** Inside the tree's landmark, on the checkbox, on the button, or elsewhere. */
+export type FocusPlace = "tree" | "checkbox" | "button" | null;
+
 export interface TreeSource {
   /** Null when the data cannot be fetched, or is not a tree. */
   load(): Promise<readonly TreeItem[] | null>;
@@ -35,8 +38,8 @@ export interface TreeSwitch {
   onPress(handler: () => void): void;
   /** The reader pressed Escape inside the tree. */
   onEscape(handler: () => void): void;
-  /** Whether the keyboard focus is inside the tree's landmark. */
-  holdsFocus(): boolean;
+  /** Where the keyboard focus is, of the tree's landmark and its controls. */
+  focus(): FocusPlace;
   focusButton(): void;
   focusCheckbox(): void;
 }

@@ -1,6 +1,6 @@
 // Service: the folder tree, shown or hidden as the reader chose with the checkbox on a wide window and with the button on a narrow one, with the path to the current page expanded, the checkbox's choice remembered for the whole site.
 
-import { itemKey, pathTo, rememberedExpanded, rememberedShown, shownKey, startChecked, startExpanded, treeShown } from "../policies/tree_state.ts";
+import { focusHidden, itemKey, pathTo, rememberedExpanded, rememberedShown, shownKey, startChecked, startExpanded, treeShown } from "../policies/tree_state.ts";
 import type { Memory } from "../ports/memory.ts";
 import type { TreeSource, TreeSwitch, TreeView } from "../ports/tree.ts";
 import type { WindowWidth } from "../ports/width.ts";
@@ -41,12 +41,12 @@ export async function startFolderTree(source: TreeSource, toggle: TreeSwitch, vi
     }
   });
   width.onChange((now) => {
-    const focusInTree = toggle.holdsFocus();
+    const focus = toggle.focus();
     narrow = now;
     open = false;
     show();
-    // A tree hidden with the focus inside it would drop the focus to the body.
-    if (focusInTree && !treeShown(narrow, checked, open)) {
+    // The focus goes to the control the resize shows in place of what it hid.
+    if (focusHidden(focus, narrow, treeShown(narrow, checked, open))) {
       if (narrow) {
         toggle.focusButton();
       } else {

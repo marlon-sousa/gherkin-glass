@@ -340,6 +340,18 @@ function startChecked(configured, kept) {
 function treeShown(narrow, checked, open) {
   return narrow ? open : checked;
 }
+function focusHidden(place, narrow, shown) {
+  switch (place) {
+    case "tree":
+      return !shown;
+    case "checkbox":
+      return narrow;
+    case "button":
+      return !narrow;
+    case null:
+      return false;
+  }
+}
 function startExpanded(onPath, kept) {
   return onPath || kept === EXPANDED;
 }
@@ -596,10 +608,20 @@ var DomTreeSwitch = class {
   checkbox;
   button;
   landmark;
+  /**
+   * The control the stylesheet hid with the focus on it, which the browser
+   * then dropped to the body, often before the resize is reported.
+   */
+  dropped = null;
   constructor(document2) {
     this.checkbox = document2.querySelector("input.ghg-show-tree");
     this.button = document2.querySelector("button.ghg-tree-button");
     this.landmark = document2.querySelector("nav.ghg-tree");
+    this.keepDropped(this.checkbox, "checkbox");
+    this.keepDropped(this.button, "button");
+    document2.addEventListener("focusin", () => {
+      this.dropped = null;
+    });
   }
   configured() {
     return this.checkbox?.checked ?? false;
@@ -639,14 +661,32 @@ var DomTreeSwitch = class {
       }
     });
   }
-  holdsFocus() {
-    return this.landmark?.contains(this.landmark.ownerDocument.activeElement) ?? false;
+  focus() {
+    const active = this.landmark?.ownerDocument.activeElement ?? null;
+    if (active === null || active === active.ownerDocument.body) {
+      return this.dropped;
+    }
+    if (this.landmark?.contains(active)) {
+      return "tree";
+    }
+    if (active === this.checkbox) {
+      return "checkbox";
+    }
+    return active === this.button ? "button" : null;
   }
   focusButton() {
     this.button?.focus();
   }
   focusCheckbox() {
     this.checkbox?.focus();
+  }
+  /** A blur to nowhere of a control no longer shown is one a resize hid; a click elsewhere leaves it shown. */
+  keepDropped(control, place) {
+    control?.addEventListener("blur", (event) => {
+      if (event.relatedTarget === null && !control.checkVisibility()) {
+        this.dropped = place;
+      }
+    });
   }
 };
 
@@ -875,11 +915,11 @@ async function startFolderTree(source, toggle, view, width, memory2, place) {
     }
   });
   width.onChange((now) => {
-    const focusInTree = toggle.holdsFocus();
+    const focus = toggle.focus();
     narrow = now;
     open = false;
     show();
-    if (focusInTree && !treeShown(narrow, checked, open)) {
+    if (focusHidden(focus, narrow, treeShown(narrow, checked, open))) {
       if (narrow) {
         toggle.focusButton();
       } else {
