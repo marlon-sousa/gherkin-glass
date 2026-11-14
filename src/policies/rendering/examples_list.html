@@ -1,5 +1,5 @@
 {% if let Some((words, anchor)) = words %}<p id="{{ anchor }}" class="ghg-runs">{{ words }}</p>
-{% endif %}<ul class="ghg-examples-list" role="list">
+{% endif %}<ul class="ghg-examples-list">
 {%- for item in items %}
 {{ item|safe }}
 {%- endfor %}

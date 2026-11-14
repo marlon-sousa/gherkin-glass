@@ -145,11 +145,12 @@ h1, h2, h3, h4, h5 {
 }
 
 /* An outline's examples are list items, not headings: each reads as a block's
-   heading through its button, without the list's marker beside the button's. */
+   heading through its button, and keeps its bullet, which a screen reader
+   names, so that the next examples block is not taken for one of the runs
+   of the block before it. */
 .ghg-examples-list {
-  list-style: none;
   margin: 0.5rem 0;
-  padding: 0;
+  padding-left: 1.25rem;
 }
 
 .ghg-examples-list > li {
