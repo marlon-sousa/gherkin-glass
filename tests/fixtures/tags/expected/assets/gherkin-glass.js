@@ -423,13 +423,12 @@ var DomTree = class {
   onToggle(handler) {
     this.handler = handler;
   }
-  add(list, items, parent, current, expanded) {
+  /** `lang` is the feature's that holds `items`, if one does. */
+  add(list, items, parent, current, expanded, lang) {
     for (const item of items) {
+      const itemLang = item.lang ?? lang;
       const entry = this.document.createElement("li");
       entry.setAttribute("role", "none");
-      if (item.lang !== void 0) {
-        entry.lang = item.lang;
-      }
       const link = this.document.createElement("a");
       link.setAttribute("role", "treeitem");
       link.href = typeof this.root === "string" ? this.root + item.address : new URL(item.address, this.root).href;
@@ -450,7 +449,7 @@ var DomTree = class {
         group.setAttribute("aria-label", textOf(item));
         link.setAttribute("aria-owns", group.id);
       }
-      link.append(...this.words(item));
+      link.append(...this.words(item, itemLang));
       entry.append(link);
       const node = { link, address: item.address, group, parent };
       this.nodes.push(node);
@@ -464,13 +463,16 @@ var DomTree = class {
           this.focus(node);
           this.toggle(node, !this.isExpanded(node));
         });
-        this.add(group, inner, node, current, expanded);
+        this.add(group, inner, node, current, expanded, itemLang);
       }
       list.append(entry);
     }
   }
-  /** The item's words, each run of feature text isolated in a `bdi`. */
-  words(item) {
+  /**
+   * The item's words, each run of feature text isolated in a `bdi` with its
+   * feature's `lang`, so that the tree's own words are read in the page's.
+   */
+  words(item, lang) {
     if (typeof item.text === "string") {
       return [item.text];
     }
@@ -480,6 +482,9 @@ var DomTree = class {
       }
       const isolated = this.document.createElement("bdi");
       isolated.append(run);
+      if (lang !== void 0) {
+        isolated.lang = lang;
+      }
       return isolated;
     });
   }

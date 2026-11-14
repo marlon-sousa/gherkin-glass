@@ -61,8 +61,12 @@ pub(crate) struct ScenarioBlock {
 pub(crate) struct ExamplesBlock {
     /// The `id` of its item.
     pub(crate) anchor: String,
-    /// The text of its button, worded as a heading.
+    /// The text of its button, worded as a heading, and saying so when it
+    /// has no row.
     pub(crate) label: Vec<HeadingPart>,
+    /// Whether its table has a row below its header, which its outline runs
+    /// once for.
+    pub(crate) has_rows: bool,
     pub(crate) tags: Vec<TagView>,
     pub(crate) description: Option<Paragraph>,
     pub(crate) table: Option<TableView>,

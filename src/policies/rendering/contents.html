@@ -1,10 +1,10 @@
 <ul>
 {%- for entry in contents.entries %}
-<li><a href="{{ contents.page }}#{{ entry.anchor }}">{{ entry.heading.render()|safe }}</a>
+<li><a href="{{ contents.page }}#{{ entry.anchor }}">{{ entry.heading.render_in(*contents.language)|safe }}</a>
 {%- if !entry.entries.is_empty() %}
 <ul>
 {%- for inner in entry.entries %}
-<li><a href="{{ contents.page }}#{{ inner.anchor }}">{{ inner.heading.render()|safe }}</a></li>
+<li><a href="{{ contents.page }}#{{ inner.anchor }}">{{ inner.heading.render_in(*contents.language)|safe }}</a></li>
 {%- endfor %}
 </ul>
 {%- endif %}</li>

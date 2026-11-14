@@ -330,8 +330,13 @@ outside-rules = Outside any rule
 
 runs-for-each-row = Runs once for each row of these examples:
 
+## The button of an examples block with no row below its header, after its $heading.
+
+empty-examples = { $heading }: empty
+
 ## Under a scenario outline, its examples as the scenarios they produce,
-## named by the outline's $name, or its keyword when it has none. A
+## named by the outline's $name, or its kind, as unnamed-heading words it,
+## when it has none. A
 ## produced scenario is named by the same $name and its row's $values, each
 ## value worded by example-value and separated by example-values-separator.
 ## $column and $value are as written.

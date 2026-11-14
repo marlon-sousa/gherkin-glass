@@ -1,13 +1,14 @@
 //! Policy: the blocks of an outline's examples, as their tables and as the scenarios their rows make.
 
-use gherkin::{Examples, Scenario};
+use gherkin::{Examples, Scenario, Table};
 use i18n_embed_fl::fl;
 
 use super::block_building::{Builder, description, worded_heading};
-use super::heading_words::{Kind, TEXT_MARKS, heading, isolated, plain, worded_parts};
+use super::heading_words::{Kind, TEXT_MARKS, heading, isolated, kind_alone, plain, worded_parts};
 use super::step_views::{filled_step_contents, table};
 use crate::entities::{
     Anchored, AnchoredScenario, ExampleScenario, ExamplesAsScenarios, ExamplesBlock, HeadingLevel,
+    HeadingPart,
 };
 use crate::policies::CATALOGUE;
 use crate::policies::site::feature_pages::{ExampleRow, example_rows};
@@ -15,13 +16,21 @@ use crate::policies::site::feature_pages::{ExampleRow, example_rows};
 impl Builder<'_> {
     pub(super) fn examples(&self, anchored: &Anchored<'_, Examples>) -> ExamplesBlock {
         let examples = anchored.block;
+        let label = heading(
+            Kind::Examples,
+            &examples.keyword,
+            examples.name.as_deref().unwrap_or(""),
+        );
+        let has_rows = examples.table.as_ref().is_some_and(has_rows);
         ExamplesBlock {
             anchor: anchored.anchor.clone(),
-            label: heading(
-                Kind::Examples,
-                &examples.keyword,
-                examples.name.as_deref().unwrap_or(""),
-            ),
+            label: if has_rows {
+                label
+            } else {
+                let words = fl!(CATALOGUE, "empty-examples", heading = TEXT_MARKS[0]);
+                worded_parts(&words, &[label])
+            },
+            has_rows,
             tags: self.tags(&examples.tags),
             description: description(examples.description.as_deref()),
             table: examples.table.as_ref().map(table),
@@ -50,7 +59,7 @@ impl Builder<'_> {
             heading: worded_heading(
                 level,
                 &format!("{outline_anchor}_scenarios"),
-                worded_parts(&words, &[isolated(outline_name(outline))]),
+                worded_parts(&words, &[outline_name(outline)]),
                 true,
             ),
             scenarios,
@@ -86,7 +95,7 @@ impl Builder<'_> {
             heading: worded_heading(
                 level,
                 anchor,
-                worded_parts(&words, &[isolated(outline_name(outline)), values]),
+                worded_parts(&words, &[outline_name(outline), values]),
                 self.options.collapse_scenarios,
             ),
             steps: filled_step_contents(self.parsed, &outline.steps, row),
@@ -94,10 +103,16 @@ impl Builder<'_> {
     }
 }
 
-/// The outline's name, or its keyword as written when it has none.
-fn outline_name(outline: &Scenario) -> &str {
+/// The outline's name, isolated, or its kind in gherkin-glass's words when
+/// it has none, whatever keyword the file writes.
+fn outline_name(outline: &Scenario) -> Vec<HeadingPart> {
     match outline.name.trim() {
-        "" => outline.keyword.trim(),
-        name => name,
+        "" => kind_alone(Kind::ScenarioOutline),
+        name => isolated(name),
     }
+}
+
+/// Whether `table` has a row below its header.
+fn has_rows(table: &Table) -> bool {
+    table.rows.get(1).is_some()
 }

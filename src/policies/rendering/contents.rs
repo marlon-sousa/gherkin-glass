@@ -2,6 +2,7 @@
 
 use askama::Template;
 
+use super::heading_parts::RenderIn;
 use super::node_rendering::{Render, rendered};
 use crate::entities::ContentsEntry;
 
@@ -10,6 +11,8 @@ pub(super) struct Contents<'a> {
     pub(super) entries: &'a [ContentsEntry],
     /// Empty on the feature's own page.
     pub(super) page: String,
+    /// The feature's language, on a page in another; `None` on its own page.
+    pub(super) language: Option<&'a str>,
 }
 
 #[derive(Template)]
@@ -30,6 +33,7 @@ impl Render for [ContentsEntry] {
         Contents {
             entries: self,
             page: String::new(),
+            language: None,
         }
         .render()
     }

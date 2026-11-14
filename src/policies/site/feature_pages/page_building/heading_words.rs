@@ -48,6 +48,11 @@ pub(super) fn heading(kind: Kind, keyword: &str, name: &str) -> Vec<HeadingPart>
     worded_parts(&words, &[named, isolated(keyword)])
 }
 
+/// The kind alone, in gherkin-glass's words, such as `Scenario outline`.
+pub(super) fn kind_alone(kind: Kind) -> Vec<HeadingPart> {
+    plain_parts(&fl!(CATALOGUE, "unnamed-heading", kind = kind.id()))
+}
+
 impl Kind {
     /// The kind as the catalogue's messages select it.
     fn id(self) -> &'static str {

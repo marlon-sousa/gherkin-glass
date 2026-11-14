@@ -50,13 +50,12 @@ export class DomTree implements TreeView {
     this.handler = handler;
   }
 
-  private add(list: HTMLUListElement, items: readonly TreeItem[], parent: TreeNode | null, current: string | null, expanded: (address: string) => boolean): void {
+  /** `lang` is the feature's that holds `items`, if one does. */
+  private add(list: HTMLUListElement, items: readonly TreeItem[], parent: TreeNode | null, current: string | null, expanded: (address: string) => boolean, lang?: string): void {
     for (const item of items) {
+      const itemLang = item.lang ?? lang;
       const entry = this.document.createElement("li");
       entry.setAttribute("role", "none");
-      if (item.lang !== undefined) {
-        entry.lang = item.lang;
-      }
       const link = this.document.createElement("a");
       link.setAttribute("role", "treeitem");
       link.href = typeof this.root === "string" ? this.root + item.address : new URL(item.address, this.root).href;
@@ -77,7 +76,7 @@ export class DomTree implements TreeView {
         group.setAttribute("aria-label", textOf(item));
         link.setAttribute("aria-owns", group.id);
       }
-      link.append(...this.words(item));
+      link.append(...this.words(item, itemLang));
       entry.append(link);
       const node: TreeNode = { link, address: item.address, group, parent };
       this.nodes.push(node);
@@ -91,14 +90,17 @@ export class DomTree implements TreeView {
           this.focus(node);
           this.toggle(node, !this.isExpanded(node));
         });
-        this.add(group, inner, node, current, expanded);
+        this.add(group, inner, node, current, expanded, itemLang);
       }
       list.append(entry);
     }
   }
 
-  /** The item's words, each run of feature text isolated in a `bdi`. */
-  private words(item: TreeItem): (string | HTMLElement)[] {
+  /**
+   * The item's words, each run of feature text isolated in a `bdi` with its
+   * feature's `lang`, so that the tree's own words are read in the page's.
+   */
+  private words(item: TreeItem, lang: string | undefined): (string | HTMLElement)[] {
     if (typeof item.text === "string") {
       return [item.text];
     }
@@ -108,6 +110,9 @@ export class DomTree implements TreeView {
       }
       const isolated = this.document.createElement("bdi");
       isolated.append(run);
+      if (lang !== undefined) {
+        isolated.lang = lang;
+      }
       return isolated;
     });
   }

@@ -6,7 +6,7 @@ export interface TreeItem {
   readonly text: string | readonly string[];
   /** Relative to the site's root, percent-encoded, with an anchor after `#` for a rule or scenario. */
   readonly address: string;
-  /** Only a feature's. */
+  /** Only a feature's, for its feature text and that of the items inside it. */
   readonly lang?: string;
   readonly items?: readonly TreeItem[];
 }

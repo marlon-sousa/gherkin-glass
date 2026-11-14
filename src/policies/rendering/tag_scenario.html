@@ -1,1 +1,1 @@
-<li>{{ scenario.before }}<a href="{{ scenario.address }}"{% if let Some(lang) = language %} lang="{{ lang }}"{% endif %}><bdi>{{ scenario.heading.render()|safe }}</bdi></a>{{ scenario.after }}</li>
+<li>{{ scenario.before }}<a href="{{ scenario.address }}"><bdi>{{ scenario.heading.render_in(language.as_deref())|safe }}</bdi></a>{{ scenario.after }}</li>

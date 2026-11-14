@@ -50,9 +50,12 @@ test("the tree is built in its landmark, named as it, with every item a link rel
   const isolated = [...item(window, "Scenario: Store credit (written as Example)").querySelectorAll("bdi")].map((bdi) => bdi.textContent);
   assert.deepEqual(isolated, ["Store credit", "Example"]);
   assert.equal(item(window, "Feature: Closed accounts").getAttribute("href"), "../billing/archive/closed%20%231.html");
-  // A feature's item, with the items inside it, has its page's lang.
-  assert.equal(item(window, "Feature: Refunds & <returns>").parentElement!.getAttribute("lang"), "en");
-  assert.equal(home.parentElement!.hasAttribute("lang"), false);
+  // A feature's feature text, and that of the items inside it, has its page's lang; the tree's own words have none.
+  const languages = (text: string) => [...item(window, text).querySelectorAll("bdi")].map((bdi) => bdi.getAttribute("lang"));
+  assert.deepEqual(languages("Feature: Saque em conta poupança (written as Funcionalidade)"), ["pt", "pt"]);
+  assert.deepEqual(languages("Scenario: Saque com saldo (written as Cenário)"), ["pt", "pt"]);
+  assert.ok(item(window, "Scenario: Saque com saldo (written as Cenário)").closest("nav [lang]") === null);
+  assert.ok(home.closest("nav [lang]") === null);
 });
 
 test("the current page is marked, and it and the items it is inside are expanded, everything else collapsed", async () => {

@@ -1,1 +1,1 @@
-{% for part in parts %}{% if part.isolated %}<bdi>{{ part.text }}</bdi>{% else %}{{ part.text }}{% endif %}{% endfor %}
+{% for part in parts %}{% if part.isolated %}<bdi{% if let Some(language) = language %} lang="{{ language }}"{% endif %}>{{ part.text }}</bdi>{% else %}{{ part.text }}{% endif %}{% endfor %}
