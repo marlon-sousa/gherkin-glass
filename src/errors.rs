@@ -24,7 +24,7 @@ pub(crate) use input_error::{InputError, InputErrors};
 pub(crate) use input_error_kind::{InputErrorKind, UnnamedBlock};
 pub(crate) use output_error::{OutputError, OutputErrorKind};
 pub(crate) use parse_error::ParseError;
-pub(crate) use serve_error::{ListenErrorKind, RebuildError, ServeError, WatchError};
+pub(crate) use serve_error::{ListenErrorKind, RebuildError, ServeError, SignalsError, WatchError};
 
 use crate::policies::CATALOGUE;
 

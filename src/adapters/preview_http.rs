@@ -1,5 +1,6 @@
 //! Adapter: the preview server port over HTTP, with tiny_http.
 
+mod answering;
 mod content_type;
 mod reload_injection;
 mod request_route;
@@ -8,23 +9,20 @@ use std::fs::read;
 use std::io::ErrorKind;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, TcpListener, TcpStream};
 use std::sync::Arc;
-use std::thread::spawn;
 use std::time::Duration;
 
 use tiny_http::{Header, Method, Request, Response, Server, StatusCode};
 
-use crate::entities::{Preview, ServedSite, ServerWords, Version};
+use crate::entities::{Listening, Preview, ServedSite, ServerWords, Version};
 use crate::errors::ListenErrorKind;
 use crate::ports::PreviewServer;
+use answering::Answering;
 use content_type::{content_type, is_html};
 use reload_injection::add_reload_script;
 use request_route::{Route, route};
 
 /// The reload script, added to every page under `--watch`.
 const RELOAD_SCRIPT: &str = include_str!("preview_http/reload.js");
-
-/// How many requests are answered at once.
-const THREADS: usize = 4;
 
 #[derive(Debug, Default, Clone, Copy)]
 pub(crate) struct HttpPreviewServer;
@@ -36,7 +34,7 @@ impl PreviewServer for HttpPreviewServer {
         port: u16,
         preview: Arc<Preview>,
         words: ServerWords,
-    ) -> Result<SocketAddr, ListenErrorKind> {
+    ) -> Result<Listening, ListenErrorKind> {
         let bind = || {
             TcpListener::bind((host, port)).map_err(|error| match error.kind() {
                 ErrorKind::AddrInUse => ListenErrorKind::PortTaken,
@@ -66,17 +64,10 @@ impl PreviewServer for HttpPreviewServer {
                 reason: error.to_string(),
             }
         })?);
-        let words = Arc::new(words);
-        for _ in 0..THREADS {
-            let (server, preview, words) = (server.clone(), preview.clone(), words.clone());
-            spawn(move || {
-                // `recv` fails only once the server is closed.
-                while let Ok(request) = server.recv() {
-                    answer(request, &preview, &words);
-                }
-            });
-        }
-        Ok(address)
+        Ok(Listening {
+            address,
+            answering: Box::new(Answering::start(server, preview, Arc::new(words))),
+        })
     }
 }
 
@@ -241,6 +232,8 @@ fn header(name: &str, value: &str) -> Header {
 #[cfg(test)]
 mod tests {
     use std::collections::BTreeMap;
+    use std::io::{Read, Write};
+    use std::thread::sleep;
 
     use super::*;
     use crate::entities::ServeMode;
@@ -301,5 +294,28 @@ mod tests {
         );
         assert_eq!(choose("/b/", &preview, &words()).status, Status::NotFound);
         assert_eq!(choose("/a/s", &preview, &words()).status, Status::NotFound);
+    }
+
+    #[test]
+    fn once_what_it_returns_is_dropped_the_server_is_closed() {
+        let preview = Arc::new(memory(ServeMode::Build));
+        let listening = HttpPreviewServer
+            .start("127.0.0.1", 0, preview, words())
+            .expect("listening");
+        let address = listening.address;
+        let mut stream = TcpStream::connect(address).expect("connects");
+        stream
+            .write_all(b"GET /a/ HTTP/1.1\r\nConnection: close\r\n\r\n")
+            .expect("sent");
+        let mut answer = String::new();
+        stream.read_to_string(&mut answer).expect("answered");
+        assert!(answer.starts_with("HTTP/1.1 200"), "{answer}");
+        drop(listening);
+        // tiny_http 0.12.0 closes its listening socket on a thread of its own, soon after.
+        let closed = (0..100).any(|_| {
+            sleep(Duration::from_millis(20));
+            TcpStream::connect(address).is_err()
+        });
+        assert!(closed);
     }
 }

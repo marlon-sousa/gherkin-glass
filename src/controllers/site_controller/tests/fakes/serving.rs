@@ -5,17 +5,23 @@ use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::mpsc::{IntoIter, Sender, channel};
 
 use super::*;
-use crate::entities::{InputChanges, Preview, Served};
+use crate::entities::{InputChanges, Listening, Preview, Served};
 use crate::errors::WatchError;
+use crate::ports::{ServeEventWaiter, StopSignals};
 use crate::services::WatchedChanges;
+use crate::test_support::{Counted, FakeSignals, FakeWaiter};
 
-/// Serves at 127.0.0.1, port 8000, keeping the preview, unless `listen_failing`; watches,
-/// unless `watch_failing`, keeping the sender of each watch's changes, and counts the watches
-/// dropped. The configuration file alone is watched even while `watch_failing`, unless
+/// Listens for the requests to stop with `signals`, and waits for them with `waiter`; serves at 127.0.0.1, port 8000, keeping
+/// the preview, unless `listen_failing`, and counts the sites no longer served; watches, unless
+/// `watch_failing`, keeping the sender of each watch's changes, and counts the watches dropped.
+/// The configuration file alone is watched even while `watch_failing`, unless
 /// `config_watch_failing`.
 #[derive(Default)]
 pub(crate) struct FakeServerService {
     pub(super) calls: Arc<Calls>,
+    pub(crate) signals: FakeSignals,
+    pub(crate) waiter: FakeWaiter,
+    pub(crate) no_longer_served: Arc<AtomicUsize>,
     pub(crate) listen_failing: AtomicBool,
     pub(crate) watch_failing: AtomicBool,
     pub(crate) config_watch_failing: AtomicBool,
@@ -25,6 +31,21 @@ pub(crate) struct FakeServerService {
 }
 
 impl ServerApi for FakeServerService {
+    fn listen_for_stops(&self) -> Result<(), ServeError> {
+        self.calls.note("server.listen_for_stops".into());
+        self.signals
+            .listen(self.waiter.stop_teller())
+            .map_err(ServeError::Signals)
+    }
+
+    fn asked_to_stop(&self) -> bool {
+        self.waiter.asked_to_stop()
+    }
+
+    fn wait_for_stop(&self) {
+        self.waiter.wait_for_stop();
+    }
+
     fn watch(
         &self,
         input: &Path,
@@ -51,9 +72,21 @@ impl ServerApi for FakeServerService {
         let preview = Arc::new(Preview::new(options.mode, site));
         *self.preview.lock().unwrap_or_else(PoisonError::into_inner) = Some(preview.clone());
         Ok(Served {
-            address: SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::LOCALHOST, 8000)),
+            listening: Listening {
+                address: SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::LOCALHOST, 8000)),
+                answering: Box::new(Counted {
+                    dropped: self.no_longer_served.clone(),
+                }),
+            },
             preview,
         })
+    }
+
+    fn stop(&self, served: Served) {
+        self.calls.note("server.stop".into());
+        // As if another request came as soon as it was listened for.
+        self.signals.end_at_once();
+        drop(served);
     }
 }
 
@@ -78,7 +111,9 @@ impl FakeServerService {
         self.calls.note(call);
         Ok(Box::new(CountedChanges {
             changes: changes.into_iter(),
-            dropped: self.dropped.clone(),
+            counted: Counted {
+                dropped: self.dropped.clone(),
+            },
         }))
     }
 
@@ -120,10 +155,11 @@ fn sent_to(sender: &Sender<InputChanges>, changes: &InputChanges) -> bool {
     sender.send(changes.clone()).is_ok()
 }
 
-/// A watch's changes, counted in `dropped` once dropped.
+/// A watch's changes, counted once dropped.
 struct CountedChanges {
     changes: IntoIter<InputChanges>,
-    dropped: Arc<AtomicUsize>,
+    #[expect(dead_code, reason = "it is held only to be dropped")]
+    counted: Counted,
 }
 
 impl Iterator for CountedChanges {
@@ -131,12 +167,6 @@ impl Iterator for CountedChanges {
 
     fn next(&mut self) -> Option<InputChanges> {
         self.changes.next()
-    }
-}
-
-impl Drop for CountedChanges {
-    fn drop(&mut self) {
-        self.dropped.fetch_add(1, Ordering::SeqCst);
     }
 }
 

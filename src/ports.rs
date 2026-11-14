@@ -7,6 +7,8 @@ mod file_writer;
 mod input_folders;
 mod output_folders;
 mod preview_server;
+mod serve_event_waiter;
+mod stop_signals;
 mod terminal;
 
 pub(crate) use change_watcher::ChangeWatcher;
@@ -16,4 +18,6 @@ pub(crate) use file_writer::FileWriter;
 pub(crate) use input_folders::InputFolders;
 pub(crate) use output_folders::OutputFolders;
 pub(crate) use preview_server::PreviewServer;
+pub(crate) use serve_event_waiter::{ChangeOrStopWaiter, ServeEventWaiter};
+pub(crate) use stop_signals::StopSignals;
 pub(crate) use terminal::Terminal;

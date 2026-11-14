@@ -1,4 +1,4 @@
-//! Controller: ghg serve's watch, rebuilding from the last build for the paths that changed, and from nothing, watching again on the input the settings name, when everything changed or the settings differ.
+//! Controller: ghg serve's watch, rebuilding from the last build for the paths that changed, and from nothing, watching again on the input the settings name, when everything changed or the settings differ, until ghg serve is asked to stop.
 
 use std::iter::once;
 use std::path::PathBuf;
@@ -40,7 +40,7 @@ impl Watching<'_> {
     }
 
     /// Rebuilds for each of `changes` that calls for it, `last` being the first build, until
-    /// the watching ends.
+    /// the watching ends or ghg serve is asked to stop.
     pub(super) fn rebuild_on(&self, mut changes: WatchedChanges, mut last: BuildSnapshot) {
         while let Some(input_changes) = changes.next() {
             let settings = match input_changes {

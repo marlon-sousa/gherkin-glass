@@ -1,13 +1,12 @@
 //! Adapter: the change watcher port over the file system, with notify and its full debouncer.
 
 use std::path::{Path, PathBuf};
-use std::sync::mpsc::{Sender, channel};
 use std::time::Duration;
 
 use notify_debouncer_full::notify::{Error as NotifyError, Event, EventKind, RecursiveMode};
 use notify_debouncer_full::{DebounceEventHandler, DebounceEventResult, new_debouncer};
 
-use crate::entities::{Burst, Changes, Watched};
+use crate::entities::{Burst, BurstTeller, Watched, Watching};
 use crate::errors::WatchError;
 use crate::ports::ChangeWatcher;
 
@@ -18,15 +17,14 @@ const QUIET_FOR: Duration = Duration::from_millis(200);
 pub(crate) struct FileWatcher;
 
 impl ChangeWatcher for FileWatcher {
-    fn watch(&self, watched: &[Watched]) -> Result<Changes, WatchError> {
+    fn watch(&self, watched: &[Watched], tell: BurstTeller) -> Result<Watching, WatchError> {
         let places = watched
             .iter()
             .map(Place::of)
             .collect::<Result<Vec<_>, _>>()?;
-        let (sender, bursts) = channel();
         let reporter = Reporter {
             places: places.clone(),
-            sender,
+            tell,
         };
         let first = places.first().map(Place::folder).unwrap_or(Path::new("."));
         let mut debouncer = new_debouncer(QUIET_FOR, None, reporter).map_err(error_at(first))?;
@@ -37,10 +35,7 @@ impl ChangeWatcher for FileWatcher {
                 .watch(place.folder(), place.mode())
                 .map_err(error_at(place.folder()))?;
         }
-        Ok(Changes {
-            bursts,
-            watching: Box::new(debouncer),
-        })
+        Ok(Box::new(debouncer))
     }
 }
 
@@ -125,11 +120,11 @@ impl Place {
     }
 }
 
-/// The debouncer's handler, on its own thread: sends each burst's changed
-/// paths, written as they were given, on the one channel.
+/// The debouncer's handler, on its own thread: tells of each burst's changed
+/// paths, written as they were given.
 struct Reporter {
     places: Vec<Place>,
-    sender: Sender<Burst>,
+    tell: BurstTeller,
 }
 
 impl DebounceEventHandler for Reporter {
@@ -148,9 +143,7 @@ impl DebounceEventHandler for Reporter {
             // The watcher failed, so changes may have been missed.
             Err(_) => Burst::Missed,
         };
-        // Sending fails only when the receiver is gone, which happens once
-        // the service has stopped watching; the burst is then not needed.
-        let _ = self.sender.send(burst);
+        (self.tell)(burst);
     }
 }
 
@@ -202,6 +195,8 @@ fn error_at(path: &Path) -> impl FnOnce(NotifyError) -> WatchError + use<> {
 
 #[cfg(test)]
 mod tests {
+    use std::sync::mpsc::channel;
+
     use super::*;
 
     fn folder(given: &str, folder: &str) -> Place {
@@ -235,7 +230,7 @@ mod tests {
     fn changed_paths_are_written_as_given_and_only_where_watched() {
         let reporter = Reporter {
             places: vec![folder("features", "/p/features"), file("ghg.toml", "/p")],
-            sender: channel().0,
+            tell: Box::new(drop),
         };
         let event = |kind, path: &str| Event::new(kind).add_path(path.into());
         let modified = EventKind::Modify(notify_debouncer_full::notify::event::ModifyKind::Any);
@@ -261,7 +256,7 @@ mod tests {
         let (sender, bursts) = channel();
         let mut reporter = Reporter {
             places: vec![folder("features", "/p/features")],
-            sender,
+            tell: Box::new(move |burst| sender.send(burst).expect("sent")),
         };
         let rescan = Event::new(EventKind::Other)
             .set_flag(notify_debouncer_full::notify::event::Flag::Rescan);

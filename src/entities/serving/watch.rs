@@ -1,8 +1,6 @@
 //! Entity: what ghg serve watches for changes, and the changes it is told of.
 
-use std::any::Any;
 use std::path::PathBuf;
-use std::sync::mpsc::Receiver;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) enum Watched {
@@ -22,12 +20,4 @@ pub(crate) enum Burst {
     Changed(Vec<PathBuf>),
     /// Changes may have been missed, so which ones is not known.
     Missed,
-}
-
-/// One message for each burst of changes, until the watching ends.
-pub(crate) struct Changes {
-    pub(crate) bursts: Receiver<Burst>,
-    /// Whatever keeps the watching going; dropping it ends it.
-    #[expect(dead_code, reason = "it is held only to be dropped")]
-    pub(crate) watching: Box<dyn Any + Send>,
 }
