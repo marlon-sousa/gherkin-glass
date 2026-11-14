@@ -6,7 +6,7 @@ use std::time::Duration;
 use notify_debouncer_full::notify::{Error as NotifyError, Event, EventKind, RecursiveMode};
 use notify_debouncer_full::{DebounceEventHandler, DebounceEventResult, new_debouncer};
 
-use crate::entities::{Burst, BurstTeller, Watched, Watching};
+use crate::entities::{Burst, BurstTeller, WatchKeeper, Watched};
 use crate::errors::WatchError;
 use crate::ports::ChangeWatcher;
 
@@ -17,7 +17,7 @@ const QUIET_FOR: Duration = Duration::from_millis(200);
 pub(crate) struct FileWatcher;
 
 impl ChangeWatcher for FileWatcher {
-    fn watch(&self, watched: &[Watched], tell: BurstTeller) -> Result<Watching, WatchError> {
+    fn watch(&self, watched: &[Watched], tell: BurstTeller) -> Result<WatchKeeper, WatchError> {
         let places = watched
             .iter()
             .map(Place::of)

@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicUsize, Ordering};
-use std::sync::{Mutex, PoisonError};
+use std::sync::{Mutex, MutexGuard, PoisonError};
 
 use rstest::rstest;
 
@@ -28,13 +28,14 @@ impl Fakes {
         )
     }
 
-    /// Has each wait for a change or a request to stop that finds no burst told end as `script` says.
+    /// Has each wait for a change or a request to stop that finds no burst told end as `script`
+    /// says.
     fn script(&self, script: impl IntoIterator<Item = ChangeOrStop>) {
         lock(&self.waiter.script).extend(script);
     }
 }
 
-fn lock<T>(mutex: &Mutex<T>) -> std::sync::MutexGuard<'_, T> {
+fn lock<T>(mutex: &Mutex<T>) -> MutexGuard<'_, T> {
     mutex.lock().unwrap_or_else(PoisonError::into_inner)
 }
 
@@ -181,6 +182,29 @@ fn the_changes_end_once_ghg_serve_is_asked_to_stop_or_the_watching_ends(#[case] 
     let paths = [PathBuf::from("features/a.feature")];
     assert_eq!(changes.next(), Some(InputChanges::Paths(paths.into())));
     assert_eq!(changes.next(), None);
+}
+
+#[rstest]
+// Rule 199: a change that comes during the same wait as a request to stop starts no rebuild.
+#[case::with_the_change(false)]
+// Rule 200: nor does one waiting once asked to stop, as during a rebuild.
+#[case::before_the_wait(true)]
+fn a_change_once_asked_to_stop_is_left(#[case] asked_before: bool) {
+    let fakes = Fakes::default();
+    let server = fakes.service();
+    server.listen_for_stops().expect("listening");
+    let mut changes = watch_the_input(&server).expect("watching");
+    fakes.watcher.tell(changed("features/a.feature"));
+    if asked_before {
+        fakes.signals.ask_to_stop();
+    } else {
+        fakes
+            .waiter
+            .asking_while_waiting
+            .store(true, Ordering::SeqCst);
+    }
+    assert_eq!(changes.next(), None);
+    assert!(server.asked_to_stop());
 }
 
 #[rstest]

@@ -11,11 +11,11 @@ use crate::ports::{ServeEventWaiter, StopSignals};
 use crate::services::WatchedChanges;
 use crate::test_support::{Counted, FakeSignals, FakeWaiter};
 
-/// Listens for the requests to stop with `signals`, and waits for them with `waiter`; serves at 127.0.0.1, port 8000, keeping
-/// the preview, unless `listen_failing`, and counts the sites no longer served; watches, unless
-/// `watch_failing`, keeping the sender of each watch's changes, and counts the watches dropped.
-/// The configuration file alone is watched even while `watch_failing`, unless
-/// `config_watch_failing`.
+/// Listens for the requests to stop with `signals`, and waits for them with `waiter`; serves at
+/// 127.0.0.1, port 8000, keeping the preview, unless `listen_failing`, and counts the sites no
+/// longer served; watches, unless `watch_failing`, keeping the sender of each watch's changes,
+/// and counts the watches dropped. The configuration file alone is watched even while
+/// `watch_failing`, unless `config_watch_failing`.
 #[derive(Default)]
 pub(crate) struct FakeServerService {
     pub(super) calls: Arc<Calls>,
