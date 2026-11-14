@@ -12,8 +12,18 @@ pub(crate) struct BlockHeading {
     pub(crate) parts: Vec<HeadingPart>,
     /// The note, at the top of its content, of the keyword its file writes
     /// when that is another word than its kind's.
-    pub(crate) source_note: Option<Vec<HeadingPart>>,
+    pub(crate) keyword_note: Option<KeywordNote>,
     pub(crate) collapsed: bool,
+}
+
+/// The note at the top of a block whose file writes its kind with another
+/// keyword than its kind's word: the words before the button that explains
+/// it, the button's words, with the keyword isolated, and the words after.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct KeywordNote {
+    pub(crate) before: String,
+    pub(crate) opener: Vec<HeadingPart>,
+    pub(crate) after: String,
 }
 
 /// A part of a heading; feature text inside gherkin-glass's own words is
@@ -72,7 +82,7 @@ pub(crate) struct ExamplesBlock {
     pub(crate) label: Vec<HeadingPart>,
     /// The note of the keyword its file writes, when that is another word
     /// than `Examples`.
-    pub(crate) source_note: Option<Vec<HeadingPart>>,
+    pub(crate) keyword_note: Option<KeywordNote>,
     pub(crate) tags: Vec<TagView>,
     pub(crate) description: Option<Paragraph>,
     pub(crate) table: Option<TableView>,
@@ -82,7 +92,7 @@ impl ExamplesBlock {
     /// Whether it has no note of its keyword, no table, no tag and no
     /// description, so that its item has nothing to show but its label.
     pub(crate) fn holds_nothing(&self) -> bool {
-        self.source_note.is_none()
+        self.keyword_note.is_none()
             && self.table.is_none()
             && self.tags.is_empty()
             && self.description.is_none()

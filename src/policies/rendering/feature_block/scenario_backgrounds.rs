@@ -36,7 +36,7 @@ fn background_in_scenario(
         level: scenario.level.below(),
         anchor: format!("{}_background_{place}", scenario.anchor),
         parts: plain_parts(&background.heading_in_scenario),
-        source_note: None,
+        keyword_note: None,
         collapsed: !checked,
     };
     let view = BlockView {

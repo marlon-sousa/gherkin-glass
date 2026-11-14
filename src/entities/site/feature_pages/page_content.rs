@@ -68,3 +68,47 @@ pub(crate) struct StepContent {
     pub(crate) table: Option<TableView>,
     pub(crate) doc_string: Option<DocStringView>,
 }
+
+impl PageContent {
+    /// Whether the feature or any of its blocks has a note of the keyword
+    /// its file writes, which the page's dialog explains.
+    pub(crate) fn has_keyword_note(&self) -> bool {
+        self.page.keyword_note.is_some()
+            || self
+                .background
+                .as_ref()
+                .is_some_and(BackgroundContent::has_keyword_note)
+            || self.scenarios.iter().any(ScenarioContent::has_keyword_note)
+            || self.rules.iter().any(RuleContent::has_keyword_note)
+    }
+}
+
+impl BackgroundContent {
+    fn has_keyword_note(&self) -> bool {
+        self.block.heading.keyword_note.is_some()
+    }
+}
+
+impl RuleContent {
+    fn has_keyword_note(&self) -> bool {
+        self.block.heading.keyword_note.is_some()
+            || self
+                .background
+                .as_ref()
+                .is_some_and(BackgroundContent::has_keyword_note)
+            || self.scenarios.iter().any(ScenarioContent::has_keyword_note)
+    }
+}
+
+impl ScenarioContent {
+    fn has_keyword_note(&self) -> bool {
+        self.block.heading.keyword_note.is_some()
+            || self.examples.iter().any(ExamplesContent::has_keyword_note)
+    }
+}
+
+impl ExamplesContent {
+    fn has_keyword_note(&self) -> bool {
+        self.block.keyword_note.is_some()
+    }
+}

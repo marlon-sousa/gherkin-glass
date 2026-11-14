@@ -8,13 +8,13 @@ mod page_content;
 
 pub(crate) use anchored_feature::{Anchored, AnchoredFeature, AnchoredRule, AnchoredScenario};
 pub(crate) use feature_blocks::{
-    BackgroundBlock, BlockHeading, ExamplesBlock, HeadingPart, RuleBlock, ScenarioBlock,
-    plain_parts, text_of,
+    BackgroundBlock, BlockHeading, ExamplesBlock, HeadingPart, KeywordNote, RuleBlock,
+    ScenarioBlock, plain_parts, text_of,
 };
 pub(crate) use highlighted_step::{HighlightedStep, StepPart};
 pub(crate) use page::{
-    BackgroundsOption, ContentsEntry, DocStringView, OutsideLink, Page, PageWords, Paragraph,
-    SourceLink, StepView, TableView, TagView,
+    BackgroundsOption, ContentsEntry, DocStringView, NoteDialog, OutsideLink, Page, PageWords,
+    Paragraph, SourceLink, StepView, TableView, TagView,
 };
 pub(crate) use page_content::{
     BackgroundContent, ExampleScenario, ExamplesContent, ExamplesRuns, PageContent, RuleContent,

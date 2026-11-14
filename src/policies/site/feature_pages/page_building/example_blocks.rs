@@ -5,7 +5,7 @@ use i18n_embed_fl::fl;
 
 use super::block_building::{Builder, description, worded_heading};
 use super::heading_words::{
-    Kind, TEXT_MARKS, examples_heading, isolated, kind_alone, plain, source_note, worded_parts,
+    Kind, TEXT_MARKS, examples_heading, isolated, keyword_note, kind_alone, plain, worded_parts,
 };
 use super::step_views::{filled_step_contents, table};
 use crate::entities::{
@@ -29,7 +29,7 @@ impl Builder<'_> {
                 let words = fl!(CATALOGUE, "nothing-to-run", heading = TEXT_MARKS[0]);
                 worded_parts(&words, &[label])
             },
-            source_note: source_note(Kind::Examples, &examples.keyword),
+            keyword_note: keyword_note(Kind::Examples, &examples.keyword),
             tags: self.tags(&examples.tags),
             description: description(examples.description.as_deref()),
             table: examples.table.as_ref().map(table),

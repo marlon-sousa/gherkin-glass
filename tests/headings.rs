@@ -115,22 +115,52 @@ fn an_examples_block_without_a_row_says_it_has_nothing_to_run_and_an_outline_wit
 #[rstest]
 #[case::the_feature_under_its_h1(
     "tests/fixtures/pages/expected/saque em conta poupança.html",
-    "<h1>Feature: <bdi>Saque em conta poupança</bdi></h1>\n<p class=\"ghg-source-note\">In the Gherkin feature file: <bdi>Funcionalidade</bdi></p>"
+    "<h1>Feature: <bdi>Saque em conta poupança</bdi></h1>\n<p class=\"ghg-keyword-note\" role=\"note\">Note: in the Gherkin feature file, this feature is <button type=\"button\" class=\"ghg-note-opener\" aria-haspopup=\"dialog\" aria-controls=\"ghg_note_dialog\">defined with the keyword &#34;<bdi>Funcionalidade</bdi>&#34;.</button></p>"
 )]
 #[case::a_scenario_at_the_top_of_its_content(
     "tests/fixtures/pages/expected/kinds.html",
-    "Scenario: <bdi>Written as an example</bdi></button></h3>\n<div class=\"ghg-content\">\n<p class=\"ghg-source-note\">In the Gherkin feature file: <bdi>Example</bdi></p>"
+    "Scenario: <bdi>Written as an example</bdi></button></h3>\n<div class=\"ghg-content\">\n<p class=\"ghg-keyword-note\" role=\"note\">Note: in the Gherkin feature file, this scenario is <button type=\"button\" class=\"ghg-note-opener\" aria-haspopup=\"dialog\" aria-controls=\"ghg_note_dialog\">defined with the keyword &#34;<bdi>Example</bdi>&#34;.</button></p>"
 )]
 #[case::an_examples_block_inside_what_its_button_shows(
     "tests/fixtures/pages/expected/kinds.html",
-    "<div class=\"ghg-content\" hidden>\n<p class=\"ghg-source-note\">In the Gherkin feature file: <bdi>Scenarios</bdi></p>"
+    "<div class=\"ghg-content\" hidden>\n<p class=\"ghg-keyword-note\" role=\"note\">Note: in the Gherkin feature file, these examples are <button type=\"button\" class=\"ghg-note-opener\" aria-haspopup=\"dialog\" aria-controls=\"ghg_note_dialog\">defined with the keyword &#34;<bdi>Scenarios</bdi>&#34;.</button></p>"
 )]
 fn a_heading_names_only_its_kind_and_its_content_names_another_keyword(
     #[case] page: &str,
     #[case] shown: &str,
 ) {
-    // Rule 43.
+    // Rules 43 and 196.
     let html = committed(page);
     assert!(html.contains(shown), "{html}");
     assert!(!html.contains("written as"), "{html}");
+}
+
+#[rstest]
+#[case::with_notes("tests/fixtures/pages/expected/kinds.html", true)]
+#[case::without_one("tests/fixtures/pages/expected/outlines.html", false)]
+fn a_page_with_a_keyword_s_note_has_one_closed_dialog_that_explains_it(
+    #[case] page: &str,
+    #[case] has_notes: bool,
+) {
+    // Rule 197.
+    let html = committed(page);
+    assert_eq!(
+        html.contains("class=\"ghg-note-opener\""),
+        has_notes,
+        "{html}"
+    );
+    let dialogs = html.matches("<dialog id=\"ghg_note_dialog\"").count();
+    assert_eq!(dialogs, usize::from(has_notes), "{html}");
+    if has_notes {
+        assert!(
+            html.contains(
+                "<dialog id=\"ghg_note_dialog\" class=\"ghg-dialog\" tabindex=\"-1\" aria-labelledby=\"ghg_note_dialog_title\" aria-describedby=\"ghg_note_dialog_text\">\n<h2 id=\"ghg_note_dialog_title\" class=\"ghg-dialog-title\">About this note</h2>\n<p id=\"ghg_note_dialog_text\">Gherkin lets authors use different words for the same kind of block. "
+            ),
+            "{html}"
+        );
+        assert!(
+            html.contains("<form method=\"dialog\"><button>Got it</button></form>\n</dialog>"),
+            "{html}"
+        );
+    }
 }

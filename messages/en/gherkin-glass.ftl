@@ -320,9 +320,30 @@ named-heading =
        *[scenario] Scenario: { $name }
     }
 
-## At the top of a block whose file writes its kind with another $keyword.
+## At the top of a block whose file writes its $kind, as unnamed-heading
+## selects it, with another keyword: a note, whose $opener is a button that
+## opens the dialog below, worded by keyword-note-opener with the $keyword as
+## written in the file. The opener ends the sentence, its full stop included,
+## so that nothing is left after the button, which wraps as one box, on a
+## line of its own.
 
-in-the-feature-file = In the Gherkin feature file: { $keyword }
+keyword-note =
+    { $kind ->
+        [feature] Note: in the Gherkin feature file, this feature is { $opener }
+        [background] Note: in the Gherkin feature file, this background is { $opener }
+        [rule] Note: in the Gherkin feature file, this rule is { $opener }
+        [scenario-outline] Note: in the Gherkin feature file, this scenario outline is { $opener }
+        [examples] Note: in the Gherkin feature file, these examples are { $opener }
+       *[scenario] Note: in the Gherkin feature file, this scenario is { $opener }
+    }
+keyword-note-opener = defined with the keyword "{ $keyword }".
+
+## The dialog that explains the note above, one on each page with such a
+## note: its heading, its text and its one button.
+
+note-dialog-title = About this note
+note-dialog-text = Gherkin lets authors use different words for the same kind of block. For example, Scenario and Example both define a scenario, and Examples and Scenarios both define examples. This site names every block by its kind, so pages read the same whichever word was used. The note only tells you which word the feature file uses; it changes nothing about the block.
+note-dialog-close = Got it
 
 ## An unnamed examples block, by its $place among its outline's blocks, from 1.
 

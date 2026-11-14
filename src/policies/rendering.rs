@@ -10,6 +10,7 @@ mod feature_page;
 mod folder_page;
 mod front_page;
 mod heading_parts;
+mod keyword_note;
 mod node_rendering;
 mod output_safety;
 mod page_frame;

@@ -9,8 +9,8 @@ use super::examples_list::{examples_list, is_examples};
 use super::node_rendering::{NodeOf, Render, pieces, rendered};
 use super::steps::{step_list, steps_of};
 use crate::entities::{
-    BackgroundBlock, BlockHeading, HeadingLevel, HeadingPart, Paragraph, RuleBlock, ScenarioBlock,
-    SiteTreeNode, TagView,
+    BackgroundBlock, BlockHeading, HeadingLevel, HeadingPart, KeywordNote, Paragraph, RuleBlock,
+    ScenarioBlock, SiteTreeNode, TagView,
 };
 
 #[derive(Template)]
@@ -37,7 +37,7 @@ struct BlockView<'a> {
     level: HeadingLevel,
     anchor: &'a str,
     heading_parts: &'a [HeadingPart],
-    source_note: Option<&'a [HeadingPart]>,
+    keyword_note: Option<&'a KeywordNote>,
     collapsed: bool,
     /// For a background whose state the page's checkbox sets, whether it is
     /// collapsed while the box is unchecked; `None` for any other block.
@@ -153,7 +153,7 @@ impl<'a> BlockView<'a> {
             level: heading.level,
             anchor: &heading.anchor,
             heading_parts: &heading.parts,
-            source_note: heading.source_note.as_deref(),
+            keyword_note: heading.keyword_note.as_ref(),
             collapsed: heading.collapsed,
             collapsed_when_unchecked: None,
             tags: &[],

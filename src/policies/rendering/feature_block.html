@@ -1,8 +1,8 @@
 <div class="ghg-block {{ block.kind.class() }}"{% if let Some(collapsed) = block.collapsed_when_unchecked %} data-expanded-when-unchecked="{{ !collapsed }}"{% endif %}>
 <h{{ block.level.number() }} id="{{ block.anchor }}"><button type="button" class="ghg-toggle" aria-expanded="{{ !block.collapsed }}">{{ block.heading_parts.render()|safe }}</button></h{{ block.level.number() }}>
 <div class="ghg-content"{% if block.collapsed %} hidden{% endif %}>
-{%- if let Some(note) = block.source_note %}
-<p class="ghg-source-note">{{ note.render()|safe }}</p>
+{%- if let Some(note) = block.keyword_note %}
+{{ note.render()|safe }}
 {%- endif %}
 {%- if !block.tags.is_empty() %}
 {{ block.tags.render()|safe }}

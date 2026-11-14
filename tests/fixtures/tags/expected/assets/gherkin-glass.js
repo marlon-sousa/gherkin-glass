@@ -31,6 +31,31 @@ var DomBackgrounds = class _DomBackgrounds {
   }
 };
 
+// src/adapters/dom_note_dialog.ts
+var DomNoteDialog = class _DomNoteDialog {
+  dialog;
+  openers;
+  constructor(dialog, openers) {
+    this.dialog = dialog;
+    this.openers = openers;
+  }
+  /** Null on a page without the dialog, where no block's file writes another keyword. */
+  static of(document2) {
+    const dialog = document2.querySelector("dialog#ghg_note_dialog");
+    return dialog ? new _DomNoteDialog(dialog, [...document2.querySelectorAll("button.ghg-note-opener")]) : null;
+  }
+  onOpen(handler) {
+    this.openers.forEach((button) => button.addEventListener("click", () => handler(button)));
+  }
+  open() {
+    this.dialog.showModal();
+    this.dialog.focus();
+  }
+  onClose(handler) {
+    this.dialog.addEventListener("close", handler);
+  }
+};
+
 // src/adapters/dom_page.ts
 var DomBlock = class {
   anchor;
@@ -945,6 +970,19 @@ async function startFolderTree(source, toggle, view, width, memory2, place) {
   const path = place.page === null ? [] : pathTo(items, place.page);
   view.build(items, path[0] ?? null, (address2) => startExpanded(path.includes(address2), memory2.get(itemKey(place.sitePath, address2))));
   view.onToggle((address2, expanded) => memory2.set(itemKey(place.sitePath, address2), rememberedExpanded(expanded)));
+}
+
+// src/services/note_explaining.ts
+function startNoteExplaining(dialog) {
+  let opener = null;
+  dialog.onOpen((pressed) => {
+    opener = pressed;
+    dialog.open();
+  });
+  dialog.onClose(() => {
+    opener?.focus();
+    opener = null;
+  });
 }
 
 // node_modules/minisearch/dist/es/index.js
@@ -2924,6 +2962,10 @@ startCollapsing(
   document.location.pathname,
   backgrounds === null ? null : { backgrounds, siteRoot: siteRoot(import.meta.url) }
 );
+var noteDialog = DomNoteDialog.of(document);
+if (noteDialog !== null) {
+  startNoteExplaining(noteDialog);
+}
 var site = new URL("../", import.meta.url);
 var sitePath = site.pathname;
 var page = pageAddress(sitePath, document.location.pathname);

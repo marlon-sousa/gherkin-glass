@@ -358,12 +358,24 @@ fn every_page_has_one_h1_and_a_lang_and_its_content_in_its_html() {
             "ghg_tree",
             "ghg_main",
         ];
-        // Rule 45: the block of the scenarios outside every rule, in a file with a rule.
+        // Rule 45: the block of the scenarios outside every rule, in a file
+        // with a rule; rule 197: the dialog of a page with a keyword's note.
+        let dialog = [
+            "ghg_note_dialog",
+            "ghg_note_dialog_title",
+            "ghg_note_dialog_text",
+        ];
         let own: Vec<&str> = own
             .into_iter()
             .chain(
                 page.contains("ghg-outside-rules")
                     .then_some("outside_rules"),
+            )
+            .chain(
+                page.contains("class=\"ghg-note-opener\"")
+                    .then_some(dialog)
+                    .into_iter()
+                    .flatten(),
             )
             .collect();
         let ids: Vec<&str> = page

@@ -1,6 +1,7 @@
 // Composition root: the page's behaviour, wired to the browser.
 
 import { DomBackgrounds } from "./adapters/dom_backgrounds.ts";
+import { DomNoteDialog } from "./adapters/dom_note_dialog.ts";
 import { DomPage } from "./adapters/dom_page.ts";
 import { DomSearchBox } from "./adapters/dom_search_box.ts";
 import { DomTheme } from "./adapters/dom_theme.ts";
@@ -15,6 +16,7 @@ import { siteRoot } from "./policies/background_form.ts";
 import { NARROW, pageAddress } from "./policies/tree_state.ts";
 import { startCollapsing } from "./services/collapsing.ts";
 import { startFolderTree } from "./services/folder_tree.ts";
+import { startNoteExplaining } from "./services/note_explaining.ts";
 import { startSearching } from "./services/searching.ts";
 import { startThemeSwitching } from "./services/theme_switching.ts";
 
@@ -27,6 +29,10 @@ startCollapsing(
   document.location.pathname,
   backgrounds === null ? null : { backgrounds, siteRoot: siteRoot(import.meta.url) },
 );
+const noteDialog = DomNoteDialog.of(document);
+if (noteDialog !== null) {
+  startNoteExplaining(noteDialog);
+}
 
 // The script is in the site's `assets/` folder.
 const site = new URL("../", import.meta.url);

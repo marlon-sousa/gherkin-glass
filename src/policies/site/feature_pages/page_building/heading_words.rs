@@ -2,7 +2,7 @@
 
 use i18n_embed_fl::fl;
 
-use crate::entities::{HeadingPart, plain_parts};
+use crate::entities::{HeadingPart, KeywordNote, plain_parts};
 use crate::policies::CATALOGUE;
 
 /// Stand for feature text in a heading's words, to find where it goes; no
@@ -24,7 +24,7 @@ pub(super) enum Kind {
 
 /// The heading of a block of `kind`: its kind, then `: ` and its name, or its
 /// kind alone; the name is isolated. The keyword the file writes is left to
-/// [`source_note`].
+/// [`keyword_note`].
 pub(super) fn heading(kind: Kind, name: &str) -> Vec<HeadingPart> {
     let unnamed = fl!(CATALOGUE, "unnamed-heading", kind = kind.id());
     named_heading(kind, name, &unnamed)
@@ -54,16 +54,28 @@ fn named_heading(kind: Kind, name: &str, unnamed: &str) -> Vec<HeadingPart> {
 }
 
 /// The note that a block of `kind` is written with `keyword` in its file,
-/// the keyword isolated; `None` when the keyword is the kind's own word,
-/// other than in its case.
-pub(super) fn source_note(kind: Kind, keyword: &str) -> Option<Vec<HeadingPart>> {
+/// around the words of the button that explains it, where the keyword is
+/// isolated; `None` when the keyword is the kind's own word, other than in
+/// its case.
+pub(super) fn keyword_note(kind: Kind, keyword: &str) -> Option<KeywordNote> {
     let keyword = keyword.trim();
     let kind_words = fl!(CATALOGUE, "unnamed-heading", kind = kind.id());
     if keyword.to_lowercase() == kind_words.to_lowercase() {
         return None;
     }
-    let words = fl!(CATALOGUE, "in-the-feature-file", keyword = TEXT_MARKS[0]);
-    Some(worded_parts(&words, &[isolated(keyword)]))
+    let words = fl!(
+        CATALOGUE,
+        "keyword-note",
+        kind = kind.id(),
+        opener = TEXT_MARKS[0]
+    );
+    let (before, after) = words.split_once(TEXT_MARKS[0]).unwrap_or((&words, ""));
+    let opener = fl!(CATALOGUE, "keyword-note-opener", keyword = TEXT_MARKS[0]);
+    Some(KeywordNote {
+        before: before.to_string(),
+        opener: worded_parts(&opener, &[isolated(keyword)]),
+        after: after.to_string(),
+    })
 }
 
 /// The kind alone, in gherkin-glass's words, such as `Scenario outline`.
@@ -173,15 +185,48 @@ mod tests {
 
     #[rstest]
     #[case::the_kind_s_word_in_another_case(Kind::ScenarioOutline, "Scenario Outline", None)]
-    #[case::another_word(Kind::Examples, "Scenarios", Some(vec![("In the Gherkin feature file: ", false), ("Scenarios", true)]))]
-    #[case::another_language(Kind::Background, " Contexto ", Some(vec![("In the Gherkin feature file: ", false), ("Contexto", true)]))]
-    fn the_source_note_names_the_keyword_only_when_it_is_another_word(
+    #[case::another_word(
+        Kind::Examples,
+        "Scenarios",
+        Some(
+            "Note: in the Gherkin feature file, these examples are [defined with the keyword \"<Scenarios>\".]"
+        )
+    )]
+    #[case::another_language(
+        Kind::Background,
+        " Contexto ",
+        Some(
+            "Note: in the Gherkin feature file, this background is [defined with the keyword \"<Contexto>\".]"
+        )
+    )]
+    #[case::an_outline(
+        Kind::ScenarioOutline,
+        "Scenario Template",
+        Some(
+            "Note: in the Gherkin feature file, this scenario outline is [defined with the keyword \"<Scenario Template>\".]"
+        )
+    )]
+    fn the_keyword_note_names_the_kind_and_the_keyword_only_when_it_is_another_word(
         #[case] kind: Kind,
         #[case] keyword: &str,
-        #[case] expected: Option<Vec<(&str, bool)>>,
+        #[case] expected: Option<&str>,
     ) {
-        let note = source_note(kind, keyword);
-        assert_eq!(note.as_deref().map(shown), expected);
+        // The button's words in brackets, the isolated keyword in angle brackets.
+        let note = keyword_note(kind, keyword).map(|note| {
+            let opener: String = note
+                .opener
+                .iter()
+                .map(|part| {
+                    if part.isolated {
+                        format!("<{}>", part.text)
+                    } else {
+                        part.text.clone()
+                    }
+                })
+                .collect();
+            format!("{}[{opener}]{}", note.before, note.after)
+        });
+        assert_eq!(note.as_deref(), expected);
     }
 
     #[test]

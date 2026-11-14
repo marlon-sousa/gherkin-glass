@@ -3,7 +3,7 @@
 use gherkin::Background;
 use i18n_embed_fl::fl;
 
-use super::heading_words::{Kind, heading, source_note};
+use super::heading_words::{Kind, heading, keyword_note};
 use super::step_views::step_contents;
 use crate::entities::{
     Anchored, AnchoredRule, AnchoredScenario, BackgroundBlock, BackgroundContent, BlockHeading,
@@ -143,7 +143,7 @@ pub(super) fn worded_heading(
         level,
         anchor: anchor.to_string(),
         parts,
-        source_note: None,
+        keyword_note: None,
         collapsed,
     }
 }
@@ -157,7 +157,7 @@ fn kind_heading(
     collapsed: bool,
 ) -> BlockHeading {
     BlockHeading {
-        source_note: source_note(kind, keyword),
+        keyword_note: keyword_note(kind, keyword),
         ..worded_heading(level, anchor, heading(kind, name), collapsed)
     }
 }

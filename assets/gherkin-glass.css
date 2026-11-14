@@ -165,9 +165,26 @@ h1, h2, h3, h4, h5 {
   font-weight: bold;
 }
 
-/* The keyword the file writes, said once at the top of the block's content. */
-.ghg-source-note {
-  font-style: italic;
+/* The keyword the file writes, said once at the top of the block's content,
+   in a note, smaller and in the muted colour, which keeps the themes'
+   contrast; part of it is a button, drawn as a link, that opens the page's
+   dialog about it. */
+.ghg-keyword-note {
+  font-size: 0.9rem;
+  color: var(--ghg-muted);
+}
+
+/* A button lays out as one box, which starts a new line when it does not
+   fit; its text keeps the sentence's alignment rather than a button's. */
+.ghg-note-opener {
+  text-align: inherit;
+  font: inherit;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ghg-accent);
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 /* A block with nothing to show keeps a block's rule, and its button, which
@@ -209,7 +226,8 @@ figcaption {
 }
 
 .ghg-controls button,
-.ghg-from-disk button {
+.ghg-from-disk button,
+.ghg-dialog button {
   font: inherit;
   padding: 0.25rem 0.75rem;
   background: var(--ghg-surface);
@@ -277,7 +295,8 @@ figcaption {
   top: 0.5rem;
 }
 
-.ghg-from-disk {
+.ghg-from-disk,
+.ghg-dialog {
   max-width: 36rem;
   padding: 1rem 1.5rem;
   border: 2px solid var(--ghg-border);
@@ -285,12 +304,18 @@ figcaption {
   color: var(--ghg-text);
 }
 
-.ghg-from-disk::backdrop {
+.ghg-from-disk::backdrop,
+.ghg-dialog::backdrop {
   background: rgb(0 0 0 / 50%);
 }
 
 .ghg-from-disk-title {
   font-weight: bold;
+}
+
+.ghg-dialog-title {
+  margin-top: 0;
+  font-size: 1.25rem;
 }
 
 /* The reader's options, a bar across the top of the page. */

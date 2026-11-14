@@ -6,12 +6,13 @@ mod heading_words;
 mod step_views;
 
 use block_building::{Builder, description, has_scenarios, worded_heading};
-use heading_words::{Kind, heading, source_note};
+use heading_words::{Kind, heading, keyword_note};
 use i18n_embed_fl::fl;
 
 use crate::entities::{
-    BackgroundsOption, FeaturePath, HeadingLevel, OwnCrumb, Page, PageContent, PageOptions,
-    PageWords, RevisedFeature, SourceLink, TagNames, Trail, percent_encoded, plain_parts, text_of,
+    BackgroundsOption, FeaturePath, HeadingLevel, NoteDialog, OwnCrumb, Page, PageContent,
+    PageOptions, PageWords, RevisedFeature, SourceLink, TagNames, Trail, percent_encoded,
+    plain_parts, text_of,
 };
 use crate::policies::site::feature_pages::anchor_feature;
 use crate::policies::site::page_language;
@@ -105,7 +106,7 @@ pub(crate) fn build_page(
         name: feature.name.clone(),
         path: path.clone(),
         revision,
-        source_note: source_note(Kind::Feature, &feature.keyword),
+        keyword_note: keyword_note(Kind::Feature, &feature.keyword),
         tags: builder.tags(&feature.tags),
         description: description(feature.description.as_deref()),
         source: options
@@ -119,13 +120,26 @@ pub(crate) fn build_page(
             runs_for_each_row: fl!(CATALOGUE, "runs-for-each-row"),
         },
         backgrounds_option,
+        // Known once the blocks are, below.
+        note_dialog: None,
     };
-    PageContent {
+    let mut content = PageContent {
         page,
         background,
         outside_rules,
         scenarios,
         rules,
+    };
+    content.page.note_dialog = content.has_keyword_note().then(note_dialog);
+    content
+}
+
+/// The words of the dialog that explains a note of the keyword a file writes.
+fn note_dialog() -> NoteDialog {
+    NoteDialog {
+        title: fl!(CATALOGUE, "note-dialog-title"),
+        text: fl!(CATALOGUE, "note-dialog-text"),
+        close: fl!(CATALOGUE, "note-dialog-close"),
     }
 }
 
