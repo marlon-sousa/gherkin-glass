@@ -2,6 +2,7 @@
   "files": [
     "assets/gherkin-glass.css",
     "assets/gherkin-glass.js",
+    "assets/gherkin-glass.svg",
     "assets/search.json",
     "assets/tree.json",
     "catalogue/index.html",
@@ -14,6 +15,7 @@
     "lending/borrowing.html",
     "lending/index.html",
     "lending/returning.html",
+    "other-gherkin-syntax.html",
     "steps.html",
     "tags/books.html",
     "tags/catalogue.html",
@@ -25,6 +27,7 @@
     "tags/lending.html",
     "tags/outline.html",
     "tags/queue.html",
+    "tags/rooms.html",
     "tags/slow.html",
     "tags/staff.html"
   ]

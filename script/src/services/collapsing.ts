@@ -35,7 +35,7 @@ export function startCollapsing(page: Page, memory: Memory, pagePath: string, op
     }
   };
   const reveal = (anchor: string): void => {
-    let block = blocks.find((found) => found.anchor === anchor) ?? null;
+    let block = page.holder(anchor);
     while (block !== null) {
       if (!block.isExpanded()) {
         set(block, true);

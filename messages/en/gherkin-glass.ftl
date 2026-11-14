@@ -259,6 +259,11 @@ skip-to-content = Skip to content
 show-folder-tree = Show the folder tree
 folder-tree = Folder tree
 
+## After every page's content: what built it. $name is gherkin-glass, a link
+## to its repository, and $version the version of ghg, such as 0.1.0-alpha.2.
+
+built-with = Built with { $name } { $version }
+
 ## The heading of each background a scenario holds, the heading of the
 ## scenario's own steps after them, and the checkbox that chooses whether
 ## those or the backgrounds in their own place are expanded.
@@ -291,13 +296,77 @@ versions-releases = Releases
 versions-pre-releases = Pre-releases
 versions-development-version = { $name }, a development version
 
-## Under a scenario outline, its examples as the scenarios they produce,
-## named by the outline's $name, or its keyword when it has none. A
-## produced scenario is named by the same $name and its row's $values, each
+## A block's heading on a feature's page: its kind alone, or its kind and
+## its $name. $kind is one of feature, background, rule, scenario,
+## scenario-outline and examples, never shown; $name is as written in the
+## file.
+
+unnamed-heading =
+    { $kind ->
+        [feature] Feature
+        [background] Background
+        [rule] Rule
+        [scenario-outline] Scenario outline
+        [examples] Examples
+       *[scenario] Scenario
+    }
+named-heading =
+    { $kind ->
+        [feature] Feature: { $name }
+        [background] Background: { $name }
+        [rule] Rule: { $name }
+        [scenario-outline] Scenario outline: { $name }
+        [examples] Examples: { $name }
+       *[scenario] Scenario: { $name }
+    }
+
+## At the top of a block whose file writes its $kind, as unnamed-heading
+## selects it, with another keyword: a note, whose $opener is a button that
+## opens the dialog below, worded by keyword-note-opener with the $keyword as
+## written in the file. The opener ends the sentence, its full stop included,
+## so that nothing is left after the button, which wraps as one box, on a
+## line of its own.
+
+keyword-note =
+    { $kind ->
+        [feature] Note: in the Gherkin feature file, this feature is { $opener }
+        [background] Note: in the Gherkin feature file, this background is { $opener }
+        [rule] Note: in the Gherkin feature file, this rule is { $opener }
+        [scenario-outline] Note: in the Gherkin feature file, this scenario outline is { $opener }
+        [examples] Note: in the Gherkin feature file, these examples are { $opener }
+       *[scenario] Note: in the Gherkin feature file, this scenario is { $opener }
+    }
+keyword-note-opener = defined with the keyword "{ $keyword }".
+
+## The dialog that explains the note above, one on each page with such a
+## note: its heading, its text and its one button.
+
+note-dialog-title = About this note
+note-dialog-text = Gherkin lets authors use different words for the same kind of block. For example, Scenario and Example both define a scenario, and Examples and Scenarios both define examples. This site names every block by its kind, so pages read the same whichever word was used. The note only tells you which word the feature file uses; it changes nothing about the block.
+note-dialog-close = Got it
+
+## An unnamed examples block, by its $place among its outline's blocks, from 1.
+
+numbered-examples = Examples { $place }
+
+## The block of the scenarios outside every rule, in a file with a rule.
+
+outside-rules = Outside any rule
+
+## After an outline's steps, before the list of its examples.
+
+runs-for-each-row = Runs once for each row of these examples:
+
+## An examples block with no row below its header, after its $heading.
+
+nothing-to-run = { $heading } (nothing to run)
+
+## In an examples block, the runs its rows produce, one per row. A
+## produced scenario is named by its outline's $name and its row's $values, each
 ## value worded by example-value and separated by example-values-separator.
 ## $column and $value are as written.
 
-examples-as-scenarios = Examples as scenarios: { $name }
+runs-one-per-row = Runs, one per row
 example-scenario-name = { $name } ({ $values })
 example-value = { $column }: { $value }
 example-values-separator = {", "}

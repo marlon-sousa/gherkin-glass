@@ -88,8 +88,9 @@ impl<'a> SiteTreeNode<'a> {
             .collect()
     }
 
-    /// The blocks this node is in, from the nearest: for a scenario, its rule,
-    /// if it is in one, then its feature page.
+    /// The blocks this node is in, from the nearest: for a scenario, its rule
+    /// or the block of the scenarios outside every rule, if it is in one, then
+    /// its feature page.
     pub(crate) fn enclosing_blocks(&self) -> impl Iterator<Item = SiteTreeNode<'a>> + use<'a> {
         self.node
             .ancestors()
@@ -115,9 +116,13 @@ fn folder_of(node: NodeRef<'_, SiteNode>) -> Option<&str> {
     folder_name(node.value())
 }
 
-/// Whether `node` is a feature page or a rule, the blocks a scenario can be in.
+/// Whether `node` is a feature page, a rule or the block of the scenarios
+/// outside every rule, the blocks a scenario can be in.
 fn holds_blocks(node: &NodeRef<'_, SiteNode>) -> bool {
-    matches!(node.value(), SiteNode::FeaturePage(_) | SiteNode::Rule(_))
+    matches!(
+        node.value(),
+        SiteNode::FeaturePage(_) | SiteNode::Rule(_) | SiteNode::OutsideRules(_)
+    )
 }
 
 fn step_of(node: NodeRef<'_, SiteNode>) -> Option<&StepView> {

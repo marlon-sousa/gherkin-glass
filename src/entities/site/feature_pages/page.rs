@@ -1,6 +1,9 @@
 //! Entity: a feature's page, as its template shows it, every text in it as written or worded.
 
-use crate::entities::{FeaturePath, LinkAddress, Revision, SiteAddress, StepKind, StepPart, Trail};
+use crate::entities::{
+    FeaturePath, HeadingPart, KeywordNote, LinkAddress, Revision, SiteAddress, StepKind, StepPart,
+    Trail, text_of,
+};
 
 /// A feature's page, its blocks the nodes below it in the site tree. Every
 /// `String` is text, escaped when it is rendered.
@@ -15,8 +18,11 @@ pub(crate) struct Page {
     /// The `lang` of the page.
     pub(crate) language: String,
     pub(crate) title: String,
-    /// The feature's keyword and name.
-    pub(crate) heading: String,
+    /// The feature's kind and its name, the page's `h1`.
+    pub(crate) heading: Vec<HeadingPart>,
+    /// The note, under the `h1`, of the keyword the file writes when it is
+    /// another word than "Feature".
+    pub(crate) keyword_note: Option<KeywordNote>,
     /// The feature's name alone, empty when it has none.
     pub(crate) name: String,
     pub(crate) trail: Trail,
@@ -28,6 +34,15 @@ pub(crate) struct Page {
     /// backgrounds inside the scenarios or those in their own place are
     /// expanded, and the heading of a scenario's steps after those inside it.
     pub(crate) backgrounds_option: Option<BackgroundsOption>,
+    /// On a page with a note of a keyword, the dialog its button opens.
+    pub(crate) note_dialog: Option<NoteDialog>,
+}
+
+impl Page {
+    /// The feature's heading, without its markup.
+    pub(crate) fn heading_text(&self) -> String {
+        text_of(&self.heading)
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -45,6 +60,17 @@ pub(crate) struct PageWords {
     pub(crate) contents: String,
     pub(crate) collapse_all: String,
     pub(crate) expand_all: String,
+    /// Before the list of an outline's examples.
+    pub(crate) runs_for_each_row: String,
+}
+
+/// The words of the dialog that explains a note of the keyword a file
+/// writes: its heading, its text and its one button's.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct NoteDialog {
+    pub(crate) title: String,
+    pub(crate) text: String,
+    pub(crate) close: String,
 }
 
 /// A tag as written, with its `@`, linked to its tag's page.
@@ -78,7 +104,7 @@ pub(crate) struct SourceLink {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct ContentsEntry {
     pub(crate) anchor: String,
-    pub(crate) heading: String,
+    pub(crate) heading: Vec<HeadingPart>,
     /// A rule's scenarios.
     pub(crate) entries: Vec<ContentsEntry>,
 }

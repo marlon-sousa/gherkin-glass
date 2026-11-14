@@ -13,12 +13,17 @@
 )]
 
 use std::collections::BTreeMap;
-use std::fs::{create_dir_all, read, read_dir, remove_dir_all, write};
+use std::fs::{create_dir_all, read, read_dir, read_to_string, remove_dir_all, write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 use std::str::from_utf8;
 
 use rstest::rstest;
+
+#[path = "support/version_placeholder.rs"]
+mod version_placeholder;
+
+use version_placeholder::with_version_placeholder;
 
 fn fixtures() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures")
@@ -45,7 +50,11 @@ fn files(folder: &Path) -> BTreeMap<String, Vec<u8>> {
             if entry.path().is_dir() {
                 folders.push((entry.path(), format!("{name}/")));
             } else {
-                found.insert(name, read(entry.path()).expect("the file is read"));
+                let file = read(entry.path()).expect("the file is read");
+                found.insert(
+                    name,
+                    with_version_placeholder(file, env!("CARGO_PKG_VERSION")),
+                );
             }
         }
     }
@@ -183,7 +192,7 @@ fn the_checked_box_starts_collapsed_the_backgrounds_whose_steps_scenarios_hold(
     "expected",
     true,
     "outside-any-rule_background_1",
-    3,
+    4,
     "From the background"
 )]
 #[case::checked_rule_s_background(
@@ -197,7 +206,7 @@ fn the_checked_box_starts_collapsed_the_backgrounds_whose_steps_scenarios_hold(
     "expected-unchecked",
     false,
     "outside-any-rule_background_1",
-    3,
+    4,
     "From the background"
 )]
 #[case::unchecked_rule_s_background(
@@ -231,7 +240,7 @@ fn the_backgrounds_inside_a_scenario_follow_the_box(
 #[rstest]
 #[case::outside_any_rule(
     "both.html",
-    3,
+    4,
     "When </span><span class=\"ghg-number\">10</span> is moved"
 )]
 #[case::in_an_outline_under_a_rule("both.html", 4, "When </span><span class=\"ghg-placeholder\">")]
@@ -282,6 +291,54 @@ fn the_assets_are_the_ones_built_into_ghg() {
     assert_eq!(built, files(&repository));
 }
 
+// Rules 39 and 194: every page links the icon, by a relative address, and ends
+// with the footer, right after its `main`.
+
+#[test]
+fn every_page_links_the_icon_and_ends_with_the_footer() {
+    for (name, page) in files(&fixtures().join("pages/expected")) {
+        if !name.ends_with(".html") {
+            continue;
+        }
+        let page = String::from_utf8(page).expect("UTF-8");
+        let root = "../".repeat(name.matches('/').count());
+        assert!(
+            page.contains(&format!(
+                "<link rel=\"icon\" href=\"{root}assets/gherkin-glass.svg\" type=\"image/svg+xml\">"
+            )),
+            "{name}"
+        );
+        assert!(
+            page.contains(
+                "</main>\n<footer class=\"ghg-footer\">\n<p>Built with \
+                 <a href=\"https://github.com/marlon-sousa/gherkin-glass\">gherkin-glass</a> {version}</p>\n\
+                 </footer>\n</div>\n</div>\n</body>"
+            ),
+            "{name}"
+        );
+    }
+}
+
+// Rule 195: the footer of a page ghg builds names the crate's own version,
+// which the committed pages hold as the placeholder.
+
+#[test]
+fn the_footer_names_the_version_of_the_ghg_that_wrote_the_page() {
+    let written = output("footer-version");
+    let result = build(
+        &fixtures().join("pages"),
+        &["--output", written.to_str().expect("UTF-8")],
+    );
+    assert_eq!(result.status.code(), Some(0));
+    let page = read_to_string(written.join("index.html")).expect("the page is written");
+    let version = env!("CARGO_PKG_VERSION");
+    assert!(
+        page.contains(&format!("gherkin-glass</a> {version}</p>\n</footer>")),
+        "{page}"
+    );
+    assert!(!page.contains("{version}"), "{page}");
+}
+
 #[test]
 fn every_page_has_one_h1_and_a_lang_and_its_content_in_its_html() {
     for (name, page) in files(&fixtures().join("pages/expected")) {
@@ -301,6 +358,26 @@ fn every_page_has_one_h1_and_a_lang_and_its_content_in_its_html() {
             "ghg_tree",
             "ghg_main",
         ];
+        // Rule 45: the block of the scenarios outside every rule, in a file
+        // with a rule; rule 197: the dialog of a page with a keyword's note.
+        let dialog = [
+            "ghg_note_dialog",
+            "ghg_note_dialog_title",
+            "ghg_note_dialog_text",
+        ];
+        let own: Vec<&str> = own
+            .into_iter()
+            .chain(
+                page.contains("ghg-outside-rules")
+                    .then_some("outside_rules"),
+            )
+            .chain(
+                page.contains("class=\"ghg-note-opener\"")
+                    .then_some(dialog)
+                    .into_iter()
+                    .flatten(),
+            )
+            .collect();
         let ids: Vec<&str> = page
             .split(" id=\"")
             .skip(1)
@@ -316,15 +393,22 @@ fn every_page_has_one_h1_and_a_lang_and_its_content_in_its_html() {
             assert!(ids.contains(&anchor), "{name}: {id}");
             assert!(place.parse::<usize>().is_ok(), "{name}: {id}");
         }
-        // Rule 129: an outline's examples as scenarios, after its anchor.
-        for id in ids.iter().filter(|id| id.ends_with("_scenarios")) {
-            let anchor = id.strip_suffix("_scenarios").expect("found");
+        // Rule 129: the line before an outline's examples, after the
+        // outline's anchor, and an examples block's runs, after the block's.
+        for id in ids
+            .iter()
+            .filter(|id| id.ends_with("_scenarios") || id.ends_with("_runs"))
+        {
+            let (anchor, _) = id.rsplit_once('_').expect("found");
             assert!(ids.contains(&anchor), "{name}: {id}");
         }
         assert_eq!(
             ids.iter()
                 .filter(|id| {
-                    id.contains('_') && !id.contains("_background_") && !id.ends_with("_scenarios")
+                    id.contains('_')
+                        && !id.contains("_background_")
+                        && !id.ends_with("_scenarios")
+                        && !id.ends_with("_runs")
                 })
                 .collect::<Vec<_>>(),
             own.iter().collect::<Vec<_>>(),
@@ -679,7 +763,7 @@ fn the_home_page_has_the_site_s_title_and_totals() {
     assert!(titled.contains("<title>Banking &#38; &#60;more&#62;</title>"));
     assert!(titled.contains("<h1>Banking &amp; &lt;more&gt;</h1>"));
     assert!(titled.contains(
-        "<ul class=\"ghg-totals\">\n<li>5 folders</li>\n<li>7 features</li>\n<li>3 rules</li>\n<li>11 scenarios</li>\n</ul>"
+        "<ul class=\"ghg-totals\">\n<li>5 folders</li>\n<li>8 features</li>\n<li>4 rules</li>\n<li>18 scenarios</li>\n</ul>"
     ));
     let untitled = home("expected-collapsed");
     assert!(untitled.contains("<title>Feature files</title>"));
@@ -687,11 +771,11 @@ fn the_home_page_has_the_site_s_title_and_totals() {
 }
 
 // Rules 86 to 88, 114 and 182: the dialog for a page opened from disk, closed,
-// then the skip link, the checkbox, the Theme control and the tree's landmark
+// then the skip link, the checkbox and the button, the Theme control and the tree's landmark
 // come before the breadcrumb and the content, the tree shown as configured.
 
 #[test]
-fn every_page_starts_with_the_dialog_then_the_skip_link_then_the_tree_then_the_breadcrumb() {
+fn every_page_starts_with_the_dialog_skip_link_tree_controls_tree_and_breadcrumb() {
     for (site, shown) in [("expected", true), ("expected-collapsed", false)] {
         for (name, page) in files(&fixtures().join("pages").join(site)) {
             if !name.ends_with(".html") {
@@ -714,8 +798,10 @@ fn every_page_starts_with_the_dialog_then_the_skip_link_then_the_tree_then_the_b
                  <script>if(location.protocol===\"file:\"){{let d=document.getElementById(\"ghg_from_disk\");d.showModal();d.focus()}}</script>\n\
                  <a class=\"ghg-skip\" href=\"#ghg_main\">Skip to content</a>\n\
                  <div class=\"ghg-options\">\n\
+                 <span class=\"ghg-option ghg-tree-choice\">\
                  <input type=\"checkbox\" id=\"ghg_show_tree\" class=\"ghg-show-tree\" aria-controls=\"ghg_tree\"{checked}> \
-                 <label for=\"ghg_show_tree\">Show the folder tree</label>\n\
+                 <label for=\"ghg_show_tree\">Show the folder tree</label></span>\n\
+                 <button type=\"button\" class=\"ghg-tree-button\" aria-expanded=\"false\" aria-controls=\"ghg_tree\">Folder tree</button>\n\
                  <fieldset class=\"ghg-theme\">\n\
                  <legend>Theme</legend>\n\
                  <label><input type=\"radio\" name=\"ghg-theme\" value=\"system\" checked> System</label>\n\

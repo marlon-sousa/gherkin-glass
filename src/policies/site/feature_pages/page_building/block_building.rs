@@ -3,7 +3,7 @@
 use gherkin::Background;
 use i18n_embed_fl::fl;
 
-use super::heading_words::{heading, plain};
+use super::heading_words::{Kind, heading, keyword_note};
 use super::step_views::step_contents;
 use crate::entities::{
     Anchored, AnchoredRule, AnchoredScenario, BackgroundBlock, BackgroundContent, BlockHeading,
@@ -39,10 +39,10 @@ impl Builder<'_> {
             || self.options.collapse_scenarios;
         BackgroundContent {
             block: BackgroundBlock {
-                heading: block_heading(
+                heading: kind_heading(
                     level,
                     &anchored.anchor,
-                    heading(&background.keyword, &background.name),
+                    (Kind::Background, &background.keyword, &background.name),
                     collapsed,
                 ),
                 description: description(background.description.as_deref()),
@@ -57,10 +57,10 @@ impl Builder<'_> {
         let rule = anchored.rule;
         RuleContent {
             block: RuleBlock {
-                heading: block_heading(
+                heading: kind_heading(
                     HeadingLevel::Two,
                     &anchored.anchor,
-                    heading(&rule.keyword, &rule.name),
+                    (Kind::Rule, &rule.keyword, &rule.name),
                     self.options.collapse_rules,
                 ),
                 name: rule.name.clone(),
@@ -90,25 +90,27 @@ impl Builder<'_> {
     ) -> ScenarioContent {
         let scenario = anchored.scenario;
         let below = level.below();
+        let kind = if scenario.examples.is_empty() {
+            Kind::Scenario
+        } else {
+            Kind::ScenarioOutline
+        };
         ScenarioContent {
             block: ScenarioBlock {
-                heading: block_heading(
+                heading: kind_heading(
                     level,
                     &anchored.anchor,
-                    heading(&scenario.keyword, &scenario.name),
+                    (kind, &scenario.keyword, &scenario.name),
                     self.options.collapse_scenarios,
                 ),
                 name: scenario.name.clone(),
                 tags: self.tags(&scenario.tags),
                 description: description(scenario.description.as_deref()),
+                runs_anchor: (!anchored.rows.is_empty())
+                    .then(|| format!("{}_scenarios", anchored.anchor)),
             },
             steps: step_contents(self.parsed, &scenario.steps, Some(scenario)),
-            examples: anchored
-                .examples
-                .iter()
-                .map(|examples| self.examples(examples, below))
-                .collect(),
-            as_scenarios: self.examples_as_scenarios(anchored, below),
+            examples: self.examples_contents(anchored, below),
         }
     }
 
@@ -131,15 +133,6 @@ pub(super) fn has_scenarios(rule: &AnchoredRule<'_>) -> bool {
     !rule.scenarios.is_empty()
 }
 
-pub(super) fn block_heading(
-    level: HeadingLevel,
-    anchor: &str,
-    heading: String,
-    collapsed: bool,
-) -> BlockHeading {
-    worded_heading(level, anchor, vec![plain(&heading)], collapsed)
-}
-
 pub(super) fn worded_heading(
     level: HeadingLevel,
     anchor: &str,
@@ -150,7 +143,22 @@ pub(super) fn worded_heading(
         level,
         anchor: anchor.to_string(),
         parts,
+        keyword_note: None,
         collapsed,
+    }
+}
+
+/// The heading of a block, from its kind, the keyword its file writes and
+/// its name, with the note of that keyword when it is another word.
+fn kind_heading(
+    level: HeadingLevel,
+    anchor: &str,
+    (kind, keyword, name): (Kind, &str, &str),
+    collapsed: bool,
+) -> BlockHeading {
+    BlockHeading {
+        keyword_note: keyword_note(kind, keyword),
+        ..worded_heading(level, anchor, heading(kind, name), collapsed)
     }
 }
 

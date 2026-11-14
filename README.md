@@ -196,7 +196,7 @@ If you don't change the frontend, Rust is enough: `cargo build` builds `ghg`, `c
 | `cargo xtask build` | Type-checks, tests and compiles the script into `assets/gherkin-glass.js`, writes again the expected sites of the test fixtures and of the example suite, and builds the release binary. Run it after changing the script, the stylesheet, a template or interface text, and commit what it writes. | Yes |
 | `cargo xtask check` | Runs every check a pull request runs: formatting, lints, tests on the pinned and the minimum supported Rust, documentation, dependencies, the package, the script check and the browser check. | Yes |
 | `cargo xtask check-script` | Type-checks and tests the script, and fails when the committed `assets/gherkin-glass.js` is not what `script/` compiles to. | Yes |
-| `cargo xtask check-browser` | Installs a headless Chromium and checks every test site in it: accessibility in both colour schemes, the keyboard, pages opened from disk, and the reload of `ghg serve --watch`. | Yes |
+| `cargo xtask check-browser` | Installs a headless Chromium and checks every test site in it: accessibility in both colour schemes, the keyboard, pages opened from disk, the folder tree on a narrow window, and the reload of `ghg serve --watch`. | Yes |
 | `cargo xtask comment-ratio [path ...]` | Counts the comment lines and the code lines of the Rust and TypeScript files given, or of every one in the repository. | No |
 
 ### Interface text and localization

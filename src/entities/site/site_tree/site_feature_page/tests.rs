@@ -36,7 +36,7 @@ fn a_page_counts_and_lists_its_rules_and_scenarios_a_rule_s_inside_it() {
     assert_eq!(
         contents,
         [
-            ("outside".to_string(), 0),
+            ("outside_rules".to_string(), 1),
             ("r".to_string(), 1),
             ("empty".to_string(), 0)
         ]

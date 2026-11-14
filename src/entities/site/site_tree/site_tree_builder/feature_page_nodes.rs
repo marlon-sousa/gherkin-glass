@@ -1,9 +1,9 @@
-//! Entity: a feature page put in its folder by the site tree's builder, its blocks below it, a rule's background and scenarios in the rule, an outline's examples and examples as scenarios in the outline, each step in its block, and a step's table or doc string in the step, or copied from the last site tree with them.
+//! Entity: a feature page put in its folder by the site tree's builder, its blocks below it, a rule's background and scenarios in the rule, the scenarios outside every rule in their block when the feature has a rule, an outline's examples blocks in the outline, each with its runs, each step in its block, and a step's table or doc string in the step, or copied from the last site tree with them.
 
 use ego_tree::{NodeId, NodeMut, NodeRef};
 
 use crate::entities::{
-    BackgroundContent, ExampleScenario, ExamplesAsScenarios, PageContent, RuleContent,
+    BackgroundContent, ExampleScenario, ExamplesContent, ExamplesRuns, PageContent, RuleContent,
     ScenarioContent, SiteNode, StepContent,
 };
 
@@ -16,8 +16,12 @@ pub(super) fn place_feature_page(
     if let Some(background) = content.background {
         place_background(&mut page, background);
     }
-    for scenario in content.scenarios {
-        place_scenario(&mut page, scenario);
+    match content.outside_rules {
+        Some(heading) => place_scenarios(
+            &mut page.append(SiteNode::OutsideRules(heading)),
+            content.scenarios,
+        ),
+        None => place_scenarios(&mut page, content.scenarios),
     }
     for rule in content.rules {
         place_rule(&mut page, rule);
@@ -56,30 +60,34 @@ fn place_rule(page: &mut NodeMut<'_, SiteNode>, rule: RuleContent) {
     if let Some(background) = rule.background {
         place_background(&mut node, background);
     }
-    for scenario in rule.scenarios {
-        place_scenario(&mut node, scenario);
+    place_scenarios(&mut node, rule.scenarios);
+}
+
+/// `scenarios` put in `parent`, in their order.
+fn place_scenarios(parent: &mut NodeMut<'_, SiteNode>, scenarios: Vec<ScenarioContent>) {
+    for scenario in scenarios {
+        place_scenario(parent, scenario);
     }
 }
 
-/// `scenario` put in `parent`, a feature page or a rule: its steps below it,
-/// then an outline's examples blocks and its examples as scenarios.
+/// `scenario` put in `parent`, a feature page, a rule or the block of the
+/// scenarios outside every rule: its steps below it, then an outline's
+/// examples blocks, each with its runs.
 fn place_scenario(parent: &mut NodeMut<'_, SiteNode>, scenario: ScenarioContent) {
     let mut node = parent.append(SiteNode::Scenario(scenario.block));
     place_steps(&mut node, scenario.steps);
-    for examples in scenario.examples {
-        node.append(SiteNode::Examples(examples));
-    }
-    if let Some(as_scenarios) = scenario.as_scenarios {
-        place_examples_as_scenarios(&mut node, as_scenarios);
+    for ExamplesContent { block, runs } in scenario.examples {
+        let mut examples = node.append(SiteNode::Examples(block));
+        if let Some(runs) = runs {
+            place_runs(&mut examples, runs);
+        }
     }
 }
 
-fn place_examples_as_scenarios(
-    outline: &mut NodeMut<'_, SiteNode>,
-    as_scenarios: ExamplesAsScenarios,
-) {
-    let mut node = outline.append(SiteNode::ExamplesAsScenarios(as_scenarios.heading));
-    for ExampleScenario { heading, steps } in as_scenarios.scenarios {
+/// `runs` put in `examples`, the block whose rows make them.
+fn place_runs(examples: &mut NodeMut<'_, SiteNode>, runs: ExamplesRuns) {
+    let mut node = examples.append(SiteNode::ExamplesRuns(runs.heading));
+    for ExampleScenario { heading, steps } in runs.scenarios {
         let mut scenario = node.append(SiteNode::ExampleScenario(heading));
         place_steps(&mut scenario, steps);
     }

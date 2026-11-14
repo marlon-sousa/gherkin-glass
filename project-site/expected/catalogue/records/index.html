@@ -52,6 +52,7 @@
 }
 </style>
 <link rel="stylesheet" href="../../assets/gherkin-glass.css">
+<link rel="icon" href="../../assets/gherkin-glass.svg" type="image/svg+xml">
 <script type="module" src="../../assets/gherkin-glass.js"></script>
 </head>
 <body>
@@ -63,7 +64,8 @@
 <script>if(location.protocol==="file:"){let d=document.getElementById("ghg_from_disk");d.showModal();d.focus()}</script>
 <a class="ghg-skip" href="#ghg_main">Skip to content</a>
 <div class="ghg-options">
-<input type="checkbox" id="ghg_show_tree" class="ghg-show-tree" aria-controls="ghg_tree" checked> <label for="ghg_show_tree">Show the folder tree</label>
+<span class="ghg-option ghg-tree-choice"><input type="checkbox" id="ghg_show_tree" class="ghg-show-tree" aria-controls="ghg_tree" checked> <label for="ghg_show_tree">Show the folder tree</label></span>
+<button type="button" class="ghg-tree-button" aria-expanded="false" aria-controls="ghg_tree">Folder tree</button>
 <fieldset class="ghg-theme">
 <legend>Theme</legend>
 <label><input type="radio" name="ghg-theme" value="system" checked> System</label>
@@ -90,17 +92,20 @@
 <h1>records</h1>
 <h2>Features</h2>
 <ul class="ghg-features">
-<li class="ghg-feature"><a href="adding-a-book.html" lang="en">Feature: Adding a book to the catalogue</a>
+<li class="ghg-feature"><a href="adding-a-book.html">Feature: <bdi lang="en">Adding a book to the catalogue</bdi></a>
 <button type="button" class="ghg-toggle" aria-expanded="false" aria-label="3 scenarios of Feature: Adding a book to the catalogue">3 scenarios</button>
-<div class="ghg-content" lang="en" hidden>
+<div class="ghg-content" hidden>
 <ul>
-<li><a href="adding-a-book.html#adding-a-book-from-its-record">Scenario: Adding a book from its record</a></li>
-<li><a href="adding-a-book.html#a-record-in-the-librarys-own-format">Scenario: A record in the library&#39;s own format</a></li>
-<li><a href="adding-a-book.html#a-record-with-a-mistake-is-refused">Scenario: A record with a mistake is refused</a></li>
+<li><a href="adding-a-book.html#adding-a-book-from-its-record">Scenario: <bdi lang="en">Adding a book from its record</bdi></a></li>
+<li><a href="adding-a-book.html#a-record-in-the-librarys-own-format">Scenario: <bdi lang="en">A record in the library&#39;s own format</bdi></a></li>
+<li><a href="adding-a-book.html#a-record-with-a-mistake-is-refused">Scenario: <bdi lang="en">A record with a mistake is refused</bdi></a></li>
 </ul>
 </div></li>
 </ul>
 </main>
+<footer class="ghg-footer">
+<p>Built with <a href="https://github.com/marlon-sousa/gherkin-glass">gherkin-glass</a> {version}</p>
+</footer>
 </div>
 </div>
 </body>

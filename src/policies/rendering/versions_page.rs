@@ -4,7 +4,7 @@ use askama::Template;
 
 use super::front_page::front_page;
 use super::node_rendering::{NodeOf, Render, RenderFile, page, pieces, rendered};
-use super::page_frame::{DiskNotice, SkipLink, ThemeControl};
+use super::page_frame::{DiskNotice, PageFooter, SkipLink, ThemeControl};
 use super::page_head::PageHead;
 use super::page_layout::SitePieces;
 use crate::entities::{
@@ -26,6 +26,7 @@ struct VersionsTemplate<'a> {
     theme_control: String,
     /// Its main content, already rendered.
     main: String,
+    footer: String,
 }
 
 /// The lists that hold a version, each already rendered.
@@ -92,6 +93,10 @@ impl RenderFile for NodeOf<'_, VersionsPage> {
             }
             .render(),
             main: front.main,
+            footer: PageFooter {
+                frame: site.page_frame(),
+            }
+            .render(),
         }))
     }
 }

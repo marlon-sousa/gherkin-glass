@@ -1,9 +1,13 @@
 //! Policy: a page's breadcrumb, from the home page through the folders it is in, the input's found above its node, then those of its trail, to the page itself, rendered from its template, and the path from the page back to the site's root.
 
+use std::borrow::Cow;
+
 use askama::Template;
 
-use super::node_rendering::rendered;
-use crate::entities::{BreadcrumbWords, LinkAddress, OwnCrumb, SiteTreeNode, Trail};
+use super::node_rendering::{Render, rendered};
+use crate::entities::{
+    BreadcrumbWords, HeadingPart, LinkAddress, OwnCrumb, SiteTreeNode, Trail, plain_parts,
+};
 use crate::policies::FOLDER_PAGE;
 
 /// Where a page is in the site: the folders it is in, from the outermost, and its own crumb.
@@ -24,7 +28,7 @@ struct BreadcrumbTemplate<'a> {
 struct Crumb<'a> {
     /// Relative to the page the breadcrumb is on.
     address: LinkAddress,
-    text: &'a str,
+    text: Cow<'a, [HeadingPart]>,
 }
 
 impl<'a> Place<'a> {
@@ -48,7 +52,7 @@ impl<'a> Place<'a> {
         let depth = self.folders.len();
         let home = Crumb {
             address: up_to_folder_page(depth),
-            text: &words.home,
+            text: Cow::Owned(plain_parts(&words.home)),
         };
         // The innermost folder is the one the page is in, zero levels up.
         let folders = self
@@ -69,14 +73,14 @@ impl<'a> Place<'a> {
 fn folder_crumb((text, levels): (&str, usize)) -> Crumb<'_> {
     Crumb {
         address: up_to_folder_page(levels),
-        text,
+        text: Cow::Owned(plain_parts(text)),
     }
 }
 
 fn own_crumb(page: &OwnCrumb) -> Crumb<'_> {
     Crumb {
         address: LinkAddress::to(&page.file),
-        text: &page.text,
+        text: Cow::Borrowed(&page.text),
     }
 }
 
@@ -91,7 +95,7 @@ mod tests {
 
     fn trail(folders: &[&str], page: Option<(&str, &str)>) -> String {
         let page = page.map(|(text, file)| OwnCrumb {
-            text: text.to_string(),
+            text: plain_parts(text),
             file: file.to_string(),
         });
         let place = Place {

@@ -1,9 +1,9 @@
-<li class="ghg-feature"><a href="{{ feature.address }}" lang="{{ feature.language }}">{{ feature.heading }}</a>
+<li class="ghg-feature"><a href="{{ feature.address }}">{{ feature.heading.render_in(Some(feature.language.as_str()))|safe }}</a>
 {%- if feature.contents.is_empty() %}
 <span class="ghg-count">{{ feature.scenarios }}</span>
 {%- else %}
 <button type="button" class="ghg-toggle" aria-expanded="false" aria-label="{{ feature.label }}">{{ feature.scenarios }}</button>
-<div class="ghg-content" lang="{{ feature.language }}" hidden>
+<div class="ghg-content" hidden>
 {{ contents|safe }}
 </div>
 {%- endif %}</li>

@@ -8,5 +8,5 @@ mod step_highlighting;
 pub(super) use page_building::build_page;
 
 use anchor_rule::anchor_feature;
-use example_rows::{ExampleRow, example_rows};
+use example_rows::{ExampleRow, block_rows, example_rows};
 use step_highlighting::highlight_step;

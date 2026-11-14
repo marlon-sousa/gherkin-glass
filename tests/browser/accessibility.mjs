@@ -194,7 +194,17 @@ async function buttonProblems(page) {
       `keyboard: the first block's button went from ${before} to ${afterEnter} with Enter, then ${afterSpace} with Space`,
     );
   }
-  const blocks = page.locator(".ghg-block .ghg-toggle");
+  // An examples block with nothing to show has a button that opens nothing:
+  // Enter on one the page shows leaves the page as it was.
+  for (const disabled of await page.locator('.ghg-toggle[aria-disabled="true"]:visible').all()) {
+    const html = await page.evaluate(() => document.body.innerHTML);
+    await disabled.focus();
+    await page.keyboard.press("Enter");
+    if ((await page.evaluate(() => document.body.innerHTML)) !== html) {
+      problems.push(`keyboard: Enter on the disabled button "${await disabled.textContent()}" changed the page`);
+    }
+  }
+  const blocks = page.locator('.ghg-block .ghg-toggle:not([aria-disabled="true"])');
   if ((await blocks.count()) === 0) return problems;
   for (const [name, expanded] of [
     ["Collapse all", "false"],

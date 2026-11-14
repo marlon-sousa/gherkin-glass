@@ -52,6 +52,7 @@
 }
 </style>
 <link rel="stylesheet" href="../assets/gherkin-glass.css">
+<link rel="icon" href="../assets/gherkin-glass.svg" type="image/svg+xml">
 <script type="module" src="../assets/gherkin-glass.js"></script>
 </head>
 <body>
@@ -63,7 +64,8 @@
 <script>if(location.protocol==="file:"){let d=document.getElementById("ghg_from_disk");d.showModal();d.focus()}</script>
 <a class="ghg-skip" href="#ghg_main">Skip to content</a>
 <div class="ghg-options">
-<input type="checkbox" id="ghg_show_tree" class="ghg-show-tree" aria-controls="ghg_tree" checked> <label for="ghg_show_tree">Show the folder tree</label>
+<span class="ghg-option ghg-tree-choice"><input type="checkbox" id="ghg_show_tree" class="ghg-show-tree" aria-controls="ghg_tree" checked> <label for="ghg_show_tree">Show the folder tree</label></span>
+<button type="button" class="ghg-tree-button" aria-expanded="false" aria-controls="ghg_tree">Folder tree</button>
 <fieldset class="ghg-theme">
 <legend>Theme</legend>
 <label><input type="radio" name="ghg-theme" value="system" checked> System</label>
@@ -78,7 +80,7 @@
 <ol>
 <li><a href="../index.html">Tagged suite</a></li>
 <li><a href="index.html">area</a></li>
-<li><a href="notes.html" aria-current="page">Feature: Notes with no scenarios</a></li>
+<li><a href="notes.html" aria-current="page">Feature: <bdi>Notes with no scenarios</bdi></a></li>
 </ol>
 </nav>
 <form class="ghg-search" role="search" data-root="../" data-shown="50" data-loading="Loading search." data-failed="Search could not be loaded." data-none="No results." data-count="Results: {count}." data-count-limited="Results: {count}. The first 50 are listed." data-no-name="no name" data-feature="{name}, feature" data-rule="{name}, rule in {feature}" data-scenario="{name}, scenario in {feature}" data-scenario-in-rule="{name}, scenario in {rule}, {feature}" data-scenario-outline="{name}, scenario outline in {feature}" data-scenario-outline-in-rule="{name}, scenario outline in {rule}, {feature}">
@@ -87,12 +89,15 @@
 <ol class="ghg-search-results" hidden></ol>
 </form>
 <main id="ghg_main">
-<h1>Feature: Notes with no scenarios</h1>
+<h1>Feature: <bdi>Notes with no scenarios</bdi></h1>
 <ul class="ghg-tags">
 <li><a href="../tags/draft.html">@draft</a></li>
 <li><a href="../tags/later.html">@later</a></li>
 </ul>
 </main>
+<footer class="ghg-footer">
+<p>Built with <a href="https://github.com/marlon-sousa/gherkin-glass">gherkin-glass</a> {version}</p>
+</footer>
 </div>
 </div>
 </body>

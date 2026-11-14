@@ -1,6 +1,6 @@
 //! Entity: the index of every tag and each tag's page, as their templates show them, their nodes and their content as the site stage builds it, with what is below each node.
 
-use crate::entities::{LinkAddress, OutsideLink, SiteAddress, Trail};
+use crate::entities::{HeadingPart, LinkAddress, OutsideLink, SiteAddress, Trail};
 
 /// The index of every tag. Every `String` is text, escaped when it is
 /// rendered, and every link is relative to the page that holds it.
@@ -42,12 +42,14 @@ pub(crate) struct TagPage {
     pub(crate) no_scenario: String,
 }
 
-/// A feature that writes the tag, on its page.
+/// A feature that writes the tag, on its page, its heading the feature page's
+/// title, in the words before and after its file's path, which is shown apart.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct TagFeature {
     pub(crate) address: LinkAddress,
-    /// The feature page's title.
-    pub(crate) heading: String,
+    pub(crate) heading_before: Vec<HeadingPart>,
+    pub(crate) path: String,
+    pub(crate) heading_after: String,
     /// The feature page's `lang`, when it is not the tag page's.
     pub(crate) language: Option<String>,
 }
@@ -56,7 +58,7 @@ pub(crate) struct TagFeature {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct TagScenario {
     pub(crate) address: LinkAddress,
-    pub(crate) heading: String,
+    pub(crate) heading: Vec<HeadingPart>,
     pub(crate) before: String,
     pub(crate) after: String,
 }

@@ -1,0 +1,22 @@
+{%- if examples.holds_nothing() -%}
+<li id="{{ examples.anchor }}" class="ghg-examples"><button type="button" class="ghg-toggle" aria-disabled="true">{{ examples.label.render()|safe }}</button></li>
+{%- else -%}
+<li id="{{ examples.anchor }}" class="ghg-block ghg-examples"><button type="button" class="ghg-toggle" aria-expanded="false">{{ examples.label.render()|safe }}</button>
+<div class="ghg-content" hidden>
+{%- if let Some(note) = examples.keyword_note %}
+{{ note.render()|safe }}
+{%- endif %}
+{%- if !examples.tags.is_empty() %}
+{{ examples.tags.render()|safe }}
+{%- endif %}
+{%- if let Some(description) = examples.description %}
+{{ description.render()|safe }}
+{%- endif %}
+{%- if let Some(table) = examples.table %}
+{{ table.render()|safe }}
+{%- endif %}
+{%- if !runs.is_empty() %}
+{{ runs|safe }}
+{%- endif %}
+</div></li>
+{%- endif %}

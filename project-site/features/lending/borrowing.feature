@@ -48,13 +48,13 @@ Feature: Borrowing books
     Background: A member near the limit
       Given "Ana" holds 5 books
 
-    Example: Borrowing over the limit is refused
+    Scenario: Borrowing over the limit is refused
       Given the book "Emma" is on the shelf
       When "Ana" borrows "Emma"
       Then the loan is refused with "You already hold 5 books."
       And "Ana" holds 5 books
 
-    Example: Returning a book makes room for another
+    Scenario: Returning a book makes room for another
       Given "Ana" returns "The Hobbit"
       And the book "Emma" is on the shelf
       When "Ana" borrows "Emma"

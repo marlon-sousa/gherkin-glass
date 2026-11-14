@@ -1,28 +1,47 @@
-// Port: the folder tree, its checkbox, and where its data comes from.
+// Port: the folder tree, its checkbox and its button, and where its data comes from.
 
 /** One item of the tree, as `assets/tree.json` holds it. */
 export interface TreeItem {
-  readonly text: string;
+  /** Its words, or their runs, those at odd places feature text that is isolated, the first plain. */
+  readonly text: string | readonly string[];
   /** Relative to the site's root, percent-encoded, with an anchor after `#` for a rule or scenario. */
   readonly address: string;
-  /** Only a feature's. */
+  /** Only a feature's, for its feature text and that of the items inside it. */
   readonly lang?: string;
   readonly items?: readonly TreeItem[];
 }
+
+/** Inside the tree's landmark, on the checkbox, on the button, or elsewhere. */
+export type FocusPlace = "tree" | "checkbox" | "button" | null;
 
 export interface TreeSource {
   /** Null when the data cannot be fetched, or is not a tree. */
   load(): Promise<readonly TreeItem[] | null>;
 }
 
-/** The checkbox, and the landmark it shows or hides. */
+/**
+ * The checkbox a wide window shows, the button a narrow one shows in its
+ * place, and the landmark they show or hide.
+ */
 export interface TreeSwitch {
-  /** As the page's HTML was written, from the configuration. */
+  /** Whether the checkbox is checked as the page's HTML was written, from the configuration. */
   configured(): boolean;
+  setChecked(checked: boolean): void;
+  /** Says on the button whether the tree is shown. */
+  setOpen(open: boolean): void;
   setShown(shown: boolean): void;
-  /** The tree cannot be shown: the checkbox is disabled and the landmark hidden. */
+  /** The tree cannot be shown: the checkbox and the button are disabled. */
   disable(): void;
-  onChange(handler: (shown: boolean) => void): void;
+  /** The reader checked or unchecked the checkbox. */
+  onChange(handler: (checked: boolean) => void): void;
+  /** The reader pressed the button. */
+  onPress(handler: () => void): void;
+  /** The reader pressed Escape inside the tree. */
+  onEscape(handler: () => void): void;
+  /** Where the keyboard focus is, of the tree's landmark and its controls. */
+  focus(): FocusPlace;
+  focusButton(): void;
+  focusCheckbox(): void;
 }
 
 export interface TreeView {

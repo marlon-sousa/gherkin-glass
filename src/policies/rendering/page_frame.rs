@@ -1,4 +1,4 @@
-//! Policy: the frame every page of a version's site has: its dialog for a page opened from disk, its skip link and its options, which the versions page shares, and the folder tree's empty landmark.
+//! Policy: the frame every page of a version's site has: its dialog for a page opened from disk, its skip link, its options and its footer, which the versions page shares, and the folder tree's empty landmark.
 
 use askama::Template;
 
@@ -22,6 +22,11 @@ pub(super) struct ThemeControl<'a> {
 
 /// The folder tree's landmark, which the script fills.
 pub(super) struct TreeLandmark<'a> {
+    pub(super) frame: &'a PageFrame,
+}
+
+/// The footer, after the page's main content.
+pub(super) struct PageFooter<'a> {
     pub(super) frame: &'a PageFrame,
 }
 
@@ -58,6 +63,14 @@ struct TreeLandmarkTemplate<'a> {
     frame: &'a PageFrame,
 }
 
+#[derive(Template)]
+#[template(path = "page_footer.html")]
+struct PageFooterTemplate<'a> {
+    frame: &'a PageFrame,
+    /// gherkin-glass's repository, as `Cargo.toml` names it.
+    repository: &'static str,
+}
+
 impl Render for PageFrame {
     fn render(&self) -> String {
         rendered(&FrameTemplate {
@@ -90,5 +103,14 @@ impl Render for ThemeControl<'_> {
 impl Render for TreeLandmark<'_> {
     fn render(&self) -> String {
         rendered(&TreeLandmarkTemplate { frame: self.frame })
+    }
+}
+
+impl Render for PageFooter<'_> {
+    fn render(&self) -> String {
+        rendered(&PageFooterTemplate {
+            frame: self.frame,
+            repository: env!("CARGO_PKG_REPOSITORY"),
+        })
     }
 }

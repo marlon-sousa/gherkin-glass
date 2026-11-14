@@ -5,6 +5,7 @@ use askama::Template;
 use super::breadcrumb::Place;
 use super::contents::Contents;
 use super::front_page::{PageMain, front_page};
+use super::heading_parts::RenderIn;
 use super::node_rendering::{Render, RenderFile, pieces, rendered};
 use super::page_heading::PageHeading;
 use super::page_layout::{PageAround, SitePieces, whole_page};
@@ -92,6 +93,7 @@ impl Render for FeatureEntry {
             contents: Contents {
                 entries: &self.contents,
                 page: self.address.to_string(),
+                language: Some(&self.language),
             }
             .render(),
         })

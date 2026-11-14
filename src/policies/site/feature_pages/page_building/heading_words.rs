@@ -1,19 +1,99 @@
 //! Policy: the words of a block's heading, in parts, from a message of the catalogue with feature text in it.
 
-use crate::entities::HeadingPart;
+use i18n_embed_fl::fl;
+
+use crate::entities::{HeadingPart, KeywordNote, plain_parts};
+use crate::policies::CATALOGUE;
 
 /// Stand for feature text in a heading's words, to find where it goes; no
 /// message of the catalogue holds them.
 pub(super) const TEXT_MARKS: [&str; 2] = ["\u{1}", "\u{2}"];
 
-/// The keyword as written, then `: ` and the name, or the keyword alone.
-pub(crate) fn heading(keyword: &str, name: &str) -> String {
+/// The kinds of block a heading names in gherkin-glass's own words, whatever
+/// keyword the file writes.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(super) enum Kind {
+    Feature,
+    Background,
+    Rule,
+    Scenario,
+    /// A scenario with examples, whatever its keyword.
+    ScenarioOutline,
+    Examples,
+}
+
+/// The heading of a block of `kind`: its kind, then `: ` and its name, or its
+/// kind alone; the name is isolated. The keyword the file writes is left to
+/// [`keyword_note`].
+pub(super) fn heading(kind: Kind, name: &str) -> Vec<HeadingPart> {
+    let unnamed = fl!(CATALOGUE, "unnamed-heading", kind = kind.id());
+    named_heading(kind, name, &unnamed)
+}
+
+/// The heading of an examples block, as [`heading`] makes it, except that an
+/// unnamed block is numbered by its place among its outline's blocks, from 1.
+pub(super) fn examples_heading(name: &str, place: usize) -> Vec<HeadingPart> {
+    let unnamed = fl!(CATALOGUE, "numbered-examples", place = place);
+    named_heading(Kind::Examples, name, &unnamed)
+}
+
+/// The heading of a block of `kind`, reading `unnamed` when it has no name.
+fn named_heading(kind: Kind, name: &str, unnamed: &str) -> Vec<HeadingPart> {
+    match name.trim() {
+        "" => plain_parts(unnamed),
+        name => {
+            let words = fl!(
+                CATALOGUE,
+                "named-heading",
+                kind = kind.id(),
+                name = TEXT_MARKS[0]
+            );
+            worded_parts(&words, &[isolated(name)])
+        }
+    }
+}
+
+/// The note that a block of `kind` is written with `keyword` in its file,
+/// around the words of the button that explains it, where the keyword is
+/// isolated; `None` when the keyword is the kind's own word, other than in
+/// its case.
+pub(super) fn keyword_note(kind: Kind, keyword: &str) -> Option<KeywordNote> {
     let keyword = keyword.trim();
-    let name = name.trim();
-    if name.is_empty() {
-        keyword.to_string()
-    } else {
-        format!("{keyword}: {name}")
+    let kind_words = fl!(CATALOGUE, "unnamed-heading", kind = kind.id());
+    if keyword.to_lowercase() == kind_words.to_lowercase() {
+        return None;
+    }
+    let words = fl!(
+        CATALOGUE,
+        "keyword-note",
+        kind = kind.id(),
+        opener = TEXT_MARKS[0]
+    );
+    let (before, after) = words.split_once(TEXT_MARKS[0]).unwrap_or((&words, ""));
+    let opener = fl!(CATALOGUE, "keyword-note-opener", keyword = TEXT_MARKS[0]);
+    Some(KeywordNote {
+        before: before.to_string(),
+        opener: worded_parts(&opener, &[isolated(keyword)]),
+        after: after.to_string(),
+    })
+}
+
+/// The kind alone, in gherkin-glass's words, such as `Scenario outline`.
+pub(super) fn kind_alone(kind: Kind) -> Vec<HeadingPart> {
+    plain_parts(&fl!(CATALOGUE, "unnamed-heading", kind = kind.id()))
+}
+
+impl Kind {
+    /// The kind as the catalogue's messages select it.
+    fn id(self) -> &'static str {
+        match self {
+            Kind::Feature => "feature",
+            Kind::Background => "background",
+            Kind::Rule => "rule",
+            Kind::Scenario => "scenario",
+            Kind::ScenarioOutline => "scenario-outline",
+            Kind::Examples => "examples",
+        }
     }
 }
 
@@ -70,7 +150,84 @@ pub(super) fn isolated(text: &str) -> Vec<HeadingPart> {
 
 #[cfg(test)]
 mod tests {
+    use rstest::rstest;
+
     use super::*;
+
+    /// The parts of `parts`, each as its text and whether it is isolated.
+    fn shown(parts: &[HeadingPart]) -> Vec<(&str, bool)> {
+        parts
+            .iter()
+            .map(|part| (part.text.as_str(), part.isolated))
+            .collect()
+    }
+
+    #[rstest]
+    #[case::named(Kind::ScenarioOutline, " Withdraw ", &[("Scenario outline: ", false), ("Withdraw", true)])]
+    #[case::unnamed(Kind::Rule, "", &[("Rule", false)])]
+    fn a_heading_names_its_kind_then_its_name(
+        #[case] kind: Kind,
+        #[case] name: &str,
+        #[case] expected: &[(&str, bool)],
+    ) {
+        assert_eq!(shown(&heading(kind, name)), expected);
+    }
+
+    #[rstest]
+    #[case::named(" Small ", &[("Examples: ", false), ("Small", true)])]
+    #[case::unnamed("", &[("Examples 3", false)])]
+    fn an_unnamed_examples_block_is_numbered(
+        #[case] name: &str,
+        #[case] expected: &[(&str, bool)],
+    ) {
+        assert_eq!(shown(&examples_heading(name, 3)), expected);
+    }
+
+    #[rstest]
+    #[case::the_kind_s_word_in_another_case(Kind::ScenarioOutline, "Scenario Outline", None)]
+    #[case::another_word(
+        Kind::Examples,
+        "Scenarios",
+        Some(
+            "Note: in the Gherkin feature file, these examples are [defined with the keyword \"<Scenarios>\".]"
+        )
+    )]
+    #[case::another_language(
+        Kind::Background,
+        " Contexto ",
+        Some(
+            "Note: in the Gherkin feature file, this background is [defined with the keyword \"<Contexto>\".]"
+        )
+    )]
+    #[case::an_outline(
+        Kind::ScenarioOutline,
+        "Scenario Template",
+        Some(
+            "Note: in the Gherkin feature file, this scenario outline is [defined with the keyword \"<Scenario Template>\".]"
+        )
+    )]
+    fn the_keyword_note_names_the_kind_and_the_keyword_only_when_it_is_another_word(
+        #[case] kind: Kind,
+        #[case] keyword: &str,
+        #[case] expected: Option<&str>,
+    ) {
+        // The button's words in brackets, the isolated keyword in angle brackets.
+        let note = keyword_note(kind, keyword).map(|note| {
+            let opener: String = note
+                .opener
+                .iter()
+                .map(|part| {
+                    if part.isolated {
+                        format!("<{}>", part.text)
+                    } else {
+                        part.text.clone()
+                    }
+                })
+                .collect();
+            format!("{}[{opener}]{}", note.before, note.after)
+        });
+        assert_eq!(note.as_deref(), expected);
+    }
 
     #[test]
     fn worded_parts_put_each_text_where_its_mark_is_whatever_the_order() {

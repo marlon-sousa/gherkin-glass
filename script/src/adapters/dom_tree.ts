@@ -1,42 +1,7 @@
-// Adapter: the tree switch and the tree view over the page's markup, as src/policies/rendering/page_layout.html and page_frame.html write it, the tree built as the WAI-ARIA Navigation Treeview example builds it.
+// Adapter: the tree view over the page's markup, as src/policies/rendering/page_layout.html writes it, the tree built as the WAI-ARIA Navigation Treeview example builds it.
 
 import { rootFrom } from "../policies/tree_state.ts";
-import type { TreeItem, TreeSwitch, TreeView } from "../ports/tree.ts";
-
-export class DomTreeSwitch implements TreeSwitch {
-  private readonly checkbox: HTMLInputElement | null;
-  private readonly landmark: HTMLElement | null;
-
-  constructor(document: Document) {
-    this.checkbox = document.querySelector<HTMLInputElement>("input.ghg-show-tree");
-    this.landmark = document.querySelector<HTMLElement>("nav.ghg-tree");
-  }
-
-  configured(): boolean {
-    return this.checkbox?.checked ?? false;
-  }
-
-  setShown(shown: boolean): void {
-    if (this.checkbox) {
-      this.checkbox.checked = shown;
-    }
-    if (this.landmark) {
-      this.landmark.hidden = !shown;
-    }
-  }
-
-  disable(): void {
-    this.setShown(false);
-    if (this.checkbox) {
-      this.checkbox.disabled = true;
-    }
-  }
-
-  onChange(handler: (shown: boolean) => void): void {
-    const checkbox = this.checkbox;
-    checkbox?.addEventListener("change", () => handler(checkbox.checked));
-  }
-}
+import type { TreeItem, TreeView } from "../ports/tree.ts";
 
 /** An item of the tree as the page shows it. */
 interface TreeNode {
@@ -85,13 +50,12 @@ export class DomTree implements TreeView {
     this.handler = handler;
   }
 
-  private add(list: HTMLUListElement, items: readonly TreeItem[], parent: TreeNode | null, current: string | null, expanded: (address: string) => boolean): void {
+  /** `lang` is the feature's that holds `items`, if one does. */
+  private add(list: HTMLUListElement, items: readonly TreeItem[], parent: TreeNode | null, current: string | null, expanded: (address: string) => boolean, lang?: string): void {
     for (const item of items) {
+      const itemLang = item.lang ?? lang;
       const entry = this.document.createElement("li");
       entry.setAttribute("role", "none");
-      if (item.lang !== undefined) {
-        entry.lang = item.lang;
-      }
       const link = this.document.createElement("a");
       link.setAttribute("role", "treeitem");
       link.href = typeof this.root === "string" ? this.root + item.address : new URL(item.address, this.root).href;
@@ -109,10 +73,10 @@ export class DomTree implements TreeView {
         group = this.document.createElement("ul");
         group.setAttribute("role", "group");
         group.id = `ghg_tree_${this.nodes.length}`;
-        group.setAttribute("aria-label", item.text);
+        group.setAttribute("aria-label", textOf(item));
         link.setAttribute("aria-owns", group.id);
       }
-      link.append(item.text);
+      link.append(...this.words(item, itemLang));
       entry.append(link);
       const node: TreeNode = { link, address: item.address, group, parent };
       this.nodes.push(node);
@@ -126,10 +90,31 @@ export class DomTree implements TreeView {
           this.focus(node);
           this.toggle(node, !this.isExpanded(node));
         });
-        this.add(group, inner, node, current, expanded);
+        this.add(group, inner, node, current, expanded, itemLang);
       }
       list.append(entry);
     }
+  }
+
+  /**
+   * The item's words, each run of feature text isolated in a `bdi` with its
+   * feature's `lang`, so that the tree's own words are read in the page's.
+   */
+  private words(item: TreeItem, lang: string | undefined): (string | HTMLElement)[] {
+    if (typeof item.text === "string") {
+      return [item.text];
+    }
+    return item.text.map((run, place) => {
+      if (place % 2 === 0) {
+        return run;
+      }
+      const isolated = this.document.createElement("bdi");
+      isolated.append(run);
+      if (lang !== undefined) {
+        isolated.lang = lang;
+      }
+      return isolated;
+    });
   }
 
   private isExpanded(node: TreeNode): boolean {
@@ -236,4 +221,9 @@ export class DomTree implements TreeView {
     event.preventDefault();
     event.stopPropagation();
   }
+}
+
+/** The item's words as plain text, for a name that holds no markup. */
+function textOf(item: TreeItem): string {
+  return typeof item.text === "string" ? item.text : item.text.join("");
 }

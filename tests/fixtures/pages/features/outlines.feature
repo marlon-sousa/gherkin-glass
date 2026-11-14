@@ -21,6 +21,9 @@ Feature: Withdraw cash at the counter
       | amount | balance | left | format |
       | 500    | 1000    | 500  | json   |
 
+    Examples: None yet
+      | amount | balance | left | format |
+
   Scenario Outline:
     Given <x> and <y>
 

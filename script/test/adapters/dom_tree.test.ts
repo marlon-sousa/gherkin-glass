@@ -1,5 +1,5 @@
 // The adapters of src/adapters/dom_tree.ts and src/adapters/fetched_tree.ts, on a page gherkin-glass wrote,
-// tests/fixtures/pages/expected/billing/refunds.html, with its site's tree.json: docs/BEHAVIOUR.md, rules 87 and 89 to 93.
+// tests/fixtures/pages/expected/billing/refunds.html, with its site's tree.json: docs/BEHAVIOUR.md, rules 89 to 93.
 
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -7,9 +7,10 @@ import { test } from "node:test";
 
 import { Window } from "happy-dom";
 
-import { DomTree, DomTreeSwitch } from "../../src/adapters/dom_tree.ts";
+import { DomTree } from "../../src/adapters/dom_tree.ts";
+import { DomTreeSwitch } from "../../src/adapters/dom_tree_switch.ts";
 import { FetchedTree } from "../../src/adapters/fetched_tree.ts";
-import { NARROW, readTree } from "../../src/policies/tree_state.ts";
+import { readTree } from "../../src/policies/tree_state.ts";
 import { startFolderTree } from "../../src/services/folder_tree.ts";
 import type { Memory } from "../../src/ports/memory.ts";
 
@@ -22,10 +23,10 @@ async function open(kept = new Map<string, string>()): Promise<Window> {
   const document = window.document as unknown as Document;
   const memory: Memory = { get: (key) => kept.get(key) ?? null, set: (key, value) => void kept.set(key, value) };
   const source = { load: () => Promise.resolve(readTree(JSON.parse(DATA))) };
-  await startFolderTree(source, new DomTreeSwitch(document), new DomTree(document, new URL("https://example.com/site/"), "billing/refunds.html"), memory, {
+  const wide = { narrow: () => false, onChange: () => {} };
+  await startFolderTree(source, new DomTreeSwitch(document), new DomTree(document, new URL("https://example.com/site/"), "billing/refunds.html"), wide, memory, {
     sitePath: "/site/",
     page: "billing/refunds.html",
-    narrow: false,
   });
   return window;
 }
@@ -44,11 +45,17 @@ test("the tree is built in its landmark, named as it, with every item a link rel
   const home = items(window)[0]!;
   assert.equal(home.textContent, "Banking & <more>");
   assert.equal(home.getAttribute("href"), "../index.html");
-  assert.equal(item(window, "Example: Store credit").getAttribute("href"), "../billing/refunds.html#store-credit");
+  assert.equal(item(window, "Scenario: Store credit").getAttribute("href"), "../billing/refunds.html#store-credit");
+  // Feature text inside gherkin-glass's words is isolated in a bdi.
+  const isolated = [...item(window, "Scenario: Store credit").querySelectorAll("bdi")].map((bdi) => bdi.textContent);
+  assert.deepEqual(isolated, ["Store credit"]);
   assert.equal(item(window, "Feature: Closed accounts").getAttribute("href"), "../billing/archive/closed%20%231.html");
-  // A feature's item, with the items inside it, has its page's lang.
-  assert.equal(item(window, "Feature: Refunds & <returns>").parentElement!.getAttribute("lang"), "en");
-  assert.equal(home.parentElement!.hasAttribute("lang"), false);
+  // A feature's feature text, and that of the items inside it, has its page's lang; the tree's own words have none.
+  const languages = (text: string) => [...item(window, text).querySelectorAll("bdi")].map((bdi) => bdi.getAttribute("lang"));
+  assert.deepEqual(languages("Feature: Saque em conta poupança"), ["pt"]);
+  assert.deepEqual(languages("Scenario: Saque com saldo"), ["pt"]);
+  assert.ok(item(window, "Scenario: Saque com saldo").closest("nav [lang]") === null);
+  assert.ok(home.closest("nav [lang]") === null);
 });
 
 test("the current page is marked, and it and the items it is inside are expanded, everything else collapsed", async () => {
@@ -146,21 +153,6 @@ test("pressing a marker expands or collapses its item, and Space follows the lin
   assert.deepEqual(followed, ["reports"]);
 });
 
-test("the checkbox shows and hides the tree, remembered for the whole site", async () => {
-  const kept = new Map<string, string>();
-  const window = await open(kept);
-  const checkbox = window.document.querySelector("#ghg_show_tree") as unknown as HTMLInputElement;
-  const landmark = window.document.querySelector("#ghg_tree")!;
-  assert.equal(checkbox.checked, true);
-  assert.equal(landmark.hasAttribute("hidden"), false);
-  checkbox.click();
-  assert.equal(landmark.hasAttribute("hidden"), true);
-  assert.equal(kept.get("gherkin-glass:/site/ tree"), "hidden");
-  const again = await open(kept);
-  assert.equal((again.document.querySelector("#ghg_show_tree") as unknown as HTMLInputElement).checked, false);
-  assert.equal(again.document.querySelector("#ghg_tree")!.hasAttribute("hidden"), true);
-});
-
 test("data that cannot be fetched, or is no tree, gives nothing to build", async () => {
   const answer = (status: number, body: string) => () => Promise.resolve(new Response(body, { status }));
   const at = new URL("https://example.com/site/assets/tree.json");
@@ -168,7 +160,7 @@ test("data that cannot be fetched, or is no tree, gives nothing to build", async
   assert.equal(await new FetchedTree(at, answer(200, "{}") as typeof fetch).load(), null);
   assert.equal(await new FetchedTree(at, answer(200, "not json") as typeof fetch).load(), null);
   assert.equal(await new FetchedTree(at, (() => Promise.reject(new Error("offline"))) as typeof fetch).load(), null);
-  assert.equal((await new FetchedTree(at, answer(200, DATA) as typeof fetch).load())?.length, 7);
+  assert.equal((await new FetchedTree(at, answer(200, DATA) as typeof fetch).load())?.length, 8);
 });
 
 test("a page that is not below the site's root links the items from the root itself", async () => {
@@ -179,27 +171,4 @@ test("a page that is not below the site's root links the items from the root its
   assert.equal(items(window)[1]!.getAttribute("href"), "https://example.com/site/billing/index.html");
   // Without a current page, the first item is the Tab stop.
   assert.equal(items(window)[0]!.tabIndex, 0);
-});
-
-test("data that cannot be loaded leaves the checkbox disabled and unchecked and the tree hidden and empty", async () => {
-  const window = new Window({ url: "https://example.com/site/billing/refunds.html" });
-  window.document.write(readFileSync(new URL("billing/refunds.html", SITE), "utf8"));
-  const document = window.document as unknown as Document;
-  const memory: Memory = { get: () => null, set: () => {} };
-  await startFolderTree({ load: () => Promise.resolve(null) }, new DomTreeSwitch(document), new DomTree(document, new URL("https://example.com/site/"), "billing/refunds.html"), memory, {
-    sitePath: "/site/",
-    page: "billing/refunds.html",
-    narrow: false,
-  });
-  const checkbox = window.document.querySelector("#ghg_show_tree") as unknown as HTMLInputElement;
-  assert.equal(checkbox.disabled, true);
-  assert.equal(checkbox.checked, false);
-  const landmark = window.document.querySelector("#ghg_tree")!;
-  assert.equal(landmark.hasAttribute("hidden"), true);
-  assert.equal(landmark.children.length, 0);
-});
-
-test("the window the script calls narrow is the one the stylesheet stacks the tree at", () => {
-  const css = readFileSync(new URL("../../../assets/gherkin-glass.css", import.meta.url), "utf8");
-  assert.ok(css.includes(`@media ${NARROW} {`), NARROW);
 });

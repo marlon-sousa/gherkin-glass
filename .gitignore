@@ -1,5 +1,7 @@
 /target
 /script/node_modules
+# The site ghg builds by default, from the repository's root.
+/site/
 
 # proptest saves the failures it finds here; each is kept instead as a named rstest case.
 /proptest-regressions/

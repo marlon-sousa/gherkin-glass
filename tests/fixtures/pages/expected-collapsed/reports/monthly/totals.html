@@ -52,6 +52,7 @@
 }
 </style>
 <link rel="stylesheet" href="../../assets/gherkin-glass.css">
+<link rel="icon" href="../../assets/gherkin-glass.svg" type="image/svg+xml">
 <script type="module" src="../../assets/gherkin-glass.js"></script>
 </head>
 <body>
@@ -63,7 +64,8 @@
 <script>if(location.protocol==="file:"){let d=document.getElementById("ghg_from_disk");d.showModal();d.focus()}</script>
 <a class="ghg-skip" href="#ghg_main">Skip to content</a>
 <div class="ghg-options">
-<input type="checkbox" id="ghg_show_tree" class="ghg-show-tree" aria-controls="ghg_tree"> <label for="ghg_show_tree">Show the folder tree</label>
+<span class="ghg-option ghg-tree-choice"><input type="checkbox" id="ghg_show_tree" class="ghg-show-tree" aria-controls="ghg_tree"> <label for="ghg_show_tree">Show the folder tree</label></span>
+<button type="button" class="ghg-tree-button" aria-expanded="false" aria-controls="ghg_tree">Folder tree</button>
 <fieldset class="ghg-theme">
 <legend>Theme</legend>
 <label><input type="radio" name="ghg-theme" value="system" checked> System</label>
@@ -79,7 +81,7 @@
 <li><a href="../../index.html">Feature files</a></li>
 <li><a href="../index.html">reports</a></li>
 <li><a href="index.html">monthly</a></li>
-<li><a href="totals.html" aria-current="page">Feature: Monthly totals</a></li>
+<li><a href="totals.html" aria-current="page">Feature: <bdi>Monthly totals</bdi></a></li>
 </ol>
 </nav>
 <form class="ghg-search" role="search" data-root="../../" data-shown="50" data-loading="Loading search." data-failed="Search could not be loaded." data-none="No results." data-count="Results: {count}." data-count-limited="Results: {count}. The first 50 are listed." data-no-name="no name" data-feature="{name}, feature" data-rule="{name}, rule in {feature}" data-scenario="{name}, scenario in {feature}" data-scenario-in-rule="{name}, scenario in {rule}, {feature}" data-scenario-outline="{name}, scenario outline in {feature}" data-scenario-outline-in-rule="{name}, scenario outline in {rule}, {feature}">
@@ -88,10 +90,10 @@
 <ol class="ghg-search-results" hidden></ol>
 </form>
 <main id="ghg_main">
-<h1>Feature: Monthly totals</h1>
+<h1>Feature: <bdi>Monthly totals</bdi></h1>
 <nav class="ghg-contents" aria-label="Contents">
 <ul>
-<li><a href="#totals-add-up">Scenario: Totals add up</a></li>
+<li><a href="#totals-add-up">Scenario: <bdi>Totals add up</bdi></a></li>
 </ul>
 </nav>
 <div class="ghg-controls">
@@ -99,7 +101,7 @@
 <button type="button" class="ghg-expand-all">Expand all</button>
 </div>
 <div class="ghg-block ghg-scenario">
-<h2 id="totals-add-up"><button type="button" class="ghg-toggle" aria-expanded="false">Scenario: Totals add up</button></h2>
+<h2 id="totals-add-up"><button type="button" class="ghg-toggle" aria-expanded="false">Scenario: <bdi>Totals add up</bdi></button></h2>
 <div class="ghg-content" hidden>
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">Then </span>the totals add up</li>
@@ -107,6 +109,9 @@
 </div>
 </div>
 </main>
+<footer class="ghg-footer">
+<p>Built with <a href="https://github.com/marlon-sousa/gherkin-glass">gherkin-glass</a> {version}</p>
+</footer>
 </div>
 </div>
 </body>

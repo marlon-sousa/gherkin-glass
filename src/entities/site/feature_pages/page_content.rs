@@ -11,6 +11,9 @@ use crate::entities::{
 pub(crate) struct PageContent {
     pub(crate) page: Page,
     pub(crate) background: Option<BackgroundContent>,
+    /// The heading of the block the scenarios are in, in a file with a rule
+    /// and a scenario outside every rule; `None` in any other file.
+    pub(crate) outside_rules: Option<BlockHeading>,
     pub(crate) scenarios: Vec<ScenarioContent>,
     pub(crate) rules: Vec<RuleContent>,
 }
@@ -29,18 +32,24 @@ pub(crate) struct RuleContent {
 }
 
 /// A scenario or an outline, with what only an outline has: its examples
-/// blocks and, when one of them has a row, its examples as scenarios.
+/// blocks, each with its runs.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct ScenarioContent {
     pub(crate) block: ScenarioBlock,
     pub(crate) steps: Vec<StepContent>,
-    pub(crate) examples: Vec<ExamplesBlock>,
-    pub(crate) as_scenarios: Option<ExamplesAsScenarios>,
+    pub(crate) examples: Vec<ExamplesContent>,
 }
 
-/// An outline's examples, as the scenarios their rows make.
+/// An examples block, with the runs its rows make when it has a row.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct ExamplesAsScenarios {
+pub(crate) struct ExamplesContent {
+    pub(crate) block: ExamplesBlock,
+    pub(crate) runs: Option<ExamplesRuns>,
+}
+
+/// An examples block's rows, as the scenarios they make: the runs of its outline.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct ExamplesRuns {
     pub(crate) heading: BlockHeading,
     pub(crate) scenarios: Vec<ExampleScenario>,
 }
@@ -58,4 +67,48 @@ pub(crate) struct StepContent {
     pub(crate) step: StepView,
     pub(crate) table: Option<TableView>,
     pub(crate) doc_string: Option<DocStringView>,
+}
+
+impl PageContent {
+    /// Whether the feature or any of its blocks has a note of the keyword
+    /// its file writes, which the page's dialog explains.
+    pub(crate) fn has_keyword_note(&self) -> bool {
+        self.page.keyword_note.is_some()
+            || self
+                .background
+                .as_ref()
+                .is_some_and(BackgroundContent::has_keyword_note)
+            || self.scenarios.iter().any(ScenarioContent::has_keyword_note)
+            || self.rules.iter().any(RuleContent::has_keyword_note)
+    }
+}
+
+impl BackgroundContent {
+    fn has_keyword_note(&self) -> bool {
+        self.block.heading.keyword_note.is_some()
+    }
+}
+
+impl RuleContent {
+    fn has_keyword_note(&self) -> bool {
+        self.block.heading.keyword_note.is_some()
+            || self
+                .background
+                .as_ref()
+                .is_some_and(BackgroundContent::has_keyword_note)
+            || self.scenarios.iter().any(ScenarioContent::has_keyword_note)
+    }
+}
+
+impl ScenarioContent {
+    fn has_keyword_note(&self) -> bool {
+        self.block.heading.keyword_note.is_some()
+            || self.examples.iter().any(ExamplesContent::has_keyword_note)
+    }
+}
+
+impl ExamplesContent {
+    fn has_keyword_note(&self) -> bool {
+        self.block.keyword_note.is_some()
+    }
 }

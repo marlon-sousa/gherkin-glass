@@ -52,6 +52,7 @@
 }
 </style>
 <link rel="stylesheet" href="assets/gherkin-glass.css">
+<link rel="icon" href="assets/gherkin-glass.svg" type="image/svg+xml">
 <script type="module" src="assets/gherkin-glass.js"></script>
 </head>
 <body>
@@ -63,7 +64,8 @@
 <script>if(location.protocol==="file:"){let d=document.getElementById("ghg_from_disk");d.showModal();d.focus()}</script>
 <a class="ghg-skip" href="#ghg_main">Skip to content</a>
 <div class="ghg-options">
-<input type="checkbox" id="ghg_show_tree" class="ghg-show-tree" aria-controls="ghg_tree" checked> <label for="ghg_show_tree">Show the folder tree</label>
+<span class="ghg-option ghg-tree-choice"><input type="checkbox" id="ghg_show_tree" class="ghg-show-tree" aria-controls="ghg_tree" checked> <label for="ghg_show_tree">Show the folder tree</label></span>
+<button type="button" class="ghg-tree-button" aria-expanded="false" aria-controls="ghg_tree">Folder tree</button>
 <fieldset class="ghg-theme">
 <legend>Theme</legend>
 <label><input type="radio" name="ghg-theme" value="system" checked> System</label>
@@ -96,29 +98,35 @@
 <p class="ghg-sentences"><a href="steps.html">Step sentences</a></p>
 <h2>Features</h2>
 <ul class="ghg-features">
-<li class="ghg-feature"><a href="destaque.html" lang="pt">Funcionalidade: Destaque</a>
-<button type="button" class="ghg-toggle" aria-expanded="false" aria-label="1 scenario of Funcionalidade: Destaque">1 scenario</button>
-<div class="ghg-content" lang="pt" hidden>
+<li class="ghg-feature"><a href="destaque.html">Feature: <bdi lang="pt">Destaque</bdi></a>
+<button type="button" class="ghg-toggle" aria-expanded="false" aria-label="1 scenario of Feature: Destaque">1 scenario</button>
+<div class="ghg-content" hidden>
 <ul>
-<li><a href="destaque.html#saque">Cenário: Saque</a></li>
+<li><a href="destaque.html#saque">Scenario: <bdi lang="pt">Saque</bdi></a></li>
 </ul>
 </div></li>
-<li class="ghg-feature"><a href="highlighting.html" lang="en">Feature: Highlighting</a>
+<li class="ghg-feature"><a href="highlighting.html">Feature: <bdi lang="en">Highlighting</bdi></a>
 <button type="button" class="ghg-toggle" aria-expanded="false" aria-label="5 scenarios of Feature: Highlighting">5 scenarios</button>
-<div class="ghg-content" lang="en" hidden>
+<div class="ghg-content" hidden>
 <ul>
-<li><a href="highlighting.html#parameters">Scenario: Parameters</a></li>
-<li><a href="highlighting.html#numbers">Scenario: Numbers</a></li>
-<li><a href="highlighting.html#not-an-outline">Scenario: Not an outline</a></li>
-<li><a href="highlighting.html#placeholders">Scenario Outline: Placeholders</a></li>
-<li><a href="highlighting.html#steps-inside-a-rule">Rule: Steps inside a rule</a>
+<li><a href="highlighting.html#outside_rules">Outside any rule</a>
 <ul>
-<li><a href="highlighting.html#in-a-rule">Scenario: In a rule</a></li>
+<li><a href="highlighting.html#parameters">Scenario: <bdi lang="en">Parameters</bdi></a></li>
+<li><a href="highlighting.html#numbers">Scenario: <bdi lang="en">Numbers</bdi></a></li>
+<li><a href="highlighting.html#not-an-outline">Scenario: <bdi lang="en">Not an outline</bdi></a></li>
+<li><a href="highlighting.html#placeholders">Scenario outline: <bdi lang="en">Placeholders</bdi></a></li>
+</ul></li>
+<li><a href="highlighting.html#steps-inside-a-rule">Rule: <bdi lang="en">Steps inside a rule</bdi></a>
+<ul>
+<li><a href="highlighting.html#in-a-rule">Scenario: <bdi lang="en">In a rule</bdi></a></li>
 </ul></li>
 </ul>
 </div></li>
 </ul>
 </main>
+<footer class="ghg-footer">
+<p>Built with <a href="https://github.com/marlon-sousa/gherkin-glass">gherkin-glass</a> {version}</p>
+</footer>
 </div>
 </div>
 </body>

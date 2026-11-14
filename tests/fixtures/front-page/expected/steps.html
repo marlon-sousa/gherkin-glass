@@ -52,6 +52,7 @@
 }
 </style>
 <link rel="stylesheet" href="assets/gherkin-glass.css">
+<link rel="icon" href="assets/gherkin-glass.svg" type="image/svg+xml">
 <script type="module" src="assets/gherkin-glass.js"></script>
 </head>
 <body>
@@ -63,7 +64,8 @@
 <script>if(location.protocol==="file:"){let d=document.getElementById("ghg_from_disk");d.showModal();d.focus()}</script>
 <a class="ghg-skip" href="#ghg_main">Skip to content</a>
 <div class="ghg-options">
-<input type="checkbox" id="ghg_show_tree" class="ghg-show-tree" aria-controls="ghg_tree" checked> <label for="ghg_show_tree">Show the folder tree</label>
+<span class="ghg-option ghg-tree-choice"><input type="checkbox" id="ghg_show_tree" class="ghg-show-tree" aria-controls="ghg_tree" checked> <label for="ghg_show_tree">Show the folder tree</label></span>
+<button type="button" class="ghg-tree-button" aria-expanded="false" aria-controls="ghg_tree">Folder tree</button>
 <fieldset class="ghg-theme">
 <legend>Theme</legend>
 <label><input type="radio" name="ghg-theme" value="system" checked> System</label>
@@ -91,36 +93,39 @@
 <h3>a customer paid 50</h3>
 <p>Used once.</p>
 <ul>
-<li><a href="billing/refunds.html#a-customer-is-refunded"><bdi>Scenario: A customer is refunded</bdi>, <bdi>billing/refunds.feature</bdi></a></li>
+<li><a href="billing/refunds.html#a-customer-is-refunded"><bdi>Scenario: <bdi>A customer is refunded</bdi></bdi>, <bdi>billing/refunds.feature</bdi></a></li>
 </ul>
 <h3>the site is served</h3>
 <p>Used once.</p>
 <ul>
-<li><a href="welcome.html#a-visitor-opens-the-front-page"><bdi>Scenario: A visitor opens the front page</bdi>, <bdi>welcome.feature</bdi></a></li>
+<li><a href="welcome.html#a-visitor-opens-the-front-page"><bdi>Scenario: <bdi>A visitor opens the front page</bdi></bdi>, <bdi>welcome.feature</bdi></a></li>
 </ul>
 <h2>When</h2>
 <h3>a visitor opens its address</h3>
 <p>Used once.</p>
 <ul>
-<li><a href="welcome.html#a-visitor-opens-the-front-page"><bdi>Scenario: A visitor opens the front page</bdi>, <bdi>welcome.feature</bdi></a></li>
+<li><a href="welcome.html#a-visitor-opens-the-front-page"><bdi>Scenario: <bdi>A visitor opens the front page</bdi></bdi>, <bdi>welcome.feature</bdi></a></li>
 </ul>
 <h3>the payment is refunded</h3>
 <p>Used once.</p>
 <ul>
-<li><a href="billing/refunds.html#a-customer-is-refunded"><bdi>Scenario: A customer is refunded</bdi>, <bdi>billing/refunds.feature</bdi></a></li>
+<li><a href="billing/refunds.html#a-customer-is-refunded"><bdi>Scenario: <bdi>A customer is refunded</bdi></bdi>, <bdi>billing/refunds.feature</bdi></a></li>
 </ul>
 <h2>Then</h2>
 <h3>the customer&#39;s balance grows by 50</h3>
 <p>Used once.</p>
 <ul>
-<li><a href="billing/refunds.html#a-customer-is-refunded"><bdi>Scenario: A customer is refunded</bdi>, <bdi>billing/refunds.feature</bdi></a></li>
+<li><a href="billing/refunds.html#a-customer-is-refunded"><bdi>Scenario: <bdi>A customer is refunded</bdi></bdi>, <bdi>billing/refunds.feature</bdi></a></li>
 </ul>
 <h3>the front page introduces the suite</h3>
 <p>Used once.</p>
 <ul>
-<li><a href="welcome.html#a-visitor-opens-the-front-page"><bdi>Scenario: A visitor opens the front page</bdi>, <bdi>welcome.feature</bdi></a></li>
+<li><a href="welcome.html#a-visitor-opens-the-front-page"><bdi>Scenario: <bdi>A visitor opens the front page</bdi></bdi>, <bdi>welcome.feature</bdi></a></li>
 </ul>
 </main>
+<footer class="ghg-footer">
+<p>Built with <a href="https://github.com/marlon-sousa/gherkin-glass">gherkin-glass</a> {version}</p>
+</footer>
 </div>
 </div>
 </body>

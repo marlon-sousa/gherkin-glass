@@ -1,4 +1,4 @@
-// Adapter: the page port over the page's markup, as feature_block.html, feature_page.html and folder_feature.html in src/policies/rendering write it.
+// Adapter: the page port over the page's markup, as feature_block.html, examples_item.html, feature_page.html and folder_feature.html in src/policies/rendering write it.
 
 import type { Block, Page } from "../ports/page.ts";
 
@@ -31,22 +31,23 @@ class DomBlock implements Block {
 
 export class DomPage implements Page {
   private readonly found: DomBlock[] = [];
+  private readonly byElement = new Map<Element, DomBlock>();
   private readonly document: Document;
 
   constructor(document: Document) {
     this.document = document;
-    const byElement = new Map<Element, DomBlock>();
     for (const element of document.querySelectorAll(".ghg-block")) {
-      const heading = element.querySelector<HTMLElement>(":scope > :is(h2, h3, h4, h5)");
-      const button = heading?.querySelector<HTMLButtonElement>(":scope > button.ghg-toggle");
+      // An item of an outline's list of examples holds its button itself, with no heading.
+      const heading = element.querySelector<HTMLElement>(":scope > :is(h2, h3, h4, h5)") ?? element;
+      const button = heading.querySelector<HTMLButtonElement>(":scope > button.ghg-toggle");
       const content = element.querySelector<HTMLElement>(":scope > .ghg-content");
-      if (!heading || !button || !content) {
+      if (!button || !content) {
         continue;
       }
       const around = element.parentElement?.closest(".ghg-block");
-      const parent = around ? (byElement.get(around) ?? null) : null;
+      const parent = around ? (this.byElement.get(around) ?? null) : null;
       const block = new DomBlock(heading.id, button, content, parent, element);
-      byElement.set(element, block);
+      this.byElement.set(element, block);
       this.found.push(block);
     }
     // A folder page's features, each known by its link's address.
@@ -67,6 +68,15 @@ export class DomPage implements Page {
 
   target(): string | null {
     return anchorOf(this.document.location.hash);
+  }
+
+  holder(anchor: string): Block | null {
+    const named = this.found.find((block) => block.anchor === anchor);
+    if (named) {
+      return named;
+    }
+    const around = this.document.getElementById(anchor)?.closest(".ghg-block");
+    return around ? (this.byElement.get(around) ?? null) : null;
   }
 
   onToggle(handler: (block: Block) => void): void {

@@ -15,6 +15,11 @@ use gherkin::{Feature, GherkinEnv, Scenario, Step};
 use rstest::rstest;
 use serde_json::Value;
 
+#[path = "support/version_placeholder.rs"]
+mod version_placeholder;
+
+use version_placeholder::with_version_placeholder;
+
 fn repository() -> &'static Path {
     Path::new(env!("CARGO_MANIFEST_DIR"))
 }
@@ -78,7 +83,11 @@ fn files(folder: &Path) -> BTreeMap<String, Vec<u8>> {
             if entry.path().is_dir() {
                 folders.push((entry.path(), format!("{name}/")));
             } else {
-                found.insert(name, read(entry.path()).expect("the file is read"));
+                let file = read(entry.path()).expect("the file is read");
+                found.insert(
+                    name,
+                    with_version_placeholder(file, env!("CARGO_PKG_VERSION")),
+                );
             }
         }
     }
@@ -267,10 +276,16 @@ fn the_example_suite_shows_every_construct() {
             show("a rule's background", rule.background.is_some());
         }
         for scenario in scenarios(feature) {
+            show("a scenario as Example", scenario.keyword == "Example");
+            show(
+                "an outline as Scenario Template",
+                scenario.keyword == "Scenario Template",
+            );
             show("a scenario's tags", !scenario.tags.is_empty());
             show("a scenario's description", non_empty(&scenario.description));
             show("several examples blocks", scenario.examples.len() > 1);
             for examples in &scenario.examples {
+                show("examples as Scenarios", examples.keyword == "Scenarios");
                 show("named examples", non_empty(&examples.name));
                 show("unnamed examples", !non_empty(&examples.name));
                 show("an examples block's tags", !examples.tags.is_empty());
@@ -320,6 +335,9 @@ fn the_example_suite_shows_every_construct() {
         "a rule's tags",
         "a rule's description",
         "a rule's background",
+        "a scenario as Example",
+        "an outline as Scenario Template",
+        "examples as Scenarios",
         "a scenario's tags",
         "a scenario's description",
         "several examples blocks",
@@ -341,6 +359,35 @@ fn the_example_suite_shows_every_construct() {
         Vec::<&&str>::new(),
         "constructs the example suite does not show"
     );
+}
+
+// Rule 179: the other English words for a scenario, an outline and an
+// examples block are all in one feature, so the suite's other English
+// features read with only the usual ones.
+#[test]
+fn the_other_english_keywords_are_in_a_feature_of_their_own() {
+    let suite = repository().join("project-site/features");
+    let holding: Vec<_> = feature_files(&suite)
+        .into_iter()
+        .filter(|path| uses_other_words(&suite.join(path)))
+        .collect();
+    assert_eq!(holding, [PathBuf::from("other-gherkin-syntax.feature")]);
+}
+
+/// Whether the feature file at `path` writes a scenario as `Example`, an
+/// outline as `Scenario Template` or an examples block as `Scenarios`.
+fn uses_other_words(path: &Path) -> bool {
+    let source = read_to_string(path).unwrap();
+    let feature = Feature::parse(&source, GherkinEnv::default()).expect("parsed");
+    scenarios(&feature).any(is_written_in_other_words)
+}
+
+fn is_written_in_other_words(scenario: &Scenario) -> bool {
+    ["Example", "Scenario Template"].contains(&scenario.keyword.as_str())
+        || scenario
+            .examples
+            .iter()
+            .any(|examples| examples.keyword == "Scenarios")
 }
 
 // How a release adds to it: rules 180 and 181.

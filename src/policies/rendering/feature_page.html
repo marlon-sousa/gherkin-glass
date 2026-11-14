@@ -1,4 +1,7 @@
-<h1>{{ page.heading }}</h1>
+<h1>{{ page.heading.render()|safe }}</h1>
+{%- if let Some(note) = page.keyword_note %}
+{{ note.render()|safe }}
+{%- endif %}
 {%- if !page.tags.is_empty() %}
 {{ page.tags.render()|safe }}
 {%- endif %}
@@ -22,4 +25,11 @@
 {%- endif %}
 </div>
 {{ blocks|safe }}
+{%- endif %}
+{%- if let Some(dialog) = page.note_dialog %}
+<dialog id="ghg_note_dialog" class="ghg-dialog" tabindex="-1" aria-labelledby="ghg_note_dialog_title" aria-describedby="ghg_note_dialog_text">
+<h2 id="ghg_note_dialog_title" class="ghg-dialog-title">{{ dialog.title }}</h2>
+<p id="ghg_note_dialog_text">{{ dialog.text }}</p>
+<form method="dialog"><button>{{ dialog.close }}</button></form>
+</dialog>
 {%- endif %}

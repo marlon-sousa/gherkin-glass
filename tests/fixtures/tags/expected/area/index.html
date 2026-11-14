@@ -52,6 +52,7 @@
 }
 </style>
 <link rel="stylesheet" href="../assets/gherkin-glass.css">
+<link rel="icon" href="../assets/gherkin-glass.svg" type="image/svg+xml">
 <script type="module" src="../assets/gherkin-glass.js"></script>
 </head>
 <body>
@@ -63,7 +64,8 @@
 <script>if(location.protocol==="file:"){let d=document.getElementById("ghg_from_disk");d.showModal();d.focus()}</script>
 <a class="ghg-skip" href="#ghg_main">Skip to content</a>
 <div class="ghg-options">
-<input type="checkbox" id="ghg_show_tree" class="ghg-show-tree" aria-controls="ghg_tree" checked> <label for="ghg_show_tree">Show the folder tree</label>
+<span class="ghg-option ghg-tree-choice"><input type="checkbox" id="ghg_show_tree" class="ghg-show-tree" aria-controls="ghg_tree" checked> <label for="ghg_show_tree">Show the folder tree</label></span>
+<button type="button" class="ghg-tree-button" aria-expanded="false" aria-controls="ghg_tree">Folder tree</button>
 <fieldset class="ghg-theme">
 <legend>Theme</legend>
 <label><input type="radio" name="ghg-theme" value="system" checked> System</label>
@@ -89,17 +91,20 @@
 <h1>area</h1>
 <h2>Features</h2>
 <ul class="ghg-features">
-<li class="ghg-feature"><a href="notes.html" lang="en">Feature: Notes with no scenarios</a>
+<li class="ghg-feature"><a href="notes.html">Feature: <bdi lang="en">Notes with no scenarios</bdi></a>
 <span class="ghg-count">0 scenarios</span></li>
-<li class="ghg-feature"><a href="saque%20em%20conta.html" lang="pt">Funcionalidade: Saque em conta</a>
-<button type="button" class="ghg-toggle" aria-expanded="false" aria-label="1 scenario of Funcionalidade: Saque em conta">1 scenario</button>
-<div class="ghg-content" lang="pt" hidden>
+<li class="ghg-feature"><a href="saque%20em%20conta.html">Feature: <bdi lang="pt">Saque em conta</bdi></a>
+<button type="button" class="ghg-toggle" aria-expanded="false" aria-label="1 scenario of Feature: Saque em conta">1 scenario</button>
+<div class="ghg-content" hidden>
 <ul>
-<li><a href="saque%20em%20conta.html#saque-no-caixa">Cenário: Saque no caixa</a></li>
+<li><a href="saque%20em%20conta.html#saque-no-caixa">Scenario: <bdi lang="pt">Saque no caixa</bdi></a></li>
 </ul>
 </div></li>
 </ul>
 </main>
+<footer class="ghg-footer">
+<p>Built with <a href="https://github.com/marlon-sousa/gherkin-glass">gherkin-glass</a> {version}</p>
+</footer>
 </div>
 </div>
 </body>

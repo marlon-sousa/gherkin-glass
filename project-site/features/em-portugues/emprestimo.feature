@@ -12,7 +12,7 @@ Funcionalidade: Empréstimo de livros
     Então "Dom Casmurro" deve voltar em 21 dias
 
   Esquema do Cenário: Quanto tempo dura um empréstimo
-    Dado que o livro "<título>" está na estante
+    Dado que "<título>" está na estante
     Quando "Ana" leva "<título>"
     Então "<título>" deve voltar em <dias> dias
 

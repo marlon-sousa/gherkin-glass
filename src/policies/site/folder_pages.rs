@@ -95,17 +95,18 @@ fn file_name<'a>(feature: &SiteFeaturePage<'a>) -> &'a str {
 fn feature_entry(feature: &SiteFeaturePage<'_>) -> FeatureEntry {
     let page = feature.page();
     let count = feature.scenario_count();
+    let heading = page.heading_text();
     FeatureEntry {
         address: LinkAddress::to(page.address.file()),
         language: page.language.clone(),
-        heading: page.heading.clone(),
         scenarios: fl!(CATALOGUE, "scenario-count", count = count),
         label: fl!(
             CATALOGUE,
             "feature-scenarios",
             count = count,
-            feature = page.heading.as_str()
+            feature = heading.as_str()
         ),
+        heading: page.heading.clone(),
         contents: feature.contents(),
     }
 }
@@ -269,7 +270,8 @@ Feature: Counted
         let counted = &site[1].features[0];
         assert_eq!(counted.scenarios, "3 scenarios");
         assert_eq!(counted.label, "3 scenarios of Feature: Counted");
-        assert_eq!(counted.contents.len(), 4);
+        // The two scenarios outside every rule are in one entry, as the page groups them.
+        assert_eq!(counted.contents.len(), 3);
         let y = &home.features[0];
         assert_eq!((y.scenarios.as_str(), y.contents.len()), ("0 scenarios", 0));
     }

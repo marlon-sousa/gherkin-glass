@@ -28,7 +28,7 @@ pub(crate) use folders::*;
 pub(crate) use front_page_template::FrontPageTemplate;
 pub(crate) use heading_level::HeadingLevel;
 pub(crate) use link_address::{LinkAddress, percent_encoded};
-pub(crate) use page_frame::{DiskNoticeWords, PageFrame};
+pub(crate) use page_frame::{DiskNoticeWords, FooterWords, PageFrame};
 pub(crate) use page_options::PageOptions;
 pub(crate) use rendered_site::RenderedSite;
 pub(crate) use search::*;

@@ -52,6 +52,7 @@
 }
 </style>
 <link rel="stylesheet" href="../../assets/gherkin-glass.css">
+<link rel="icon" href="../../assets/gherkin-glass.svg" type="image/svg+xml">
 <script type="module" src="../../assets/gherkin-glass.js"></script>
 </head>
 <body>
@@ -63,7 +64,8 @@
 <script>if(location.protocol==="file:"){let d=document.getElementById("ghg_from_disk");d.showModal();d.focus()}</script>
 <a class="ghg-skip" href="#ghg_main">Skip to content</a>
 <div class="ghg-options">
-<input type="checkbox" id="ghg_show_tree" class="ghg-show-tree" aria-controls="ghg_tree" checked> <label for="ghg_show_tree">Show the folder tree</label>
+<span class="ghg-option ghg-tree-choice"><input type="checkbox" id="ghg_show_tree" class="ghg-show-tree" aria-controls="ghg_tree" checked> <label for="ghg_show_tree">Show the folder tree</label></span>
+<button type="button" class="ghg-tree-button" aria-expanded="false" aria-controls="ghg_tree">Folder tree</button>
 <fieldset class="ghg-theme">
 <legend>Theme</legend>
 <label><input type="radio" name="ghg-theme" value="system" checked> System</label>
@@ -79,7 +81,7 @@
 <li><a href="../../index.html">gherkin-glass examples</a></li>
 <li><a href="../index.html">catalogue</a></li>
 <li><a href="index.html">records</a></li>
-<li><a href="adding-a-book.html" aria-current="page">Feature: Adding a book to the catalogue</a></li>
+<li><a href="adding-a-book.html" aria-current="page">Feature: <bdi>Adding a book to the catalogue</bdi></a></li>
 </ol>
 </nav>
 <form class="ghg-search" role="search" data-root="../../" data-shown="50" data-loading="Loading search." data-failed="Search could not be loaded." data-none="No results." data-count="Results: {count}." data-count-limited="Results: {count}. The first 50 are listed." data-no-name="no name" data-feature="{name}, feature" data-rule="{name}, rule in {feature}" data-scenario="{name}, scenario in {feature}" data-scenario-in-rule="{name}, scenario in {rule}, {feature}" data-scenario-outline="{name}, scenario outline in {feature}" data-scenario-outline-in-rule="{name}, scenario outline in {rule}, {feature}">
@@ -88,7 +90,7 @@
 <ol class="ghg-search-results" hidden></ol>
 </form>
 <main id="ghg_main">
-<h1>Feature: Adding a book to the catalogue</h1>
+<h1>Feature: <bdi>Adding a book to the catalogue</bdi></h1>
 <ul class="ghg-tags">
 <li><a href="../../tags/catalogue.html">@catalogue</a></li>
 <li><a href="../../tags/staff.html">@staff</a></li>
@@ -98,9 +100,9 @@
 </div>
 <nav class="ghg-contents" aria-label="Contents">
 <ul>
-<li><a href="#adding-a-book-from-its-record">Scenario: Adding a book from its record</a></li>
-<li><a href="#a-record-in-the-librarys-own-format">Scenario: A record in the library&#39;s own format</a></li>
-<li><a href="#a-record-with-a-mistake-is-refused">Scenario: A record with a mistake is refused</a></li>
+<li><a href="#adding-a-book-from-its-record">Scenario: <bdi>Adding a book from its record</bdi></a></li>
+<li><a href="#a-record-in-the-librarys-own-format">Scenario: <bdi>A record in the library&#39;s own format</bdi></a></li>
+<li><a href="#a-record-with-a-mistake-is-refused">Scenario: <bdi>A record with a mistake is refused</bdi></a></li>
 </ul>
 </nav>
 <div class="ghg-controls">
@@ -108,7 +110,7 @@
 <button type="button" class="ghg-expand-all">Expand all</button>
 </div>
 <div class="ghg-block ghg-scenario">
-<h2 id="adding-a-book-from-its-record"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: Adding a book from its record</button></h2>
+<h2 id="adding-a-book-from-its-record"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: <bdi>Adding a book from its record</bdi></button></h2>
 <div class="ghg-content">
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span>a member of staff is signed in</li>
@@ -126,7 +128,7 @@
 </div>
 </div>
 <div class="ghg-block ghg-scenario">
-<h2 id="a-record-in-the-librarys-own-format"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: A record in the library&#39;s own format</button></h2>
+<h2 id="a-record-in-the-librarys-own-format"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: <bdi>A record in the library&#39;s own format</bdi></button></h2>
 <div class="ghg-content">
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span>a member of staff is signed in</li>
@@ -143,7 +145,7 @@ A line with three backticks: ```</pre>
 </div>
 </div>
 <div class="ghg-block ghg-scenario">
-<h2 id="a-record-with-a-mistake-is-refused"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: A record with a mistake is refused</button></h2>
+<h2 id="a-record-with-a-mistake-is-refused"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: <bdi>A record with a mistake is refused</bdi></button></h2>
 <div class="ghg-content">
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span>a member of staff is signed in</li>
@@ -157,6 +159,9 @@ A line with three backticks: ```</pre>
 </div>
 </div>
 </main>
+<footer class="ghg-footer">
+<p>Built with <a href="https://github.com/marlon-sousa/gherkin-glass">gherkin-glass</a> {version}</p>
+</footer>
 </div>
 </div>
 </body>

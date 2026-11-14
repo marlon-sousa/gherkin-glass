@@ -10,7 +10,20 @@ pub(crate) struct BlockHeading {
     /// scenarios an `id` of the page's own, with a `_`.
     pub(crate) anchor: String,
     pub(crate) parts: Vec<HeadingPart>,
+    /// The note, at the top of its content, of the keyword its file writes
+    /// when that is another word than its kind's.
+    pub(crate) keyword_note: Option<KeywordNote>,
     pub(crate) collapsed: bool,
+}
+
+/// The note at the top of a block whose file writes its kind with another
+/// keyword than its kind's word: the words before the button that explains
+/// it, the button's words, with the keyword isolated, and the words after.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct KeywordNote {
+    pub(crate) before: String,
+    pub(crate) opener: Vec<HeadingPart>,
+    pub(crate) after: String,
 }
 
 /// A part of a heading; feature text inside gherkin-glass's own words is
@@ -53,19 +66,49 @@ pub(crate) struct ScenarioBlock {
     pub(crate) name: String,
     pub(crate) tags: Vec<TagView>,
     pub(crate) description: Option<Paragraph>,
+    /// An outline's: the `id` of the line before its list of examples, which
+    /// says it runs once for each row, when one of them has a row.
+    pub(crate) runs_anchor: Option<String>,
 }
 
+/// An examples block, an item of its outline's list of examples, which is
+/// not a heading and starts collapsed.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct ExamplesBlock {
-    pub(crate) heading: BlockHeading,
+    /// The `id` of its item.
+    pub(crate) anchor: String,
+    /// The text of its button, worded as a heading, and saying so when it
+    /// has no row; the item's only text when it holds nothing else.
+    pub(crate) label: Vec<HeadingPart>,
+    /// The note of the keyword its file writes, when that is another word
+    /// than `Examples`.
+    pub(crate) keyword_note: Option<KeywordNote>,
     pub(crate) tags: Vec<TagView>,
     pub(crate) description: Option<Paragraph>,
     pub(crate) table: Option<TableView>,
 }
 
-impl BlockHeading {
-    /// The heading's text, without its markup.
-    pub(crate) fn text(&self) -> String {
-        self.parts.iter().map(|part| part.text.as_str()).collect()
+impl ExamplesBlock {
+    /// Whether it has no note of its keyword, no table, no tag and no
+    /// description, so that its item has nothing to show but its label.
+    pub(crate) fn holds_nothing(&self) -> bool {
+        self.keyword_note.is_none()
+            && self.table.is_none()
+            && self.tags.is_empty()
+            && self.description.is_none()
     }
+}
+
+/// `text` as the only part of a heading, gherkin-glass's own or a name not
+/// inside its words, not isolated.
+pub(crate) fn plain_parts(text: &str) -> Vec<HeadingPart> {
+    vec![HeadingPart {
+        text: text.to_string(),
+        isolated: false,
+    }]
+}
+
+/// The text of a heading's `parts`, without their markup.
+pub(crate) fn text_of(parts: &[HeadingPart]) -> String {
+    parts.iter().map(|part| part.text.as_str()).collect()
 }

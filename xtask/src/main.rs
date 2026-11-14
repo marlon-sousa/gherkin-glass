@@ -2,6 +2,7 @@
 
 mod checks;
 mod comment_ratio;
+mod expected_sites;
 
 use std::env::consts::EXE_SUFFIX;
 use std::env::{args, var_os};
@@ -11,6 +12,7 @@ use std::process::{Command, ExitCode};
 
 use checks::{CARGO_CHECKS, MINIMUM_RUST_TEST};
 use comment_ratio::Lines;
+use expected_sites::put_back_placeholder;
 
 const USAGE: &str = "\
 Usage: cargo xtask <command>
@@ -19,13 +21,15 @@ Commands:
   build: builds the pages' script from script/ into assets/gherkin-glass.js, writes the fixtures' and the example suite's expected sites again, then builds the release binary.
   check: runs every check a pull request runs: formatting, lints, the tests on both Rust versions, the documentation, the dependencies with cargo deny, the package, the script check and the browser check.
   check-script: type-checks and tests the script, and checks that assets/gherkin-glass.js is what it compiles to.
-  check-browser: builds ghg, installs the browser, and checks every fixture's site and the example suite's in it: accessibility, the keyboard, pages opened from disk, and the reload of ghg serve --watch.
+  check-browser: builds ghg, installs the browser, and checks every fixture's site and the example suite's in it: accessibility, the keyboard, pages opened from disk, the folder tree on a narrow window, the dialog of a keyword's note, and the reload of ghg serve --watch.
   comment-ratio [path ...]: counts the comment lines and the code lines of the given Rust and TypeScript files, or of every one git tracks, with the total last.";
 
 /// The browser checks, run with Node from the repository's root.
-const BROWSER_CHECKS: [&str; 3] = [
+const BROWSER_CHECKS: [&str; 5] = [
     "tests/browser/accessibility.mjs",
     "tests/browser/from_disk.mjs",
+    "tests/browser/narrow.mjs",
+    "tests/browser/note_dialog.mjs",
     "tests/browser/reload.mjs",
 ];
 
@@ -93,6 +97,9 @@ fn build() -> Result<(), String> {
         "--config",
         "project-site/ghg.toml",
     ])?;
+    let version = manifest_value("version")?;
+    put_back_placeholder(&root().join("tests/fixtures"), &version)?;
+    put_back_placeholder(&root().join("project-site/expected"), &version)?;
     cargo(&[
         "build",
         "--release",
@@ -257,14 +264,20 @@ fn run(command: &mut Command) -> Result<(), String> {
 
 /// `rust-version` of the crate's `Cargo.toml`.
 fn minimum_rust() -> Result<String, String> {
+    manifest_value("rust-version")
+}
+
+/// The first value of `key` in the crate's `Cargo.toml`, its package's.
+fn manifest_value(key: &str) -> Result<String, String> {
     let manifest = root().join("Cargo.toml");
     let text =
         read_to_string(&manifest).map_err(|error| format!("{}: {error}", manifest.display()))?;
+    let start = format!("{key} = \"");
     text.lines()
-        .find_map(|line| line.strip_prefix("rust-version = \""))
+        .find_map(|line| line.strip_prefix(start.as_str()))
         .and_then(|rest| rest.strip_suffix('"'))
         .map(str::to_string)
-        .ok_or_else(|| format!("{}: no rust-version", manifest.display()))
+        .ok_or_else(|| format!("{}: no {key}", manifest.display()))
 }
 
 /// Cargo's target folder, `CARGO_TARGET_DIR` when it is set, relative to the repository's root.

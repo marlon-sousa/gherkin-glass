@@ -4,7 +4,7 @@ use askama::Template;
 
 use super::breadcrumb::Place;
 use super::node_rendering::{Render, page};
-use super::page_frame::TreeLandmark;
+use super::page_frame::{PageFooter, TreeLandmark};
 use super::page_head::PageHead;
 use super::search_box::SearchBox;
 use crate::entities::{FrontPageTemplate, PageFrame};
@@ -16,6 +16,7 @@ pub(super) struct SitePieces<'a> {
     stylesheet: String,
     frame: String,
     tree: String,
+    footer: String,
 }
 
 /// What a page has of its own around its main content.
@@ -36,6 +37,7 @@ struct LayoutTemplate<'a> {
     breadcrumb: String,
     search: String,
     main: String,
+    footer: &'a str,
 }
 
 impl<'a> SitePieces<'a> {
@@ -47,6 +49,7 @@ impl<'a> SitePieces<'a> {
             stylesheet: frame.accents.render(),
             frame: frame.render(),
             tree: TreeLandmark { frame }.render(),
+            footer: PageFooter { frame }.render(),
         }
     }
 }
@@ -88,5 +91,6 @@ pub(super) fn whole_page(site: &SitePieces<'_>, around: &PageAround<'_>, main: S
         }
         .render(),
         main,
+        footer: &site.footer,
     })
 }

@@ -52,6 +52,7 @@
 }
 </style>
 <link rel="stylesheet" href="../assets/gherkin-glass.css">
+<link rel="icon" href="../assets/gherkin-glass.svg" type="image/svg+xml">
 <script type="module" src="../assets/gherkin-glass.js"></script>
 </head>
 <body>
@@ -63,7 +64,8 @@
 <script>if(location.protocol==="file:"){let d=document.getElementById("ghg_from_disk");d.showModal();d.focus()}</script>
 <a class="ghg-skip" href="#ghg_main">Skip to content</a>
 <div class="ghg-options">
-<input type="checkbox" id="ghg_show_tree" class="ghg-show-tree" aria-controls="ghg_tree" checked> <label for="ghg_show_tree">Show the folder tree</label>
+<span class="ghg-option ghg-tree-choice"><input type="checkbox" id="ghg_show_tree" class="ghg-show-tree" aria-controls="ghg_tree" checked> <label for="ghg_show_tree">Show the folder tree</label></span>
+<button type="button" class="ghg-tree-button" aria-expanded="false" aria-controls="ghg_tree">Folder tree</button>
 <fieldset class="ghg-theme">
 <legend>Theme</legend>
 <label><input type="radio" name="ghg-theme" value="system" checked> System</label>
@@ -89,10 +91,13 @@
 <h1>stories</h1>
 <h2>Features</h2>
 <ul class="ghg-features">
-<li class="ghg-feature"><a href="read.html" lang="en">Feature: A story without scenarios</a>
+<li class="ghg-feature"><a href="read.html">Feature: <bdi lang="en">A story without scenarios</bdi></a>
 <span class="ghg-count">0 scenarios</span></li>
 </ul>
 </main>
+<footer class="ghg-footer">
+<p>Built with <a href="https://github.com/marlon-sousa/gherkin-glass">gherkin-glass</a> {version}</p>
+</footer>
 </div>
 </div>
 </body>

@@ -31,6 +31,31 @@ var DomBackgrounds = class _DomBackgrounds {
   }
 };
 
+// src/adapters/dom_note_dialog.ts
+var DomNoteDialog = class _DomNoteDialog {
+  dialog;
+  openers;
+  constructor(dialog, openers) {
+    this.dialog = dialog;
+    this.openers = openers;
+  }
+  /** Null on a page without the dialog, where no block's file writes another keyword. */
+  static of(document2) {
+    const dialog = document2.querySelector("dialog#ghg_note_dialog");
+    return dialog ? new _DomNoteDialog(dialog, [...document2.querySelectorAll("button.ghg-note-opener")]) : null;
+  }
+  onOpen(handler) {
+    this.openers.forEach((button) => button.addEventListener("click", () => handler(button)));
+  }
+  open() {
+    this.dialog.showModal();
+    this.dialog.focus();
+  }
+  onClose(handler) {
+    this.dialog.addEventListener("close", handler);
+  }
+};
+
 // src/adapters/dom_page.ts
 var DomBlock = class {
   anchor;
@@ -57,21 +82,21 @@ var DomBlock = class {
 };
 var DomPage = class {
   found = [];
+  byElement = /* @__PURE__ */ new Map();
   document;
   constructor(document2) {
     this.document = document2;
-    const byElement = /* @__PURE__ */ new Map();
     for (const element of document2.querySelectorAll(".ghg-block")) {
-      const heading = element.querySelector(":scope > :is(h2, h3, h4, h5)");
-      const button = heading?.querySelector(":scope > button.ghg-toggle");
+      const heading = element.querySelector(":scope > :is(h2, h3, h4, h5)") ?? element;
+      const button = heading.querySelector(":scope > button.ghg-toggle");
       const content = element.querySelector(":scope > .ghg-content");
-      if (!heading || !button || !content) {
+      if (!button || !content) {
         continue;
       }
       const around = element.parentElement?.closest(".ghg-block");
-      const parent = around ? byElement.get(around) ?? null : null;
+      const parent = around ? this.byElement.get(around) ?? null : null;
       const block = new DomBlock(heading.id, button, content, parent, element);
-      byElement.set(element, block);
+      this.byElement.set(element, block);
       this.found.push(block);
     }
     for (const element of document2.querySelectorAll(".ghg-feature")) {
@@ -89,6 +114,14 @@ var DomPage = class {
   }
   target() {
     return anchorOf(this.document.location.hash);
+  }
+  holder(anchor) {
+    const named = this.found.find((block) => block.anchor === anchor);
+    if (named) {
+      return named;
+    }
+    const around = this.document.getElementById(anchor)?.closest(".ghg-block");
+    return around ? this.byElement.get(around) ?? null : null;
   }
   onToggle(handler) {
     for (const block of this.found) {
@@ -328,14 +361,29 @@ function rememberedShown(shown) {
 function rememberedExpanded(expanded) {
   return expanded ? EXPANDED : COLLAPSED;
 }
-function startShown(configured, kept, narrow) {
+function startChecked(configured, kept) {
   if (kept === SHOWN) {
     return true;
   }
   if (kept === HIDDEN) {
     return false;
   }
-  return configured && !narrow;
+  return configured;
+}
+function treeShown(narrow, checked, open) {
+  return narrow ? open : checked;
+}
+function focusHidden(place, narrow, shown) {
+  switch (place) {
+    case "tree":
+      return !shown;
+    case "checkbox":
+      return narrow;
+    case "button":
+      return !narrow;
+    case null:
+      return false;
+  }
 }
 function startExpanded(onPath, kept) {
   return onPath || kept === EXPANDED;
@@ -375,7 +423,7 @@ function isItem(data) {
     return false;
   }
   const item = data;
-  return typeof item["text"] === "string" && typeof item["address"] === "string" && (item["lang"] === void 0 || typeof item["lang"] === "string") && (item["items"] === void 0 || isItems(item["items"]));
+  return (typeof item["text"] === "string" || Array.isArray(item["text"]) && item["text"].every((run) => typeof run === "string")) && typeof item["address"] === "string" && (item["lang"] === void 0 || typeof item["lang"] === "string") && (item["items"] === void 0 || isItems(item["items"]));
 }
 function decoded(path) {
   try {
@@ -386,35 +434,6 @@ function decoded(path) {
 }
 
 // src/adapters/dom_tree.ts
-var DomTreeSwitch = class {
-  checkbox;
-  landmark;
-  constructor(document2) {
-    this.checkbox = document2.querySelector("input.ghg-show-tree");
-    this.landmark = document2.querySelector("nav.ghg-tree");
-  }
-  configured() {
-    return this.checkbox?.checked ?? false;
-  }
-  setShown(shown) {
-    if (this.checkbox) {
-      this.checkbox.checked = shown;
-    }
-    if (this.landmark) {
-      this.landmark.hidden = !shown;
-    }
-  }
-  disable() {
-    this.setShown(false);
-    if (this.checkbox) {
-      this.checkbox.disabled = true;
-    }
-  }
-  onChange(handler) {
-    const checkbox = this.checkbox;
-    checkbox?.addEventListener("change", () => handler(checkbox.checked));
-  }
-};
 var DomTree = class {
   document;
   landmark;
@@ -449,13 +468,12 @@ var DomTree = class {
   onToggle(handler) {
     this.handler = handler;
   }
-  add(list, items, parent, current, expanded) {
+  /** `lang` is the feature's that holds `items`, if one does. */
+  add(list, items, parent, current, expanded, lang) {
     for (const item of items) {
+      const itemLang = item.lang ?? lang;
       const entry = this.document.createElement("li");
       entry.setAttribute("role", "none");
-      if (item.lang !== void 0) {
-        entry.lang = item.lang;
-      }
       const link = this.document.createElement("a");
       link.setAttribute("role", "treeitem");
       link.href = typeof this.root === "string" ? this.root + item.address : new URL(item.address, this.root).href;
@@ -473,10 +491,10 @@ var DomTree = class {
         group = this.document.createElement("ul");
         group.setAttribute("role", "group");
         group.id = `ghg_tree_${this.nodes.length}`;
-        group.setAttribute("aria-label", item.text);
+        group.setAttribute("aria-label", textOf(item));
         link.setAttribute("aria-owns", group.id);
       }
-      link.append(item.text);
+      link.append(...this.words(item, itemLang));
       entry.append(link);
       const node = { link, address: item.address, group, parent };
       this.nodes.push(node);
@@ -490,10 +508,30 @@ var DomTree = class {
           this.focus(node);
           this.toggle(node, !this.isExpanded(node));
         });
-        this.add(group, inner, node, current, expanded);
+        this.add(group, inner, node, current, expanded, itemLang);
       }
       list.append(entry);
     }
+  }
+  /**
+   * The item's words, each run of feature text isolated in a `bdi` with its
+   * feature's `lang`, so that the tree's own words are read in the page's.
+   */
+  words(item, lang) {
+    if (typeof item.text === "string") {
+      return [item.text];
+    }
+    return item.text.map((run, place) => {
+      if (place % 2 === 0) {
+        return run;
+      }
+      const isolated = this.document.createElement("bdi");
+      isolated.append(run);
+      if (lang !== void 0) {
+        isolated.lang = lang;
+      }
+      return isolated;
+    });
   }
   isExpanded(node) {
     return node.link.getAttribute("aria-expanded") === "true";
@@ -594,6 +632,96 @@ var DomTree = class {
     event.stopPropagation();
   }
 };
+function textOf(item) {
+  return typeof item.text === "string" ? item.text : item.text.join("");
+}
+
+// src/adapters/dom_tree_switch.ts
+var DomTreeSwitch = class {
+  checkbox;
+  button;
+  landmark;
+  /**
+   * The control the stylesheet hid with the focus on it, which the browser
+   * then dropped to the body, often before the resize is reported.
+   */
+  dropped = null;
+  constructor(document2) {
+    this.checkbox = document2.querySelector("input.ghg-show-tree");
+    this.button = document2.querySelector("button.ghg-tree-button");
+    this.landmark = document2.querySelector("nav.ghg-tree");
+    this.keepDropped(this.checkbox, "checkbox");
+    this.keepDropped(this.button, "button");
+    document2.addEventListener("focusin", () => {
+      this.dropped = null;
+    });
+  }
+  configured() {
+    return this.checkbox?.checked ?? false;
+  }
+  setChecked(checked) {
+    if (this.checkbox) {
+      this.checkbox.checked = checked;
+    }
+  }
+  setOpen(open) {
+    this.button?.setAttribute("aria-expanded", String(open));
+  }
+  setShown(shown) {
+    if (this.landmark) {
+      this.landmark.hidden = !shown;
+    }
+  }
+  disable() {
+    if (this.checkbox) {
+      this.checkbox.disabled = true;
+    }
+    if (this.button) {
+      this.button.disabled = true;
+    }
+  }
+  onChange(handler) {
+    const checkbox = this.checkbox;
+    checkbox?.addEventListener("change", () => handler(checkbox.checked));
+  }
+  onPress(handler) {
+    this.button?.addEventListener("click", () => handler());
+  }
+  onEscape(handler) {
+    this.landmark?.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        handler();
+      }
+    });
+  }
+  focus() {
+    const active = this.landmark?.ownerDocument.activeElement ?? null;
+    if (active === null || active === active.ownerDocument.body) {
+      return this.dropped;
+    }
+    if (this.landmark?.contains(active)) {
+      return "tree";
+    }
+    if (active === this.checkbox) {
+      return "checkbox";
+    }
+    return active === this.button ? "button" : null;
+  }
+  focusButton() {
+    this.button?.focus();
+  }
+  focusCheckbox() {
+    this.checkbox?.focus();
+  }
+  /** A blur to nowhere of a control no longer shown is one a resize hid; a click elsewhere leaves it shown. */
+  keepDropped(control, place) {
+    control?.addEventListener("blur", (event) => {
+      if (event.relatedTarget === null && !control.checkVisibility()) {
+        this.dropped = place;
+      }
+    });
+  }
+};
 
 // src/adapters/fetched_documents.ts
 var FetchedDocuments = class {
@@ -647,6 +775,20 @@ var LocalMemory = class {
       window.localStorage.setItem(key, value);
     } catch {
     }
+  }
+};
+
+// src/adapters/media_width.ts
+var MediaWidth = class {
+  query;
+  constructor(query) {
+    this.query = query;
+  }
+  narrow() {
+    return this.query.matches;
+  }
+  onChange(handler) {
+    this.query.addEventListener("change", (event) => handler(event.matches));
   }
 };
 
@@ -742,7 +884,7 @@ function startCollapsing(page2, memory2, pagePath, option) {
     }
   };
   const reveal = (anchor) => {
-    let block = blocks.find((found) => found.anchor === anchor) ?? null;
+    let block = page2.holder(anchor);
     while (block !== null) {
       if (!block.isExpanded()) {
         set(block, true);
@@ -778,21 +920,69 @@ function startCollapsing(page2, memory2, pagePath, option) {
 }
 
 // src/services/folder_tree.ts
-async function startFolderTree(source, toggle, view, memory2, place) {
-  const shown = startShown(toggle.configured(), memory2.get(shownKey(place.sitePath)), place.narrow);
-  toggle.setShown(shown);
+async function startFolderTree(source, toggle, view, width, memory2, place) {
+  let checked = startChecked(toggle.configured(), memory2.get(shownKey(place.sitePath)));
+  let open = false;
+  let narrow = width.narrow();
+  let usable = true;
+  const show = () => {
+    toggle.setChecked(usable && checked);
+    toggle.setOpen(usable && open);
+    toggle.setShown(usable && treeShown(narrow, checked, open));
+  };
+  show();
   toggle.onChange((chosen) => {
-    toggle.setShown(chosen);
+    checked = chosen;
     memory2.set(shownKey(place.sitePath), rememberedShown(chosen));
+    show();
+  });
+  toggle.onPress(() => {
+    open = !open;
+    show();
+  });
+  toggle.onEscape(() => {
+    if (narrow && open) {
+      open = false;
+      show();
+      toggle.focusButton();
+    }
+  });
+  width.onChange((now) => {
+    const focus = toggle.focus();
+    narrow = now;
+    open = false;
+    show();
+    if (focusHidden(focus, narrow, treeShown(narrow, checked, open))) {
+      if (narrow) {
+        toggle.focusButton();
+      } else {
+        toggle.focusCheckbox();
+      }
+    }
   });
   const items = await source.load();
   if (items === null) {
+    usable = false;
     toggle.disable();
+    show();
     return;
   }
   const path = place.page === null ? [] : pathTo(items, place.page);
   view.build(items, path[0] ?? null, (address2) => startExpanded(path.includes(address2), memory2.get(itemKey(place.sitePath, address2))));
   view.onToggle((address2, expanded) => memory2.set(itemKey(place.sitePath, address2), rememberedExpanded(expanded)));
+}
+
+// src/services/note_explaining.ts
+function startNoteExplaining(dialog) {
+  let opener = null;
+  dialog.onOpen((pressed) => {
+    opener = pressed;
+    dialog.open();
+  });
+  dialog.onClose(() => {
+    opener?.focus();
+    opener = null;
+  });
 }
 
 // node_modules/minisearch/dist/es/index.js
@@ -2772,14 +2962,21 @@ startCollapsing(
   document.location.pathname,
   backgrounds === null ? null : { backgrounds, siteRoot: siteRoot(import.meta.url) }
 );
+var noteDialog = DomNoteDialog.of(document);
+if (noteDialog !== null) {
+  startNoteExplaining(noteDialog);
+}
 var site = new URL("../", import.meta.url);
 var sitePath = site.pathname;
 var page = pageAddress(sitePath, document.location.pathname);
-void startFolderTree(new FetchedTree(new URL("tree.json", import.meta.url)), new DomTreeSwitch(document), new DomTree(document, site, page), memory, {
-  sitePath,
-  page,
-  narrow: window.matchMedia(NARROW).matches
-});
+void startFolderTree(
+  new FetchedTree(new URL("tree.json", import.meta.url)),
+  new DomTreeSwitch(document),
+  new DomTree(document, site, page),
+  new MediaWidth(window.matchMedia(NARROW)),
+  memory,
+  { sitePath, page }
+);
 var searchBox = DomSearchBox.find(document);
 if (searchBox !== null) {
   startSearching(searchBox, new FetchedDocuments(new URL("search.json", import.meta.url)), new WindowTimer());

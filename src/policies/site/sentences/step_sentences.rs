@@ -37,7 +37,7 @@ pub(crate) fn find_step_sentences(pages: &[SiteFeaturePage<'_>]) -> StepSentence
                         page: page.address.clone(),
                         language: page.language.clone(),
                         anchor: heading.anchor.clone(),
-                        heading: heading.text(),
+                        heading: heading.parts.clone(),
                         line: step.line,
                         values,
                     });
@@ -85,10 +85,11 @@ fn blocks_of<'a>(page: &SiteFeaturePage<'a>) -> Vec<FoundBlock<'a>> {
         .collect()
 }
 
-/// `block`'s own blocks when it is a rule, or else `block` itself.
+/// `block`'s own blocks when it is a rule or the block of the scenarios outside every rule, or
+/// else `block` itself.
 fn with_rule_blocks(block: SiteTreeNode<'_>) -> Vec<SiteTreeNode<'_>> {
     match block.value() {
-        SiteNode::Rule(_) => block.children().collect(),
+        SiteNode::Rule(_) | SiteNode::OutsideRules(_) => block.children().collect(),
         _ => vec![block],
     }
 }

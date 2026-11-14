@@ -2,6 +2,7 @@
   "files": [
     "assets/gherkin-glass.css",
     "assets/gherkin-glass.js",
+    "assets/gherkin-glass.svg",
     "assets/search.json",
     "assets/tree.json",
     "billing/archive/closed #1.html",
@@ -10,6 +11,7 @@
     "billing/refunds.html",
     "emoji.html",
     "index.html",
+    "kinds.html",
     "outlines.html",
     "reports/index.html",
     "reports/monthly/index.html",

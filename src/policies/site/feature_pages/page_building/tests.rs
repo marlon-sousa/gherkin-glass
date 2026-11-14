@@ -6,7 +6,7 @@ use gherkin::{Feature, GherkinEnv};
 use super::*;
 use crate::entities::{
     BackgroundContent, LinkAddress, OutsideLink, ParsedFeature, RuleContent, ScenarioContent,
-    StepPart, TableView, TagView,
+    StepPart, TableView, TagView, text_of,
 };
 use crate::policies::site::name_tags;
 use crate::test_support::{revised, tag_link};
@@ -135,7 +135,7 @@ fn every_tag_links_its_page_and_the_first_outside_link_that_matches() {
         .flatten()
         .collect();
     assert_eq!(views.len(), 1);
-    let examples = &in_rule(rule).1.examples[0];
+    let examples = &in_rule(rule).1.examples[0].block;
     let tag = &examples.tags[0];
     assert_eq!(tag.address.to_string(), "../tags/in-rule.html");
     assert_eq!(

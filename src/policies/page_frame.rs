@@ -2,12 +2,15 @@
 
 use i18n_embed_fl::fl;
 
-use crate::entities::{BreadcrumbWords, DiskNoticeWords, PageFrame, PageOptions};
+use crate::entities::{BreadcrumbWords, DiskNoticeWords, FooterWords, PageFrame, PageOptions};
 use crate::policies::{CATALOGUE, site_title};
 
 mod search_wording;
 
 use search_wording::search_words;
+
+/// What the footer's words hold in the place of the link to gherkin-glass's repository, which splits them around it.
+const LINK_MARK: &str = "\u{0}";
 
 pub(crate) fn page_frame(options: &PageOptions) -> PageFrame {
     PageFrame {
@@ -30,6 +33,22 @@ pub(crate) fn page_frame(options: &PageOptions) -> PageFrame {
             label: fl!(CATALOGUE, "breadcrumb"),
             home: site_title(options),
         },
+        footer: footer_words(),
+    }
+}
+
+/// The footer's words, with the version of this ghg.
+fn footer_words() -> FooterWords {
+    let words = fl!(
+        CATALOGUE,
+        "built-with",
+        name = LINK_MARK,
+        version = env!("CARGO_PKG_VERSION")
+    );
+    let (before, after) = words.split_once(LINK_MARK).unwrap_or((&words, ""));
+    FooterWords {
+        before: before.to_string(),
+        after: after.to_string(),
     }
 }
 
@@ -46,6 +65,13 @@ mod tests {
         };
         assert!(!page_frame(&hidden).tree_shown);
         assert_eq!(page_frame(&hidden).skip_link, "Skip to content");
+    }
+
+    #[test]
+    fn the_footer_names_gherkin_glass_around_its_link_with_this_version() {
+        let footer = page_frame(&PageOptions::default()).footer;
+        assert_eq!(footer.before, "Built with ");
+        assert_eq!(footer.after, format!(" {}", env!("CARGO_PKG_VERSION")));
     }
 
     #[test]

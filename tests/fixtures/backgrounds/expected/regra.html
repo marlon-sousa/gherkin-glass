@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Funcionalidade: Só a regra tem contexto, regra.feature</title>
+<title>Feature: Só a regra tem contexto, regra.feature</title>
 <script>try{var t=localStorage.getItem("gherkin-glass:theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}</script>
 <style>
 :root,
@@ -52,6 +52,7 @@
 }
 </style>
 <link rel="stylesheet" href="assets/gherkin-glass.css">
+<link rel="icon" href="assets/gherkin-glass.svg" type="image/svg+xml">
 <script type="module" src="assets/gherkin-glass.js"></script>
 </head>
 <body>
@@ -63,7 +64,8 @@
 <script>if(location.protocol==="file:"){let d=document.getElementById("ghg_from_disk");d.showModal();d.focus()}</script>
 <a class="ghg-skip" href="#ghg_main">Skip to content</a>
 <div class="ghg-options">
-<input type="checkbox" id="ghg_show_tree" class="ghg-show-tree" aria-controls="ghg_tree" checked> <label for="ghg_show_tree">Show the folder tree</label>
+<span class="ghg-option ghg-tree-choice"><input type="checkbox" id="ghg_show_tree" class="ghg-show-tree" aria-controls="ghg_tree" checked> <label for="ghg_show_tree">Show the folder tree</label></span>
+<button type="button" class="ghg-tree-button" aria-expanded="false" aria-controls="ghg_tree">Folder tree</button>
 <fieldset class="ghg-theme">
 <legend>Theme</legend>
 <label><input type="radio" name="ghg-theme" value="system" checked> System</label>
@@ -77,7 +79,7 @@
 <nav class="ghg-breadcrumb" aria-label="Breadcrumb">
 <ol>
 <li><a href="index.html">Backgrounds</a></li>
-<li><a href="regra.html" aria-current="page">Funcionalidade: Só a regra tem contexto</a></li>
+<li><a href="regra.html" aria-current="page">Feature: <bdi>Só a regra tem contexto</bdi></a></li>
 </ol>
 </nav>
 <form class="ghg-search" role="search" data-root="" data-shown="50" data-loading="Loading search." data-failed="Search could not be loaded." data-none="No results." data-count="Results: {count}." data-count-limited="Results: {count}. The first 50 are listed." data-no-name="no name" data-feature="{name}, feature" data-rule="{name}, rule in {feature}" data-scenario="{name}, scenario in {feature}" data-scenario-in-rule="{name}, scenario in {rule}, {feature}" data-scenario-outline="{name}, scenario outline in {feature}" data-scenario-outline-in-rule="{name}, scenario outline in {rule}, {feature}">
@@ -86,13 +88,17 @@
 <ol class="ghg-search-results" hidden></ol>
 </form>
 <main id="ghg_main">
-<h1>Funcionalidade: Só a regra tem contexto</h1>
+<h1>Feature: <bdi>Só a regra tem contexto</bdi></h1>
+<p class="ghg-keyword-note" role="note">Note: in the Gherkin feature file, this feature is <button type="button" class="ghg-note-opener" aria-haspopup="dialog" aria-controls="ghg_note_dialog">defined with the keyword &#34;<bdi>Funcionalidade</bdi>&#34;.</button></p>
 <nav class="ghg-contents" aria-label="Contents">
 <ul>
-<li><a href="#fora-da-regra">Cenário: Fora da regra</a></li>
-<li><a href="#com-contexto">Regra: Com contexto</a>
+<li><a href="#outside_rules">Outside any rule</a>
 <ul>
-<li><a href="#dentro-da-regra">Cenário: Dentro da regra</a></li>
+<li><a href="#fora-da-regra">Scenario: <bdi>Fora da regra</bdi></a></li>
+</ul></li>
+<li><a href="#com-contexto">Rule: <bdi>Com contexto</bdi></a>
+<ul>
+<li><a href="#dentro-da-regra">Scenario: <bdi>Dentro da regra</bdi></a></li>
 </ul></li>
 </ul>
 </nav>
@@ -101,28 +107,37 @@
 <button type="button" class="ghg-expand-all">Expand all</button>
 <label class="ghg-option"><input type="checkbox" class="ghg-inline-backgrounds" autocomplete="off" checked> Show backgrounds inside each scenario</label>
 </div>
-<div class="ghg-block ghg-scenario">
-<h2 id="fora-da-regra"><button type="button" class="ghg-toggle" aria-expanded="true">Cenário: Fora da regra</button></h2>
+<div class="ghg-block ghg-outside-rules">
+<h2 id="outside_rules"><button type="button" class="ghg-toggle" aria-expanded="true">Outside any rule</button></h2>
 <div class="ghg-content">
+<div class="ghg-block ghg-scenario">
+<h3 id="fora-da-regra"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: <bdi>Fora da regra</bdi></button></h3>
+<div class="ghg-content">
+<p class="ghg-keyword-note" role="note">Note: in the Gherkin feature file, this scenario is <button type="button" class="ghg-note-opener" aria-haspopup="dialog" aria-controls="ghg_note_dialog">defined with the keyword &#34;<bdi>Cenário</bdi>&#34;.</button></p>
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">Então </span>nada muda</li>
 </ol>
 </div>
 </div>
+</div>
+</div>
 <div class="ghg-block ghg-rule">
-<h2 id="com-contexto"><button type="button" class="ghg-toggle" aria-expanded="true">Regra: Com contexto</button></h2>
+<h2 id="com-contexto"><button type="button" class="ghg-toggle" aria-expanded="true">Rule: <bdi>Com contexto</bdi></button></h2>
 <div class="ghg-content">
+<p class="ghg-keyword-note" role="note">Note: in the Gherkin feature file, this rule is <button type="button" class="ghg-note-opener" aria-haspopup="dialog" aria-controls="ghg_note_dialog">defined with the keyword &#34;<bdi>Regra</bdi>&#34;.</button></p>
 <div class="ghg-block ghg-background" data-expanded-when-unchecked="true">
-<h3 id="contexto"><button type="button" class="ghg-toggle" aria-expanded="false">Contexto</button></h3>
+<h3 id="contexto"><button type="button" class="ghg-toggle" aria-expanded="false">Background</button></h3>
 <div class="ghg-content" hidden>
+<p class="ghg-keyword-note" role="note">Note: in the Gherkin feature file, this background is <button type="button" class="ghg-note-opener" aria-haspopup="dialog" aria-controls="ghg_note_dialog">defined with the keyword &#34;<bdi>Contexto</bdi>&#34;.</button></p>
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">Dado </span>um cliente</li>
 </ol>
 </div>
 </div>
 <div class="ghg-block ghg-scenario">
-<h3 id="dentro-da-regra"><button type="button" class="ghg-toggle" aria-expanded="true">Cenário: Dentro da regra</button></h3>
+<h3 id="dentro-da-regra"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: <bdi>Dentro da regra</bdi></button></h3>
 <div class="ghg-content">
+<p class="ghg-keyword-note" role="note">Note: in the Gherkin feature file, this scenario is <button type="button" class="ghg-note-opener" aria-haspopup="dialog" aria-controls="ghg_note_dialog">defined with the keyword &#34;<bdi>Cenário</bdi>&#34;.</button></p>
 <div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
 <h4 id="dentro-da-regra_background_1"><button type="button" class="ghg-toggle" aria-expanded="true">From the rule&#39;s background</button></h4>
 <div class="ghg-content">
@@ -139,7 +154,15 @@
 </div>
 </div>
 </div>
+<dialog id="ghg_note_dialog" class="ghg-dialog" tabindex="-1" aria-labelledby="ghg_note_dialog_title" aria-describedby="ghg_note_dialog_text">
+<h2 id="ghg_note_dialog_title" class="ghg-dialog-title">About this note</h2>
+<p id="ghg_note_dialog_text">Gherkin lets authors use different words for the same kind of block. For example, Scenario and Example both define a scenario, and Examples and Scenarios both define examples. This site names every block by its kind, so pages read the same whichever word was used. The note only tells you which word the feature file uses; it changes nothing about the block.</p>
+<form method="dialog"><button>Got it</button></form>
+</dialog>
 </main>
+<footer class="ghg-footer">
+<p>Built with <a href="https://github.com/marlon-sousa/gherkin-glass">gherkin-glass</a> {version}</p>
+</footer>
 </div>
 </div>
 </body>
