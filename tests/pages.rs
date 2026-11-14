@@ -13,12 +13,17 @@
 )]
 
 use std::collections::BTreeMap;
-use std::fs::{create_dir_all, read, read_dir, remove_dir_all, write};
+use std::fs::{create_dir_all, read, read_dir, read_to_string, remove_dir_all, write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 use std::str::from_utf8;
 
 use rstest::rstest;
+
+#[path = "support/version_placeholder.rs"]
+mod version_placeholder;
+
+use version_placeholder::with_version_placeholder;
 
 fn fixtures() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures")
@@ -45,7 +50,11 @@ fn files(folder: &Path) -> BTreeMap<String, Vec<u8>> {
             if entry.path().is_dir() {
                 folders.push((entry.path(), format!("{name}/")));
             } else {
-                found.insert(name, read(entry.path()).expect("the file is read"));
+                let file = read(entry.path()).expect("the file is read");
+                found.insert(
+                    name,
+                    with_version_placeholder(file, env!("CARGO_PKG_VERSION")),
+                );
             }
         }
     }
@@ -280,6 +289,54 @@ fn the_assets_are_the_ones_built_into_ghg() {
     // Rule 147: so are the search documents.
     assert!(built.remove("search.json").is_some());
     assert_eq!(built, files(&repository));
+}
+
+// Rules 39 and 194: every page links the icon, by a relative address, and ends
+// with the footer, right after its `main`.
+
+#[test]
+fn every_page_links_the_icon_and_ends_with_the_footer() {
+    for (name, page) in files(&fixtures().join("pages/expected")) {
+        if !name.ends_with(".html") {
+            continue;
+        }
+        let page = String::from_utf8(page).expect("UTF-8");
+        let root = "../".repeat(name.matches('/').count());
+        assert!(
+            page.contains(&format!(
+                "<link rel=\"icon\" href=\"{root}assets/gherkin-glass.svg\" type=\"image/svg+xml\">"
+            )),
+            "{name}"
+        );
+        assert!(
+            page.contains(
+                "</main>\n<footer class=\"ghg-footer\">\n<p>Built with \
+                 <a href=\"https://github.com/marlon-sousa/gherkin-glass\">gherkin-glass</a> {version}</p>\n\
+                 </footer>\n</div>\n</div>\n</body>"
+            ),
+            "{name}"
+        );
+    }
+}
+
+// Rule 195: the footer of a page ghg builds names the crate's own version,
+// which the committed pages hold as the placeholder.
+
+#[test]
+fn the_footer_names_the_version_of_the_ghg_that_wrote_the_page() {
+    let written = output("footer-version");
+    let result = build(
+        &fixtures().join("pages"),
+        &["--output", written.to_str().expect("UTF-8")],
+    );
+    assert_eq!(result.status.code(), Some(0));
+    let page = read_to_string(written.join("index.html")).expect("the page is written");
+    let version = env!("CARGO_PKG_VERSION");
+    assert!(
+        page.contains(&format!("gherkin-glass</a> {version}</p>\n</footer>")),
+        "{page}"
+    );
+    assert!(!page.contains("{version}"), "{page}");
 }
 
 #[test]

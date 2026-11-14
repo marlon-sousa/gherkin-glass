@@ -259,6 +259,11 @@ skip-to-content = Skip to content
 show-folder-tree = Show the folder tree
 folder-tree = Folder tree
 
+## After every page's content: what built it. $name is gherkin-glass, a link
+## to its repository, and $version the version of ghg, such as 0.1.0-alpha.2.
+
+built-with = Built with { $name } { $version }
+
 ## The heading of each background a scenario holds, the heading of the
 ## scenario's own steps after them, and the checkbox that chooses whether
 ## those or the backgrounds in their own place are expanded.

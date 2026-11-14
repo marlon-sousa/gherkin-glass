@@ -1,4 +1,4 @@
-//! Policy: a page's head, with its title, the themes' stylesheet and the links back to the shared assets.
+//! Policy: a page's head, with its title, the themes' stylesheet and the links back to the shared assets: the stylesheet, the icon and the script.
 
 use askama::Template;
 

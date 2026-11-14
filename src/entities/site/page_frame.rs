@@ -1,4 +1,4 @@
-//! Entity: what every page has around its content, a feature's or a folder's: the dialog opened when it is opened from disk, the skip link, the folder tree's checkbox and the tree's landmark, the Theme control, the search box, the words every breadcrumb has, and the themes' colours.
+//! Entity: what every page has around its content, a feature's or a folder's: the dialog opened when it is opened from disk, the skip link, the folder tree's checkbox and the tree's landmark, the Theme control, the search box, the words every breadcrumb has, the footer, and the themes' colours.
 
 use crate::entities::{Accents, BreadcrumbWords, SearchWords};
 
@@ -10,6 +10,13 @@ pub(crate) struct DiskNoticeWords {
     pub(crate) text: String,
     /// Its one button, which closes it.
     pub(crate) agree: String,
+}
+
+/// The footer's words, before and after the link to gherkin-glass's repository, the version of ghg among them.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct FooterWords {
+    pub(crate) before: String,
+    pub(crate) after: String,
 }
 
 /// Every `String` is text, escaped when it is rendered.
@@ -30,4 +37,5 @@ pub(crate) struct PageFrame {
     pub(crate) accents: Accents,
     pub(crate) search: SearchWords,
     pub(crate) breadcrumb: BreadcrumbWords,
+    pub(crate) footer: FooterWords,
 }
