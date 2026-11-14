@@ -184,27 +184,35 @@ fn the_changes_end_once_ghg_serve_is_asked_to_stop_or_the_watching_ends(#[case] 
     assert_eq!(changes.next(), None);
 }
 
-#[rstest]
-// Rule 199: a change that comes during the same wait as a request to stop starts no rebuild.
-#[case::with_the_change(false)]
-// Rule 200: nor does one waiting once asked to stop, as during a rebuild.
-#[case::before_the_wait(true)]
-fn a_change_once_asked_to_stop_is_left(#[case] asked_before: bool) {
+#[test]
+fn a_change_that_comes_with_a_request_to_stop_is_left() {
+    // Rule 199: a change that comes during the same wait as a request to stop starts no rebuild.
     let fakes = Fakes::default();
     let server = fakes.service();
     server.listen_for_stops().expect("listening");
     let mut changes = watch_the_input(&server).expect("watching");
     fakes.watcher.tell(changed("features/a.feature"));
-    if asked_before {
-        fakes.signals.ask_to_stop();
-    } else {
-        fakes
-            .waiter
-            .asking_while_waiting
-            .store(true, Ordering::SeqCst);
-    }
+    fakes
+        .waiter
+        .asking_while_waiting
+        .store(true, Ordering::SeqCst);
     assert_eq!(changes.next(), None);
     assert!(server.asked_to_stop());
+}
+
+#[test]
+fn once_asked_to_stop_no_change_is_waited_for() {
+    // Rule 200: a request to stop that came during a rebuild ends the watch, not another
+    // rebuild, without waiting, since the request seen is no longer there to end a wait.
+    let fakes = Fakes::default();
+    let server = fakes.service();
+    server.listen_for_stops().expect("listening");
+    let change = ChangeOrStop::Changed(vec![changed("features/a.feature")]);
+    fakes.script([change.clone()]);
+    let mut changes = watch_the_input(&server).expect("watching");
+    fakes.signals.ask_to_stop();
+    assert_eq!(changes.next(), None);
+    assert_eq!(*lock(&fakes.waiter.script), [change]);
 }
 
 #[rstest]
