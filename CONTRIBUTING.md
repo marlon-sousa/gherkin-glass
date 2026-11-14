@@ -80,6 +80,8 @@ Every pull request runs:
 
 AGENTS.md, "Building and testing", gives the command of each, and `cargo xtask check` runs them all.
 
+Every push to a pull request, a force push included, runs them all. Editing its description, such as ticking a checkbox, runs again only the first two items, the checks of `.github/workflows/pull-request.yml` ([#123](https://github.com/marlon-sousa/gherkin-glass/issues/123)).
+
 Every action a workflow uses is pinned to a commit, with its version in a comment beside it. Each week, `.github/workflows/weekly.yml` runs the tests on Rust beta, so that a change in the next Rust that breaks gherkin-glass is known before it is released.
 
 ## Releases

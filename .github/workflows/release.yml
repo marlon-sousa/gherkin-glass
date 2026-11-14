@@ -13,7 +13,8 @@ on:
   push:
     tags: ["v*"]
   pull_request:
-    types: [opened, synchronize, reopened, edited]
+    # Not on "edited", as rust.yml says (#123).
+    types: [opened, synchronize, reopened]
     paths:
       - .github/workflows/release.yml
       - .github/release/**
