@@ -1,4 +1,4 @@
-//! Controller: ghg serve's watch, rebuilding from the last build for the paths that changed, and from nothing, watching again on the input the settings name, when everything changed or the settings differ.
+//! Controller: ghg serve's watch, rebuilding from the last build for the paths that changed, and from nothing, watching again on the input the settings name, when everything changed or the settings differ, until ghg serve is asked to stop.
 
 use std::iter::once;
 use std::path::PathBuf;
@@ -7,41 +7,44 @@ use super::building::{BuildOutcome, Built, Stopped};
 use super::{SiteController, SiteListener};
 use crate::entities::{
     BuildOptions, BuildSnapshot, BuildStart, Destination, InputChanges, Preview, Settings,
+    StopRequests,
 };
 use crate::errors::{BuildError, RebuildError, ServeError, WatchError};
 use crate::services::WatchedChanges;
 
 /// What ghg serve watches with: the controller, the options it was started with, the
-/// configuration file they name, the site it serves and the listener it tells.
+/// configuration file they name, the site it serves, the listener it tells and the requests to
+/// stop that end the watching.
 pub(super) struct Watching<'a> {
     pub(super) controller: &'a SiteController,
     pub(super) options: &'a BuildOptions,
     pub(super) config: PathBuf,
     pub(super) preview: &'a Preview,
     pub(super) listener: &'a dyn SiteListener,
+    pub(super) stops: &'a StopRequests,
 }
 
-impl Watching<'_> {
+impl<'a> Watching<'a> {
     /// Starts watching the input of `first`, the first build, the configuration file and the
     /// front page's template.
-    pub(super) fn start(&self, first: &BuildSnapshot) -> Result<WatchedChanges, ServeError> {
+    pub(super) fn start(&self, first: &BuildSnapshot) -> Result<WatchedChanges<'a>, ServeError> {
         self.watch(&first.settings).map_err(ServeError::Watch)
     }
 
     /// Starts watching the input `settings` name, the configuration file and the front page's
     /// template they name.
-    fn watch(&self, settings: &Settings) -> Result<WatchedChanges, WatchError> {
+    fn watch(&self, settings: &Settings) -> Result<WatchedChanges<'a>, WatchError> {
         let settings_files: Vec<_> = once(self.config.clone())
             .chain(settings.front_page.clone())
             .collect();
         self.controller
             .server
-            .watch(&settings.input, &settings_files)
+            .watch(&settings.input, &settings_files, self.stops)
     }
 
     /// Rebuilds for each of `changes` that calls for it, `last` being the first build, until
-    /// the watching ends.
-    pub(super) fn rebuild_on(&self, mut changes: WatchedChanges, mut last: BuildSnapshot) {
+    /// the watching ends or ghg serve is asked to stop.
+    pub(super) fn rebuild_on(&self, mut changes: WatchedChanges<'a>, mut last: BuildSnapshot) {
         while let Some(input_changes) = changes.next() {
             let settings = match input_changes {
                 InputChanges::Everything => self.read_settings(),
@@ -122,7 +125,7 @@ impl Watching<'_> {
     fn watched_again(
         &self,
         mut settings: Settings,
-    ) -> Result<Option<(WatchedChanges, Settings)>, WatchError> {
+    ) -> Result<Option<(WatchedChanges<'a>, Settings)>, WatchError> {
         loop {
             let watched = self.watch(&settings)?;
             match self.load_settings() {
@@ -140,8 +143,12 @@ impl Watching<'_> {
 
     /// The configuration file watched alone, or, when even it cannot be watched, `changes`, the
     /// only ones left to tell of a change.
-    fn config_watched_alone(&self, changes: WatchedChanges) -> WatchedChanges {
-        match self.controller.server.watch_config(&self.config) {
+    fn config_watched_alone(&self, changes: WatchedChanges<'a>) -> WatchedChanges<'a> {
+        match self
+            .controller
+            .server
+            .watch_config(&self.config, self.stops)
+        {
             Ok(watched) => watched,
             Err(error) => {
                 self.listener.not_watched(&error);

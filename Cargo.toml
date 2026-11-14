@@ -52,6 +52,7 @@ path = "src/cargo_ghg.rs"
 [dependencies]
 askama = "0.16.1"
 clap = { version = "4.6.7", default-features = false, features = ["std", "derive", "error-context"] }
+ctrlc = { version = "3.5.2", features = ["termination"] }
 gherkin = "0.16.0"
 i18n-embed = { version = "0.16.0", features = ["fluent-system"] }
 i18n-embed-fl = "0.10.1"

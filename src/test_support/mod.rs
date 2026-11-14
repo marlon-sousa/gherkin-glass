@@ -29,7 +29,7 @@ use crate::ports::{FeatureParser, InputFolders};
 use crate::services::{GherkinParser, GherkinParserApi, InputCollector, InputCollectorApi};
 
 pub(crate) use output::{folder, name, set, two_versions};
-pub(crate) use serving::{FakeServer, FakeWatcher, changed};
+pub(crate) use serving::{FakeServer, FakeSignals, FakeWatcher, changed};
 
 /// A link from the tags that `pattern` matches whole, as the configuration gives it, for a
 /// pattern without the `x` flag, whose trailing comment would swallow the anchors written here.

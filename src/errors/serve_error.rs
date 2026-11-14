@@ -22,6 +22,8 @@ pub(crate) enum ServeError {
     },
     #[error(transparent)]
     Watch(WatchError),
+    #[error(transparent)]
+    Signals(SignalsError),
 }
 
 /// Why ghg serve cannot listen, said of its host and port by [`ServeError::Listen`].
@@ -39,6 +41,13 @@ pub(crate) enum ListenErrorKind {
 #[derive(Debug, Clone, PartialEq, Eq, Error)]
 pub(crate) struct WatchError {
     pub(crate) path: PathBuf,
+    pub(crate) reason: String,
+}
+
+/// Listening for the signals that stop ghg serve that cannot start: the reason in the
+/// operating system's or the `ctrlc` crate's words.
+#[derive(Debug, Clone, PartialEq, Eq, Error)]
+pub(crate) struct SignalsError {
     pub(crate) reason: String,
 }
 
@@ -83,6 +92,16 @@ impl Display for WatchError {
     }
 }
 
+impl Display for SignalsError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+        f.write_str(&fl!(
+            CATALOGUE,
+            "serve-cannot-handle-signals",
+            reason = self.reason.as_str()
+        ))
+    }
+}
+
 impl Display for RebuildError {
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         write!(f, "{}", self.build)?;
@@ -116,7 +135,14 @@ mod tests {
         },
         "ghg serve cannot listen at 203.0.113.1, port 8000: no such address"
     )]
-    fn serve_names_what_it_cannot_watch_and_where_it_cannot_listen(
+    // Rule 198.
+    #[case::signals_it_cannot_handle(
+        ServeError::Signals(SignalsError {
+            reason: "Operation not permitted".into(),
+        }),
+        "ghg serve cannot handle Control+C and the signals that stop it: Operation not permitted"
+    )]
+    fn serve_names_what_it_cannot_watch_listen_at_or_handle(
         #[case] error: ServeError,
         #[case] said: &str,
     ) {

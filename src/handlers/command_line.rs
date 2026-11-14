@@ -56,7 +56,7 @@ impl CommandLine {
             terminal: self.terminal.as_ref(),
         };
         match self.site.serve(options, &listener) {
-            Ok(()) => Reply::success(String::new()),
+            Ok(()) => Reply::success(fl!(CATALOGUE, "serve-stopped")),
             Err(error) => Reply::failure(ExitStatus::Stopped, error.to_string()),
         }
     }
