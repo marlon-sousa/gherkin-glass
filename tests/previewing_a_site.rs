@@ -345,14 +345,18 @@ fn the_output_folder_is_checked_as_ghg_build_checks_it_unless_the_site_is_in_mem
     );
 }
 
-#[test]
-fn a_version_name_changes_nothing_under_watch() {
-    let folder = built_copy("serve-watch-versioned");
-    let serving = serve(
-        &folder,
-        &["--port", "0", "--watch", "--version-name", "main"],
-    );
-    assert_eq!(get(&serving.address, "/withdraw.html").status, 200);
+// Rule 66, and rule 213 for --preview.
+#[rstest]
+#[case::a_version_name("serve-watch-versioned", &[])]
+#[case::a_preview("serve-watch-preview", &["--preview"])]
+fn a_version_name_changes_nothing_under_watch(#[case] name: &str, #[case] preview: &[&str]) {
+    let folder = built_copy(name);
+    let mut arguments = vec!["--port", "0", "--watch", "--version-name", "main"];
+    arguments.extend(preview);
+    let serving = serve(&folder, &arguments);
+    let page = get(&serving.address, "/withdraw.html");
+    assert_eq!(page.status, 200);
+    assert!(!page.text().contains("noindex"), "{}", page.text());
     assert_eq!(get(&serving.address, "/main/withdraw.html").status, 404);
     drop(serving);
     assert!(!folder.join("site").exists());

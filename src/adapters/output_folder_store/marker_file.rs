@@ -17,6 +17,9 @@ struct SiteMarker {
 struct VersionsMarker {
     page: BTreeSet<FilePath>,
     versions: BTreeMap<String, BTreeSet<FilePath>>,
+    /// Left out when there is none.
+    #[serde(default, skip_serializing_if = "BTreeSet::is_empty")]
+    previews: BTreeSet<String>,
 }
 
 /// The marker's file name and its text, for `record`.
@@ -28,10 +31,15 @@ pub(super) fn marker_text(record: &Record) -> serde_json::Result<(&'static str, 
             };
             Ok((Record::SITE_MARKER, serde_json::to_string_pretty(&marker)?))
         }
-        Record::Versions { page, versions } => {
+        Record::Versions {
+            page,
+            versions,
+            previews,
+        } => {
             let marker = VersionsMarker {
                 page: page.clone(),
                 versions: versions.iter().map(written_version).collect(),
+                previews: previews.iter().map(VersionName::to_string).collect(),
             };
             Ok((
                 Record::VERSIONS_MARKER,
@@ -56,9 +64,15 @@ pub(super) fn versions_record(text: &str) -> Option<Record> {
         .into_iter()
         .map(read_version)
         .collect::<Option<_>>()?;
+    let previews = marker
+        .previews
+        .iter()
+        .map(|name| VersionName::new(name))
+        .collect::<Option<_>>()?;
     Some(Record::Versions {
         page: marker.page,
         versions,
+        previews,
     })
 }
 
@@ -85,17 +99,22 @@ mod tests {
         paths.iter().map(|path| path.to_string()).collect()
     }
 
-    fn versions() -> Record {
-        let main = VersionName::new("main").expect("a version name");
+    fn versions(previews: &[&str]) -> Record {
+        let name = |name: &str| VersionName::new(name).expect("a version name");
         Record::Versions {
             page: set(&["index.html", "assets/a.css"]),
-            versions: BTreeMap::from([(main, set(&["index.html", "sub/b.html"]))]),
+            versions: BTreeMap::from([
+                (name("main"), set(&["index.html", "sub/b.html"])),
+                (name("pr-1"), set(&["index.html"])),
+            ]),
+            previews: previews.iter().map(|preview| name(preview)).collect(),
         }
     }
 
     #[rstest]
     #[case::a_site(Record::Site(set(&["index.html", "sub/a.html"])), Record::SITE_MARKER)]
-    #[case::versions(versions(), Record::VERSIONS_MARKER)]
+    #[case::versions(versions(&[]), Record::VERSIONS_MARKER)]
+    #[case::versions_with_a_preview(versions(&["pr-1"]), Record::VERSIONS_MARKER)]
     fn a_marker_reads_back_as_it_was_written(#[case] record: Record, #[case] file: &str) {
         let (name, text) = marker_text(&record).expect("written");
         assert_eq!(name, file);
@@ -118,7 +137,16 @@ mod tests {
     #[case::not_json("not a marker")]
     #[case::a_site_marker("{\"files\": []}")]
     #[case::a_name_that_is_no_version("{\"page\": [], \"versions\": {\"a/b\": []}}")]
+    #[case::a_preview_that_is_no_version(
+        "{\"page\": [], \"versions\": {}, \"previews\": [\"a/b\"]}"
+    )]
     fn a_versions_marker_that_is_not_one_reads_as_none(#[case] text: &str) {
         assert_eq!(versions_record(text), None);
+    }
+
+    #[test]
+    fn a_marker_without_previews_does_not_name_them() {
+        let (_, text) = marker_text(&versions(&[])).expect("written");
+        assert!(!text.contains("previews"), "{text}");
     }
 }

@@ -2,6 +2,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{{ head.title }}</title>
+{%- if let Some(robots) = robots %}
+<meta name="robots" content="{{ robots }}">
+{%- endif %}
 <script>try{var t=localStorage.getItem("gherkin-glass:theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}</script>
 <style>
 {{ head.stylesheet|safe }}</style>

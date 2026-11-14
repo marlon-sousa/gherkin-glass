@@ -1,10 +1,10 @@
 //! Entity: the settings that shape every page of a site.
 
-use crate::entities::{Accents, SiteScope, TagLink};
+use crate::entities::{Accents, SiteScope, TagLink, VersionListing};
 
 /// The defaults are the configuration's: the catalogue's title, no source
 /// link, every block expanded, the folder tree shown, backgrounds shown
-/// inside each scenario, no tag linked to another site, the default accents, and every feature file shown.
+/// inside each scenario, no tag linked to another site, the default accents, every feature file shown, and the version listed.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct PageOptions {
     /// The site's title; `None` for the catalogue's default.
@@ -23,6 +23,8 @@ pub(crate) struct PageOptions {
     pub(crate) tag_links: Vec<TagLink>,
     pub(crate) accents: Accents,
     pub(crate) scope: SiteScope,
+    /// Whether the version built is listed on the versions page.
+    pub(crate) listing: VersionListing,
 }
 
 impl Default for PageOptions {
@@ -37,6 +39,7 @@ impl Default for PageOptions {
             tag_links: Vec::new(),
             accents: Accents::DEFAULT,
             scope: SiteScope::EveryFeature,
+            listing: VersionListing::Listed,
         }
     }
 }

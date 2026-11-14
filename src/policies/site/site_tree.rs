@@ -7,7 +7,7 @@ use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 
 use crate::entities::{
     FolderId, PageContent, PageOptions, RevisedFeature, Revision, SiteAssets, SiteFeaturePage,
-    SiteTree, SiteTreeBuilder, SiteVersion, TagNames, VersionName,
+    SiteTree, SiteTreeBuilder, SiteVersion, TagNames, VersionListing, VersionName,
 };
 use crate::policies::site::{
     build_folder_pages, build_folder_tree, build_page, build_sentences_page, build_tag_pages,
@@ -21,14 +21,14 @@ use crate::policies::{page_address, page_frame};
 /// A feature's page is copied from `last`, the last site tree, when it was
 /// converted from the same revision and every tag it writes keeps its name.
 /// `version` names the version the build makes, or is `None` for a site
-/// without versions, and `built_versions` are those the output folder
-/// already holds.
+/// without versions, and `listed_versions` are those the output folder
+/// already holds and lists on its versions page.
 pub(crate) fn site_tree(
     features: &[RevisedFeature<'_>],
     last: Option<&SiteTree>,
     options: &PageOptions,
     version: Option<&VersionName>,
-    built_versions: &BTreeSet<VersionName>,
+    listed_versions: &BTreeSet<VersionName>,
 ) -> SiteTree {
     let names = name_tags(features.iter().map(|revised| revised.feature));
     let mut site = site_with_feature_pages(features, last, options, &names, version);
@@ -45,7 +45,7 @@ pub(crate) fn site_tree(
     site.search_documents(documents);
     site.assets(SiteAssets::iter().map(Cow::into_owned));
     if let Some(version) = version {
-        add_versions(&mut site, version, built_versions);
+        add_versions(&mut site, version, options.listing, listed_versions);
     }
     site.build()
 }
@@ -142,16 +142,23 @@ fn keyed_by_revision(page: SiteFeaturePage<'_>) -> (Revision, SiteFeaturePage<'_
     (page.page().revision, page)
 }
 
-/// The versions `built_versions` the output folder holds, but `version`,
-/// which the build makes, and the page that lists them all, with its assets.
+/// The versions `listed_versions` the output folder holds and lists, but
+/// `version`, which the build makes, and the page that lists them all, with
+/// `version` among them unless `listing` makes it a preview, with its assets.
 fn add_versions(
     site: &mut SiteTreeBuilder,
     version: &VersionName,
-    built_versions: &BTreeSet<VersionName>,
+    listing: VersionListing,
+    listed_versions: &BTreeSet<VersionName>,
 ) {
     let made = BTreeSet::from([version.clone()]);
-    site.kept_versions(built_versions.difference(&made).cloned());
-    site.versions_page(build_versions_page(built_versions.union(&made).cloned()));
+    let kept: BTreeSet<_> = listed_versions.difference(&made).cloned().collect();
+    let listed = match listing {
+        VersionListing::Listed => kept.union(&made).cloned().collect(),
+        VersionListing::Preview => kept.clone(),
+    };
+    site.kept_versions(kept);
+    site.versions_page(build_versions_page(listed));
     site.versions_page_assets(SiteAssets::iter().map(Cow::into_owned));
 }
 
@@ -221,16 +228,22 @@ mod tests {
         assert_eq!(tree.root_files().count(), 0);
     }
 
-    #[test]
-    fn a_versions_page_lists_every_version_once_the_one_built_among_them() {
+    // Rule 212: a preview is not listed, even when it was built before without --preview.
+    #[rstest]
+    #[case::the_one_built_among_them("main", VersionListing::Listed, &["main"])]
+    #[case::but_a_preview("pr-1", VersionListing::Preview, &["main"])]
+    #[case::but_a_listed_one_built_again_as_a_preview("main", VersionListing::Preview, &[])]
+    fn a_versions_page_lists_every_version(
+        #[case] version: &str,
+        #[case] listing: VersionListing,
+        #[case] development: &[&str],
+    ) {
         let built = BTreeSet::from([name("main"), name("v1.0.0")]);
-        let tree = site_tree(
-            &[],
-            None,
-            &PageOptions::default(),
-            Some(&name("main")),
-            &built,
-        );
+        let options = PageOptions {
+            listing,
+            ..PageOptions::default()
+        };
+        let tree = site_tree(&[], None, &options, Some(&name(version)), &built);
         let Some(page) = tree.root_files().next() else {
             panic!("the versions page first");
         };
@@ -245,7 +258,10 @@ mod tests {
         assert_eq!(
             lists,
             [
-                (VersionsList::Development, vec![name("main")]),
+                (
+                    VersionsList::Development,
+                    development.iter().map(|version| name(version)).collect()
+                ),
                 (VersionsList::Releases, vec![name("v1.0.0")]),
                 (VersionsList::PreReleases, vec![]),
             ]

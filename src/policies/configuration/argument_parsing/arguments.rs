@@ -6,7 +6,9 @@ use std::path::PathBuf;
 use clap::builder::{OsStringValueParser, TypedValueParser};
 use clap::{ArgAction, Args, Parser, Subcommand};
 
-use crate::entities::{BuildOptions, Invocation, PathList, ServeMode, ServeOptions, VersionName};
+use crate::entities::{
+    BuildOptions, Invocation, PathList, ServeMode, ServeOptions, VersionListing, VersionName,
+};
 use crate::errors::ArgumentError;
 
 use super::option_values::{path_list, port, text, version_name};
@@ -54,6 +56,8 @@ struct BuildArguments {
     front_page: Option<PathBuf>,
     #[arg(long, allow_hyphen_values = true, value_parser = OsStringValueParser::new().try_map(path_list))]
     only: Option<PathList>,
+    #[arg(long)]
+    preview: bool,
     /// What follows `--`, which no command takes.
     #[arg(last = true)]
     after_the_options: Vec<OsString>,
@@ -94,6 +98,11 @@ impl BuildArguments {
                 argument: argument.to_string_lossy().into_owned(),
             });
         }
+        let listing = match (self.preview, &self.version_name) {
+            (true, None) => return Err(ArgumentError::PreviewWithoutVersionName),
+            (true, Some(_)) => VersionListing::Preview,
+            (false, _) => VersionListing::Listed,
+        };
         Ok(BuildOptions {
             config: self.config,
             input: self.input,
@@ -102,6 +111,7 @@ impl BuildArguments {
             title: self.title,
             front_page: self.front_page,
             only: self.only,
+            listing,
         })
     }
 }

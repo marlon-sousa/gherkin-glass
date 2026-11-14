@@ -531,7 +531,11 @@ fn build(options: &[(&str, &str)]) -> (Output, PathBuf) {
         .env_clear()
         .env("PATH", std::env::var_os("PATH").unwrap_or_default())
         .env("GHG_BIN", env!("CARGO_BIN_EXE_ghg"))
-        .env("GHG_OPTIONS", "config input output title version-name");
+        .env(
+            "GHG_OPTIONS",
+            "config input output title version-name preview",
+        )
+        .env("GHG_FLAGS", "preview");
     for (name, value) in options {
         command.env(name, value);
     }
@@ -553,6 +557,7 @@ fn build_runs_ghg_build_with_the_configuration_when_no_option_is_given() {
             ("GHG_OPTION_OUTPUT", ""),
             ("GHG_OPTION_TITLE", ""),
             ("GHG_OPTION_VERSION_NAME", ""),
+            ("GHG_OPTION_PREVIEW", ""),
         ],
         // Only the options GHG_OPTIONS names are passed.
         &[("GHG_OPTION_PORT", "9")],
@@ -596,4 +601,34 @@ fn each_option_input_is_passed_to_ghg_build() {
     let (output, workspace) = build(&[("GHG_OPTION_VERSION_NAME", "v1.0.0")]);
     built(&output);
     assert!(workspace.join("site/v1.0.0/read.html").is_file());
+}
+
+// Rule 175: a flag is passed when its input is true, and left out when it is false.
+#[rstest::rstest]
+#[case::true_("true", false)]
+#[case::false_("false", true)]
+fn a_flag_input_is_passed_to_ghg_build_when_it_is_true(
+    #[case] preview: &str,
+    #[case] listed: bool,
+) {
+    let (output, workspace) = build(&[
+        ("GHG_OPTION_VERSION_NAME", "pr-1"),
+        ("GHG_OPTION_PREVIEW", preview),
+    ]);
+    built(&output);
+    assert!(workspace.join("site/pr-1/read.html").is_file());
+    let versions = fs::read_to_string(workspace.join("site/index.html")).unwrap();
+    assert_eq!(versions.contains("pr-1/index.html"), listed, "{versions}");
+}
+
+// Rule 175.
+#[test]
+fn a_flag_input_is_true_or_false() {
+    let (output, workspace) = build(&[
+        ("GHG_OPTION_VERSION_NAME", "pr-1"),
+        ("GHG_OPTION_PREVIEW", "yes"),
+    ]);
+    assert_eq!(output.status.code(), Some(1));
+    assert_eq!(text(&output.stderr), "preview must be true or false.\n");
+    assert!(!workspace.join("site").exists());
 }

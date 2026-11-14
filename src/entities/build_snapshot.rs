@@ -16,8 +16,9 @@ pub(crate) struct BuildSnapshot {
     /// shared with the snapshots made from this one that keep it; none while no build from
     /// nothing has got that far.
     pub(crate) site: Option<Arc<RenderedSite>>,
-    /// The versions the output folder held when the build from nothing checked it.
-    pub(crate) built_versions: BTreeSet<VersionName>,
+    /// The versions the output folder held and listed, every one but the
+    /// previews, when the build from nothing checked it.
+    pub(crate) listed_versions: BTreeSet<VersionName>,
 }
 
 impl BuildSnapshot {

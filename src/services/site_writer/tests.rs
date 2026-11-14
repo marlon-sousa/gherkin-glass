@@ -126,11 +126,11 @@ fn a_site_in_memory_checks_no_folder_and_has_no_versions() {
         replace: false,
         ..settings(Destination::Memory, Some("v1.0.0"))
     };
-    let built_versions = writer.check(&settings).expect("no check");
-    assert!(built_versions.is_empty());
+    let listed_versions = writer.check(&settings).expect("no check");
+    assert!(listed_versions.is_empty());
     let empty =
         InputTreeBuilder::listed("in".into(), IgnoreRules::default(), Revision::default()).build();
-    let site = Converter.convert(&empty, None, &settings, &built_versions);
+    let site = Converter.convert(&empty, None, &settings, &listed_versions);
     let (ServedSite::Memory(files), _) = writer.write(&settings, site, None).expect("written")
     else {
         panic!("a site in memory");

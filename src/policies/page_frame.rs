@@ -40,6 +40,7 @@ pub(crate) fn page_frame(options: &PageOptions) -> PageFrame {
             SiteScope::OnlyListed => Some(fl!(CATALOGUE, "only-note")),
             SiteScope::EveryFeature => None,
         },
+        listing: options.listing,
     }
 }
 

@@ -32,6 +32,7 @@ fn versions() -> Record {
             (name("main"), set(&["index.html"])),
             (name("v1.0.0"), set(&["index.html", "sub/old.html"])),
         ]),
+        previews: BTreeSet::new(),
     }
 }
 
@@ -211,10 +212,12 @@ fn a_marker_listing_a_path_outside_the_folder_is_no_marker(#[case] listed: &str)
 #[case::a_version_s_file(Record::Versions {
     page: set(&["index.html"]),
     versions: BTreeMap::from([(name("main"), set(&["../../victim.txt"]))]),
+    previews: BTreeSet::new(),
 })]
 #[case::a_page_file(Record::Versions {
     page: set(&["../victim.txt"]),
     versions: BTreeMap::new(),
+    previews: BTreeSet::new(),
 })]
 fn a_versions_marker_listing_a_path_outside_the_folder_is_no_marker(#[case] record: Record) {
     let contents = OutputContents::Folder {
@@ -268,6 +271,7 @@ fn only_the_versions_page_s_files_found_are_kept_for_removal() {
                 (name("main"), set(&["index.html"])),
                 (name("v1.0.0"), set(&["index.html", "sub/old.html"])),
             ]),
+            previews: BTreeSet::new(),
         });
     }
     let Ok(Some(Record::Versions { page, .. })) =

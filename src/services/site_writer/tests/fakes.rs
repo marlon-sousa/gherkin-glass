@@ -7,7 +7,7 @@ use std::sync::Mutex;
 use gherkin::{Feature, GherkinEnv};
 
 use super::*;
-use crate::entities::{OutputContents, PageOptions, RawFeature, Unnamed};
+use crate::entities::{OutputContents, PageOptions, RawFeature, Unnamed, VersionListing};
 use crate::errors::{BuildError, ParseError};
 use crate::ports::{FeatureParser, FileReader};
 use crate::services::{Converter, ConverterApi};
@@ -134,8 +134,20 @@ pub(super) fn build(
     folders: Arc<FakeFolders>,
     writer: Arc<FakeWriter>,
 ) -> Result<ServedSite, BuildError> {
+    build_as(files, version, VersionListing::Listed, folders, writer)
+}
+
+/// As `build`, the version listed on the versions page or built as a preview, as `listing` says.
+pub(super) fn build_as(
+    files: Vec<&'static str>,
+    version: Option<&str>,
+    listing: VersionListing,
+    folders: Arc<FakeFolders>,
+    writer: Arc<FakeWriter>,
+) -> Result<ServedSite, BuildError> {
     let folders_in = MemoryFolders::with_files_in(Path::new("in"), &files);
-    let settings = settings(Destination::Folder, version);
+    let mut settings = settings(Destination::Folder, version);
+    settings.pages.listing = listing;
     let input_tree = parsed_input(
         Arc::new(folders_in),
         Arc::new(FakeParser),
@@ -148,8 +160,8 @@ pub(super) fn build(
         writer,
         Arc::new(FakeWriter::default()),
     );
-    let built_versions = site_writer.check(&settings)?;
-    let tree = Converter.convert(&input_tree, None, &settings, &built_versions);
+    let listed_versions = site_writer.check(&settings)?;
+    let tree = Converter.convert(&input_tree, None, &settings, &listed_versions);
     let (served, _) = site_writer.write(&settings, tree, None)?;
     Ok(served)
 }

@@ -4,7 +4,7 @@ use std::collections::BTreeSet;
 
 use yaml_rust2::{Yaml, YamlLoader};
 
-use super::long_options;
+use super::{flags_of, long_options};
 
 const ACTION: &str = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/action.yml"));
 
@@ -75,6 +75,13 @@ fn the_build_step_passes_every_option_input_and_nothing_else() {
         })
         .collect();
     assert_eq!(passed, expected);
+    let flags: BTreeSet<String> = build["env"]["GHG_FLAGS"]
+        .as_str()
+        .expect("the build step names its flags")
+        .split_whitespace()
+        .map(str::to_string)
+        .collect();
+    assert_eq!(flags, flags_of("build"));
 }
 
 #[test]
@@ -84,7 +91,11 @@ fn the_help_names_every_option() {
         "/messages/en/gherkin-glass.ftl"
     ));
     for option in long_options("build") {
-        let named = format!("  --{option} <");
-        assert!(help.contains(&named), "the help names --{option}");
+        let with_a_value = format!("  --{option} <");
+        let without = format!("  --{option}:");
+        assert!(
+            help.contains(&with_a_value) || help.contains(&without),
+            "the help names --{option}"
+        );
     }
 }
