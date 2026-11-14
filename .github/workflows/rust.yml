@@ -8,10 +8,13 @@ name: Rust
 
 on:
   pull_request:
-    # "edited" so that a layer of a stack is checked again when its base
-    # changes, as it does when the layer below is merged. Other edits run the
-    # checks too: skipping them would report the skipped jobs as passed.
-    types: [opened, synchronize, reopened, edited]
+    # Every push, a force push included, runs every check. Editing the
+    # description does not, so that ticking a checkbox runs again only the
+    # checks of pull-request.yml (#123). When the layer below a stack's layer
+    # merges, the layer is restacked by a push, which runs them, and the main
+    # ruleset lets a pull request merge only once it is up to date with its
+    # base, which takes a push too.
+    types: [opened, synchronize, reopened]
   push:
     branches: [main]
   # The release workflow runs these checks again on the tagged commit.

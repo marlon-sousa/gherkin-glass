@@ -40,7 +40,9 @@ jobs:
   checkboxes:
     # A manual check, such as the one with a screen reader, is a list of
     # checkboxes in the description, so the pull request cannot merge while one
-    # is unticked. "edited" runs it again when a box is ticked.
+    # is unticked. "edited" runs it again when a box is ticked; rust.yml and
+    # release.yml leave "edited" out, so that a tick runs again only this
+    # workflow (#123).
     name: no unticked checkbox in the description
     runs-on: ubuntu-latest
     steps:
