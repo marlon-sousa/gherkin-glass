@@ -1,0 +1,10 @@
+# Markup in feature text, which every page must show as text. Tags reach a
+# link to another site, through both its address and its text, and paths
+# reach the link to the source.
+title = "Hostile suite"
+source_link = "https://example.com/repo/blob/main/features/{path}#L{line}"
+
+[[tag_links]]
+pattern = '@ticket:(.+)'
+address = "https://example.com/tickets/$1"
+text = "Ticket $1"
