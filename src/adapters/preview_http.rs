@@ -1,5 +1,6 @@
 //! Adapter: the preview server port over HTTP, with tiny_http.
 
+mod answering;
 mod content_type;
 mod reload_injection;
 mod request_route;
@@ -8,7 +9,6 @@ use std::fs::read;
 use std::io::ErrorKind;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, TcpListener, TcpStream};
 use std::sync::Arc;
-use std::thread::{JoinHandle, spawn};
 use std::time::Duration;
 
 use tiny_http::{Header, Method, Request, Response, Server, StatusCode};
@@ -16,15 +16,13 @@ use tiny_http::{Header, Method, Request, Response, Server, StatusCode};
 use crate::entities::{Listening, Preview, ServedSite, ServerWords, Version};
 use crate::errors::ListenErrorKind;
 use crate::ports::PreviewServer;
+use answering::Answering;
 use content_type::{content_type, is_html};
 use reload_injection::add_reload_script;
 use request_route::{Route, route};
 
 /// The reload script, added to every page under `--watch`.
 const RELOAD_SCRIPT: &str = include_str!("preview_http/reload.js");
-
-/// How many requests are answered at once.
-const THREADS: usize = 4;
 
 #[derive(Debug, Default, Clone, Copy)]
 pub(crate) struct HttpPreviewServer;
@@ -66,51 +64,10 @@ impl PreviewServer for HttpPreviewServer {
                 reason: error.to_string(),
             }
         })?);
-        let words = Arc::new(words);
-        let threads = (0..THREADS)
-            .map(|_| answer_on_a_thread(&server, &preview, &words))
-            .collect();
         Ok(Listening {
             address,
-            answering: Box::new(Answering { server, threads }),
+            answering: Box::new(Answering::start(server, preview, Arc::new(words))),
         })
-    }
-}
-
-/// Answers the requests `server` takes on a thread of its own, until it is unblocked.
-fn answer_on_a_thread(
-    server: &Arc<Server>,
-    preview: &Arc<Preview>,
-    words: &Arc<ServerWords>,
-) -> JoinHandle<()> {
-    let (server, preview, words) = (server.clone(), preview.clone(), words.clone());
-    spawn(move || {
-        // `recv` fails once the thread is unblocked or the server is closed.
-        while let Ok(request) = server.recv() {
-            answer(request, &preview, &words);
-        }
-    })
-}
-
-/// The server and its threads answering. Dropped, it unblocks each thread, then waits for
-/// them, so that the requests already taken are answered, and the server closes once the last
-/// share of it is dropped.
-struct Answering {
-    server: Arc<Server>,
-    threads: Vec<JoinHandle<()>>,
-}
-
-impl Drop for Answering {
-    fn drop(&mut self) {
-        // tiny_http 0.12.0 queues each unblock behind the requests already taken, and each
-        // unblock ends one thread's `recv`.
-        for _ in &self.threads {
-            self.server.unblock();
-        }
-        for thread in self.threads.drain(..) {
-            // A thread that panicked has nothing left to answer.
-            let _ = thread.join();
-        }
     }
 }
 
@@ -360,5 +317,23 @@ mod tests {
             TcpStream::connect(address).is_err()
         });
         assert!(closed);
+    }
+
+    #[test]
+    fn a_request_taken_before_what_it_returns_is_dropped_is_answered() {
+        let preview = Arc::new(memory(ServeMode::Build));
+        let listening = HttpPreviewServer
+            .start("127.0.0.1", 0, preview, words())
+            .expect("listening");
+        let mut stream = TcpStream::connect(listening.address).expect("connects");
+        stream
+            .write_all(b"GET /a/ HTTP/1.1\r\nConnection: close\r\n\r\n")
+            .expect("sent");
+        // Time for tiny_http 0.12.0's connection thread to queue the request.
+        sleep(Duration::from_millis(200));
+        drop(listening);
+        let mut answer = String::new();
+        stream.read_to_string(&mut answer).expect("answered");
+        assert!(answer.starts_with("HTTP/1.1 200"), "{answer}");
     }
 }

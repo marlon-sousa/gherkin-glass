@@ -20,8 +20,7 @@ use crate::ports::{ChangeWatcher, PreviewServer, StopSignals};
 const DEFAULT_HOST: &str = "127.0.0.1";
 /// The port ghg serve listens at unless `--port` names another.
 const DEFAULT_PORT: u16 = 8000;
-/// How long a wait for changes lasts before it looks again whether ghg serve was asked to stop,
-/// since a standard channel cannot be waited on with another.
+/// How long a wait for changes lasts before it looks again whether ghg serve was asked to stop.
 const STOP_LOOKED_FOR_EVERY: Duration = Duration::from_millis(100);
 
 /// What the controller asks of the server.
@@ -142,6 +141,8 @@ fn changes_waiting(
             return None;
         }
         match changes.bursts.recv_timeout(STOP_LOOKED_FOR_EVERY) {
+            // A burst that came with a request to stop starts no rebuild.
+            Ok(_) if stops.asked() => return None,
             Ok(burst) => break burst,
             Err(RecvTimeoutError::Timeout) => {}
             Err(RecvTimeoutError::Disconnected) => return None,

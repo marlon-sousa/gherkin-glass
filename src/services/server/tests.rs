@@ -213,3 +213,21 @@ fn the_requests_to_stop_are_listened_for_or_their_refusal_said(
         assert!(requests.asked());
     }
 }
+
+#[test]
+fn a_change_that_comes_with_a_request_to_stop_is_left() {
+    // Rule 196: a change that comes during the same wait as a request to stop starts no rebuild.
+    let watcher = Arc::new(FakeWatcher::default());
+    let server = service(&Arc::new(FakeServer::default()), &watcher);
+    let (asker, stops) = stops();
+    let mut changes = watch_the_input(&server, &stops).expect("watching");
+    let sender = watcher.sender().expect("watching");
+    let asking = spawn(move || {
+        sleep(STOP_LOOKED_FOR_EVERY / 4);
+        asker.send(()).expect("sent");
+        sender.send(changed("features/a.feature")).expect("sent");
+        sender
+    });
+    assert_eq!(changes.next(), None);
+    drop(asking.join().expect("no panic"));
+}
