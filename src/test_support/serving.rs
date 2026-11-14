@@ -1,13 +1,14 @@
-//! Test support: a server and a watcher for ghg serve, which touch no network and no folder.
+//! Test support: a server, a watcher and stop signals for ghg serve, which touch no network, no folder and no signal.
 
 use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4};
 use std::path::PathBuf;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::{Sender, channel};
 use std::sync::{Arc, Mutex, PoisonError};
 
-use crate::entities::{Burst, Changes, Preview, ServerWords, Watched};
-use crate::errors::{ListenErrorKind, WatchError};
-use crate::ports::{ChangeWatcher, PreviewServer};
+use crate::entities::{Burst, Changes, Listening, Preview, ServerWords, StopRequests, Watched};
+use crate::errors::{ListenErrorKind, SignalsError, WatchError};
+use crate::ports::{ChangeWatcher, PreviewServer, StopSignals};
 
 /// Records the preview it was given, and listens at port 1 for port 0,
 /// unless the port is `taken`.
@@ -24,16 +25,16 @@ impl PreviewServer for FakeServer {
         port: u16,
         preview: Arc<Preview>,
         _: ServerWords,
-    ) -> Result<SocketAddr, ListenErrorKind> {
+    ) -> Result<Listening, ListenErrorKind> {
         if self.taken {
             return Err(ListenErrorKind::PortTaken);
         }
         *self.started.lock().unwrap_or_else(PoisonError::into_inner) =
             Some((host.to_string(), port, preview));
-        Ok(SocketAddr::V4(SocketAddrV4::new(
-            Ipv4Addr::LOCALHOST,
-            port.max(1),
-        )))
+        Ok(Listening {
+            address: SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::LOCALHOST, port.max(1))),
+            answering: Box::new(()),
+        })
     }
 }
 
@@ -92,4 +93,37 @@ impl FakeWatcher {
 /// A burst that changed only `path`.
 pub(crate) fn changed(path: &str) -> Burst {
     Burst::Changed(vec![PathBuf::from(path)])
+}
+
+/// Keeps the sender of the requests to stop, for the test to ask with, unless it is `failing`;
+/// asks at once as it starts listening while `asking_at_once`.
+#[derive(Default)]
+pub(crate) struct FakeSignals {
+    pub(crate) sender: Mutex<Option<Sender<()>>>,
+    pub(crate) failing: AtomicBool,
+    pub(crate) asking_at_once: AtomicBool,
+}
+
+impl StopSignals for FakeSignals {
+    fn listen(&self) -> Result<StopRequests, SignalsError> {
+        if self.failing.load(Ordering::SeqCst) {
+            return Err(SignalsError {
+                reason: "not permitted".into(),
+            });
+        }
+        let (sender, requests) = channel();
+        *self.sender.lock().unwrap_or_else(PoisonError::into_inner) = Some(sender);
+        if self.asking_at_once.load(Ordering::SeqCst) {
+            self.ask_to_stop();
+        }
+        Ok(StopRequests::new(requests))
+    }
+}
+
+impl FakeSignals {
+    /// Asks ghg serve to stop, once it listens.
+    pub(crate) fn ask_to_stop(&self) {
+        let sender = self.sender.lock().unwrap_or_else(PoisonError::into_inner);
+        sender.as_ref().expect("listening").send(()).expect("sent");
+    }
 }

@@ -239,6 +239,8 @@ serve-not-rebuilt = The site was not rebuilt, so the last site that built is sti
 serve-port-taken = Port { $port } is already in use. Choose another with --port.
 serve-cannot-listen = ghg serve cannot listen at { $host }, port { $port }: { $reason }
 serve-cannot-watch = ghg serve cannot watch { $path } for changes: { $reason }
+serve-cannot-handle-signals = ghg serve cannot handle Control+C and the signals that stop it: { $reason }
+serve-stopped = The site is no longer served.
 
 ## What ghg serve answers a browser with, as plain text.
 

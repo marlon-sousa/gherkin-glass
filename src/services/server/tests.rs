@@ -1,29 +1,54 @@
 use std::path::PathBuf;
+use std::sync::atomic::Ordering;
+use std::sync::mpsc::{Sender, channel};
+use std::thread::{sleep, spawn};
 
 use rstest::rstest;
 
 use super::*;
 use crate::entities::ServeMode;
-use crate::errors::ListenErrorKind;
-use crate::test_support::{FakeServer, FakeWatcher, changed};
+use crate::errors::{ListenErrorKind, SignalsError};
+use crate::test_support::{FakeServer, FakeSignals, FakeWatcher, changed};
 
 fn service(server: &Arc<FakeServer>, watcher: &Arc<FakeWatcher>) -> ServerService {
-    ServerService::new(server.clone(), watcher.clone())
-}
-
-fn watch_the_input(server: &ServerService) -> Result<WatchedChanges, WatchError> {
-    server.watch(Path::new("features"), &[PathBuf::from("ghg.toml")])
-}
-
-fn watch_the_input_and_a_template(server: &ServerService) -> Result<WatchedChanges, WatchError> {
-    server.watch(
-        Path::new("features"),
-        &[PathBuf::from("ghg.toml"), PathBuf::from("front.md")],
+    ServerService::new(
+        server.clone(),
+        watcher.clone(),
+        Arc::new(FakeSignals::default()),
     )
 }
 
-fn watch_the_configuration(server: &ServerService) -> Result<WatchedChanges, WatchError> {
-    server.watch_config(Path::new("ghg.toml"))
+/// Stop requests not asked yet, with their sender.
+fn stops() -> (Sender<()>, StopRequests) {
+    let (sender, requests) = channel();
+    (sender, StopRequests::new(requests))
+}
+
+type Watch = for<'a> fn(&ServerService, &'a StopRequests) -> Result<WatchedChanges<'a>, WatchError>;
+
+fn watch_the_input<'a>(
+    server: &ServerService,
+    stops: &'a StopRequests,
+) -> Result<WatchedChanges<'a>, WatchError> {
+    server.watch(Path::new("features"), &[PathBuf::from("ghg.toml")], stops)
+}
+
+fn watch_the_input_and_a_template<'a>(
+    server: &ServerService,
+    stops: &'a StopRequests,
+) -> Result<WatchedChanges<'a>, WatchError> {
+    server.watch(
+        Path::new("features"),
+        &[PathBuf::from("ghg.toml"), PathBuf::from("front.md")],
+        stops,
+    )
+}
+
+fn watch_the_configuration<'a>(
+    server: &ServerService,
+    stops: &'a StopRequests,
+) -> Result<WatchedChanges<'a>, WatchError> {
+    server.watch_config(Path::new("ghg.toml"), stops)
 }
 
 #[rstest]
@@ -43,13 +68,11 @@ fn watch_the_configuration(server: &ServerService) -> Result<WatchedChanges, Wat
     ]
 )]
 #[case::the_configuration_alone(watch_the_configuration, &[Watched::File(PathBuf::from("ghg.toml"))])]
-fn the_bursts_waiting_are_handed_back_merged(
-    #[case] watch: fn(&ServerService) -> Result<WatchedChanges, WatchError>,
-    #[case] watched: &[Watched],
-) {
+fn the_bursts_waiting_are_handed_back_merged(#[case] watch: Watch, #[case] watched: &[Watched]) {
     let watcher = Arc::new(FakeWatcher::default());
     let server = service(&Arc::new(FakeServer::default()), &watcher);
-    let mut changes = watch(&server).expect("watching");
+    let (_asker, stops) = stops();
+    let mut changes = watch(&server, &stops).expect("watching");
     assert_eq!(*watcher.watched.lock().expect("lock"), watched);
     let sender = watcher.sender().expect("watching");
     sender.send(changed("features/b.feature")).expect("sent");
@@ -70,9 +93,8 @@ fn changes_missed_while_starting_are_everything() {
         ..FakeWatcher::default()
     });
     let server = service(&Arc::new(FakeServer::default()), &watcher);
-    let mut changes = server
-        .watch(Path::new("features"), &[PathBuf::from("ghg.toml")])
-        .expect("watching");
+    let (_asker, stops) = stops();
+    let mut changes = watch_the_input(&server, &stops).expect("watching");
     drop(watcher.sender());
     assert_eq!(changes.next(), Some(InputChanges::Everything));
     assert_eq!(changes.next(), None);
@@ -86,9 +108,8 @@ fn a_watch_that_cannot_start_says_where() {
         ..FakeWatcher::default()
     });
     let server = service(&Arc::new(FakeServer::default()), &watcher);
-    let error = server
-        .watch(Path::new("features"), &[PathBuf::from("ghg.toml")])
-        .err();
+    let (_asker, stops) = stops();
+    let error = watch_the_input(&server, &stops).err();
     assert_eq!(
         error,
         Some(WatchError {
@@ -107,7 +128,7 @@ fn a_site_is_served_at_127_0_0_1_port_8000_unless_told_otherwise() {
     let served = service
         .serve(site.clone(), &ServeOptions::default())
         .expect("served");
-    assert_eq!(served.address.to_string(), "127.0.0.1:8000");
+    assert_eq!(served.listening.address.to_string(), "127.0.0.1:8000");
     let (host, port, preview) = server.started().expect("started");
     assert_eq!((host.as_str(), port), ("127.0.0.1", 8000));
     assert_eq!(preview.current().site, site);
@@ -138,4 +159,75 @@ fn a_port_in_use_is_named_with_its_host() {
             kind: ListenErrorKind::PortTaken
         })
     );
+}
+
+#[test]
+fn the_changes_end_once_ghg_serve_is_asked_to_stop_while_it_waits() {
+    // Rule 196: under --watch, a request to stop ends the wait for the next change.
+    let watcher = Arc::new(FakeWatcher::default());
+    let server = service(&Arc::new(FakeServer::default()), &watcher);
+    let (asker, stops) = stops();
+    let mut changes = watch_the_input(&server, &stops).expect("watching");
+    let _sender = watcher.sender();
+    let asking = spawn(move || {
+        sleep(STOP_LOOKED_FOR_EVERY * 2);
+        asker.send(()).expect("sent");
+    });
+    assert_eq!(changes.next(), None);
+    asking.join().expect("no panic");
+}
+
+#[test]
+fn a_change_waiting_once_asked_to_stop_is_left() {
+    // Rule 197: a request to stop that came during a rebuild ends the watch, not another rebuild.
+    let watcher = Arc::new(FakeWatcher::default());
+    let server = service(&Arc::new(FakeServer::default()), &watcher);
+    let (asker, stops) = stops();
+    let mut changes = watch_the_input(&server, &stops).expect("watching");
+    let sender = watcher.sender().expect("watching");
+    sender.send(changed("features/a.feature")).expect("sent");
+    asker.send(()).expect("sent");
+    assert_eq!(changes.next(), None);
+}
+
+#[rstest]
+// Rules 196 and 198: the requests to stop are listened for, or what stops listening is said.
+#[case::listened_for(false, None)]
+#[case::refused(true, Some(ServeError::Signals(SignalsError { reason: "not permitted".into() })))]
+fn the_requests_to_stop_are_listened_for_or_their_refusal_said(
+    #[case] failing: bool,
+    #[case] error: Option<ServeError>,
+) {
+    let signals = Arc::new(FakeSignals::default());
+    signals.failing.store(failing, Ordering::SeqCst);
+    let server = ServerService::new(
+        Arc::new(FakeServer::default()),
+        Arc::new(FakeWatcher::default()),
+        signals.clone(),
+    );
+    let requests = server.stop_requests();
+    assert_eq!(requests.as_ref().err(), error.as_ref());
+    if let Ok(requests) = requests {
+        assert!(!requests.asked());
+        signals.ask_to_stop();
+        assert!(requests.asked());
+    }
+}
+
+#[test]
+fn a_change_that_comes_with_a_request_to_stop_is_left() {
+    // Rule 196: a change that comes during the same wait as a request to stop starts no rebuild.
+    let watcher = Arc::new(FakeWatcher::default());
+    let server = service(&Arc::new(FakeServer::default()), &watcher);
+    let (asker, stops) = stops();
+    let mut changes = watch_the_input(&server, &stops).expect("watching");
+    let sender = watcher.sender().expect("watching");
+    let asking = spawn(move || {
+        sleep(STOP_LOOKED_FOR_EVERY / 4);
+        asker.send(()).expect("sent");
+        sender.send(changed("features/a.feature")).expect("sent");
+        sender
+    });
+    assert_eq!(changes.next(), None);
+    drop(asking.join().expect("no panic"));
 }
