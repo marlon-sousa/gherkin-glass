@@ -114,7 +114,7 @@ fn file_renderer<'a>(node: SiteTreeNode<'a>) -> Option<Box<dyn RenderFile + 'a>>
         | SiteNode::OutsideRules(_)
         | SiteNode::Scenario(_)
         | SiteNode::Examples(_)
-        | SiteNode::ExamplesAsScenarios(_)
+        | SiteNode::ExamplesRuns(_)
         | SiteNode::ExampleScenario(_)
         | SiteNode::Step(_)
         | SiteNode::StepTable(_)

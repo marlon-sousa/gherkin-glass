@@ -57,10 +57,10 @@ var DomBlock = class {
 };
 var DomPage = class {
   found = [];
+  byElement = /* @__PURE__ */ new Map();
   document;
   constructor(document2) {
     this.document = document2;
-    const byElement = /* @__PURE__ */ new Map();
     for (const element of document2.querySelectorAll(".ghg-block")) {
       const heading = element.querySelector(":scope > :is(h2, h3, h4, h5)") ?? element;
       const button = heading.querySelector(":scope > button.ghg-toggle");
@@ -69,9 +69,9 @@ var DomPage = class {
         continue;
       }
       const around = element.parentElement?.closest(".ghg-block");
-      const parent = around ? byElement.get(around) ?? null : null;
+      const parent = around ? this.byElement.get(around) ?? null : null;
       const block = new DomBlock(heading.id, button, content, parent, element);
-      byElement.set(element, block);
+      this.byElement.set(element, block);
       this.found.push(block);
     }
     for (const element of document2.querySelectorAll(".ghg-feature")) {
@@ -89,6 +89,14 @@ var DomPage = class {
   }
   target() {
     return anchorOf(this.document.location.hash);
+  }
+  holder(anchor) {
+    const named = this.found.find((block) => block.anchor === anchor);
+    if (named) {
+      return named;
+    }
+    const around = this.document.getElementById(anchor)?.closest(".ghg-block");
+    return around ? this.byElement.get(around) ?? null : null;
   }
   onToggle(handler) {
     for (const block of this.found) {
@@ -851,7 +859,7 @@ function startCollapsing(page2, memory2, pagePath, option) {
     }
   };
   const reveal = (anchor) => {
-    let block = blocks.find((found) => found.anchor === anchor) ?? null;
+    let block = page2.holder(anchor);
     while (block !== null) {
       if (!block.isExpanded()) {
         set(block, true);

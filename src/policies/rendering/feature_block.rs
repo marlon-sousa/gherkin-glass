@@ -61,12 +61,12 @@ pub(super) enum BlockKind {
     /// The block of the scenarios outside every rule.
     OutsideRules,
     Scenario,
-    ExamplesAsScenarios,
+    ExamplesRuns,
 }
 
 /// A block known by its heading alone, of `kind`: the block of the scenarios
-/// outside every rule, which holds them, an outline's examples as scenarios,
-/// which holds the scenario of each row, or the scenario of one row, which
+/// outside every rule, which holds them, an examples block's runs, which
+/// holds the scenario of each row, or the scenario of one row, which
 /// holds its steps; with its node.
 pub(super) struct HeadedNode<'a> {
     pub(super) kind: BlockKind,
@@ -171,7 +171,7 @@ impl BlockKind {
             BlockKind::Rule => "ghg-rule",
             BlockKind::OutsideRules => "ghg-outside-rules",
             BlockKind::Scenario => "ghg-scenario",
-            BlockKind::ExamplesAsScenarios => "ghg-examples-as-scenarios",
+            BlockKind::ExamplesRuns => "ghg-examples-as-scenarios",
         }
     }
 }

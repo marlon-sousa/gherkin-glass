@@ -32,18 +32,24 @@ pub(crate) struct RuleContent {
 }
 
 /// A scenario or an outline, with what only an outline has: its examples
-/// blocks and, when one of them has a row, its examples as scenarios.
+/// blocks, each with its runs.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct ScenarioContent {
     pub(crate) block: ScenarioBlock,
     pub(crate) steps: Vec<StepContent>,
-    pub(crate) examples: Vec<ExamplesBlock>,
-    pub(crate) as_scenarios: Option<ExamplesAsScenarios>,
+    pub(crate) examples: Vec<ExamplesContent>,
 }
 
-/// An outline's examples, as the scenarios their rows make.
+/// An examples block, with the runs its rows make when it has a row.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct ExamplesAsScenarios {
+pub(crate) struct ExamplesContent {
+    pub(crate) block: ExamplesBlock,
+    pub(crate) runs: Option<ExamplesRuns>,
+}
+
+/// An examples block's rows, as the scenarios they make: the runs of its outline.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct ExamplesRuns {
     pub(crate) heading: BlockHeading,
     pub(crate) scenarios: Vec<ExampleScenario>,
 }

@@ -56,6 +56,9 @@ pub(crate) struct ScenarioBlock {
     pub(crate) name: String,
     pub(crate) tags: Vec<TagView>,
     pub(crate) description: Option<Paragraph>,
+    /// An outline's: the `id` of the line before its list of examples, which
+    /// says it runs once for each row, when one of them has a row.
+    pub(crate) runs_anchor: Option<String>,
 }
 
 /// An examples block, an item of its outline's list of examples, which is
@@ -67,9 +70,6 @@ pub(crate) struct ExamplesBlock {
     /// The text of its button, worded as a heading, and saying so when it
     /// has no row; the item's only text when it holds nothing else.
     pub(crate) label: Vec<HeadingPart>,
-    /// Whether its table has a row below its header, which its outline runs
-    /// once for.
-    pub(crate) has_rows: bool,
     /// The note of the keyword its file writes, when that is another word
     /// than `Examples`.
     pub(crate) source_note: Option<Vec<HeadingPart>>,

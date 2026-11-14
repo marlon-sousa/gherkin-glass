@@ -17,6 +17,6 @@ pub(crate) use page::{
     SourceLink, StepView, TableView, TagView,
 };
 pub(crate) use page_content::{
-    BackgroundContent, ExampleScenario, ExamplesAsScenarios, PageContent, RuleContent,
+    BackgroundContent, ExampleScenario, ExamplesContent, ExamplesRuns, PageContent, RuleContent,
     ScenarioContent, StepContent,
 };

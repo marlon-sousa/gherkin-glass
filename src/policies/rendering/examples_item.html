@@ -15,5 +15,8 @@
 {%- if let Some(table) = examples.table %}
 {{ table.render()|safe }}
 {%- endif %}
+{%- if !runs.is_empty() %}
+{{ runs|safe }}
+{%- endif %}
 </div></li>
 {%- endif %}

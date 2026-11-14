@@ -1,4 +1,4 @@
-//! Policy: the blocks of an outline's examples, as their tables and as the scenarios their rows make.
+//! Policy: the blocks of an outline's examples, each with its table and the runs its rows make.
 
 use gherkin::{Examples, Scenario, Table};
 use i18n_embed_fl::fl;
@@ -9,19 +9,15 @@ use super::heading_words::{
 };
 use super::step_views::{filled_step_contents, table};
 use crate::entities::{
-    Anchored, AnchoredScenario, ExampleScenario, ExamplesAsScenarios, ExamplesBlock, HeadingLevel,
-    HeadingPart, plain_parts,
+    Anchored, AnchoredScenario, ExampleScenario, ExamplesBlock, ExamplesContent, ExamplesRuns,
+    HeadingLevel, HeadingPart, plain_parts,
 };
 use crate::policies::CATALOGUE;
-use crate::policies::site::feature_pages::{ExampleRow, example_rows};
+use crate::policies::site::feature_pages::{ExampleRow, block_rows};
 
 impl Builder<'_> {
     /// The block at `place` among its outline's, from 1.
-    pub(super) fn examples(
-        &self,
-        anchored: &Anchored<'_, Examples>,
-        place: usize,
-    ) -> ExamplesBlock {
+    fn examples(&self, anchored: &Anchored<'_, Examples>, place: usize) -> ExamplesBlock {
         let examples = anchored.block;
         let label = examples_heading(examples.name.as_deref().unwrap_or(""), place);
         let has_rows = examples.table.as_ref().is_some_and(has_rows);
@@ -33,7 +29,6 @@ impl Builder<'_> {
                 let words = fl!(CATALOGUE, "nothing-to-run", heading = TEXT_MARKS[0]);
                 worded_parts(&words, &[label])
             },
-            has_rows,
             source_note: source_note(Kind::Examples, &examples.keyword),
             tags: self.tags(&examples.tags),
             description: description(examples.description.as_deref()),
@@ -41,28 +36,65 @@ impl Builder<'_> {
         }
     }
 
-    /// `None` for a scenario, or an outline whose examples have no row.
-    pub(super) fn examples_as_scenarios(
+    /// The examples blocks of `anchored`, each with its runs at `level`, the
+    /// level below the outline's, when it has a row.
+    pub(super) fn examples_contents(
         &self,
         anchored: &AnchoredScenario<'_>,
         level: HeadingLevel,
-    ) -> Option<ExamplesAsScenarios> {
-        let outline = anchored.scenario;
-        let rows = example_rows(outline);
+    ) -> Vec<ExamplesContent> {
+        let mut row_anchors = anchored.rows.iter().map(String::as_str);
+        anchored
+            .examples
+            .iter()
+            .zip(1..)
+            .map(|(examples, place)| {
+                self.examples_content(anchored.scenario, examples, place, &mut row_anchors, level)
+            })
+            .collect()
+    }
+
+    /// The examples block at `place`, with its runs, which take their
+    /// anchors from the outline's `row_anchors` still unused.
+    fn examples_content<'r>(
+        &self,
+        outline: &Scenario,
+        examples: &Anchored<'_, Examples>,
+        place: usize,
+        row_anchors: &mut impl Iterator<Item = &'r str>,
+        level: HeadingLevel,
+    ) -> ExamplesContent {
+        let rows = block_rows(examples.block);
+        let anchors: Vec<&str> = row_anchors.take(rows.len()).collect();
+        ExamplesContent {
+            block: self.examples(examples, place),
+            runs: self.runs(outline, examples, &rows, &anchors, level),
+        }
+    }
+
+    /// The runs of `examples`' `rows`, each with its anchor; `None` when it
+    /// has no row.
+    fn runs(
+        &self,
+        outline: &Scenario,
+        examples: &Anchored<'_, Examples>,
+        rows: &[ExampleRow<'_>],
+        anchors: &[&str],
+        level: HeadingLevel,
+    ) -> Option<ExamplesRuns> {
         if rows.is_empty() {
             return None;
         }
-        let outline_anchor = &anchored.anchor;
         let scenarios = rows
             .iter()
-            .zip(&anchored.rows)
+            .zip(anchors)
             .map(|(row, anchor)| self.example_scenario(outline, anchor, row, level.below()))
             .collect();
-        Some(ExamplesAsScenarios {
+        Some(ExamplesRuns {
             heading: worded_heading(
                 level,
-                &format!("{outline_anchor}_scenarios"),
-                runs_heading(outline),
+                &format!("{}_runs", examples.anchor),
+                plain_parts(&fl!(CATALOGUE, "runs-one-per-row")),
                 true,
             ),
             scenarios,
@@ -103,18 +135,6 @@ impl Builder<'_> {
             ),
             steps: filled_step_contents(self.parsed, &outline.steps, row),
         }
-    }
-}
-
-/// The heading of the runs of `outline`, one per row, naming it when it has
-/// a name.
-fn runs_heading(outline: &Scenario) -> Vec<HeadingPart> {
-    match outline.name.trim() {
-        "" => plain_parts(&fl!(CATALOGUE, "runs-of-unnamed-outline")),
-        name => worded_parts(
-            &fl!(CATALOGUE, "runs-of-outline", name = TEXT_MARKS[0]),
-            &[isolated(name)],
-        ),
     }
 }
 

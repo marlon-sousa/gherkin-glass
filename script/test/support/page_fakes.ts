@@ -49,6 +49,10 @@ export class FakePage implements Page {
     return this.opened;
   }
 
+  holder(anchor: string): Block | null {
+    return this.found.find((block) => block.anchor === anchor) ?? null;
+  }
+
   onToggle(handler: (block: Block) => void): void {
     this.toggle = handler;
   }

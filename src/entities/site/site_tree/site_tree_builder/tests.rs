@@ -43,8 +43,8 @@ fn outline(tree: &SiteTree) -> Vec<String> {
                 SiteNode::OutsideRules(heading) => format!("outside rules {}", heading.anchor),
                 SiteNode::Scenario(block) => format!("scenario {}", block.heading.anchor),
                 SiteNode::Examples(block) => format!("examples {}", block.anchor),
-                SiteNode::ExamplesAsScenarios(heading) => {
-                    format!("examples as scenarios {}", heading.anchor)
+                SiteNode::ExamplesRuns(heading) => {
+                    format!("examples runs {}", heading.anchor)
                 }
                 SiteNode::ExampleScenario(heading) => {
                     format!("example scenario {}", heading.anchor)
@@ -238,9 +238,9 @@ Feature: F
             "          scenario o",
             "            step Given",
             "            examples examples",
-            "            examples as scenarios o_scenarios",
-            "              example scenario o-row-1",
-            "                step Given",
+            "              examples runs examples_runs",
+            "                example scenario o-row-1",
+            "                  step Given",
         ]
         .map(String::from)
     );

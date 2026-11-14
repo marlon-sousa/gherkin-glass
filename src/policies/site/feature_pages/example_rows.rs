@@ -1,6 +1,6 @@
 //! Policy: the rows of an outline's examples, and the placeholders each row fills.
 
-use gherkin::Scenario;
+use gherkin::{Examples, Scenario};
 
 /// One row of an outline's examples, with the header of its table.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -12,17 +12,21 @@ pub(crate) struct ExampleRow<'a> {
 /// Every row of `outline`'s examples blocks, in file order, without their
 /// header rows: the `n`th is the row the anchor rule numbers `n + 1`.
 pub(crate) fn example_rows(outline: &Scenario) -> Vec<ExampleRow<'_>> {
-    outline
-        .examples
-        .iter()
-        .filter_map(|examples| examples.table.as_ref())
-        .flat_map(|table| {
-            let (header, rows) = table
-                .rows
-                .split_first()
-                .map_or((&[][..], &[][..]), |(h, r)| (&h[..], r));
-            rows.iter().map(move |values| ExampleRow { header, values })
-        })
+    outline.examples.iter().flat_map(block_rows).collect()
+}
+
+/// The rows of one examples block, without its header row; none when it has
+/// no table.
+pub(crate) fn block_rows(examples: &Examples) -> Vec<ExampleRow<'_>> {
+    let Some(table) = examples.table.as_ref() else {
+        return Vec::new();
+    };
+    let (header, rows) = table
+        .rows
+        .split_first()
+        .map_or((&[][..], &[][..]), |(h, r)| (&h[..], r));
+    rows.iter()
+        .map(|values| ExampleRow { header, values })
         .collect()
 }
 

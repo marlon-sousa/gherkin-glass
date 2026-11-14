@@ -48,8 +48,8 @@ fn piece(node: SiteTreeNode<'_>) -> String {
         .render(),
         SiteNode::Scenario(value) => NodeOf { value, node }.render(),
         SiteNode::Examples(value) => NodeOf { value, node }.render(),
-        SiteNode::ExamplesAsScenarios(heading) => HeadedNode {
-            kind: BlockKind::ExamplesAsScenarios,
+        SiteNode::ExamplesRuns(heading) => HeadedNode {
+            kind: BlockKind::ExamplesRuns,
             heading,
             node,
         }

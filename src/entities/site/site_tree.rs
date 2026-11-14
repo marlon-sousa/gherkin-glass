@@ -52,11 +52,12 @@ pub(crate) enum SiteNode {
     OutsideRules(BlockHeading),
     /// A scenario or an outline, in its feature's page, its rule or the block
     /// of the scenarios outside every rule, which holds its steps, then an
-    /// outline's examples and examples as scenarios.
+    /// outline's examples blocks.
     Scenario(ScenarioBlock),
+    /// An examples block, in its outline, which holds the runs of its rows.
     Examples(ExamplesBlock),
-    /// An outline's examples as scenarios, by its heading, which holds the scenario of each row.
-    ExamplesAsScenarios(BlockHeading),
+    /// An examples block's runs, by their heading, which holds the scenario of each row.
+    ExamplesRuns(BlockHeading),
     /// The scenario one row of an outline's examples makes, by its heading, which holds its steps.
     ExampleScenario(BlockHeading),
     /// A step of a background or a scenario, which holds its data table or its doc string.

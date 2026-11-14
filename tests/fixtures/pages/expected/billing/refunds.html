@@ -192,7 +192,7 @@ Refunded in full.
 <li><span class="ghg-keyword">Given </span><span class="ghg-placeholder">&#60;count&#62;</span> items</li>
 <li><span class="ghg-keyword">Then </span>the total is <span class="ghg-placeholder">&#60;total&#62;</span></li>
 </ol>
-<p class="ghg-runs">Runs once for each row of these examples:</p>
+<p id="refund-count-items_scenarios" class="ghg-runs">Runs once for each row of these examples:</p>
 <ul class="ghg-examples-list" role="list">
 <li id="cheap" class="ghg-block ghg-examples"><button type="button" class="ghg-toggle" aria-expanded="false">Examples: <bdi>Cheap</bdi></button>
 <div class="ghg-content" hidden>
@@ -207,18 +207,8 @@ Refunded in full.
 <tr><td>1</td><td>2</td></tr>
 </tbody>
 </table>
-</div></li>
-<li id="examples" class="ghg-block ghg-examples"><button type="button" class="ghg-toggle" aria-expanded="false">Examples 2 (nothing to run)</button>
-<div class="ghg-content" hidden>
-<table class="ghg-table">
-<thead>
-<tr><th scope="col">count</th><th scope="col">total</th></tr>
-</thead>
-</table>
-</div></li>
-</ul>
 <div class="ghg-block ghg-examples-as-scenarios">
-<h4 id="refund-count-items_scenarios"><button type="button" class="ghg-toggle" aria-expanded="false">Runs of <bdi>Refund &#60;count&#62; items</bdi>, one per row</button></h4>
+<h4 id="cheap_runs"><button type="button" class="ghg-toggle" aria-expanded="false">Runs, one per row</button></h4>
 <div class="ghg-content" hidden>
 <div class="ghg-block ghg-scenario">
 <h5 id="refund-count-items-row-1"><button type="button" class="ghg-toggle" aria-expanded="true"><bdi>Refund &#60;count&#62; items</bdi> (<bdi>count</bdi>: <bdi>1</bdi>, <bdi>total</bdi>: <bdi>2</bdi>)</button></h5>
@@ -231,6 +221,16 @@ Refunded in full.
 </div>
 </div>
 </div>
+</div></li>
+<li id="examples" class="ghg-block ghg-examples"><button type="button" class="ghg-toggle" aria-expanded="false">Examples 2 (nothing to run)</button>
+<div class="ghg-content" hidden>
+<table class="ghg-table">
+<thead>
+<tr><th scope="col">count</th><th scope="col">total</th></tr>
+</thead>
+</table>
+</div></li>
+</ul>
 </div>
 </div>
 </div>
@@ -301,7 +301,7 @@ Refunded in full.
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span><span class="ghg-placeholder">&#60;count&#62;</span> refunds</li>
 </ol>
-<p class="ghg-runs">Runs once for each row of these examples:</p>
+<p id="refund-again-count-times_scenarios" class="ghg-runs">Runs once for each row of these examples:</p>
 <ul class="ghg-examples-list" role="list">
 <li id="again" class="ghg-block ghg-examples"><button type="button" class="ghg-toggle" aria-expanded="false">Examples: <bdi>Again</bdi></button>
 <div class="ghg-content" hidden>
@@ -313,10 +313,8 @@ Refunded in full.
 <tr><td>2</td></tr>
 </tbody>
 </table>
-</div></li>
-</ul>
 <div class="ghg-block ghg-examples-as-scenarios">
-<h4 id="refund-again-count-times_scenarios"><button type="button" class="ghg-toggle" aria-expanded="false">Runs of <bdi>Refund again &#60;count&#62; times</bdi>, one per row</button></h4>
+<h4 id="again_runs"><button type="button" class="ghg-toggle" aria-expanded="false">Runs, one per row</button></h4>
 <div class="ghg-content" hidden>
 <div class="ghg-block ghg-scenario">
 <h5 id="refund-again-count-times-row-1"><button type="button" class="ghg-toggle" aria-expanded="true"><bdi>Refund again &#60;count&#62; times</bdi> (<bdi>count</bdi>: <bdi>2</bdi>)</button></h5>
@@ -328,6 +326,8 @@ Refunded in full.
 </div>
 </div>
 </div>
+</div></li>
+</ul>
 </div>
 </div>
 </div>

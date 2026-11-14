@@ -106,15 +106,11 @@ impl Builder<'_> {
                 name: scenario.name.clone(),
                 tags: self.tags(&scenario.tags),
                 description: description(scenario.description.as_deref()),
+                runs_anchor: (!anchored.rows.is_empty())
+                    .then(|| format!("{}_scenarios", anchored.anchor)),
             },
             steps: step_contents(self.parsed, &scenario.steps, Some(scenario)),
-            examples: anchored
-                .examples
-                .iter()
-                .zip(1..)
-                .map(|(examples, place)| self.examples(examples, place))
-                .collect(),
-            as_scenarios: self.examples_as_scenarios(anchored, below),
+            examples: self.examples_contents(anchored, below),
         }
     }
 

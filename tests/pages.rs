@@ -381,15 +381,22 @@ fn every_page_has_one_h1_and_a_lang_and_its_content_in_its_html() {
             assert!(ids.contains(&anchor), "{name}: {id}");
             assert!(place.parse::<usize>().is_ok(), "{name}: {id}");
         }
-        // Rule 129: an outline's examples as scenarios, after its anchor.
-        for id in ids.iter().filter(|id| id.ends_with("_scenarios")) {
-            let anchor = id.strip_suffix("_scenarios").expect("found");
+        // Rule 129: the line before an outline's examples, after the
+        // outline's anchor, and an examples block's runs, after the block's.
+        for id in ids
+            .iter()
+            .filter(|id| id.ends_with("_scenarios") || id.ends_with("_runs"))
+        {
+            let (anchor, _) = id.rsplit_once('_').expect("found");
             assert!(ids.contains(&anchor), "{name}: {id}");
         }
         assert_eq!(
             ids.iter()
                 .filter(|id| {
-                    id.contains('_') && !id.contains("_background_") && !id.ends_with("_scenarios")
+                    id.contains('_')
+                        && !id.contains("_background_")
+                        && !id.ends_with("_scenarios")
+                        && !id.ends_with("_runs")
                 })
                 .collect::<Vec<_>>(),
             own.iter().collect::<Vec<_>>(),

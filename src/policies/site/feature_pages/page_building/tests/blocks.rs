@@ -42,7 +42,7 @@ fn headings_read_the_kind_and_the_name_at_their_levels() {
         text_of(&outline.block.heading.parts),
         "Scenario outline: Inside"
     );
-    let examples = &outline.examples[0];
+    let examples = &outline.examples[0].block;
     assert_eq!(
         (examples.anchor.as_str(), text_of(&examples.label).as_str()),
         ("examples", "Examples 1")
@@ -57,10 +57,14 @@ fn headings_read_the_kind_and_the_name_at_their_levels() {
 }
 
 #[test]
-fn an_outline_shows_its_rows_as_scenarios_in_a_collapsed_block() {
+fn an_examples_block_shows_its_rows_as_runs_in_a_collapsed_block() {
     let page = page(FEATURE, &PageOptions::default());
     let (_, outline) = in_rule(blocks(&page).2);
-    let section = outline.as_scenarios.as_ref().expect("rows");
+    assert_eq!(
+        outline.block.runs_anchor.as_deref(),
+        Some("inside_scenarios")
+    );
+    let section = outline.examples[0].runs.as_ref().expect("rows");
     let heading = &section.heading;
     assert_eq!(
         (
@@ -69,7 +73,7 @@ fn an_outline_shows_its_rows_as_scenarios_in_a_collapsed_block() {
             text_of(&heading.parts).as_str(),
             heading.collapsed
         ),
-        (4, "inside_scenarios", "Runs of Inside, one per row", true)
+        (4, "examples_runs", "Runs, one per row", true)
     );
     let row = &section.scenarios[0];
     assert_eq!(
@@ -86,14 +90,7 @@ fn an_outline_shows_its_rows_as_scenarios_in_a_collapsed_block() {
         .iter()
         .map(|part| (part.text.as_str(), part.isolated))
         .collect();
-    assert_eq!(
-        isolated,
-        [
-            ("Runs of ", false),
-            ("Inside", true),
-            (", one per row", false)
-        ]
-    );
+    assert_eq!(isolated, [("Runs, one per row", false)]);
     let isolated: Vec<_> = row
         .heading
         .parts
@@ -117,7 +114,7 @@ fn an_outline_shows_its_rows_as_scenarios_in_a_collapsed_block() {
     };
     let page = self::page(FEATURE, &scenarios);
     let (_, outline) = in_rule(blocks(&page).2);
-    let as_scenarios = outline.as_scenarios.as_ref().expect("rows");
+    let as_scenarios = outline.examples[0].runs.as_ref().expect("rows");
     assert!(as_scenarios.scenarios[0].heading.collapsed);
 }
 

@@ -48,9 +48,9 @@ test("every block of the page is found, with the blocks it is inside", () => {
     ["refund-count-items", "outside_rules"],
     ["refund-count-items_background_1", "refund-count-items"],
     ["cheap", "refund-count-items"],
+    ["cheap_runs", "cheap"],
+    ["refund-count-items-row-1", "cheap_runs"],
     ["examples", "refund-count-items"],
-    ["refund-count-items_scenarios", "refund-count-items"],
-    ["refund-count-items-row-1", "refund-count-items_scenarios"],
     ["refunds-after-thirty-days", null],
     ["an-old-order", "refunds-after-thirty-days"],
     ["store-credit", "refunds-after-thirty-days"],
@@ -60,8 +60,8 @@ test("every block of the page is found, with the blocks it is inside", () => {
     ["refund-again-count-times_background_1", "refund-again-count-times"],
     ["refund-again-count-times_background_2", "refund-again-count-times"],
     ["again", "refund-again-count-times"],
-    ["refund-again-count-times_scenarios", "refund-again-count-times"],
-    ["refund-again-count-times-row-1", "refund-again-count-times_scenarios"],
+    ["again_runs", "again"],
+    ["refund-again-count-times-row-1", "again_runs"],
     ["rule", null],
     ["refund-a-refund", "rule"],
     ["refund-a-refund_background_1", "refund-a-refund"],
@@ -84,18 +84,27 @@ test("every block of the page is found, with the blocks it is inside", () => {
   );
 });
 
-test("an outline's examples as scenarios start collapsed, and a link to a row's scenario expands them", () => {
+test("an examples block's runs start collapsed, and a link to a run, or to the line that once held them, expands them", () => {
   const window = open();
-  assert.equal(expanded(window, "refund-again-count-times_scenarios"), false);
-  assert.equal(content(window, "refund-again-count-times_scenarios").hasAttribute("hidden"), true);
+  assert.equal(expanded(window, "again_runs"), false);
+  assert.equal(content(window, "again_runs").hasAttribute("hidden"), true);
   (window.document.querySelector(".ghg-collapse-all") as unknown as HTMLElement).click();
   const link = window.document.createElement("a");
   link.setAttribute("href", "#refund-again-count-times-row-1");
   window.document.body.appendChild(link);
   link.dispatchEvent(new window.MouseEvent("click", { bubbles: true, cancelable: true }));
-  for (const anchor of ["refunds-after-thirty-days", "refund-again-count-times", "refund-again-count-times_scenarios", "refund-again-count-times-row-1"]) {
+  for (const anchor of ["refunds-after-thirty-days", "refund-again-count-times", "again", "again_runs", "refund-again-count-times-row-1"]) {
     assert.equal(expanded(window, anchor), true, anchor);
   }
+  // An old link to the outline's examples as scenarios lands on the line before its examples, inside the outline.
+  (window.document.querySelector(".ghg-collapse-all") as unknown as HTMLElement).click();
+  link.setAttribute("href", "#refund-again-count-times_scenarios");
+  link.dispatchEvent(new window.MouseEvent("click", { bubbles: true, cancelable: true }));
+  assert.equal(window.document.querySelector("#refund-again-count-times_scenarios")!.matches("p.ghg-runs"), true);
+  for (const anchor of ["refunds-after-thirty-days", "refund-again-count-times"]) {
+    assert.equal(expanded(window, anchor), true, anchor);
+  }
+  assert.equal(expanded(window, "again"), false);
 });
 
 test("an outline's examples start collapsed, and their buttons and a link to one expand them", () => {
