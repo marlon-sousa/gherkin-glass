@@ -3,6 +3,7 @@ Feature: Hostile <script>alert("feature")</script> & 'friends'
   A description with <img src=x onerror="alert('description')"> & <b>bold</b> &amp; &#60;i&#62;
 
   Background: Setup <iframe src="javascript:alert('background')"></iframe>
+    A background's <video src=x onerror="alert('background description')"></video>
     Given a user named "<script>alert('parameter')</script>"
 
   @<i>scenario-tag</i>
@@ -27,10 +28,12 @@ Feature: Hostile <script>alert("feature")</script> & 'friends'
 
     @<em>outline-tag</em>
     Scenario Outline: Outline <object data="x"></object> for <who>
+      An outline's <embed src="javascript:alert('outline description')">
       Given "<who>" signs in as <who>
 
       @<s>examples-tag</s>
       Examples: Examples <textarea>written</textarea>
+        These examples' <details open ontoggle="alert('examples description')">
         | who                                 |
         | <script>alert('row')</script>       |
         | <img src=x onerror="alert('row')">  |

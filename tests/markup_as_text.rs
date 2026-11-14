@@ -109,6 +109,9 @@ const ATTRIBUTES: [&str; 45] = [
     "value",
 ];
 
+/// The elements ghg writes only in a page's head.
+const HEAD_ONLY: [&str; 4] = ["link", "meta", "style", "title"];
+
 /// The scripts every page has: the theme's line, the line that opens the
 /// dialog for a page opened from disk, and the pages' script.
 const SCRIPTS_OF_A_PAGE: usize = 3;
@@ -163,12 +166,25 @@ fn elements(html: &Html) -> impl Iterator<Item = ElementRef<'_>> {
         .filter_map(ElementRef::wrap)
 }
 
-/// The text of the page's body as a reader gets it, every run of white space
-/// read as one space.
-fn body_text(html: &Html) -> String {
-    let body = Selector::parse("body").expect("the selector is valid");
-    let text: String = html.select(&body).flat_map(|body| body.text()).collect();
-    text.split_whitespace().collect::<Vec<_>>().join(" ")
+/// The text of the page's title and body as a reader gets it, every run of
+/// white space read as one space.
+fn page_text(html: &Html) -> String {
+    let parts = Selector::parse("title, body").expect("the selector is valid");
+    let text: Vec<String> = html
+        .select(&parts)
+        .map(|part| part.text().collect())
+        .collect();
+    text.join(" ")
+        .split_whitespace()
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
+fn is_in_head(element: &ElementRef<'_>) -> bool {
+    element
+        .ancestors()
+        .filter_map(ElementRef::wrap)
+        .any(|ancestor| ancestor.value().name() == "head")
 }
 
 #[test]
@@ -213,6 +229,21 @@ fn every_page_holds_only_the_elements_and_attributes_ghg_writes() {
     }
 }
 
+// Rule 203: what only a page's head may hold is only in its head.
+#[test]
+fn every_page_holds_its_title_style_links_and_metadata_only_in_its_head() {
+    for page in pages() {
+        let html = parsed(&page);
+        for element in elements(&html).filter(|element| !is_in_head(element)) {
+            let name = element.value().name();
+            assert!(
+                !HEAD_ONLY.contains(&name),
+                "{page}: an element {name} outside the head"
+            );
+        }
+    }
+}
+
 // Rule 203: the only scripts are ghg's own.
 #[test]
 fn every_page_runs_only_ghg_s_own_scripts() {
@@ -221,6 +252,26 @@ fn every_page_runs_only_ghg_s_own_scripts() {
         let scripts = parsed(&page).select(&script).count();
         assert_eq!(scripts, SCRIPTS_OF_A_PAGE, "{page}");
     }
+}
+
+// Rule 203: the HTML writes the text with character references, and the
+// addresses made from it percent-encoded.
+#[rstest]
+#[case::the_feature_s_heading(
+    "hostile.html",
+    "<h1>Feature: <bdi>Hostile &#60;script&#62;alert(&#34;feature&#34;)&#60;/script&#62; &#38; &#39;friends&#39;</bdi></h1>"
+)]
+#[case::a_tag_s_link_to_another_site(
+    "hostile.html",
+    "href=\"https://example.com/tickets/%22%3E%3Cscript%3Ealert%28%27ticket%27%29%3C/script%3E\""
+)]
+#[case::the_source_link_of_a_file_in_a_folder_with_an_ampersand_and_an_apostrophe(
+    "Q&A's notes/answers.html",
+    "href=\"https://example.com/repo/blob/main/features/Q%26A%27s%20notes/answers.feature#L1\""
+)]
+fn the_html_writes_the_text_escaped(#[case] page: &str, #[case] written: &str) {
+    let html = read_to_string(site().join(page)).expect("the page is read");
+    assert!(html.contains(written), "{page} does not hold {written}");
 }
 
 // Rule 203: the text reads as written in the feature files.
@@ -233,7 +284,9 @@ fn every_page_runs_only_ghg_s_own_scripts() {
         "@ticket:\"><script>alert('ticket')</script>",
         "Ticket \"><script>alert('ticket')</script>",
         "A description with <img src=x onerror=\"alert('description')\"> & <b>bold</b> &amp; &#60;i&#62;",
+        "Feature: Hostile <script>alert(\"feature\")</script> & 'friends', hostile.feature",
         "Background: Setup <iframe src=\"javascript:alert('background')\"></iframe>",
+        "A background's <video src=x onerror=\"alert('background description')\"></video>",
         "Given a user named \"<script>alert('parameter')</script>\"",
         "Scenario: Scenario <img src=x onerror=alert('scenario')> & \"quoted\"",
         "@<i>scenario-tag</i>",
@@ -250,6 +303,8 @@ fn every_page_runs_only_ghg_s_own_scripts() {
         "Given the style is \"<style>body { display: none }</style>\"",
         "Scenario outline: Outline <object data=\"x\"></object> for <who>",
         "@<em>outline-tag</em>",
+        "An outline's <embed src=\"javascript:alert('outline description')\">",
+        "These examples' <details open ontoggle=\"alert('examples description')\">",
         "Given \"<who>\" signs in as <who>",
         "Examples: Examples <textarea>written</textarea>",
         "@<s>examples-tag</s>",
@@ -260,15 +315,16 @@ fn every_page_runs_only_ghg_s_own_scripts() {
 #[case::a_feature_in_a_folder_with_an_ampersand_and_an_apostrophe(
     "Q&A's notes/answers.html",
     &[
+        "Feature: Answers & <b>questions</b> </title><script>alert('title')</script>, Q&A's notes/answers.feature",
         "Q&A's notes",
-        "Feature: Answers & <b>questions</b>",
+        "Feature: Answers & <b>questions</b> </title><script>alert('title')</script>",
         "Scenario: <marquee>Moving</marquee> & 'still'",
         "Given nothing <blink>blinks</blink>",
     ]
 )]
 #[case::the_folder_page(
     "Q&A's notes/index.html",
-    &["Q&A's notes", "Feature: Answers & <b>questions</b>"]
+    &["Q&A's notes", "Feature: Answers & <b>questions</b> </title><script>alert('title')</script>"]
 )]
 #[case::the_home_page(
     "index.html",
@@ -296,7 +352,7 @@ fn every_page_runs_only_ghg_s_own_scripts() {
     ]
 )]
 fn the_text_reads_as_written(#[case] page: &str, #[case] texts: &[&str]) {
-    let text = body_text(&parsed(page));
+    let text = page_text(&parsed(page));
     for written in texts {
         assert!(
             text.contains(written),

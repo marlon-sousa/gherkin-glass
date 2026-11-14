@@ -1,8 +1,8 @@
 // docs/BEHAVIOUR.md, "What a page holds", rule 203, checked in Chromium with
 // Playwright: tests/fixtures/hostile, whose feature files hold markup and
 // scripts in every place their text reaches, is built and served, and on its
-// feature page the folder tree is opened all the way down and the hostile
-// words are searched for. What the script writes, the tree's items and the
+// feature page every item of the folder tree is read and the hostile words
+// are searched for. What the script writes, the tree's items and the
 // results, must read the text as written in the feature files, hold only the
 // elements the script itself makes, and no dialog may open, as one would if
 // any of the feature files' scripts ran.
@@ -35,7 +35,7 @@ const treeTexts = [
 ];
 const searches = [
   { words: "Hostile", reads: "Hostile <script>alert(\"feature\")</script> & 'friends', feature" },
-  { words: "still", reads: "<marquee>Moving</marquee> & 'still', scenario in Answers & <b>questions</b>" },
+  { words: "still", reads: "<marquee>Moving</marquee> & 'still', scenario in Answers & <b>questions</b> </title><script>alert('title')</script>" },
   {
     words: "onload",
     reads: "Rule <svg onload=\"alert('rule')\"></svg>, rule in Hostile <script>alert(\"feature\")</script> & 'friends'",
@@ -97,7 +97,6 @@ try {
       [],
       `the results of ${words} hold elements the script does not make`,
     );
-    await page.keyboard.press("Escape");
   }
   assert.deepEqual(dialogs, [], "a script of the feature files ran and opened a dialog");
 } finally {
