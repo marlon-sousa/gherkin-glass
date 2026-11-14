@@ -27,7 +27,7 @@ impl StopSignals for CtrlcSignals {
 
 fn signals_error(error: CtrlcError) -> SignalsError {
     let reason = match error {
-        // ctrlc's own words for it hide the operating system's.
+        // ctrlc 3.5.2 words it "Unexpected system error", hiding the operating system's words.
         CtrlcError::System(error) => error.to_string(),
         error => error.to_string(),
     };

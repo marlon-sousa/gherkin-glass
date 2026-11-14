@@ -12,10 +12,10 @@ use std::io::{BufRead, BufReader, Read, Write};
 use std::net::{TcpListener, TcpStream};
 use std::path::{Path, PathBuf};
 use std::process::{Child, ChildStdout, Command, Stdio};
-
-use rstest::rstest;
 use std::thread::sleep;
 use std::time::{Duration, Instant};
+
+use rstest::rstest;
 
 fn fixture(name: &str) -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -363,26 +363,35 @@ fn a_versioned_build_serves_the_output_folder_with_its_versions_page() {
 
 // Stopping: rules 196 to 198; the controller's tests check 197 and 198.
 
-#[rstest]
 #[cfg(unix)]
+#[rstest]
 fn a_signal_stops_it_gracefully_once_it_answered(
     #[values("INT", "TERM", "HUP")] signal: &str,
-    #[values(&["--no-build"][..], &[][..], &["--watch"][..])] mode: &[&str],
+    #[values(&["--no-build", "--output", "site"][..], &[][..], &["--watch"][..])] mode: &[&str],
 ) {
-    let folder = built_copy(&format!("serve-stopped-{signal}-{}", mode.len()));
+    // `--no-build` serves the `site` fixture, the others build the `built` one.
+    let folder = match mode.first() {
+        Some(&"--no-build") => fixture(""),
+        _ => built_copy(&format!("serve-stopped-{signal}-{}", mode.len())),
+    };
     let arguments: Vec<_> = ["--port", "0"].iter().chain(mode).copied().collect();
     let mut serving = serve(&folder, &arguments);
-    assert_ne!(get(&serving.address, "/").status, 0);
+    assert_eq!(get(&serving.address, "/").status, 200);
     let sent = Command::new("kill")
         .arg(format!("-{signal}"))
         .arg(serving.child.id().to_string())
         .status()
         .expect("kill runs");
     assert!(sent.success());
+    let mut status = None;
+    eventually("ghg serve ends", || {
+        status = serving.child.try_wait().expect("waited");
+        status.is_some()
+    });
+    assert_eq!(status.and_then(|status| status.code()), Some(0));
     let mut rest = String::new();
     serving.stdout.read_to_string(&mut rest).expect("read");
     assert_eq!(rest, "The site is no longer served.\n");
-    assert_eq!(serving.child.wait().expect("ended").code(), Some(0));
     assert!(TcpStream::connect(&serving.address).is_err());
 }
 
