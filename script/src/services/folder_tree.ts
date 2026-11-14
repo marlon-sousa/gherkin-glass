@@ -41,9 +41,18 @@ export async function startFolderTree(source: TreeSource, toggle: TreeSwitch, vi
     }
   });
   width.onChange((now) => {
+    const focusInTree = toggle.holdsFocus();
     narrow = now;
     open = false;
     show();
+    // A tree hidden with the focus inside it would drop the focus to the body.
+    if (focusInTree && !treeShown(narrow, checked, open)) {
+      if (narrow) {
+        toggle.focusButton();
+      } else {
+        toggle.focusCheckbox();
+      }
+    }
   });
   const items = await source.load();
   if (items === null) {

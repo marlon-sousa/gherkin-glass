@@ -34,7 +34,10 @@ export interface TreeSwitch {
   onPress(handler: () => void): void;
   /** The reader pressed Escape inside the tree. */
   onEscape(handler: () => void): void;
+  /** Whether the keyboard focus is inside the tree's landmark. */
+  holdsFocus(): boolean;
   focusButton(): void;
+  focusCheckbox(): void;
 }
 
 export interface TreeView {

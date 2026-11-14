@@ -73,6 +73,17 @@ test("Escape inside the tree hides it and puts the focus on the button", async (
   assert.equal(window.document.activeElement, button(window) as unknown);
 });
 
+test("the switch knows whether the focus is in the tree, and puts it on the checkbox", async () => {
+  const window = await open(false);
+  const toggle = new DomTreeSwitch(window.document as unknown as Document);
+  assert.equal(toggle.holdsFocus(), false);
+  (window.document.querySelector('[role="treeitem"][tabindex="0"]') as unknown as HTMLElement).focus();
+  assert.equal(toggle.holdsFocus(), true);
+  toggle.focusCheckbox();
+  assert.equal(window.document.activeElement, checkbox(window) as unknown);
+  assert.equal(toggle.holdsFocus(), false);
+});
+
 test("data that cannot be loaded leaves the checkbox and the button disabled and the tree hidden and empty", async () => {
   const window = await open(false, new Map(), null);
   assert.equal(checkbox(window).disabled, true);

@@ -3,8 +3,9 @@
 // page is loaded on a narrow window, where the button shows and hides the tree
 // and Escape in the tree hides it again, with the focus on the button, and on
 // a wide window resized to narrow and back without a reload, where the
-// checkbox and the button change places at once. The page is held to the
-// rules of "Accessibility" with the tree shown on a narrow window, in the
+// checkbox and the button change places at once, and the focus, when it was
+// in a tree the resize hides, moves to the control shown. The page is held to
+// the rules of "Accessibility" with the tree shown on a narrow window, in the
 // light and the dark colour scheme.
 //
 // Run from the repository's root, after cargo build and npm ci in script/,
@@ -35,7 +36,12 @@ const seen = (page) =>
       button: shown(button),
       expanded: button?.getAttribute("aria-expanded"),
       tree: shown(document.querySelector("nav.ghg-tree")),
-      focus: document.activeElement === button ? "button" : document.activeElement?.getAttribute("role") ?? document.activeElement?.tagName,
+      focus:
+        document.activeElement === button
+          ? "button"
+          : document.activeElement?.matches("input.ghg-show-tree")
+            ? "checkbox"
+            : document.activeElement?.getAttribute("role") ?? document.activeElement?.tagName,
     };
   });
 
@@ -90,6 +96,20 @@ try {
   await page.setViewportSize(WIDE);
   await page.waitForFunction(() => document.querySelector("button.ghg-tree-button").getAttribute("aria-expanded") === "false");
   expect("resized to wide again", await seen(page), { checkbox: true, button: false, tree: true });
+  // A resize that hides the tree with the focus in it moves the focus to the
+  // control it shows: the button, then, with the box unchecked, the checkbox.
+  await page.locator('nav.ghg-tree [role="treeitem"][tabindex="0"]').focus();
+  await page.setViewportSize(NARROW);
+  await page.waitForFunction(() => document.querySelector("nav.ghg-tree").hidden);
+  expect("resized to narrow with the focus in the tree", await seen(page), { tree: false, focus: "button" });
+  await page.setViewportSize(WIDE);
+  await page.locator("input.ghg-show-tree").uncheck();
+  await page.setViewportSize(NARROW);
+  await page.locator("button.ghg-tree-button").click();
+  await page.locator('nav.ghg-tree [role="treeitem"][tabindex="0"]').focus();
+  await page.setViewportSize(WIDE);
+  await page.waitForFunction(() => document.querySelector("nav.ghg-tree").hidden);
+  expect("resized to wide with the focus in the tree", await seen(page), { checkbox: true, tree: false, focus: "checkbox" });
   await context.close();
 } finally {
   if (running) await stop(running.server);

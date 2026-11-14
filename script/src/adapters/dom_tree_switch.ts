@@ -59,7 +59,15 @@ export class DomTreeSwitch implements TreeSwitch {
     });
   }
 
+  holdsFocus(): boolean {
+    return this.landmark?.contains(this.landmark.ownerDocument.activeElement) ?? false;
+  }
+
   focusButton(): void {
     this.button?.focus();
+  }
+
+  focusCheckbox(): void {
+    this.checkbox?.focus();
   }
 }

@@ -617,8 +617,14 @@ var DomTreeSwitch = class {
       }
     });
   }
+  holdsFocus() {
+    return this.landmark?.contains(this.landmark.ownerDocument.activeElement) ?? false;
+  }
   focusButton() {
     this.button?.focus();
+  }
+  focusCheckbox() {
+    this.checkbox?.focus();
   }
 };
 
@@ -847,9 +853,17 @@ async function startFolderTree(source, toggle, view, width, memory2, place) {
     }
   });
   width.onChange((now) => {
+    const focusInTree = toggle.holdsFocus();
     narrow = now;
     open = false;
     show();
+    if (focusInTree && !treeShown(narrow, checked, open)) {
+      if (narrow) {
+        toggle.focusButton();
+      } else {
+        toggle.focusCheckbox();
+      }
+    }
   });
   const items = await source.load();
   if (items === null) {

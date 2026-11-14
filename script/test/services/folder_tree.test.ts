@@ -19,7 +19,8 @@ class FakeSwitch implements TreeSwitch {
   open = false;
   shown: boolean;
   disabled = false;
-  focused = false;
+  focused: "button" | "checkbox" | null = null;
+  focusInside = false;
   change: (checked: boolean) => void = () => {};
   press: () => void = () => {};
   escape: () => void = () => {};
@@ -51,8 +52,14 @@ class FakeSwitch implements TreeSwitch {
   onEscape(handler: () => void): void {
     this.escape = handler;
   }
+  holdsFocus(): boolean {
+    return this.focusInside;
+  }
   focusButton(): void {
-    this.focused = true;
+    this.focused = "button";
+  }
+  focusCheckbox(): void {
+    this.focused = "checkbox";
   }
 }
 
@@ -136,17 +143,17 @@ test("Escape in the tree on a narrow window hides it and puts the focus on the b
   const toggle = new FakeSwitch(true);
   await startFolderTree(source(ITEMS), toggle, new FakeView(), new FakeWidth(true), memory(new Map()), { sitePath: "/", page: "index.html" });
   toggle.escape();
-  assert.equal(toggle.focused, false);
+  assert.equal(toggle.focused, null);
   toggle.press();
   toggle.escape();
-  assert.deepEqual([toggle.open, toggle.shown, toggle.focused], [false, false, true]);
+  assert.deepEqual([toggle.open, toggle.shown, toggle.focused], [false, false, "button"]);
 });
 
 test("Escape in the tree on a wide window does nothing", async () => {
   const toggle = new FakeSwitch(true);
   await startFolderTree(source(ITEMS), toggle, new FakeView(), new FakeWidth(false), memory(new Map()), { sitePath: "/", page: "index.html" });
   toggle.escape();
-  assert.deepEqual([toggle.shown, toggle.focused], [true, false]);
+  assert.deepEqual([toggle.shown, toggle.focused], [true, null]);
 });
 
 test("resizing across the narrow width switches between the checkbox and the button, both ways", async () => {
@@ -166,6 +173,33 @@ test("resizing across the narrow width switches between the checkbox and the but
   assert.equal(toggle.shown, true);
   width.resize(false);
   assert.equal(toggle.shown, false);
+});
+
+test("a resize that hides the tree with the focus inside it moves the focus to the control it shows", async () => {
+  const toggle = new FakeSwitch(true);
+  const width = new FakeWidth(false);
+  await startFolderTree(source(ITEMS), toggle, new FakeView(), width, memory(new Map()), { sitePath: "/", page: "index.html" });
+  toggle.focusInside = true;
+  width.resize(true);
+  assert.equal(toggle.focused, "button");
+  toggle.focused = null;
+  toggle.change(false);
+  toggle.press();
+  width.resize(false);
+  assert.equal(toggle.focused, "checkbox");
+});
+
+test("a resize that keeps the tree shown, or hides it with the focus elsewhere, leaves the focus where it is", async () => {
+  const toggle = new FakeSwitch(true);
+  const width = new FakeWidth(true);
+  await startFolderTree(source(ITEMS), toggle, new FakeView(), width, memory(new Map()), { sitePath: "/", page: "index.html" });
+  toggle.press();
+  toggle.focusInside = true;
+  width.resize(false);
+  assert.deepEqual([toggle.shown, toggle.focused], [true, null]);
+  toggle.focusInside = false;
+  width.resize(true);
+  assert.deepEqual([toggle.shown, toggle.focused], [false, null]);
 });
 
 test("data that cannot be loaded disables the checkbox and the button and builds nothing", async () => {
