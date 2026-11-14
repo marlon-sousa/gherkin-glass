@@ -31,7 +31,7 @@ impl StopRequests {
     }
 
     /// Leaves the requests that came already, so that only those to come count.
-    pub(crate) fn leave_those_come(&self) {
+    pub(crate) fn leave_those_that_came(&self) {
         self.requests.try_iter().for_each(drop);
     }
 
@@ -53,8 +53,6 @@ impl StopRequests {
 #[cfg(test)]
 mod tests {
     use std::sync::mpsc::channel;
-    use std::thread::{sleep, spawn};
-    use std::time::{Duration, Instant};
 
     use super::*;
 
@@ -70,22 +68,15 @@ mod tests {
     }
 
     #[test]
-    fn another_request_is_one_that_comes_from_then_on() {
+    fn the_requests_that_came_are_left_before_another_is_waited_for() {
         let (sender, requests) = channel();
         let requests = StopRequests::new(requests);
         sender.send(()).expect("sent");
         sender.send(()).expect("sent");
         requests.wait();
-        requests.leave_those_come();
-        let asking = spawn(move || {
-            sleep(Duration::from_millis(100));
-            sender.send(()).expect("sent");
-            sender
-        });
-        let started = Instant::now();
-        assert!(requests.another());
-        assert!(started.elapsed() >= Duration::from_millis(100));
-        drop(asking.join().expect("no panic"));
+        requests.leave_those_that_came();
+        drop(sender);
+        assert!(!requests.another());
     }
 
     #[test]

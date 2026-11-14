@@ -31,7 +31,7 @@ impl StopSignals for CtrlcSignals {
     }
 
     fn end_on_another(&self, requests: StopRequests) {
-        requests.leave_those_come();
+        requests.leave_those_that_came();
         spawn(move || {
             if requests.another() {
                 exit(INTERRUPTED);
