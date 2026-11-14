@@ -1,5 +1,5 @@
-//! Composition root: the ghg command, wired to the real file system, network
-//! and terminal, for both binaries, `ghg` and the cargo plugin `cargo-ghg`.
+//! Composition root: the ghg command, wired to the real file system, network,
+//! signals and terminal, for both binaries, `ghg` and the cargo plugin `cargo-ghg`.
 
 use std::ffi::OsString;
 use std::io::{Write, stderr, stdout};
@@ -7,8 +7,8 @@ use std::process::ExitCode;
 use std::sync::Arc;
 
 use crate::adapters::{
-    FileSystemReader, FileWatcher, FolderFiles, GherkinCrate, HttpPreviewServer, InputFolderReader,
-    MemoryFiles, OutputFolderStore, StandardStreams,
+    CtrlcSignals, FileSystemReader, FileWatcher, FolderFiles, GherkinCrate, HttpPreviewServer,
+    InputFolderReader, MemoryFiles, OutputFolderStore, StandardStreams,
 };
 use crate::controllers::SiteController;
 use crate::handlers::CommandLine;
@@ -33,6 +33,7 @@ pub fn run(arguments: impl IntoIterator<Item = OsString>) -> ExitCode {
         Arc::new(ServerService::new(
             Arc::new(HttpPreviewServer),
             Arc::new(FileWatcher),
+            Arc::new(CtrlcSignals),
         )),
     );
     let reply = CommandLine::new(Arc::new(site), Arc::new(StandardStreams)).run(arguments);

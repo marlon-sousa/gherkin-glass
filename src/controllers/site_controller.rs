@@ -5,12 +5,13 @@ mod watching;
 
 use std::net::SocketAddr;
 use std::sync::Arc;
-use std::thread::park;
 
+use building::Built;
 use watching::Watching;
 
 use crate::entities::{
-    BuildOptions, BuiltSite, Destination, ServeMode, ServeOptions, Served, ServedSite,
+    BuildOptions, BuiltSite, Destination, ServeMode, ServeOptions, Served, ServedSite, Settings,
+    StopRequests,
 };
 use crate::errors::{BuildError, RebuildError, ServeError, WatchError};
 use crate::services::{
@@ -21,9 +22,9 @@ use crate::services::{
 pub(crate) trait SiteApi {
     fn build(&self, options: &BuildOptions) -> Result<BuiltSite, BuildError>;
 
-    /// Serves until ghg serve is stopped, so it returns only what stops it
-    /// before it serves, or, under `--watch`, a watch that cannot start, or
-    /// `Ok` once the watching ends.
+    /// Serves until ghg serve is asked to stop, or, under `--watch`, until the watching ends,
+    /// then returns `Ok` once it no longer serves; or returns what stops it before it serves,
+    /// or, under `--watch`, a watch that cannot start.
     fn serve(&self, options: &ServeOptions, listener: &dyn SiteListener) -> Result<(), ServeError>;
 }
 
@@ -63,15 +64,56 @@ impl SiteController {
         }
     }
 
-    /// Serves `site` as `options` say, and tells `listener` where.
-    fn serve_site(
+    /// The first build of ghg serve, from nothing with `settings`, or nothing when `stops` were
+    /// asked while it ran.
+    fn first_build(
+        &self,
+        settings: Settings,
+        stops: &StopRequests,
+    ) -> Result<Option<Built>, ServeError> {
+        let first = self
+            .build_from_nothing(settings)
+            .map_err(|stopped| stopped.error)?;
+        Ok((!stops.asked()).then_some(first))
+    }
+
+    /// Serves `site` as `options` say, tells `listener` where, and waits until `stops` are
+    /// asked.
+    fn serve_until_asked(
         &self,
         site: ServedSite,
         options: &ServeOptions,
         listener: &dyn SiteListener,
+        stops: &StopRequests,
     ) -> Result<Served, ServeError> {
         let served = self.server.serve(site, options)?;
-        listener.listening(served.address);
+        listener.listening(served.listening.address);
+        stops.wait();
+        Ok(served)
+    }
+
+    /// Serves the site `first` built under `--watch`, and rebuilds on each change until
+    /// `stops` are asked or the watching ends.
+    fn serve_and_watch(
+        &self,
+        first: Built,
+        options: &ServeOptions,
+        listener: &dyn SiteListener,
+        stops: &StopRequests,
+    ) -> Result<Served, ServeError> {
+        let served = self.server.serve(first.site, options)?;
+        let watching = Watching {
+            controller: self,
+            options: &options.build,
+            config: self.settings.config_file(&options.build),
+            preview: &served.preview,
+            listener,
+            stops,
+        };
+        let changes = watching.start(&first.snapshot)?;
+        // Said once watching, so that a change made from then on is seen.
+        listener.listening(served.listening.address);
+        watching.rebuild_on(changes, first.snapshot);
         Ok(served)
     }
 }
@@ -89,43 +131,30 @@ impl SiteApi for SiteController {
     }
 
     fn serve(&self, options: &ServeOptions, listener: &dyn SiteListener) -> Result<(), ServeError> {
+        // Before the first build, so that a request to stop during it lets it finish.
+        let stops = self.server.stop_requests()?;
         let settings = self
             .settings
             .load(&options.build, options.mode.destination())
             .map_err(BuildError::Config)?;
+        // Each arm drops what it served once it returns, which stops the server.
         match options.mode {
             ServeMode::Folder => {
                 let site = ServedSite::Folder(settings.output.clone());
-                self.serve_site(site, options, listener)?;
+                self.serve_until_asked(site, options, listener, &stops)?;
             }
             ServeMode::Build => {
-                let built = self
-                    .build_from_nothing(settings)
-                    .map_err(|stopped| stopped.error)?;
-                self.serve_site(built.site, options, listener)?;
+                if let Some(first) = self.first_build(settings, &stops)? {
+                    self.serve_until_asked(first.site, options, listener, &stops)?;
+                }
             }
             ServeMode::Watch => {
-                let first = self
-                    .build_from_nothing(settings)
-                    .map_err(|stopped| stopped.error)?;
-                let served = self.server.serve(first.site, options)?;
-                let watching = Watching {
-                    controller: self,
-                    options: &options.build,
-                    config: self.settings.config_file(&options.build),
-                    preview: &served.preview,
-                    listener,
-                };
-                let changes = watching.start(&first.snapshot)?;
-                // Said once watching, so that a change made from then on is seen.
-                listener.listening(served.address);
-                watching.rebuild_on(changes, first.snapshot);
-                return Ok(());
+                if let Some(first) = self.first_build(settings, &stops)? {
+                    self.serve_and_watch(first, options, listener, &stops)?;
+                }
             }
         }
-        loop {
-            park();
-        }
+        Ok(())
     }
 }
 

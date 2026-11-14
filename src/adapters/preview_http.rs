@@ -8,12 +8,12 @@ use std::fs::read;
 use std::io::ErrorKind;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, TcpListener, TcpStream};
 use std::sync::Arc;
-use std::thread::spawn;
+use std::thread::{JoinHandle, spawn};
 use std::time::Duration;
 
 use tiny_http::{Header, Method, Request, Response, Server, StatusCode};
 
-use crate::entities::{Preview, ServedSite, ServerWords, Version};
+use crate::entities::{Listening, Preview, ServedSite, ServerWords, Version};
 use crate::errors::ListenErrorKind;
 use crate::ports::PreviewServer;
 use content_type::{content_type, is_html};
@@ -36,7 +36,7 @@ impl PreviewServer for HttpPreviewServer {
         port: u16,
         preview: Arc<Preview>,
         words: ServerWords,
-    ) -> Result<SocketAddr, ListenErrorKind> {
+    ) -> Result<Listening, ListenErrorKind> {
         let bind = || {
             TcpListener::bind((host, port)).map_err(|error| match error.kind() {
                 ErrorKind::AddrInUse => ListenErrorKind::PortTaken,
@@ -67,16 +67,50 @@ impl PreviewServer for HttpPreviewServer {
             }
         })?);
         let words = Arc::new(words);
-        for _ in 0..THREADS {
-            let (server, preview, words) = (server.clone(), preview.clone(), words.clone());
-            spawn(move || {
-                // `recv` fails only once the server is closed.
-                while let Ok(request) = server.recv() {
-                    answer(request, &preview, &words);
-                }
-            });
+        let threads = (0..THREADS)
+            .map(|_| answer_on_a_thread(&server, &preview, &words))
+            .collect();
+        Ok(Listening {
+            address,
+            answering: Box::new(Answering { server, threads }),
+        })
+    }
+}
+
+/// Answers the requests `server` takes on a thread of its own, until it is unblocked.
+fn answer_on_a_thread(
+    server: &Arc<Server>,
+    preview: &Arc<Preview>,
+    words: &Arc<ServerWords>,
+) -> JoinHandle<()> {
+    let (server, preview, words) = (server.clone(), preview.clone(), words.clone());
+    spawn(move || {
+        // `recv` fails once the thread is unblocked or the server is closed.
+        while let Ok(request) = server.recv() {
+            answer(request, &preview, &words);
         }
-        Ok(address)
+    })
+}
+
+/// The server and its threads answering. Dropped, it unblocks each thread, then waits for
+/// them, so that the requests already taken are answered, and the server closes once the last
+/// share of it is dropped.
+struct Answering {
+    server: Arc<Server>,
+    threads: Vec<JoinHandle<()>>,
+}
+
+impl Drop for Answering {
+    fn drop(&mut self) {
+        // tiny_http 0.12.0 queues each unblock behind the requests already taken, and each
+        // unblock ends one thread's `recv`.
+        for _ in &self.threads {
+            self.server.unblock();
+        }
+        for thread in self.threads.drain(..) {
+            // A thread that panicked has nothing left to answer.
+            let _ = thread.join();
+        }
     }
 }
 
@@ -241,6 +275,8 @@ fn header(name: &str, value: &str) -> Header {
 #[cfg(test)]
 mod tests {
     use std::collections::BTreeMap;
+    use std::io::{Read, Write};
+    use std::thread::sleep;
 
     use super::*;
     use crate::entities::ServeMode;
@@ -301,5 +337,28 @@ mod tests {
         );
         assert_eq!(choose("/b/", &preview, &words()).status, Status::NotFound);
         assert_eq!(choose("/a/s", &preview, &words()).status, Status::NotFound);
+    }
+
+    #[test]
+    fn once_what_it_returns_is_dropped_the_server_is_closed() {
+        let preview = Arc::new(memory(ServeMode::Build));
+        let listening = HttpPreviewServer
+            .start("127.0.0.1", 0, preview, words())
+            .expect("listening");
+        let address = listening.address;
+        let mut stream = TcpStream::connect(address).expect("connects");
+        stream
+            .write_all(b"GET /a/ HTTP/1.1\r\nConnection: close\r\n\r\n")
+            .expect("sent");
+        let mut answer = String::new();
+        stream.read_to_string(&mut answer).expect("answered");
+        assert!(answer.starts_with("HTTP/1.1 200"), "{answer}");
+        drop(listening);
+        // tiny_http 0.12.0 closes its listening socket on a thread of its own, soon after.
+        let closed = (0..100).any(|_| {
+            sleep(Duration::from_millis(20));
+            TcpStream::connect(address).is_err()
+        });
+        assert!(closed);
     }
 }

@@ -7,7 +7,7 @@ use super::*;
 use crate::entities::InputChanges;
 
 /// The calls ghg serve --watch makes before it waits for the first change.
-const UNTIL_WATCHING: usize = 9;
+const UNTIL_WATCHING: usize = 10;
 
 /// Runs ghg serve --watch with the fakes of `world` on a thread of its own and, once it watches,
 /// hands `steps` what the listener was told; then ends the watching, and checks that serve ends.
@@ -27,6 +27,8 @@ fn while_watching(world: &World, steps: impl FnOnce(&Recorded)) {
         world.server.stop_watching();
         assert_eq!(serving.join().expect("no panic"), Ok(()));
     });
+    // Rule 196: and no longer serves.
+    assert_eq!(world.server.no_longer_served.load(Ordering::SeqCst), 1);
 }
 
 /// The calls made since the first `count`, once there are `more` of them.

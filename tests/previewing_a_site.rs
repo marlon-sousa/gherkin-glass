@@ -12,6 +12,8 @@ use std::io::{BufRead, BufReader, Read, Write};
 use std::net::{TcpListener, TcpStream};
 use std::path::{Path, PathBuf};
 use std::process::{Child, ChildStdout, Command, Stdio};
+
+use rstest::rstest;
 use std::thread::sleep;
 use std::time::{Duration, Instant};
 
@@ -357,6 +359,31 @@ fn a_versioned_build_serves_the_output_folder_with_its_versions_page() {
     );
     assert_eq!(get(&serving.address, "/main/withdraw.html").status, 200);
     assert!(folder.join("site/ghg-versions.json").is_file());
+}
+
+// Stopping: rules 196 to 198; the controller's tests check 197 and 198.
+
+#[rstest]
+#[cfg(unix)]
+fn a_signal_stops_it_gracefully_once_it_answered(
+    #[values("INT", "TERM", "HUP")] signal: &str,
+    #[values(&["--no-build"][..], &[][..], &["--watch"][..])] mode: &[&str],
+) {
+    let folder = built_copy(&format!("serve-stopped-{signal}-{}", mode.len()));
+    let arguments: Vec<_> = ["--port", "0"].iter().chain(mode).copied().collect();
+    let mut serving = serve(&folder, &arguments);
+    assert_ne!(get(&serving.address, "/").status, 0);
+    let sent = Command::new("kill")
+        .arg(format!("-{signal}"))
+        .arg(serving.child.id().to_string())
+        .status()
+        .expect("kill runs");
+    assert!(sent.success());
+    let mut rest = String::new();
+    serving.stdout.read_to_string(&mut rest).expect("read");
+    assert_eq!(rest, "The site is no longer served.\n");
+    assert_eq!(serving.child.wait().expect("ended").code(), Some(0));
+    assert!(TcpStream::connect(&serving.address).is_err());
 }
 
 // What it answers: rules 61 to 64.

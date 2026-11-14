@@ -1,5 +1,6 @@
-//! Entity: the site ghg serve serves, the version of it being served, where it is served, and the words of its answers.
+//! Entity: the site ghg serve serves, the version of it being served, where it is served and what keeps it served, and the words of its answers.
 
+use std::any::Any;
 use std::collections::BTreeMap;
 use std::net::SocketAddr;
 use std::path::PathBuf;
@@ -56,12 +57,21 @@ impl Preview {
     }
 }
 
-/// A site being served: the address it is served at, and what is served,
-/// which a rebuild replaces.
+/// A site being served: where it is listened for, and what is served, which a rebuild
+/// replaces.
 #[derive(Debug)]
 pub(crate) struct Served {
-    pub(crate) address: SocketAddr,
+    pub(crate) listening: Listening,
     pub(crate) preview: Arc<Preview>,
+}
+
+/// A server listening: the address it listens at, and what keeps it answering.
+#[derive(Debug)]
+pub(crate) struct Listening {
+    pub(crate) address: SocketAddr,
+    /// Dropping it stops taking requests, and returns once those being answered are.
+    #[expect(dead_code, reason = "it is held only to be dropped")]
+    pub(crate) answering: Box<dyn Any + Send>,
 }
 
 /// The sentences ghg serve answers with when it has no file to serve,
