@@ -1,6 +1,6 @@
 //! Entity: a folder's page, the home page among them, every text in it as written or worded: its nodes and its content as the site stage builds it, with what is below its node.
 
-use crate::entities::{ContentsEntry, LinkAddress, SiteAddress, Trail};
+use crate::entities::{ContentsEntry, HeadingPart, LinkAddress, SiteAddress, Trail};
 
 /// One folder page of the site. Every `String` is text, escaped when it is rendered.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -38,7 +38,7 @@ pub(crate) struct FeatureEntry {
     pub(crate) address: LinkAddress,
     /// The `lang` of the feature's page.
     pub(crate) language: String,
-    pub(crate) heading: String,
+    pub(crate) heading: Vec<HeadingPart>,
     /// The count of its scenarios, in words.
     pub(crate) scenarios: String,
     /// The button's accessible name, the count and the feature's heading.

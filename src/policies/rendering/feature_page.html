@@ -1,4 +1,4 @@
-<h1>{{ page.heading }}</h1>
+<h1>{{ page.heading.render()|safe }}</h1>
 {%- if !page.tags.is_empty() %}
 {{ page.tags.render()|safe }}
 {%- endif %}

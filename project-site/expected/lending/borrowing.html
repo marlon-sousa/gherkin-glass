@@ -80,7 +80,7 @@
 <ol>
 <li><a href="../index.html">gherkin-glass examples</a></li>
 <li><a href="index.html">lending</a></li>
-<li><a href="borrowing.html" aria-current="page">Feature: Borrowing books</a></li>
+<li><a href="borrowing.html" aria-current="page">Feature: <bdi>Borrowing books</bdi></a></li>
 </ol>
 </nav>
 <form class="ghg-search" role="search" data-root="../" data-shown="50" data-loading="Loading search." data-failed="Search could not be loaded." data-none="No results." data-count="Results: {count}." data-count-limited="Results: {count}. The first 50 are listed." data-no-name="no name" data-feature="{name}, feature" data-rule="{name}, rule in {feature}" data-scenario="{name}, scenario in {feature}" data-scenario-in-rule="{name}, scenario in {rule}, {feature}" data-scenario-outline="{name}, scenario outline in {feature}" data-scenario-outline-in-rule="{name}, scenario outline in {rule}, {feature}">
@@ -89,7 +89,7 @@
 <ol class="ghg-search-results" hidden></ol>
 </form>
 <main id="ghg_main">
-<h1>Feature: Borrowing books</h1>
+<h1>Feature: <bdi>Borrowing books</bdi></h1>
 <ul class="ghg-tags">
 <li><a href="../tags/lending.html">@lending</a></li>
 <li><a href="../tags/issue-19.html">@issue-19</a></li>
@@ -100,17 +100,20 @@ Each member may hold a few books at a time, for a few weeks each.</p>
 </div>
 <nav class="ghg-contents" aria-label="Contents">
 <ul>
-<li><a href="#borrowing-a-book-that-is-on-the-shelf">Scenario: Borrowing a book that is on the shelf</a></li>
-<li><a href="#borrowing-several-books-at-once">Scenario: Borrowing several books at once</a></li>
-<li><a href="#how-long-a-loan-lasts">Scenario Outline: How long a loan lasts</a></li>
-<li><a href="#a-member-holds-at-most-5-books">Rule: A member holds at most 5 books</a>
+<li><a href="#outside_rules">Outside any rule</a>
 <ul>
-<li><a href="#borrowing-over-the-limit-is-refused">Scenario: Borrowing over the limit is refused</a></li>
-<li><a href="#returning-a-book-makes-room-for-another">Scenario: Returning a book makes room for another</a></li>
+<li><a href="#borrowing-a-book-that-is-on-the-shelf">Scenario: <bdi>Borrowing a book that is on the shelf</bdi></a></li>
+<li><a href="#borrowing-several-books-at-once">Scenario: <bdi>Borrowing several books at once</bdi></a></li>
+<li><a href="#how-long-a-loan-lasts">Scenario outline: <bdi>How long a loan lasts</bdi></a></li>
 </ul></li>
-<li><a href="#a-book-on-hold-waits-for-the-member-who-asked-first">Rule: A book on hold waits for the member who asked first</a>
+<li><a href="#a-member-holds-at-most-5-books">Rule: <bdi>A member holds at most 5 books</bdi></a>
 <ul>
-<li><a href="#a-book-on-hold-cannot-be-borrowed-by-someone-else">Scenario: A book on hold cannot be borrowed by someone else</a></li>
+<li><a href="#borrowing-over-the-limit-is-refused">Scenario: <bdi>Borrowing over the limit is refused</bdi></a></li>
+<li><a href="#returning-a-book-makes-room-for-another">Scenario: <bdi>Returning a book makes room for another</bdi></a></li>
+</ul></li>
+<li><a href="#a-book-on-hold-waits-for-the-member-who-asked-first">Rule: <bdi>A book on hold waits for the member who asked first</bdi></a>
+<ul>
+<li><a href="#a-book-on-hold-cannot-be-borrowed-by-someone-else">Scenario: <bdi>A book on hold cannot be borrowed by someone else</bdi></a></li>
 </ul></li>
 </ul>
 </nav>
@@ -120,7 +123,7 @@ Each member may hold a few books at a time, for a few weeks each.</p>
 <label class="ghg-option"><input type="checkbox" class="ghg-inline-backgrounds" autocomplete="off" checked> Show backgrounds inside each scenario</label>
 </div>
 <div class="ghg-block ghg-background" data-expanded-when-unchecked="true">
-<h2 id="a-member-at-the-desk"><button type="button" class="ghg-toggle" aria-expanded="false">Background: A member at the desk</button></h2>
+<h2 id="a-member-at-the-desk"><button type="button" class="ghg-toggle" aria-expanded="false">Background: <bdi>A member at the desk</bdi></button></h2>
 <div class="ghg-content" hidden>
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span>a member named <span class="ghg-parameter">&#34;Ana&#34;</span> with card number <span class="ghg-number">1024</span></li>
@@ -128,14 +131,17 @@ Each member may hold a few books at a time, for a few weeks each.</p>
 </ol>
 </div>
 </div>
+<div class="ghg-block ghg-outside-rules">
+<h2 id="outside_rules"><button type="button" class="ghg-toggle" aria-expanded="true">Outside any rule</button></h2>
+<div class="ghg-content">
 <div class="ghg-block ghg-scenario">
-<h2 id="borrowing-a-book-that-is-on-the-shelf"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: Borrowing a book that is on the shelf</button></h2>
+<h3 id="borrowing-a-book-that-is-on-the-shelf"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: <bdi>Borrowing a book that is on the shelf</bdi></button></h3>
 <div class="ghg-content">
 <div class="ghg-description">
 <p>A book on the shelf can be borrowed at once.</p>
 </div>
 <div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
-<h3 id="borrowing-a-book-that-is-on-the-shelf_background_1"><button type="button" class="ghg-toggle" aria-expanded="true">From the background</button></h3>
+<h4 id="borrowing-a-book-that-is-on-the-shelf_background_1"><button type="button" class="ghg-toggle" aria-expanded="true">From the background</button></h4>
 <div class="ghg-content">
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span>a member named <span class="ghg-parameter">&#34;Ana&#34;</span> with card number <span class="ghg-number">1024</span></li>
@@ -143,7 +149,7 @@ Each member may hold a few books at a time, for a few weeks each.</p>
 </ol>
 </div>
 </div>
-<h3 class="ghg-steps-heading">From the scenario</h3>
+<h4 class="ghg-steps-heading">From the scenario</h4>
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span>the book <span class="ghg-parameter">&#34;The Hobbit&#34;</span> is on the shelf</li>
 <li><span class="ghg-keyword">When </span><span class="ghg-parameter">&#34;Ana&#34;</span> borrows <span class="ghg-parameter">&#34;The Hobbit&#34;</span></li>
@@ -153,13 +159,13 @@ Each member may hold a few books at a time, for a few weeks each.</p>
 </div>
 </div>
 <div class="ghg-block ghg-scenario">
-<h2 id="borrowing-several-books-at-once"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: Borrowing several books at once</button></h2>
+<h3 id="borrowing-several-books-at-once"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: <bdi>Borrowing several books at once</bdi></button></h3>
 <div class="ghg-content">
 <ul class="ghg-tags">
 <li><a href="../tags/slow.html">@slow</a></li>
 </ul>
 <div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
-<h3 id="borrowing-several-books-at-once_background_1"><button type="button" class="ghg-toggle" aria-expanded="true">From the background</button></h3>
+<h4 id="borrowing-several-books-at-once_background_1"><button type="button" class="ghg-toggle" aria-expanded="true">From the background</button></h4>
 <div class="ghg-content">
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span>a member named <span class="ghg-parameter">&#34;Ana&#34;</span> with card number <span class="ghg-number">1024</span></li>
@@ -167,7 +173,7 @@ Each member may hold a few books at a time, for a few weeks each.</p>
 </ol>
 </div>
 </div>
-<h3 class="ghg-steps-heading">From the scenario</h3>
+<h4 class="ghg-steps-heading">From the scenario</h4>
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span>these books are on the shelf:
 <table class="ghg-table">
@@ -186,13 +192,13 @@ Each member may hold a few books at a time, for a few weeks each.</p>
 </div>
 </div>
 <div class="ghg-block ghg-scenario">
-<h2 id="how-long-a-loan-lasts"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario Outline: How long a loan lasts</button></h2>
+<h3 id="how-long-a-loan-lasts"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario outline: <bdi>How long a loan lasts</bdi></button></h3>
 <div class="ghg-content">
 <ul class="ghg-tags">
 <li><a href="../tags/outline.html">@outline</a></li>
 </ul>
 <div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
-<h3 id="how-long-a-loan-lasts_background_1"><button type="button" class="ghg-toggle" aria-expanded="true">From the background</button></h3>
+<h4 id="how-long-a-loan-lasts_background_1"><button type="button" class="ghg-toggle" aria-expanded="true">From the background</button></h4>
 <div class="ghg-content">
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span>a member named <span class="ghg-parameter">&#34;Ana&#34;</span> with card number <span class="ghg-number">1024</span></li>
@@ -200,15 +206,16 @@ Each member may hold a few books at a time, for a few weeks each.</p>
 </ol>
 </div>
 </div>
-<h3 class="ghg-steps-heading">From the scenario</h3>
+<h4 class="ghg-steps-heading">From the scenario</h4>
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span><span class="ghg-parameter">&#34;<span class="ghg-placeholder">&#60;title&#62;</span>&#34;</span> is on the shelf</li>
 <li><span class="ghg-keyword">When </span><span class="ghg-parameter">&#34;Ana&#34;</span> borrows <span class="ghg-parameter">&#34;<span class="ghg-placeholder">&#60;title&#62;</span>&#34;</span></li>
 <li><span class="ghg-keyword">Then </span><span class="ghg-parameter">&#34;<span class="ghg-placeholder">&#60;title&#62;</span>&#34;</span> is due back in <span class="ghg-placeholder">&#60;days&#62;</span> days</li>
 </ol>
-<div class="ghg-block ghg-examples">
-<h3 id="books"><button type="button" class="ghg-toggle" aria-expanded="true">Examples: Books</button></h3>
-<div class="ghg-content">
+<p class="ghg-runs">Runs once for each row of these examples:</p>
+<ul class="ghg-examples-list" role="list">
+<li id="books" class="ghg-block ghg-examples"><button type="button" class="ghg-toggle" aria-expanded="false">Examples: <bdi>Books</bdi></button>
+<div class="ghg-content" hidden>
 <ul class="ghg-tags">
 <li><a href="../tags/books.html">@books</a></li>
 </ul>
@@ -221,11 +228,9 @@ Each member may hold a few books at a time, for a few weeks each.</p>
 <tr><td>Middlemarch</td><td>21</td></tr>
 </tbody>
 </table>
-</div>
-</div>
-<div class="ghg-block ghg-examples">
-<h3 id="films"><button type="button" class="ghg-toggle" aria-expanded="true">Examples: Films</button></h3>
-<div class="ghg-content">
+</div></li>
+<li id="films" class="ghg-block ghg-examples"><button type="button" class="ghg-toggle" aria-expanded="false">Examples: <bdi>Films</bdi></button>
+<div class="ghg-content" hidden>
 <ul class="ghg-tags">
 <li><a href="../tags/films.html">@films</a></li>
 </ul>
@@ -237,13 +242,13 @@ Each member may hold a few books at a time, for a few weeks each.</p>
 <tr><td>Metropolis</td><td>7</td></tr>
 </tbody>
 </table>
-</div>
-</div>
+</div></li>
+</ul>
 <div class="ghg-block ghg-examples-as-scenarios">
-<h3 id="how-long-a-loan-lasts_scenarios"><button type="button" class="ghg-toggle" aria-expanded="false">Examples as scenarios: <bdi>How long a loan lasts</bdi></button></h3>
+<h4 id="how-long-a-loan-lasts_scenarios"><button type="button" class="ghg-toggle" aria-expanded="false">Examples as scenarios: <bdi>How long a loan lasts</bdi></button></h4>
 <div class="ghg-content" hidden>
 <div class="ghg-block ghg-scenario">
-<h4 id="how-long-a-loan-lasts-row-1"><button type="button" class="ghg-toggle" aria-expanded="true"><bdi>How long a loan lasts</bdi> (<bdi>title</bdi>: <bdi>The Hobbit</bdi>, <bdi>days</bdi>: <bdi>21</bdi>)</button></h4>
+<h5 id="how-long-a-loan-lasts-row-1"><button type="button" class="ghg-toggle" aria-expanded="true"><bdi>How long a loan lasts</bdi> (<bdi>title</bdi>: <bdi>The Hobbit</bdi>, <bdi>days</bdi>: <bdi>21</bdi>)</button></h5>
 <div class="ghg-content">
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span><span class="ghg-parameter">&#34;The Hobbit&#34;</span> is on the shelf</li>
@@ -253,7 +258,7 @@ Each member may hold a few books at a time, for a few weeks each.</p>
 </div>
 </div>
 <div class="ghg-block ghg-scenario">
-<h4 id="how-long-a-loan-lasts-row-2"><button type="button" class="ghg-toggle" aria-expanded="true"><bdi>How long a loan lasts</bdi> (<bdi>title</bdi>: <bdi>Middlemarch</bdi>, <bdi>days</bdi>: <bdi>21</bdi>)</button></h4>
+<h5 id="how-long-a-loan-lasts-row-2"><button type="button" class="ghg-toggle" aria-expanded="true"><bdi>How long a loan lasts</bdi> (<bdi>title</bdi>: <bdi>Middlemarch</bdi>, <bdi>days</bdi>: <bdi>21</bdi>)</button></h5>
 <div class="ghg-content">
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span><span class="ghg-parameter">&#34;Middlemarch&#34;</span> is on the shelf</li>
@@ -263,7 +268,7 @@ Each member may hold a few books at a time, for a few weeks each.</p>
 </div>
 </div>
 <div class="ghg-block ghg-scenario">
-<h4 id="how-long-a-loan-lasts-row-3"><button type="button" class="ghg-toggle" aria-expanded="true"><bdi>How long a loan lasts</bdi> (<bdi>title</bdi>: <bdi>Metropolis</bdi>, <bdi>days</bdi>: <bdi>7</bdi>)</button></h4>
+<h5 id="how-long-a-loan-lasts-row-3"><button type="button" class="ghg-toggle" aria-expanded="true"><bdi>How long a loan lasts</bdi> (<bdi>title</bdi>: <bdi>Metropolis</bdi>, <bdi>days</bdi>: <bdi>7</bdi>)</button></h5>
 <div class="ghg-content">
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span><span class="ghg-parameter">&#34;Metropolis&#34;</span> is on the shelf</li>
@@ -276,14 +281,16 @@ Each member may hold a few books at a time, for a few weeks each.</p>
 </div>
 </div>
 </div>
+</div>
+</div>
 <div class="ghg-block ghg-rule">
-<h2 id="a-member-holds-at-most-5-books"><button type="button" class="ghg-toggle" aria-expanded="true">Rule: A member holds at most 5 books</button></h2>
+<h2 id="a-member-holds-at-most-5-books"><button type="button" class="ghg-toggle" aria-expanded="true">Rule: <bdi>A member holds at most 5 books</bdi></button></h2>
 <div class="ghg-content">
 <div class="ghg-description">
 <p>The limit keeps books on the shelves for everyone.</p>
 </div>
 <div class="ghg-block ghg-background" data-expanded-when-unchecked="true">
-<h3 id="a-member-near-the-limit"><button type="button" class="ghg-toggle" aria-expanded="false">Background: A member near the limit</button></h3>
+<h3 id="a-member-near-the-limit"><button type="button" class="ghg-toggle" aria-expanded="false">Background: <bdi>A member near the limit</bdi></button></h3>
 <div class="ghg-content" hidden>
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span><span class="ghg-parameter">&#34;Ana&#34;</span> holds <span class="ghg-number">5</span> books</li>
@@ -291,7 +298,7 @@ Each member may hold a few books at a time, for a few weeks each.</p>
 </div>
 </div>
 <div class="ghg-block ghg-scenario">
-<h3 id="borrowing-over-the-limit-is-refused"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: Borrowing over the limit is refused</button></h3>
+<h3 id="borrowing-over-the-limit-is-refused"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: <bdi>Borrowing over the limit is refused</bdi></button></h3>
 <div class="ghg-content">
 <div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
 <h4 id="borrowing-over-the-limit-is-refused_background_1"><button type="button" class="ghg-toggle" aria-expanded="true">From the background</button></h4>
@@ -320,7 +327,7 @@ Each member may hold a few books at a time, for a few weeks each.</p>
 </div>
 </div>
 <div class="ghg-block ghg-scenario">
-<h3 id="returning-a-book-makes-room-for-another"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: Returning a book makes room for another</button></h3>
+<h3 id="returning-a-book-makes-room-for-another"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: <bdi>Returning a book makes room for another</bdi></button></h3>
 <div class="ghg-content">
 <div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
 <h4 id="returning-a-book-makes-room-for-another_background_1"><button type="button" class="ghg-toggle" aria-expanded="true">From the background</button></h4>
@@ -351,13 +358,13 @@ Each member may hold a few books at a time, for a few weeks each.</p>
 </div>
 </div>
 <div class="ghg-block ghg-rule">
-<h2 id="a-book-on-hold-waits-for-the-member-who-asked-first"><button type="button" class="ghg-toggle" aria-expanded="true">Rule: A book on hold waits for the member who asked first</button></h2>
+<h2 id="a-book-on-hold-waits-for-the-member-who-asked-first"><button type="button" class="ghg-toggle" aria-expanded="true">Rule: <bdi>A book on hold waits for the member who asked first</bdi></button></h2>
 <div class="ghg-content">
 <ul class="ghg-tags">
 <li><a href="../tags/holds.html">@holds</a></li>
 </ul>
 <div class="ghg-block ghg-scenario">
-<h3 id="a-book-on-hold-cannot-be-borrowed-by-someone-else"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: A book on hold cannot be borrowed by someone else</button></h3>
+<h3 id="a-book-on-hold-cannot-be-borrowed-by-someone-else"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: <bdi>A book on hold cannot be borrowed by someone else</bdi></button></h3>
 <div class="ghg-content">
 <ul class="ghg-tags">
 <li><a href="../tags/queue.html">@queue</a></li>

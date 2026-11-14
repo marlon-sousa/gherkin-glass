@@ -1,28 +1,34 @@
 use super::*;
 
 #[test]
-fn headings_read_the_keyword_and_the_name_at_their_levels() {
+fn headings_read_the_kind_and_the_name_at_their_levels() {
     let page = page(FEATURE, &PageOptions::default());
-    assert_eq!(page.page.heading, "Feature: Refunds");
+    assert_eq!(page.page.heading_text(), "Feature: Refunds");
     assert_eq!(
         page.page.title,
         "Feature: Refunds, billing/saque em conta.feature"
     );
     assert_eq!(page.page.address.as_str(), "billing/saque em conta.html");
     let (background, scenario, rule) = blocks(&page);
+    let outside = page
+        .outside_rules
+        .as_ref()
+        .expect("a rule beside a scenario");
     let top: Vec<_> = [
         &background.block.heading,
+        outside,
         &scenario.block.heading,
         &rule.block.heading,
     ]
     .into_iter()
-    .map(|h| (h.level.number(), h.text(), h.anchor.as_str()))
+    .map(|h| (h.level.number(), text_of(&h.parts), h.anchor.as_str()))
     .collect();
     assert_eq!(
         top,
         [
             (2, "Background".to_string(), "background"),
-            (2, "Scenario: Outside".to_string(), "outside"),
+            (2, "Outside any rule".to_string(), "outside_rules"),
+            (3, "Scenario: Outside".to_string(), "outside"),
             (2, "Rule: R".to_string(), "r"),
         ]
     );
@@ -32,13 +38,14 @@ fn headings_read_the_keyword_and_the_name_at_their_levels() {
         .map(|h| (h.level.number(), h.anchor.as_str()))
         .collect();
     assert_eq!(inside, [(3, "in-the-rule"), (3, "inside")]);
+    assert_eq!(
+        text_of(&outline.block.heading.parts),
+        "Scenario outline: Inside"
+    );
     let examples = &outline.examples[0];
     assert_eq!(
-        (
-            examples.heading.level.number(),
-            examples.heading.text().as_str()
-        ),
-        (4, "Examples")
+        (examples.anchor.as_str(), text_of(&examples.label).as_str()),
+        ("examples", "Examples")
     );
     assert_eq!(
         examples.table,
@@ -59,7 +66,7 @@ fn an_outline_shows_its_rows_as_scenarios_in_a_collapsed_block() {
         (
             heading.level.number(),
             heading.anchor.as_str(),
-            heading.text().as_str(),
+            text_of(&heading.parts).as_str(),
             heading.collapsed
         ),
         (4, "inside_scenarios", "Examples as scenarios: Inside", true)
@@ -69,7 +76,7 @@ fn an_outline_shows_its_rows_as_scenarios_in_a_collapsed_block() {
         (
             row.heading.level.number(),
             row.heading.anchor.as_str(),
-            row.heading.text().as_str()
+            text_of(&row.heading.parts).as_str()
         ),
         (5, "inside-row-1", "Inside (n: 1)")
     );
@@ -122,7 +129,9 @@ fn the_settings_choose_which_blocks_start_collapsed() {
             &rule.block.heading,
             &rule_background.block.heading,
             &outline.block.heading,
-            &outline.examples[0].heading,
+            page.outside_rules
+                .as_ref()
+                .expect("a rule beside a scenario"),
         ]
         .map(|heading| heading.collapsed)
     };
@@ -140,7 +149,8 @@ fn the_settings_choose_which_blocks_start_collapsed() {
         collapse_rules: true,
         ..linked.clone()
     };
-    assert_eq!(collapsed(&rules), [false, false, true, false, false, false]);
+    // Rule 51: `collapse_rules` collapses the block of the scenarios outside every rule too.
+    assert_eq!(collapsed(&rules), [false, false, true, false, false, true]);
     let scenarios = PageOptions {
         collapse_scenarios: true,
         ..linked

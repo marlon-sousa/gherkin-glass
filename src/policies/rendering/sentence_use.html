@@ -20,7 +20,7 @@
 <a href="{{ found.address }}">
 {%- for piece in found.link -%}
 {%- if let Some(words) = piece.words() %}{{ words }}
-{%- else if piece.is_placeholder(0) %}<bdi{% if let Some(language) = found.language %} lang="{{ language }}"{% endif %}>{{ found.heading }}</bdi>
+{%- else if piece.is_placeholder(0) %}<bdi{% if let Some(language) = found.language %} lang="{{ language }}"{% endif %}>{{ found.heading.render()|safe }}</bdi>
 {%- else %}<bdi>{{ found.path }}</bdi>
 {%- endif -%}
 {%- endfor -%}

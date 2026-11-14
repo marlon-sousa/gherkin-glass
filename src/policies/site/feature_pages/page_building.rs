@@ -5,13 +5,13 @@ mod example_blocks;
 mod heading_words;
 mod step_views;
 
-use block_building::{Builder, description, has_scenarios};
-use heading_words::heading;
+use block_building::{Builder, description, has_scenarios, worded_heading};
+use heading_words::{Kind, heading};
 use i18n_embed_fl::fl;
 
 use crate::entities::{
     BackgroundsOption, FeaturePath, HeadingLevel, OwnCrumb, Page, PageContent, PageOptions,
-    PageWords, RevisedFeature, SourceLink, TagNames, Trail, percent_encoded,
+    PageWords, RevisedFeature, SourceLink, TagNames, Trail, percent_encoded, plain_parts, text_of,
 };
 use crate::policies::site::feature_pages::anchor_feature;
 use crate::policies::site::page_language;
@@ -20,6 +20,10 @@ use crate::policies::{CATALOGUE, page_address};
 /// Stands for the file's path in the words of the source link, to find where
 /// the path goes; no message of the catalogue holds it.
 const PATH_MARK: &str = "\u{0}";
+
+/// The `id` of the heading of the block of the scenarios outside every rule,
+/// with a `_`, which no anchor has.
+const OUTSIDE_RULES_ID: &str = "outside_rules";
 
 /// The page of `revised` with its blocks, each with its anchor. `tags` names
 /// every tag of the site.
@@ -36,7 +40,8 @@ pub(crate) fn build_page(
     let feature = &parsed.feature;
     let path = FeaturePath::below_input(&parsed.path);
     let address = page_address(&parsed.path);
-    let heading = heading(&feature.keyword, &feature.name);
+    let heading = heading(Kind::Feature, &feature.keyword, &feature.name);
+    let heading_text = text_of(&heading);
     let builder = Builder {
         parsed,
         options,
@@ -51,10 +56,22 @@ pub(crate) fn build_page(
             !anchored.scenarios.is_empty() || anchored.rules.iter().any(has_scenarios),
         )
     });
+    let outside_rules = (!anchored.rules.is_empty() && !anchored.scenarios.is_empty()).then(|| {
+        worded_heading(
+            HeadingLevel::Two,
+            OUTSIDE_RULES_ID,
+            plain_parts(&fl!(CATALOGUE, "outside-rules")),
+            options.collapse_rules,
+        )
+    });
+    let scenario_level = match outside_rules {
+        Some(_) => HeadingLevel::Three,
+        None => HeadingLevel::Two,
+    };
     let scenarios: Vec<_> = anchored
         .scenarios
         .iter()
-        .map(|scenario| builder.scenario(scenario, HeadingLevel::Two))
+        .map(|scenario| builder.scenario(scenario, scenario_level))
         .collect();
     let rules: Vec<_> = anchored
         .rules
@@ -81,7 +98,7 @@ pub(crate) fn build_page(
         title: fl!(
             CATALOGUE,
             "page-title",
-            heading = heading.as_str(),
+            heading = heading_text.as_str(),
             path = path.as_str()
         ),
         heading,
@@ -98,12 +115,14 @@ pub(crate) fn build_page(
             contents: fl!(CATALOGUE, "page-contents"),
             collapse_all: fl!(CATALOGUE, "collapse-all"),
             expand_all: fl!(CATALOGUE, "expand-all"),
+            runs_for_each_row: fl!(CATALOGUE, "runs-for-each-row"),
         },
         backgrounds_option,
     };
     PageContent {
         page,
         background,
+        outside_rules,
         scenarios,
         rules,
     }

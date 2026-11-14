@@ -1,5 +1,7 @@
 //! Entity: what a page has of its own in its breadcrumb, the trail of links from the home page to it, after the folders of the input it is in, which its node finds above it, and the words every breadcrumb shares.
 
+use crate::entities::HeadingPart;
+
 /// What a page adds to its breadcrumb after the folders of the input it is in.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub(crate) struct Trail {
@@ -15,7 +17,7 @@ pub(crate) struct Trail {
 /// A page's own crumb: its text, as written or worded, and its file's name.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct OwnCrumb {
-    pub(crate) text: String,
+    pub(crate) text: Vec<HeadingPart>,
     pub(crate) file: String,
 }
 

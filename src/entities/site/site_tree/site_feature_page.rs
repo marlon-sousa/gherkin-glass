@@ -35,7 +35,8 @@ impl<'a> SiteFeaturePage<'a> {
     }
 
     /// The blocks directly in the page, in the order of the file: the
-    /// feature's background, its scenarios, then its rules.
+    /// feature's background, its scenarios, or their block in a feature with
+    /// a rule, then its rules.
     pub(crate) fn blocks(&self) -> impl Iterator<Item = SiteTreeNode<'a>> + use<'a> {
         self.node.children().map(SiteTreeNode::new)
     }
@@ -49,7 +50,8 @@ impl<'a> SiteFeaturePage<'a> {
             .map(SiteTreeNode::new)
     }
 
-    /// The page's rules and scenarios, a rule's entry listing its scenarios.
+    /// The page's rules and scenarios, and the block of the scenarios outside
+    /// every rule, a rule's entry and the block's listing its scenarios.
     pub(crate) fn contents(&self) -> Vec<ContentsEntry> {
         self.node.children().filter_map(contents_entry).collect()
     }
@@ -66,11 +68,17 @@ impl<'a> SiteFeaturePage<'a> {
 
 fn contents_entry(node: NodeRef<'_, SiteNode>) -> Option<ContentsEntry> {
     match node.value() {
-        SiteNode::Rule(rule) => Some(ContentsEntry {
-            entries: node.children().filter_map(scenario_entry).collect(),
-            ..entry(&rule.heading)
-        }),
+        SiteNode::Rule(rule) => Some(holding_scenarios(&rule.heading, node)),
+        SiteNode::OutsideRules(heading) => Some(holding_scenarios(heading, node)),
         _ => scenario_entry(node),
+    }
+}
+
+/// The entry of `node`, headed by `heading`, listing the scenarios in it.
+fn holding_scenarios(heading: &BlockHeading, node: NodeRef<'_, SiteNode>) -> ContentsEntry {
+    ContentsEntry {
+        entries: node.children().filter_map(scenario_entry).collect(),
+        ..entry(heading)
     }
 }
 
@@ -84,7 +92,7 @@ fn scenario_entry(node: NodeRef<'_, SiteNode>) -> Option<ContentsEntry> {
 fn entry(heading: &BlockHeading) -> ContentsEntry {
     ContentsEntry {
         anchor: heading.anchor.clone(),
-        heading: heading.text(),
+        heading: heading.parts.clone(),
         entries: Vec::new(),
     }
 }
@@ -93,18 +101,25 @@ fn is_rule(node: &NodeRef<'_, SiteNode>) -> bool {
     matches!(node.value(), SiteNode::Rule(_))
 }
 
+fn holds_scenarios(node: &NodeRef<'_, SiteNode>) -> bool {
+    matches!(node.value(), SiteNode::Rule(_) | SiteNode::OutsideRules(_))
+}
+
 /// The scenarios the block `node` is or holds.
 fn scenarios_in(node: NodeRef<'_, SiteNode>) -> usize {
     match node.value() {
-        SiteNode::Rule(_) => node.children().filter(is_scenario).count(),
+        SiteNode::Rule(_) | SiteNode::OutsideRules(_) => {
+            node.children().filter(is_scenario).count()
+        }
         SiteNode::Scenario(_) => 1,
         _ => 0,
     }
 }
 
-/// `block`, then the blocks in it when it is a rule.
+/// `block`, then the blocks in it when it is a rule or the block of the
+/// scenarios outside every rule.
 fn with_rule_children(block: NodeRef<'_, SiteNode>) -> impl Iterator<Item = NodeRef<'_, SiteNode>> {
-    let in_rule = is_rule(&block)
+    let in_rule = holds_scenarios(&block)
         .then(|| block.children())
         .into_iter()
         .flatten();

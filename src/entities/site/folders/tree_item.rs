@@ -1,10 +1,11 @@
 //! Entity: one item of the folder tree, with the items inside it, which `assets/tree.json` holds for the pages' script.
 
-use crate::entities::LinkAddress;
+use crate::entities::{HeadingPart, LinkAddress};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct TreeItem {
-    pub(crate) text: String,
+    /// Its link's words, feature text inside gherkin-glass's own isolated.
+    pub(crate) text: Vec<HeadingPart>,
     /// Relative to the site's root, with the block's anchor for a rule or scenario.
     pub(crate) address: LinkAddress,
     /// Only a feature's: the `lang` of its page.

@@ -1,6 +1,6 @@
 //! Policy: the folder tree's items, from the input folder's node of the site tree and the folders and pages it holds.
 
-use crate::entities::{ContentsEntry, FolderLink, LinkAddress, SiteFolder, TreeItem};
+use crate::entities::{ContentsEntry, FolderLink, LinkAddress, SiteFolder, TreeItem, plain_parts};
 use crate::policies::FOLDER_PAGE;
 
 /// The items of the input folder `input`, once each folder holds its page.
@@ -10,7 +10,7 @@ pub(crate) fn build_folder_tree(input: SiteFolder<'_>) -> Vec<TreeItem> {
         return Vec::new();
     };
     let mut items = vec![TreeItem {
-        text: home.page().heading.clone(),
+        text: plain_parts(&home.page().heading),
         address: LinkAddress::to(FOLDER_PAGE),
         lang: None,
         items: Vec::new(),
@@ -50,7 +50,7 @@ fn subfolder_item(
     link: &FolderLink,
 ) -> TreeItem {
     TreeItem {
-        text: link.name.clone(),
+        text: plain_parts(&link.name),
         address: encoded.then(&link.address),
         lang: None,
         items: folder
@@ -80,7 +80,7 @@ mod tests {
     use gherkin::{Feature, GherkinEnv};
 
     use super::*;
-    use crate::entities::{PageOptions, ParsedFeature, SiteNode};
+    use crate::entities::{PageOptions, ParsedFeature, SiteNode, text_of};
     use crate::test_support::site_from_nothing;
 
     /// The folder tree's items of the site of `files`, each a path and its text.
@@ -116,7 +116,7 @@ mod tests {
             lines.push(format!(
                 "{}{} {}",
                 "  ".repeat(depth),
-                item.text,
+                text_of(&item.text),
                 item.address
             ));
             outline(&item.items, depth + 1, lines);
@@ -146,7 +146,8 @@ mod tests {
                 "b c b%20c/index.html",
                 "  Feature: D b%20c/d.html",
                 "Feature: Z z.html",
-                "  Scenario: Out z.html#out",
+                "  Outside any rule z.html#outside_rules",
+                "    Scenario: Out z.html#out",
                 "  Rule: R z.html#r",
                 "    Scenario: In z.html#in",
             ]

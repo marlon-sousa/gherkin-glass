@@ -74,10 +74,10 @@ export class DomTree implements TreeView {
         group = this.document.createElement("ul");
         group.setAttribute("role", "group");
         group.id = `ghg_tree_${this.nodes.length}`;
-        group.setAttribute("aria-label", item.text);
+        group.setAttribute("aria-label", textOf(item));
         link.setAttribute("aria-owns", group.id);
       }
-      link.append(item.text);
+      link.append(...this.words(item));
       entry.append(link);
       const node: TreeNode = { link, address: item.address, group, parent };
       this.nodes.push(node);
@@ -95,6 +95,21 @@ export class DomTree implements TreeView {
       }
       list.append(entry);
     }
+  }
+
+  /** The item's words, each run of feature text isolated in a `bdi`. */
+  private words(item: TreeItem): (string | HTMLElement)[] {
+    if (typeof item.text === "string") {
+      return [item.text];
+    }
+    return item.text.map((run, place) => {
+      if (place % 2 === 0) {
+        return run;
+      }
+      const isolated = this.document.createElement("bdi");
+      isolated.append(run);
+      return isolated;
+    });
   }
 
   private isExpanded(node: TreeNode): boolean {
@@ -201,4 +216,9 @@ export class DomTree implements TreeView {
     event.preventDefault();
     event.stopPropagation();
   }
+}
+
+/** The item's words as plain text, for a name that holds no markup. */
+function textOf(item: TreeItem): string {
+  return typeof item.text === "string" ? item.text : item.text.join("");
 }

@@ -40,8 +40,9 @@ fn outline(tree: &SiteTree) -> Vec<String> {
                 SiteNode::FolderPage(page) => format!("folder page {}", page.address),
                 SiteNode::Background(block) => format!("background {}", block.heading.anchor),
                 SiteNode::Rule(block) => format!("rule {}", block.heading.anchor),
+                SiteNode::OutsideRules(heading) => format!("outside rules {}", heading.anchor),
                 SiteNode::Scenario(block) => format!("scenario {}", block.heading.anchor),
-                SiteNode::Examples(block) => format!("examples {}", block.heading.anchor),
+                SiteNode::Examples(block) => format!("examples {}", block.anchor),
                 SiteNode::ExamplesAsScenarios(heading) => {
                     format!("examples as scenarios {}", heading.anchor)
                 }
@@ -221,15 +222,16 @@ Feature: F
         .position(|line| line.ends_with("feature page f.html"))
         .expect("the feature page");
     assert_eq!(
-        lines[start..start + 16],
+        lines[start..start + 17],
         [
             "      feature page f.html",
             "        background background",
             "          step Given",
             "            step table",
-            "        scenario s",
-            "          step Given",
-            "            doc string",
+            "        outside rules outside_rules",
+            "          scenario s",
+            "            step Given",
+            "              doc string",
             "        rule r",
             "          background b",
             "            step Given",

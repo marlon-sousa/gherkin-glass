@@ -144,6 +144,26 @@ h1, h2, h3, h4, h5 {
   margin: 0.5rem 0;
 }
 
+/* An outline's examples are list items, not headings: each reads as a block's
+   heading through its button, without the list's marker beside the button's. */
+.ghg-examples-list {
+  list-style: none;
+  margin: 0.5rem 0;
+  padding: 0;
+}
+
+.ghg-examples-list > li {
+  margin: 0.5rem 0;
+}
+
+/* The button inherits the item's rule and indent, which the item already draws. */
+.ghg-examples-list > li > .ghg-toggle {
+  display: block;
+  border-left: 0;
+  padding-left: 0;
+  font-weight: bold;
+}
+
 pre {
   background: var(--ghg-surface);
   padding: 0.5rem;

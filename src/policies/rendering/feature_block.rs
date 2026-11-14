@@ -1,12 +1,16 @@
-//! Policy: the blocks of a feature's page, each kind of block node rendered through the rendering trait into the one template of a block, with the backgrounds a scenario starts with, each a block of its own, its steps and the blocks below it.
+//! Policy: the blocks of a feature's page, each kind of block node rendered through the rendering trait into the one template of a block, with the backgrounds a scenario starts with, each a block of its own, its steps, an outline's list of examples and the blocks below it.
+
+mod scenario_backgrounds;
 
 use askama::Template;
+use scenario_backgrounds::{backgrounds_in_scenario, steps_heading};
 
+use super::examples_list::{examples_list, is_examples};
 use super::node_rendering::{NodeOf, Render, pieces, rendered};
 use super::steps::{step_list, steps_of};
 use crate::entities::{
-    BackgroundBlock, BackgroundsOption, BlockHeading, ExamplesBlock, HeadingLevel, HeadingPart,
-    Paragraph, RuleBlock, ScenarioBlock, SiteTreeNode, TableView, TagView,
+    BackgroundBlock, BlockHeading, HeadingLevel, HeadingPart, Paragraph, RuleBlock, ScenarioBlock,
+    SiteTreeNode, TagView,
 };
 
 #[derive(Template)]
@@ -20,6 +24,8 @@ struct BlockTemplate<'a> {
     steps_heading: Option<StepsHeading<'a>>,
     /// The block's own steps, already rendered; empty for a block with none.
     steps: String,
+    /// An outline's list of examples, already rendered; empty for any other block.
+    examples: String,
     /// The blocks below it, already rendered.
     blocks: String,
 }
@@ -37,7 +43,6 @@ struct BlockView<'a> {
     collapsed_when_unchecked: Option<bool>,
     tags: &'a [TagView],
     description: &'a Option<Paragraph>,
-    table: &'a Option<TableView>,
 }
 
 /// A heading with no button.
@@ -47,26 +52,23 @@ struct StepsHeading<'a> {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum BlockKind {
+pub(super) enum BlockKind {
     Background,
     /// A background inside a scenario that starts with its steps.
     BackgroundInScenario,
     Rule,
+    /// The block of the scenarios outside every rule.
+    OutsideRules,
     Scenario,
-    Examples,
     ExamplesAsScenarios,
 }
 
-/// An outline's examples as scenarios, by its heading, with its node, which
-/// holds the scenario of each row.
-pub(super) struct ExamplesAsScenariosNode<'a> {
-    pub(super) heading: &'a BlockHeading,
-    pub(super) node: SiteTreeNode<'a>,
-}
-
-/// The scenario one row of an outline's examples makes, by its heading, with
-/// its node, which holds its steps.
-pub(super) struct ExampleScenarioNode<'a> {
+/// A block known by its heading alone, of `kind`: the block of the scenarios
+/// outside every rule, which holds them, an outline's examples as scenarios,
+/// which holds the scenario of each row, or the scenario of one row, which
+/// holds its steps; with its node.
+pub(super) struct HeadedNode<'a> {
+    pub(super) kind: BlockKind,
     pub(super) heading: &'a BlockHeading,
     pub(super) node: SiteTreeNode<'a>,
 }
@@ -104,111 +106,33 @@ impl Render for NodeOf<'_, ScenarioBlock> {
     }
 }
 
-impl Render for NodeOf<'_, ExamplesBlock> {
+impl Render for HeadedNode<'_> {
     fn render(&self) -> String {
-        let view = BlockView {
-            tags: &self.value.tags,
-            description: &self.value.description,
-            table: &self.value.table,
-            ..BlockView::of(BlockKind::Examples, &self.value.heading)
-        };
-        block(view, self.node)
-    }
-}
-
-impl Render for ExamplesAsScenariosNode<'_> {
-    fn render(&self) -> String {
-        block(
-            BlockView::of(BlockKind::ExamplesAsScenarios, self.heading),
-            self.node,
-        )
-    }
-}
-
-impl Render for ExampleScenarioNode<'_> {
-    fn render(&self) -> String {
-        block(BlockView::of(BlockKind::Scenario, self.heading), self.node)
+        block(BlockView::of(self.kind, self.heading), self.node)
     }
 }
 
 /// The block `view` of `node`, with its backgrounds, its steps and the blocks below it.
 fn block(view: BlockView<'_>, node: SiteTreeNode<'_>) -> String {
-    let option = node
-        .feature_page()
-        .and_then(|feature| feature.page().backgrounds_option.as_ref());
+    let page = node.feature_page().map(|feature| feature.page());
+    let option = page.and_then(|page| page.backgrounds_option.as_ref());
     let backgrounds = backgrounds_in_scenario(node, &view, option.is_some_and(|o| o.inline));
     let steps = own_steps(node);
     let steps_heading = steps_heading(option, view.level.below(), &backgrounds, &steps);
+    let runs = page.map_or("", |page| page.words.runs_for_each_row.as_str());
     rendered(&BlockTemplate {
         backgrounds,
         steps_heading,
         steps,
+        examples: examples_list(node, runs),
         blocks: pieces(node.children().filter(is_block)).join("\n"),
         block: view,
     })
 }
 
+/// Whether `node` is a block with a heading of its own.
 fn is_block(node: &SiteTreeNode<'_>) -> bool {
-    !node.is_step()
-}
-
-/// The blocks of the backgrounds the scenario `node`, headed by `scenario`,
-/// starts with, each one level below it and expanded while the page's
-/// checkbox is `checked`; none for any other block.
-fn backgrounds_in_scenario(
-    node: SiteTreeNode<'_>,
-    scenario: &BlockView<'_>,
-    checked: bool,
-) -> Vec<String> {
-    node.backgrounds()
-        .into_iter()
-        .zip(1..)
-        .map(|((background, background_node), place)| {
-            background_in_scenario(background, background_node, scenario, place, checked)
-        })
-        .collect()
-}
-
-/// The block of `background`, the `place`th the scenario headed by `scenario`
-/// starts with, counted from 1, holding the steps below `background_node`;
-/// it is expanded while the page's checkbox is `checked`.
-fn background_in_scenario(
-    background: &BackgroundBlock,
-    background_node: SiteTreeNode<'_>,
-    scenario: &BlockView<'_>,
-    place: usize,
-    checked: bool,
-) -> String {
-    let heading = BlockHeading {
-        level: scenario.level.below(),
-        anchor: format!("{}_background_{place}", scenario.anchor),
-        parts: vec![HeadingPart {
-            text: background.heading_in_scenario.clone(),
-            isolated: false,
-        }],
-        collapsed: !checked,
-    };
-    let view = BlockView {
-        collapsed_when_unchecked: Some(true),
-        ..BlockView::of(BlockKind::BackgroundInScenario, &heading)
-    };
-    block(view, background_node)
-}
-
-/// The heading, at `level`, of a scenario's `steps` after its `backgrounds`,
-/// in the words of the page's `option`; `None` when the page has no
-/// background, or either is empty.
-fn steps_heading<'a>(
-    option: Option<&'a BackgroundsOption>,
-    level: HeadingLevel,
-    backgrounds: &[String],
-    steps: &str,
-) -> Option<StepsHeading<'a>> {
-    let option = option?;
-    (!backgrounds.is_empty() && !steps.is_empty()).then(|| StepsHeading {
-        level,
-        text: &option.steps_heading,
-    })
+    !node.is_step() && !is_examples(node)
 }
 
 /// The steps directly below `node`, as one list; empty when it has none.
@@ -232,7 +156,6 @@ impl<'a> BlockView<'a> {
             collapsed_when_unchecked: None,
             tags: &[],
             description: &None,
-            table: &None,
         }
     }
 }
@@ -244,8 +167,8 @@ impl BlockKind {
             BlockKind::Background => "ghg-background",
             BlockKind::BackgroundInScenario => "ghg-background-in-scenario",
             BlockKind::Rule => "ghg-rule",
+            BlockKind::OutsideRules => "ghg-outside-rules",
             BlockKind::Scenario => "ghg-scenario",
-            BlockKind::Examples => "ghg-examples",
             BlockKind::ExamplesAsScenarios => "ghg-examples-as-scenarios",
         }
     }

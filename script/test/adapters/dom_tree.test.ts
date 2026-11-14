@@ -45,7 +45,10 @@ test("the tree is built in its landmark, named as it, with every item a link rel
   const home = items(window)[0]!;
   assert.equal(home.textContent, "Banking & <more>");
   assert.equal(home.getAttribute("href"), "../index.html");
-  assert.equal(item(window, "Example: Store credit").getAttribute("href"), "../billing/refunds.html#store-credit");
+  assert.equal(item(window, "Scenario: Store credit (written as Example)").getAttribute("href"), "../billing/refunds.html#store-credit");
+  // Feature text inside gherkin-glass's words is isolated, the name and the keyword each in a bdi.
+  const isolated = [...item(window, "Scenario: Store credit (written as Example)").querySelectorAll("bdi")].map((bdi) => bdi.textContent);
+  assert.deepEqual(isolated, ["Store credit", "Example"]);
   assert.equal(item(window, "Feature: Closed accounts").getAttribute("href"), "../billing/archive/closed%20%231.html");
   // A feature's item, with the items inside it, has its page's lang.
   assert.equal(item(window, "Feature: Refunds & <returns>").parentElement!.getAttribute("lang"), "en");
@@ -154,7 +157,7 @@ test("data that cannot be fetched, or is no tree, gives nothing to build", async
   assert.equal(await new FetchedTree(at, answer(200, "{}") as typeof fetch).load(), null);
   assert.equal(await new FetchedTree(at, answer(200, "not json") as typeof fetch).load(), null);
   assert.equal(await new FetchedTree(at, (() => Promise.reject(new Error("offline"))) as typeof fetch).load(), null);
-  assert.equal((await new FetchedTree(at, answer(200, DATA) as typeof fetch).load())?.length, 7);
+  assert.equal((await new FetchedTree(at, answer(200, DATA) as typeof fetch).load())?.length, 8);
 });
 
 test("a page that is not below the site's root links the items from the root itself", async () => {

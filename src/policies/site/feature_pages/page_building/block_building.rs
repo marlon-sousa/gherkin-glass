@@ -3,7 +3,7 @@
 use gherkin::Background;
 use i18n_embed_fl::fl;
 
-use super::heading_words::{heading, plain};
+use super::heading_words::{Kind, heading};
 use super::step_views::step_contents;
 use crate::entities::{
     Anchored, AnchoredRule, AnchoredScenario, BackgroundBlock, BackgroundContent, BlockHeading,
@@ -39,10 +39,10 @@ impl Builder<'_> {
             || self.options.collapse_scenarios;
         BackgroundContent {
             block: BackgroundBlock {
-                heading: block_heading(
+                heading: worded_heading(
                     level,
                     &anchored.anchor,
-                    heading(&background.keyword, &background.name),
+                    heading(Kind::Background, &background.keyword, &background.name),
                     collapsed,
                 ),
                 description: description(background.description.as_deref()),
@@ -57,10 +57,10 @@ impl Builder<'_> {
         let rule = anchored.rule;
         RuleContent {
             block: RuleBlock {
-                heading: block_heading(
+                heading: worded_heading(
                     HeadingLevel::Two,
                     &anchored.anchor,
-                    heading(&rule.keyword, &rule.name),
+                    heading(Kind::Rule, &rule.keyword, &rule.name),
                     self.options.collapse_rules,
                 ),
                 name: rule.name.clone(),
@@ -90,12 +90,17 @@ impl Builder<'_> {
     ) -> ScenarioContent {
         let scenario = anchored.scenario;
         let below = level.below();
+        let kind = if scenario.examples.is_empty() {
+            Kind::Scenario
+        } else {
+            Kind::ScenarioOutline
+        };
         ScenarioContent {
             block: ScenarioBlock {
-                heading: block_heading(
+                heading: worded_heading(
                     level,
                     &anchored.anchor,
-                    heading(&scenario.keyword, &scenario.name),
+                    heading(kind, &scenario.keyword, &scenario.name),
                     self.options.collapse_scenarios,
                 ),
                 name: scenario.name.clone(),
@@ -106,7 +111,7 @@ impl Builder<'_> {
             examples: anchored
                 .examples
                 .iter()
-                .map(|examples| self.examples(examples, below))
+                .map(|examples| self.examples(examples))
                 .collect(),
             as_scenarios: self.examples_as_scenarios(anchored, below),
         }
@@ -129,15 +134,6 @@ impl Builder<'_> {
 
 pub(super) fn has_scenarios(rule: &AnchoredRule<'_>) -> bool {
     !rule.scenarios.is_empty()
-}
-
-pub(super) fn block_heading(
-    level: HeadingLevel,
-    anchor: &str,
-    heading: String,
-    collapsed: bool,
-) -> BlockHeading {
-    worded_heading(level, anchor, vec![plain(&heading)], collapsed)
 }
 
 pub(super) fn worded_heading(

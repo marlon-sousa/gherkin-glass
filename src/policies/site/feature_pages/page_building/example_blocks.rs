@@ -3,8 +3,8 @@
 use gherkin::{Examples, Scenario};
 use i18n_embed_fl::fl;
 
-use super::block_building::{Builder, block_heading, description, worded_heading};
-use super::heading_words::{TEXT_MARKS, heading, isolated, plain, worded_parts};
+use super::block_building::{Builder, description, worded_heading};
+use super::heading_words::{Kind, TEXT_MARKS, heading, isolated, plain, worded_parts};
 use super::step_views::{filled_step_contents, table};
 use crate::entities::{
     Anchored, AnchoredScenario, ExampleScenario, ExamplesAsScenarios, ExamplesBlock, HeadingLevel,
@@ -13,18 +13,14 @@ use crate::policies::CATALOGUE;
 use crate::policies::site::feature_pages::{ExampleRow, example_rows};
 
 impl Builder<'_> {
-    pub(super) fn examples(
-        &self,
-        anchored: &Anchored<'_, Examples>,
-        level: HeadingLevel,
-    ) -> ExamplesBlock {
+    pub(super) fn examples(&self, anchored: &Anchored<'_, Examples>) -> ExamplesBlock {
         let examples = anchored.block;
         ExamplesBlock {
-            heading: block_heading(
-                level,
-                &anchored.anchor,
-                heading(&examples.keyword, examples.name.as_deref().unwrap_or("")),
-                false,
+            anchor: anchored.anchor.clone(),
+            label: heading(
+                Kind::Examples,
+                &examples.keyword,
+                examples.name.as_deref().unwrap_or(""),
             ),
             tags: self.tags(&examples.tags),
             description: description(examples.description.as_deref()),

@@ -192,7 +192,7 @@ fn the_checked_box_starts_collapsed_the_backgrounds_whose_steps_scenarios_hold(
     "expected",
     true,
     "outside-any-rule_background_1",
-    3,
+    4,
     "From the background"
 )]
 #[case::checked_rule_s_background(
@@ -206,7 +206,7 @@ fn the_checked_box_starts_collapsed_the_backgrounds_whose_steps_scenarios_hold(
     "expected-unchecked",
     false,
     "outside-any-rule_background_1",
-    3,
+    4,
     "From the background"
 )]
 #[case::unchecked_rule_s_background(
@@ -240,7 +240,7 @@ fn the_backgrounds_inside_a_scenario_follow_the_box(
 #[rstest]
 #[case::outside_any_rule(
     "both.html",
-    3,
+    4,
     "When </span><span class=\"ghg-number\">10</span> is moved"
 )]
 #[case::in_an_outline_under_a_rule("both.html", 4, "When </span><span class=\"ghg-placeholder\">")]
@@ -358,6 +358,14 @@ fn every_page_has_one_h1_and_a_lang_and_its_content_in_its_html() {
             "ghg_tree",
             "ghg_main",
         ];
+        // Rule 45: the block of the scenarios outside every rule, in a file with a rule.
+        let own: Vec<&str> = own
+            .into_iter()
+            .chain(
+                page.contains("ghg-outside-rules")
+                    .then_some("outside_rules"),
+            )
+            .collect();
         let ids: Vec<&str> = page
             .split(" id=\"")
             .skip(1)
@@ -736,7 +744,7 @@ fn the_home_page_has_the_site_s_title_and_totals() {
     assert!(titled.contains("<title>Banking &#38; &#60;more&#62;</title>"));
     assert!(titled.contains("<h1>Banking &amp; &lt;more&gt;</h1>"));
     assert!(titled.contains(
-        "<ul class=\"ghg-totals\">\n<li>5 folders</li>\n<li>7 features</li>\n<li>3 rules</li>\n<li>11 scenarios</li>\n</ul>"
+        "<ul class=\"ghg-totals\">\n<li>5 folders</li>\n<li>8 features</li>\n<li>4 rules</li>\n<li>18 scenarios</li>\n</ul>"
     ));
     let untitled = home("expected-collapsed");
     assert!(untitled.contains("<title>Feature files</title>"));

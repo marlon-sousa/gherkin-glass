@@ -80,7 +80,7 @@
 <ol>
 <li><a href="../index.html">Banking &#38; &#60;more&#62;</a></li>
 <li><a href="index.html">billing</a></li>
-<li><a href="refunds.html" aria-current="page">Feature: Refunds &#38; &#60;returns&#62;</a></li>
+<li><a href="refunds.html" aria-current="page">Feature: <bdi>Refunds &#38; &#60;returns&#62;</bdi></a></li>
 </ol>
 </nav>
 <form class="ghg-search" role="search" data-root="../" data-shown="50" data-loading="Loading search." data-failed="Search could not be loaded." data-none="No results." data-count="Results: {count}." data-count-limited="Results: {count}. The first 50 are listed." data-no-name="no name" data-feature="{name}, feature" data-rule="{name}, rule in {feature}" data-scenario="{name}, scenario in {feature}" data-scenario-in-rule="{name}, scenario in {rule}, {feature}" data-scenario-outline="{name}, scenario outline in {feature}" data-scenario-outline-in-rule="{name}, scenario outline in {rule}, {feature}">
@@ -89,7 +89,7 @@
 <ol class="ghg-search-results" hidden></ol>
 </form>
 <main id="ghg_main">
-<h1>Feature: Refunds &#38; &#60;returns&#62;</h1>
+<h1>Feature: <bdi>Refunds &#38; &#60;returns&#62;</bdi></h1>
 <ul class="ghg-tags">
 <li><a href="../tags/billing.html">@billing</a></li>
 <li><a href="../tags/slow.html">@slow</a></li>
@@ -101,16 +101,19 @@ in the way it was paid.</p>
 <p class="ghg-source"><a href="https://example.com/repo/blob/main/features/billing/refunds.feature#L2">Source: <bdi>billing/refunds.feature</bdi></a></p>
 <nav class="ghg-contents" aria-label="Contents">
 <ul>
-<li><a href="#refund-a-card-payment">Scenario: Refund a card payment</a></li>
-<li><a href="#refund-count-items">Scenario Outline: Refund &#60;count&#62; items</a></li>
-<li><a href="#refunds-after-thirty-days">Rule: Refunds after thirty days</a>
+<li><a href="#outside_rules">Outside any rule</a>
 <ul>
-<li><a href="#store-credit">Example: Store credit</a></li>
-<li><a href="#refund-again-count-times">Scenario Outline: Refund again &#60;count&#62; times</a></li>
+<li><a href="#refund-a-card-payment">Scenario: <bdi>Refund a card payment</bdi></a></li>
+<li><a href="#refund-count-items">Scenario outline: <bdi>Refund &#60;count&#62; items</bdi></a></li>
+</ul></li>
+<li><a href="#refunds-after-thirty-days">Rule: <bdi>Refunds after thirty days</bdi></a>
+<ul>
+<li><a href="#store-credit">Scenario: <bdi>Store credit</bdi> (written as <bdi>Example</bdi>)</a></li>
+<li><a href="#refund-again-count-times">Scenario outline: <bdi>Refund again &#60;count&#62; times</bdi></a></li>
 </ul></li>
 <li><a href="#rule">Rule</a>
 <ul>
-<li><a href="#refund-a-refund">Scenario: Refund a refund</a></li>
+<li><a href="#refund-a-refund">Scenario: <bdi>Refund a refund</bdi></a></li>
 </ul></li>
 </ul>
 </nav>
@@ -127,21 +130,24 @@ in the way it was paid.</p>
 </ol>
 </div>
 </div>
+<div class="ghg-block ghg-outside-rules">
+<h2 id="outside_rules"><button type="button" class="ghg-toggle" aria-expanded="true">Outside any rule</button></h2>
+<div class="ghg-content">
 <div class="ghg-block ghg-scenario">
-<h2 id="refund-a-card-payment"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: Refund a card payment</button></h2>
+<h3 id="refund-a-card-payment"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: <bdi>Refund a card payment</bdi></button></h3>
 <div class="ghg-content">
 <div class="ghg-description">
 <p>The plain case.</p>
 </div>
 <div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
-<h3 id="refund-a-card-payment_background_1"><button type="button" class="ghg-toggle" aria-expanded="true">From the background</button></h3>
+<h4 id="refund-a-card-payment_background_1"><button type="button" class="ghg-toggle" aria-expanded="true">From the background</button></h4>
 <div class="ghg-content">
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span>a customer named <span class="ghg-parameter">&#34;Ana&#34;</span></li>
 </ol>
 </div>
 </div>
-<h3 class="ghg-steps-heading">From the scenario</h3>
+<h4 class="ghg-steps-heading">From the scenario</h4>
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span>an order with these lines:
 <table class="ghg-table">
@@ -168,27 +174,28 @@ Refunded in full.
 </div>
 </div>
 <div class="ghg-block ghg-scenario">
-<h2 id="refund-count-items"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario Outline: Refund &#60;count&#62; items</button></h2>
+<h3 id="refund-count-items"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario outline: <bdi>Refund &#60;count&#62; items</bdi></button></h3>
 <div class="ghg-content">
 <ul class="ghg-tags">
 <li><a href="../tags/outline.html">@outline</a></li>
 </ul>
 <div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
-<h3 id="refund-count-items_background_1"><button type="button" class="ghg-toggle" aria-expanded="true">From the background</button></h3>
+<h4 id="refund-count-items_background_1"><button type="button" class="ghg-toggle" aria-expanded="true">From the background</button></h4>
 <div class="ghg-content">
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span>a customer named <span class="ghg-parameter">&#34;Ana&#34;</span></li>
 </ol>
 </div>
 </div>
-<h3 class="ghg-steps-heading">From the scenario</h3>
+<h4 class="ghg-steps-heading">From the scenario</h4>
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span><span class="ghg-placeholder">&#60;count&#62;</span> items</li>
 <li><span class="ghg-keyword">Then </span>the total is <span class="ghg-placeholder">&#60;total&#62;</span></li>
 </ol>
-<div class="ghg-block ghg-examples">
-<h3 id="cheap"><button type="button" class="ghg-toggle" aria-expanded="true">Examples: Cheap</button></h3>
-<div class="ghg-content">
+<p class="ghg-runs">Runs once for each row of these examples:</p>
+<ul class="ghg-examples-list" role="list">
+<li id="cheap" class="ghg-block ghg-examples"><button type="button" class="ghg-toggle" aria-expanded="false">Examples: <bdi>Cheap</bdi></button>
+<div class="ghg-content" hidden>
 <ul class="ghg-tags">
 <li><a href="../tags/cheap.html">@cheap</a></li>
 </ul>
@@ -200,23 +207,21 @@ Refunded in full.
 <tr><td>1</td><td>2</td></tr>
 </tbody>
 </table>
-</div>
-</div>
-<div class="ghg-block ghg-examples">
-<h3 id="examples"><button type="button" class="ghg-toggle" aria-expanded="true">Examples</button></h3>
-<div class="ghg-content">
+</div></li>
+<li id="examples" class="ghg-block ghg-examples"><button type="button" class="ghg-toggle" aria-expanded="false">Examples</button>
+<div class="ghg-content" hidden>
 <table class="ghg-table">
 <thead>
 <tr><th scope="col">count</th><th scope="col">total</th></tr>
 </thead>
 </table>
-</div>
-</div>
+</div></li>
+</ul>
 <div class="ghg-block ghg-examples-as-scenarios">
-<h3 id="refund-count-items_scenarios"><button type="button" class="ghg-toggle" aria-expanded="false">Examples as scenarios: <bdi>Refund &#60;count&#62; items</bdi></button></h3>
+<h4 id="refund-count-items_scenarios"><button type="button" class="ghg-toggle" aria-expanded="false">Examples as scenarios: <bdi>Refund &#60;count&#62; items</bdi></button></h4>
 <div class="ghg-content" hidden>
 <div class="ghg-block ghg-scenario">
-<h4 id="refund-count-items-row-1"><button type="button" class="ghg-toggle" aria-expanded="true"><bdi>Refund &#60;count&#62; items</bdi> (<bdi>count</bdi>: <bdi>1</bdi>, <bdi>total</bdi>: <bdi>2</bdi>)</button></h4>
+<h5 id="refund-count-items-row-1"><button type="button" class="ghg-toggle" aria-expanded="true"><bdi>Refund &#60;count&#62; items</bdi> (<bdi>count</bdi>: <bdi>1</bdi>, <bdi>total</bdi>: <bdi>2</bdi>)</button></h5>
 <div class="ghg-content">
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span><span class="ghg-number">1</span> items</li>
@@ -228,14 +233,16 @@ Refunded in full.
 </div>
 </div>
 </div>
+</div>
+</div>
 <div class="ghg-block ghg-rule">
-<h2 id="refunds-after-thirty-days"><button type="button" class="ghg-toggle" aria-expanded="true">Rule: Refunds after thirty days</button></h2>
+<h2 id="refunds-after-thirty-days"><button type="button" class="ghg-toggle" aria-expanded="true">Rule: <bdi>Refunds after thirty days</bdi></button></h2>
 <div class="ghg-content">
 <div class="ghg-description">
 <p>Only store credit.</p>
 </div>
 <div class="ghg-block ghg-background" data-expanded-when-unchecked="true">
-<h3 id="an-old-order"><button type="button" class="ghg-toggle" aria-expanded="false">Background: An old order</button></h3>
+<h3 id="an-old-order"><button type="button" class="ghg-toggle" aria-expanded="false">Background: <bdi>An old order</bdi></button></h3>
 <div class="ghg-content" hidden>
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span>an order from forty days ago</li>
@@ -243,7 +250,7 @@ Refunded in full.
 </div>
 </div>
 <div class="ghg-block ghg-scenario">
-<h3 id="store-credit"><button type="button" class="ghg-toggle" aria-expanded="true">Example: Store credit</button></h3>
+<h3 id="store-credit"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: <bdi>Store credit</bdi> (written as <bdi>Example</bdi>)</button></h3>
 <div class="ghg-content">
 <ul class="ghg-tags">
 <li><a href="../tags/in-rule.html">@in-rule</a></li>
@@ -271,7 +278,7 @@ Refunded in full.
 </div>
 </div>
 <div class="ghg-block ghg-scenario">
-<h3 id="refund-again-count-times"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario Outline: Refund again &#60;count&#62; times</button></h3>
+<h3 id="refund-again-count-times"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario outline: <bdi>Refund again &#60;count&#62; times</bdi></button></h3>
 <div class="ghg-content">
 <div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
 <h4 id="refund-again-count-times_background_1"><button type="button" class="ghg-toggle" aria-expanded="true">From the background</button></h4>
@@ -293,9 +300,10 @@ Refunded in full.
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span><span class="ghg-placeholder">&#60;count&#62;</span> refunds</li>
 </ol>
-<div class="ghg-block ghg-examples">
-<h4 id="again"><button type="button" class="ghg-toggle" aria-expanded="true">Examples: Again</button></h4>
-<div class="ghg-content">
+<p class="ghg-runs">Runs once for each row of these examples:</p>
+<ul class="ghg-examples-list" role="list">
+<li id="again" class="ghg-block ghg-examples"><button type="button" class="ghg-toggle" aria-expanded="false">Examples: <bdi>Again</bdi></button>
+<div class="ghg-content" hidden>
 <table class="ghg-table">
 <thead>
 <tr><th scope="col">count</th></tr>
@@ -304,8 +312,8 @@ Refunded in full.
 <tr><td>2</td></tr>
 </tbody>
 </table>
-</div>
-</div>
+</div></li>
+</ul>
 <div class="ghg-block ghg-examples-as-scenarios">
 <h4 id="refund-again-count-times_scenarios"><button type="button" class="ghg-toggle" aria-expanded="false">Examples as scenarios: <bdi>Refund again &#60;count&#62; times</bdi></button></h4>
 <div class="ghg-content" hidden>
@@ -327,7 +335,7 @@ Refunded in full.
 <h2 id="rule"><button type="button" class="ghg-toggle" aria-expanded="true">Rule</button></h2>
 <div class="ghg-content">
 <div class="ghg-block ghg-scenario">
-<h3 id="refund-a-refund"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: Refund a refund</button></h3>
+<h3 id="refund-a-refund"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: <bdi>Refund a refund</bdi></button></h3>
 <div class="ghg-content">
 <div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
 <h4 id="refund-a-refund_background_1"><button type="button" class="ghg-toggle" aria-expanded="true">From the background</button></h4>

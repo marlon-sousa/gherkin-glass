@@ -1,4 +1,4 @@
-//! Entity: a feature page put in its folder by the site tree's builder, its blocks below it, a rule's background and scenarios in the rule, an outline's examples and examples as scenarios in the outline, each step in its block, and a step's table or doc string in the step, or copied from the last site tree with them.
+//! Entity: a feature page put in its folder by the site tree's builder, its blocks below it, a rule's background and scenarios in the rule, the scenarios outside every rule in their block when the feature has a rule, an outline's examples and examples as scenarios in the outline, each step in its block, and a step's table or doc string in the step, or copied from the last site tree with them.
 
 use ego_tree::{NodeId, NodeMut, NodeRef};
 
@@ -16,8 +16,12 @@ pub(super) fn place_feature_page(
     if let Some(background) = content.background {
         place_background(&mut page, background);
     }
-    for scenario in content.scenarios {
-        place_scenario(&mut page, scenario);
+    match content.outside_rules {
+        Some(heading) => place_scenarios(
+            &mut page.append(SiteNode::OutsideRules(heading)),
+            content.scenarios,
+        ),
+        None => place_scenarios(&mut page, content.scenarios),
     }
     for rule in content.rules {
         place_rule(&mut page, rule);
@@ -56,13 +60,19 @@ fn place_rule(page: &mut NodeMut<'_, SiteNode>, rule: RuleContent) {
     if let Some(background) = rule.background {
         place_background(&mut node, background);
     }
-    for scenario in rule.scenarios {
-        place_scenario(&mut node, scenario);
+    place_scenarios(&mut node, rule.scenarios);
+}
+
+/// `scenarios` put in `parent`, in their order.
+fn place_scenarios(parent: &mut NodeMut<'_, SiteNode>, scenarios: Vec<ScenarioContent>) {
+    for scenario in scenarios {
+        place_scenario(parent, scenario);
     }
 }
 
-/// `scenario` put in `parent`, a feature page or a rule: its steps below it,
-/// then an outline's examples blocks and its examples as scenarios.
+/// `scenario` put in `parent`, a feature page, a rule or the block of the
+/// scenarios outside every rule: its steps below it, then an outline's
+/// examples blocks and its examples as scenarios.
 fn place_scenario(parent: &mut NodeMut<'_, SiteNode>, scenario: ScenarioContent) {
     let mut node = parent.append(SiteNode::Scenario(scenario.block));
     place_steps(&mut node, scenario.steps);

@@ -1,6 +1,6 @@
 //! Entity: the distinct step sentences of the suite, grouped by the kind of step, with every step that uses each.
 
-use crate::entities::{FeaturePath, SiteAddress};
+use crate::entities::{FeaturePath, HeadingPart, SiteAddress};
 
 /// Ordered as the groups are shown: Given, then When, then Then.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -41,8 +41,8 @@ pub(crate) struct SentenceUse {
     pub(crate) language: String,
     /// Of the scenario, scenario outline or background the step is in.
     pub(crate) anchor: String,
-    /// That block's keyword as written, then `: ` and its name, or its keyword alone.
-    pub(crate) heading: String,
+    /// That block's heading, as its page shows it.
+    pub(crate) heading: Vec<HeadingPart>,
     pub(crate) line: usize,
     /// Each slot's text as written, quotes or angle brackets included.
     pub(crate) values: Vec<String>,

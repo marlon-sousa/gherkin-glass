@@ -296,6 +296,40 @@ versions-releases = Releases
 versions-pre-releases = Pre-releases
 versions-development-version = { $name }, a development version
 
+## A block's heading on a feature's page: its kind alone, or its kind and
+## its $name, and, when the file writes the kind with another word, that
+## $keyword after the $heading. $kind is one of feature, background, rule,
+## scenario, scenario-outline and examples, never shown; $name and $keyword
+## are as written in the file.
+
+unnamed-heading =
+    { $kind ->
+        [feature] Feature
+        [background] Background
+        [rule] Rule
+        [scenario-outline] Scenario outline
+        [examples] Examples
+       *[scenario] Scenario
+    }
+named-heading =
+    { $kind ->
+        [feature] Feature: { $name }
+        [background] Background: { $name }
+        [rule] Rule: { $name }
+        [scenario-outline] Scenario outline: { $name }
+        [examples] Examples: { $name }
+       *[scenario] Scenario: { $name }
+    }
+written-as = { $heading } (written as { $keyword })
+
+## The block of the scenarios outside every rule, in a file with a rule.
+
+outside-rules = Outside any rule
+
+## After an outline's steps, before the list of its examples.
+
+runs-for-each-row = Runs once for each row of these examples:
+
 ## Under a scenario outline, its examples as the scenarios they produce,
 ## named by the outline's $name, or its keyword when it has none. A
 ## produced scenario is named by the same $name and its row's $values, each

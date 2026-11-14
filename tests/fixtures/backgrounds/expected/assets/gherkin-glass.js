@@ -62,10 +62,10 @@ var DomPage = class {
     this.document = document2;
     const byElement = /* @__PURE__ */ new Map();
     for (const element of document2.querySelectorAll(".ghg-block")) {
-      const heading = element.querySelector(":scope > :is(h2, h3, h4, h5)");
-      const button = heading?.querySelector(":scope > button.ghg-toggle");
+      const heading = element.querySelector(":scope > :is(h2, h3, h4, h5)") ?? element;
+      const button = heading.querySelector(":scope > button.ghg-toggle");
       const content = element.querySelector(":scope > .ghg-content");
-      if (!heading || !button || !content) {
+      if (!button || !content) {
         continue;
       }
       const around = element.parentElement?.closest(".ghg-block");
@@ -378,7 +378,7 @@ function isItem(data) {
     return false;
   }
   const item = data;
-  return typeof item["text"] === "string" && typeof item["address"] === "string" && (item["lang"] === void 0 || typeof item["lang"] === "string") && (item["items"] === void 0 || isItems(item["items"]));
+  return (typeof item["text"] === "string" || Array.isArray(item["text"]) && item["text"].every((run) => typeof run === "string")) && typeof item["address"] === "string" && (item["lang"] === void 0 || typeof item["lang"] === "string") && (item["items"] === void 0 || isItems(item["items"]));
 }
 function decoded(path) {
   try {
@@ -447,10 +447,10 @@ var DomTree = class {
         group = this.document.createElement("ul");
         group.setAttribute("role", "group");
         group.id = `ghg_tree_${this.nodes.length}`;
-        group.setAttribute("aria-label", item.text);
+        group.setAttribute("aria-label", textOf(item));
         link.setAttribute("aria-owns", group.id);
       }
-      link.append(item.text);
+      link.append(...this.words(item));
       entry.append(link);
       const node = { link, address: item.address, group, parent };
       this.nodes.push(node);
@@ -468,6 +468,20 @@ var DomTree = class {
       }
       list.append(entry);
     }
+  }
+  /** The item's words, each run of feature text isolated in a `bdi`. */
+  words(item) {
+    if (typeof item.text === "string") {
+      return [item.text];
+    }
+    return item.text.map((run, place) => {
+      if (place % 2 === 0) {
+        return run;
+      }
+      const isolated = this.document.createElement("bdi");
+      isolated.append(run);
+      return isolated;
+    });
   }
   isExpanded(node) {
     return node.link.getAttribute("aria-expanded") === "true";
@@ -568,6 +582,9 @@ var DomTree = class {
     event.stopPropagation();
   }
 };
+function textOf(item) {
+  return typeof item.text === "string" ? item.text : item.text.join("");
+}
 
 // src/adapters/dom_tree_switch.ts
 var DomTreeSwitch = class {

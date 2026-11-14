@@ -1,4 +1,4 @@
-<li class="ghg-feature"><a href="{{ feature.address }}" lang="{{ feature.language }}">{{ feature.heading }}</a>
+<li class="ghg-feature"><a href="{{ feature.address }}" lang="{{ feature.language }}">{{ feature.heading.render()|safe }}</a>
 {%- if feature.contents.is_empty() %}
 <span class="ghg-count">{{ feature.scenarios }}</span>
 {%- else %}

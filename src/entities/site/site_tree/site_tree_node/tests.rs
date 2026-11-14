@@ -1,7 +1,7 @@
 use rstest::rstest;
 
 use super::*;
-use crate::entities::{PageOptions, SiteTree};
+use crate::entities::{PageOptions, SiteTree, text_of};
 use crate::test_support::{feature_pages, site_of};
 
 const FEATURE: &str = "\
@@ -106,7 +106,7 @@ fn an_outline_holds_its_examples_and_each_block_its_steps() {
     };
     let names: Vec<_> = inside
         .examples()
-        .map(|examples| examples.heading.text())
+        .map(|examples| text_of(&examples.label))
         .collect();
     assert_eq!(names, ["Examples: First", "Examples: Second"]);
     let steps: Vec<_> = inside.steps().map(StepView::text).collect();

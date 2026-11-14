@@ -99,7 +99,7 @@ function isItem(data: unknown): data is TreeItem {
   }
   const item = data as Record<string, unknown>;
   return (
-    typeof item["text"] === "string" &&
+    (typeof item["text"] === "string" || (Array.isArray(item["text"]) && item["text"].every((run) => typeof run === "string"))) &&
     typeof item["address"] === "string" &&
     (item["lang"] === undefined || typeof item["lang"] === "string") &&
     (item["items"] === undefined || isItems(item["items"]))
