@@ -11,6 +11,9 @@
 {%- if let Some(sentences) = folder.sentences %}
 <p class="ghg-sentences"><a href="{{ sentences.address }}">{{ sentences.name }}</a></p>
 {%- endif %}
+{%- if let Some(nothing_given) = folder.nothing_given %}
+<p class="ghg-nothing-given">{{ nothing_given }}</p>
+{%- endif %}
 {%- if !folders.is_empty() %}
 <h{{ level.number() }}>{{ folder.words.folders }}</h{{ level.number() }}>
 <ul class="ghg-folders">

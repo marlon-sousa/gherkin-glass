@@ -14,7 +14,7 @@ use rstest::rstest;
 use super::super::building::{BuildOutcome, Built, Stopped};
 use super::*;
 use crate::adapters::MemoryFiles;
-use crate::entities::{BuildSnapshot, BuildStart};
+use crate::entities::{BuildSnapshot, BuildStart, PathList};
 use crate::services::{Converter, GherkinParser, InputCollector, SettingsService, SiteWriter};
 use changing_input::{Change, ChangingInput};
 
@@ -94,15 +94,45 @@ fn left_by(outcome: BuildOutcome, last: BuildSnapshot) -> BuildSnapshot {
 fn a_build_from_the_last_build_gives_the_site_a_build_from_nothing_gives(
     #[case] changes: &[Change],
 ) {
-    builds_from_the_last_build_match_builds_from_nothing(changes);
+    builds_from_the_last_build_match_builds_from_nothing(changes, None);
 }
 
-/// Builds the input `START` makes, then applies each of `changes`.
-fn builds_from_the_last_build_match_builds_from_nothing(changes: &[Change]) {
+/// The list `--only` reads in the sequences of only some files: `a.feature` and a file made later.
+const LIST: Change = Change::Write("list.txt", "in/a.feature\nin/sub/new.feature\n");
+
+#[rstest]
+// Rules 205, 206 and 209: with --only, a change to a listed file, to a file not listed, even one
+// that cannot be parsed, and to the list itself.
+#[case::a_listed_file_edited(&[Change::Write("in/a.feature", EDITED)])]
+#[case::a_file_not_listed_broken(&[
+    Change::Write("in/sub/b.feature", BROKEN),
+    Change::Write("in/a.feature", EDITED),
+])]
+#[case::a_listed_file_made(&[Change::Write("in/sub/new.feature", PLAIN)])]
+#[case::a_listed_file_removed(&[Change::Remove("in/a.feature")])]
+#[case::the_list_changed(&[Change::Write("list.txt", "in/sub/b.feature\n")])]
+fn a_build_of_the_listed_files_from_the_last_build_gives_the_site_a_build_from_nothing_gives(
+    #[case] changes: &[Change],
+) {
+    builds_from_the_last_build_match_builds_from_nothing(
+        changes,
+        Some(PathList::File(PathBuf::from("list.txt"))),
+    );
+}
+
+/// Builds the input `START` makes, with `LIST` beside it, then applies each of `changes`, the
+/// site built from the files `only` lists, if any.
+fn builds_from_the_last_build_match_builds_from_nothing(
+    changes: &[Change],
+    only: Option<PathList>,
+) {
     let input = Arc::new(ChangingInput::default());
-    START.iter().for_each(|change| input.apply(change));
+    START
+        .iter()
+        .chain([&LIST])
+        .for_each(|change| input.apply(change));
     let controller = SiteController::new(
-        Arc::new(SettingsService::new(input.clone())),
+        Arc::new(SettingsService::new(input.clone(), input.clone())),
         Arc::new(InputCollector::new(input.clone())),
         Arc::new(GherkinParser::new(input.clone())),
         Arc::new(Converter),
@@ -116,6 +146,7 @@ fn builds_from_the_last_build_match_builds_from_nothing(changes: &[Change]) {
     );
     let options = BuildOptions {
         input: Some(PathBuf::from("in")),
+        only,
         ..BuildOptions::default()
     };
     let settings = controller
@@ -126,7 +157,10 @@ fn builds_from_the_last_build_match_builds_from_nothing(changes: &[Change]) {
         .build_from_nothing(settings.clone())
         .expect("the first site")
         .snapshot;
-    let mut before = controller.build_from(BuildStart::FromNothing(settings.clone()), &options);
+    let mut before = controller.build_from(
+        BuildStart::FromNothing(Box::new(settings.clone())),
+        &options,
+    );
     for change in changes {
         input.apply(change);
         let paths = change.paths();
@@ -135,8 +169,10 @@ fn builds_from_the_last_build_match_builds_from_nothing(changes: &[Change]) {
             paths: &paths,
         };
         let from_last = controller.build_from(start, &options);
-        let from_nothing =
-            controller.build_from(BuildStart::FromNothing(settings.clone()), &options);
+        let from_nothing = controller.build_from(
+            BuildStart::FromNothing(Box::new(settings.clone())),
+            &options,
+        );
         let expected = match &from_last {
             BuildOutcome::NothingToBuild(_) => &before,
             built_or_stopped => built_or_stopped,

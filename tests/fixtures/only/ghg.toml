@@ -1,0 +1,3 @@
+# A site of only the feature files a list names, built with --only changed.txt.
+title = "Changed features"
+output = "expected"

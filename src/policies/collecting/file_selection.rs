@@ -1,11 +1,12 @@
 //! Policy: which paths of the input are read.
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use ignore::Match;
 use ignore::gitignore::{Gitignore, GitignoreBuilder};
 
+use super::ListedSelection;
 use crate::entities::{EntryKind, IGNORE_FILE};
 
 /// Gitignore rules, where the last matching rule wins: leave out everything,
@@ -13,9 +14,13 @@ use crate::entities::{EntryKind, IGNORE_FILE};
 /// every hidden file or folder.
 const DEFAULT_RULES: [&str; 4] = ["*", "!*/", "!*.feature", ".*"];
 
-/// The rules in force in the folder being walked: the defaults, and the
-/// `.ghg-ignore` rules of that folder and the folders above it.
+/// The rules in force in the folder being walked: the defaults, the
+/// `.ghg-ignore` rules of that folder and the folders above it, and the files
+/// `--only` lists.
 pub(crate) struct FileSelection {
+    input: PathBuf,
+    /// `None` without `--only`.
+    listed: Option<ListedSelection>,
     defaults: Gitignore,
     /// Outermost first.
     rules: Vec<Arc<Gitignore>>,
@@ -36,7 +41,7 @@ pub(crate) struct InvalidRule {
 
 impl FileSelection {
     #[expect(clippy::expect_used, reason = "the default rules are valid")]
-    pub(crate) fn new(input: &Path) -> Self {
+    pub(crate) fn new(input: &Path, listed: Option<ListedSelection>) -> Self {
         let mut builder = GitignoreBuilder::new(input);
         for rule in DEFAULT_RULES {
             builder
@@ -44,6 +49,8 @@ impl FileSelection {
                 .expect("the default rules are valid");
         }
         FileSelection {
+            input: input.to_path_buf(),
+            listed,
             defaults: builder.build().expect("the default rules are valid"),
             rules: Vec::new(),
         }
@@ -60,10 +67,14 @@ impl FileSelection {
 
     /// The last matching rule of the nearest `.ghg-ignore` file with a
     /// matching rule decides; the defaults decide when none matches. A
-    /// `.ghg-ignore` file itself is always left out.
+    /// `.ghg-ignore` file itself is always left out, and so is what the
+    /// files `--only` lists leave out, whatever the rules say.
     pub(crate) fn is_left_out(&self, path: &Path, kind: EntryKind) -> bool {
         let is_folder = kind == EntryKind::Folder;
         if !is_folder && path.file_name() == Some(IGNORE_FILE.as_ref()) {
+            return true;
+        }
+        if self.is_left_out_of_the_list(path, kind) {
             return true;
         }
         for rules in self.rules.iter().rev() {
@@ -74,6 +85,13 @@ impl FileSelection {
             }
         }
         self.defaults.matched(path, is_folder).is_ignore()
+    }
+
+    fn is_left_out_of_the_list(&self, path: &Path, kind: EntryKind) -> bool {
+        let relative = path.strip_prefix(&self.input).unwrap_or(path);
+        self.listed
+            .as_ref()
+            .is_some_and(|listed| listed.leaves_out(relative, kind))
     }
 }
 
@@ -107,7 +125,7 @@ mod tests {
     use super::*;
 
     fn selection(rules: &[(&str, &str)]) -> FileSelection {
-        let mut selection = FileSelection::new(Path::new("in"));
+        let mut selection = FileSelection::new(Path::new("in"), None);
         for (folder, text) in rules {
             let folder = Path::new(folder);
             let parsed = parse_rules(folder, &folder.join(IGNORE_FILE), text);

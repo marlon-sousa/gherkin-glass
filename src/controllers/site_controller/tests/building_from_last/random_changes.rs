@@ -81,6 +81,6 @@ proptest! {
     fn a_build_from_the_last_build_gives_the_site_a_build_from_nothing_gives_after_any_changes(
         changes in vec(change(), 1..8),
     ) {
-        builds_from_the_last_build_match_builds_from_nothing(&changes);
+        builds_from_the_last_build_match_builds_from_nothing(&changes, None);
     }
 }

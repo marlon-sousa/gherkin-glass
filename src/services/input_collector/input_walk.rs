@@ -1,4 +1,4 @@
-//! Service: the walk of the input into the input tree, from nothing or from the last tree and the paths that changed, listing the folders the `.ghg-ignore` rules allow, marking each entry allowed or not, and copying from the last tree what the paths do not concern.
+//! Service: the walk of the input into the input tree, from nothing or from the last tree and the paths that changed, listing the folders the `.ghg-ignore` rules and the files `--only` lists allow, marking each entry allowed or not, and copying from the last tree what the paths do not concern.
 
 mod ignore_reading;
 mod last_tree;
@@ -15,14 +15,19 @@ use crate::entities::{
     ListedFolder, Revision,
 };
 use crate::errors::{InputError, InputErrorKind};
-use crate::policies::FileSelection;
+use crate::policies::{FileSelection, ListedSelection};
 use crate::ports::InputFolders;
 
-/// The input tree of the folder `input`, with every error met on the way.
-pub(super) fn walk_input(input_folders: &dyn InputFolders, input: &Path) -> InputTree {
+/// The input tree of the folder `input`, with every error met on the way, of the files `listed`
+/// lets it read, or of every file when it is `None`.
+pub(super) fn walk_input(
+    input_folders: &dyn InputFolders,
+    input: &Path,
+    listed: Option<ListedSelection>,
+) -> InputTree {
     let paths = BTreeSet::new();
     let changed = Changed { paths: &paths };
-    Walk::new(input_folders, input, changed, Revision::default()).tree(None)
+    Walk::new(input_folders, input, changed, Revision::default(), listed).tree(None)
 }
 
 /// The input tree made from `last` and the paths `changed` in its input since: a folder is
@@ -33,13 +38,15 @@ pub(super) fn walk_changes(
     input_folders: &dyn InputFolders,
     last: &InputTree,
     changed: &BTreeSet<PathBuf>,
+    listed: Option<ListedSelection>,
 ) -> InputTree {
     let input = last.input_folder();
     let changed = Changed { paths: changed };
     if !changed.concerns(input) {
         return last.clone();
     }
-    Walk::new(input_folders, input, changed, last.next_revision()).tree(Some(last.input_entry()))
+    Walk::new(input_folders, input, changed, last.next_revision(), listed)
+        .tree(Some(last.input_entry()))
 }
 
 struct Walk<'a> {
@@ -76,11 +83,12 @@ impl<'a> Walk<'a> {
         input: &'a Path,
         changed: Changed<'a>,
         next_revision: Revision,
+        listed: Option<ListedSelection>,
     ) -> Self {
         Walk {
             input_folders,
             input,
-            selection: FileSelection::new(input),
+            selection: FileSelection::new(input, listed),
             changed,
             next_revision,
         }
@@ -238,6 +246,10 @@ mod tests {
         fn read(&self, _: &Path) -> IoResult<String> {
             Err(IoError::new(ErrorKind::NotFound, "not found"))
         }
+
+        fn absolute(&self, path: &Path) -> IoResult<PathBuf> {
+            Ok(path.to_path_buf())
+        }
     }
 
     fn entry(path: &str, kind: EntryKind) -> FolderEntry {
@@ -267,7 +279,7 @@ mod tests {
                 entry("in/read.feature", EntryKind::File),
             ],
         )]);
-        let found = walk_input(&folders, Path::new("in"));
+        let found = walk_input(&folders, Path::new("in"), None);
         assert_eq!(found.allowed_files(), [PathBuf::from("in/read.feature")]);
         assert!(found.input_errors().is_none());
     }
@@ -283,7 +295,7 @@ mod tests {
         #[case] folders: Vec<(&str, Vec<FolderEntry>)>,
         #[case] kind: InputErrorKind,
     ) {
-        let found = walk_input(&listings(folders), Path::new("in"));
+        let found = walk_input(&listings(folders), Path::new("in"), None);
         let errors = found.input_errors().expect("an error");
         let kinds: Vec<_> = errors.as_slice().iter().map(|error| &error.kind).collect();
         assert_eq!(kinds, [&kind]);

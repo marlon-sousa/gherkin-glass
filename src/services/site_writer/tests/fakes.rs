@@ -166,6 +166,7 @@ pub(super) fn settings(destination: Destination, version: Option<&str>) -> Setti
         version: version.map(name),
         replace: true,
         front_page: None,
+        only: None,
     }
 }
 

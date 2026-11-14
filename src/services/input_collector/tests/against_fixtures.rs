@@ -14,7 +14,7 @@ use crate::test_support::{copy_folder, fixture, scratch};
 use super::*;
 
 fn collected(input: &Path) -> InputTree {
-    InputCollector::new(Arc::new(InputFolderReader)).collect(input)
+    InputCollector::new(Arc::new(InputFolderReader)).collect(input, None)
 }
 
 /// The paths of the files the input tree of `input` allows, relative to it, with `/` between

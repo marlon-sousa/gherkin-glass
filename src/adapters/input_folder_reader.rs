@@ -1,8 +1,8 @@
-//! Adapter: the input folders port, listing folders and reading files on disk.
+//! Adapter: the input folders port, listing folders and reading files on disk, and making paths absolute from the current folder.
 
 use std::fs::{DirEntry, FileType, read_dir, read_to_string};
 use std::io::Result as IoResult;
-use std::path::Path;
+use std::path::{Path, PathBuf, absolute};
 
 use crate::entities::{EntryKind, FolderEntry};
 use crate::ports::InputFolders;
@@ -17,6 +17,10 @@ impl InputFolders for InputFolderReader {
 
     fn read(&self, file: &Path) -> IoResult<String> {
         read_to_string(file)
+    }
+
+    fn absolute(&self, path: &Path) -> IoResult<PathBuf> {
+        absolute(path)
     }
 }
 

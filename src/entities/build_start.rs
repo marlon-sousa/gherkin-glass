@@ -7,7 +7,7 @@ use crate::entities::{BuildSnapshot, Settings};
 
 #[derive(Debug, Clone)]
 pub(crate) enum BuildStart<'a> {
-    FromNothing(Settings),
+    FromNothing(Box<Settings>),
     FromLast {
         last: &'a BuildSnapshot,
         paths: &'a BTreeSet<PathBuf>,

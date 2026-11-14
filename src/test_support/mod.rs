@@ -111,7 +111,7 @@ pub(crate) fn parsed_input(
     input: &Path,
     unnamed: Unnamed,
 ) -> InputTree {
-    let mut input_tree = InputCollector::new(input_folders).collect(input);
+    let mut input_tree = InputCollector::new(input_folders).collect(input, None);
     let files = input_tree.files_to_parse();
     input_tree.put_parsed(GherkinParser::new(feature_parser).parse(input, files, unnamed));
     input_tree
@@ -238,7 +238,14 @@ impl InputFolders for MemoryFolders {
             .cloned()
             .ok_or_else(|| IoError::new(ErrorKind::NotFound, "not found"))
     }
+
+    fn absolute(&self, path: &Path) -> IoResult<PathBuf> {
+        Ok(Path::new(CURRENT_FOLDER).join(path))
+    }
 }
+
+/// The current folder the fakes of the input make relative paths absolute from.
+const CURRENT_FOLDER: &str = "/work";
 
 /// The entry of `folder` that `path` is or is under, if it is under `folder`.
 fn entry_under(folder: &Path, path: &Path) -> Option<FolderEntry> {

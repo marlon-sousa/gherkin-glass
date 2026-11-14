@@ -2,7 +2,7 @@
 
 use std::path::PathBuf;
 
-use crate::entities::{Destination, VersionName};
+use crate::entities::{Destination, PathList, VersionName};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) enum Invocation {
@@ -21,6 +21,7 @@ pub(crate) struct BuildOptions {
     pub(crate) output: Option<PathBuf>,
     pub(crate) title: Option<String>,
     pub(crate) front_page: Option<PathBuf>,
+    pub(crate) only: Option<PathList>,
 }
 
 /// The options of `ghg serve`: those of `ghg build`, and how it serves.

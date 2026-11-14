@@ -6,14 +6,16 @@
     reason = "a test file's helpers are test code, which clippy.toml lets panic"
 )]
 
-use std::collections::BTreeMap;
-use std::fs::{create_dir_all, read, read_dir, read_to_string, remove_dir_all, write};
+use std::fs::{create_dir_all, read, read_to_string, remove_dir_all, write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 
+#[path = "support/site_files.rs"]
+mod site_files;
 #[path = "support/version_placeholder.rs"]
 mod version_placeholder;
 
+use site_files::assert_same_site;
 use version_placeholder::with_version_placeholder;
 
 fn fixture() -> PathBuf {
@@ -38,28 +40,6 @@ fn build(folder: &Path, arguments: &[&str], name: &str) -> (PathBuf, Output) {
     (output, run)
 }
 
-/// Every file below `folder`, by its `/`-joined path in it.
-fn files(folder: &Path) -> BTreeMap<String, Vec<u8>> {
-    let mut found = BTreeMap::new();
-    let mut folders = vec![(folder.to_path_buf(), String::new())];
-    while let Some((path, prefix)) = folders.pop() {
-        for entry in read_dir(&path).expect("the folder is listed") {
-            let entry = entry.expect("the folder is listed");
-            let name = format!("{prefix}{}", entry.file_name().to_string_lossy());
-            if entry.path().is_dir() {
-                folders.push((entry.path(), format!("{name}/")));
-            } else {
-                let file = read(entry.path()).expect("the file is read");
-                found.insert(
-                    name,
-                    with_version_placeholder(file, env!("CARGO_PKG_VERSION")),
-                );
-            }
-        }
-    }
-    found
-}
-
 fn text(bytes: &[u8]) -> String {
     String::from_utf8_lossy(bytes).into_owned()
 }
@@ -71,23 +51,7 @@ fn the_home_page_of_a_site_without_versions_is_written_from_the_template() {
     let (written, run) = build(&fixture(), &["--config", "ghg.toml"], "site");
     assert_eq!(text(&run.stderr), "");
     assert_eq!(run.status.code(), Some(0));
-    let expected = files(&fixture().join("expected"));
-    let written = files(&written);
-    assert_eq!(
-        written.keys().collect::<Vec<_>>(),
-        expected.keys().collect::<Vec<_>>(),
-        "the files written"
-    );
-    for (name, contents) in &expected {
-        assert!(
-            written.get(name) == Some(contents),
-            "{name} differs from the expected file:\n{}",
-            written
-                .get(name)
-                .map(|bytes| text(bytes))
-                .unwrap_or_default()
-        );
-    }
+    assert_same_site(&written, &fixture().join("expected"));
 }
 
 #[test]

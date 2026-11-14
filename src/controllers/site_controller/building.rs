@@ -52,7 +52,7 @@ impl SiteController {
     /// from the last build and the paths concern what a build reads.
     pub(super) fn build_from(&self, start: BuildStart<'_>, options: &BuildOptions) -> BuildOutcome {
         match start {
-            BuildStart::FromNothing(settings) => match self.build_from_nothing(settings) {
+            BuildStart::FromNothing(settings) => match self.build_from_nothing(*settings) {
                 Ok(built) => BuildOutcome::Built(built),
                 Err(stopped) => BuildOutcome::Stopped(*stopped),
             },
@@ -67,7 +67,9 @@ impl SiteController {
             left: None,
             error: BuildError::Output(error),
         })?;
-        let input_tree = self.input_collector.collect(&settings.input);
+        let input_tree = self
+            .input_collector
+            .collect(&settings.input, settings.only.as_ref());
         self.parse_convert_and_write(BuildSnapshot {
             settings,
             input_tree,
@@ -87,9 +89,11 @@ impl SiteController {
         let CollectedChanges {
             input_tree,
             calls_for_rebuild,
-        } = self
-            .input_collector
-            .collect_changes(&last.input_tree, paths);
+        } = self.input_collector.collect_changes(
+            &last.input_tree,
+            paths,
+            last.settings.only.as_ref(),
+        );
         let left = BuildSnapshot {
             settings: last.settings.clone(),
             input_tree,

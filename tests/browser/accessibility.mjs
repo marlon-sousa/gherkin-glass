@@ -52,6 +52,8 @@ const builds = [
   { folder: "front-page", args: ["--config", "ghg.toml"] },
   { folder: "front-page", args: ["--config", "versioned.toml"] },
   { folder: "hostile", args: [] },
+  { folder: "only", args: ["--only", "changed.txt"] },
+  { folder: "only", args: ["--config", "nothing.toml", "--only", "nothing.txt"] },
   { root: ".", folder: "project-site", args: ["--config", "ghg.toml"] },
 ];
 

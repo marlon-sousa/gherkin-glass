@@ -9,9 +9,9 @@ use gherkin::{Feature, GherkinEnv};
 
 use super::*;
 use crate::entities::{
-    CollectedChanges, FileToParse, IgnoreRules, InputTree, InputTreeBuilder, PageOptions,
-    ParsedFeature, ParsedFile, RenderedSite, RevisedFeature, Revision, Settings, SiteFiles,
-    SiteNode, SiteTree, SiteTreeBuilder, SiteVersion, TagNames, Unnamed, VersionName,
+    CollectedChanges, FileToParse, IgnoreRules, InputTree, InputTreeBuilder, ListedFiles,
+    PageOptions, ParsedFeature, ParsedFile, RenderedSite, RevisedFeature, Revision, Settings,
+    SiteFiles, SiteNode, SiteTree, SiteTreeBuilder, SiteVersion, TagNames, Unnamed, VersionName,
 };
 use crate::policies::page_frame;
 use crate::test_support::name;
@@ -80,6 +80,7 @@ impl SettingsApi for FakeSettingsService {
                 .lock()
                 .unwrap_or_else(PoisonError::into_inner)
                 .clone(),
+            only: None,
         })
     }
 }
@@ -94,13 +95,18 @@ pub(crate) struct FakeInputCollector {
 }
 
 impl InputCollectorApi for FakeInputCollector {
-    fn collect(&self, input: &Path) -> InputTree {
+    fn collect(&self, input: &Path, _: Option<&ListedFiles>) -> InputTree {
         self.calls
             .note(format!("input_collector.collect {}", input.display()));
         one_file_in(input)
     }
 
-    fn collect_changes(&self, last: &InputTree, paths: &BTreeSet<PathBuf>) -> CollectedChanges {
+    fn collect_changes(
+        &self,
+        last: &InputTree,
+        paths: &BTreeSet<PathBuf>,
+        _: Option<&ListedFiles>,
+    ) -> CollectedChanges {
         // Read before the call is noted, since a test changes it once it sees the call.
         let calls_for_rebuild = !self.nothing_read_changes.load(Ordering::SeqCst);
         let paths: Vec<_> = paths

@@ -19,6 +19,7 @@ help =
       --title <text>: the site's title, instead of the configuration's title.
       --version-name <name>: builds the site as the version of that name, instead of the configuration's version_name.
       --front-page <file>: the Markdown template of the site's front page, instead of the configuration's front_page.
+      --only <file>: builds the site from the feature files the file lists, one path on each line, alone. --only - reads the list from standard input.
 
     Options of ghg serve only:
       --host <address>: the address to listen on, instead of 127.0.0.1.
@@ -265,6 +266,13 @@ folder-tree = Folder tree
 ## to its repository, and $version the version of ghg, such as 0.1.0-alpha.2.
 
 built-with = Built with { $name } { $version }
+
+## First in every page's main content when the site was built with --only,
+## and, on its home page, in place of its folders and features when none of
+## the files --only lists is read.
+
+only-note = This site shows only the feature files given with --only.
+only-nothing-given = No feature file was given with --only.
 
 ## The heading of each background a scenario holds, the heading of the
 ## scenario's own steps after them, and the checkbox that chooses whether

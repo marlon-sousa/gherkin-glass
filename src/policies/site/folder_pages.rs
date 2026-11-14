@@ -5,7 +5,7 @@ use i18n_embed_fl::fl;
 
 use crate::entities::{
     FeatureEntry, FolderId, FolderLink, FolderPage, FolderPageContent, FolderWords, LinkAddress,
-    PageOptions, SiteAddress, SiteFeaturePage, SiteFolder, Trail, VersionName,
+    PageOptions, SiteAddress, SiteFeaturePage, SiteFolder, SiteScope, Trail, VersionName,
 };
 use crate::policies::{CATALOGUE, FOLDER_PAGE, SENTENCES_PAGE, site_title, tag_index_address};
 
@@ -22,16 +22,18 @@ pub(crate) fn build_folder_pages<'a>(
     let title = site_title(options);
     let versioned = version.is_some();
     folders
-        .map(|folder| folder_page(&folder, &title, versioned))
+        .map(|folder| folder_page(&folder, &title, versioned, options.scope))
         .collect()
 }
 
 /// The page of `folder`, in the site titled `title`, with versions or without,
-/// paired with the folder.
+/// of every feature file or of those `--only` lists, as `scope` says, paired
+/// with the folder.
 fn folder_page(
     folder: &SiteFolder<'_>,
     title: &str,
     versioned: bool,
+    scope: SiteScope,
 ) -> (FolderId, FolderPageContent) {
     let names = folder.names();
     let home = folder.name().is_none();
@@ -67,6 +69,11 @@ fn folder_page(
             address: LinkAddress::to(SENTENCES_PAGE),
             name: fl!(CATALOGUE, "sentences-title"),
         }),
+        nothing_given: (home
+            && scope == SiteScope::OnlyListed
+            && features.is_empty()
+            && subfolders.is_empty())
+        .then(|| fl!(CATALOGUE, "only-nothing-given")),
         words: FolderWords {
             folders: fl!(CATALOGUE, "folders"),
             features: fl!(CATALOGUE, "features"),

@@ -62,6 +62,7 @@ fn unknown_command(name: &str) -> ArgumentError {
 #[case::an_empty_path(&["build", "--config", ""], missing_value("--config"))]
 #[case::an_empty_title(&["build", "--title="], missing_value("--title"))]
 #[case::an_empty_version_name(&["build", "--version-name="], missing_value("--version-name"))]
+#[case::an_empty_list(&["build", "--only="], missing_value("--only"))]
 #[case::no_version_name(&["build", "--version-name"], missing_value("--version-name"))]
 #[case::an_empty_host(&["serve", "--host", ""], missing_value("--host"))]
 #[case::an_empty_port(&["serve", "--port="], missing_value("--port"))]

@@ -40,14 +40,26 @@ impl Drop for Serving {
 
 /// Starts `ghg serve` and waits for the line that says where it listens.
 fn serve(folder: &Path, arguments: &[&str]) -> Serving {
+    serve_given(folder, arguments, "")
+}
+
+/// As `serve`, with `standard_input` given to it, then closed.
+fn serve_given(folder: &Path, arguments: &[&str], standard_input: &str) -> Serving {
     let mut child = Command::new(env!("CARGO_BIN_EXE_ghg"))
         .arg("serve")
         .args(arguments)
         .current_dir(folder)
+        .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()
         .expect("ghg serve starts");
+    child
+        .stdin
+        .take()
+        .expect("piped")
+        .write_all(standard_input.as_bytes())
+        .expect("standard input is written");
     let mut stdout = BufReader::new(child.stdout.take().expect("piped"));
     let mut line = String::new();
     stdout.read_line(&mut line).expect("a line");
@@ -683,6 +695,62 @@ fn watching_rebuilds_when_the_front_page_s_template_changes() {
     eventually("a rebuild after the template changed", || build() == "2");
     let home = get(&address, "/index.html").text();
     assert!(home.contains("<h1>Second words</h1>"), "{home}");
+}
+
+#[test]
+fn watching_rebuilds_with_the_new_list_of_only_when_it_changes() {
+    // Rule 209: the list's file is watched as the configuration file is, and a file it does
+    // not name stays out of the site, even when it changes.
+    let folder = built_copy("serve-watch-only");
+    let list = folder.join("changed.txt");
+    write(&list, "features/withdraw.feature\n").expect("written");
+    let other = folder.join("features/deposit.feature");
+    write(&other, "Feature: Deposit\n").expect("written");
+    let serving = serve(
+        &folder,
+        &["--watch", "--only", "changed.txt", "--port", "0"],
+    );
+    let address = serving.address.clone();
+    let build = || get(&address, "/__ghg/build").text();
+    assert_eq!(build(), "1");
+    let page = get(&address, "/withdraw.html").text();
+    assert!(page.contains("given with --only"), "{page}");
+    assert_eq!(get(&address, "/deposit.html").status, 404);
+    write(&other, "Feature: Deposit cash\n").expect("written");
+    still_built(build, "1");
+    write(
+        &list,
+        "features/withdraw.feature\nfeatures/deposit.feature\n",
+    )
+    .expect("written");
+    eventually("a rebuild after the list changed", || build() == "2");
+    assert_eq!(get(&address, "/deposit.html").status, 200);
+}
+
+#[test]
+fn watching_keeps_the_list_of_only_read_from_standard_input() {
+    // Rule 209: a list given on standard input is read once, and kept when the configuration
+    // file changes.
+    let folder = built_copy("serve-watch-only-standard-input");
+    let serving = serve_given(
+        &folder,
+        &["--watch", "--only", "-", "--port", "0"],
+        "features/withdraw.feature\n",
+    );
+    let address = serving.address.clone();
+    let build = || get(&address, "/__ghg/build").text();
+    assert_eq!(build(), "1");
+    write(
+        folder.join("ghg.toml"),
+        "input = \"features\"\ntitle = \"Changed\"\n",
+    )
+    .expect("written");
+    eventually("a rebuild after the configuration changed", || {
+        build() == "2"
+    });
+    let page = get(&address, "/withdraw.html").text();
+    assert!(page.contains("given with --only"), "{page}");
+    assert!(page.contains("Changed"), "{page}");
 }
 
 #[test]

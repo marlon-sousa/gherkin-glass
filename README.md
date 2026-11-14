@@ -118,6 +118,7 @@ ghg serve [options]
 | `--title <text>` | `build` and `serve` | The site's title, instead of the configuration's `title`. |
 | `--version-name <name>` | `build` and `serve` | Builds the site as that version, instead of the configuration's `version_name`. |
 | `--front-page <file>` | `build` and `serve` | The Markdown file of the site's front page, instead of the configuration's `front_page`. |
+| `--only <file>` | `build` and `serve` | Builds the site from the feature files listed in that file, one path on each line, alone, as "A site of only some feature files" below describes. `--only -` reads the list from standard input. |
 | `--host <address>` | `serve` | Listens on that address instead of `127.0.0.1`, such as `0.0.0.0` to be reached from other machines. |
 | `--port <number>` | `serve` | Listens at that port instead of 8000. `0` lets the system choose a free one. |
 | `--no-build` | `serve` | Serves the output folder as it is, without building it. |
@@ -151,6 +152,16 @@ So keep the output folder for the site alone, and put anything you want served b
 One site can hold several versions of the same suite, so that readers read the version they use. Give each build a version name, with `--version-name` or `version_name`, such as `v1.2.0` or `main`. A version name is one folder name, of the letters `a` to `z` and `A` to `Z`, digits, `.`, `-`, `_` and `+`. A name such as `1.2.0` or `v1.2.0` is a release, one such as `2.0.0-rc.1` a pre-release, and any other, such as `main`, a development version. Each version is written into a folder of its own in the output folder, such as `site/v1.2.0/`, and the output folder's `index.html` lists every version: development versions, releases newest first, and pre-releases, listed collapsed.
 
 ghg does not read git. To build several versions, check each one out into a folder of its own and run ghg once for each, into the same output folder. Building a version again replaces it, unless `replace_existing_version` is `false`.
+
+### A site of only some feature files
+
+To review a change to your feature files, such as a pull request, you can build a site of the feature files it changes or adds alone, and read them as pages rather than as a diff. Give `--only` a list of paths, one on each line, relative to the current folder, such as the list git prints. From the folder of your `ghg.toml`, at the root of the repository:
+
+```sh
+git diff --name-only origin/main...HEAD | ghg build --only -
+```
+
+Every path in the list that is not a feature file ghg would read is passed over quietly: a removed file, a file that is not a feature file, or a path outside the input folder, so the list needs no filter. The site's folder pages, folder tree, tags, step sentences and search hold only the listed features, and every page says that the site shows only the feature files given with `--only`. git quotes paths with characters outside ASCII; `git -c core.quotePath=false diff --name-only` prints them as they are. With `ghg serve --watch`, a list given as a file is read again whenever it changes.
 
 ### The front page
 

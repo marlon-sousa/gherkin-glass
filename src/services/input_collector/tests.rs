@@ -7,13 +7,14 @@ use std::path::PathBuf;
 use rstest::rstest;
 
 use super::*;
+use crate::entities::PathList;
 use crate::errors::{InputError, InputErrorKind};
 use crate::test_support::MemoryFolders;
 
 /// The errors of the input tree of the input `in` that `folders` holds, each as its path and
 /// what is wrong, in the order they are reported.
 fn errors_of(folders: MemoryFolders) -> Vec<(String, InputErrorKind)> {
-    let input_tree = InputCollector::new(Arc::new(folders)).collect(Path::new("in"));
+    let input_tree = InputCollector::new(Arc::new(folders)).collect(Path::new("in"), None);
     let errors = input_tree.input_errors().expect("errors");
     errors.as_slice().iter().map(path_and_kind).collect()
 }
@@ -74,7 +75,7 @@ fn a_folder_the_rules_leave_out_is_not_listed() {
     // listed.
     let mut folders = MemoryFolders::with_files(["in/.hidden/a.feature", "in/b.feature"]);
     folders.unlistable.insert(PathBuf::from("in/.hidden"));
-    let input_tree = InputCollector::new(Arc::new(folders)).collect(Path::new("in"));
+    let input_tree = InputCollector::new(Arc::new(folders)).collect(Path::new("in"), None);
     assert!(input_tree.input_errors().is_none());
     assert_eq!(input_tree.allowed_files(), [PathBuf::from("in/b.feature")]);
 }
@@ -92,10 +93,57 @@ fn changes_call_for_a_rebuild_judged_against_the_last_tree(
     #[case] rebuilds: bool,
 ) {
     let last_input = MemoryFolders::with_files(["in/gone.feature", "in/kept.feature"]);
-    let last = InputCollector::new(Arc::new(last_input)).collect(Path::new("in"));
+    let last = InputCollector::new(Arc::new(last_input)).collect(Path::new("in"), None);
     let input = MemoryFolders::with_files(["in/kept.feature", "in/new.feature", "in/notes.txt"]);
     let input_collector = InputCollector::new(Arc::new(input));
     let paths = BTreeSet::from([PathBuf::from(changed)]);
-    let changes = input_collector.collect_changes(&last, &paths);
+    let changes = input_collector.collect_changes(&last, &paths, None);
+    assert_eq!(changes.calls_for_rebuild, rebuilds);
+}
+
+/// The list `--only` gives, of `paths`.
+fn listed(paths: &[&str]) -> ListedFiles {
+    ListedFiles {
+        list: PathList::StandardInput,
+        paths: paths.iter().map(PathBuf::from).collect(),
+    }
+}
+
+#[test]
+fn only_the_listed_files_of_the_input_are_collected_and_no_other_folder_is_listed() {
+    // Rules 205 and 206: a listed path is matched once made absolute, a path outside the input
+    // is passed over, and a folder with no listed file below it is not entered.
+    let mut folders = MemoryFolders::with_files([
+        "in/a.feature",
+        "in/sub/b.feature",
+        "in/sub/c.feature",
+        "in/other/d.feature",
+    ]);
+    folders.unlistable.insert(PathBuf::from("in/other"));
+    let only = listed(&["in/a.feature", "./in/x/../sub/b.feature", "src/main.rs"]);
+    let input_tree = InputCollector::new(Arc::new(folders)).collect(Path::new("in"), Some(&only));
+    assert!(input_tree.input_errors().is_none());
+    assert_eq!(
+        input_tree.allowed_files(),
+        [
+            PathBuf::from("in/a.feature"),
+            PathBuf::from("in/sub/b.feature")
+        ]
+    );
+}
+
+#[rstest]
+// Rule 209: a change to a file the list does not name rebuilds nothing.
+#[case::a_listed_file("in/a.feature", true)]
+#[case::a_file_not_listed("in/b.feature", false)]
+fn only_a_change_to_a_listed_file_calls_for_a_rebuild(
+    #[case] changed: &str,
+    #[case] rebuilds: bool,
+) {
+    let only = listed(&["in/a.feature"]);
+    let input = || Arc::new(MemoryFolders::with_files(["in/a.feature", "in/b.feature"]));
+    let last = InputCollector::new(input()).collect(Path::new("in"), Some(&only));
+    let paths = BTreeSet::from([PathBuf::from(changed)]);
+    let changes = InputCollector::new(input()).collect_changes(&last, &paths, Some(&only));
     assert_eq!(changes.calls_for_rebuild, rebuilds);
 }
