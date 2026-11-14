@@ -75,6 +75,12 @@ impl ServerApi for FakeServerService {
             preview,
         })
     }
+
+    fn stop(&self, served: Served, stops: StopRequests) {
+        self.calls.note("server.stop".into());
+        self.signals.end_on_another(stops);
+        drop(served);
+    }
 }
 
 impl FakeServerService {

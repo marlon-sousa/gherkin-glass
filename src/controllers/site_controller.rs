@@ -137,22 +137,22 @@ impl SiteApi for SiteController {
             .settings
             .load(&options.build, options.mode.destination())
             .map_err(BuildError::Config)?;
-        // Each arm drops what it served once it returns, which stops the server.
-        match options.mode {
+        let served = match options.mode {
             ServeMode::Folder => {
                 let site = ServedSite::Folder(settings.output.clone());
-                self.serve_until_asked(site, options, listener, &stops)?;
+                Some(self.serve_until_asked(site, options, listener, &stops)?)
             }
-            ServeMode::Build => {
-                if let Some(first) = self.first_build(settings, &stops)? {
-                    self.serve_until_asked(first.site, options, listener, &stops)?;
-                }
-            }
-            ServeMode::Watch => {
-                if let Some(first) = self.first_build(settings, &stops)? {
-                    self.serve_and_watch(first, options, listener, &stops)?;
-                }
-            }
+            ServeMode::Build => self
+                .first_build(settings, &stops)?
+                .map(|first| self.serve_until_asked(first.site, options, listener, &stops))
+                .transpose()?,
+            ServeMode::Watch => self
+                .first_build(settings, &stops)?
+                .map(|first| self.serve_and_watch(first, options, listener, &stops))
+                .transpose()?,
+        };
+        if let Some(served) = served {
+            self.server.stop(served, stops);
         }
         Ok(())
     }

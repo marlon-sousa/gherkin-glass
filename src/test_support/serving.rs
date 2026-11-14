@@ -96,12 +96,14 @@ pub(crate) fn changed(path: &str) -> Burst {
 }
 
 /// Keeps the sender of the requests to stop, for the test to ask with, unless it is `failing`;
-/// asks at once as it starts listening while `asking_at_once`.
+/// asks at once as it starts listening while `asking_at_once`; notes in `ending_on_another`
+/// that it was told to end on another request.
 #[derive(Default)]
 pub(crate) struct FakeSignals {
     pub(crate) sender: Mutex<Option<Sender<()>>>,
     pub(crate) failing: AtomicBool,
     pub(crate) asking_at_once: AtomicBool,
+    pub(crate) ending_on_another: AtomicBool,
 }
 
 impl StopSignals for FakeSignals {
@@ -117,6 +119,10 @@ impl StopSignals for FakeSignals {
             self.ask_to_stop();
         }
         Ok(StopRequests::new(requests))
+    }
+
+    fn end_on_another(&self, _: StopRequests) {
+        self.ending_on_another.store(true, Ordering::SeqCst);
     }
 }
 

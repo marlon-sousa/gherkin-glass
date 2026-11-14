@@ -231,3 +231,23 @@ fn a_change_that_comes_with_a_request_to_stop_is_left() {
     assert_eq!(changes.next(), None);
     drop(asking.join().expect("no panic"));
 }
+
+#[test]
+fn stopping_ends_ghg_at_once_on_another_request() {
+    // Rule 199.
+    let signals = Arc::new(FakeSignals::default());
+    let server = ServerService::new(
+        Arc::new(FakeServer::default()),
+        Arc::new(FakeWatcher::default()),
+        signals.clone(),
+    );
+    let served = server
+        .serve(
+            ServedSite::Folder(PathBuf::from("site")),
+            &ServeOptions::default(),
+        )
+        .expect("served");
+    let (_asker, stops) = stops();
+    server.stop(served, stops);
+    assert!(signals.ending_on_another.load(Ordering::SeqCst));
+}

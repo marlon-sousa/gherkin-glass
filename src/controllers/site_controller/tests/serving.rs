@@ -138,6 +138,18 @@ fn serve_serves_until_it_is_asked_to_stop(#[case] mode: ServeMode) {
         assert_eq!(serving.join().expect("no panic"), Ok(()));
     });
     assert_eq!(world.server.no_longer_served.load(Ordering::SeqCst), 1);
+    // Rule 199: while it stops, another request ends ghg at once.
+    assert_eq!(
+        world.calls.taken().last().map(String::as_str),
+        Some("server.stop")
+    );
+    assert!(
+        world
+            .server
+            .signals
+            .ending_on_another
+            .load(Ordering::SeqCst)
+    );
 }
 
 #[rstest]

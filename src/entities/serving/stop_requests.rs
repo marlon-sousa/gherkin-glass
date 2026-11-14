@@ -30,6 +30,12 @@ impl StopRequests {
         self.asked.get()
     }
 
+    /// Waits for a request besides the one seen, if any, which may have come already: whether
+    /// one came, or none can come any more.
+    pub(crate) fn another(self) -> bool {
+        self.requests.recv().is_ok()
+    }
+
     /// Waits until ghg serve is asked to stop.
     pub(crate) fn wait(&self) {
         if !self.asked() {
@@ -55,6 +61,26 @@ mod tests {
         assert!(requests.asked());
         assert!(requests.asked());
         requests.wait();
+    }
+
+    #[test]
+    fn another_request_is_one_besides_the_one_seen() {
+        let (sender, requests) = channel();
+        let requests = StopRequests::new(requests);
+        sender.send(()).expect("sent");
+        sender.send(()).expect("sent");
+        requests.wait();
+        assert!(requests.another());
+    }
+
+    #[test]
+    fn no_other_request_comes_once_the_channel_is_closed() {
+        let (sender, requests) = channel();
+        let requests = StopRequests::new(requests);
+        sender.send(()).expect("sent");
+        drop(sender);
+        requests.wait();
+        assert!(!requests.another());
     }
 
     #[test]

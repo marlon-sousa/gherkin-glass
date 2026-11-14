@@ -361,7 +361,7 @@ fn a_versioned_build_serves_the_output_folder_with_its_versions_page() {
     assert!(folder.join("site/ghg-versions.json").is_file());
 }
 
-// Stopping: rules 196 to 198; the controller's tests check 197 and 198.
+// Stopping: rules 196 to 199; the controller's tests check 197 and 198.
 
 #[cfg(unix)]
 #[rstest]
@@ -377,22 +377,89 @@ fn a_signal_stops_it_gracefully_once_it_answered(
     let arguments: Vec<_> = ["--port", "0"].iter().chain(mode).copied().collect();
     let mut serving = serve(&folder, &arguments);
     assert_eq!(get(&serving.address, "/").status, 200);
+    send(signal, &serving);
+    assert_eq!(ended(&mut serving), Some(0));
+    let mut rest = String::new();
+    serving.stdout.read_to_string(&mut rest).expect("read");
+    assert_eq!(rest, "The site is no longer served.\n");
+    assert!(TcpStream::connect(&serving.address).is_err());
+}
+
+/// Sends `signal` to the `ghg serve` of `serving`.
+#[cfg(unix)]
+fn send(signal: &str, serving: &Serving) {
     let sent = Command::new("kill")
         .arg(format!("-{signal}"))
         .arg(serving.child.id().to_string())
         .status()
         .expect("kill runs");
     assert!(sent.success());
+}
+
+/// The status `ghg serve` ends with, within ten seconds.
+#[cfg(unix)]
+fn ended(serving: &mut Serving) -> Option<i32> {
     let mut status = None;
     eventually("ghg serve ends", || {
         status = serving.child.try_wait().expect("waited");
         status.is_some()
     });
-    assert_eq!(status.and_then(|status| status.code()), Some(0));
+    status.and_then(|status| status.code())
+}
+
+/// A request whose body never comes, which tiny_http 0.12.0, having answered it, waits to
+/// read before it takes another on the same thread, so that ghg serve is still answering it.
+#[cfg(unix)]
+fn a_request_still_answered(address: &str) -> TcpStream {
+    let mut stream = TcpStream::connect(address).expect("connects");
+    write!(
+        stream,
+        "POST / HTTP/1.1\r\nHost: {address}\r\nContent-Length: 2048\r\n\r\n"
+    )
+    .expect("sent");
+    let mut head = [0; 12];
+    stream.read_exact(&mut head).expect("answered");
+    assert_eq!(&head, b"HTTP/1.1 405");
+    stream
+}
+
+#[cfg(unix)]
+#[test]
+fn a_stop_waits_for_the_requests_being_answered() {
+    // Rule 196.
+    let mut serving = serve_site();
+    let held = a_request_still_answered(&serving.address);
+    send("TERM", &serving);
+    still_running(&mut serving);
+    drop(held);
+    assert_eq!(ended(&mut serving), Some(0));
     let mut rest = String::new();
     serving.stdout.read_to_string(&mut rest).expect("read");
     assert_eq!(rest, "The site is no longer served.\n");
-    assert!(TcpStream::connect(&serving.address).is_err());
+}
+
+#[cfg(unix)]
+#[rstest]
+fn another_signal_while_it_waits_ends_it_at_once_with_130(
+    #[values("INT", "TERM", "HUP")] signal: &str,
+) {
+    // Rule 199.
+    let mut serving = serve_site();
+    let _held = a_request_still_answered(&serving.address);
+    send("TERM", &serving);
+    still_running(&mut serving);
+    send(signal, &serving);
+    assert_eq!(ended(&mut serving), Some(130));
+    let mut rest = String::new();
+    serving.stdout.read_to_string(&mut rest).expect("read");
+    assert_eq!(rest, "");
+}
+
+/// Checks that `ghg serve` has not ended once a stop that waited for nothing would have.
+#[cfg(unix)]
+fn still_running(serving: &mut Serving) {
+    sleep(Duration::from_millis(500));
+    assert_eq!(serving.child.try_wait().expect("waited"), None);
 }
 
 // What it answers: rules 61 to 64.
