@@ -45,16 +45,16 @@ test("the tree is built in its landmark, named as it, with every item a link rel
   const home = items(window)[0]!;
   assert.equal(home.textContent, "Banking & <more>");
   assert.equal(home.getAttribute("href"), "../index.html");
-  assert.equal(item(window, "Scenario: Store credit (written as Example)").getAttribute("href"), "../billing/refunds.html#store-credit");
-  // Feature text inside gherkin-glass's words is isolated, the name and the keyword each in a bdi.
-  const isolated = [...item(window, "Scenario: Store credit (written as Example)").querySelectorAll("bdi")].map((bdi) => bdi.textContent);
-  assert.deepEqual(isolated, ["Store credit", "Example"]);
+  assert.equal(item(window, "Scenario: Store credit").getAttribute("href"), "../billing/refunds.html#store-credit");
+  // Feature text inside gherkin-glass's words is isolated in a bdi.
+  const isolated = [...item(window, "Scenario: Store credit").querySelectorAll("bdi")].map((bdi) => bdi.textContent);
+  assert.deepEqual(isolated, ["Store credit"]);
   assert.equal(item(window, "Feature: Closed accounts").getAttribute("href"), "../billing/archive/closed%20%231.html");
   // A feature's feature text, and that of the items inside it, has its page's lang; the tree's own words have none.
   const languages = (text: string) => [...item(window, text).querySelectorAll("bdi")].map((bdi) => bdi.getAttribute("lang"));
-  assert.deepEqual(languages("Feature: Saque em conta poupança (written as Funcionalidade)"), ["pt", "pt"]);
-  assert.deepEqual(languages("Scenario: Saque com saldo (written as Cenário)"), ["pt", "pt"]);
-  assert.ok(item(window, "Scenario: Saque com saldo (written as Cenário)").closest("nav [lang]") === null);
+  assert.deepEqual(languages("Feature: Saque em conta poupança"), ["pt"]);
+  assert.deepEqual(languages("Scenario: Saque com saldo"), ["pt"]);
+  assert.ok(item(window, "Scenario: Saque com saldo").closest("nav [lang]") === null);
   assert.ok(home.closest("nav [lang]") === null);
 });
 

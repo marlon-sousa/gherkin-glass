@@ -5,7 +5,7 @@ use i18n_embed_fl::fl;
 
 use super::block_building::{Builder, description, worded_heading};
 use super::heading_words::{
-    Kind, TEXT_MARKS, examples_heading, isolated, kind_alone, plain, worded_parts,
+    Kind, TEXT_MARKS, examples_heading, isolated, kind_alone, plain, source_note, worded_parts,
 };
 use super::step_views::{filled_step_contents, table};
 use crate::entities::{
@@ -23,11 +23,7 @@ impl Builder<'_> {
         place: usize,
     ) -> ExamplesBlock {
         let examples = anchored.block;
-        let label = examples_heading(
-            &examples.keyword,
-            examples.name.as_deref().unwrap_or(""),
-            place,
-        );
+        let label = examples_heading(examples.name.as_deref().unwrap_or(""), place);
         let has_rows = examples.table.as_ref().is_some_and(has_rows);
         ExamplesBlock {
             anchor: anchored.anchor.clone(),
@@ -38,6 +34,7 @@ impl Builder<'_> {
                 worded_parts(&words, &[label])
             },
             has_rows,
+            source_note: source_note(Kind::Examples, &examples.keyword),
             tags: self.tags(&examples.tags),
             description: description(examples.description.as_deref()),
             table: examples.table.as_ref().map(table),

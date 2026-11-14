@@ -18,9 +18,11 @@ pub(crate) struct Page {
     /// The `lang` of the page.
     pub(crate) language: String,
     pub(crate) title: String,
-    /// The feature's kind, its name and the keyword it is written with, the
-    /// page's `h1`.
+    /// The feature's kind and its name, the page's `h1`.
     pub(crate) heading: Vec<HeadingPart>,
+    /// The note, under the `h1`, of the keyword the file writes when it is
+    /// another word than "Feature".
+    pub(crate) source_note: Option<Vec<HeadingPart>>,
     /// The feature's name alone, empty when it has none.
     pub(crate) name: String,
     pub(crate) trail: Trail,

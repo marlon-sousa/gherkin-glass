@@ -10,6 +10,9 @@ pub(crate) struct BlockHeading {
     /// scenarios an `id` of the page's own, with a `_`.
     pub(crate) anchor: String,
     pub(crate) parts: Vec<HeadingPart>,
+    /// The note, at the top of its content, of the keyword its file writes
+    /// when that is another word than its kind's.
+    pub(crate) source_note: Option<Vec<HeadingPart>>,
     pub(crate) collapsed: bool,
 }
 
@@ -67,16 +70,22 @@ pub(crate) struct ExamplesBlock {
     /// Whether its table has a row below its header, which its outline runs
     /// once for.
     pub(crate) has_rows: bool,
+    /// The note of the keyword its file writes, when that is another word
+    /// than `Examples`.
+    pub(crate) source_note: Option<Vec<HeadingPart>>,
     pub(crate) tags: Vec<TagView>,
     pub(crate) description: Option<Paragraph>,
     pub(crate) table: Option<TableView>,
 }
 
 impl ExamplesBlock {
-    /// Whether it has no table, no tag and no description, so that its item
-    /// has nothing to show but its label.
+    /// Whether it has no note of its keyword, no table, no tag and no
+    /// description, so that its item has nothing to show but its label.
     pub(crate) fn holds_nothing(&self) -> bool {
-        self.table.is_none() && self.tags.is_empty() && self.description.is_none()
+        self.source_note.is_none()
+            && self.table.is_none()
+            && self.tags.is_empty()
+            && self.description.is_none()
     }
 }
 

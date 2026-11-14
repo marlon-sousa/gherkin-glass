@@ -37,11 +37,11 @@ fn an_item_with_isolated_words_holds_its_runs_the_isolated_at_odd_places() {
     };
     let item = TreeItem {
         text: vec![
-            part("Scenario", false),
+            part("Rule", false),
             part(": ", false),
+            part("R", true),
+            part(", then ", false),
             part("S", true),
-            part(" (written as ", false),
-            part("Example", true),
         ],
         address: LinkAddress::to("b.html").at("s"),
         lang: None,
@@ -49,6 +49,6 @@ fn an_item_with_isolated_words_holds_its_runs_the_isolated_at_odd_places() {
     };
     assert_eq!(
         [item].render(),
-        "[{\"text\":[\"Scenario: \",\"S\",\" (written as \",\"Example\"],\"address\":\"b.html#s\"}]\n"
+        "[{\"text\":[\"Rule: \",\"R\",\", then \",\"S\"],\"address\":\"b.html#s\"}]\n"
     );
 }

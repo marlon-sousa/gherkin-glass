@@ -3,7 +3,7 @@
 use gherkin::Background;
 use i18n_embed_fl::fl;
 
-use super::heading_words::{Kind, heading};
+use super::heading_words::{Kind, heading, source_note};
 use super::step_views::step_contents;
 use crate::entities::{
     Anchored, AnchoredRule, AnchoredScenario, BackgroundBlock, BackgroundContent, BlockHeading,
@@ -39,10 +39,10 @@ impl Builder<'_> {
             || self.options.collapse_scenarios;
         BackgroundContent {
             block: BackgroundBlock {
-                heading: worded_heading(
+                heading: kind_heading(
                     level,
                     &anchored.anchor,
-                    heading(Kind::Background, &background.keyword, &background.name),
+                    (Kind::Background, &background.keyword, &background.name),
                     collapsed,
                 ),
                 description: description(background.description.as_deref()),
@@ -57,10 +57,10 @@ impl Builder<'_> {
         let rule = anchored.rule;
         RuleContent {
             block: RuleBlock {
-                heading: worded_heading(
+                heading: kind_heading(
                     HeadingLevel::Two,
                     &anchored.anchor,
-                    heading(Kind::Rule, &rule.keyword, &rule.name),
+                    (Kind::Rule, &rule.keyword, &rule.name),
                     self.options.collapse_rules,
                 ),
                 name: rule.name.clone(),
@@ -97,10 +97,10 @@ impl Builder<'_> {
         };
         ScenarioContent {
             block: ScenarioBlock {
-                heading: worded_heading(
+                heading: kind_heading(
                     level,
                     &anchored.anchor,
-                    heading(kind, &scenario.keyword, &scenario.name),
+                    (kind, &scenario.keyword, &scenario.name),
                     self.options.collapse_scenarios,
                 ),
                 name: scenario.name.clone(),
@@ -147,7 +147,22 @@ pub(super) fn worded_heading(
         level,
         anchor: anchor.to_string(),
         parts,
+        source_note: None,
         collapsed,
+    }
+}
+
+/// The heading of a block, from its kind, the keyword its file writes and
+/// its name, with the note of that keyword when it is another word.
+fn kind_heading(
+    level: HeadingLevel,
+    anchor: &str,
+    (kind, keyword, name): (Kind, &str, &str),
+    collapsed: bool,
+) -> BlockHeading {
+    BlockHeading {
+        source_note: source_note(kind, keyword),
+        ..worded_heading(level, anchor, heading(kind, name), collapsed)
     }
 }
 

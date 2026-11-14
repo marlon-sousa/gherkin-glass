@@ -1,6 +1,6 @@
 Ability: Kinds written with other words
-  Each heading names its block's kind,
-  and the word the file writes when it is another.
+  Each heading names its block's kind; the word the file writes,
+  when it is another, is said at the top of the block.
 
   Background:
     Given a shelf

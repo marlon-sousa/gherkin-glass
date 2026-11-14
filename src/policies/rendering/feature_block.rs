@@ -37,6 +37,7 @@ struct BlockView<'a> {
     level: HeadingLevel,
     anchor: &'a str,
     heading_parts: &'a [HeadingPart],
+    source_note: Option<&'a [HeadingPart]>,
     collapsed: bool,
     /// For a background whose state the page's checkbox sets, whether it is
     /// collapsed while the box is unchecked; `None` for any other block.
@@ -152,6 +153,7 @@ impl<'a> BlockView<'a> {
             level: heading.level,
             anchor: &heading.anchor,
             heading_parts: &heading.parts,
+            source_note: heading.source_note.as_deref(),
             collapsed: heading.collapsed,
             collapsed_when_unchecked: None,
             tags: &[],

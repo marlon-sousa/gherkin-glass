@@ -6,7 +6,7 @@ mod heading_words;
 mod step_views;
 
 use block_building::{Builder, description, has_scenarios, worded_heading};
-use heading_words::{Kind, heading};
+use heading_words::{Kind, heading, source_note};
 use i18n_embed_fl::fl;
 
 use crate::entities::{
@@ -40,7 +40,7 @@ pub(crate) fn build_page(
     let feature = &parsed.feature;
     let path = FeaturePath::below_input(&parsed.path);
     let address = page_address(&parsed.path);
-    let heading = heading(Kind::Feature, &feature.keyword, &feature.name);
+    let heading = heading(Kind::Feature, &feature.name);
     let heading_text = text_of(&heading);
     let builder = Builder {
         parsed,
@@ -105,6 +105,7 @@ pub(crate) fn build_page(
         name: feature.name.clone(),
         path: path.clone(),
         revision,
+        source_note: source_note(Kind::Feature, &feature.keyword),
         tags: builder.tags(&feature.tags),
         description: description(feature.description.as_deref()),
         source: options

@@ -21,23 +21,23 @@ fn committed(page: &str) -> String {
 #[rstest]
 #[case::a_folder_page_s_feature_link(
     "tests/fixtures/pages/expected/index.html",
-    "<a href=\"saque%20em%20conta%20poupan%C3%A7a.html\">Feature: <bdi lang=\"pt\">Saque em conta poupança</bdi> (written as <bdi lang=\"pt\">Funcionalidade</bdi>)</a>"
+    "<a href=\"saque%20em%20conta%20poupan%C3%A7a.html\">Feature: <bdi lang=\"pt\">Saque em conta poupança</bdi></a>"
 )]
 #[case::a_folder_page_s_contents(
     "tests/fixtures/pages/expected/index.html",
-    "<div class=\"ghg-content\" hidden>\n<ul>\n<li><a href=\"saque%20em%20conta%20poupan%C3%A7a.html#saque-com-saldo\">Scenario: <bdi lang=\"pt\">Saque com saldo</bdi> (written as <bdi lang=\"pt\">Cenário</bdi>)</a></li>"
+    "<div class=\"ghg-content\" hidden>\n<ul>\n<li><a href=\"saque%20em%20conta%20poupan%C3%A7a.html#saque-com-saldo\">Scenario: <bdi lang=\"pt\">Saque com saldo</bdi></a></li>"
 )]
 #[case::a_tag_page_s_feature(
     "project-site/expected/tags/empréstimo.html",
-    "<h2><a href=\"../em-portugues/emprestimo.html\">Feature: <bdi lang=\"pt\">Empréstimo de livros</bdi> (written as <bdi lang=\"pt\">Funcionalidade</bdi>), "
+    "<h2><a href=\"../em-portugues/emprestimo.html\">Feature: <bdi lang=\"pt\">Empréstimo de livros</bdi>, "
 )]
 #[case::a_tag_page_s_scenario(
     "project-site/expected/tags/empréstimo.html",
-    "<a href=\"../em-portugues/emprestimo.html#empréstimo-de-um-livro-na-estante\"><bdi>Scenario: <bdi lang=\"pt\">Empréstimo de um livro na estante</bdi> (written as <bdi lang=\"pt\">Cenário</bdi>)</bdi></a>"
+    "<a href=\"../em-portugues/emprestimo.html#empréstimo-de-um-livro-na-estante\"><bdi>Scenario: <bdi lang=\"pt\">Empréstimo de um livro na estante</bdi></bdi></a>"
 )]
 #[case::a_use_of_a_step_sentence(
     "tests/fixtures/pages/expected/steps.html",
-    "Scenario: <bdi lang=\"pt\">Saque com saldo</bdi> (written as <bdi lang=\"pt\">Cenário</bdi>)"
+    "Scenario: <bdi lang=\"pt\">Saque com saldo</bdi>"
 )]
 fn on_an_english_page_only_a_heading_s_feature_text_has_its_feature_s_lang(
     #[case] page: &str,
@@ -110,4 +110,27 @@ fn an_examples_block_without_a_row_says_it_has_nothing_to_run_and_an_outline_wit
         "{with_rows}"
     );
     assert!(!without.contains("ghg-runs"), "{without}");
+}
+
+#[rstest]
+#[case::the_feature_under_its_h1(
+    "tests/fixtures/pages/expected/saque em conta poupança.html",
+    "<h1>Feature: <bdi>Saque em conta poupança</bdi></h1>\n<p class=\"ghg-source-note\">In the Gherkin feature file: <bdi>Funcionalidade</bdi></p>"
+)]
+#[case::a_scenario_at_the_top_of_its_content(
+    "tests/fixtures/pages/expected/kinds.html",
+    "Scenario: <bdi>Written as an example</bdi></button></h3>\n<div class=\"ghg-content\">\n<p class=\"ghg-source-note\">In the Gherkin feature file: <bdi>Example</bdi></p>"
+)]
+#[case::an_examples_block_inside_what_its_button_shows(
+    "tests/fixtures/pages/expected/kinds.html",
+    "<div class=\"ghg-content\" hidden>\n<p class=\"ghg-source-note\">In the Gherkin feature file: <bdi>Scenarios</bdi></p>"
+)]
+fn a_heading_names_only_its_kind_and_its_content_names_another_keyword(
+    #[case] page: &str,
+    #[case] shown: &str,
+) {
+    // Rule 43.
+    let html = committed(page);
+    assert!(html.contains(shown), "{html}");
+    assert!(!html.contains("written as"), "{html}");
 }

@@ -23,42 +23,47 @@ pub(super) enum Kind {
 }
 
 /// The heading of a block of `kind`: its kind, then `: ` and its name, or its
-/// kind alone, then the keyword as written when it is another word than the
-/// kind's, other than in its case; the name and the keyword are isolated.
-pub(super) fn heading(kind: Kind, keyword: &str, name: &str) -> Vec<HeadingPart> {
+/// kind alone; the name is isolated. The keyword the file writes is left to
+/// [`source_note`].
+pub(super) fn heading(kind: Kind, name: &str) -> Vec<HeadingPart> {
     let unnamed = fl!(CATALOGUE, "unnamed-heading", kind = kind.id());
-    named_heading(kind, keyword, name, &unnamed)
+    named_heading(kind, name, &unnamed)
 }
 
 /// The heading of an examples block, as [`heading`] makes it, except that an
 /// unnamed block is numbered by its place among its outline's blocks, from 1.
-pub(super) fn examples_heading(keyword: &str, name: &str, place: usize) -> Vec<HeadingPart> {
+pub(super) fn examples_heading(name: &str, place: usize) -> Vec<HeadingPart> {
     let unnamed = fl!(CATALOGUE, "numbered-examples", place = place);
-    named_heading(Kind::Examples, keyword, name, &unnamed)
+    named_heading(Kind::Examples, name, &unnamed)
 }
 
 /// The heading of a block of `kind`, reading `unnamed` when it has no name.
-fn named_heading(kind: Kind, keyword: &str, name: &str, unnamed: &str) -> Vec<HeadingPart> {
-    let id = kind.id();
-    let keyword = keyword.trim();
-    let name = name.trim();
-    let kind_words = fl!(CATALOGUE, "unnamed-heading", kind = id);
-    let named = if name.is_empty() {
-        plain_parts(unnamed)
-    } else {
-        let words = fl!(CATALOGUE, "named-heading", kind = id, name = TEXT_MARKS[0]);
-        worded_parts(&words, &[isolated(name)])
-    };
-    if keyword.to_lowercase() == kind_words.to_lowercase() {
-        return named;
+fn named_heading(kind: Kind, name: &str, unnamed: &str) -> Vec<HeadingPart> {
+    match name.trim() {
+        "" => plain_parts(unnamed),
+        name => {
+            let words = fl!(
+                CATALOGUE,
+                "named-heading",
+                kind = kind.id(),
+                name = TEXT_MARKS[0]
+            );
+            worded_parts(&words, &[isolated(name)])
+        }
     }
-    let words = fl!(
-        CATALOGUE,
-        "written-as",
-        heading = TEXT_MARKS[0],
-        keyword = TEXT_MARKS[1]
-    );
-    worded_parts(&words, &[named, isolated(keyword)])
+}
+
+/// The note that a block of `kind` is written with `keyword` in its file,
+/// the keyword isolated; `None` when the keyword is the kind's own word,
+/// other than in its case.
+pub(super) fn source_note(kind: Kind, keyword: &str) -> Option<Vec<HeadingPart>> {
+    let keyword = keyword.trim();
+    let kind_words = fl!(CATALOGUE, "unnamed-heading", kind = kind.id());
+    if keyword.to_lowercase() == kind_words.to_lowercase() {
+        return None;
+    }
+    let words = fl!(CATALOGUE, "in-the-feature-file", keyword = TEXT_MARKS[0]);
+    Some(worded_parts(&words, &[isolated(keyword)]))
 }
 
 /// The kind alone, in gherkin-glass's words, such as `Scenario outline`.
@@ -146,43 +151,37 @@ mod tests {
     }
 
     #[rstest]
-    #[case::outline_written_as_outline(
-        Kind::ScenarioOutline,
-        "Scenario Outline",
-        " Withdraw ",
-        &[("Scenario outline: ", false), ("Withdraw", true)]
-    )]
-    #[case::examples_written_as_scenarios(
-        Kind::Examples,
-        "Scenarios",
-        "Small",
-        &[
-            ("Examples: ", false),
-            ("Small", true),
-            (" (written as ", false),
-            ("Scenarios", true),
-            (")", false)
-        ]
-    )]
-    #[case::unnamed_background_in_portuguese(
-        Kind::Background,
-        "Contexto",
-        "",
-        &[
-            ("Background", false),
-            (" (written as ", false),
-            ("Contexto", true),
-            (")", false)
-        ]
-    )]
-    #[case::unnamed_rule(Kind::Rule, "Rule", "", &[("Rule", false)])]
-    fn a_heading_names_its_kind_then_the_keyword_only_when_it_is_another_word(
+    #[case::named(Kind::ScenarioOutline, " Withdraw ", &[("Scenario outline: ", false), ("Withdraw", true)])]
+    #[case::unnamed(Kind::Rule, "", &[("Rule", false)])]
+    fn a_heading_names_its_kind_then_its_name(
         #[case] kind: Kind,
-        #[case] keyword: &str,
         #[case] name: &str,
         #[case] expected: &[(&str, bool)],
     ) {
-        assert_eq!(shown(&heading(kind, keyword, name)), expected);
+        assert_eq!(shown(&heading(kind, name)), expected);
+    }
+
+    #[rstest]
+    #[case::named(" Small ", &[("Examples: ", false), ("Small", true)])]
+    #[case::unnamed("", &[("Examples 3", false)])]
+    fn an_unnamed_examples_block_is_numbered(
+        #[case] name: &str,
+        #[case] expected: &[(&str, bool)],
+    ) {
+        assert_eq!(shown(&examples_heading(name, 3)), expected);
+    }
+
+    #[rstest]
+    #[case::the_kind_s_word_in_another_case(Kind::ScenarioOutline, "Scenario Outline", None)]
+    #[case::another_word(Kind::Examples, "Scenarios", Some(vec![("In the Gherkin feature file: ", false), ("Scenarios", true)]))]
+    #[case::another_language(Kind::Background, " Contexto ", Some(vec![("In the Gherkin feature file: ", false), ("Contexto", true)]))]
+    fn the_source_note_names_the_keyword_only_when_it_is_another_word(
+        #[case] kind: Kind,
+        #[case] keyword: &str,
+        #[case] expected: Option<Vec<(&str, bool)>>,
+    ) {
+        let note = source_note(kind, keyword);
+        assert_eq!(note.as_deref().map(shown), expected);
     }
 
     #[test]

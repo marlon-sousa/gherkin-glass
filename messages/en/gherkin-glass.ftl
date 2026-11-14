@@ -297,10 +297,9 @@ versions-pre-releases = Pre-releases
 versions-development-version = { $name }, a development version
 
 ## A block's heading on a feature's page: its kind alone, or its kind and
-## its $name, and, when the file writes the kind with another word, that
-## $keyword after the $heading. $kind is one of feature, background, rule,
-## scenario, scenario-outline and examples, never shown; $name and $keyword
-## are as written in the file.
+## its $name. $kind is one of feature, background, rule, scenario,
+## scenario-outline and examples, never shown; $name is as written in the
+## file.
 
 unnamed-heading =
     { $kind ->
@@ -320,7 +319,10 @@ named-heading =
         [examples] Examples: { $name }
        *[scenario] Scenario: { $name }
     }
-written-as = { $heading } (written as { $keyword })
+
+## At the top of a block whose file writes its kind with another $keyword.
+
+in-the-feature-file = In the Gherkin feature file: { $keyword }
 
 ## An unnamed examples block, by its $place among its outline's blocks, from 1.
 

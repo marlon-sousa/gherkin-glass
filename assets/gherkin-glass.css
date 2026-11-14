@@ -164,6 +164,11 @@ h1, h2, h3, h4, h5 {
   font-weight: bold;
 }
 
+/* The keyword the file writes, said once at the top of the block's content. */
+.ghg-source-note {
+  font-style: italic;
+}
+
 /* A block with nothing to show has no button: it keeps a block's rule, and
    its text starts where the buttons' text does, after their arrow. */
 .ghg-examples-list > li:not(.ghg-block) {

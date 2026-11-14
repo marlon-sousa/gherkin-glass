@@ -1,4 +1,7 @@
 <h1>{{ page.heading.render()|safe }}</h1>
+{%- if let Some(note) = page.source_note %}
+<p class="ghg-source-note">{{ note.render()|safe }}</p>
+{%- endif %}
 {%- if !page.tags.is_empty() %}
 {{ page.tags.render()|safe }}
 {%- endif %}
