@@ -50,8 +50,8 @@ pub(crate) trait ServerApi: Send + Sync {
     /// Serves `site` on threads of its own, as `options` say, until what it returns is dropped.
     fn serve(&self, site: ServedSite, options: &ServeOptions) -> Result<Served, ServeError>;
 
-    /// Stops serving `served`, once the requests being answered are, unless `stops`, asked
-    /// already, hold another request meanwhile, which ends ghg at once.
+    /// Stops serving `served`, once the requests being answered are; when ghg serve was asked
+    /// to stop by `stops`, another request meanwhile ends ghg at once.
     fn stop(&self, served: Served, stops: StopRequests);
 }
 
@@ -133,7 +133,10 @@ impl ServerApi for ServerService {
     }
 
     fn stop(&self, served: Served, stops: StopRequests) {
-        self.signals.end_on_another(stops);
+        // Before the wait, so that the wait can always be cut short.
+        if stops.asked() {
+            self.signals.end_on_another(stops);
+        }
         drop(served);
     }
 }

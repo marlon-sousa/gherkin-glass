@@ -10,12 +10,12 @@ use crate::entities::StopRequests;
 use crate::errors::SignalsError;
 use crate::ports::StopSignals;
 
-/// Control+C, `SIGTERM` and `SIGHUP` on Unix, through ctrlc's `termination` feature, and
-/// Control+C and Control+Break on Windows. Windows ends the process as soon as ctrlc 3.5.2
-/// has been told of a closed console, before a request is seen.
 /// The status a shell gives a command that Control+C ended, 128 and `SIGINT`'s number.
 const INTERRUPTED: i32 = 130;
 
+/// Control+C, `SIGTERM` and `SIGHUP` on Unix, through ctrlc's `termination` feature, and
+/// Control+C and Control+Break on Windows. Windows ends the process as soon as ctrlc 3.5.2
+/// has been told of a closed console, before a request is seen.
 #[derive(Debug, Default, Clone, Copy)]
 pub(crate) struct CtrlcSignals;
 
@@ -31,6 +31,7 @@ impl StopSignals for CtrlcSignals {
     }
 
     fn end_on_another(&self, requests: StopRequests) {
+        requests.leave_those_come();
         spawn(move || {
             if requests.another() {
                 exit(INTERRUPTED);

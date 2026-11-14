@@ -9,7 +9,7 @@ use crate::entities::{InputChanges, Listening, Preview, Served, StopRequests};
 use crate::errors::WatchError;
 use crate::ports::StopSignals;
 use crate::services::WatchedChanges;
-use crate::test_support::FakeSignals;
+use crate::test_support::{Counted, FakeSignals};
 
 /// Listens for the requests to stop with `signals`; serves at 127.0.0.1, port 8000, keeping
 /// the preview, unless `listen_failing`, and counts the sites no longer served; watches, unless
@@ -160,17 +160,6 @@ impl Iterator for CountedChanges {
 
     fn next(&mut self) -> Option<InputChanges> {
         self.changes.next()
-    }
-}
-
-/// Counted in `dropped` once dropped.
-struct Counted {
-    dropped: Arc<AtomicUsize>,
-}
-
-impl Drop for Counted {
-    fn drop(&mut self) {
-        self.dropped.fetch_add(1, Ordering::SeqCst);
     }
 }
 

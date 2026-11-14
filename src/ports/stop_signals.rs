@@ -9,7 +9,7 @@ pub(crate) trait StopSignals: Send + Sync {
     /// on is one request. Called once in a run.
     fn listen(&self) -> Result<StopRequests, SignalsError>;
 
-    /// From now on, ends ghg at once, with the status of an interrupted command, when
-    /// `requests` hold another request besides the one seen.
+    /// From now on, ends ghg at once, with the status of an interrupted command, when another
+    /// request comes in `requests`; those that came already do not count.
     fn end_on_another(&self, requests: StopRequests);
 }

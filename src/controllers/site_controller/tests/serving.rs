@@ -143,13 +143,8 @@ fn serve_serves_until_it_is_asked_to_stop(#[case] mode: ServeMode) {
         world.calls.taken().last().map(String::as_str),
         Some("server.stop")
     );
-    assert!(
-        world
-            .server
-            .signals
-            .ending_on_another
-            .load(Ordering::SeqCst)
-    );
+    let ending = world.server.signals.ending.lock().expect("lock");
+    assert!(ending.is_some());
 }
 
 #[rstest]

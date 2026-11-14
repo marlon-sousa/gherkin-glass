@@ -1,5 +1,5 @@
 use std::path::PathBuf;
-use std::sync::atomic::Ordering;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::mpsc::{Sender, channel};
 use std::thread::{sleep, spawn};
 
@@ -232,12 +232,26 @@ fn a_change_that_comes_with_a_request_to_stop_is_left() {
     drop(asking.join().expect("no panic"));
 }
 
-#[test]
-fn stopping_ends_ghg_at_once_on_another_request() {
-    // Rule 199.
-    let signals = Arc::new(FakeSignals::default());
+#[rstest]
+// Rule 199: once asked to stop, another request ends ghg at once, and can cut short the wait for
+// the requests being answered, since the site served is dropped only then; without a request,
+// the watch having ended alone, nothing is ended at once.
+#[case::once_asked(true, Some(0))]
+#[case::not_asked(false, None)]
+fn stopping_has_another_request_end_ghg_before_it_waits(
+    #[case] asked: bool,
+    #[case] ending: Option<usize>,
+) {
+    let no_longer_served = Arc::new(AtomicUsize::new(0));
+    let signals = Arc::new(FakeSignals {
+        no_longer_served: no_longer_served.clone(),
+        ..FakeSignals::default()
+    });
     let server = ServerService::new(
-        Arc::new(FakeServer::default()),
+        Arc::new(FakeServer {
+            no_longer_served: no_longer_served.clone(),
+            ..FakeServer::default()
+        }),
         Arc::new(FakeWatcher::default()),
         signals.clone(),
     );
@@ -247,7 +261,11 @@ fn stopping_ends_ghg_at_once_on_another_request() {
             &ServeOptions::default(),
         )
         .expect("served");
-    let (_asker, stops) = stops();
+    let (asker, stops) = stops();
+    if asked {
+        asker.send(()).expect("sent");
+    }
     server.stop(served, stops);
-    assert!(signals.ending_on_another.load(Ordering::SeqCst));
+    assert_eq!(*signals.ending.lock().expect("lock"), ending);
+    assert_eq!(no_longer_served.load(Ordering::SeqCst), 1);
 }

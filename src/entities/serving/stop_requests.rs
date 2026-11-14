@@ -30,8 +30,12 @@ impl StopRequests {
         self.asked.get()
     }
 
-    /// Waits for a request besides the one seen, if any, which may have come already: whether
-    /// one came, or none can come any more.
+    /// Leaves the requests that came already, so that only those to come count.
+    pub(crate) fn leave_those_come(&self) {
+        self.requests.try_iter().for_each(drop);
+    }
+
+    /// Waits for another request: whether one came, or none can come any more.
     pub(crate) fn another(self) -> bool {
         self.requests.recv().is_ok()
     }
@@ -49,6 +53,8 @@ impl StopRequests {
 #[cfg(test)]
 mod tests {
     use std::sync::mpsc::channel;
+    use std::thread::{sleep, spawn};
+    use std::time::{Duration, Instant};
 
     use super::*;
 
@@ -64,13 +70,22 @@ mod tests {
     }
 
     #[test]
-    fn another_request_is_one_besides_the_one_seen() {
+    fn another_request_is_one_that_comes_from_then_on() {
         let (sender, requests) = channel();
         let requests = StopRequests::new(requests);
         sender.send(()).expect("sent");
         sender.send(()).expect("sent");
         requests.wait();
+        requests.leave_those_come();
+        let asking = spawn(move || {
+            sleep(Duration::from_millis(100));
+            sender.send(()).expect("sent");
+            sender
+        });
+        let started = Instant::now();
         assert!(requests.another());
+        assert!(started.elapsed() >= Duration::from_millis(100));
+        drop(asking.join().expect("no panic"));
     }
 
     #[test]

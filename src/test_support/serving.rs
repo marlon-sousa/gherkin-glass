@@ -2,7 +2,7 @@
 
 use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4};
 use std::path::PathBuf;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::mpsc::{Sender, channel};
 use std::sync::{Arc, Mutex, PoisonError};
 
@@ -11,11 +11,12 @@ use crate::errors::{ListenErrorKind, SignalsError, WatchError};
 use crate::ports::{ChangeWatcher, PreviewServer, StopSignals};
 
 /// Records the preview it was given, and listens at port 1 for port 0,
-/// unless the port is `taken`.
+/// unless the port is `taken`; counts the sites no longer served.
 #[derive(Default)]
 pub(crate) struct FakeServer {
     pub(crate) started: Mutex<Option<(String, u16, Arc<Preview>)>>,
     pub(crate) taken: bool,
+    pub(crate) no_longer_served: Arc<AtomicUsize>,
 }
 
 impl PreviewServer for FakeServer {
@@ -33,7 +34,9 @@ impl PreviewServer for FakeServer {
             Some((host.to_string(), port, preview));
         Ok(Listening {
             address: SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::LOCALHOST, port.max(1))),
-            answering: Box::new(()),
+            answering: Box::new(Counted {
+                dropped: self.no_longer_served.clone(),
+            }),
         })
     }
 }
@@ -96,14 +99,15 @@ pub(crate) fn changed(path: &str) -> Burst {
 }
 
 /// Keeps the sender of the requests to stop, for the test to ask with, unless it is `failing`;
-/// asks at once as it starts listening while `asking_at_once`; notes in `ending_on_another`
-/// that it was told to end on another request.
+/// asks at once as it starts listening while `asking_at_once`; once told to end on another
+/// request, notes in `ending` how many sites `no_longer_served` counted then.
 #[derive(Default)]
 pub(crate) struct FakeSignals {
     pub(crate) sender: Mutex<Option<Sender<()>>>,
     pub(crate) failing: AtomicBool,
     pub(crate) asking_at_once: AtomicBool,
-    pub(crate) ending_on_another: AtomicBool,
+    pub(crate) no_longer_served: Arc<AtomicUsize>,
+    pub(crate) ending: Mutex<Option<usize>>,
 }
 
 impl StopSignals for FakeSignals {
@@ -122,7 +126,8 @@ impl StopSignals for FakeSignals {
     }
 
     fn end_on_another(&self, _: StopRequests) {
-        self.ending_on_another.store(true, Ordering::SeqCst);
+        *self.ending.lock().unwrap_or_else(PoisonError::into_inner) =
+            Some(self.no_longer_served.load(Ordering::SeqCst));
     }
 }
 
@@ -131,5 +136,16 @@ impl FakeSignals {
     pub(crate) fn ask_to_stop(&self) {
         let sender = self.sender.lock().unwrap_or_else(PoisonError::into_inner);
         sender.as_ref().expect("listening").send(()).expect("sent");
+    }
+}
+
+/// Counted in `dropped` once dropped.
+pub(crate) struct Counted {
+    pub(crate) dropped: Arc<AtomicUsize>,
+}
+
+impl Drop for Counted {
+    fn drop(&mut self) {
+        self.dropped.fetch_add(1, Ordering::SeqCst);
     }
 }
