@@ -8,8 +8,9 @@ use crate::entities::StopRequests;
 use crate::errors::SignalsError;
 use crate::ports::StopSignals;
 
-/// Control+C, `SIGTERM` and `SIGHUP` on Unix, and Control+C, Control+Break and a closed
-/// console on Windows, through ctrlc's `termination` feature.
+/// Control+C, `SIGTERM` and `SIGHUP` on Unix, through ctrlc's `termination` feature, and
+/// Control+C and Control+Break on Windows. Windows ends the process as soon as ctrlc 3.5.2
+/// has been told of a closed console, before a request is seen.
 #[derive(Debug, Default, Clone, Copy)]
 pub(crate) struct CtrlcSignals;
 
