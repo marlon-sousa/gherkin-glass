@@ -180,11 +180,15 @@ fn page_text(html: &Html) -> String {
         .join(" ")
 }
 
-fn is_in_head(element: &ElementRef<'_>) -> bool {
-    element
+fn is_head(element: ElementRef<'_>) -> bool {
+    element.value().name() == "head"
+}
+
+fn is_outside_head(element: &ElementRef<'_>) -> bool {
+    !element
         .ancestors()
         .filter_map(ElementRef::wrap)
-        .any(|ancestor| ancestor.value().name() == "head")
+        .any(is_head)
 }
 
 #[test]
@@ -234,7 +238,7 @@ fn every_page_holds_only_the_elements_and_attributes_ghg_writes() {
 fn every_page_holds_its_title_style_links_and_metadata_only_in_its_head() {
     for page in pages() {
         let html = parsed(&page);
-        for element in elements(&html).filter(|element| !is_in_head(element)) {
+        for element in elements(&html).filter(is_outside_head) {
             let name = element.value().name();
             assert!(
                 !HEAD_ONLY.contains(&name),
