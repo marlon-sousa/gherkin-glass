@@ -135,7 +135,7 @@ mod tests {
         },
         "ghg serve cannot listen at 203.0.113.1, port 8000: no such address"
     )]
-    // Rule 198.
+    // Rule 201.
     #[case::signals_it_cannot_handle(
         ServeError::Signals(SignalsError {
             reason: "Operation not permitted".into(),

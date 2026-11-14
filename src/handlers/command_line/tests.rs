@@ -187,7 +187,7 @@ fn a_watch_that_cannot_start_again_is_named_on_standard_error() {
 
 #[test]
 fn serve_says_once_the_site_is_no_longer_served_and_exits_with_0() {
-    // Rule 196.
+    // Rule 199.
     let (reply, asked) = run(FakeSite::default(), &["serve"]);
     assert_eq!(asked, 1);
     assert_eq!(reply.stdout, "The site is no longer served.\n");

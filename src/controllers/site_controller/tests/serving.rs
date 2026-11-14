@@ -19,7 +19,7 @@ fn serve_options(mode: ServeMode) -> ServeOptions {
 }
 
 #[rstest]
-// Rules 56, 66 and 198: ghg serve listens for the requests to stop first, then loads the
+// Rules 56, 66 and 201: ghg serve listens for the requests to stop first, then loads the
 // settings as ghg build does, with the destination its mode gives, builds as its mode says,
 // then serves the site it built, or the output folder as it is.
 #[case::the_output_folder_as_it_is(ServeMode::Folder, "Folder", &[], "Folder(\"site\")")]
@@ -122,7 +122,7 @@ fn watching_starts_once_the_site_is_served_and_one_that_cannot_start_stops_serve
 }
 
 #[rstest]
-// Rule 196: once asked to stop, ghg serve no longer serves, and returns as a finished command.
+// Rule 199: once asked to stop, ghg serve no longer serves, and returns as a finished command.
 #[case::the_output_folder_as_it_is(ServeMode::Folder)]
 #[case::the_site_built_into_the_output_folder(ServeMode::Build)]
 fn serve_serves_until_it_is_asked_to_stop(#[case] mode: ServeMode) {
@@ -138,7 +138,7 @@ fn serve_serves_until_it_is_asked_to_stop(#[case] mode: ServeMode) {
         assert_eq!(serving.join().expect("no panic"), Ok(()));
     });
     assert_eq!(world.server.no_longer_served.load(Ordering::SeqCst), 1);
-    // Rule 199: while it stops, another request ends ghg at once.
+    // Rule 202: while it stops, another request ends ghg at once.
     assert_eq!(
         world.calls.taken().last().map(String::as_str),
         Some("server.stop")
@@ -148,7 +148,7 @@ fn serve_serves_until_it_is_asked_to_stop(#[case] mode: ServeMode) {
 }
 
 #[rstest]
-// Rule 197: a request to stop during the first build lets it finish, then stops without
+// Rule 200: a request to stop during the first build lets it finish, then stops without
 // serving.
 #[case::into_the_output_folder(ServeMode::Build, "Folder")]
 #[case::in_memory(ServeMode::Watch, "Memory")]
@@ -178,7 +178,7 @@ fn a_request_to_stop_during_the_first_build_lets_it_finish_then_serves_nothing(
 
 #[test]
 fn a_request_to_stop_during_a_first_build_that_stops_still_reports_it() {
-    // Rule 197: the build's error still stops ghg serve with it.
+    // Rule 200: the build's error still stops ghg serve with it.
     let world = world();
     world
         .server
@@ -197,7 +197,7 @@ fn a_request_to_stop_during_a_first_build_that_stops_still_reports_it() {
 
 #[test]
 fn signals_that_cannot_be_listened_for_stop_serve_before_anything() {
-    // Rule 198.
+    // Rule 201.
     let world = world();
     world.server.signals.failing.store(true, Ordering::SeqCst);
     let outcome = world

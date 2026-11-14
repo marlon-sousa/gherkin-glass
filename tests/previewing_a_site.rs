@@ -361,7 +361,7 @@ fn a_versioned_build_serves_the_output_folder_with_its_versions_page() {
     assert!(folder.join("site/ghg-versions.json").is_file());
 }
 
-// Stopping: rules 196 to 199; the controller's tests check 197 and 198.
+// Stopping: rules 199 to 202; the controller's tests check 200 and 201.
 
 #[cfg(unix)]
 #[rstest]
@@ -426,7 +426,7 @@ fn a_request_still_answered(address: &str) -> TcpStream {
 #[cfg(unix)]
 #[test]
 fn a_stop_waits_for_the_requests_being_answered() {
-    // Rule 196.
+    // Rule 199.
     let mut serving = serve_site();
     let held = a_request_still_answered(&serving.address);
     send("TERM", &serving);
@@ -443,7 +443,7 @@ fn a_stop_waits_for_the_requests_being_answered() {
 fn another_signal_while_it_waits_ends_it_at_once_with_130(
     #[values("INT", "TERM", "HUP")] signal: &str,
 ) {
-    // Rule 199.
+    // Rule 202.
     let mut serving = serve_site();
     let _held = a_request_still_answered(&serving.address);
     send("TERM", &serving);

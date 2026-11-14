@@ -163,7 +163,7 @@ fn a_port_in_use_is_named_with_its_host() {
 
 #[test]
 fn the_changes_end_once_ghg_serve_is_asked_to_stop_while_it_waits() {
-    // Rule 196: under --watch, a request to stop ends the wait for the next change.
+    // Rule 199: under --watch, a request to stop ends the wait for the next change.
     let watcher = Arc::new(FakeWatcher::default());
     let server = service(&Arc::new(FakeServer::default()), &watcher);
     let (asker, stops) = stops();
@@ -179,7 +179,7 @@ fn the_changes_end_once_ghg_serve_is_asked_to_stop_while_it_waits() {
 
 #[test]
 fn a_change_waiting_once_asked_to_stop_is_left() {
-    // Rule 197: a request to stop that came during a rebuild ends the watch, not another rebuild.
+    // Rule 200: a request to stop that came during a rebuild ends the watch, not another rebuild.
     let watcher = Arc::new(FakeWatcher::default());
     let server = service(&Arc::new(FakeServer::default()), &watcher);
     let (asker, stops) = stops();
@@ -191,7 +191,7 @@ fn a_change_waiting_once_asked_to_stop_is_left() {
 }
 
 #[rstest]
-// Rules 196 and 198: the requests to stop are listened for, or what stops listening is said.
+// Rules 199 and 201: the requests to stop are listened for, or what stops listening is said.
 #[case::listened_for(false, None)]
 #[case::refused(true, Some(ServeError::Signals(SignalsError { reason: "not permitted".into() })))]
 fn the_requests_to_stop_are_listened_for_or_their_refusal_said(
@@ -216,7 +216,7 @@ fn the_requests_to_stop_are_listened_for_or_their_refusal_said(
 
 #[test]
 fn a_change_that_comes_with_a_request_to_stop_is_left() {
-    // Rule 196: a change that comes during the same wait as a request to stop starts no rebuild.
+    // Rule 199: a change that comes during the same wait as a request to stop starts no rebuild.
     let watcher = Arc::new(FakeWatcher::default());
     let server = service(&Arc::new(FakeServer::default()), &watcher);
     let (asker, stops) = stops();
@@ -233,7 +233,7 @@ fn a_change_that_comes_with_a_request_to_stop_is_left() {
 }
 
 #[rstest]
-// Rule 199: once asked to stop, another request ends ghg at once, and can cut short the wait for
+// Rule 202: once asked to stop, another request ends ghg at once, and can cut short the wait for
 // the requests being answered, since the site served is dropped only then; without a request,
 // the watch having ended alone, nothing is ended at once.
 #[case::once_asked(true, Some(0))]
