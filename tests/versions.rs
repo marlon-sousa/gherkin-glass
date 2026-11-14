@@ -115,6 +115,7 @@ fn a_versioned_build_replaces_its_version_and_writes_the_versions_page() {
         [
             "assets",
             "index.html",
+            "search.html",
             "steps.html",
             "tags",
             "withdraw.html"

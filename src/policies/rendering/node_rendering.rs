@@ -87,6 +87,7 @@ fn piece(node: SiteTreeNode<'_>) -> String {
         | SiteNode::TagIndex(_)
         | SiteNode::TagPage(_)
         | SiteNode::SearchDocuments(_)
+        | SiteNode::SearchPage(_)
         | SiteNode::Asset(_) => String::new(),
     }
 }

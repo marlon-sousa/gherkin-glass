@@ -8,9 +8,9 @@ use feature_page_nodes::{copy_feature_page, place_feature_page};
 
 use super::{FolderId, SiteFeaturePage, SiteFolder, SiteNode, SiteTree, SiteVersion};
 use crate::entities::{
-    FolderPageContent, GroupContent, PageContent, PageFrame, SearchDocument, SentenceContent,
-    SentencesPageContent, TagFeatureContent, TagPagesContent, TreeItem, VersionName, VersionsList,
-    VersionsPageContent,
+    FolderPageContent, GroupContent, PageContent, PageFrame, SearchDocument, SearchPage,
+    SentenceContent, SentencesPageContent, TagFeatureContent, TagPagesContent, TreeItem,
+    VersionName, VersionsList, VersionsPageContent,
 };
 
 /// A site tree being built, each add putting its nodes after those already
@@ -146,6 +146,10 @@ impl SiteTreeBuilder {
 
     pub(crate) fn search_documents(&mut self, documents: Vec<SearchDocument>) {
         self.version_files([SiteNode::SearchDocuments(documents)]);
+    }
+
+    pub(crate) fn search_page(&mut self, page: SearchPage) {
+        self.version_files([SiteNode::SearchPage(page)]);
     }
 
     /// The version's assets, named `names` in their folder.

@@ -7,7 +7,9 @@
 {{ tree|safe }}
 <div class="ghg-page">
 {{ breadcrumb|safe }}
+{%- if !search.is_empty() %}
 {{ search|safe }}
+{%- endif %}
 <main id="ghg_main">
 {%- if let Some(only_note) = only_note %}
 <p class="ghg-only-note" role="note">{{ only_note }}</p>

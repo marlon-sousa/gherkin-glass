@@ -43,5 +43,5 @@ fn the_pages_show_the_highlighting_and_the_accents_as_the_expected_pages_do() {
         assert!(page.contains("  --ghg-accent: #ffcc88;\n"), "{name:?}");
         pages += 1;
     }
-    assert_eq!(pages, 4);
+    assert_eq!(pages, 5);
 }

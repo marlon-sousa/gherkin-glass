@@ -42,6 +42,9 @@ pub(crate) enum InputErrorKind {
     /// `page` is the address of the page of step sentences.
     #[error(fmt = Self::reserved_page)]
     ReservedPage { page: String },
+    /// `page` is the address of the page of search results.
+    #[error(fmt = Self::search_page_clash)]
+    SearchPageClash { page: String },
     /// `page` is the file's own page, at the path of a folder's, and `folder`
     /// that folder's path below the input folder, `None` for the input
     /// folder's, the home page.
@@ -110,6 +113,10 @@ impl InputErrorKind {
 
     fn reserved_page(page: &str, f: &mut Formatter<'_>) -> FmtResult {
         f.write_str(&fl!(CATALOGUE, "reserved-page", page = page))
+    }
+
+    fn search_page_clash(page: &str, f: &mut Formatter<'_>) -> FmtResult {
+        f.write_str(&fl!(CATALOGUE, "search-page-clash", page = page))
     }
 
     fn same_as_folder_page(

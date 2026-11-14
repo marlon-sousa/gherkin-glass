@@ -323,8 +323,10 @@ fn every_page_has_one_h1_and_a_lang_and_its_content_in_its_html() {
             "ghg_from_disk_text",
             "ghg_show_tree",
             "ghg_tree",
-            "ghg_main",
         ];
+        // Rule 151: the search box's list of results, on every page but the
+        // page of search results, which has its own form (rule 217).
+        let search_box = (name != "search.html").then_some("ghg_search_results");
         // Rule 45: the block of the scenarios outside every rule, in a file
         // with a rule; rule 197: the dialog of a page with a keyword's note.
         let dialog = [
@@ -334,6 +336,8 @@ fn every_page_has_one_h1_and_a_lang_and_its_content_in_its_html() {
         ];
         let own: Vec<&str> = own
             .into_iter()
+            .chain(search_box)
+            .chain(["ghg_main"])
             .chain(
                 page.contains("ghg-outside-rules")
                     .then_some("outside_rules"),
@@ -400,7 +404,7 @@ fn the_page_s_lang_is_its_file_s_language_as_a_tag() {
     assert_eq!(lang("emoji.html"), "und");
 }
 
-// Rules 37, 78 and 142.
+// Rules 37, 78, 142 and 215.
 
 #[test]
 fn two_files_with_the_same_page_stop_the_build_with_the_files_that_cannot_be_read() {
@@ -416,6 +420,7 @@ fn two_files_with_the_same_page_stop_the_build_with_the_files_that_cannot_be_rea
         "a.story: has the same page, a.html, as a.feature.\n\
          broken.feature:1: Unknown keyword: 'not a feature'.\n\
          index.feature: has the same page, index.html, as the home page.\n\
+         search.feature: has the same page, search.html, as the search results.\n\
          steps.feature: has the same page, steps.html, as the step sentences.\n\
          sub/Index.story: has the same page, sub/Index.html, as the page of the folder sub.\n"
     );
@@ -811,11 +816,14 @@ fn every_item_of_the_tree_reaches_a_page_and_its_anchor() {
             reached.insert(percent_decoded(file), ());
         }
         // Every page of the site has its item, but the tag pages and the page
-        // of step sentences, which the home page links.
+        // of step sentences, which the home page links, and the page of
+        // search results, which the search box links (rule 216).
         let html: Vec<_> = pages
             .keys()
             .filter(|name| {
-                name.ends_with(".html") && !name.starts_with("tags/") && *name != "steps.html"
+                name.ends_with(".html")
+                    && !name.starts_with("tags/")
+                    && !["steps.html", "search.html"].contains(&name.as_str())
             })
             .collect();
         assert_eq!(reached.keys().collect::<Vec<_>>(), html, "{site}");

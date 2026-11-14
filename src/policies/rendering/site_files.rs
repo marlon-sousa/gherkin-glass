@@ -102,6 +102,7 @@ fn file_renderer<'a>(node: SiteTreeNode<'a>) -> Option<Box<dyn RenderFile + 'a>>
         SiteNode::TagIndex(value) => Some(boxed(NodeOf { value, node })),
         SiteNode::TagPage(value) => Some(boxed(NodeOf { value, node })),
         SiteNode::SearchDocuments(documents) => Some(boxed(documents.as_slice())),
+        SiteNode::SearchPage(value) => Some(boxed(NodeOf { value, node })),
         SiteNode::VersionsPage(value) => Some(boxed(NodeOf { value, node })),
         SiteNode::Asset(_)
         | SiteNode::Site(_)

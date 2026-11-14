@@ -37,6 +37,8 @@ pub(crate) struct HeadingPart {
 /// A background, the feature's or a rule's.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct BackgroundBlock {
+    /// The background's name alone, empty when it has none.
+    pub(crate) name: String,
     pub(crate) heading: BlockHeading,
     pub(crate) description: Option<Paragraph>,
     /// The heading of the block that holds its steps in a scenario that starts
@@ -75,6 +77,8 @@ pub(crate) struct ScenarioBlock {
 /// not a heading and starts collapsed.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct ExamplesBlock {
+    /// The block's name alone, empty when it has none.
+    pub(crate) name: String,
     /// The `id` of its item.
     pub(crate) anchor: String,
     /// The text of its button, worded as a heading, and saying so when it

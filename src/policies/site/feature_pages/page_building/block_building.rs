@@ -39,6 +39,7 @@ impl Builder<'_> {
             || self.options.collapse_scenarios;
         BackgroundContent {
             block: BackgroundBlock {
+                name: background.name.clone(),
                 heading: kind_heading(
                     level,
                     &anchored.anchor,

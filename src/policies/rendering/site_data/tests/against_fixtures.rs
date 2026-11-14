@@ -30,7 +30,7 @@ fn documents() -> String {
 }
 
 #[test]
-fn every_feature_rule_and_scenario_has_its_document_in_page_and_file_order() {
+fn every_block_has_its_document_in_page_and_file_order() {
     // Rules 147 and 148.
     let expected = fs::read_to_string(fixture().join("search.json")).unwrap();
     let expected: Value = serde_json::from_str(&expected).unwrap();

@@ -96,6 +96,11 @@ in-tags-folder = has its page, { $page }, in the folder tags, which holds the ta
 
 reserved-page = has the same page, { $page }, as the step sentences.
 
+## A feature file whose page would be the page of search results. $page is
+## that page's address, search.html.
+
+search-page-clash = has the same page, { $page }, as the search results.
+
 ## A file of the site that cannot be written. $reason is the operating
 ## system's words.
 
@@ -405,8 +410,10 @@ sentence-use-values = { $link }, with { $values }
 sentence-values-separator = {", "}
 
 ## The search box on every page. The script puts what it found in place of
-## each placeholder that is not $shown: $count is a number of results, and
-## $name, $feature and $rule the names of a block, its feature and its rule.
+## each placeholder that is not $shown: $count is a number of results, $name,
+## $feature, $rule and $outline the names of a block, its feature, its rule and
+## its outline, $place an examples block's place among its outline's, from 1,
+## and $words the words searched for.
 
 search-label = Search features, rules and scenarios
 search-loading = Loading search.
@@ -423,3 +430,25 @@ search-result-scenario = { $name }, scenario in { $feature }
 search-result-scenario-in-rule = { $name }, scenario in { $rule }, { $feature }
 search-result-scenario-outline = { $name }, scenario outline in { $feature }
 search-result-scenario-outline-in-rule = { $name }, scenario outline in { $rule }, { $feature }
+search-result-background = { $name }, background in { $feature }
+search-result-background-in-rule = { $name }, background in { $rule }, { $feature }
+search-result-examples = { $name }, examples in { $outline }, { $feature }
+search-result-examples-in-rule = { $name }, examples in { $outline }, { $rule }, { $feature }
+search-all-results = All results for "{ $words }"
+
+## The page of search results. $site is the site's title. The script puts
+## what it found in place of the other placeholders: $words are the words
+## searched for, $count a number of results and $features of features,
+## $blocks the headings of the blocks a result is in, each separated by
+## search-page-separator.
+
+search-page-heading = Search results
+search-page-title = Search results, { $site }
+search-page-heading-for = Results for "{ $words }"
+search-page-title-for = Results for "{ $words }", { $site }
+search-page-count = Results: { $count }. Features: { $features }.
+search-page-within = In { $blocks }.
+search-page-separator = {", "}
+search-page-matching-steps = Matching steps:
+search-page-matching-tags = Matching tags:
+search-page-matching-cells = Matching cells:

@@ -417,14 +417,56 @@ figcaption {
   margin-top: 0.5rem;
 }
 
+/* The link to the page of search results, on a line of its own under the field. */
+.ghg-search-all:not([hidden]) {
+  display: block;
+  width: fit-content;
+  margin-top: 0.5rem;
+}
+
 .ghg-search-results {
   margin: 0.5rem 0 0;
-  padding: 0.5rem 1rem 0.5rem 2.5rem;
+  padding: 0.25rem;
+  list-style: none;
   background: var(--ghg-surface);
   border: 1px solid var(--ghg-border);
 }
 
+/* A line between results keeps those that wrap apart on a narrow window. */
 .ghg-search-results li {
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
+}
+
+.ghg-search-results li:not(:last-child) {
+  border-bottom: 1px solid var(--ghg-border);
+}
+
+/* The chosen result has its colours swapped and a ring inside its edge, so that colour is not
+   all that tells it apart. The ring and the line under it take its text's colour, which stands
+   out from its background as its text does, and the ring, inside the accent, does not look like
+   the ring of the focus. */
+.ghg-search-results li[aria-selected="true"] {
+  color: var(--ghg-background);
+  background: var(--ghg-accent);
+  border-color: var(--ghg-background);
+  outline: 2px solid var(--ghg-background);
+  outline-offset: -0.25rem;
+}
+
+/* On the page of search results, a matched word is bold on a shaded background, not only
+   coloured, and not underlined, so that it does not read as a link of its own. */
+.ghg-search-groups mark {
+  color: inherit;
+  background: var(--ghg-surface);
+  font-weight: bold;
+}
+
+.ghg-search-group > li {
+  margin: 0.75rem 0;
+}
+
+.ghg-search-group p {
   margin: 0.25rem 0;
 }
 
@@ -478,7 +520,8 @@ figcaption {
     display: inline-block;
   }
 
-  .ghg-search label {
+  .ghg-search label,
+  .ghg-search-page label {
     display: block;
   }
 

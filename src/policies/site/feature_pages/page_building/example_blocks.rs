@@ -22,6 +22,7 @@ impl Builder<'_> {
         let label = examples_heading(examples.name.as_deref().unwrap_or(""), place);
         let has_rows = examples.table.as_ref().is_some_and(has_rows);
         ExamplesBlock {
+            name: examples.name.clone().unwrap_or_default(),
             anchor: anchored.anchor.clone(),
             label: if has_rows {
                 label
