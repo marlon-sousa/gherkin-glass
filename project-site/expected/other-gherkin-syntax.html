@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Feature: Booking a study room, other-gherkin-syntax.feature</title>
+<script>try{var t=localStorage.getItem("gherkin-glass:theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}</script>
+<style>
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+  --ghg-background: #ffffff;
+  --ghg-surface: #f2f2f2;
+  --ghg-text: #1a1a1a;
+  --ghg-muted: #474747;
+  --ghg-border: #757575;
+  --ghg-accent: #0b4f9c;
+  --ghg-keyword: #6a1b9a;
+  --ghg-parameter: #14521a;
+  --ghg-number: #8a3000;
+  --ghg-placeholder: #00575e;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ghg-background: #141414;
+    --ghg-surface: #222222;
+    --ghg-text: #ececec;
+    --ghg-muted: #c4c4c4;
+    --ghg-border: #8f8f8f;
+    --ghg-accent: #8cc4ff;
+    --ghg-keyword: #e1b3ff;
+    --ghg-parameter: #9fe0a8;
+    --ghg-number: #ffbf8a;
+    --ghg-placeholder: #7fdbe0;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ghg-background: #141414;
+  --ghg-surface: #222222;
+  --ghg-text: #ececec;
+  --ghg-muted: #c4c4c4;
+  --ghg-border: #8f8f8f;
+  --ghg-accent: #8cc4ff;
+  --ghg-keyword: #e1b3ff;
+  --ghg-parameter: #9fe0a8;
+  --ghg-number: #ffbf8a;
+  --ghg-placeholder: #7fdbe0;
+}
+</style>
+<link rel="stylesheet" href="assets/gherkin-glass.css">
+<link rel="icon" href="assets/gherkin-glass.svg" type="image/svg+xml">
+<script type="module" src="assets/gherkin-glass.js"></script>
+</head>
+<body>
+<dialog id="ghg_from_disk" class="ghg-from-disk" tabindex="-1" aria-labelledby="ghg_from_disk_title" aria-describedby="ghg_from_disk_text">
+<p id="ghg_from_disk_title" class="ghg-from-disk-title">Opened from disk</p>
+<p id="ghg_from_disk_text">This site is meant to be served, so its folder tree and search do not work when a page is opened from disk. Run ghg serve in the folder of your ghg.toml, or serve the site&#39;s folder with any web server, then open the address it gives.</p>
+<form method="dialog"><button>I agree</button></form>
+</dialog>
+<script>if(location.protocol==="file:"){let d=document.getElementById("ghg_from_disk");d.showModal();d.focus()}</script>
+<a class="ghg-skip" href="#ghg_main">Skip to content</a>
+<div class="ghg-options">
+<span class="ghg-option ghg-tree-choice"><input type="checkbox" id="ghg_show_tree" class="ghg-show-tree" aria-controls="ghg_tree" checked> <label for="ghg_show_tree">Show the folder tree</label></span>
+<button type="button" class="ghg-tree-button" aria-expanded="false" aria-controls="ghg_tree">Folder tree</button>
+<fieldset class="ghg-theme">
+<legend>Theme</legend>
+<label><input type="radio" name="ghg-theme" value="system" checked> System</label>
+<label><input type="radio" name="ghg-theme" value="light"> Light</label>
+<label><input type="radio" name="ghg-theme" value="dark"> Dark</label>
+</fieldset>
+</div>
+<div class="ghg-layout">
+<nav id="ghg_tree" class="ghg-tree" aria-label="Folder tree"></nav>
+<div class="ghg-page">
+<nav class="ghg-breadcrumb" aria-label="Breadcrumb">
+<ol>
+<li><a href="index.html">gherkin-glass examples</a></li>
+<li><a href="other-gherkin-syntax.html" aria-current="page">Feature: Booking a study room</a></li>
+</ol>
+</nav>
+<form class="ghg-search" role="search" data-root="" data-shown="50" data-loading="Loading search." data-failed="Search could not be loaded." data-none="No results." data-count="Results: {count}." data-count-limited="Results: {count}. The first 50 are listed." data-no-name="no name" data-feature="{name}, feature" data-rule="{name}, rule in {feature}" data-scenario="{name}, scenario in {feature}" data-scenario-in-rule="{name}, scenario in {rule}, {feature}" data-scenario-outline="{name}, scenario outline in {feature}" data-scenario-outline-in-rule="{name}, scenario outline in {rule}, {feature}">
+<label>Search features, rules and scenarios <input type="search" class="ghg-search-field" autocomplete="off" spellcheck="false" enterkeyhint="search"></label>
+<p class="ghg-search-status" role="status"></p>
+<ol class="ghg-search-results" hidden></ol>
+</form>
+<main id="ghg_main">
+<h1>Feature: Booking a study room</h1>
+<ul class="ghg-tags">
+<li><a href="tags/rooms.html">@rooms</a></li>
+</ul>
+<div class="ghg-description">
+<p>Gherkin accepts other words for some of its keywords. This file uses<br>
+them: &#34;Example&#34; for a scenario, &#34;Scenario Template&#34; for a scenario<br>
+outline and &#34;Scenarios&#34; for an outline&#39;s examples. They mean exactly<br>
+what &#34;Scenario&#34;, &#34;Scenario Outline&#34; and &#34;Examples&#34; mean.</p>
+</div>
+<nav class="ghg-contents" aria-label="Contents">
+<ul>
+<li><a href="#booking-a-free-room">Example: Booking a free room</a></li>
+<li><a href="#booking-a-room-someone-else-holds">Example: Booking a room someone else holds</a></li>
+<li><a href="#how-long-a-booking-lasts">Scenario Template: How long a booking lasts</a></li>
+</ul>
+</nav>
+<div class="ghg-controls">
+<button type="button" class="ghg-collapse-all">Collapse all</button>
+<button type="button" class="ghg-expand-all">Expand all</button>
+<label class="ghg-option"><input type="checkbox" class="ghg-inline-backgrounds" autocomplete="off" checked> Show backgrounds inside each scenario</label>
+</div>
+<div class="ghg-block ghg-background" data-expanded-when-unchecked="true">
+<h2 id="a-member-at-the-desk"><button type="button" class="ghg-toggle" aria-expanded="false">Background: A member at the desk</button></h2>
+<div class="ghg-content" hidden>
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>a member named <span class="ghg-parameter">&#34;Ana&#34;</span> with card number <span class="ghg-number">1024</span></li>
+</ol>
+</div>
+</div>
+<div class="ghg-block ghg-scenario">
+<h2 id="booking-a-free-room"><button type="button" class="ghg-toggle" aria-expanded="true">Example: Booking a free room</button></h2>
+<div class="ghg-content">
+<div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
+<h3 id="booking-a-free-room_background_1"><button type="button" class="ghg-toggle" aria-expanded="true">From the background</button></h3>
+<div class="ghg-content">
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>a member named <span class="ghg-parameter">&#34;Ana&#34;</span> with card number <span class="ghg-number">1024</span></li>
+</ol>
+</div>
+</div>
+<h3 class="ghg-steps-heading">From the scenario</h3>
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>the study room <span class="ghg-parameter">&#34;Garden&#34;</span> is free at <span class="ghg-number">10</span>:<span class="ghg-number">00</span></li>
+<li><span class="ghg-keyword">When </span><span class="ghg-parameter">&#34;Ana&#34;</span> books <span class="ghg-parameter">&#34;Garden&#34;</span> at <span class="ghg-number">10</span>:<span class="ghg-number">00</span></li>
+<li><span class="ghg-keyword">Then </span><span class="ghg-parameter">&#34;Garden&#34;</span> is booked for <span class="ghg-parameter">&#34;Ana&#34;</span> at <span class="ghg-number">10</span>:<span class="ghg-number">00</span></li>
+</ol>
+</div>
+</div>
+<div class="ghg-block ghg-scenario">
+<h2 id="booking-a-room-someone-else-holds"><button type="button" class="ghg-toggle" aria-expanded="true">Example: Booking a room someone else holds</button></h2>
+<div class="ghg-content">
+<div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
+<h3 id="booking-a-room-someone-else-holds_background_1"><button type="button" class="ghg-toggle" aria-expanded="true">From the background</button></h3>
+<div class="ghg-content">
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>a member named <span class="ghg-parameter">&#34;Ana&#34;</span> with card number <span class="ghg-number">1024</span></li>
+</ol>
+</div>
+</div>
+<h3 class="ghg-steps-heading">From the scenario</h3>
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span><span class="ghg-parameter">&#34;Bea&#34;</span> booked the study room <span class="ghg-parameter">&#34;Garden&#34;</span> at <span class="ghg-number">10</span>:<span class="ghg-number">00</span></li>
+<li><span class="ghg-keyword">When </span><span class="ghg-parameter">&#34;Ana&#34;</span> books <span class="ghg-parameter">&#34;Garden&#34;</span> at <span class="ghg-number">10</span>:<span class="ghg-number">00</span></li>
+<li><span class="ghg-keyword">Then </span>the booking is refused with <span class="ghg-parameter">&#34;Garden is booked at 10:00.&#34;</span></li>
+</ol>
+</div>
+</div>
+<div class="ghg-block ghg-scenario">
+<h2 id="how-long-a-booking-lasts"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario Template: How long a booking lasts</button></h2>
+<div class="ghg-content">
+<div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
+<h3 id="how-long-a-booking-lasts_background_1"><button type="button" class="ghg-toggle" aria-expanded="true">From the background</button></h3>
+<div class="ghg-content">
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>a member named <span class="ghg-parameter">&#34;Ana&#34;</span> with card number <span class="ghg-number">1024</span></li>
+</ol>
+</div>
+</div>
+<h3 class="ghg-steps-heading">From the scenario</h3>
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>the study room <span class="ghg-parameter">&#34;<span class="ghg-placeholder">&#60;room&#62;</span>&#34;</span> is free at <span class="ghg-number">10</span>:<span class="ghg-number">00</span></li>
+<li><span class="ghg-keyword">When </span><span class="ghg-parameter">&#34;Ana&#34;</span> books <span class="ghg-parameter">&#34;<span class="ghg-placeholder">&#60;room&#62;</span>&#34;</span> at <span class="ghg-number">10</span>:<span class="ghg-number">00</span></li>
+<li><span class="ghg-keyword">Then </span><span class="ghg-parameter">&#34;<span class="ghg-placeholder">&#60;room&#62;</span>&#34;</span> is booked until <span class="ghg-placeholder">&#60;until&#62;</span></li>
+</ol>
+<div class="ghg-block ghg-examples">
+<h3 id="small-rooms"><button type="button" class="ghg-toggle" aria-expanded="true">Scenarios: Small rooms</button></h3>
+<div class="ghg-content">
+<table class="ghg-table">
+<thead>
+<tr><th scope="col">room</th><th scope="col">until</th></tr>
+</thead>
+<tbody>
+<tr><td>Garden</td><td>11:00</td></tr>
+<tr><td>Attic</td><td>11:00</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="ghg-block ghg-examples">
+<h3 id="large-rooms"><button type="button" class="ghg-toggle" aria-expanded="true">Scenarios: Large rooms</button></h3>
+<div class="ghg-content">
+<table class="ghg-table">
+<thead>
+<tr><th scope="col">room</th><th scope="col">until</th></tr>
+</thead>
+<tbody>
+<tr><td>Hall</td><td>12:00</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="ghg-block ghg-examples-as-scenarios">
+<h3 id="how-long-a-booking-lasts_scenarios"><button type="button" class="ghg-toggle" aria-expanded="false">Examples as scenarios: <bdi>How long a booking lasts</bdi></button></h3>
+<div class="ghg-content" hidden>
+<div class="ghg-block ghg-scenario">
+<h4 id="how-long-a-booking-lasts-row-1"><button type="button" class="ghg-toggle" aria-expanded="true"><bdi>How long a booking lasts</bdi> (<bdi>room</bdi>: <bdi>Garden</bdi>, <bdi>until</bdi>: <bdi>11:00</bdi>)</button></h4>
+<div class="ghg-content">
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>the study room <span class="ghg-parameter">&#34;Garden&#34;</span> is free at <span class="ghg-number">10</span>:<span class="ghg-number">00</span></li>
+<li><span class="ghg-keyword">When </span><span class="ghg-parameter">&#34;Ana&#34;</span> books <span class="ghg-parameter">&#34;Garden&#34;</span> at <span class="ghg-number">10</span>:<span class="ghg-number">00</span></li>
+<li><span class="ghg-keyword">Then </span><span class="ghg-parameter">&#34;Garden&#34;</span> is booked until <span class="ghg-number">11</span>:<span class="ghg-number">00</span></li>
+</ol>
+</div>
+</div>
+<div class="ghg-block ghg-scenario">
+<h4 id="how-long-a-booking-lasts-row-2"><button type="button" class="ghg-toggle" aria-expanded="true"><bdi>How long a booking lasts</bdi> (<bdi>room</bdi>: <bdi>Attic</bdi>, <bdi>until</bdi>: <bdi>11:00</bdi>)</button></h4>
+<div class="ghg-content">
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>the study room <span class="ghg-parameter">&#34;Attic&#34;</span> is free at <span class="ghg-number">10</span>:<span class="ghg-number">00</span></li>
+<li><span class="ghg-keyword">When </span><span class="ghg-parameter">&#34;Ana&#34;</span> books <span class="ghg-parameter">&#34;Attic&#34;</span> at <span class="ghg-number">10</span>:<span class="ghg-number">00</span></li>
+<li><span class="ghg-keyword">Then </span><span class="ghg-parameter">&#34;Attic&#34;</span> is booked until <span class="ghg-number">11</span>:<span class="ghg-number">00</span></li>
+</ol>
+</div>
+</div>
+<div class="ghg-block ghg-scenario">
+<h4 id="how-long-a-booking-lasts-row-3"><button type="button" class="ghg-toggle" aria-expanded="true"><bdi>How long a booking lasts</bdi> (<bdi>room</bdi>: <bdi>Hall</bdi>, <bdi>until</bdi>: <bdi>12:00</bdi>)</button></h4>
+<div class="ghg-content">
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>the study room <span class="ghg-parameter">&#34;Hall&#34;</span> is free at <span class="ghg-number">10</span>:<span class="ghg-number">00</span></li>
+<li><span class="ghg-keyword">When </span><span class="ghg-parameter">&#34;Ana&#34;</span> books <span class="ghg-parameter">&#34;Hall&#34;</span> at <span class="ghg-number">10</span>:<span class="ghg-number">00</span></li>
+<li><span class="ghg-keyword">Then </span><span class="ghg-parameter">&#34;Hall&#34;</span> is booked until <span class="ghg-number">12</span>:<span class="ghg-number">00</span></li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<footer class="ghg-footer">
+<p>Built with <a href="https://github.com/marlon-sousa/gherkin-glass">gherkin-glass</a> {version}</p>
+</footer>
+</div>
+</div>
+</body>
+</html>
