@@ -69,7 +69,7 @@ fn an_outline_shows_its_rows_as_scenarios_in_a_collapsed_block() {
             text_of(&heading.parts).as_str(),
             heading.collapsed
         ),
-        (4, "inside_scenarios", "Examples as scenarios: Inside", true)
+        (4, "inside_scenarios", "Runs of Inside, one per row", true)
     );
     let row = &section.scenarios[0];
     assert_eq!(
@@ -88,7 +88,11 @@ fn an_outline_shows_its_rows_as_scenarios_in_a_collapsed_block() {
         .collect();
     assert_eq!(
         isolated,
-        [("Examples as scenarios: ", false), ("Inside", true)]
+        [
+            ("Runs of ", false),
+            ("Inside", true),
+            (", one per row", false)
+        ]
     );
     let isolated: Vec<_> = row
         .heading

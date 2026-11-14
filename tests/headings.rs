@@ -64,11 +64,11 @@ fn an_unnamed_examples_block_is_numbered_by_its_place_among_its_outline_s() {
 }
 
 #[test]
-fn an_unnamed_outline_is_named_by_its_kind_in_its_examples_as_scenarios() {
+fn an_outline_s_runs_are_headed_as_runs_and_an_unnamed_one_s_named_by_its_kind() {
     // Rules 129 and 130.
     let html = committed("tests/fixtures/pages/expected/outlines.html");
     assert!(
-        html.contains("aria-expanded=\"false\">Examples as scenarios: Scenario outline</button>"),
+        html.contains("aria-expanded=\"false\">Runs, one per row</button>"),
         "{html}"
     );
     assert!(
@@ -92,10 +92,10 @@ fn an_examples_block_without_a_row_says_it_has_nothing_to_run_and_an_outline_wit
         html.contains("aria-expanded=\"false\">Examples 1 (nothing to run)</button>"),
         "{html}"
     );
-    // A block with nothing to show has no button.
+    // A block with nothing to show has a button that opens nothing.
     assert!(
         html.contains(
-            "<li id=\"examples-3\" class=\"ghg-examples\">Examples 2 (nothing to run)</li>"
+            "<li id=\"examples-3\" class=\"ghg-examples\"><button type=\"button\" class=\"ghg-toggle\" aria-disabled=\"true\">Examples 2 (nothing to run)</button></li>"
         ),
         "{html}"
     );

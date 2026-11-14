@@ -340,14 +340,14 @@ runs-for-each-row = Runs once for each row of these examples:
 
 nothing-to-run = { $heading } (nothing to run)
 
-## Under a scenario outline, its examples as the scenarios they produce,
-## named by the outline's $name, or its kind, as unnamed-heading words it,
-## when it has none. A
+## Under a scenario outline, the runs its examples' rows produce, named by
+## the outline's $name, or not named when it has none. A
 ## produced scenario is named by the same $name and its row's $values, each
 ## value worded by example-value and separated by example-values-separator.
 ## $column and $value are as written.
 
-examples-as-scenarios = Examples as scenarios: { $name }
+runs-of-outline = Runs of { $name }, one per row
+runs-of-unnamed-outline = Runs, one per row
 example-scenario-name = { $name } ({ $values })
 example-value = { $column }: { $value }
 example-values-separator = {", "}

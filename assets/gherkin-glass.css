@@ -169,12 +169,23 @@ h1, h2, h3, h4, h5 {
   font-style: italic;
 }
 
-/* A block with nothing to show has no button: it keeps a block's rule, and
-   its text starts where the buttons' text does, after their arrow. */
+/* A block with nothing to show keeps a block's rule, and its button, which
+   opens nothing, looks disabled: no arrow, its text where the others' text
+   starts, in normal weight rather than bold, so not by colour alone, and
+   dimmed with the muted text colour, which keeps the themes' contrast. */
 .ghg-examples-list > li:not(.ghg-block) {
   border-left: 1px solid var(--ghg-border);
-  padding-left: calc(1rem + 1.1em);
-  font-weight: bold;
+  padding-left: 1rem;
+}
+
+.ghg-examples-list > li > .ghg-toggle[aria-disabled="true"] {
+  color: var(--ghg-muted);
+  font-weight: normal;
+  cursor: not-allowed;
+}
+
+.ghg-toggle[aria-disabled="true"]::before {
+  visibility: hidden;
 }
 
 pre {

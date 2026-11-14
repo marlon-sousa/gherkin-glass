@@ -10,7 +10,7 @@ use super::heading_words::{
 use super::step_views::{filled_step_contents, table};
 use crate::entities::{
     Anchored, AnchoredScenario, ExampleScenario, ExamplesAsScenarios, ExamplesBlock, HeadingLevel,
-    HeadingPart,
+    HeadingPart, plain_parts,
 };
 use crate::policies::CATALOGUE;
 use crate::policies::site::feature_pages::{ExampleRow, example_rows};
@@ -53,7 +53,6 @@ impl Builder<'_> {
             return None;
         }
         let outline_anchor = &anchored.anchor;
-        let words = fl!(CATALOGUE, "examples-as-scenarios", name = TEXT_MARKS[0]);
         let scenarios = rows
             .iter()
             .zip(&anchored.rows)
@@ -63,7 +62,7 @@ impl Builder<'_> {
             heading: worded_heading(
                 level,
                 &format!("{outline_anchor}_scenarios"),
-                worded_parts(&words, &[outline_name(outline)]),
+                runs_heading(outline),
                 true,
             ),
             scenarios,
@@ -104,6 +103,18 @@ impl Builder<'_> {
             ),
             steps: filled_step_contents(self.parsed, &outline.steps, row),
         }
+    }
+}
+
+/// The heading of the runs of `outline`, one per row, naming it when it has
+/// a name.
+fn runs_heading(outline: &Scenario) -> Vec<HeadingPart> {
+    match outline.name.trim() {
+        "" => plain_parts(&fl!(CATALOGUE, "runs-of-unnamed-outline")),
+        name => worded_parts(
+            &fl!(CATALOGUE, "runs-of-outline", name = TEXT_MARKS[0]),
+            &[isolated(name)],
+        ),
     }
 }
 

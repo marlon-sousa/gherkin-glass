@@ -1,5 +1,5 @@
 {%- if examples.holds_nothing() -%}
-<li id="{{ examples.anchor }}" class="ghg-examples">{{ examples.label.render()|safe }}</li>
+<li id="{{ examples.anchor }}" class="ghg-examples"><button type="button" class="ghg-toggle" aria-disabled="true">{{ examples.label.render()|safe }}</button></li>
 {%- else -%}
 <li id="{{ examples.anchor }}" class="ghg-block ghg-examples"><button type="button" class="ghg-toggle" aria-expanded="false">{{ examples.label.render()|safe }}</button>
 <div class="ghg-content" hidden>
