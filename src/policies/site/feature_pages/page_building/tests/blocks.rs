@@ -45,7 +45,7 @@ fn headings_read_the_kind_and_the_name_at_their_levels() {
     let examples = &outline.examples[0];
     assert_eq!(
         (examples.anchor.as_str(), text_of(&examples.label).as_str()),
-        ("examples", "Examples")
+        ("examples", "Examples 1")
     );
     assert_eq!(
         examples.table,

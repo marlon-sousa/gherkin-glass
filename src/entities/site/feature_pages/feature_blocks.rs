@@ -62,7 +62,7 @@ pub(crate) struct ExamplesBlock {
     /// The `id` of its item.
     pub(crate) anchor: String,
     /// The text of its button, worded as a heading, and saying so when it
-    /// has no row.
+    /// has no row; the item's only text when it holds nothing else.
     pub(crate) label: Vec<HeadingPart>,
     /// Whether its table has a row below its header, which its outline runs
     /// once for.
@@ -70,6 +70,14 @@ pub(crate) struct ExamplesBlock {
     pub(crate) tags: Vec<TagView>,
     pub(crate) description: Option<Paragraph>,
     pub(crate) table: Option<TableView>,
+}
+
+impl ExamplesBlock {
+    /// Whether it has no table, no tag and no description, so that its item
+    /// has nothing to show but its label.
+    pub(crate) fn holds_nothing(&self) -> bool {
+        self.table.is_none() && self.tags.is_empty() && self.description.is_none()
+    }
 }
 
 /// `text` as the only part of a heading, gherkin-glass's own or a name not

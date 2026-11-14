@@ -26,12 +26,25 @@ pub(super) enum Kind {
 /// kind alone, then the keyword as written when it is another word than the
 /// kind's, other than in its case; the name and the keyword are isolated.
 pub(super) fn heading(kind: Kind, keyword: &str, name: &str) -> Vec<HeadingPart> {
+    let unnamed = fl!(CATALOGUE, "unnamed-heading", kind = kind.id());
+    named_heading(kind, keyword, name, &unnamed)
+}
+
+/// The heading of an examples block, as [`heading`] makes it, except that an
+/// unnamed block is numbered by its place among its outline's blocks, from 1.
+pub(super) fn examples_heading(keyword: &str, name: &str, place: usize) -> Vec<HeadingPart> {
+    let unnamed = fl!(CATALOGUE, "numbered-examples", place = place);
+    named_heading(Kind::Examples, keyword, name, &unnamed)
+}
+
+/// The heading of a block of `kind`, reading `unnamed` when it has no name.
+fn named_heading(kind: Kind, keyword: &str, name: &str, unnamed: &str) -> Vec<HeadingPart> {
     let id = kind.id();
     let keyword = keyword.trim();
     let name = name.trim();
     let kind_words = fl!(CATALOGUE, "unnamed-heading", kind = id);
     let named = if name.is_empty() {
-        plain_parts(&kind_words)
+        plain_parts(unnamed)
     } else {
         let words = fl!(CATALOGUE, "named-heading", kind = id, name = TEXT_MARKS[0]);
         worded_parts(&words, &[isolated(name)])

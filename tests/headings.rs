@@ -54,6 +54,16 @@ fn on_an_english_page_only_a_heading_s_feature_text_has_its_feature_s_lang(
 }
 
 #[test]
+fn an_unnamed_examples_block_is_numbered_by_its_place_among_its_outline_s() {
+    // Rule 43; the anchor stays the one of rule 31.
+    let html = committed("tests/fixtures/pages/expected/outlines.html");
+    assert!(
+        html.contains("<li id=\"examples\" class=\"ghg-block ghg-examples\"><button type=\"button\" class=\"ghg-toggle\" aria-expanded=\"false\">Examples 1</button>"),
+        "{html}"
+    );
+}
+
+#[test]
 fn an_unnamed_outline_is_named_by_its_kind_in_its_examples_as_scenarios() {
     // Rules 129 and 130.
     let html = committed("tests/fixtures/pages/expected/outlines.html");
@@ -68,15 +78,25 @@ fn an_unnamed_outline_is_named_by_its_kind_in_its_examples_as_scenarios() {
 }
 
 #[test]
-fn an_examples_block_without_a_row_says_so_and_an_outline_with_none_does_not_say_it_runs() {
+fn an_examples_block_without_a_row_says_it_has_nothing_to_run_and_an_outline_with_none_does_not_say_it_runs()
+ {
     // Rule 45, the list of an outline's examples.
     let html = committed("tests/fixtures/pages/expected/outlines.html");
     assert!(
-        html.contains("aria-expanded=\"false\">Examples: <bdi>None yet</bdi>: empty</button>"),
+        html.contains(
+            "aria-expanded=\"false\">Examples: <bdi>None yet</bdi> (nothing to run)</button>"
+        ),
         "{html}"
     );
     assert!(
-        html.contains("aria-expanded=\"false\">Examples: empty</button>"),
+        html.contains("aria-expanded=\"false\">Examples 1 (nothing to run)</button>"),
+        "{html}"
+    );
+    // A block with nothing to show has no button.
+    assert!(
+        html.contains(
+            "<li id=\"examples-3\" class=\"ghg-examples\">Examples 2 (nothing to run)</li>"
+        ),
         "{html}"
     );
     let (with_rows, without) = html

@@ -322,6 +322,10 @@ named-heading =
     }
 written-as = { $heading } (written as { $keyword })
 
+## An unnamed examples block, by its $place among its outline's blocks, from 1.
+
+numbered-examples = Examples { $place }
+
 ## The block of the scenarios outside every rule, in a file with a rule.
 
 outside-rules = Outside any rule
@@ -330,9 +334,9 @@ outside-rules = Outside any rule
 
 runs-for-each-row = Runs once for each row of these examples:
 
-## The button of an examples block with no row below its header, after its $heading.
+## An examples block with no row below its header, after its $heading.
 
-empty-examples = { $heading }: empty
+nothing-to-run = { $heading } (nothing to run)
 
 ## Under a scenario outline, its examples as the scenarios they produce,
 ## named by the outline's $name, or its kind, as unnamed-heading words it,

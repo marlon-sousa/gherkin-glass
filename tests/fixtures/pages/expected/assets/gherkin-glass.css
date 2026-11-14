@@ -164,6 +164,14 @@ h1, h2, h3, h4, h5 {
   font-weight: bold;
 }
 
+/* A block with nothing to show has no button: it keeps a block's rule, and
+   its text starts where the buttons' text does, after their arrow. */
+.ghg-examples-list > li:not(.ghg-block) {
+  border-left: 1px solid var(--ghg-border);
+  padding-left: calc(1rem + 1.1em);
+  font-weight: bold;
+}
+
 pre {
   background: var(--ghg-surface);
   padding: 0.5rem;

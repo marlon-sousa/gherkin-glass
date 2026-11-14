@@ -111,7 +111,8 @@ impl Builder<'_> {
             examples: anchored
                 .examples
                 .iter()
-                .map(|examples| self.examples(examples))
+                .zip(1..)
+                .map(|(examples, place)| self.examples(examples, place))
                 .collect(),
             as_scenarios: self.examples_as_scenarios(anchored, below),
         }

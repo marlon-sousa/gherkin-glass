@@ -1,3 +1,6 @@
+{%- if examples.holds_nothing() -%}
+<li id="{{ examples.anchor }}" class="ghg-examples">{{ examples.label.render()|safe }}</li>
+{%- else -%}
 <li id="{{ examples.anchor }}" class="ghg-block ghg-examples"><button type="button" class="ghg-toggle" aria-expanded="false">{{ examples.label.render()|safe }}</button>
 <div class="ghg-content" hidden>
 {%- if !examples.tags.is_empty() %}
@@ -10,3 +13,4 @@
 {{ table.render()|safe }}
 {%- endif %}
 </div></li>
+{%- endif %}

@@ -4,7 +4,9 @@ use gherkin::{Examples, Scenario, Table};
 use i18n_embed_fl::fl;
 
 use super::block_building::{Builder, description, worded_heading};
-use super::heading_words::{Kind, TEXT_MARKS, heading, isolated, kind_alone, plain, worded_parts};
+use super::heading_words::{
+    Kind, TEXT_MARKS, examples_heading, isolated, kind_alone, plain, worded_parts,
+};
 use super::step_views::{filled_step_contents, table};
 use crate::entities::{
     Anchored, AnchoredScenario, ExampleScenario, ExamplesAsScenarios, ExamplesBlock, HeadingLevel,
@@ -14,12 +16,17 @@ use crate::policies::CATALOGUE;
 use crate::policies::site::feature_pages::{ExampleRow, example_rows};
 
 impl Builder<'_> {
-    pub(super) fn examples(&self, anchored: &Anchored<'_, Examples>) -> ExamplesBlock {
+    /// The block at `place` among its outline's, from 1.
+    pub(super) fn examples(
+        &self,
+        anchored: &Anchored<'_, Examples>,
+        place: usize,
+    ) -> ExamplesBlock {
         let examples = anchored.block;
-        let label = heading(
-            Kind::Examples,
+        let label = examples_heading(
             &examples.keyword,
             examples.name.as_deref().unwrap_or(""),
+            place,
         );
         let has_rows = examples.table.as_ref().is_some_and(has_rows);
         ExamplesBlock {
@@ -27,7 +34,7 @@ impl Builder<'_> {
             label: if has_rows {
                 label
             } else {
-                let words = fl!(CATALOGUE, "empty-examples", heading = TEXT_MARKS[0]);
+                let words = fl!(CATALOGUE, "nothing-to-run", heading = TEXT_MARKS[0]);
                 worded_parts(&words, &[label])
             },
             has_rows,
