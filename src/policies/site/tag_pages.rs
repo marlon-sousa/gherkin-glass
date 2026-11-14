@@ -8,9 +8,9 @@ use i18n_embed_fl::fl;
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 
 use crate::entities::{
-    LinkAddress, OwnCrumb, PageOptions, SiteFeaturePage, TagFeature, TagFeatureContent, TagIndex,
-    TagIndexContent, TagIndexEntry, TagNames, TagPage, TagPageContent, TagPagesContent,
-    TagScenario, Trail,
+    HeadingPart, LinkAddress, OwnCrumb, PageOptions, SiteFeaturePage, TagFeature,
+    TagFeatureContent, TagIndex, TagIndexContent, TagIndexEntry, TagNames, TagPage, TagPageContent,
+    TagPagesContent, TagScenario, Trail, plain_parts,
 };
 use crate::policies::site::outside_link;
 use crate::policies::{CATALOGUE, tag_index_address};
@@ -19,6 +19,9 @@ use tag_carriers::{Through, carriers, writes};
 /// Stands for the link in the words around it, to find where the link
 /// goes; no message of the catalogue holds it.
 const LINK_MARK: &str = "\u{0}";
+
+/// Stands for the feature's heading in the page's title, to put its parts in its place.
+const HEADING_MARK: &str = "\u{1}";
 
 /// From a tag page or the index, both in the folder of the tag pages, back to the site's root.
 const ROOT: &str = "../";
@@ -102,7 +105,7 @@ fn tag_page(
         trail: Trail {
             folders: vec![fl!(CATALOGUE, "tag-index-title")],
             page: Some(OwnCrumb {
-                text: title.clone(),
+                text: plain_parts(&title),
                 file,
             }),
         },
@@ -120,12 +123,24 @@ fn tag_page(
 fn tag_feature(feature: &SiteFeaturePage<'_>, tag: &str, language: &str) -> TagFeatureContent {
     let page = feature.page();
     let page_address = format!("{ROOT}{}", page.address);
-    let (heading_before, heading_after) = around_mark(&fl!(
+    let (title_before, heading_after) = around_mark(&fl!(
         CATALOGUE,
         "page-title",
-        heading = page.heading.as_str(),
+        heading = HEADING_MARK,
         path = LINK_MARK
     ));
+    let (before, after) = title_before
+        .split_once(HEADING_MARK)
+        .unwrap_or((&title_before, ""));
+    let heading_before = [
+        plain_parts(before),
+        page.heading.clone(),
+        plain_parts(after),
+    ]
+    .concat()
+    .into_iter()
+    .filter(has_text)
+    .collect();
     TagFeatureContent {
         feature: TagFeature {
             address: LinkAddress::to(&page_address),
@@ -152,13 +167,17 @@ fn tag_feature(feature: &SiteFeaturePage<'_>, tag: &str, language: &str) -> TagF
                 let (before, after) = around_mark(&words);
                 TagScenario {
                     address: LinkAddress::to(&page_address).at(&scenario.heading.anchor),
-                    heading: scenario.heading.text(),
+                    heading: scenario.heading.parts.clone(),
                     before,
                     after,
                 }
             })
             .collect(),
     }
+}
+
+fn has_text(part: &HeadingPart) -> bool {
+    !part.text.is_empty()
 }
 
 fn around_mark(words: &str) -> (String, String) {
@@ -174,7 +193,7 @@ mod tests {
     use gherkin::{Feature, GherkinEnv};
 
     use super::*;
-    use crate::entities::{ParsedFeature, SiteTreeBuilder};
+    use crate::entities::{ParsedFeature, SiteTreeBuilder, text_of};
     use crate::policies::site::{name_tags, site_with_feature_pages};
     use crate::test_support::every_revised;
 
@@ -231,7 +250,7 @@ Feature: F
             .map(|s| {
                 (
                     s.address.to_string(),
-                    format!("{}{}{}", s.before, s.heading, s.after),
+                    format!("{}{}{}", s.before, text_of(&s.heading), s.after),
                 )
             })
             .collect()
@@ -251,7 +270,7 @@ Feature: F
                 ),
                 (
                     "../a%20b.html#through-examples".into(),
-                    "Scenario Outline: Through examples, through its feature".into()
+                    "Scenario outline: Through examples, through its feature".into()
                 ),
                 (
                     "../a%20b.html#in-the-rule".into(),
@@ -271,7 +290,7 @@ Feature: F
         );
         assert_eq!(
             listed(&page("@ex"))[0].1,
-            "Scenario Outline: Through examples, through its examples"
+            "Scenario outline: Through examples, through its examples"
         );
         assert_eq!(
             listed(&page("@rule"))[0].1,

@@ -1,0 +1,12 @@
+<li id="{{ examples.anchor }}" class="ghg-block ghg-examples"><button type="button" class="ghg-toggle" aria-expanded="false">{{ examples.label.render()|safe }}</button>
+<div class="ghg-content" hidden>
+{%- if !examples.tags.is_empty() %}
+{{ examples.tags.render()|safe }}
+{%- endif %}
+{%- if let Some(description) = examples.description %}
+{{ description.render()|safe }}
+{%- endif %}
+{%- if let Some(table) = examples.table %}
+{{ table.render()|safe }}
+{%- endif %}
+</div></li>

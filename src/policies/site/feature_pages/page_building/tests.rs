@@ -6,7 +6,7 @@ use gherkin::{Feature, GherkinEnv};
 use super::*;
 use crate::entities::{
     BackgroundContent, LinkAddress, OutsideLink, ParsedFeature, RuleContent, ScenarioContent,
-    StepPart, TableView, TagView,
+    StepPart, TableView, TagView, text_of,
 };
 use crate::policies::site::name_tags;
 use crate::test_support::{revised, tag_link};

@@ -1,4 +1,4 @@
-<h2><a href="{{ feature.address }}"{% if let Some(lang) = feature.language %} lang="{{ lang }}"{% endif %}>{{ feature.heading_before }}<span class="ghg-tag-path">{{ feature.path }}</span>{{ feature.heading_after }}</a></h2>
+<h2><a href="{{ feature.address }}">{{ feature.heading_before.render_in(feature.language.as_deref())|safe }}<span class="ghg-tag-path">{{ feature.path }}</span>{{ feature.heading_after }}</a></h2>
 {%- if scenarios.is_empty() %}
 <p>{{ no_scenario }}</p>
 {%- else %}

@@ -47,8 +47,12 @@ pub(crate) enum SiteNode {
     Background(BackgroundBlock),
     /// A rule, in its feature's page, which holds its background and its scenarios.
     Rule(RuleBlock),
-    /// A scenario or an outline, in its feature's page or its rule, which
-    /// holds its steps, then an outline's examples and examples as scenarios.
+    /// The block of the scenarios outside every rule, in the page of a feature
+    /// with a rule, by its heading, which holds those scenarios.
+    OutsideRules(BlockHeading),
+    /// A scenario or an outline, in its feature's page, its rule or the block
+    /// of the scenarios outside every rule, which holds its steps, then an
+    /// outline's examples and examples as scenarios.
     Scenario(ScenarioBlock),
     Examples(ExamplesBlock),
     /// An outline's examples as scenarios, by its heading, which holds the scenario of each row.

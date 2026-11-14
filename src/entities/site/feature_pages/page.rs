@@ -1,6 +1,9 @@
 //! Entity: a feature's page, as its template shows it, every text in it as written or worded.
 
-use crate::entities::{FeaturePath, LinkAddress, Revision, SiteAddress, StepKind, StepPart, Trail};
+use crate::entities::{
+    FeaturePath, HeadingPart, LinkAddress, Revision, SiteAddress, StepKind, StepPart, Trail,
+    text_of,
+};
 
 /// A feature's page, its blocks the nodes below it in the site tree. Every
 /// `String` is text, escaped when it is rendered.
@@ -15,8 +18,9 @@ pub(crate) struct Page {
     /// The `lang` of the page.
     pub(crate) language: String,
     pub(crate) title: String,
-    /// The feature's keyword and name.
-    pub(crate) heading: String,
+    /// The feature's kind, its name and the keyword it is written with, the
+    /// page's `h1`.
+    pub(crate) heading: Vec<HeadingPart>,
     /// The feature's name alone, empty when it has none.
     pub(crate) name: String,
     pub(crate) trail: Trail,
@@ -28,6 +32,13 @@ pub(crate) struct Page {
     /// backgrounds inside the scenarios or those in their own place are
     /// expanded, and the heading of a scenario's steps after those inside it.
     pub(crate) backgrounds_option: Option<BackgroundsOption>,
+}
+
+impl Page {
+    /// The feature's heading, without its markup.
+    pub(crate) fn heading_text(&self) -> String {
+        text_of(&self.heading)
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -45,6 +56,8 @@ pub(crate) struct PageWords {
     pub(crate) contents: String,
     pub(crate) collapse_all: String,
     pub(crate) expand_all: String,
+    /// Before the list of an outline's examples.
+    pub(crate) runs_for_each_row: String,
 }
 
 /// A tag as written, with its `@`, linked to its tag's page.
@@ -78,7 +91,7 @@ pub(crate) struct SourceLink {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct ContentsEntry {
     pub(crate) anchor: String,
-    pub(crate) heading: String,
+    pub(crate) heading: Vec<HeadingPart>,
     /// A rule's scenarios.
     pub(crate) entries: Vec<ContentsEntry>,
 }

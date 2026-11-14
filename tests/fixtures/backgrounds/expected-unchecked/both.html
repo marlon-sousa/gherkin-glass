@@ -79,7 +79,7 @@
 <nav class="ghg-breadcrumb" aria-label="Breadcrumb">
 <ol>
 <li><a href="index.html">Backgrounds</a></li>
-<li><a href="both.html" aria-current="page">Feature: Transfers</a></li>
+<li><a href="both.html" aria-current="page">Feature: <bdi>Transfers</bdi></a></li>
 </ol>
 </nav>
 <form class="ghg-search" role="search" data-root="" data-shown="50" data-loading="Loading search." data-failed="Search could not be loaded." data-none="No results." data-count="Results: {count}." data-count-limited="Results: {count}. The first 50 are listed." data-no-name="no name" data-feature="{name}, feature" data-rule="{name}, rule in {feature}" data-scenario="{name}, scenario in {feature}" data-scenario-in-rule="{name}, scenario in {rule}, {feature}" data-scenario-outline="{name}, scenario outline in {feature}" data-scenario-outline-in-rule="{name}, scenario outline in {rule}, {feature}">
@@ -88,18 +88,21 @@
 <ol class="ghg-search-results" hidden></ol>
 </form>
 <main id="ghg_main">
-<h1>Feature: Transfers</h1>
+<h1>Feature: <bdi>Transfers</bdi></h1>
 <nav class="ghg-contents" aria-label="Contents">
 <ul>
-<li><a href="#outside-any-rule">Scenario: Outside any rule</a></li>
-<li><a href="#limits">Rule: Limits</a>
+<li><a href="#outside_rules">Outside any rule</a>
 <ul>
-<li><a href="#move-amount">Scenario Outline: Move &#60;amount&#62;</a></li>
+<li><a href="#outside-any-rule">Scenario: <bdi>Outside any rule</bdi></a></li>
 </ul></li>
-<li><a href="#no-background-of-its-own">Rule: No background of its own</a>
+<li><a href="#limits">Rule: <bdi>Limits</bdi></a>
 <ul>
-<li><a href="#only-the-features-background">Scenario: Only the feature&#39;s background</a></li>
-<li><a href="#nothing-of-its-own">Scenario: Nothing of its own</a></li>
+<li><a href="#move-amount">Scenario outline: <bdi>Move &#60;amount&#62;</bdi></a></li>
+</ul></li>
+<li><a href="#no-background-of-its-own">Rule: <bdi>No background of its own</bdi></a>
+<ul>
+<li><a href="#only-the-features-background">Scenario: <bdi>Only the feature&#39;s background</bdi></a></li>
+<li><a href="#nothing-of-its-own">Scenario: <bdi>Nothing of its own</bdi></a></li>
 </ul></li>
 </ul>
 </nav>
@@ -129,11 +132,14 @@
 </ol>
 </div>
 </div>
+<div class="ghg-block ghg-outside-rules">
+<h2 id="outside_rules"><button type="button" class="ghg-toggle" aria-expanded="true">Outside any rule</button></h2>
+<div class="ghg-content">
 <div class="ghg-block ghg-scenario">
-<h2 id="outside-any-rule"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: Outside any rule</button></h2>
+<h3 id="outside-any-rule"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: <bdi>Outside any rule</bdi></button></h3>
 <div class="ghg-content">
 <div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
-<h3 id="outside-any-rule_background_1"><button type="button" class="ghg-toggle" aria-expanded="false">From the background</button></h3>
+<h4 id="outside-any-rule_background_1"><button type="button" class="ghg-toggle" aria-expanded="false">From the background</button></h4>
 <div class="ghg-content" hidden>
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span>an account with these balances:
@@ -153,18 +159,20 @@
 </ol>
 </div>
 </div>
-<h3 class="ghg-steps-heading">From the scenario</h3>
+<h4 class="ghg-steps-heading">From the scenario</h4>
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">When </span><span class="ghg-number">10</span> is moved</li>
 <li><span class="ghg-keyword">Then </span>the balance is <span class="ghg-number">90</span></li>
 </ol>
 </div>
 </div>
+</div>
+</div>
 <div class="ghg-block ghg-rule">
-<h2 id="limits"><button type="button" class="ghg-toggle" aria-expanded="true">Rule: Limits</button></h2>
+<h2 id="limits"><button type="button" class="ghg-toggle" aria-expanded="true">Rule: <bdi>Limits</bdi></button></h2>
 <div class="ghg-content">
 <div class="ghg-block ghg-background" data-expanded-when-unchecked="true">
-<h3 id="over-the-limit"><button type="button" class="ghg-toggle" aria-expanded="true">Background: Over the limit</button></h3>
+<h3 id="over-the-limit"><button type="button" class="ghg-toggle" aria-expanded="true">Background: <bdi>Over the limit</bdi></button></h3>
 <div class="ghg-content">
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span>a limit of <span class="ghg-number">50</span></li>
@@ -172,7 +180,7 @@
 </div>
 </div>
 <div class="ghg-block ghg-scenario">
-<h3 id="move-amount"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario Outline: Move &#60;amount&#62;</button></h3>
+<h3 id="move-amount"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario outline: <bdi>Move &#60;amount&#62;</bdi></button></h3>
 <div class="ghg-content">
 <div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
 <h4 id="move-amount_background_1"><button type="button" class="ghg-toggle" aria-expanded="false">From the background</button></h4>
@@ -207,9 +215,10 @@
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">When </span><span class="ghg-placeholder">&#60;amount&#62;</span> is moved</li>
 </ol>
-<div class="ghg-block ghg-examples">
-<h4 id="examples"><button type="button" class="ghg-toggle" aria-expanded="true">Examples</button></h4>
-<div class="ghg-content">
+<p class="ghg-runs">Runs once for each row of these examples:</p>
+<ul class="ghg-examples-list" role="list">
+<li id="examples" class="ghg-block ghg-examples"><button type="button" class="ghg-toggle" aria-expanded="false">Examples</button>
+<div class="ghg-content" hidden>
 <table class="ghg-table">
 <thead>
 <tr><th scope="col">amount</th></tr>
@@ -218,8 +227,8 @@
 <tr><td>60</td></tr>
 </tbody>
 </table>
-</div>
-</div>
+</div></li>
+</ul>
 <div class="ghg-block ghg-examples-as-scenarios">
 <h4 id="move-amount_scenarios"><button type="button" class="ghg-toggle" aria-expanded="false">Examples as scenarios: <bdi>Move &#60;amount&#62;</bdi></button></h4>
 <div class="ghg-content" hidden>
@@ -238,10 +247,10 @@
 </div>
 </div>
 <div class="ghg-block ghg-rule">
-<h2 id="no-background-of-its-own"><button type="button" class="ghg-toggle" aria-expanded="true">Rule: No background of its own</button></h2>
+<h2 id="no-background-of-its-own"><button type="button" class="ghg-toggle" aria-expanded="true">Rule: <bdi>No background of its own</bdi></button></h2>
 <div class="ghg-content">
 <div class="ghg-block ghg-scenario">
-<h3 id="only-the-features-background"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: Only the feature&#39;s background</button></h3>
+<h3 id="only-the-features-background"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: <bdi>Only the feature&#39;s background</bdi></button></h3>
 <div class="ghg-content">
 <div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
 <h4 id="only-the-features-background_background_1"><button type="button" class="ghg-toggle" aria-expanded="false">From the background</button></h4>
@@ -271,7 +280,7 @@
 </div>
 </div>
 <div class="ghg-block ghg-scenario">
-<h3 id="nothing-of-its-own"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: Nothing of its own</button></h3>
+<h3 id="nothing-of-its-own"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: <bdi>Nothing of its own</bdi></button></h3>
 <div class="ghg-content">
 <div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
 <h4 id="nothing-of-its-own_background_1"><button type="button" class="ghg-toggle" aria-expanded="false">From the background</button></h4>

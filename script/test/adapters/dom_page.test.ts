@@ -28,7 +28,12 @@ function open(hash = "", memory: Memory = new Map() as unknown as Memory): Windo
 }
 
 const button = (window: Window, anchor: string) => window.document.querySelector(`#${anchor} > button`)!;
-const content = (window: Window, anchor: string) => window.document.querySelector(`#${anchor}`)!.parentElement!.querySelector(":scope > .ghg-content")!;
+/** The block of `anchor`: its heading's parent, or the item of an examples block itself. */
+const block = (window: Window, anchor: string) => {
+  const target = window.document.querySelector(`#${anchor}`)!;
+  return target.matches("li") ? target : target.parentElement!;
+};
+const content = (window: Window, anchor: string) => block(window, anchor).querySelector(":scope > .ghg-content")!;
 const expanded = (window: Window, anchor: string): boolean => button(window, anchor).getAttribute("aria-expanded") === "true";
 
 test("every block of the page is found, with the blocks it is inside", () => {
@@ -37,9 +42,10 @@ test("every block of the page is found, with the blocks it is inside", () => {
   const found = page.blocks().map((block) => [block.anchor, block.parent?.anchor ?? null]);
   assert.deepEqual(found, [
     ["background", null],
-    ["refund-a-card-payment", null],
+    ["outside_rules", null],
+    ["refund-a-card-payment", "outside_rules"],
     ["refund-a-card-payment_background_1", "refund-a-card-payment"],
-    ["refund-count-items", null],
+    ["refund-count-items", "outside_rules"],
     ["refund-count-items_background_1", "refund-count-items"],
     ["cheap", "refund-count-items"],
     ["examples", "refund-count-items"],
@@ -90,6 +96,46 @@ test("an outline's examples as scenarios start collapsed, and a link to a row's 
   for (const anchor of ["refunds-after-thirty-days", "refund-again-count-times", "refund-again-count-times_scenarios", "refund-again-count-times-row-1"]) {
     assert.equal(expanded(window, anchor), true, anchor);
   }
+});
+
+test("an outline's examples start collapsed, and their buttons and a link to one expand them", () => {
+  const window = open();
+  for (const anchor of ["cheap", "examples", "again"]) {
+    assert.equal(expanded(window, anchor), false, anchor);
+    assert.equal(content(window, anchor).hasAttribute("hidden"), true, anchor);
+  }
+  (button(window, "cheap") as unknown as HTMLElement).click();
+  assert.equal(expanded(window, "cheap"), true);
+  assert.equal(content(window, "cheap").hasAttribute("hidden"), false);
+  (window.document.querySelector(".ghg-collapse-all") as unknown as HTMLElement).click();
+  assert.equal(expanded(window, "cheap"), false);
+  const link = window.document.createElement("a");
+  link.setAttribute("href", "#again");
+  window.document.body.appendChild(link);
+  link.dispatchEvent(new window.MouseEvent("click", { bubbles: true, cancelable: true }));
+  for (const anchor of ["refunds-after-thirty-days", "refund-again-count-times", "again"]) {
+    assert.equal(expanded(window, anchor), true, anchor);
+  }
+});
+
+test("an examples item's state is remembered under its anchor, and wins when the page is opened again", () => {
+  const kept = new Map<string, string>();
+  const memory: Memory = { get: (key) => kept.get(key) ?? null, set: (key, value) => void kept.set(key, value) };
+  const window = open("", memory);
+  (button(window, "cheap") as unknown as HTMLElement).click();
+  assert.equal(kept.get("gherkin-glass:/site/billing/refunds.html#cheap"), "expanded");
+  assert.equal(expanded(open("", memory), "cheap"), true);
+});
+
+test("the scenarios outside every rule are one block, which collapses and is found by a link", () => {
+  const window = open();
+  assert.equal(button(window, "outside_rules").textContent, "Outside any rule");
+  (button(window, "outside_rules") as unknown as HTMLElement).click();
+  assert.equal(expanded(window, "outside_rules"), false);
+  assert.equal(content(window, "outside_rules").hasAttribute("hidden"), true);
+  const link = window.document.querySelector('nav a[href="#refund-a-card-payment"]')!;
+  link.dispatchEvent(new window.MouseEvent("click", { bubbles: true, cancelable: true }));
+  assert.equal(expanded(window, "outside_rules"), true);
 });
 
 test("pressing a button hides its block's content and says so, and pressing it again shows it", () => {

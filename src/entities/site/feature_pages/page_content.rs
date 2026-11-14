@@ -11,6 +11,9 @@ use crate::entities::{
 pub(crate) struct PageContent {
     pub(crate) page: Page,
     pub(crate) background: Option<BackgroundContent>,
+    /// The heading of the block the scenarios are in, in a file with a rule
+    /// and a scenario outside every rule; `None` in any other file.
+    pub(crate) outside_rules: Option<BlockHeading>,
     pub(crate) scenarios: Vec<ScenarioContent>,
     pub(crate) rules: Vec<RuleContent>,
 }

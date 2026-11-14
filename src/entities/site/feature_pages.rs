@@ -9,6 +9,7 @@ mod page_content;
 pub(crate) use anchored_feature::{Anchored, AnchoredFeature, AnchoredRule, AnchoredScenario};
 pub(crate) use feature_blocks::{
     BackgroundBlock, BlockHeading, ExamplesBlock, HeadingPart, RuleBlock, ScenarioBlock,
+    plain_parts, text_of,
 };
 pub(crate) use highlighted_step::{HighlightedStep, StepPart};
 pub(crate) use page::{

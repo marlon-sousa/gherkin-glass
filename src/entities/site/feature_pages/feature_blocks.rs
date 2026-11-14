@@ -55,17 +55,33 @@ pub(crate) struct ScenarioBlock {
     pub(crate) description: Option<Paragraph>,
 }
 
+/// An examples block, an item of its outline's list of examples, which is
+/// not a heading and starts collapsed.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct ExamplesBlock {
-    pub(crate) heading: BlockHeading,
+    /// The `id` of its item.
+    pub(crate) anchor: String,
+    /// The text of its button, worded as a heading, and saying so when it
+    /// has no row.
+    pub(crate) label: Vec<HeadingPart>,
+    /// Whether its table has a row below its header, which its outline runs
+    /// once for.
+    pub(crate) has_rows: bool,
     pub(crate) tags: Vec<TagView>,
     pub(crate) description: Option<Paragraph>,
     pub(crate) table: Option<TableView>,
 }
 
-impl BlockHeading {
-    /// The heading's text, without its markup.
-    pub(crate) fn text(&self) -> String {
-        self.parts.iter().map(|part| part.text.as_str()).collect()
-    }
+/// `text` as the only part of a heading, gherkin-glass's own or a name not
+/// inside its words, not isolated.
+pub(crate) fn plain_parts(text: &str) -> Vec<HeadingPart> {
+    vec![HeadingPart {
+        text: text.to_string(),
+        isolated: false,
+    }]
+}
+
+/// The text of a heading's `parts`, without their markup.
+pub(crate) fn text_of(parts: &[HeadingPart]) -> String {
+    parts.iter().map(|part| part.text.as_str()).collect()
 }

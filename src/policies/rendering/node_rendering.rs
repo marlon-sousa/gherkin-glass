@@ -2,7 +2,7 @@
 
 use askama::Template;
 
-use super::feature_block::{ExampleScenarioNode, ExamplesAsScenariosNode};
+use super::feature_block::{BlockKind, HeadedNode};
 use super::page_layout::SitePieces;
 use crate::entities::{SiteAddress, SiteNode, SiteTreeNode};
 use crate::errors::FrontPageError;
@@ -40,12 +40,26 @@ fn piece(node: SiteTreeNode<'_>) -> String {
     match node.value() {
         SiteNode::Background(value) => NodeOf { value, node }.render(),
         SiteNode::Rule(value) => NodeOf { value, node }.render(),
+        SiteNode::OutsideRules(heading) => HeadedNode {
+            kind: BlockKind::OutsideRules,
+            heading,
+            node,
+        }
+        .render(),
         SiteNode::Scenario(value) => NodeOf { value, node }.render(),
         SiteNode::Examples(value) => NodeOf { value, node }.render(),
-        SiteNode::ExamplesAsScenarios(heading) => {
-            ExamplesAsScenariosNode { heading, node }.render()
+        SiteNode::ExamplesAsScenarios(heading) => HeadedNode {
+            kind: BlockKind::ExamplesAsScenarios,
+            heading,
+            node,
         }
-        SiteNode::ExampleScenario(heading) => ExampleScenarioNode { heading, node }.render(),
+        .render(),
+        SiteNode::ExampleScenario(heading) => HeadedNode {
+            kind: BlockKind::Scenario,
+            heading,
+            node,
+        }
+        .render(),
         SiteNode::Step(value) => NodeOf { value, node }.render(),
         SiteNode::StepTable(table) => table.render(),
         SiteNode::DocString(doc_string) => doc_string.render(),

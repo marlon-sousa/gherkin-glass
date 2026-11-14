@@ -62,10 +62,10 @@ var DomPage = class {
     this.document = document2;
     const byElement = /* @__PURE__ */ new Map();
     for (const element of document2.querySelectorAll(".ghg-block")) {
-      const heading = element.querySelector(":scope > :is(h2, h3, h4, h5)");
-      const button = heading?.querySelector(":scope > button.ghg-toggle");
+      const heading = element.querySelector(":scope > :is(h2, h3, h4, h5)") ?? element;
+      const button = heading.querySelector(":scope > button.ghg-toggle");
       const content = element.querySelector(":scope > .ghg-content");
-      if (!heading || !button || !content) {
+      if (!button || !content) {
         continue;
       }
       const around = element.parentElement?.closest(".ghg-block");
@@ -378,7 +378,7 @@ function isItem(data) {
     return false;
   }
   const item = data;
-  return typeof item["text"] === "string" && typeof item["address"] === "string" && (item["lang"] === void 0 || typeof item["lang"] === "string") && (item["items"] === void 0 || isItems(item["items"]));
+  return (typeof item["text"] === "string" || Array.isArray(item["text"]) && item["text"].every((run) => typeof run === "string")) && typeof item["address"] === "string" && (item["lang"] === void 0 || typeof item["lang"] === "string") && (item["items"] === void 0 || isItems(item["items"]));
 }
 function decoded(path) {
   try {
@@ -423,13 +423,12 @@ var DomTree = class {
   onToggle(handler) {
     this.handler = handler;
   }
-  add(list, items, parent, current, expanded) {
+  /** `lang` is the feature's that holds `items`, if one does. */
+  add(list, items, parent, current, expanded, lang) {
     for (const item of items) {
+      const itemLang = item.lang ?? lang;
       const entry = this.document.createElement("li");
       entry.setAttribute("role", "none");
-      if (item.lang !== void 0) {
-        entry.lang = item.lang;
-      }
       const link = this.document.createElement("a");
       link.setAttribute("role", "treeitem");
       link.href = typeof this.root === "string" ? this.root + item.address : new URL(item.address, this.root).href;
@@ -447,10 +446,10 @@ var DomTree = class {
         group = this.document.createElement("ul");
         group.setAttribute("role", "group");
         group.id = `ghg_tree_${this.nodes.length}`;
-        group.setAttribute("aria-label", item.text);
+        group.setAttribute("aria-label", textOf(item));
         link.setAttribute("aria-owns", group.id);
       }
-      link.append(item.text);
+      link.append(...this.words(item, itemLang));
       entry.append(link);
       const node = { link, address: item.address, group, parent };
       this.nodes.push(node);
@@ -464,10 +463,30 @@ var DomTree = class {
           this.focus(node);
           this.toggle(node, !this.isExpanded(node));
         });
-        this.add(group, inner, node, current, expanded);
+        this.add(group, inner, node, current, expanded, itemLang);
       }
       list.append(entry);
     }
+  }
+  /**
+   * The item's words, each run of feature text isolated in a `bdi` with its
+   * feature's `lang`, so that the tree's own words are read in the page's.
+   */
+  words(item, lang) {
+    if (typeof item.text === "string") {
+      return [item.text];
+    }
+    return item.text.map((run, place) => {
+      if (place % 2 === 0) {
+        return run;
+      }
+      const isolated = this.document.createElement("bdi");
+      isolated.append(run);
+      if (lang !== void 0) {
+        isolated.lang = lang;
+      }
+      return isolated;
+    });
   }
   isExpanded(node) {
     return node.link.getAttribute("aria-expanded") === "true";
@@ -568,6 +587,9 @@ var DomTree = class {
     event.stopPropagation();
   }
 };
+function textOf(item) {
+  return typeof item.text === "string" ? item.text : item.text.join("");
+}
 
 // src/adapters/dom_tree_switch.ts
 var DomTreeSwitch = class {

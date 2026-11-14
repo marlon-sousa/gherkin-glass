@@ -4,7 +4,9 @@ use serde::Serialize;
 
 use super::node_rendering::{Render, RenderFile};
 use super::page_layout::SitePieces;
-use crate::entities::{ASSETS, SearchDocument, SearchKind, SiteAddress, TreeItem};
+use crate::entities::{
+    ASSETS, HeadingPart, SearchDocument, SearchKind, SiteAddress, TreeItem, text_of,
+};
 use crate::errors::FrontPageError;
 
 /// In the folder of the assets, where the pages' script fetches them from.
@@ -14,12 +16,21 @@ pub(super) const SEARCH_DOCUMENTS: &str = "search.json";
 /// An item of the folder tree, as the script reads it.
 #[derive(Serialize)]
 struct TreeData<'a> {
-    text: &'a str,
+    text: TextData,
     address: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     lang: Option<&'a str>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     items: Vec<TreeData<'a>>,
+}
+
+/// An item's words: plain text, or, when some of it is isolated, its runs
+/// of words, those at odd places isolated, the first plain and maybe empty.
+#[derive(Serialize)]
+#[serde(untagged)]
+enum TextData {
+    Plain(String),
+    Runs(Vec<String>),
 }
 
 /// A document, as search reads it.
@@ -83,11 +94,32 @@ impl RenderFile for &[SearchDocument] {
 
 fn tree_data(item: &TreeItem) -> TreeData<'_> {
     TreeData {
-        text: &item.text,
+        text: text_data(&item.text),
         address: item.address.to_string(),
         lang: item.lang.as_deref(),
         items: item.items.iter().map(tree_data).collect(),
     }
+}
+
+fn text_data(parts: &[HeadingPart]) -> TextData {
+    if !parts.iter().any(is_isolated) {
+        return TextData::Plain(text_of(parts));
+    }
+    // The first run is plain, so an isolated first part follows an empty one.
+    let empty = parts
+        .first()
+        .filter(|first| first.isolated)
+        .map(|_| String::new());
+    let runs = parts.chunk_by(same_isolation).map(text_of);
+    TextData::Runs(empty.into_iter().chain(runs).collect())
+}
+
+fn is_isolated(part: &HeadingPart) -> bool {
+    part.isolated
+}
+
+fn same_isolation(a: &HeadingPart, b: &HeadingPart) -> bool {
+    a.isolated == b.isolated
 }
 
 fn search_data(document: &SearchDocument) -> SearchData<'_> {

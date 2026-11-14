@@ -1,0 +1,6 @@
+{% if let Some(words) = words %}<p class="ghg-runs">{{ words }}</p>
+{% endif %}<ul class="ghg-examples-list" role="list">
+{%- for item in items %}
+{{ item|safe }}
+{%- endfor %}
+</ul>

@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Feature: Kinds written with other words (written as Ability), kinds.feature</title>
+<script>try{var t=localStorage.getItem("gherkin-glass:theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}</script>
+<style>
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+  --ghg-background: #ffffff;
+  --ghg-surface: #f2f2f2;
+  --ghg-text: #1a1a1a;
+  --ghg-muted: #474747;
+  --ghg-border: #757575;
+  --ghg-accent: #0b4f9c;
+  --ghg-keyword: #6a1b9a;
+  --ghg-parameter: #14521a;
+  --ghg-number: #8a3000;
+  --ghg-placeholder: #00575e;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ghg-background: #141414;
+    --ghg-surface: #222222;
+    --ghg-text: #ececec;
+    --ghg-muted: #c4c4c4;
+    --ghg-border: #8f8f8f;
+    --ghg-accent: #8cc4ff;
+    --ghg-keyword: #e1b3ff;
+    --ghg-parameter: #9fe0a8;
+    --ghg-number: #ffbf8a;
+    --ghg-placeholder: #7fdbe0;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ghg-background: #141414;
+  --ghg-surface: #222222;
+  --ghg-text: #ececec;
+  --ghg-muted: #c4c4c4;
+  --ghg-border: #8f8f8f;
+  --ghg-accent: #8cc4ff;
+  --ghg-keyword: #e1b3ff;
+  --ghg-parameter: #9fe0a8;
+  --ghg-number: #ffbf8a;
+  --ghg-placeholder: #7fdbe0;
+}
+</style>
+<link rel="stylesheet" href="assets/gherkin-glass.css">
+<link rel="icon" href="assets/gherkin-glass.svg" type="image/svg+xml">
+<script type="module" src="assets/gherkin-glass.js"></script>
+</head>
+<body>
+<dialog id="ghg_from_disk" class="ghg-from-disk" tabindex="-1" aria-labelledby="ghg_from_disk_title" aria-describedby="ghg_from_disk_text">
+<p id="ghg_from_disk_title" class="ghg-from-disk-title">Opened from disk</p>
+<p id="ghg_from_disk_text">This site is meant to be served, so its folder tree and search do not work when a page is opened from disk. Run ghg serve in the folder of your ghg.toml, or serve the site&#39;s folder with any web server, then open the address it gives.</p>
+<form method="dialog"><button>I agree</button></form>
+</dialog>
+<script>if(location.protocol==="file:"){let d=document.getElementById("ghg_from_disk");d.showModal();d.focus()}</script>
+<a class="ghg-skip" href="#ghg_main">Skip to content</a>
+<div class="ghg-options">
+<span class="ghg-option ghg-tree-choice"><input type="checkbox" id="ghg_show_tree" class="ghg-show-tree" aria-controls="ghg_tree" checked> <label for="ghg_show_tree">Show the folder tree</label></span>
+<button type="button" class="ghg-tree-button" aria-expanded="false" aria-controls="ghg_tree">Folder tree</button>
+<fieldset class="ghg-theme">
+<legend>Theme</legend>
+<label><input type="radio" name="ghg-theme" value="system" checked> System</label>
+<label><input type="radio" name="ghg-theme" value="light"> Light</label>
+<label><input type="radio" name="ghg-theme" value="dark"> Dark</label>
+</fieldset>
+</div>
+<div class="ghg-layout">
+<nav id="ghg_tree" class="ghg-tree" aria-label="Folder tree"></nav>
+<div class="ghg-page">
+<nav class="ghg-breadcrumb" aria-label="Breadcrumb">
+<ol>
+<li><a href="index.html">Banking &#38; &#60;more&#62;</a></li>
+<li><a href="kinds.html" aria-current="page">Feature: <bdi>Kinds written with other words</bdi> (written as <bdi>Ability</bdi>)</a></li>
+</ol>
+</nav>
+<form class="ghg-search" role="search" data-root="" data-shown="50" data-loading="Loading search." data-failed="Search could not be loaded." data-none="No results." data-count="Results: {count}." data-count-limited="Results: {count}. The first 50 are listed." data-no-name="no name" data-feature="{name}, feature" data-rule="{name}, rule in {feature}" data-scenario="{name}, scenario in {feature}" data-scenario-in-rule="{name}, scenario in {rule}, {feature}" data-scenario-outline="{name}, scenario outline in {feature}" data-scenario-outline-in-rule="{name}, scenario outline in {rule}, {feature}">
+<label>Search features, rules and scenarios <input type="search" class="ghg-search-field" autocomplete="off" spellcheck="false" enterkeyhint="search"></label>
+<p class="ghg-search-status" role="status"></p>
+<ol class="ghg-search-results" hidden></ol>
+</form>
+<main id="ghg_main">
+<h1>Feature: <bdi>Kinds written with other words</bdi> (written as <bdi>Ability</bdi>)</h1>
+<div class="ghg-description">
+<p>Each heading names its block&#39;s kind,<br>
+and the word the file writes when it is another.</p>
+</div>
+<p class="ghg-source"><a href="https://example.com/repo/blob/main/features/kinds.feature#L1">Source: <bdi>kinds.feature</bdi></a></p>
+<nav class="ghg-contents" aria-label="Contents">
+<ul>
+<li><a href="#outside_rules">Outside any rule</a>
+<ul>
+<li><a href="#written-as-an-example">Scenario: <bdi>Written as an example</bdi> (written as <bdi>Example</bdi>)</a></li>
+<li><a href="#written-as-a-template">Scenario outline: <bdi>Written as a template</bdi> (written as <bdi>Scenario Template</bdi>)</a></li>
+<li><a href="#written-as-a-scenario-with-examples">Scenario outline: <bdi>Written as a scenario with examples</bdi> (written as <bdi>Scenario</bdi>)</a></li>
+<li><a href="#written-as-an-outline-without-examples">Scenario: <bdi>Written as an outline without examples</bdi> (written as <bdi>Scenario Outline</bdi>)</a></li>
+<li><a href="#example">Scenario (written as <bdi>Example</bdi>)</a></li>
+<li><a href="#outside-any-rule">Scenario: <bdi>Outside any rule</bdi></a></li>
+</ul></li>
+<li><a href="#kinds-inside-a-rule">Rule: <bdi>Kinds inside a rule</bdi></a>
+<ul>
+<li><a href="#inside-the-rule">Scenario: <bdi>Inside the rule</bdi> (written as <bdi>Example</bdi>)</a></li>
+</ul></li>
+</ul>
+</nav>
+<div class="ghg-controls">
+<button type="button" class="ghg-collapse-all">Collapse all</button>
+<button type="button" class="ghg-expand-all">Expand all</button>
+<label class="ghg-option"><input type="checkbox" class="ghg-inline-backgrounds" autocomplete="off" checked> Show backgrounds inside each scenario</label>
+</div>
+<div class="ghg-block ghg-background" data-expanded-when-unchecked="true">
+<h2 id="background"><button type="button" class="ghg-toggle" aria-expanded="false">Background</button></h2>
+<div class="ghg-content" hidden>
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>a shelf</li>
+</ol>
+</div>
+</div>
+<div class="ghg-block ghg-outside-rules">
+<h2 id="outside_rules"><button type="button" class="ghg-toggle" aria-expanded="true">Outside any rule</button></h2>
+<div class="ghg-content">
+<div class="ghg-block ghg-scenario">
+<h3 id="written-as-an-example"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: <bdi>Written as an example</bdi> (written as <bdi>Example</bdi>)</button></h3>
+<div class="ghg-content">
+<div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
+<h4 id="written-as-an-example_background_1"><button type="button" class="ghg-toggle" aria-expanded="true">From the background</button></h4>
+<div class="ghg-content">
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>a shelf</li>
+</ol>
+</div>
+</div>
+<h4 class="ghg-steps-heading">From the scenario</h4>
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>a book</li>
+</ol>
+</div>
+</div>
+<div class="ghg-block ghg-scenario">
+<h3 id="written-as-a-template"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario outline: <bdi>Written as a template</bdi> (written as <bdi>Scenario Template</bdi>)</button></h3>
+<div class="ghg-content">
+<div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
+<h4 id="written-as-a-template_background_1"><button type="button" class="ghg-toggle" aria-expanded="true">From the background</button></h4>
+<div class="ghg-content">
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>a shelf</li>
+</ol>
+</div>
+</div>
+<h4 class="ghg-steps-heading">From the scenario</h4>
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span><span class="ghg-placeholder">&#60;count&#62;</span> books</li>
+</ol>
+<p class="ghg-runs">Runs once for each row of these examples:</p>
+<ul class="ghg-examples-list" role="list">
+<li id="shelves" class="ghg-block ghg-examples"><button type="button" class="ghg-toggle" aria-expanded="false">Examples: <bdi>Shelves</bdi> (written as <bdi>Scenarios</bdi>)</button>
+<div class="ghg-content" hidden>
+<table class="ghg-table">
+<thead>
+<tr><th scope="col">count</th></tr>
+</thead>
+<tbody>
+<tr><td>2</td></tr>
+</tbody>
+</table>
+</div></li>
+</ul>
+<div class="ghg-block ghg-examples-as-scenarios">
+<h4 id="written-as-a-template_scenarios"><button type="button" class="ghg-toggle" aria-expanded="false">Examples as scenarios: <bdi>Written as a template</bdi></button></h4>
+<div class="ghg-content" hidden>
+<div class="ghg-block ghg-scenario">
+<h5 id="written-as-a-template-row-1"><button type="button" class="ghg-toggle" aria-expanded="true"><bdi>Written as a template</bdi> (<bdi>count</bdi>: <bdi>2</bdi>)</button></h5>
+<div class="ghg-content">
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span><span class="ghg-number">2</span> books</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="ghg-block ghg-scenario">
+<h3 id="written-as-a-scenario-with-examples"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario outline: <bdi>Written as a scenario with examples</bdi> (written as <bdi>Scenario</bdi>)</button></h3>
+<div class="ghg-content">
+<div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
+<h4 id="written-as-a-scenario-with-examples_background_1"><button type="button" class="ghg-toggle" aria-expanded="true">From the background</button></h4>
+<div class="ghg-content">
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>a shelf</li>
+</ol>
+</div>
+</div>
+<h4 class="ghg-steps-heading">From the scenario</h4>
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span><span class="ghg-placeholder">&#60;count&#62;</span> books</li>
+</ol>
+<p class="ghg-runs">Runs once for each row of these examples:</p>
+<ul class="ghg-examples-list" role="list">
+<li id="examples" class="ghg-block ghg-examples"><button type="button" class="ghg-toggle" aria-expanded="false">Examples</button>
+<div class="ghg-content" hidden>
+<table class="ghg-table">
+<thead>
+<tr><th scope="col">count</th></tr>
+</thead>
+<tbody>
+<tr><td>3</td></tr>
+</tbody>
+</table>
+</div></li>
+</ul>
+<div class="ghg-block ghg-examples-as-scenarios">
+<h4 id="written-as-a-scenario-with-examples_scenarios"><button type="button" class="ghg-toggle" aria-expanded="false">Examples as scenarios: <bdi>Written as a scenario with examples</bdi></button></h4>
+<div class="ghg-content" hidden>
+<div class="ghg-block ghg-scenario">
+<h5 id="written-as-a-scenario-with-examples-row-1"><button type="button" class="ghg-toggle" aria-expanded="true"><bdi>Written as a scenario with examples</bdi> (<bdi>count</bdi>: <bdi>3</bdi>)</button></h5>
+<div class="ghg-content">
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span><span class="ghg-number">3</span> books</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="ghg-block ghg-scenario">
+<h3 id="written-as-an-outline-without-examples"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: <bdi>Written as an outline without examples</bdi> (written as <bdi>Scenario Outline</bdi>)</button></h3>
+<div class="ghg-content">
+<div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
+<h4 id="written-as-an-outline-without-examples_background_1"><button type="button" class="ghg-toggle" aria-expanded="true">From the background</button></h4>
+<div class="ghg-content">
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>a shelf</li>
+</ol>
+</div>
+</div>
+<h4 class="ghg-steps-heading">From the scenario</h4>
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>a book</li>
+</ol>
+</div>
+</div>
+<div class="ghg-block ghg-scenario">
+<h3 id="example"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario (written as <bdi>Example</bdi>)</button></h3>
+<div class="ghg-content">
+<div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
+<h4 id="example_background_1"><button type="button" class="ghg-toggle" aria-expanded="true">From the background</button></h4>
+<div class="ghg-content">
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>a shelf</li>
+</ol>
+</div>
+</div>
+<h4 class="ghg-steps-heading">From the scenario</h4>
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>nothing named</li>
+</ol>
+</div>
+</div>
+<div class="ghg-block ghg-scenario">
+<h3 id="outside-any-rule"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: <bdi>Outside any rule</bdi></button></h3>
+<div class="ghg-content">
+<div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
+<h4 id="outside-any-rule_background_1"><button type="button" class="ghg-toggle" aria-expanded="true">From the background</button></h4>
+<div class="ghg-content">
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>a shelf</li>
+</ol>
+</div>
+</div>
+<h4 class="ghg-steps-heading">From the scenario</h4>
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>a scenario named as the group</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div class="ghg-block ghg-rule">
+<h2 id="kinds-inside-a-rule"><button type="button" class="ghg-toggle" aria-expanded="true">Rule: <bdi>Kinds inside a rule</bdi></button></h2>
+<div class="ghg-content">
+<div class="ghg-block ghg-scenario">
+<h3 id="inside-the-rule"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: <bdi>Inside the rule</bdi> (written as <bdi>Example</bdi>)</button></h3>
+<div class="ghg-content">
+<div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
+<h4 id="inside-the-rule_background_1"><button type="button" class="ghg-toggle" aria-expanded="true">From the background</button></h4>
+<div class="ghg-content">
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>a shelf</li>
+</ol>
+</div>
+</div>
+<h4 class="ghg-steps-heading">From the scenario</h4>
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>a book</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+</main>
+<footer class="ghg-footer">
+<p>Built with <a href="https://github.com/marlon-sousa/gherkin-glass">gherkin-glass</a> {version}</p>
+</footer>
+</div>
+</div>
+</body>
+</html>

@@ -6,7 +6,7 @@ use i18n_embed_fl::fl;
 use crate::entities::{
     GroupContent, GroupView, LinkAddress, OwnCrumb, PageOptions, Piece, SentenceContent,
     SentenceUse, SentenceView, SentencesPage, SentencesPageContent, SiteFeaturePage, StepKind,
-    StepSentences, Trail, UseView,
+    StepSentences, Trail, UseView, plain_parts,
 };
 use crate::policies::site::sentences::find_step_sentences;
 use crate::policies::{CATALOGUE, SENTENCES_PAGE, site_title};
@@ -60,7 +60,7 @@ fn sentences_page(sentences: &StepSentences, options: &PageOptions) -> Sentences
             trail: Trail {
                 folders: Vec::new(),
                 page: Some(OwnCrumb {
-                    text: heading.clone(),
+                    text: plain_parts(&heading),
                     file: SENTENCES_PAGE.to_string(),
                 }),
             },
@@ -163,7 +163,7 @@ mod tests {
                 page: SiteAddress::of::<&str>(&[], "a.html"),
                 language: "en".to_string(),
                 anchor: "s".to_string(),
-                heading: "Scenario: S".to_string(),
+                heading: plain_parts("Scenario: S"),
                 line: 1,
                 values: Vec::new(),
             };

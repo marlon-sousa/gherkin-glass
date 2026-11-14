@@ -79,7 +79,7 @@
 <nav class="ghg-breadcrumb" aria-label="Breadcrumb">
 <ol>
 <li><a href="index.html">gherkin-glass examples</a></li>
-<li><a href="other-gherkin-syntax.html" aria-current="page">Feature: Booking a study room</a></li>
+<li><a href="other-gherkin-syntax.html" aria-current="page">Feature: <bdi>Booking a study room</bdi></a></li>
 </ol>
 </nav>
 <form class="ghg-search" role="search" data-root="" data-shown="50" data-loading="Loading search." data-failed="Search could not be loaded." data-none="No results." data-count="Results: {count}." data-count-limited="Results: {count}. The first 50 are listed." data-no-name="no name" data-feature="{name}, feature" data-rule="{name}, rule in {feature}" data-scenario="{name}, scenario in {feature}" data-scenario-in-rule="{name}, scenario in {rule}, {feature}" data-scenario-outline="{name}, scenario outline in {feature}" data-scenario-outline-in-rule="{name}, scenario outline in {rule}, {feature}">
@@ -88,7 +88,7 @@
 <ol class="ghg-search-results" hidden></ol>
 </form>
 <main id="ghg_main">
-<h1>Feature: Booking a study room</h1>
+<h1>Feature: <bdi>Booking a study room</bdi></h1>
 <ul class="ghg-tags">
 <li><a href="tags/rooms.html">@rooms</a></li>
 </ul>
@@ -100,9 +100,9 @@ what &#34;Scenario&#34;, &#34;Scenario Outline&#34; and &#34;Examples&#34; mean.
 </div>
 <nav class="ghg-contents" aria-label="Contents">
 <ul>
-<li><a href="#booking-a-free-room">Example: Booking a free room</a></li>
-<li><a href="#booking-a-room-someone-else-holds">Example: Booking a room someone else holds</a></li>
-<li><a href="#how-long-a-booking-lasts">Scenario Template: How long a booking lasts</a></li>
+<li><a href="#booking-a-free-room">Scenario: <bdi>Booking a free room</bdi> (written as <bdi>Example</bdi>)</a></li>
+<li><a href="#booking-a-room-someone-else-holds">Scenario: <bdi>Booking a room someone else holds</bdi> (written as <bdi>Example</bdi>)</a></li>
+<li><a href="#how-long-a-booking-lasts">Scenario outline: <bdi>How long a booking lasts</bdi> (written as <bdi>Scenario Template</bdi>)</a></li>
 </ul>
 </nav>
 <div class="ghg-controls">
@@ -111,7 +111,7 @@ what &#34;Scenario&#34;, &#34;Scenario Outline&#34; and &#34;Examples&#34; mean.
 <label class="ghg-option"><input type="checkbox" class="ghg-inline-backgrounds" autocomplete="off" checked> Show backgrounds inside each scenario</label>
 </div>
 <div class="ghg-block ghg-background" data-expanded-when-unchecked="true">
-<h2 id="a-member-at-the-desk"><button type="button" class="ghg-toggle" aria-expanded="false">Background: A member at the desk</button></h2>
+<h2 id="a-member-at-the-desk"><button type="button" class="ghg-toggle" aria-expanded="false">Background: <bdi>A member at the desk</bdi></button></h2>
 <div class="ghg-content" hidden>
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span>a member named <span class="ghg-parameter">&#34;Ana&#34;</span> with card number <span class="ghg-number">1024</span></li>
@@ -119,7 +119,7 @@ what &#34;Scenario&#34;, &#34;Scenario Outline&#34; and &#34;Examples&#34; mean.
 </div>
 </div>
 <div class="ghg-block ghg-scenario">
-<h2 id="booking-a-free-room"><button type="button" class="ghg-toggle" aria-expanded="true">Example: Booking a free room</button></h2>
+<h2 id="booking-a-free-room"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: <bdi>Booking a free room</bdi> (written as <bdi>Example</bdi>)</button></h2>
 <div class="ghg-content">
 <div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
 <h3 id="booking-a-free-room_background_1"><button type="button" class="ghg-toggle" aria-expanded="true">From the background</button></h3>
@@ -138,7 +138,7 @@ what &#34;Scenario&#34;, &#34;Scenario Outline&#34; and &#34;Examples&#34; mean.
 </div>
 </div>
 <div class="ghg-block ghg-scenario">
-<h2 id="booking-a-room-someone-else-holds"><button type="button" class="ghg-toggle" aria-expanded="true">Example: Booking a room someone else holds</button></h2>
+<h2 id="booking-a-room-someone-else-holds"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: <bdi>Booking a room someone else holds</bdi> (written as <bdi>Example</bdi>)</button></h2>
 <div class="ghg-content">
 <div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
 <h3 id="booking-a-room-someone-else-holds_background_1"><button type="button" class="ghg-toggle" aria-expanded="true">From the background</button></h3>
@@ -157,7 +157,7 @@ what &#34;Scenario&#34;, &#34;Scenario Outline&#34; and &#34;Examples&#34; mean.
 </div>
 </div>
 <div class="ghg-block ghg-scenario">
-<h2 id="how-long-a-booking-lasts"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario Template: How long a booking lasts</button></h2>
+<h2 id="how-long-a-booking-lasts"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario outline: <bdi>How long a booking lasts</bdi> (written as <bdi>Scenario Template</bdi>)</button></h2>
 <div class="ghg-content">
 <div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
 <h3 id="how-long-a-booking-lasts_background_1"><button type="button" class="ghg-toggle" aria-expanded="true">From the background</button></h3>
@@ -173,9 +173,10 @@ what &#34;Scenario&#34;, &#34;Scenario Outline&#34; and &#34;Examples&#34; mean.
 <li><span class="ghg-keyword">When </span><span class="ghg-parameter">&#34;Ana&#34;</span> books <span class="ghg-parameter">&#34;<span class="ghg-placeholder">&#60;room&#62;</span>&#34;</span> at <span class="ghg-number">10</span>:<span class="ghg-number">00</span></li>
 <li><span class="ghg-keyword">Then </span><span class="ghg-parameter">&#34;<span class="ghg-placeholder">&#60;room&#62;</span>&#34;</span> is booked until <span class="ghg-placeholder">&#60;until&#62;</span></li>
 </ol>
-<div class="ghg-block ghg-examples">
-<h3 id="small-rooms"><button type="button" class="ghg-toggle" aria-expanded="true">Scenarios: Small rooms</button></h3>
-<div class="ghg-content">
+<p class="ghg-runs">Runs once for each row of these examples:</p>
+<ul class="ghg-examples-list" role="list">
+<li id="small-rooms" class="ghg-block ghg-examples"><button type="button" class="ghg-toggle" aria-expanded="false">Examples: <bdi>Small rooms</bdi> (written as <bdi>Scenarios</bdi>)</button>
+<div class="ghg-content" hidden>
 <table class="ghg-table">
 <thead>
 <tr><th scope="col">room</th><th scope="col">until</th></tr>
@@ -185,11 +186,9 @@ what &#34;Scenario&#34;, &#34;Scenario Outline&#34; and &#34;Examples&#34; mean.
 <tr><td>Attic</td><td>11:00</td></tr>
 </tbody>
 </table>
-</div>
-</div>
-<div class="ghg-block ghg-examples">
-<h3 id="large-rooms"><button type="button" class="ghg-toggle" aria-expanded="true">Scenarios: Large rooms</button></h3>
-<div class="ghg-content">
+</div></li>
+<li id="large-rooms" class="ghg-block ghg-examples"><button type="button" class="ghg-toggle" aria-expanded="false">Examples: <bdi>Large rooms</bdi> (written as <bdi>Scenarios</bdi>)</button>
+<div class="ghg-content" hidden>
 <table class="ghg-table">
 <thead>
 <tr><th scope="col">room</th><th scope="col">until</th></tr>
@@ -198,8 +197,8 @@ what &#34;Scenario&#34;, &#34;Scenario Outline&#34; and &#34;Examples&#34; mean.
 <tr><td>Hall</td><td>12:00</td></tr>
 </tbody>
 </table>
-</div>
-</div>
+</div></li>
+</ul>
 <div class="ghg-block ghg-examples-as-scenarios">
 <h3 id="how-long-a-booking-lasts_scenarios"><button type="button" class="ghg-toggle" aria-expanded="false">Examples as scenarios: <bdi>How long a booking lasts</bdi></button></h3>
 <div class="ghg-content" hidden>

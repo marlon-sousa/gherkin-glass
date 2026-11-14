@@ -79,7 +79,7 @@
 <nav class="ghg-breadcrumb" aria-label="Breadcrumb">
 <ol>
 <li><a href="index.html">Feature files</a></li>
-<li><a href="outlines.html" aria-current="page">Feature: Withdraw cash at the counter</a></li>
+<li><a href="outlines.html" aria-current="page">Feature: <bdi>Withdraw cash at the counter</bdi></a></li>
 </ol>
 </nav>
 <form class="ghg-search" role="search" data-root="" data-shown="50" data-loading="Loading search." data-failed="Search could not be loaded." data-none="No results." data-count="Results: {count}." data-count-limited="Results: {count}. The first 50 are listed." data-no-name="no name" data-feature="{name}, feature" data-rule="{name}, rule in {feature}" data-scenario="{name}, scenario in {feature}" data-scenario-in-rule="{name}, scenario in {rule}, {feature}" data-scenario-outline="{name}, scenario outline in {feature}" data-scenario-outline-in-rule="{name}, scenario outline in {rule}, {feature}">
@@ -88,15 +88,15 @@
 <ol class="ghg-search-results" hidden></ol>
 </form>
 <main id="ghg_main">
-<h1>Feature: Withdraw cash at the counter</h1>
+<h1>Feature: <bdi>Withdraw cash at the counter</bdi></h1>
 <div class="ghg-description">
 <p>Outlines, and the scenarios their examples produce.</p>
 </div>
 <nav class="ghg-contents" aria-label="Contents">
 <ul>
-<li><a href="#withdraw-cash">Scenario Outline: Withdraw cash</a></li>
-<li><a href="#scenario-outline">Scenario Outline</a></li>
-<li><a href="#nothing-to-produce">Scenario Outline: Nothing to produce</a></li>
+<li><a href="#withdraw-cash">Scenario outline: <bdi>Withdraw cash</bdi></a></li>
+<li><a href="#scenario-outline">Scenario outline</a></li>
+<li><a href="#nothing-to-produce">Scenario outline: <bdi>Nothing to produce</bdi></a></li>
 </ul>
 </nav>
 <div class="ghg-controls">
@@ -104,7 +104,7 @@
 <button type="button" class="ghg-expand-all">Expand all</button>
 </div>
 <div class="ghg-block ghg-scenario">
-<h2 id="withdraw-cash"><button type="button" class="ghg-toggle" aria-expanded="false">Scenario Outline: Withdraw cash</button></h2>
+<h2 id="withdraw-cash"><button type="button" class="ghg-toggle" aria-expanded="false">Scenario outline: <bdi>Withdraw cash</bdi></button></h2>
 <div class="ghg-content" hidden>
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span>a balance of <span class="ghg-placeholder">&#60;balance&#62;</span></li>
@@ -124,9 +124,10 @@
 <pre>Withdrawn: &#60;amount&#62;</pre>
 </figure></li>
 </ol>
-<div class="ghg-block ghg-examples">
-<h3 id="small"><button type="button" class="ghg-toggle" aria-expanded="true">Examples: Small</button></h3>
-<div class="ghg-content">
+<p class="ghg-runs">Runs once for each row of these examples:</p>
+<ul class="ghg-examples-list" role="list">
+<li id="small" class="ghg-block ghg-examples"><button type="button" class="ghg-toggle" aria-expanded="false">Examples: <bdi>Small</bdi></button>
+<div class="ghg-content" hidden>
 <table class="ghg-table">
 <thead>
 <tr><th scope="col">amount</th><th scope="col">balance</th><th scope="col">left</th><th scope="col">format</th></tr>
@@ -136,11 +137,9 @@
 <tr><td>20</td><td>100</td><td>80</td><td>text</td></tr>
 </tbody>
 </table>
-</div>
-</div>
-<div class="ghg-block ghg-examples">
-<h3 id="large"><button type="button" class="ghg-toggle" aria-expanded="true">Examples: Large</button></h3>
-<div class="ghg-content">
+</div></li>
+<li id="large" class="ghg-block ghg-examples"><button type="button" class="ghg-toggle" aria-expanded="false">Examples: <bdi>Large</bdi></button>
+<div class="ghg-content" hidden>
 <table class="ghg-table">
 <thead>
 <tr><th scope="col">amount</th><th scope="col">balance</th><th scope="col">left</th><th scope="col">format</th></tr>
@@ -149,8 +148,16 @@
 <tr><td>500</td><td>1000</td><td>500</td><td>json</td></tr>
 </tbody>
 </table>
-</div>
-</div>
+</div></li>
+<li id="none-yet" class="ghg-block ghg-examples"><button type="button" class="ghg-toggle" aria-expanded="false">Examples: <bdi>None yet</bdi>: empty</button>
+<div class="ghg-content" hidden>
+<table class="ghg-table">
+<thead>
+<tr><th scope="col">amount</th><th scope="col">balance</th><th scope="col">left</th><th scope="col">format</th></tr>
+</thead>
+</table>
+</div></li>
+</ul>
 <div class="ghg-block ghg-examples-as-scenarios">
 <h3 id="withdraw-cash_scenarios"><button type="button" class="ghg-toggle" aria-expanded="false">Examples as scenarios: <bdi>Withdraw cash</bdi></button></h3>
 <div class="ghg-content" hidden>
@@ -228,14 +235,15 @@
 </div>
 </div>
 <div class="ghg-block ghg-scenario">
-<h2 id="scenario-outline"><button type="button" class="ghg-toggle" aria-expanded="false">Scenario Outline</button></h2>
+<h2 id="scenario-outline"><button type="button" class="ghg-toggle" aria-expanded="false">Scenario outline</button></h2>
 <div class="ghg-content" hidden>
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span><span class="ghg-placeholder">&#60;x&#62;</span> and <span class="ghg-placeholder">&#60;y&#62;</span></li>
 </ol>
-<div class="ghg-block ghg-examples">
-<h3 id="examples"><button type="button" class="ghg-toggle" aria-expanded="true">Examples</button></h3>
-<div class="ghg-content">
+<p class="ghg-runs">Runs once for each row of these examples:</p>
+<ul class="ghg-examples-list" role="list">
+<li id="examples" class="ghg-block ghg-examples"><button type="button" class="ghg-toggle" aria-expanded="false">Examples</button>
+<div class="ghg-content" hidden>
 <table class="ghg-table">
 <thead>
 <tr><th scope="col">x</th><th scope="col">y</th><th scope="col">x</th></tr>
@@ -244,13 +252,13 @@
 <tr><td>1</td><td>&#60;x&#62;</td><td>3</td></tr>
 </tbody>
 </table>
-</div>
-</div>
+</div></li>
+</ul>
 <div class="ghg-block ghg-examples-as-scenarios">
-<h3 id="scenario-outline_scenarios"><button type="button" class="ghg-toggle" aria-expanded="false">Examples as scenarios: <bdi>Scenario Outline</bdi></button></h3>
+<h3 id="scenario-outline_scenarios"><button type="button" class="ghg-toggle" aria-expanded="false">Examples as scenarios: Scenario outline</button></h3>
 <div class="ghg-content" hidden>
 <div class="ghg-block ghg-scenario">
-<h4 id="scenario-outline-row-1"><button type="button" class="ghg-toggle" aria-expanded="false"><bdi>Scenario Outline</bdi> (<bdi>x</bdi>: <bdi>1</bdi>, <bdi>y</bdi>: <bdi>&#60;x&#62;</bdi>, <bdi>x</bdi>: <bdi>3</bdi>)</button></h4>
+<h4 id="scenario-outline-row-1"><button type="button" class="ghg-toggle" aria-expanded="false">Scenario outline (<bdi>x</bdi>: <bdi>1</bdi>, <bdi>y</bdi>: <bdi>&#60;x&#62;</bdi>, <bdi>x</bdi>: <bdi>3</bdi>)</button></h4>
 <div class="ghg-content" hidden>
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span><span class="ghg-number">1</span> and &#60;x&#62;</li>
@@ -262,26 +270,24 @@
 </div>
 </div>
 <div class="ghg-block ghg-scenario">
-<h2 id="nothing-to-produce"><button type="button" class="ghg-toggle" aria-expanded="false">Scenario Outline: Nothing to produce</button></h2>
+<h2 id="nothing-to-produce"><button type="button" class="ghg-toggle" aria-expanded="false">Scenario outline: <bdi>Nothing to produce</bdi></button></h2>
 <div class="ghg-content" hidden>
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span><span class="ghg-placeholder">&#60;x&#62;</span></li>
 </ol>
-<div class="ghg-block ghg-examples">
-<h3 id="examples-2"><button type="button" class="ghg-toggle" aria-expanded="true">Examples</button></h3>
-<div class="ghg-content">
+<ul class="ghg-examples-list" role="list">
+<li id="examples-2" class="ghg-block ghg-examples"><button type="button" class="ghg-toggle" aria-expanded="false">Examples: empty</button>
+<div class="ghg-content" hidden>
 <table class="ghg-table">
 <thead>
 <tr><th scope="col">x</th></tr>
 </thead>
 </table>
-</div>
-</div>
-<div class="ghg-block ghg-examples">
-<h3 id="examples-3"><button type="button" class="ghg-toggle" aria-expanded="true">Examples</button></h3>
-<div class="ghg-content">
-</div>
-</div>
+</div></li>
+<li id="examples-3" class="ghg-block ghg-examples"><button type="button" class="ghg-toggle" aria-expanded="false">Examples: empty</button>
+<div class="ghg-content" hidden>
+</div></li>
+</ul>
 </div>
 </div>
 </main>

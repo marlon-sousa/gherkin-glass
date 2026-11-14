@@ -79,7 +79,7 @@
 <nav class="ghg-breadcrumb" aria-label="Breadcrumb">
 <ol>
 <li><a href="index.html">Tagged suite</a></li>
-<li><a href="accounts.html" aria-current="page">Feature: Accounts</a></li>
+<li><a href="accounts.html" aria-current="page">Feature: <bdi>Accounts</bdi></a></li>
 </ol>
 </nav>
 <form class="ghg-search" role="search" data-root="" data-shown="50" data-loading="Loading search." data-failed="Search could not be loaded." data-none="No results." data-count="Results: {count}." data-count-limited="Results: {count}. The first 50 are listed." data-no-name="no name" data-feature="{name}, feature" data-rule="{name}, rule in {feature}" data-scenario="{name}, scenario in {feature}" data-scenario-in-rule="{name}, scenario in {rule}, {feature}" data-scenario-outline="{name}, scenario outline in {feature}" data-scenario-outline-in-rule="{name}, scenario outline in {rule}, {feature}">
@@ -88,7 +88,7 @@
 <ol class="ghg-search-results" hidden></ol>
 </form>
 <main id="ghg_main">
-<h1>Feature: Accounts</h1>
+<h1>Feature: <bdi>Accounts</bdi></h1>
 <ul class="ghg-tags">
 <li><a href="tags/slow.html">@Slow</a></li>
 <li><a href="tags/slow-2.html">@slow</a></li>
@@ -99,22 +99,28 @@
 </div>
 <nav class="ghg-contents" aria-label="Contents">
 <ul>
-<li><a href="#open-an-account">Scenario: Open an account</a></li>
-<li><a href="#close-count-accounts">Scenario Outline: Close &#60;count&#62; accounts</a></li>
-<li><a href="#joint-accounts">Rule: Joint accounts</a>
+<li><a href="#outside_rules">Outside any rule</a>
 <ul>
-<li><a href="#open-a-joint-account">Scenario: Open a joint account</a></li>
-<li><a href="#close-a-joint-account">Scenario: Close a joint account</a></li>
+<li><a href="#open-an-account">Scenario: <bdi>Open an account</bdi></a></li>
+<li><a href="#close-count-accounts">Scenario outline: <bdi>Close &#60;count&#62; accounts</bdi></a></li>
 </ul></li>
-<li><a href="#nothing-yet">Rule: Nothing yet</a></li>
+<li><a href="#joint-accounts">Rule: <bdi>Joint accounts</bdi></a>
+<ul>
+<li><a href="#open-a-joint-account">Scenario: <bdi>Open a joint account</bdi></a></li>
+<li><a href="#close-a-joint-account">Scenario: <bdi>Close a joint account</bdi></a></li>
+</ul></li>
+<li><a href="#nothing-yet">Rule: <bdi>Nothing yet</bdi></a></li>
 </ul>
 </nav>
 <div class="ghg-controls">
 <button type="button" class="ghg-collapse-all">Collapse all</button>
 <button type="button" class="ghg-expand-all">Expand all</button>
 </div>
+<div class="ghg-block ghg-outside-rules">
+<h2 id="outside_rules"><button type="button" class="ghg-toggle" aria-expanded="true">Outside any rule</button></h2>
+<div class="ghg-content">
 <div class="ghg-block ghg-scenario">
-<h2 id="open-an-account"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: Open an account</button></h2>
+<h3 id="open-an-account"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: <bdi>Open an account</bdi></button></h3>
 <div class="ghg-content">
 <ul class="ghg-tags">
 <li><a href="tags/issue-12.html">@issue-12</a> <a class="ghg-tag-link" href="https://github.com/owner/repo/issues/12">Issue 12 on GitHub</a></li>
@@ -126,14 +132,15 @@
 </div>
 </div>
 <div class="ghg-block ghg-scenario">
-<h2 id="close-count-accounts"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario Outline: Close &#60;count&#62; accounts</button></h2>
+<h3 id="close-count-accounts"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario outline: <bdi>Close &#60;count&#62; accounts</bdi></button></h3>
 <div class="ghg-content">
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span><span class="ghg-placeholder">&#60;count&#62;</span> accounts</li>
 </ol>
-<div class="ghg-block ghg-examples">
-<h3 id="many"><button type="button" class="ghg-toggle" aria-expanded="true">Examples: Many</button></h3>
-<div class="ghg-content">
+<p class="ghg-runs">Runs once for each row of these examples:</p>
+<ul class="ghg-examples-list" role="list">
+<li id="many" class="ghg-block ghg-examples"><button type="button" class="ghg-toggle" aria-expanded="false">Examples: <bdi>Many</bdi></button>
+<div class="ghg-content" hidden>
 <ul class="ghg-tags">
 <li><a href="tags/ticket-%C3%A7-1-2.html">@ticket:ç/1#2</a> <a class="ghg-tag-link" href="https://example.com/tickets/%C3%A7/1%232?view=$full">Ticket ç/1#2</a></li>
 </ul>
@@ -145,23 +152,21 @@
 <tr><td>2</td></tr>
 </tbody>
 </table>
-</div>
-</div>
-<div class="ghg-block ghg-examples">
-<h3 id="none"><button type="button" class="ghg-toggle" aria-expanded="true">Examples: None</button></h3>
-<div class="ghg-content">
+</div></li>
+<li id="none" class="ghg-block ghg-examples"><button type="button" class="ghg-toggle" aria-expanded="false">Examples: <bdi>None</bdi>: empty</button>
+<div class="ghg-content" hidden>
 <table class="ghg-table">
 <thead>
 <tr><th scope="col">count</th></tr>
 </thead>
 </table>
-</div>
-</div>
+</div></li>
+</ul>
 <div class="ghg-block ghg-examples-as-scenarios">
-<h3 id="close-count-accounts_scenarios"><button type="button" class="ghg-toggle" aria-expanded="false">Examples as scenarios: <bdi>Close &#60;count&#62; accounts</bdi></button></h3>
+<h4 id="close-count-accounts_scenarios"><button type="button" class="ghg-toggle" aria-expanded="false">Examples as scenarios: <bdi>Close &#60;count&#62; accounts</bdi></button></h4>
 <div class="ghg-content" hidden>
 <div class="ghg-block ghg-scenario">
-<h4 id="close-count-accounts-row-1"><button type="button" class="ghg-toggle" aria-expanded="true"><bdi>Close &#60;count&#62; accounts</bdi> (<bdi>count</bdi>: <bdi>2</bdi>)</button></h4>
+<h5 id="close-count-accounts-row-1"><button type="button" class="ghg-toggle" aria-expanded="true"><bdi>Close &#60;count&#62; accounts</bdi> (<bdi>count</bdi>: <bdi>2</bdi>)</button></h5>
 <div class="ghg-content">
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span><span class="ghg-number">2</span> accounts</li>
@@ -172,14 +177,16 @@
 </div>
 </div>
 </div>
+</div>
+</div>
 <div class="ghg-block ghg-rule">
-<h2 id="joint-accounts"><button type="button" class="ghg-toggle" aria-expanded="true">Rule: Joint accounts</button></h2>
+<h2 id="joint-accounts"><button type="button" class="ghg-toggle" aria-expanded="true">Rule: <bdi>Joint accounts</bdi></button></h2>
 <div class="ghg-content">
 <ul class="ghg-tags">
 <li><a href="tags/issue-7.html">@issue-7</a> <a class="ghg-tag-link" href="https://github.com/owner/repo/issues/7">Issue 7 on GitHub</a></li>
 </ul>
 <div class="ghg-block ghg-scenario">
-<h3 id="open-a-joint-account"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: Open a joint account</button></h3>
+<h3 id="open-a-joint-account"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: <bdi>Open a joint account</bdi></button></h3>
 <div class="ghg-content">
 <ul class="ghg-tags">
 <li><a href="tags/issue-12.html">@issue-12</a> <a class="ghg-tag-link" href="https://github.com/owner/repo/issues/12">Issue 12 on GitHub</a></li>
@@ -190,7 +197,7 @@
 </div>
 </div>
 <div class="ghg-block ghg-scenario">
-<h3 id="close-a-joint-account"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: Close a joint account</button></h3>
+<h3 id="close-a-joint-account"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: <bdi>Close a joint account</bdi></button></h3>
 <div class="ghg-content">
 <ol class="ghg-steps">
 <li><span class="ghg-keyword">Given </span>two customers</li>
@@ -200,7 +207,7 @@
 </div>
 </div>
 <div class="ghg-block ghg-rule">
-<h2 id="nothing-yet"><button type="button" class="ghg-toggle" aria-expanded="true">Rule: Nothing yet</button></h2>
+<h2 id="nothing-yet"><button type="button" class="ghg-toggle" aria-expanded="true">Rule: <bdi>Nothing yet</bdi></button></h2>
 <div class="ghg-content">
 <ul class="ghg-tags">
 <li><a href="tags/needs-db.html">@needs:db</a></li>

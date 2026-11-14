@@ -38,11 +38,15 @@ struct OnPage<'a> {
 }
 
 impl OnPage<'_> {
-    /// The documents of `node`, a block directly in the page: a scenario's, or a rule's then its
-    /// scenarios'; none for a background.
+    /// The documents of `node`, a block directly in the page: a scenario's, those of the scenarios
+    /// outside every rule in their block, or a rule's then its scenarios'; none for a background.
     fn block(&self, node: SiteTreeNode<'_>) -> Vec<SearchDocument> {
         match node.value() {
             SiteNode::Scenario(scenario) => vec![self.scenario(scenario, node, None)],
+            SiteNode::OutsideRules(_) => node
+                .children()
+                .flat_map(|child| self.block(child))
+                .collect(),
             SiteNode::Rule(rule) => self.rule(rule, node),
             _ => Vec::new(),
         }
