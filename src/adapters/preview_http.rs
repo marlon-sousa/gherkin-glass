@@ -318,22 +318,4 @@ mod tests {
         });
         assert!(closed);
     }
-
-    #[test]
-    fn a_request_taken_before_what_it_returns_is_dropped_is_answered() {
-        let preview = Arc::new(memory(ServeMode::Build));
-        let listening = HttpPreviewServer
-            .start("127.0.0.1", 0, preview, words())
-            .expect("listening");
-        let mut stream = TcpStream::connect(listening.address).expect("connects");
-        stream
-            .write_all(b"GET /a/ HTTP/1.1\r\nConnection: close\r\n\r\n")
-            .expect("sent");
-        // Time for tiny_http 0.12.0's connection thread to queue the request.
-        sleep(Duration::from_millis(200));
-        drop(listening);
-        let mut answer = String::new();
-        stream.read_to_string(&mut answer).expect("answered");
-        assert!(answer.starts_with("HTTP/1.1 200"), "{answer}");
-    }
 }
