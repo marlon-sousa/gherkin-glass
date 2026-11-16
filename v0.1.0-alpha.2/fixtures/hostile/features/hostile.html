@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Feature: Hostile &#60;script&#62;alert(&#34;feature&#34;)&#60;/script&#62; &#38; &#39;friends&#39;, fixtures/hostile/features/hostile.feature</title>
+<script>try{var t=localStorage.getItem("gherkin-glass:theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}</script>
+<style>
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+  --ghg-background: #ffffff;
+  --ghg-surface: #f2f2f2;
+  --ghg-text: #1a1a1a;
+  --ghg-muted: #474747;
+  --ghg-border: #757575;
+  --ghg-accent: #0b4f9c;
+  --ghg-keyword: #6a1b9a;
+  --ghg-parameter: #14521a;
+  --ghg-number: #8a3000;
+  --ghg-placeholder: #00575e;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ghg-background: #141414;
+    --ghg-surface: #222222;
+    --ghg-text: #ececec;
+    --ghg-muted: #c4c4c4;
+    --ghg-border: #8f8f8f;
+    --ghg-accent: #8cc4ff;
+    --ghg-keyword: #e1b3ff;
+    --ghg-parameter: #9fe0a8;
+    --ghg-number: #ffbf8a;
+    --ghg-placeholder: #7fdbe0;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ghg-background: #141414;
+  --ghg-surface: #222222;
+  --ghg-text: #ececec;
+  --ghg-muted: #c4c4c4;
+  --ghg-border: #8f8f8f;
+  --ghg-accent: #8cc4ff;
+  --ghg-keyword: #e1b3ff;
+  --ghg-parameter: #9fe0a8;
+  --ghg-number: #ffbf8a;
+  --ghg-placeholder: #7fdbe0;
+}
+</style>
+<link rel="stylesheet" href="../../../assets/gherkin-glass.css">
+<link rel="icon" href="../../../assets/gherkin-glass.svg" type="image/svg+xml">
+<script type="module" src="../../../assets/gherkin-glass.js"></script>
+</head>
+<body>
+<dialog id="ghg_from_disk" class="ghg-from-disk" tabindex="-1" aria-labelledby="ghg_from_disk_title" aria-describedby="ghg_from_disk_text">
+<p id="ghg_from_disk_title" class="ghg-from-disk-title">Opened from disk</p>
+<p id="ghg_from_disk_text">This site is meant to be served, so its folder tree and search do not work when a page is opened from disk. Run ghg serve in the folder of your ghg.toml, or serve the site&#39;s folder with any web server, then open the address it gives.</p>
+<form method="dialog"><button>I agree</button></form>
+</dialog>
+<script>if(location.protocol==="file:"){let d=document.getElementById("ghg_from_disk");d.showModal();d.focus()}</script>
+<a class="ghg-skip" href="#ghg_main">Skip to content</a>
+<div class="ghg-options">
+<span class="ghg-option ghg-tree-choice"><input type="checkbox" id="ghg_show_tree" class="ghg-show-tree" aria-controls="ghg_tree" checked> <label for="ghg_show_tree">Show the folder tree</label></span>
+<button type="button" class="ghg-tree-button" aria-expanded="false" aria-controls="ghg_tree">Folder tree</button>
+<fieldset class="ghg-theme">
+<legend>Theme</legend>
+<label><input type="radio" name="ghg-theme" value="system" checked> System</label>
+<label><input type="radio" name="ghg-theme" value="light"> Light</label>
+<label><input type="radio" name="ghg-theme" value="dark"> Dark</label>
+</fieldset>
+</div>
+<div class="ghg-layout">
+<nav id="ghg_tree" class="ghg-tree" aria-label="Folder tree"></nav>
+<div class="ghg-page">
+<nav class="ghg-breadcrumb" aria-label="Breadcrumb">
+<ol>
+<li><a href="../../../index.html">gherkin-glass examples</a></li>
+<li><a href="../../index.html">fixtures</a></li>
+<li><a href="../index.html">hostile</a></li>
+<li><a href="index.html">features</a></li>
+<li><a href="hostile.html" aria-current="page">Feature: <bdi>Hostile &#60;script&#62;alert(&#34;feature&#34;)&#60;/script&#62; &#38; &#39;friends&#39;</bdi></a></li>
+</ol>
+</nav>
+<form class="ghg-search" role="search" data-root="../../../" data-shown="50" data-loading="Loading search." data-failed="Search could not be loaded." data-none="No results." data-count="Results: {count}." data-count-limited="Results: {count}. The first 50 are listed." data-no-name="no name" data-feature="{name}, feature" data-rule="{name}, rule in {feature}" data-scenario="{name}, scenario in {feature}" data-scenario-in-rule="{name}, scenario in {rule}, {feature}" data-scenario-outline="{name}, scenario outline in {feature}" data-scenario-outline-in-rule="{name}, scenario outline in {rule}, {feature}" data-background="{name}, background in {feature}" data-background-in-rule="{name}, background in {rule}, {feature}" data-examples="{name}, examples in {outline}, {feature}" data-examples-in-rule="{name}, examples in {outline}, {rule}, {feature}" data-numbered-examples="Examples {place}" data-all-results="All results for &#34;{words}&#34;">
+<label>Search features, rules and scenarios <input type="search" class="ghg-search-field" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="ghg_search_results" autocomplete="off" spellcheck="false" enterkeyhint="search"></label>
+<a class="ghg-search-all" href="../../../search.html" hidden></a>
+<p class="ghg-search-status" role="status"></p>
+<ol class="ghg-search-results" id="ghg_search_results" role="listbox" aria-label="Search results" hidden></ol>
+</form>
+<main id="ghg_main">
+<h1>Feature: <bdi>Hostile &#60;script&#62;alert(&#34;feature&#34;)&#60;/script&#62; &#38; &#39;friends&#39;</bdi></h1>
+<ul class="ghg-tags">
+<li><a href="../../../tags/b-feature-tag-b.html">@&#60;b&#62;feature-tag&#60;/b&#62;</a></li>
+<li><a href="../../../tags/ticket-script-alert-ticket-script.html">@ticket:&#34;&#62;&#60;script&#62;alert(&#39;ticket&#39;)&#60;/script&#62;</a></li>
+</ul>
+<div class="ghg-description">
+<p>A description with &#60;img src=x onerror=&#34;alert(&#39;description&#39;)&#34;&#62; &#38; &#60;b&#62;bold&#60;/b&#62; &#38;amp; &#38;#60;i&#38;#62;</p>
+</div>
+<nav class="ghg-contents" aria-label="Contents">
+<ul>
+<li><a href="#outside_rules">Outside any rule</a>
+<ul>
+<li><a href="#scenario-img-src-x-onerror-alert-scenario-quoted">Scenario: <bdi>Scenario &#60;img src=x onerror=alert(&#39;scenario&#39;)&#62; &#38; &#34;quoted&#34;</bdi></a></li>
+</ul></li>
+<li><a href="#rule-svg-onload-alert-rule-svg">Rule: <bdi>Rule &#60;svg onload=&#34;alert(&#39;rule&#39;)&#34;&#62;&#60;/svg&#62;</bdi></a>
+<ul>
+<li><a href="#outline-object-data-x-object-for-who">Scenario outline: <bdi>Outline &#60;object data=&#34;x&#34;&#62;&#60;/object&#62; for &#60;who&#62;</bdi></a></li>
+</ul></li>
+</ul>
+</nav>
+<div class="ghg-controls">
+<button type="button" class="ghg-collapse-all">Collapse all</button>
+<button type="button" class="ghg-expand-all">Expand all</button>
+<label class="ghg-option"><input type="checkbox" class="ghg-inline-backgrounds" autocomplete="off" checked> Show backgrounds inside each scenario</label>
+</div>
+<div class="ghg-block ghg-background" data-expanded-when-unchecked="true">
+<h2 id="setup-iframe-src-javascript-alert-background-iframe"><button type="button" class="ghg-toggle" aria-expanded="false">Background: <bdi>Setup &#60;iframe src=&#34;javascript:alert(&#39;background&#39;)&#34;&#62;&#60;/iframe&#62;</bdi></button></h2>
+<div class="ghg-content" hidden>
+<div class="ghg-description">
+<p>A background&#39;s &#60;video src=x onerror=&#34;alert(&#39;background description&#39;)&#34;&#62;&#60;/video&#62;</p>
+</div>
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>a user named <span class="ghg-parameter">&#34;&#60;script&#62;alert(&#39;parameter&#39;)&#60;/script&#62;&#34;</span></li>
+</ol>
+</div>
+</div>
+<div class="ghg-block ghg-outside-rules">
+<h2 id="outside_rules"><button type="button" class="ghg-toggle" aria-expanded="true">Outside any rule</button></h2>
+<div class="ghg-content">
+<div class="ghg-block ghg-scenario">
+<h3 id="scenario-img-src-x-onerror-alert-scenario-quoted"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: <bdi>Scenario &#60;img src=x onerror=alert(&#39;scenario&#39;)&#62; &#38; &#34;quoted&#34;</bdi></button></h3>
+<div class="ghg-content">
+<ul class="ghg-tags">
+<li><a href="../../../tags/i-scenario-tag-i.html">@&#60;i&#62;scenario-tag&#60;/i&#62;</a></li>
+</ul>
+<div class="ghg-description">
+<p>Line one of &#60;a href=&#34;javascript:alert(&#39;scenario description&#39;)&#34;&#62;a link&#60;/a&#62;<br>
+Line two with &#60;!-- a comment --&#62; and ]]&#62;</p>
+</div>
+<div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
+<h4 id="scenario-img-src-x-onerror-alert-scenario-quoted_background_1"><button type="button" class="ghg-toggle" aria-expanded="true">From the background</button></h4>
+<div class="ghg-content">
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>a user named <span class="ghg-parameter">&#34;&#60;script&#62;alert(&#39;parameter&#39;)&#60;/script&#62;&#34;</span></li>
+</ol>
+</div>
+</div>
+<h4 class="ghg-steps-heading">From the scenario</h4>
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">When </span>the text is &#60;i&#62;italic&#60;/i&#62; &#38; <span class="ghg-parameter">&#34;&#60;b&#62;bold&#60;/b&#62;&#34;</span> with &#39;apostrophes&#39; and <span class="ghg-number">3</span> &#60;u&#62;numbers&#60;/u&#62;</li>
+<li><span class="ghg-keyword">Then </span>the table reads
+<table class="ghg-table">
+<thead>
+<tr><th scope="col">&#60;th&#62;head&#60;/th&#62;</th><th scope="col">name &#38; &#39;more&#39;</th></tr>
+</thead>
+<tbody>
+<tr><td>&#60;script&#62;alert(&#39;cell&#39;)&#60;/script&#62;</td><td>a | b &#60;br&#62; &#34;c&#34;</td></tr>
+</tbody>
+</table></li>
+<li><span class="ghg-keyword">And </span>the doc string reads
+<figure class="ghg-doc-string">
+<figcaption>&#60;i&#62;media&#60;/i&#62;</figcaption>
+<pre>&#60;script&#62;alert(&#39;doc string&#39;)&#60;/script&#62;
+&#60;/pre&#62;&#60;b&#62;outside the pre&#60;/b&#62;</pre>
+</figure></li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div class="ghg-block ghg-rule">
+<h2 id="rule-svg-onload-alert-rule-svg"><button type="button" class="ghg-toggle" aria-expanded="true">Rule: <bdi>Rule &#60;svg onload=&#34;alert(&#39;rule&#39;)&#34;&#62;&#60;/svg&#62;</bdi></button></h2>
+<div class="ghg-content">
+<div class="ghg-description">
+<p>&#60;a href=&#34;javascript:alert(&#39;rule description&#39;)&#34;&#62;A rule&#39;s link&#60;/a&#62;</p>
+</div>
+<div class="ghg-block ghg-background" data-expanded-when-unchecked="true">
+<h3 id="rules-style-body-display-none-style"><button type="button" class="ghg-toggle" aria-expanded="false">Background: <bdi>Rule&#39;s &#60;style&#62;body { display: none }&#60;/style&#62;</bdi></button></h3>
+<div class="ghg-content" hidden>
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>the style is <span class="ghg-parameter">&#34;&#60;style&#62;body { display: none }&#60;/style&#62;&#34;</span></li>
+</ol>
+</div>
+</div>
+<div class="ghg-block ghg-scenario">
+<h3 id="outline-object-data-x-object-for-who"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario outline: <bdi>Outline &#60;object data=&#34;x&#34;&#62;&#60;/object&#62; for &#60;who&#62;</bdi></button></h3>
+<div class="ghg-content">
+<ul class="ghg-tags">
+<li><a href="../../../tags/em-outline-tag-em.html">@&#60;em&#62;outline-tag&#60;/em&#62;</a></li>
+</ul>
+<div class="ghg-description">
+<p>An outline&#39;s &#60;embed src=&#34;javascript:alert(&#39;outline description&#39;)&#34;&#62;</p>
+</div>
+<div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
+<h4 id="outline-object-data-x-object-for-who_background_1"><button type="button" class="ghg-toggle" aria-expanded="true">From the background</button></h4>
+<div class="ghg-content">
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>a user named <span class="ghg-parameter">&#34;&#60;script&#62;alert(&#39;parameter&#39;)&#60;/script&#62;&#34;</span></li>
+</ol>
+</div>
+</div>
+<div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
+<h4 id="outline-object-data-x-object-for-who_background_2"><button type="button" class="ghg-toggle" aria-expanded="true">From the rule&#39;s background</button></h4>
+<div class="ghg-content">
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>the style is <span class="ghg-parameter">&#34;&#60;style&#62;body { display: none }&#60;/style&#62;&#34;</span></li>
+</ol>
+</div>
+</div>
+<h4 class="ghg-steps-heading">From the scenario</h4>
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span><span class="ghg-parameter">&#34;<span class="ghg-placeholder">&#60;who&#62;</span>&#34;</span> signs in as <span class="ghg-placeholder">&#60;who&#62;</span></li>
+</ol>
+<p id="outline-object-data-x-object-for-who_scenarios" class="ghg-runs">Runs once for each row of these examples:</p>
+<ul class="ghg-examples-list">
+<li id="examples-textarea-written-textarea" class="ghg-block ghg-examples"><button type="button" class="ghg-toggle" aria-expanded="false">Examples: <bdi>Examples &#60;textarea&#62;written&#60;/textarea&#62;</bdi></button>
+<div class="ghg-content" hidden>
+<ul class="ghg-tags">
+<li><a href="../../../tags/s-examples-tag-s.html">@&#60;s&#62;examples-tag&#60;/s&#62;</a></li>
+</ul>
+<div class="ghg-description">
+<p>These examples&#39; &#60;details open ontoggle=&#34;alert(&#39;examples description&#39;)&#34;&#62;</p>
+</div>
+<table class="ghg-table">
+<thead>
+<tr><th scope="col">who</th></tr>
+</thead>
+<tbody>
+<tr><td>&#60;script&#62;alert(&#39;row&#39;)&#60;/script&#62;</td></tr>
+<tr><td>&#60;img src=x onerror=&#34;alert(&#39;row&#39;)&#34;&#62;</td></tr>
+</tbody>
+</table>
+<div class="ghg-block ghg-examples-as-scenarios">
+<h4 id="examples-textarea-written-textarea_runs"><button type="button" class="ghg-toggle" aria-expanded="false">Runs, one per row</button></h4>
+<div class="ghg-content" hidden>
+<div class="ghg-block ghg-scenario">
+<h5 id="outline-object-data-x-object-for-who-row-1"><button type="button" class="ghg-toggle" aria-expanded="true"><bdi>Outline &#60;object data=&#34;x&#34;&#62;&#60;/object&#62; for &#60;who&#62;</bdi> (<bdi>who</bdi>: <bdi>&#60;script&#62;alert(&#39;row&#39;)&#60;/script&#62;</bdi>)</button></h5>
+<div class="ghg-content">
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span><span class="ghg-parameter">&#34;&#60;script&#62;alert(&#39;row&#39;)&#60;/script&#62;&#34;</span> signs in as &#60;script&#62;alert(&#39;row&#39;)&#60;/script&#62;</li>
+</ol>
+</div>
+</div>
+<div class="ghg-block ghg-scenario">
+<h5 id="outline-object-data-x-object-for-who-row-2"><button type="button" class="ghg-toggle" aria-expanded="true"><bdi>Outline &#60;object data=&#34;x&#34;&#62;&#60;/object&#62; for &#60;who&#62;</bdi> (<bdi>who</bdi>: <bdi>&#60;img src=x onerror=&#34;alert(&#39;row&#39;)&#34;&#62;</bdi>)</button></h5>
+<div class="ghg-content">
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span><span class="ghg-parameter">&#34;&#60;img src=x onerror=&#34;</span>alert(&#39;row&#39;)<span class="ghg-parameter">&#34;&#62;&#34;</span> signs in as &#60;img src=x onerror=<span class="ghg-parameter">&#34;alert(&#39;row&#39;)&#34;</span>&#62;</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+</div></li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</main>
+<footer class="ghg-footer">
+<p>Built with <a href="https://github.com/marlon-sousa/gherkin-glass">gherkin-glass</a> 0.1.0-alpha.2</p>
+</footer>
+</div>
+</div>
+</body>
+</html>

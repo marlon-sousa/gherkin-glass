@@ -4,6 +4,11 @@
 /* The colours are the themes' tokens, --ghg-*, which every page defines in
    its head, since the accent colours are set for each site. */
 
+/* The content column stays in place whether a page scrolls or not. */
+html {
+  scrollbar-gutter: stable;
+}
+
 body {
   margin: 0;
   background: var(--ghg-background);
@@ -15,7 +20,11 @@ body {
 main {
   max-width: 60rem;
   margin: 0 auto;
-  padding: 1rem;
+  padding: 0 1rem 1rem;
+}
+
+main > :first-child {
+  margin-top: 1rem;
 }
 
 /* A link is underlined, so that colour is not all that tells it apart. */
@@ -135,6 +144,68 @@ h1, h2, h3, h4, h5 {
   margin: 0.5rem 0;
 }
 
+/* An outline's examples are list items, not headings: each reads as a block's
+   heading through its button, and keeps its bullet, which a screen reader
+   names, so that the next examples block is not taken for one of the runs
+   of the block before it. */
+.ghg-examples-list {
+  margin: 0.5rem 0;
+  padding-left: 1.25rem;
+}
+
+.ghg-examples-list > li {
+  margin: 0.5rem 0;
+}
+
+/* The button inherits the item's rule and indent, which the item already draws. */
+.ghg-examples-list > li > .ghg-toggle {
+  display: block;
+  border-left: 0;
+  padding-left: 0;
+  font-weight: bold;
+}
+
+/* The keyword the file writes, said once at the top of the block's content,
+   in a note, smaller and in the muted colour, which keeps the themes'
+   contrast; part of it is a button, drawn as a link, that opens the page's
+   dialog about it. */
+.ghg-keyword-note {
+  font-size: 0.9rem;
+  color: var(--ghg-muted);
+}
+
+/* A button lays out as one box, which starts a new line when it does not
+   fit; its text keeps the sentence's alignment rather than a button's. */
+.ghg-note-opener {
+  text-align: inherit;
+  font: inherit;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ghg-accent);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* A block with nothing to show keeps a block's rule, and its button, which
+   opens nothing, looks disabled: no arrow, its text where the others' text
+   starts, in normal weight rather than bold, so not by colour alone, and
+   dimmed with the muted text colour, which keeps the themes' contrast. */
+.ghg-examples-list > li:not(.ghg-block) {
+  border-left: 1px solid var(--ghg-border);
+  padding-left: 1rem;
+}
+
+.ghg-examples-list > li > .ghg-toggle[aria-disabled="true"] {
+  color: var(--ghg-muted);
+  font-weight: normal;
+  cursor: not-allowed;
+}
+
+.ghg-toggle[aria-disabled="true"]::before {
+  visibility: hidden;
+}
+
 pre {
   background: var(--ghg-surface);
   padding: 0.5rem;
@@ -148,12 +219,15 @@ figcaption {
 
 .ghg-controls {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 0.5rem;
   margin: 1rem 0;
 }
 
 .ghg-controls button,
-.ghg-from-disk button {
+.ghg-from-disk button,
+.ghg-dialog button {
   font: inherit;
   padding: 0.25rem 0.75rem;
   background: var(--ghg-surface);
@@ -179,7 +253,7 @@ figcaption {
   padding: 0;
 }
 
-.ghg-breadcrumb li + li::before {
+.ghg-breadcrumb li:not(:last-child)::after {
   content: "";
   display: inline-block;
   height: 0.8em;
@@ -221,7 +295,8 @@ figcaption {
   top: 0.5rem;
 }
 
-.ghg-from-disk {
+.ghg-from-disk,
+.ghg-dialog {
   max-width: 36rem;
   padding: 1rem 1.5rem;
   border: 2px solid var(--ghg-border);
@@ -229,7 +304,8 @@ figcaption {
   color: var(--ghg-text);
 }
 
-.ghg-from-disk::backdrop {
+.ghg-from-disk::backdrop,
+.ghg-dialog::backdrop {
   background: rgb(0 0 0 / 50%);
 }
 
@@ -237,16 +313,181 @@ figcaption {
   font-weight: bold;
 }
 
-.ghg-options {
-  padding: 0.5rem 1rem 0;
+.ghg-dialog-title {
+  margin-top: 0;
+  font-size: 1.25rem;
 }
 
-.ghg-theme {
-  display: inline-flex;
+/* The reader's options, a bar across the top of the page. */
+.ghg-options {
+  display: flex;
   flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.5rem;
+  padding: 0.5rem 1rem;
+  background: var(--ghg-surface);
+  border-bottom: 1px solid var(--ghg-border);
+}
+
+.ghg-show-tree {
+  accent-color: var(--ghg-accent);
+}
+
+/* The legend reads before its radio buttons, on their line. */
+.ghg-theme {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 0.25rem 1rem;
-  margin: 0 0 0 1rem;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.ghg-theme legend {
+  float: left;
+  padding: 0;
+  margin-right: 0.25rem;
+  font-weight: bold;
+}
+
+.ghg-tree-button {
+  display: none;
+  font: inherit;
+  padding: 0.25rem 0.75rem;
+  background: var(--ghg-background);
+  color: var(--ghg-text);
   border: 1px solid var(--ghg-border);
+  border-radius: 0.25rem;
+  cursor: pointer;
+}
+
+.ghg-tree-button::before {
+  content: "";
+  display: inline-block;
+  width: 0;
+  height: 0;
+  margin-right: 0.5em;
+  vertical-align: middle;
+  border-style: solid;
+  border-width: 0.4em 0 0.4em 0.6em;
+  border-color: transparent transparent transparent currentColor;
+  transition: transform 0.1s;
+}
+
+.ghg-tree-button[aria-expanded="true"]::before {
+  transform: rotate(90deg);
+}
+
+@media (forced-colors: active) {
+  .ghg-tree-button::before {
+    forced-color-adjust: none;
+    border-color: transparent transparent transparent ButtonText;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ghg-tree-button::before {
+    transition: none;
+  }
+}
+
+/* The search form and its results take the column of the breadcrumb and the content. */
+.ghg-search {
+  max-width: 60rem;
+  margin: 0 auto;
+  padding: 0.75rem 1rem 0;
+}
+
+.ghg-search-field {
+  font: inherit;
+  margin-left: 0.25rem;
+  width: 20rem;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* On the page of search results, the search box is in the content's column, under its heading. */
+.ghg-search-heading + .ghg-search {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* No margin while it is empty, until the reader searches, so that it takes no room. */
+.ghg-search-status {
+  margin: 0;
+}
+
+.ghg-search-status:not(:empty) {
+  margin-top: 0.5rem;
+}
+
+/* The page of search results' own status, between its search box and its results. */
+.ghg-results-status {
+  margin: 1rem 0 0;
+}
+
+/* The link to the page of search results, on a line of its own under the field. */
+.ghg-search-all:not([hidden]) {
+  display: block;
+  width: fit-content;
+  margin-top: 0.5rem;
+}
+
+.ghg-search-results {
+  margin: 0.5rem 0 0;
+  padding: 0.25rem;
+  list-style: none;
+  background: var(--ghg-surface);
+  border: 1px solid var(--ghg-border);
+}
+
+/* A line between results keeps those that wrap apart on a narrow window. */
+.ghg-search-results li {
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
+}
+
+.ghg-search-results li:not(:last-child) {
+  border-bottom: 1px solid var(--ghg-border);
+}
+
+/* The chosen result has its colours swapped and a ring inside its edge, so that colour is not
+   all that tells it apart. The ring and the line under it take its text's colour, which stands
+   out from its background as its text does, and the ring, inside the accent, does not look like
+   the ring of the focus. */
+.ghg-search-results li[aria-selected="true"] {
+  color: var(--ghg-background);
+  background: var(--ghg-accent);
+  border-color: var(--ghg-background);
+  outline: 2px solid var(--ghg-background);
+  outline-offset: -0.25rem;
+}
+
+/* On the page of search results, a matched word is bold on a shaded background, not only
+   coloured, and not underlined, so that it does not read as a link of its own. */
+.ghg-search-groups mark {
+  color: inherit;
+  background: var(--ghg-surface);
+  font-weight: bold;
+}
+
+.ghg-search-group > li {
+  margin: 0.75rem 0;
+}
+
+.ghg-search-group p {
+  margin: 0.25rem 0;
+}
+
+/* On a tag's page, a feature's heading shows its file's path smaller and muted;
+   the words read the same. */
+.ghg-tag-path {
+  font-size: 0.8em;
+  font-weight: normal;
+  color: var(--ghg-muted);
 }
 
 .ghg-theme input {
@@ -280,7 +521,27 @@ figcaption {
   min-width: 0;
 }
 
+/* A narrow window shows the button in place of the checkbox. */
 @media not all and (min-width: 48em) {
+  /* Two classes, to win over .ghg-option's display below. */
+  .ghg-option.ghg-tree-choice {
+    display: none;
+  }
+
+  .ghg-tree-button {
+    display: inline-block;
+  }
+
+  .ghg-search label {
+    display: block;
+  }
+
+  .ghg-search-field {
+    display: block;
+    width: 100%;
+    margin: 0.5rem 0 0;
+  }
+
   .ghg-layout {
     display: block;
   }
@@ -304,7 +565,8 @@ figcaption {
   padding-left: 1rem;
 }
 
-/* An item without a marker starts where the text of one with a marker does. */
+/* Every item's text starts at the same place, with a marker or without, and
+   its wrapped lines line up with its first. */
 .ghg-treeview [role="treeitem"] {
   display: block;
   padding: 0.125rem 0.25rem 0.125rem 1.75rem;
@@ -313,10 +575,6 @@ figcaption {
 
 .ghg-treeview [role="treeitem"]:hover {
   text-decoration: underline;
-}
-
-.ghg-treeview [role="treeitem"][aria-owns] {
-  padding-left: 0.25rem;
 }
 
 .ghg-treeview [aria-current="page"] {
@@ -328,6 +586,7 @@ figcaption {
   /* At least 24 by 24 pixels, as WCAG 2.2's target size asks. */
   width: 1.5rem;
   min-height: 1.5rem;
+  margin-left: -1.5rem;
   text-align: center;
   cursor: pointer;
 }
@@ -367,23 +626,46 @@ figcaption {
   gap: 0.25rem;
 }
 
-/* The steps a scenario takes from a background, set apart by a tint; the words before them say where they come from. */
-.ghg-from-background {
+/* The backgrounds inside a scenario, set apart by a tint; their headings say where the steps come from. */
+.ghg-background-in-scenario {
   margin: 0.5rem 0;
   padding: 0.25rem 0.75rem;
   background: var(--ghg-surface);
 }
 
-.ghg-from-background p {
+.ghg-background-in-scenario > :is(h3, h4) {
   margin: 0.25rem 0;
-  color: var(--ghg-muted);
 }
 
-.ghg-from-background .ghg-steps {
+.ghg-background-in-scenario .ghg-steps {
   margin: 0.25rem 0;
 }
 
 /* A doc string keeps its box inside the tint. */
-.ghg-from-background pre {
+.ghg-background-in-scenario pre {
   background: var(--ghg-background);
+}
+
+/* The heading of a scenario's own steps, after its backgrounds, close to the steps it heads. */
+.ghg-steps-heading {
+  margin: 0.75rem 0 0.25rem;
+}
+
+.ghg-steps-heading + .ghg-steps {
+  margin-top: 0.25rem;
+}
+
+/* The footer closes the content's column, set apart by a rule above its words. */
+.ghg-footer {
+  max-width: 60rem;
+  margin: 2rem auto 0;
+  padding: 0 1rem 1.5rem;
+  color: var(--ghg-muted);
+  font-size: 0.9rem;
+}
+
+.ghg-footer p {
+  margin: 0;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--ghg-border);
 }

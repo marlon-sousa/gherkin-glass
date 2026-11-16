@@ -18,12 +18,6 @@ var DomBackgrounds = class _DomBackgrounds {
   }
   setInline(inline) {
     this.checkbox.checked = inline;
-    for (const steps of this.document.querySelectorAll(".ghg-from-background > .ghg-inline")) {
-      steps.hidden = !inline;
-    }
-    for (const link of this.document.querySelectorAll(".ghg-from-background .ghg-linked")) {
-      link.hidden = inline;
-    }
   }
   onSwitch(handler) {
     this.checkbox.addEventListener("change", () => handler(this.checkbox.checked));
@@ -37,19 +31,46 @@ var DomBackgrounds = class _DomBackgrounds {
   }
 };
 
+// src/adapters/dom_note_dialog.ts
+var DomNoteDialog = class _DomNoteDialog {
+  dialog;
+  openers;
+  constructor(dialog, openers) {
+    this.dialog = dialog;
+    this.openers = openers;
+  }
+  /** Null on a page without the dialog, where no block's file writes another keyword. */
+  static of(document2) {
+    const dialog = document2.querySelector("dialog#ghg_note_dialog");
+    return dialog ? new _DomNoteDialog(dialog, [...document2.querySelectorAll("button.ghg-note-opener")]) : null;
+  }
+  onOpen(handler) {
+    this.openers.forEach((button) => button.addEventListener("click", () => handler(button)));
+  }
+  open() {
+    this.dialog.showModal();
+    this.dialog.focus();
+  }
+  onClose(handler) {
+    this.dialog.addEventListener("close", handler);
+  }
+};
+
 // src/adapters/dom_page.ts
 var DomBlock = class {
   anchor;
   parent;
-  expandedWhenLinked;
+  expandedWhenUnchecked;
+  inScenario;
   button;
   content;
-  constructor(anchor, button, content, parent, expandedWhenLinked2) {
+  constructor(anchor, button, content, parent, element) {
     this.anchor = anchor;
     this.button = button;
     this.content = content;
     this.parent = parent;
-    this.expandedWhenLinked = expandedWhenLinked2;
+    this.expandedWhenUnchecked = element === null ? null : expandedWhenUnchecked(element);
+    this.inScenario = element?.classList.contains("ghg-background-in-scenario") ?? false;
   }
   isExpanded() {
     return this.button.getAttribute("aria-expanded") === "true";
@@ -61,21 +82,21 @@ var DomBlock = class {
 };
 var DomPage = class {
   found = [];
+  byElement = /* @__PURE__ */ new Map();
   document;
   constructor(document2) {
     this.document = document2;
-    const byElement = /* @__PURE__ */ new Map();
     for (const element of document2.querySelectorAll(".ghg-block")) {
-      const heading = element.querySelector(":scope > :is(h2, h3, h4, h5)");
-      const button = heading?.querySelector(":scope > button.ghg-toggle");
+      const heading = element.querySelector(":scope > :is(h2, h3, h4, h5)") ?? element;
+      const button = heading.querySelector(":scope > button.ghg-toggle");
       const content = element.querySelector(":scope > .ghg-content");
-      if (!heading || !button || !content) {
+      if (!button || !content) {
         continue;
       }
       const around = element.parentElement?.closest(".ghg-block");
-      const parent = around ? byElement.get(around) ?? null : null;
-      const block = new DomBlock(heading.id, button, content, parent, expandedWhenLinked(element));
-      byElement.set(element, block);
+      const parent = around ? this.byElement.get(around) ?? null : null;
+      const block = new DomBlock(heading.id, button, content, parent, element);
+      this.byElement.set(element, block);
       this.found.push(block);
     }
     for (const element of document2.querySelectorAll(".ghg-feature")) {
@@ -93,6 +114,14 @@ var DomPage = class {
   }
   target() {
     return anchorOf(this.document.location.hash);
+  }
+  holder(anchor) {
+    const named2 = this.found.find((block) => block.anchor === anchor);
+    if (named2) {
+      return named2;
+    }
+    const around = this.document.getElementById(anchor)?.closest(".ghg-block");
+    return around ? this.byElement.get(around) ?? null : null;
   }
   onToggle(handler) {
     for (const block of this.found) {
@@ -140,8 +169,8 @@ var DomPage = class {
     this.document.querySelector(selector)?.addEventListener("click", handler);
   }
 };
-function expandedWhenLinked(element) {
-  switch (element.getAttribute("data-expanded-when-linked")) {
+function expandedWhenUnchecked(element) {
+  switch (element.getAttribute("data-expanded-when-unchecked")) {
     case "true":
       return true;
     case "false":
@@ -163,9 +192,11 @@ function anchorOf(hash) {
 
 // src/adapters/dom_search_box.ts
 var REANNOUNCE_MILLISECONDS = 50;
+var OPTION_ID = "ghg_search_result_";
 var DomSearchBox = class _DomSearchBox {
   form;
   field;
+  link;
   status;
   results;
   pendingStatus = null;
@@ -173,19 +204,22 @@ var DomSearchBox = class _DomSearchBox {
   static find(document2) {
     const form = document2.querySelector("form.ghg-search");
     const field = form?.querySelector("input.ghg-search-field");
+    const link = form?.querySelector("a.ghg-search-all");
     const status2 = form?.querySelector(".ghg-search-status");
     const results = form?.querySelector("ol.ghg-search-results");
-    if (form && field && status2 && results && form.dataset["root"] !== void 0 && form.dataset["shown"] !== void 0) {
-      return new _DomSearchBox(form, field, status2, results);
+    if (form && field && link && status2 && results && form.dataset["root"] !== void 0 && form.dataset["shown"] !== void 0) {
+      return new _DomSearchBox(form, field, link, status2, results);
     }
     return null;
   }
-  constructor(form, field, status2, results) {
+  constructor(form, field, link, status2, results) {
     this.form = form;
     this.field = field;
+    this.link = link;
     this.status = status2;
     this.results = results;
     form.addEventListener("submit", (event) => event.preventDefault());
+    results.addEventListener("mousedown", (event) => event.preventDefault());
   }
   words() {
     const data = this.form.dataset;
@@ -203,17 +237,38 @@ var DomSearchBox = class _DomSearchBox {
       scenario: text("scenario"),
       scenarioInRule: text("scenarioInRule"),
       scenarioOutline: text("scenarioOutline"),
-      scenarioOutlineInRule: text("scenarioOutlineInRule")
+      scenarioOutlineInRule: text("scenarioOutlineInRule"),
+      background: text("background"),
+      backgroundInRule: text("backgroundInRule"),
+      examples: text("examples"),
+      examplesInRule: text("examplesInRule"),
+      numberedExamples: text("numberedExamples"),
+      allResults: text("allResults")
     };
   }
   onInput(handler) {
     this.field.addEventListener("input", () => handler(this.field.value));
+  }
+  onDown(handler) {
+    this.onKey("ArrowDown", handler);
+  }
+  onUp(handler) {
+    this.onKey("ArrowUp", handler);
   }
   onEnter(handler) {
     this.onKey("Enter", handler);
   }
   onEscape(handler) {
     this.onKey("Escape", handler);
+  }
+  onPick(handler) {
+    this.results.addEventListener("click", (event) => {
+      const option = event.target?.closest?.("[role=option]");
+      const place = option ? [...this.results.children].indexOf(option) : -1;
+      if (place >= 0) {
+        handler(place);
+      }
+    });
   }
   setStatus(text) {
     const view = this.form.ownerDocument.defaultView;
@@ -233,39 +288,201 @@ var DomSearchBox = class _DomSearchBox {
   }
   showResults(results) {
     const document2 = this.form.ownerDocument;
-    const root = this.form.dataset["root"] ?? "";
-    const items = results.map((result2) => {
-      const link = document2.createElement("a");
-      link.setAttribute("href", root + result2.address);
-      for (const piece of result2.label) {
-        if (piece.isName) {
-          const name2 = document2.createElement("bdi");
-          name2.textContent = piece.text;
-          link.append(name2);
-        } else {
-          link.append(piece.text);
-        }
-      }
-      const item = document2.createElement("li");
-      item.append(link);
-      return item;
+    const options = results.map((result2, place) => {
+      const option = document2.createElement("li");
+      option.id = `${OPTION_ID}${place}`;
+      option.setAttribute("role", "option");
+      option.setAttribute("aria-selected", "false");
+      option.append(...this.pieces(result2.label));
+      return option;
     });
-    this.results.replaceChildren(...items);
-    this.results.hidden = items.length === 0;
+    this.results.replaceChildren(...options);
+    this.choose(null);
+  }
+  setOpen(open) {
+    this.results.hidden = !open;
+    this.field.setAttribute("aria-expanded", String(open));
+  }
+  choose(place) {
+    for (const [at, option2] of [...this.results.children].entries()) {
+      option2.setAttribute("aria-selected", String(at === place));
+    }
+    const option = place === null ? null : this.results.children.item(place);
+    if (option === null) {
+      this.field.removeAttribute("aria-activedescendant");
+      return;
+    }
+    this.field.setAttribute("aria-activedescendant", option.id);
+    option.scrollIntoView?.({ block: "nearest" });
+  }
+  showAllResults(link) {
+    this.link.hidden = link === null;
+    if (link === null) {
+      this.link.replaceChildren();
+      return;
+    }
+    this.link.replaceChildren(...this.pieces(link.label));
+    this.link.setAttribute("href", this.root() + link.address);
+  }
+  fieldText() {
+    return this.field.value;
   }
   clear() {
     this.field.value = "";
   }
-  focusFirstResult() {
-    this.results.querySelector("a")?.focus();
+  go(address2) {
+    this.form.ownerDocument.defaultView?.location.assign(this.root() + address2);
+  }
+  root() {
+    return this.form.dataset["root"] ?? "";
+  }
+  /** Each piece as text, a name isolated in a `bdi` of its own. */
+  pieces(label2) {
+    return label2.map((piece) => {
+      if (!piece.isName) {
+        return piece.text;
+      }
+      const name2 = this.form.ownerDocument.createElement("bdi");
+      name2.textContent = piece.text;
+      return name2;
+    });
   }
   onKey(key, handler) {
     this.field.addEventListener("keydown", (event) => {
-      if (event.key === key && !event.isComposing && event.keyCode !== 229) {
+      if (event.key === key && !event.isComposing && event.keyCode !== 229 && !event.altKey && !event.ctrlKey && !event.metaKey) {
         event.preventDefault();
         handler();
       }
     });
+  }
+};
+
+// src/adapters/dom_search_page.ts
+var DomSearchPage = class _DomSearchPage {
+  document;
+  heading;
+  field;
+  status;
+  groups;
+  /** Null when the page is not the page of search results, or not the whole of one. */
+  static find(document2) {
+    const heading = document2.querySelector("h1.ghg-search-heading");
+    const field = document2.querySelector("form.ghg-search input.ghg-search-field");
+    const status2 = document2.querySelector(".ghg-results-status");
+    const groups = document2.querySelector(".ghg-search-groups");
+    if (heading && field && status2 && groups) {
+      return new _DomSearchPage(document2, heading, field, status2, groups);
+    }
+    return null;
+  }
+  constructor(document2, heading, field, status2, groups) {
+    this.document = document2;
+    this.heading = heading;
+    this.field = field;
+    this.status = status2;
+    this.groups = groups;
+  }
+  words() {
+    const data = this.groups.dataset;
+    const text = (key) => data[key] ?? "";
+    return {
+      heading: text("heading"),
+      title: text("title"),
+      loading: text("loading"),
+      failed: text("failed"),
+      none: text("none"),
+      count: text("count"),
+      within: text("within"),
+      separator: text("separator"),
+      matchingSteps: text("matchingSteps"),
+      matchingTags: text("matchingTags"),
+      matchingCells: text("matchingCells"),
+      headings: {
+        feature: text("feature"),
+        unnamedFeature: text("unnamedFeature"),
+        rule: text("rule"),
+        unnamedRule: text("unnamedRule"),
+        background: text("background"),
+        unnamedBackground: text("unnamedBackground"),
+        scenario: text("scenario"),
+        unnamedScenario: text("unnamedScenario"),
+        scenarioOutline: text("scenarioOutline"),
+        unnamedScenarioOutline: text("unnamedScenarioOutline"),
+        examples: text("examples"),
+        numberedExamples: text("numberedExamples")
+      }
+    };
+  }
+  searched() {
+    const address2 = this.document.defaultView?.location.href ?? "";
+    return new URL(address2, "https://example.invalid/").searchParams.get("q") ?? "";
+  }
+  showSearched(words, heading, title) {
+    this.field.value = words;
+    this.heading.replaceChildren(...this.parts(heading));
+    this.document.title = title;
+  }
+  setStatus(text) {
+    this.status.textContent = text;
+  }
+  showGroups(groups) {
+    const words = this.words();
+    this.groups.replaceChildren(...groups.flatMap((group) => this.group(words, group)));
+  }
+  group(words, group) {
+    const heading = this.element("h2", [this.link(group.address, group.heading)]);
+    const list = this.element(
+      "ul",
+      group.results.map((result2) => this.element("li", this.result(words, result2)))
+    );
+    list.className = "ghg-search-group";
+    return [heading, list];
+  }
+  result(words, result2) {
+    const parts = [this.link(result2.address, result2.heading)];
+    if (result2.within !== null) {
+      parts.push(this.element("p", this.parts(result2.within)));
+    }
+    if (result2.steps.length > 0) {
+      parts.push(
+        this.element("p", [words.matchingSteps]),
+        this.element(
+          "ul",
+          result2.steps.map((step) => this.element("li", [this.name(step)]))
+        )
+      );
+    }
+    for (const [label2, texts] of [
+      [words.matchingTags, result2.tags],
+      [words.matchingCells, result2.cells]
+    ]) {
+      if (texts.length > 0) {
+        const named2 = texts.flatMap((text, at) => at === 0 ? [this.name(text)] : [words.separator, this.name(text)]);
+        parts.push(this.element("p", [`${label2} `, ...named2]));
+      }
+    }
+    return parts;
+  }
+  link(address2, text) {
+    const link = this.element("a", this.parts(text));
+    link.setAttribute("href", address2);
+    return link;
+  }
+  /** Each part's runs, a name's isolated in a `bdi` of its own. */
+  parts(parts) {
+    return parts.flatMap((part) => part.isName ? [this.name(part.runs)] : this.runs(part.runs));
+  }
+  name(runs) {
+    return this.element("bdi", this.runs(runs));
+  }
+  /** Each run as text, a marked one in a `mark` of its own. */
+  runs(runs) {
+    return runs.map((run) => run.marked ? this.element("mark", [run.text]) : run.text);
+  }
+  element(name2, children) {
+    const element = this.document.createElement(name2);
+    element.append(...children);
+    return element;
   }
 };
 
@@ -332,14 +549,29 @@ function rememberedShown(shown) {
 function rememberedExpanded(expanded) {
   return expanded ? EXPANDED : COLLAPSED;
 }
-function startShown(configured, kept, narrow) {
+function startChecked(configured, kept) {
   if (kept === SHOWN) {
     return true;
   }
   if (kept === HIDDEN) {
     return false;
   }
-  return configured && !narrow;
+  return configured;
+}
+function treeShown(narrow, checked, open) {
+  return narrow ? open : checked;
+}
+function focusHidden(place, narrow, shown) {
+  switch (place) {
+    case "tree":
+      return !shown;
+    case "checkbox":
+      return narrow;
+    case "button":
+      return !narrow;
+    case null:
+      return false;
+  }
 }
 function startExpanded(onPath, kept) {
   return onPath || kept === EXPANDED;
@@ -379,7 +611,7 @@ function isItem(data) {
     return false;
   }
   const item = data;
-  return typeof item["text"] === "string" && typeof item["address"] === "string" && (item["lang"] === void 0 || typeof item["lang"] === "string") && (item["items"] === void 0 || isItems(item["items"]));
+  return (typeof item["text"] === "string" || Array.isArray(item["text"]) && item["text"].every((run) => typeof run === "string")) && typeof item["address"] === "string" && (item["lang"] === void 0 || typeof item["lang"] === "string") && (item["items"] === void 0 || isItems(item["items"]));
 }
 function decoded(path) {
   try {
@@ -390,35 +622,6 @@ function decoded(path) {
 }
 
 // src/adapters/dom_tree.ts
-var DomTreeSwitch = class {
-  checkbox;
-  landmark;
-  constructor(document2) {
-    this.checkbox = document2.querySelector("input.ghg-show-tree");
-    this.landmark = document2.querySelector("nav.ghg-tree");
-  }
-  configured() {
-    return this.checkbox?.checked ?? false;
-  }
-  setShown(shown) {
-    if (this.checkbox) {
-      this.checkbox.checked = shown;
-    }
-    if (this.landmark) {
-      this.landmark.hidden = !shown;
-    }
-  }
-  disable() {
-    this.setShown(false);
-    if (this.checkbox) {
-      this.checkbox.disabled = true;
-    }
-  }
-  onChange(handler) {
-    const checkbox = this.checkbox;
-    checkbox?.addEventListener("change", () => handler(checkbox.checked));
-  }
-};
 var DomTree = class {
   document;
   landmark;
@@ -453,13 +656,12 @@ var DomTree = class {
   onToggle(handler) {
     this.handler = handler;
   }
-  add(list, items, parent, current, expanded) {
+  /** `lang` is the feature's that holds `items`, if one does. */
+  add(list, items, parent, current, expanded, lang) {
     for (const item of items) {
+      const itemLang = item.lang ?? lang;
       const entry = this.document.createElement("li");
       entry.setAttribute("role", "none");
-      if (item.lang !== void 0) {
-        entry.lang = item.lang;
-      }
       const link = this.document.createElement("a");
       link.setAttribute("role", "treeitem");
       link.href = typeof this.root === "string" ? this.root + item.address : new URL(item.address, this.root).href;
@@ -477,10 +679,10 @@ var DomTree = class {
         group = this.document.createElement("ul");
         group.setAttribute("role", "group");
         group.id = `ghg_tree_${this.nodes.length}`;
-        group.setAttribute("aria-label", item.text);
+        group.setAttribute("aria-label", textOf(item));
         link.setAttribute("aria-owns", group.id);
       }
-      link.append(item.text);
+      link.append(...this.words(item, itemLang));
       entry.append(link);
       const node = { link, address: item.address, group, parent };
       this.nodes.push(node);
@@ -494,10 +696,30 @@ var DomTree = class {
           this.focus(node);
           this.toggle(node, !this.isExpanded(node));
         });
-        this.add(group, inner, node, current, expanded);
+        this.add(group, inner, node, current, expanded, itemLang);
       }
       list.append(entry);
     }
+  }
+  /**
+   * The item's words, each run of feature text isolated in a `bdi` with its
+   * feature's `lang`, so that the tree's own words are read in the page's.
+   */
+  words(item, lang) {
+    if (typeof item.text === "string") {
+      return [item.text];
+    }
+    return item.text.map((run, place) => {
+      if (place % 2 === 0) {
+        return run;
+      }
+      const isolated = this.document.createElement("bdi");
+      isolated.append(run);
+      if (lang !== void 0) {
+        isolated.lang = lang;
+      }
+      return isolated;
+    });
   }
   isExpanded(node) {
     return node.link.getAttribute("aria-expanded") === "true";
@@ -598,6 +820,96 @@ var DomTree = class {
     event.stopPropagation();
   }
 };
+function textOf(item) {
+  return typeof item.text === "string" ? item.text : item.text.join("");
+}
+
+// src/adapters/dom_tree_switch.ts
+var DomTreeSwitch = class {
+  checkbox;
+  button;
+  landmark;
+  /**
+   * The control the stylesheet hid with the focus on it, which the browser
+   * then dropped to the body, often before the resize is reported.
+   */
+  dropped = null;
+  constructor(document2) {
+    this.checkbox = document2.querySelector("input.ghg-show-tree");
+    this.button = document2.querySelector("button.ghg-tree-button");
+    this.landmark = document2.querySelector("nav.ghg-tree");
+    this.keepDropped(this.checkbox, "checkbox");
+    this.keepDropped(this.button, "button");
+    document2.addEventListener("focusin", () => {
+      this.dropped = null;
+    });
+  }
+  configured() {
+    return this.checkbox?.checked ?? false;
+  }
+  setChecked(checked) {
+    if (this.checkbox) {
+      this.checkbox.checked = checked;
+    }
+  }
+  setOpen(open) {
+    this.button?.setAttribute("aria-expanded", String(open));
+  }
+  setShown(shown) {
+    if (this.landmark) {
+      this.landmark.hidden = !shown;
+    }
+  }
+  disable() {
+    if (this.checkbox) {
+      this.checkbox.disabled = true;
+    }
+    if (this.button) {
+      this.button.disabled = true;
+    }
+  }
+  onChange(handler) {
+    const checkbox = this.checkbox;
+    checkbox?.addEventListener("change", () => handler(checkbox.checked));
+  }
+  onPress(handler) {
+    this.button?.addEventListener("click", () => handler());
+  }
+  onEscape(handler) {
+    this.landmark?.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        handler();
+      }
+    });
+  }
+  focus() {
+    const active = this.landmark?.ownerDocument.activeElement ?? null;
+    if (active === null || active === active.ownerDocument.body) {
+      return this.dropped;
+    }
+    if (this.landmark?.contains(active)) {
+      return "tree";
+    }
+    if (active === this.checkbox) {
+      return "checkbox";
+    }
+    return active === this.button ? "button" : null;
+  }
+  focusButton() {
+    this.button?.focus();
+  }
+  focusCheckbox() {
+    this.checkbox?.focus();
+  }
+  /** A blur to nowhere of a control no longer shown is one a resize hid; a click elsewhere leaves it shown. */
+  keepDropped(control, place) {
+    control?.addEventListener("blur", (event) => {
+      if (event.relatedTarget === null && !control.checkVisibility()) {
+        this.dropped = place;
+      }
+    });
+  }
+};
 
 // src/adapters/fetched_documents.ts
 var FetchedDocuments = class {
@@ -610,11 +922,11 @@ var FetchedDocuments = class {
     if (!response.ok) {
       throw new Error(`${this.address.href}: ${response.status}`);
     }
-    const found = await response.json();
-    if (!Array.isArray(found)) {
+    const found2 = await response.json();
+    if (!Array.isArray(found2)) {
       throw new Error(`${this.address.href}: not a list of documents`);
     }
-    return found;
+    return found2;
   }
 };
 
@@ -651,6 +963,20 @@ var LocalMemory = class {
       window.localStorage.setItem(key, value);
     } catch {
     }
+  }
+};
+
+// src/adapters/media_width.ts
+var MediaWidth = class {
+  query;
+  constructor(query) {
+    this.query = query;
+  }
+  narrow() {
+    return this.query.matches;
+  }
+  onChange(handler) {
+    this.query.addEventListener("change", (event) => handler(event.matches));
   }
 };
 
@@ -715,25 +1041,28 @@ function startState(configured, kept) {
   }
   return configured;
 }
-function formStart(written, expandedWhenLinked2, inline) {
-  if (expandedWhenLinked2 === null) {
+function formStart(written, expandedWhenUnchecked2, inScenario, inline) {
+  if (expandedWhenUnchecked2 === null) {
     return written;
   }
-  return !inline && expandedWhenLinked2;
+  return inline ? inScenario : expandedWhenUnchecked2;
+}
+function switchedState(inScenario, inline) {
+  return inline === inScenario;
 }
 
 // src/services/collapsing.ts
 function startCollapsing(page2, memory2, pagePath, option) {
   const blocks = page2.blocks();
-  const followingTheForm = blocks.filter((block) => block.expandedWhenLinked !== null);
+  const followingTheForm = blocks.filter((block) => block.expandedWhenUnchecked !== null);
   let inline = false;
-  const key = (block) => inline && block.expandedWhenLinked !== null ? inlineMemoryKey(pagePath, block.anchor) : memoryKey(pagePath, block.anchor);
+  const key = (block) => inline && block.expandedWhenUnchecked !== null ? inlineMemoryKey(pagePath, block.anchor) : memoryKey(pagePath, block.anchor);
   const set = (block, expanded) => {
     block.setExpanded(expanded);
     memory2.set(key(block), remembered(expanded));
   };
   const settle = (block) => {
-    const start = formStart(block.isExpanded(), block.expandedWhenLinked, inline);
+    const start = formStart(block.isExpanded(), block.expandedWhenUnchecked, block.inScenario, inline);
     block.setExpanded(startState(start, memory2.get(key(block))));
   };
   const showForm = (unchosen) => {
@@ -743,7 +1072,7 @@ function startCollapsing(page2, memory2, pagePath, option) {
     }
   };
   const reveal = (anchor) => {
-    let block = blocks.find((found) => found.anchor === anchor) ?? null;
+    let block = page2.holder(anchor);
     while (block !== null) {
       if (!block.isExpanded()) {
         set(block, true);
@@ -766,7 +1095,7 @@ function startCollapsing(page2, memory2, pagePath, option) {
       inline = switched;
       option.backgrounds.setInline(inline);
       memory2.set(formKey(option.siteRoot), rememberedForm(inline));
-      followingTheForm.forEach((block) => set(block, !inline));
+      followingTheForm.forEach((block) => set(block, switchedState(block.inScenario, inline)));
     });
     option.backgrounds.onReturn(() => {
       const shown = inline;
@@ -779,21 +1108,69 @@ function startCollapsing(page2, memory2, pagePath, option) {
 }
 
 // src/services/folder_tree.ts
-async function startFolderTree(source, toggle, view, memory2, place) {
-  const shown = startShown(toggle.configured(), memory2.get(shownKey(place.sitePath)), place.narrow);
-  toggle.setShown(shown);
+async function startFolderTree(source, toggle, view, width, memory2, place) {
+  let checked = startChecked(toggle.configured(), memory2.get(shownKey(place.sitePath)));
+  let open = false;
+  let narrow = width.narrow();
+  let usable = true;
+  const show = () => {
+    toggle.setChecked(usable && checked);
+    toggle.setOpen(usable && open);
+    toggle.setShown(usable && treeShown(narrow, checked, open));
+  };
+  show();
   toggle.onChange((chosen) => {
-    toggle.setShown(chosen);
+    checked = chosen;
     memory2.set(shownKey(place.sitePath), rememberedShown(chosen));
+    show();
+  });
+  toggle.onPress(() => {
+    open = !open;
+    show();
+  });
+  toggle.onEscape(() => {
+    if (narrow && open) {
+      open = false;
+      show();
+      toggle.focusButton();
+    }
+  });
+  width.onChange((now) => {
+    const focus = toggle.focus();
+    narrow = now;
+    open = false;
+    show();
+    if (focusHidden(focus, narrow, treeShown(narrow, checked, open))) {
+      if (narrow) {
+        toggle.focusButton();
+      } else {
+        toggle.focusCheckbox();
+      }
+    }
   });
   const items = await source.load();
   if (items === null) {
+    usable = false;
     toggle.disable();
+    show();
     return;
   }
   const path = place.page === null ? [] : pathTo(items, place.page);
   view.build(items, path[0] ?? null, (address2) => startExpanded(path.includes(address2), memory2.get(itemKey(place.sitePath, address2))));
   view.onToggle((address2, expanded) => memory2.set(itemKey(place.sitePath, address2), rememberedExpanded(expanded)));
+}
+
+// src/services/note_explaining.ts
+function startNoteExplaining(dialog) {
+  let opener = null;
+  dialog.onOpen((pressed) => {
+    opener = pressed;
+    dialog.open();
+  });
+  dialog.onClose(() => {
+    opener?.focus();
+    opener = null;
+  });
 }
 
 // node_modules/minisearch/dist/es/index.js
@@ -2606,9 +2983,9 @@ var objectToNumericMapAsync = async (object) => {
 var wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 var SPACE_OR_PUNCTUATION = /[\n\r\p{Z}\p{P}]+/u;
 
-// src/policies/search_results.ts
+// src/policies/search_index.ts
 var INDEX_OPTIONS = {
-  fields: ["name", "tags", "steps"],
+  fields: ["name", "tags", "steps", "cells"],
   extractField: (document2, field) => {
     const value = document2[field];
     return Array.isArray(value) ? value.join(" ") : value;
@@ -2618,8 +2995,155 @@ var SEARCH_OPTIONS = {
   combineWith: "AND",
   prefix: true,
   fuzzy: 0.2,
-  boost: { name: 3, tags: 2, steps: 1 }
+  boost: { name: 3, tags: 2, steps: 1, cells: 1 }
 };
+var BETWEEN_WORDS = /([\n\r\p{Z}\p{P}]+)/u;
+function indexOf(documents) {
+  const search = new MiniSearch(INDEX_OPTIONS);
+  search.addAll(documents.map((document2, id) => ({ ...document2, id })));
+  return {
+    search: (text) => search.search(text, SEARCH_OPTIONS).flatMap((match) => found(documents, match))
+  };
+}
+function found(documents, match) {
+  const document2 = documents[match.id];
+  if (document2 === void 0) {
+    return [];
+  }
+  const matched = /* @__PURE__ */ new Map();
+  for (const [term, fields] of Object.entries(match.match)) {
+    for (const field of fields) {
+      matched.set(field, (matched.get(field) ?? /* @__PURE__ */ new Set()).add(term));
+    }
+  }
+  return [{ document: document2, matched }];
+}
+function marked(text, matched) {
+  const runs = [];
+  for (const part of text.split(BETWEEN_WORDS)) {
+    if (part === "") {
+      continue;
+    }
+    const isMatch = matched?.has(part.toLowerCase()) ?? false;
+    const last2 = runs.at(-1);
+    if (last2 !== void 0 && !last2.marked && !isMatch) {
+      runs[runs.length - 1] = { text: last2.text + part, marked: false };
+    } else {
+      runs.push({ text: part, marked: isMatch });
+    }
+  }
+  return runs;
+}
+function holdsMatch(runs) {
+  return runs.some((run) => run.marked);
+}
+function address(document2) {
+  const page2 = document2.page.split("/").map(encodeURIComponent).join("/");
+  return document2.anchor === "" ? page2 : `${page2}#${encodeURIComponent(document2.anchor)}`;
+}
+function resultsPage(words) {
+  return `search.html?${new URLSearchParams({ q: words }).toString()}`;
+}
+
+// src/policies/result_groups.ts
+function searchedHeading(words, text) {
+  return {
+    heading: filled(words.heading, "{words}", [plainName(text)]),
+    title: words.title.replaceAll("{words}", () => text)
+  };
+}
+function pageStatus(words, groups) {
+  const count = groups.reduce((sum, group) => sum + group.results.length, 0);
+  if (count === 0) {
+    return words.none;
+  }
+  return words.count.replaceAll("{count}", String(count)).replaceAll("{features}", String(groups.length));
+}
+function groupedResults(words, found2) {
+  const groups = /* @__PURE__ */ new Map();
+  for (const one of found2) {
+    const page2 = one.document.page;
+    const group = groups.get(page2) ?? { heading: featureHeading(words.headings, one.document), address: address({ ...one.document, anchor: "" }), results: [] };
+    group.results.push(listed(words, one));
+    groups.set(page2, group);
+  }
+  return [...groups.values()];
+}
+function listed(words, { document: document2, matched }) {
+  const marks = (field) => (text) => marked(text, matched.get(field));
+  return {
+    heading: blockHeading(words.headings, document2, marks("name")(document2.name)),
+    address: address(document2),
+    within: within(words, document2),
+    steps: document2.steps.map(marks("steps")).filter(holdsMatch),
+    tags: document2.tags.map(marks("tags")).filter(holdsMatch),
+    cells: document2.cells.map(marks("cells")).filter(holdsMatch)
+  };
+}
+function within(words, document2) {
+  const blocks = [
+    document2.rule === null ? null : named(words.headings.rule, words.headings.unnamedRule, document2.rule),
+    document2.outline === null ? null : named(words.headings.scenarioOutline, words.headings.unnamedScenarioOutline, document2.outline)
+  ].filter((block) => block !== null);
+  if (blocks.length === 0) {
+    return null;
+  }
+  const separator = { runs: [{ text: words.separator, marked: false }], isName: false };
+  const joined = blocks.flatMap((block, at) => at === 0 ? block : [separator, ...block]);
+  return filled(words.within, "{blocks}", joined);
+}
+function featureHeading(headings, document2) {
+  return named(headings.feature, headings.unnamedFeature, document2.feature ?? document2.name);
+}
+function blockHeading(headings, document2, name2) {
+  const [template, unnamed] = {
+    feature: [headings.feature, headings.unnamedFeature],
+    rule: [headings.rule, headings.unnamedRule],
+    background: [headings.background, headings.unnamedBackground],
+    scenario: [headings.scenario, headings.unnamedScenario],
+    "scenario-outline": [headings.scenarioOutline, headings.unnamedScenarioOutline],
+    examples: [headings.examples, headings.numberedExamples.replaceAll("{place}", String(document2.place ?? 1))]
+  }[document2.kind];
+  if (document2.name.trim() === "") {
+    return [plainWords(unnamed)];
+  }
+  return filled(template, "{name}", [{ runs: name2, isName: true }]);
+}
+function named(template, unnamed, name2) {
+  return name2.trim() === "" ? [plainWords(unnamed)] : filled(template, "{name}", [plainName(name2)]);
+}
+function filled(template, placeholder, parts) {
+  return template.split(placeholder).flatMap((words, at) => at === 0 ? [words] : [parts, words]).flatMap((piece) => typeof piece === "string" ? piece === "" ? [] : [plainWords(piece)] : piece);
+}
+function plainWords(text) {
+  return { runs: [{ text, marked: false }], isName: false };
+}
+function plainName(text) {
+  return { runs: [{ text, marked: false }], isName: true };
+}
+
+// src/services/results_listing.ts
+async function startListing(page2, documents) {
+  const words = page2.words();
+  const text = page2.searched().trim();
+  if (text === "") {
+    return;
+  }
+  const { heading, title } = searchedHeading(words, text);
+  page2.showSearched(text, heading, title);
+  page2.setStatus(words.loading);
+  let groups;
+  try {
+    groups = groupedResults(words, indexOf(await documents.load()).search(text));
+  } catch {
+    page2.setStatus(words.failed);
+    return;
+  }
+  page2.showGroups(groups);
+  page2.setStatus(pageStatus(words, groups));
+}
+
+// src/policies/search_results.ts
 var PAUSE_MILLISECONDS = 300;
 function status(words, count) {
   if (count === 0) {
@@ -2631,33 +3155,51 @@ function status(words, count) {
 function result(words, document2) {
   return { label: label(words, document2), address: address(document2) };
 }
+function allResults(words, text) {
+  const searched = text.trim();
+  if (searched === "") {
+    return null;
+  }
+  return { label: filled2(words.allResults, { "{words}": { text: searched, isName: true } }), address: resultsPage(searched) };
+}
+function moved(chosen, count, step) {
+  if (count === 0) {
+    return null;
+  }
+  if (chosen === null) {
+    return step === 1 ? 0 : count - 1;
+  }
+  const next = chosen + step;
+  return next < 0 || next >= count ? null : next;
+}
 function label(words, document2) {
   const inRule = document2.rule !== null;
   const template = {
     feature: words.feature,
     rule: words.rule,
+    background: inRule ? words.backgroundInRule : words.background,
     scenario: inRule ? words.scenarioInRule : words.scenario,
-    "scenario-outline": inRule ? words.scenarioOutlineInRule : words.scenarioOutline
+    "scenario-outline": inRule ? words.scenarioOutlineInRule : words.scenarioOutline,
+    examples: inRule ? words.examplesInRule : words.examples
   }[document2.kind];
-  return template.split(/(\{(?:name|feature|rule)\})/).filter((part) => part !== "").map((part) => {
-    switch (part) {
-      case "{name}":
-        return name(words, document2.name);
-      case "{feature}":
-        return name(words, document2.feature);
-      case "{rule}":
-        return name(words, document2.rule);
-      default:
-        return { text: part, isName: false };
-    }
+  return filled2(template, {
+    "{name}": blockName(words, document2),
+    "{feature}": name(words, document2.feature),
+    "{rule}": name(words, document2.rule),
+    "{outline}": name(words, document2.outline)
   });
 }
-function name(words, written) {
-  return written === null || written === "" ? { text: words.noName, isName: false } : { text: written, isName: true };
+function filled2(template, pieces) {
+  return template.split(/(\{[a-z]+\})/).filter((part) => part !== "").map((part) => pieces[part] ?? { text: part, isName: false });
 }
-function address(document2) {
-  const page2 = document2.page.split("/").map(encodeURIComponent).join("/");
-  return document2.anchor === "" ? page2 : `${page2}#${encodeURIComponent(document2.anchor)}`;
+function blockName(words, document2) {
+  if (document2.kind === "examples" && document2.name.trim() === "") {
+    return { text: words.numberedExamples.replaceAll("{place}", String(document2.place ?? 1)), isName: false };
+  }
+  return name(words, document2.name);
+}
+function name(words, written) {
+  return written === null || written.trim() === "" ? { text: words.noName, isName: false } : { text: written, isName: true };
 }
 
 // src/services/searching.ts
@@ -2665,16 +3207,19 @@ function startSearching(box, documents, timer) {
   const words = box.words();
   let index = null;
   let loading = null;
-  let text = "";
+  let text = box.fieldText();
   let started = false;
+  let results = [];
+  let chosen = null;
+  let open = false;
+  let pending = null;
+  let paused = false;
   const load = () => {
     if (index !== null) {
       return Promise.resolve(index);
     }
-    loading ??= documents.load().then((found) => {
-      const search = new MiniSearch(INDEX_OPTIONS);
-      search.addAll(found.map((document2, id) => ({ ...document2, id })));
-      index = { documents: found, search };
+    loading ??= documents.load().then((found2) => {
+      index = indexOf(found2);
       return index;
     }).catch(() => {
       loading = null;
@@ -2682,38 +3227,50 @@ function startSearching(box, documents, timer) {
     });
     return loading;
   };
+  const announce = () => {
+    if (paused && pending !== null) {
+      box.setStatus(pending);
+      pending = null;
+    }
+  };
+  const show = (shown) => {
+    results = shown;
+    chosen = null;
+    box.showResults(results);
+    setOpen(results.length > 0);
+  };
+  const setOpen = (opened) => {
+    open = opened;
+    box.setOpen(opened);
+  };
   const run = async () => {
     const asked = text;
-    if (asked.trim() === "") {
-      empty();
-      return false;
-    }
     if (index === null) {
       box.setStatus(words.loading);
     }
-    const found = await load();
+    const found2 = await load();
     if (asked !== text) {
-      return false;
+      return;
     }
-    if (found === null) {
-      box.showResults([]);
-      box.setStatus(words.failed);
-      return false;
+    if (found2 === null) {
+      show([]);
+      pending = words.failed;
+    } else {
+      const matches = found2.search(asked);
+      show(matches.slice(0, words.shown).map((match) => result(words, match.document)));
+      pending = status(words, matches.length);
     }
-    const matches = found.search.search(asked, SEARCH_OPTIONS);
-    box.showResults(
-      matches.slice(0, words.shown).map((match) => result(words, found.documents[match.id]))
-    );
-    box.setStatus(status(words, matches.length));
-    return true;
+    announce();
   };
   const empty = () => {
     timer.cancel();
-    box.showResults([]);
+    pending = null;
+    show([]);
     box.setStatus("");
   };
   box.onInput((typed) => {
     text = typed;
+    box.showAllResults(allResults(words, typed));
     if (typed.trim() === "") {
       empty();
       return;
@@ -2722,19 +3279,49 @@ function startSearching(box, documents, timer) {
       started = true;
       void load();
     }
-    timer.after(PAUSE_MILLISECONDS, () => void run());
-  });
-  box.onEnter(() => {
-    timer.cancel();
-    void run().then((shown) => {
-      if (shown) {
-        box.focusFirstResult();
-      }
+    paused = false;
+    timer.after(PAUSE_MILLISECONDS, () => {
+      paused = true;
+      announce();
     });
+    void run();
+  });
+  const move = (step) => {
+    if (!open) {
+      if (results.length === 0) {
+        return;
+      }
+      setOpen(true);
+    }
+    chosen = moved(chosen, results.length, step);
+    box.choose(chosen);
+  };
+  box.showAllResults(allResults(words, text));
+  box.onDown(() => move(1));
+  box.onUp(() => move(-1));
+  box.onEnter(() => {
+    const picked = open && chosen !== null ? results[chosen] : void 0;
+    const target = picked ?? allResults(words, text);
+    if (target !== null) {
+      box.go(target.address);
+    }
+  });
+  box.onPick((place) => {
+    const picked = results[place];
+    if (picked !== void 0) {
+      box.go(picked.address);
+    }
   });
   box.onEscape(() => {
+    if (open) {
+      chosen = null;
+      box.choose(null);
+      setOpen(false);
+      return;
+    }
     text = "";
     box.clear();
+    box.showAllResults(null);
     empty();
   });
 }
@@ -2773,15 +3360,27 @@ startCollapsing(
   document.location.pathname,
   backgrounds === null ? null : { backgrounds, siteRoot: siteRoot(import.meta.url) }
 );
+var noteDialog = DomNoteDialog.of(document);
+if (noteDialog !== null) {
+  startNoteExplaining(noteDialog);
+}
 var site = new URL("../", import.meta.url);
 var sitePath = site.pathname;
 var page = pageAddress(sitePath, document.location.pathname);
-void startFolderTree(new FetchedTree(new URL("tree.json", import.meta.url)), new DomTreeSwitch(document), new DomTree(document, site, page), memory, {
-  sitePath,
-  page,
-  narrow: window.matchMedia(NARROW).matches
-});
+void startFolderTree(
+  new FetchedTree(new URL("tree.json", import.meta.url)),
+  new DomTreeSwitch(document),
+  new DomTree(document, site, page),
+  new MediaWidth(window.matchMedia(NARROW)),
+  memory,
+  { sitePath, page }
+);
+var searchDocuments = new FetchedDocuments(new URL("search.json", import.meta.url));
+var searchPage = DomSearchPage.find(document);
+if (searchPage !== null) {
+  void startListing(searchPage, searchDocuments);
+}
 var searchBox = DomSearchBox.find(document);
 if (searchBox !== null) {
-  startSearching(searchBox, new FetchedDocuments(new URL("search.json", import.meta.url)), new WindowTimer());
+  startSearching(searchBox, searchDocuments, new WindowTimer());
 }
