@@ -365,3 +365,18 @@ fn a_listed_version_built_again_as_a_preview_leaves_the_versions_page() {
     assert!(!page.contains("v1.0.0/index.html"), "{page}");
     assert!(page.contains("v1.1.0/index.html"), "{page}");
 }
+
+// Rule 212: when every version is a preview, the versions page lists none.
+#[test]
+fn a_versions_page_of_previews_alone_lists_no_version() {
+    let output = Path::new(env!("CARGO_TARGET_TMPDIR"))
+        .join("versions")
+        .join("previews-alone");
+    let _ = remove_dir_all(&output);
+    let (report, status) = ghg("suite", &output, &["--version-name", "pr-1", "--preview"]);
+    assert_eq!((report.as_str(), status), ("", 0));
+    let page = read_to_string(output.join("index.html")).expect("read");
+    assert!(page.contains("<h1"), "{page}");
+    assert!(!page.contains("<h2"), "{page}");
+    assert!(!page.contains("pr-1/index.html"), "{page}");
+}

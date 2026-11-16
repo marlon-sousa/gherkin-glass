@@ -12,6 +12,7 @@
 )]
 #![cfg(unix)]
 
+use rstest::rstest;
 use std::collections::HashMap;
 use std::fs::{self, create_dir_all, remove_dir_all};
 use std::io::{BufRead, BufReader, Write};
@@ -604,7 +605,7 @@ fn each_option_input_is_passed_to_ghg_build() {
 }
 
 // Rule 175: a flag is passed when its input is true, and left out when it is false.
-#[rstest::rstest]
+#[rstest]
 #[case::true_("true", false)]
 #[case::false_("false", true)]
 fn a_flag_input_is_passed_to_ghg_build_when_it_is_true(

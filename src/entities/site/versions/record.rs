@@ -71,3 +71,75 @@ impl Record {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use rstest::rstest;
+
+    use super::*;
+
+    fn name(text: &str) -> VersionName {
+        VersionName::new(text).expect("a version name")
+    }
+
+    fn names(texts: &[&str]) -> BTreeSet<VersionName> {
+        texts.iter().copied().map(name).collect()
+    }
+
+    /// The versions `main` and `pr-1`, of no files, with `previews` as previews.
+    fn record(previews: &[&str]) -> Record {
+        Record::Versions {
+            page: BTreeSet::new(),
+            versions: BTreeMap::from([
+                (name("main"), BTreeSet::new()),
+                (name("pr-1"), BTreeSet::new()),
+            ]),
+            previews: names(previews),
+        }
+    }
+
+    // Rule 212: the versions page lists every version but the previews.
+    #[rstest]
+    #[case::no_preview(record(&[]), &["main", "pr-1"])]
+    #[case::a_preview(record(&["pr-1"]), &["main"])]
+    #[case::every_version_a_preview(record(&["main", "pr-1"]), &[])]
+    #[case::a_site_without_versions(Record::Site(BTreeSet::new()), &[])]
+    fn the_versions_listed_are_every_one_but_the_previews(
+        #[case] record: Record,
+        #[case] listed: &[&str],
+    ) {
+        assert_eq!(record.listed_versions(), names(listed));
+    }
+
+    // Rule 212: a version written as a preview is among the previews, and one written without
+    // is not, whatever it was before.
+    #[rstest]
+    #[case::a_new_preview(None, "pr-2", VersionListing::Preview, &["pr-2"])]
+    #[case::a_preview_kept(Some(record(&["pr-1"])), "main", VersionListing::Listed, &["pr-1"])]
+    #[case::a_preview_listed_again(Some(record(&["pr-1"])), "pr-1", VersionListing::Listed, &[])]
+    #[case::a_listed_version_made_a_preview(Some(record(&[])), "main", VersionListing::Preview, &["main"])]
+    fn a_version_written_is_recorded_among_the_previews_as_its_listing_says(
+        #[case] last: Option<Record>,
+        #[case] version: &str,
+        #[case] listing: VersionListing,
+        #[case] previews: &[&str],
+    ) {
+        let files = BTreeSet::from(["index.html".to_string()]);
+        let written = Record::with_version(
+            last.as_ref(),
+            BTreeSet::new(),
+            (&name(version), files.clone()),
+            listing,
+        );
+        let Record::Versions {
+            versions,
+            previews: recorded,
+            ..
+        } = written
+        else {
+            panic!("{written:?}");
+        };
+        assert_eq!(versions.get(&name(version)), Some(&files));
+        assert_eq!(recorded, names(previews));
+    }
+}
