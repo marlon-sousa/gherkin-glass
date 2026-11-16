@@ -7,5 +7,5 @@ mod watch;
 
 pub(crate) use input_changes::InputChanges;
 pub(crate) use preview::{Listening, Preview, Served, ServedSite, ServerWords, Version};
-pub(crate) use serve_events::{BurstTeller, ChangeOrStop, StopTeller, Watching};
+pub(crate) use serve_events::{BurstTeller, ChangeOrStop, StopTeller, WatchKeeper};
 pub(crate) use watch::{Burst, Watched};

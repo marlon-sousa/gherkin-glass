@@ -95,19 +95,16 @@ struct WatchWaiter {
 
 impl ChangeOrStopWaiter for WatchWaiter {
     fn wait_for_change_or_stop(&self) -> ChangeOrStop {
-        if self.stops.asked.load(Ordering::SeqCst) {
-            return ChangeOrStop::Stop;
-        }
         select! {
             recv(self.stops.requests) -> _ => {
                 self.stops.asked.store(true, Ordering::SeqCst);
                 ChangeOrStop::Stop
             }
             recv(self.bursts) -> burst => match burst {
-                // `select!` picks at random when both are ready, so a request that came with
-                // the burst is looked for, and wins.
-                Ok(_) if self.stops.asked_to_stop() => ChangeOrStop::Stop,
-                Ok(burst) => ChangeOrStop::Changed(once(burst).chain(self.bursts.try_iter()).collect()),
+                Ok(burst) => {
+                    let waiting = self.bursts.try_iter();
+                    ChangeOrStop::Changed(once(burst).chain(waiting).collect())
+                }
                 Err(_) => ChangeOrStop::WatchingEnded,
             },
         }
@@ -150,28 +147,6 @@ mod tests {
             bursts.wait_for_change_or_stop(),
             ChangeOrStop::Changed(vec![changed("features/b.feature"), Burst::Missed])
         );
-    }
-
-    #[test]
-    fn a_burst_that_comes_with_a_request_to_stop_is_left() {
-        // Both are ready as the wait starts, and `select!` picks between them at random; the
-        // request wins whichever it picks.
-        let waiter = CrossbeamEventWaiter::default();
-        let (tell, bursts) = waiter.bursts();
-        tell(changed("features/a.feature"));
-        waiter.stop_teller()();
-        assert_eq!(bursts.wait_for_change_or_stop(), ChangeOrStop::Stop);
-        assert!(waiter.asked_to_stop());
-    }
-
-    #[test]
-    fn once_asked_to_stop_a_burst_is_left() {
-        let waiter = CrossbeamEventWaiter::default();
-        let (tell, bursts) = waiter.bursts();
-        waiter.stop_teller()();
-        waiter.wait_for_stop();
-        tell(changed("features/a.feature"));
-        assert_eq!(bursts.wait_for_change_or_stop(), ChangeOrStop::Stop);
     }
 
     #[test]

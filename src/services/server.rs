@@ -7,8 +7,8 @@ use std::sync::Arc;
 use i18n_embed_fl::fl;
 
 use crate::entities::{
-    ChangeOrStop, InputChanges, Preview, ServeOptions, Served, ServedSite, ServerWords, Watched,
-    Watching,
+    ChangeOrStop, InputChanges, Preview, ServeOptions, Served, ServedSite, ServerWords,
+    WatchKeeper, Watched,
 };
 use crate::errors::{ServeError, WatchError};
 use crate::policies::{CATALOGUE, merged_bursts};
@@ -86,6 +86,7 @@ impl ServerService {
         Ok(Box::new(ChangesWaiting {
             watching,
             waiter,
+            stops: self.waiter.clone(),
             settings_files: settings_files.to_vec(),
         }))
     }
@@ -152,8 +153,9 @@ impl ServerApi for ServerService {
 /// watching ends or ghg serve is asked to stop.
 struct ChangesWaiting {
     #[expect(dead_code, reason = "it is held only to be dropped")]
-    watching: Watching,
+    watching: WatchKeeper,
     waiter: Box<dyn ChangeOrStopWaiter>,
+    stops: Arc<dyn ServeEventWaiter>,
     settings_files: Vec<PathBuf>,
 }
 
@@ -161,7 +163,13 @@ impl Iterator for ChangesWaiting {
     type Item = InputChanges;
 
     fn next(&mut self) -> Option<InputChanges> {
+        if self.stops.asked_to_stop() {
+            return None;
+        }
         match self.waiter.wait_for_change_or_stop() {
+            // A request to stop that came with the bursts wins, so that no rebuild starts once
+            // ghg serve is asked to stop.
+            ChangeOrStop::Changed(_) if self.stops.asked_to_stop() => None,
             ChangeOrStop::Changed(bursts) => Some(merged_bursts(&bursts, &self.settings_files)),
             ChangeOrStop::Stop | ChangeOrStop::WatchingEnded => None,
         }

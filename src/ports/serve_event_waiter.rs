@@ -24,7 +24,6 @@ pub(crate) trait ServeEventWaiter: Send + Sync {
 /// Waits for one watch's bursts or a request to stop, as [`ServeEventWaiter::bursts`] hands it.
 pub(crate) trait ChangeOrStopWaiter: Send {
     /// Waits until a burst of changes or a request to stop comes, whichever is first, and hands
-    /// back every burst waiting then; a request to stop that came first, or with the burst,
-    /// wins, so that no rebuild starts once ghg serve is asked to stop.
+    /// back every burst waiting then. When both have come, either may be handed back.
     fn wait_for_change_or_stop(&self) -> ChangeOrStop;
 }
