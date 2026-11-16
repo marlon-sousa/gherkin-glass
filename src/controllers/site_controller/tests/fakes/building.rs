@@ -87,26 +87,26 @@ impl SettingsApi for FakeSettingsService {
 
 /// Finds one file, `a.feature`, with nothing parsed, in whatever input it is given, from nothing
 /// or from the last tree, and says that every change calls for a rebuild, unless
-/// `nothing_read_changes`.
+/// `nothing_read_changes`; from nothing, the errors of [`config_errors`] instead, as for a list
+/// of `--only` that cannot be read, while `list_failing`.
 #[derive(Default)]
 pub(crate) struct FakeInputCollector {
     pub(super) calls: Arc<Calls>,
     pub(crate) nothing_read_changes: AtomicBool,
+    pub(crate) list_failing: AtomicBool,
 }
 
 impl InputCollectorApi for FakeInputCollector {
     fn collect(&self, input: &Path, _: Option<&PathList>) -> Result<InputTree, ConfigErrors> {
         self.calls
             .note(format!("input_collector.collect {}", input.display()));
+        if self.list_failing.load(Ordering::SeqCst) {
+            return Err(config_errors());
+        }
         Ok(one_file_in(input))
     }
 
-    fn collect_changes(
-        &self,
-        last: &InputTree,
-        paths: &BTreeSet<PathBuf>,
-        _: Option<&PathList>,
-    ) -> Result<CollectedChanges, ConfigErrors> {
+    fn collect_changes(&self, last: &InputTree, paths: &BTreeSet<PathBuf>) -> CollectedChanges {
         // Read before the call is noted, since a test changes it once it sees the call.
         let calls_for_rebuild = !self.nothing_read_changes.load(Ordering::SeqCst);
         let paths: Vec<_> = paths
@@ -118,10 +118,10 @@ impl InputCollectorApi for FakeInputCollector {
             last.input_folder().display(),
             paths.join(" ")
         ));
-        Ok(CollectedChanges {
+        CollectedChanges {
             input_tree: one_file_in(last.input_folder()),
             calls_for_rebuild,
-        })
+        }
     }
 }
 

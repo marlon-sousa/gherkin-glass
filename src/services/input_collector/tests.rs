@@ -103,9 +103,7 @@ fn changes_call_for_a_rebuild_judged_against_the_last_tree(
     let input = MemoryFolders::with_files(["in/kept.feature", "in/new.feature", "in/notes.txt"]);
     let input_collector = input_collector(Arc::new(input));
     let paths = BTreeSet::from([PathBuf::from(changed)]);
-    let changes = input_collector
-        .collect_changes(&last, &paths, None)
-        .expect("no list");
+    let changes = input_collector.collect_changes(&last, &paths);
     assert_eq!(changes.calls_for_rebuild, rebuilds);
 }
 
@@ -161,25 +159,24 @@ fn a_list_that_cannot_be_read_stops_the_run(#[case] list: PathList, #[case] repo
 }
 
 #[rstest]
-// Rule 209: a change to a file the list does not name rebuilds nothing.
-#[case::a_listed_file("in/a.feature", true)]
-#[case::a_file_not_listed("in/b.feature", false)]
+// Rule 209: a change to a file the list does not name rebuilds nothing, and the files are those
+// the last tree was walked for, the list not being read again.
+#[case::a_listed_file("in/a.feature", true, &["in/a.feature"])]
+#[case::a_file_not_listed("in/b.feature", false, &["in/a.feature"])]
 fn only_a_change_to_a_listed_file_calls_for_a_rebuild(
     #[case] changed: &str,
     #[case] rebuilds: bool,
+    #[case] allowed: &[&str],
 ) {
     let only = listed(&["in/a.feature"]);
-    let list = PathList::StandardInput;
-    let collector = || {
-        let folders = MemoryFolders::with_files(["in/a.feature", "in/b.feature"]);
-        listing_collector(Arc::new(folders), Some(&only))
-    };
-    let last = collector()
-        .collect(Path::new("in"), Some(&list))
+    let folders = || Arc::new(MemoryFolders::with_files(["in/a.feature", "in/b.feature"]));
+    let last = listing_collector(folders(), Some(&only))
+        .collect(Path::new("in"), Some(&PathList::StandardInput))
         .expect("the list is read");
     let paths = BTreeSet::from([PathBuf::from(changed)]);
-    let changes = collector()
-        .collect_changes(&last, &paths, Some(&list))
-        .expect("the list is read");
+    // A collector whose list cannot be read, which collect_changes never reads.
+    let changes = input_collector(folders()).collect_changes(&last, &paths);
     assert_eq!(changes.calls_for_rebuild, rebuilds);
+    let allowed: Vec<_> = allowed.iter().map(PathBuf::from).collect();
+    assert_eq!(changes.input_tree.allowed_files(), allowed);
 }

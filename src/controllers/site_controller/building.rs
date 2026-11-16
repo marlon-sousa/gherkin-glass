@@ -42,8 +42,8 @@ pub(super) struct Built {
 pub(super) struct Stopped {
     /// What the next build starts from: the new input tree beside the site tree and the site
     /// rendered from it that the build started from, or none when the output check stopped a
-    /// build from nothing, or the list of `--only` could not be read, which leaves the last build
-    /// as it was.
+    /// build from nothing, or the list of `--only` could not be read, which leaves the last
+    /// build as it was.
     pub(super) left: Option<BuildSnapshot>,
     pub(super) error: BuildError,
 }
@@ -94,23 +94,12 @@ impl SiteController {
         paths: &BTreeSet<PathBuf>,
         options: &BuildOptions,
     ) -> BuildOutcome {
-        let collected = self.input_collector.collect_changes(
-            &last.input_tree,
-            paths,
-            last.settings.only.as_ref(),
-        );
         let CollectedChanges {
             input_tree,
             calls_for_rebuild,
-        } = match collected {
-            Ok(collected) => collected,
-            Err(errors) => {
-                return BuildOutcome::Stopped(Stopped {
-                    left: None,
-                    error: BuildError::Config(errors),
-                });
-            }
-        };
+        } = self
+            .input_collector
+            .collect_changes(&last.input_tree, paths);
         let left = BuildSnapshot {
             settings: Arc::clone(&last.settings),
             input_tree,

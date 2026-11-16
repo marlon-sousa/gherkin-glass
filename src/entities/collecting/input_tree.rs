@@ -7,6 +7,7 @@ mod input_node;
 mod parsed_file;
 mod revised_feature;
 
+use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
@@ -28,6 +29,9 @@ pub(crate) struct InputTree {
     tree: Tree<InputNode>,
     /// The revision the next file taken in is given.
     next_revision: Revision,
+    /// The files the list of `--only` held, below the input folder, which the tree was walked
+    /// for, and a tree made from it is walked for too; `None` for every file.
+    listed: Option<BTreeSet<PathBuf>>,
 }
 
 impl InputTree {
@@ -42,7 +46,20 @@ impl InputTree {
         InputTree {
             tree: Tree::new(InputNode::new(input, kind)),
             next_revision,
+            listed: None,
         }
+    }
+
+    /// The files the list of `--only` held, below the input folder, which the tree was walked
+    /// for; `None` for every file.
+    pub(crate) fn listed(&self) -> Option<&BTreeSet<PathBuf>> {
+        self.listed.as_ref()
+    }
+
+    /// The tree, walked for `listed`, the files the list of `--only` held, below the input
+    /// folder, or for every file when it is `None`.
+    pub(crate) fn walked_for(self, listed: Option<BTreeSet<PathBuf>>) -> Self {
+        InputTree { listed, ..self }
     }
 
     /// The folder the tree is the input of, its root's path.

@@ -24,6 +24,18 @@ impl ListedSelection {
         }
     }
 
+    /// The selection of `files`, the listed paths below the input folder, as [`files`] gave them.
+    ///
+    /// [`files`]: ListedSelection::files
+    pub(crate) fn of(files: BTreeSet<PathBuf>) -> Self {
+        ListedSelection { files }
+    }
+
+    /// The listed paths below the input folder.
+    pub(crate) fn files(&self) -> &BTreeSet<PathBuf> {
+        &self.files
+    }
+
     /// Whether the entry at `relative`, the path below the input folder, is left out: a file
     /// that is not listed, or a folder that holds no listed path at any depth below it.
     pub(crate) fn leaves_out(&self, relative: &Path, kind: EntryKind) -> bool {

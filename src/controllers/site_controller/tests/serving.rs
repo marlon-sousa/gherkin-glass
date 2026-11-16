@@ -75,6 +75,7 @@ fn serve_builds_as_its_mode_says_then_serves(
     Failing::OutputCheck,
     BuildError::Output(output_error())
 )]
+#[case::by_the_list_of_only(ServeMode::Build, Failing::List, BuildError::Config(config_errors()))]
 #[case::by_the_input(ServeMode::Build, Failing::Input, BuildError::Input(input_errors()))]
 #[case::by_the_input_in_memory(ServeMode::Watch, Failing::Input, BuildError::Input(input_errors()))]
 fn what_stops_the_first_build_stops_serve(

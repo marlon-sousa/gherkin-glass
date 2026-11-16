@@ -43,9 +43,7 @@ fn only_the_files_the_paths_name_are_parsed_again() {
     let files = ["in/a.feature", "in/b.feature", "in/sub/c.feature"];
     let last = parsed_tree(MemoryFolders::with_files(files));
     let input_collector = input_collector(Arc::new(MemoryFolders::with_files(files)));
-    let changes = input_collector
-        .collect_changes(&last, &changed(&["in/b.feature"]), None)
-        .expect("no list");
+    let changes = input_collector.collect_changes(&last, &changed(&["in/b.feature"]));
     assert!(changes.calls_for_rebuild);
     assert_eq!(
         to_parse(&changes.input_tree),
@@ -70,9 +68,7 @@ fn a_folder_no_path_concerns_is_copied_without_being_listed_again() {
     let mut folders = MemoryFolders::with_files(["in/a.feature", "in/sub/c.feature"]);
     folders.unlistable.insert(PathBuf::from("in/sub"));
     let input_collector = input_collector(Arc::new(folders));
-    let changes = input_collector
-        .collect_changes(&last, &changed(&["in/a.feature"]), None)
-        .expect("no list");
+    let changes = input_collector.collect_changes(&last, &changed(&["in/a.feature"]));
     assert!(changes.input_tree.input_errors().is_none());
     assert_eq!(
         changes.input_tree.allowed_files(),
@@ -98,9 +94,7 @@ fn a_ghg_ignore_judges_again_its_folder_and_below_and_marks_what_it_leaves_out()
         "c.feature\ndeeper/\n".into(),
     );
     let input_collector = input_collector(Arc::new(folders));
-    let changes = input_collector
-        .collect_changes(&last, &changed(&["in/sub/.ghg-ignore"]), None)
-        .expect("no list");
+    let changes = input_collector.collect_changes(&last, &changed(&["in/sub/.ghg-ignore"]));
     assert!(changes.calls_for_rebuild);
     assert_eq!(
         changes.input_tree.allowed_files(),
@@ -113,9 +107,7 @@ fn a_ghg_ignore_judges_again_its_folder_and_below_and_marks_what_it_leaves_out()
 fn paths_outside_the_input_leave_the_tree_as_it_was() {
     let last = parsed_tree(MemoryFolders::with_files(["in/a.feature"]));
     let input_collector = input_collector(Arc::new(MemoryFolders::default()));
-    let changes = input_collector
-        .collect_changes(&last, &changed(&["elsewhere/a.feature"]), None)
-        .expect("no list");
+    let changes = input_collector.collect_changes(&last, &changed(&["elsewhere/a.feature"]));
     assert!(!changes.calls_for_rebuild);
     assert_eq!(
         changes.input_tree.allowed_files(),

@@ -22,14 +22,9 @@ pub(crate) trait InputCollectorApi: Send + Sync {
 
     /// The input tree made from `last`, the tree of the last build, and `paths`, which changed in
     /// its input since, with every error and those of the pages that clash, and whether the paths
-    /// call for a rebuild, of the files the list `only` holds, read again, as `last` was; or the
-    /// error of the list when it cannot be read.
-    fn collect_changes(
-        &self,
-        last: &InputTree,
-        paths: &BTreeSet<PathBuf>,
-        only: Option<&PathList>,
-    ) -> Result<CollectedChanges, ConfigErrors>;
+    /// call for a rebuild, of the files `last` was walked for. The list is not read again: a
+    /// change to its file is a change of everything, which builds from nothing.
+    fn collect_changes(&self, last: &InputTree, paths: &BTreeSet<PathBuf>) -> CollectedChanges;
 }
 
 pub(crate) struct InputCollector {
@@ -85,30 +80,23 @@ impl InputCollector {
 impl InputCollectorApi for InputCollector {
     fn collect(&self, input: &Path, only: Option<&PathList>) -> Result<InputTree, ConfigErrors> {
         let listed = self.listed_selection(input, only)?;
-        Ok(with_page_errors(walk_input(
-            self.input_folders.as_ref(),
-            input,
-            listed,
-        )))
+        let files = listed.as_ref().map(|listed| listed.files().clone());
+        let input_tree = walk_input(self.input_folders.as_ref(), input, listed);
+        Ok(with_page_errors(input_tree.walked_for(files)))
     }
 
-    fn collect_changes(
-        &self,
-        last: &InputTree,
-        paths: &BTreeSet<PathBuf>,
-        only: Option<&PathList>,
-    ) -> Result<CollectedChanges, ConfigErrors> {
-        let input = last.input_folder();
-        let listed = self.listed_selection(input, only)?;
-        let input_tree = walk_changes(self.input_folders.as_ref(), last, paths, listed);
+    fn collect_changes(&self, last: &InputTree, paths: &BTreeSet<PathBuf>) -> CollectedChanges {
+        let listed = last.listed().cloned().map(ListedSelection::of);
+        let input_tree = walk_changes(self.input_folders.as_ref(), last, paths, listed)
+            .walked_for(last.listed().cloned());
         let read = Read {
             before: &last.allowed_files(),
             after: &input_tree.allowed_files(),
         };
-        Ok(CollectedChanges {
+        CollectedChanges {
             calls_for_rebuild: read.calls_for_rebuild(paths),
             input_tree: with_page_errors(input_tree),
-        })
+        }
     }
 }
 

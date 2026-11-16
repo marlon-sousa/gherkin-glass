@@ -81,6 +81,7 @@ impl InputTreeBuilder {
         InputTree {
             tree: self.tree,
             next_revision: self.next_revision,
+            listed: None,
         }
     }
 
