@@ -19,6 +19,7 @@ help =
       --title <text>: the site's title, instead of the configuration's title.
       --version-name <name>: builds the site as the version of that name, instead of the configuration's version_name.
       --front-page <file>: the Markdown template of the site's front page, instead of the configuration's front_page.
+      --only <file>: builds the site from the feature files the file lists, one path on each line, alone. --only - reads the list from standard input.
 
     Options of ghg serve only:
       --host <address>: the address to listen on, instead of 127.0.0.1.
@@ -43,6 +44,7 @@ repeated-option = The option { $option } is given more than once.
 unexpected-argument = { $command } takes no argument { $argument }.
 not-a-port = The option --port needs a whole number from 0 to 65535, not { $value }.
 watch-without-build = The options --watch and --no-build cannot be used together.
+only-without-build = The options --only and --no-build cannot be used together.
 
 ## One line of the report of what stops a build: the path, the line when
 ## there is one, and what is wrong.
@@ -106,6 +108,7 @@ search-documents-large = The search documents are { $size } MB, larger than the 
 ## system's words, and $key a key as the file writes it.
 
 config-cannot-be-read = cannot be read: { $reason }
+config-empty-list = names no path, so there is nothing to build.
 config-unknown-key = ghg has no setting named { $key }.
 config-not-text = { $key } must be text, in quotes.
 config-not-boolean = { $key } must be true or false.
@@ -265,6 +268,13 @@ folder-tree = Folder tree
 ## to its repository, and $version the version of ghg, such as 0.1.0-alpha.2.
 
 built-with = Built with { $name } { $version }
+
+## First in every page's main content when the site was built with --only,
+## and, on its home page, in place of its folders and features when none of
+## the files --only lists is read.
+
+only-note = This site shows only the feature files given with --only.
+only-nothing-given = No feature file was given with --only.
 
 ## The heading of each background a scenario holds, the heading of the
 ## scenario's own steps after them, and the checkbox that chooses whether

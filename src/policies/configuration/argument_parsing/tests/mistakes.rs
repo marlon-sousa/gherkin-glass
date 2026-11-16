@@ -62,6 +62,7 @@ fn unknown_command(name: &str) -> ArgumentError {
 #[case::an_empty_path(&["build", "--config", ""], missing_value("--config"))]
 #[case::an_empty_title(&["build", "--title="], missing_value("--title"))]
 #[case::an_empty_version_name(&["build", "--version-name="], missing_value("--version-name"))]
+#[case::an_empty_list(&["build", "--only="], missing_value("--only"))]
 #[case::no_version_name(&["build", "--version-name"], missing_value("--version-name"))]
 #[case::an_empty_host(&["serve", "--host", ""], missing_value("--host"))]
 #[case::an_empty_port(&["serve", "--port="], missing_value("--port"))]
@@ -75,6 +76,8 @@ fn unknown_command(name: &str) -> ArgumentError {
 #[case::a_port_with_a_sign(&["serve", "--port", "+80"], ArgumentError::NotAPort { value: "+80".into() })]
 #[case::a_port_too_large(&["serve", "--port=65536"], ArgumentError::NotAPort { value: "65536".into() })]
 #[case::watching_without_building(&["serve", "--no-build", "--watch"], ArgumentError::WatchWithoutBuild)]
+// Rule 204.
+#[case::a_list_without_building(&["serve", "--no-build", "--only", "-"], ArgumentError::OnlyWithoutBuild)]
 #[case::a_path_as_version_name(
     &["build", "--version-name", "../v1"],
     ArgumentError::InvalidVersionName { name: "../v1".into() }

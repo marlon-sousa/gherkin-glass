@@ -1,8 +1,10 @@
-//! Policy: the values of the options that are not paths, read as text and checked as clap reads them.
+//! Policy: the values of the options that are not plain paths, read as text and checked as clap reads them.
 
 use std::ffi::OsString;
 
-use crate::entities::VersionName;
+use std::path::PathBuf;
+
+use crate::entities::{PathList, VersionName};
 
 /// Why a value was refused, which clap keeps as the source of its error.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, thiserror::Error)]
@@ -38,4 +40,15 @@ pub(super) fn port(value: OsString) -> Result<u16, Rejected> {
 
 pub(super) fn version_name(value: OsString) -> Result<VersionName, Rejected> {
     VersionName::new(&text(value)?).ok_or(Rejected::NotAVersionName)
+}
+
+/// `-` for standard input, and any other value for the file of that path.
+pub(super) fn path_list(value: OsString) -> Result<PathList, Rejected> {
+    if value.is_empty() {
+        return Err(Rejected::Empty);
+    }
+    if value == "-" {
+        return Ok(PathList::StandardInput);
+    }
+    Ok(PathList::File(PathBuf::from(value)))
 }

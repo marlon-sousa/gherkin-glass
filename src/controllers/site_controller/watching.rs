@@ -1,12 +1,13 @@
 //! Controller: ghg serve's watch, rebuilding from the last build for the paths that changed, and from nothing, watching again on the input the settings name, when everything changed or the settings differ, until ghg serve is asked to stop.
 
 use std::iter::once;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
+use std::sync::Arc;
 
 use super::building::{BuildOutcome, Built, Stopped};
 use super::{SiteController, SiteListener};
 use crate::entities::{
-    BuildOptions, BuildSnapshot, BuildStart, Destination, InputChanges, Preview, Settings,
+    BuildOptions, BuildSnapshot, BuildStart, Destination, InputChanges, PathList, Preview, Settings,
 };
 use crate::errors::{BuildError, RebuildError, ServeError, WatchError};
 use crate::services::WatchedChanges;
@@ -22,17 +23,18 @@ pub(super) struct Watching<'a> {
 }
 
 impl Watching<'_> {
-    /// Starts watching the input of `first`, the first build, the configuration file and the
-    /// front page's template.
+    /// Starts watching the input of `first`, the first build, the configuration file, the
+    /// front page's template and the list of `--only`.
     pub(super) fn start(&self, first: &BuildSnapshot) -> Result<WatchedChanges, ServeError> {
         self.watch(&first.settings).map_err(ServeError::Watch)
     }
 
-    /// Starts watching the input `settings` name, the configuration file and the front page's
-    /// template they name.
+    /// Starts watching the input `settings` name, the configuration file, and the front page's
+    /// template and the file of the list of `--only` they name.
     fn watch(&self, settings: &Settings) -> Result<WatchedChanges, WatchError> {
         let settings_files: Vec<_> = once(self.config.clone())
             .chain(settings.front_page.clone())
+            .chain(list_file(settings))
             .collect();
         self.controller
             .server
@@ -80,7 +82,7 @@ impl Watching<'_> {
             };
             let outcome = self
                 .controller
-                .build_from(BuildStart::FromNothing(settings), self.options);
+                .build_from(BuildStart::FromNothing(Arc::new(settings)), self.options);
             last = self.served(outcome, last);
         }
     }
@@ -162,7 +164,17 @@ impl Watching<'_> {
     }
 }
 
-/// Whether `read` names another input or front page's template than `watched`.
+/// Whether `read` names another input or front page's template than `watched`. The list of
+/// `--only` is named on the command line alone, so it is the same in both.
 fn watches_other_files(read: &Settings, watched: &Settings) -> bool {
     read.input != watched.input || read.front_page != watched.front_page
+}
+
+/// The file the list of `--only` is read from, `None` for standard input or without `--only`.
+fn list_file(settings: &Settings) -> Option<PathBuf> {
+    settings
+        .only
+        .as_ref()
+        .and_then(PathList::file)
+        .map(Path::to_path_buf)
 }

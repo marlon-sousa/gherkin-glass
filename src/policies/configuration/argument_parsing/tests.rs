@@ -8,7 +8,7 @@ use clap::CommandFactory;
 use rstest::rstest;
 
 use super::*;
-use crate::entities::{BuildOptions, ServeMode, ServeOptions, VersionName};
+use crate::entities::{BuildOptions, PathList, ServeMode, ServeOptions, VersionName};
 
 fn parse(arguments: &[&str]) -> Result<Invocation, ArgumentError> {
     parse_arguments(arguments.iter().map(OsString::from))
@@ -87,6 +87,15 @@ fn serve_takes_every_option_of_build() {
 })]
 #[case::a_joined_version_name(&["build", "--version-name=main"], BuildOptions {
     version_name: VersionName::new("main"),
+    ..BuildOptions::default()
+})]
+// Rule 204.
+#[case::a_list_of_files(&["build", "--only", "changed.txt"], BuildOptions {
+    only: Some(PathList::File(PathBuf::from("changed.txt"))),
+    ..BuildOptions::default()
+})]
+#[case::a_list_on_standard_input(&["build", "--only=-"], BuildOptions {
+    only: Some(PathList::StandardInput),
     ..BuildOptions::default()
 })]
 fn build_takes_its_options_in_either_spelling_and_order(

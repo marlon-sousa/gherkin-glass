@@ -10,7 +10,7 @@ use gherkin::{Feature, GherkinEnv};
 
 use crate::entities::{FolderEntry, OutputContents, RawFeature, Record};
 use crate::errors::{InputErrorKind, ParseError};
-use crate::ports::{FeatureParser, FileReader, InputFolders, OutputFolders};
+use crate::ports::{FeatureParser, FileReader, InputFolders, OutputFolders, StandardInput};
 use crate::test_support::MemoryFolders;
 
 /// An input held in memory that a test changes between builds, read by the input collector and
@@ -57,6 +57,17 @@ impl InputFolders for ChangingInput {
         let folders = self.folders.lock().unwrap_or_else(PoisonError::into_inner);
         folders.read(file)
     }
+
+    fn absolute(&self, path: &Path) -> IoResult<PathBuf> {
+        let folders = self.folders.lock().unwrap_or_else(PoisonError::into_inner);
+        folders.absolute(path)
+    }
+}
+
+impl StandardInput for ChangingInput {
+    fn read(&self) -> IoResult<String> {
+        Err(not_found())
+    }
 }
 
 impl FeatureParser for ChangingInput {
@@ -75,9 +86,10 @@ impl FeatureParser for ChangingInput {
     }
 }
 
+/// Reads the files held, such as the list `--only` names; the configuration file is not one.
 impl FileReader for ChangingInput {
-    fn read(&self, _: &Path) -> IoResult<String> {
-        Err(not_found())
+    fn read(&self, file: &Path) -> IoResult<String> {
+        InputFolders::read(self, file)
     }
 }
 

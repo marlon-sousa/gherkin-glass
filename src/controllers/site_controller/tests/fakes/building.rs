@@ -10,8 +10,8 @@ use gherkin::{Feature, GherkinEnv};
 use super::*;
 use crate::entities::{
     CollectedChanges, FileToParse, IgnoreRules, InputTree, InputTreeBuilder, PageOptions,
-    ParsedFeature, ParsedFile, RenderedSite, RevisedFeature, Revision, Settings, SiteFiles,
-    SiteNode, SiteTree, SiteTreeBuilder, SiteVersion, TagNames, Unnamed, VersionName,
+    ParsedFeature, ParsedFile, PathList, RenderedSite, RevisedFeature, Revision, Settings,
+    SiteFiles, SiteNode, SiteTree, SiteTreeBuilder, SiteVersion, TagNames, Unnamed, VersionName,
 };
 use crate::policies::page_frame;
 use crate::test_support::name;
@@ -80,24 +80,30 @@ impl SettingsApi for FakeSettingsService {
                 .lock()
                 .unwrap_or_else(PoisonError::into_inner)
                 .clone(),
+            only: None,
         })
     }
 }
 
 /// Finds one file, `a.feature`, with nothing parsed, in whatever input it is given, from nothing
 /// or from the last tree, and says that every change calls for a rebuild, unless
-/// `nothing_read_changes`.
+/// `nothing_read_changes`; from nothing, the errors of [`config_errors`] instead, as for a list
+/// of `--only` that cannot be read, while `list_failing`.
 #[derive(Default)]
 pub(crate) struct FakeInputCollector {
     pub(super) calls: Arc<Calls>,
     pub(crate) nothing_read_changes: AtomicBool,
+    pub(crate) list_failing: AtomicBool,
 }
 
 impl InputCollectorApi for FakeInputCollector {
-    fn collect(&self, input: &Path) -> InputTree {
+    fn collect(&self, input: &Path, _: Option<&PathList>) -> Result<InputTree, ConfigErrors> {
         self.calls
             .note(format!("input_collector.collect {}", input.display()));
-        one_file_in(input)
+        if self.list_failing.load(Ordering::SeqCst) {
+            return Err(config_errors());
+        }
+        Ok(one_file_in(input))
     }
 
     fn collect_changes(&self, last: &InputTree, paths: &BTreeSet<PathBuf>) -> CollectedChanges {

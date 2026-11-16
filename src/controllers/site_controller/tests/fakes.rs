@@ -67,6 +67,8 @@ fn waited_for(count: usize, so_far: impl Fn() -> Vec<String>) -> Vec<String> {
 /// The stage of a build that fails.
 pub(super) enum Failing {
     Settings,
+    /// The list of `--only`, which the input collector reads.
+    List,
     OutputCheck,
     Input,
     Writing,
@@ -100,6 +102,7 @@ impl World {
     pub(super) fn fail(&self, failing: Failing) {
         let flag = match failing {
             Failing::Settings => &self.settings.failing,
+            Failing::List => &self.input_collector.list_failing,
             Failing::OutputCheck => &self.site_writer.check_failing,
             Failing::Input => &self.gherkin_parser.failing,
             Failing::Writing => &self.site_writer.write_failing,

@@ -1,5 +1,5 @@
 //! Composition root: the ghg command, wired to the real file system, network,
-//! signals and terminal, for both binaries, `ghg` and the cargo plugin `cargo-ghg`.
+//! signals, standard input and terminal, for both binaries, `ghg` and the cargo plugin `cargo-ghg`.
 
 use std::ffi::OsString;
 use std::io::{Write, stderr, stdout};
@@ -8,7 +8,8 @@ use std::sync::Arc;
 
 use crate::adapters::{
     CrossbeamEventWaiter, CtrlcSignals, FileSystemReader, FileWatcher, FolderFiles, GherkinCrate,
-    HttpPreviewServer, InputFolderReader, MemoryFiles, OutputFolderStore, StandardStreams,
+    HttpPreviewServer, InputFolderReader, MemoryFiles, OutputFolderStore, StandardInputReader,
+    StandardStreams,
 };
 use crate::controllers::SiteController;
 use crate::handlers::CommandLine;
@@ -21,7 +22,11 @@ use crate::services::{
 pub fn run(arguments: impl IntoIterator<Item = OsString>) -> ExitCode {
     let site = SiteController::new(
         Arc::new(SettingsService::new(Arc::new(FileSystemReader))),
-        Arc::new(InputCollector::new(Arc::new(InputFolderReader))),
+        Arc::new(InputCollector::new(
+            Arc::new(InputFolderReader),
+            Arc::new(FileSystemReader),
+            Arc::new(StandardInputReader::default()),
+        )),
         Arc::new(GherkinParser::new(Arc::new(GherkinCrate))),
         Arc::new(Converter),
         Arc::new(SiteWriter::new(

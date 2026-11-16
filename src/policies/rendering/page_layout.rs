@@ -37,6 +37,7 @@ struct LayoutTemplate<'a> {
     breadcrumb: String,
     search: String,
     main: String,
+    only_note: Option<&'a str>,
     footer: &'a str,
 }
 
@@ -91,6 +92,7 @@ pub(super) fn whole_page(site: &SitePieces<'_>, around: &PageAround<'_>, main: S
         }
         .render(),
         main,
+        only_note: site.page_frame.only_note.as_deref(),
         footer: &site.footer,
     })
 }

@@ -67,7 +67,7 @@ impl SiteController {
     /// was asked to stop while it ran.
     fn first_build(&self, settings: Settings) -> Result<Option<Built>, ServeError> {
         let first = self
-            .build_from_nothing(settings)
+            .build_from_nothing(Arc::new(settings))
             .map_err(|stopped| stopped.error)?;
         Ok((!self.server.asked_to_stop()).then_some(first))
     }
@@ -117,7 +117,7 @@ impl SiteApi for SiteController {
             .load(options, Destination::Folder)
             .map_err(BuildError::Config)?;
         let built = self
-            .build_from_nothing(settings)
+            .build_from_nothing(Arc::new(settings))
             .map_err(|stopped| stopped.error)?;
         Ok(built.built)
     }

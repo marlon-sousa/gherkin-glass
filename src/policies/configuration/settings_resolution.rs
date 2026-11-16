@@ -2,7 +2,9 @@
 
 use std::path::{Path, PathBuf};
 
-use crate::entities::{Accents, BuildOptions, Config, Destination, PageOptions, Settings, Unnamed};
+use crate::entities::{
+    Accents, BuildOptions, Config, Destination, PageOptions, Settings, SiteScope, Unnamed,
+};
 
 /// The input folder when neither the command line nor the file names one,
 /// relative to the configuration file's folder.
@@ -33,6 +35,10 @@ pub(crate) fn resolve_settings(
         Some(false) => Unnamed::Refused,
         Some(true) | None => Unnamed::Allowed,
     };
+    let scope = match options.only {
+        Some(_) => SiteScope::OnlyListed,
+        None => SiteScope::EveryFeature,
+    };
     let version = options
         .version_name
         .clone()
@@ -48,6 +54,7 @@ pub(crate) fn resolve_settings(
             .front_page
             .clone()
             .or_else(|| config.front_page.as_ref().map(|set| folder.join(set))),
+        only: options.only.clone(),
         pages: PageOptions {
             title: options.title.clone().or_else(|| config.title.clone()),
             source_link: config.source_link.clone(),
@@ -60,6 +67,7 @@ pub(crate) fn resolve_settings(
                 light: config.accent_light.unwrap_or(Accents::DEFAULT.light),
                 dark: config.accent_dark.unwrap_or(Accents::DEFAULT.dark),
             },
+            scope,
         },
     }
 }

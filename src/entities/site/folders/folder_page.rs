@@ -21,6 +21,9 @@ pub(crate) struct FolderPage {
     pub(crate) tags: Option<FolderLink>,
     /// Only the home page's: its link to the page of step sentences.
     pub(crate) sentences: Option<FolderLink>,
+    /// Only the home page's, in a site of the files `--only` lists when none of them is read:
+    /// the sentence that says so.
+    pub(crate) nothing_given: Option<String>,
     pub(crate) words: FolderWords,
 }
 

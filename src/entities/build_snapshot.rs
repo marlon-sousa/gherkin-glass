@@ -7,7 +7,8 @@ use crate::entities::{InputTree, RenderedSite, Settings, SiteTree, VersionName};
 
 #[derive(Debug, Clone)]
 pub(crate) struct BuildSnapshot {
-    pub(crate) settings: Settings,
+    /// Shared with every snapshot made from this one while the settings read again are equal.
+    pub(crate) settings: Arc<Settings>,
     /// Holds every entry of the input as the build last found it, also when the input stopped
     /// the build.
     pub(crate) input_tree: InputTree,

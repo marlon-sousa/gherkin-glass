@@ -38,4 +38,6 @@ pub(crate) struct PageFrame {
     pub(crate) search: SearchWords,
     pub(crate) breadcrumb: BreadcrumbWords,
     pub(crate) footer: FooterWords,
+    /// The note that the site shows only the feature files `--only` lists; `None` without it.
+    pub(crate) only_note: Option<String>,
 }

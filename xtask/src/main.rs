@@ -63,18 +63,21 @@ fn main() -> ExitCode {
 fn build() -> Result<(), String> {
     prepare_script()?;
     bundle(&root().join(SCRIPT))?;
-    // The expected sites of the fixtures hold the assets as built.
-    for config in [
-        "pages/ghg.toml",
-        "pages/collapsed.toml",
-        "backgrounds/ghg.toml",
-        "backgrounds/unchecked.toml",
-        "tags/ghg.toml",
-        "highlighting/ghg.toml",
-        "front-page/ghg.toml",
+    // The expected sites of the fixtures hold the assets as built. Each is built in its
+    // fixture's folder, from its configuration file and the list `--only` names, if any.
+    for (fixture, config, only) in [
+        ("pages", "ghg.toml", None),
+        ("pages", "collapsed.toml", None),
+        ("backgrounds", "ghg.toml", None),
+        ("backgrounds", "unchecked.toml", None),
+        ("tags", "ghg.toml", None),
+        ("highlighting", "ghg.toml", None),
+        ("front-page", "ghg.toml", None),
+        ("only", "ghg.toml", Some("changed.txt")),
+        ("only", "nothing.toml", Some("nothing.txt")),
     ] {
-        let config = format!("tests/fixtures/{config}");
-        cargo(&[
+        let folder = root().join("tests/fixtures").join(fixture);
+        let mut arguments = vec![
             "run",
             "--quiet",
             "--locked",
@@ -83,8 +86,10 @@ fn build() -> Result<(), String> {
             "--",
             "build",
             "--config",
-            &config,
-        ])?;
+            config,
+        ];
+        arguments.extend(only.into_iter().flat_map(only_arguments));
+        cargo_in(&folder, &arguments)?;
     }
     // So does the example suite's, which the project's site shows.
     cargo(&[
@@ -242,6 +247,16 @@ fn npm(arguments: &[&str]) -> Result<(), String> {
 
 fn cargo(arguments: &[&str]) -> Result<(), String> {
     run(&mut cargo_command(arguments))
+}
+
+/// The arguments that give `ghg build` the list `list` with `--only`.
+fn only_arguments(list: &str) -> [&str; 2] {
+    ["--only", list]
+}
+
+/// Cargo with `arguments`, run from `folder`.
+fn cargo_in(folder: &Path, arguments: &[&str]) -> Result<(), String> {
+    run(cargo_command(arguments).current_dir(folder))
 }
 
 /// Cargo with `arguments`, run from the repository's root.

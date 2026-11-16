@@ -5,7 +5,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use crate::entities::{BuildOptions, Config, Destination, Settings};
-use crate::errors::{ConfigError, ConfigErrorKind, ConfigErrors};
+use crate::errors::{ConfigError, ConfigErrors};
 use crate::policies::{config_folder, parse_config, resolve_settings};
 use crate::ports::FileReader;
 
@@ -57,22 +57,18 @@ impl SettingsApi for SettingsService {
             Err(error) if !asked_for && error.kind() == ErrorKind::NotFound => {
                 Ok(Config::default())
             }
-            Err(error) => Err(vec![ConfigError {
-                line: None,
-                kind: ConfigErrorKind::CannotBeRead {
-                    reason: error.to_string(),
-                },
-            }]),
+            Err(error) => Err(vec![ConfigError::cannot_be_read(&error)]),
         };
-        match config {
-            Ok(config) => Ok(resolve_settings(
-                options,
-                &config_folder(&file),
-                &config,
-                destination,
-            )),
-            Err(errors) => Err(ConfigErrors { file, errors }),
-        }
+        let config = match config {
+            Ok(config) => config,
+            Err(errors) => return Err(ConfigErrors { file, errors }),
+        };
+        Ok(resolve_settings(
+            options,
+            &config_folder(&file),
+            &config,
+            destination,
+        ))
     }
 }
 

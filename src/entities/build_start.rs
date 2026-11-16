@@ -2,12 +2,13 @@
 
 use std::collections::BTreeSet;
 use std::path::PathBuf;
+use std::sync::Arc;
 
 use crate::entities::{BuildSnapshot, Settings};
 
 #[derive(Debug, Clone)]
 pub(crate) enum BuildStart<'a> {
-    FromNothing(Settings),
+    FromNothing(Arc<Settings>),
     FromLast {
         last: &'a BuildSnapshot,
         paths: &'a BTreeSet<PathBuf>,

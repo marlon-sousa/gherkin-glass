@@ -2,6 +2,7 @@
 //! folders for tests that touch the disk, an input held in memory, output folders as ghg finds
 //! them, and a server and a watcher for ghg serve.
 
+mod list;
 mod output;
 mod serving;
 
@@ -26,8 +27,9 @@ use crate::entities::{
 use crate::errors::InputErrors;
 use crate::policies::site_tree;
 use crate::ports::{FeatureParser, InputFolders};
-use crate::services::{GherkinParser, GherkinParserApi, InputCollector, InputCollectorApi};
+use crate::services::{GherkinParser, GherkinParserApi, InputCollectorApi};
 
+pub(crate) use list::{input_collector, listing_collector};
 pub(crate) use output::{folder, name, set, two_versions};
 pub(crate) use serving::{Counted, FakeServer, FakeSignals, FakeWaiter, FakeWatcher, changed};
 
@@ -111,7 +113,9 @@ pub(crate) fn parsed_input(
     input: &Path,
     unnamed: Unnamed,
 ) -> InputTree {
-    let mut input_tree = InputCollector::new(input_folders).collect(input);
+    let mut input_tree = input_collector(input_folders)
+        .collect(input, None)
+        .expect("no list");
     let files = input_tree.files_to_parse();
     input_tree.put_parsed(GherkinParser::new(feature_parser).parse(input, files, unnamed));
     input_tree
@@ -238,7 +242,14 @@ impl InputFolders for MemoryFolders {
             .cloned()
             .ok_or_else(|| IoError::new(ErrorKind::NotFound, "not found"))
     }
+
+    fn absolute(&self, path: &Path) -> IoResult<PathBuf> {
+        Ok(Path::new(CURRENT_FOLDER).join(path))
+    }
 }
+
+/// The current folder the fakes of the input make relative paths absolute from.
+const CURRENT_FOLDER: &str = "/work";
 
 /// The entry of `folder` that `path` is or is under, if it is under `folder`.
 fn entry_under(folder: &Path, path: &Path) -> Option<FolderEntry> {

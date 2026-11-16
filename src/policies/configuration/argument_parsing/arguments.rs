@@ -6,10 +6,10 @@ use std::path::PathBuf;
 use clap::builder::{OsStringValueParser, TypedValueParser};
 use clap::{ArgAction, Args, Parser, Subcommand};
 
-use crate::entities::{BuildOptions, Invocation, ServeMode, ServeOptions, VersionName};
+use crate::entities::{BuildOptions, Invocation, PathList, ServeMode, ServeOptions, VersionName};
 use crate::errors::ArgumentError;
 
-use super::option_values::{port, text, version_name};
+use super::option_values::{path_list, port, text, version_name};
 
 /// clap prints nothing: `--help` and `--version` are answered with the
 /// catalogue's words, and its mistakes become [`ArgumentError`]s.
@@ -52,6 +52,8 @@ struct BuildArguments {
     version_name: Option<VersionName>,
     #[arg(long, allow_hyphen_values = true)]
     front_page: Option<PathBuf>,
+    #[arg(long, allow_hyphen_values = true, value_parser = OsStringValueParser::new().try_map(path_list))]
+    only: Option<PathList>,
     /// What follows `--`, which no command takes.
     #[arg(last = true)]
     after_the_options: Vec<OsString>,
@@ -99,6 +101,7 @@ impl BuildArguments {
             output: self.output,
             title: self.title,
             front_page: self.front_page,
+            only: self.only,
         })
     }
 }
@@ -110,6 +113,7 @@ impl TryFrom<ServeArguments> for ServeOptions {
         let build = arguments.build.options("ghg serve")?;
         let mode = match (arguments.no_build, arguments.watch) {
             (true, true) => return Err(ArgumentError::WatchWithoutBuild),
+            (true, false) if build.only.is_some() => return Err(ArgumentError::OnlyWithoutBuild),
             (true, false) => ServeMode::Folder,
             (false, true) => ServeMode::Watch,
             (false, false) => ServeMode::Build,

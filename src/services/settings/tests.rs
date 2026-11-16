@@ -5,6 +5,7 @@ use std::path::Path;
 use rstest::rstest;
 
 use super::*;
+use crate::entities::{PathList, SiteScope};
 
 /// Configuration files held in memory, each with its text, or with `None` when it is there but
 /// cannot be read; any other path is not found.
@@ -32,14 +33,27 @@ fn config_file((path, text): &(&str, Option<&str>)) -> (PathBuf, Option<String>)
 /// The settings of a build over the configuration `files`, with the file `--config` names, if
 /// any, or the report of what stops them.
 fn load(files: &[(&str, Option<&str>)], config: Option<&str>) -> Result<Settings, String> {
-    let files = files.iter().map(config_file).collect();
     let options = BuildOptions {
         config: config.map(PathBuf::from),
         ..BuildOptions::default()
     };
+    load_with(files, &options)
+}
+
+/// The settings of a build over the configuration `files`, with `options`, or the report of what
+/// stops them.
+fn load_with(files: &[(&str, Option<&str>)], options: &BuildOptions) -> Result<Settings, String> {
+    let files = files.iter().map(config_file).collect();
     SettingsService::new(Arc::new(ConfigFiles { files }))
-        .load(&options, Destination::Folder)
+        .load(options, Destination::Folder)
         .map_err(|errors| errors.to_string())
+}
+
+fn only(list: PathList) -> BuildOptions {
+    BuildOptions {
+        only: Some(list),
+        ..BuildOptions::default()
+    }
 }
 
 #[rstest]
@@ -79,4 +93,22 @@ fn a_configuration_that_cannot_be_used_is_reported_whole(
     #[case] report: &str,
 ) {
     assert_eq!(load(files, config), Err(report.to_string()));
+}
+
+// Rule 204: the settings hold where the list is read from, which the input collector reads, so
+// that a list that is not there yet stops nothing here.
+#[rstest]
+#[case::a_file(only(PathList::File(PathBuf::from("changed.txt"))))]
+#[case::standard_input(only(PathList::StandardInput))]
+fn the_settings_hold_where_the_list_of_only_is_read_from(#[case] options: BuildOptions) {
+    let settings = load_with(&[], &options).expect("loads");
+    assert_eq!(settings.only, options.only);
+    assert_eq!(settings.pages.scope, SiteScope::OnlyListed);
+}
+
+#[test]
+fn without_only_the_site_shows_every_feature_file() {
+    let settings = load(&[], None).expect("loads");
+    assert_eq!(settings.only, None);
+    assert_eq!(settings.pages.scope, SiteScope::EveryFeature);
 }

@@ -9,12 +9,14 @@ use std::path::Path;
 use crate::adapters::InputFolderReader;
 use crate::entities::InputTree;
 use crate::errors::{InputError, InputErrorKind};
-use crate::test_support::{copy_folder, fixture, scratch};
+use crate::test_support::{copy_folder, fixture, input_collector, scratch};
 
 use super::*;
 
 fn collected(input: &Path) -> InputTree {
-    InputCollector::new(Arc::new(InputFolderReader)).collect(input)
+    input_collector(Arc::new(InputFolderReader))
+        .collect(input, None)
+        .expect("no list")
 }
 
 /// The paths of the files the input tree of `input` allows, relative to it, with `/` between

@@ -2,7 +2,7 @@
 
 use std::path::PathBuf;
 
-use crate::entities::{Destination, PageOptions, Unnamed, VersionName};
+use crate::entities::{Destination, PageOptions, PathList, Unnamed, VersionName};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct Settings {
@@ -17,4 +17,7 @@ pub(crate) struct Settings {
     pub(crate) replace: bool,
     /// The front page's template; `None` for ghg's own.
     pub(crate) front_page: Option<PathBuf>,
+    /// Where `--only` reads its list of feature files from; `None` when the site shows every
+    /// feature file.
+    pub(crate) only: Option<PathList>,
 }

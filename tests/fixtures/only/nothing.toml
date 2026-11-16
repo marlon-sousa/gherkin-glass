@@ -1,0 +1,3 @@
+# A site of only the feature files a list names, built with --only nothing.txt, none of whose paths is read.
+title = "Changed features"
+output = "expected-nothing"

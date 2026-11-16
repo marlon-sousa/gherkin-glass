@@ -2,7 +2,9 @@
 
 use i18n_embed_fl::fl;
 
-use crate::entities::{BreadcrumbWords, DiskNoticeWords, FooterWords, PageFrame, PageOptions};
+use crate::entities::{
+    BreadcrumbWords, DiskNoticeWords, FooterWords, PageFrame, PageOptions, SiteScope,
+};
 use crate::policies::{CATALOGUE, site_title};
 
 mod search_wording;
@@ -34,6 +36,10 @@ pub(crate) fn page_frame(options: &PageOptions) -> PageFrame {
             home: site_title(options),
         },
         footer: footer_words(),
+        only_note: match options.scope {
+            SiteScope::OnlyListed => Some(fl!(CATALOGUE, "only-note")),
+            SiteScope::EveryFeature => None,
+        },
     }
 }
 
@@ -65,6 +71,20 @@ mod tests {
         };
         assert!(!page_frame(&hidden).tree_shown);
         assert_eq!(page_frame(&hidden).skip_link, "Skip to content");
+    }
+
+    // Rule 207.
+    #[test]
+    fn only_a_site_of_the_files_only_lists_has_the_note_that_says_so() {
+        assert_eq!(page_frame(&PageOptions::default()).only_note, None);
+        let listed = PageOptions {
+            scope: SiteScope::OnlyListed,
+            ..PageOptions::default()
+        };
+        assert_eq!(
+            page_frame(&listed).only_note.as_deref(),
+            Some("This site shows only the feature files given with --only.")
+        );
     }
 
     #[test]
