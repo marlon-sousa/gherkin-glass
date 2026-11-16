@@ -30,6 +30,8 @@ pub(crate) enum ArgumentError {
     NotAPort { value: String },
     #[error(fmt = Self::watch_without_build)]
     WatchWithoutBuild,
+    #[error(fmt = Self::only_without_build)]
+    OnlyWithoutBuild,
     #[error(fmt = invalid_version_name)]
     InvalidVersionName { name: String },
 }
@@ -79,5 +81,9 @@ impl ArgumentError {
 
     fn watch_without_build(f: &mut Formatter<'_>) -> FmtResult {
         f.write_str(&fl!(CATALOGUE, "watch-without-build"))
+    }
+
+    fn only_without_build(f: &mut Formatter<'_>) -> FmtResult {
+        f.write_str(&fl!(CATALOGUE, "only-without-build"))
     }
 }

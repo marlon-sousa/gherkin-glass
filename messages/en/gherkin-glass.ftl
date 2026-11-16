@@ -44,6 +44,7 @@ repeated-option = The option { $option } is given more than once.
 unexpected-argument = { $command } takes no argument { $argument }.
 not-a-port = The option --port needs a whole number from 0 to 65535, not { $value }.
 watch-without-build = The options --watch and --no-build cannot be used together.
+only-without-build = The options --only and --no-build cannot be used together.
 
 ## One line of the report of what stops a build: the path, the line when
 ## there is one, and what is wrong.

@@ -121,6 +121,22 @@ fn a_list_that_cannot_be_read_stops_the_run_before_the_input_is_read() {
     assert!(!written.exists());
 }
 
+// Rule 204: serving without building has no use for a list.
+#[test]
+fn a_list_given_with_no_build_is_a_mistake_on_the_command_line() {
+    let run = Command::new(env!("CARGO_BIN_EXE_ghg"))
+        .args(["serve", "--no-build", "--only", "changed.txt"])
+        .current_dir(fixture())
+        .output()
+        .expect("the command runs");
+    assert_eq!(
+        text(&run.stderr),
+        "The options --only and --no-build cannot be used together.\n"
+    );
+    assert_eq!(text(&run.stdout), "");
+    assert_eq!(run.status.code(), Some(2));
+}
+
 // Rule 210.
 #[test]
 fn a_version_of_only_the_listed_files_is_listed_as_any_other_and_says_what_it_shows() {

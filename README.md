@@ -121,7 +121,7 @@ ghg serve [options]
 | `--only <file>` | `build` and `serve` | Builds the site from the feature files listed in that file, one path on each line, alone, as "A site of only some feature files" below describes. `--only -` reads the list from standard input. |
 | `--host <address>` | `serve` | Listens on that address instead of `127.0.0.1`, such as `0.0.0.0` to be reached from other machines. |
 | `--port <number>` | `serve` | Listens at that port instead of 8000. `0` lets the system choose a free one. |
-| `--no-build` | `serve` | Serves the output folder as it is, without building it. |
+| `--no-build` | `serve` | Serves the output folder as it is, without building it. It cannot be given with `--watch` or `--only`. |
 | `--watch` | `serve` | Rebuilds the site whenever a feature file, the configuration, the front page's Markdown file or the list `--only` names changes, and reloads the pages open in the browser. With `--only`, a change to a feature file the list does not name rebuilds nothing. |
 
 An option on the command line wins over the configuration file's key, and the key wins over the default. `ghg --help` lists the commands and options, and `ghg --version` prints the version.

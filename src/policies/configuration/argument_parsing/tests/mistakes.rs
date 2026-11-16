@@ -76,6 +76,8 @@ fn unknown_command(name: &str) -> ArgumentError {
 #[case::a_port_with_a_sign(&["serve", "--port", "+80"], ArgumentError::NotAPort { value: "+80".into() })]
 #[case::a_port_too_large(&["serve", "--port=65536"], ArgumentError::NotAPort { value: "65536".into() })]
 #[case::watching_without_building(&["serve", "--no-build", "--watch"], ArgumentError::WatchWithoutBuild)]
+// Rule 204.
+#[case::a_list_without_building(&["serve", "--no-build", "--only", "-"], ArgumentError::OnlyWithoutBuild)]
 #[case::a_path_as_version_name(
     &["build", "--version-name", "../v1"],
     ArgumentError::InvalidVersionName { name: "../v1".into() }
