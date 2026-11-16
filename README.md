@@ -91,7 +91,7 @@ text = "Issue $1 on GitHub"
 | `tag_links` | a list of tables, each written `[[tag_links]]` | none | Links from tags to another site. Each table has a `pattern`, a regular expression matched against the whole tag with its `@`; an `address`; and a `text` for the link. In the address and the text, `$1` or `$name` is replaced by what that group of the pattern matched. |
 | `accent_light` | a colour, `#` and six or three hexadecimal digits, in quotes, such as `"#0b4f9c"` | `"#0b4f9c"` | The light theme's colour for links and the focus outline. It must reach a contrast of 7:1 against the theme's backgrounds. |
 | `accent_dark` | a colour, written as `accent_light`'s, such as `"#8cc4ff"` | `"#8cc4ff"` | The dark theme's colour for links and the focus outline, held to the same contrast. |
-| `version_name` | text | none | Builds the site as a version of that name, as "Versions" below describes. |
+| `version_name` | text | none | Builds the site as a version of that name, as "Versions" below describes, unless `--preview` is given. |
 | `replace_existing_version` | `true` or `false` | `true` | Whether a build replaces the site, or the version, that an earlier build wrote in the output folder. When `false`, it stops instead. |
 | `front_page` | a path | none | A Markdown file that introduces the site on its front page, as "The front page" below describes. |
 
