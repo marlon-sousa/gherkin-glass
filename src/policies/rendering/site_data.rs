@@ -40,8 +40,11 @@ struct SearchData<'a> {
     name: &'a str,
     feature: Option<&'a str>,
     rule: Option<&'a str>,
+    outline: Option<&'a str>,
+    place: Option<usize>,
     steps: &'a [String],
     tags: &'a [String],
+    cells: &'a [String],
     page: &'a str,
     anchor: &'a str,
 }
@@ -51,8 +54,10 @@ struct SearchData<'a> {
 enum KindData {
     Feature,
     Rule,
+    Background,
     Scenario,
     ScenarioOutline,
+    Examples,
 }
 
 /// The folder tree's items, on one line that ends in a line break.
@@ -128,8 +133,14 @@ fn search_data(document: &SearchDocument) -> SearchData<'_> {
         name: &document.name,
         feature: document.feature.as_deref(),
         rule: document.rule.as_deref(),
+        outline: document
+            .outline
+            .as_ref()
+            .map(|outline| outline.name.as_str()),
+        place: document.outline.as_ref().map(|outline| outline.place),
         steps: &document.steps,
         tags: &document.tags,
+        cells: &document.cells,
         page: document.page.as_str(),
         anchor: &document.anchor,
     }
@@ -139,18 +150,20 @@ fn kind_data(kind: SearchKind) -> KindData {
     match kind {
         SearchKind::Feature => KindData::Feature,
         SearchKind::Rule => KindData::Rule,
+        SearchKind::Background => KindData::Background,
         SearchKind::Scenario => KindData::Scenario,
         SearchKind::ScenarioOutline => KindData::ScenarioOutline,
+        SearchKind::Examples => KindData::Examples,
     }
 }
 
 #[expect(
     clippy::expect_used,
-    reason = "strings, lists of strings and options of them always serialise"
+    reason = "strings, numbers, lists of strings and options of them always serialise"
 )]
 fn json(data: &impl Serialize) -> String {
     serde_json::to_string(data)
-        .expect("strings, lists of strings and options of them always serialise")
+        .expect("strings, numbers, lists of strings and options of them always serialise")
 }
 
 /// The address of the file named `name` in the folder of the assets.

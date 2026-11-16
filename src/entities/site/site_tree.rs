@@ -18,9 +18,9 @@ use ego_tree::{NodeRef, Tree};
 
 use crate::entities::{
     BackgroundBlock, BlockHeading, DocStringView, ExamplesBlock, FeatureEntry, FolderLink,
-    FolderPage, GroupView, Page, PageFrame, RuleBlock, ScenarioBlock, SearchDocument, SentenceView,
-    SentencesPage, StepView, TableView, TagFeature, TagIndex, TagIndexEntry, TagPage, TagScenario,
-    TreeItem, UseView, VersionEntry, VersionName, VersionsList, VersionsPage,
+    FolderPage, GroupView, Page, PageFrame, RuleBlock, ScenarioBlock, SearchDocument, SearchPage,
+    SentenceView, SentencesPage, StepView, TableView, TagFeature, TagIndex, TagIndexEntry, TagPage,
+    TagScenario, TreeItem, UseView, VersionEntry, VersionName, VersionsList, VersionsPage,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -90,6 +90,8 @@ pub(crate) enum SiteNode {
     TagScenario(TagScenario),
     /// The documents search reads.
     SearchDocuments(Vec<SearchDocument>),
+    /// The page of search results.
+    SearchPage(SearchPage),
     /// One of the assets every site has, by its name in their folder.
     Asset(String),
 }
@@ -108,6 +110,7 @@ impl SiteNode {
                 | SiteNode::TagIndex(_)
                 | SiteNode::TagPage(_)
                 | SiteNode::SearchDocuments(_)
+                | SiteNode::SearchPage(_)
                 | SiteNode::Asset(_)
         )
     }

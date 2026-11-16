@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 
 use crate::entities::{PageClash, SiteAddress, TAGS_FOLDER};
 use crate::errors::{InputError, InputErrorKind};
-use crate::policies::{FOLDER_PAGE, SENTENCES_PAGE, page_address};
+use crate::policies::{FOLDER_PAGE, SEARCH_PAGE, SENTENCES_PAGE, page_address};
 
 /// Every clash of the pages of `paths`, files under `input` in path order: those of
 /// [`same_folder_pages`], of [`same_file_pages`], then of [`pages_in_tags_folder`].
@@ -103,8 +103,8 @@ fn folder_clash(
     })
 }
 
-/// Every file whose page, compared without regard to case, is a folder's page or the page of
-/// step sentences, or one an earlier file in path order already has.
+/// Every file whose page, compared without regard to case, is a folder's page, the page of
+/// step sentences or the page of search results, or one an earlier file in path order already has.
 fn same_file_pages(input: &Path, pages: &[Page<'_>]) -> Vec<PageClash> {
     let first: BTreeMap<String, &Path> = pages
         .iter()
@@ -128,12 +128,19 @@ fn file_clash(input: &Path, page: &Page<'_>, first: &BTreeMap<String, &Path>) ->
         .map(|kind| page.clash(input, kind))
 }
 
-/// What is wrong with a page at the place of the page of step sentences or of a folder's page,
+/// What is wrong with a page at the place of the page of step sentences, of the page of search
+/// results or of a folder's page,
 /// compared without regard to case.
 fn reserved(page: &SiteAddress) -> Option<InputErrorKind> {
-    if page.to_string().to_lowercase() == SENTENCES_PAGE {
+    let lowercase = page.to_string().to_lowercase();
+    if lowercase == SENTENCES_PAGE {
         return Some(InputErrorKind::ReservedPage {
             page: SENTENCES_PAGE.to_string(),
+        });
+    }
+    if lowercase == SEARCH_PAGE {
+        return Some(InputErrorKind::SearchPageClash {
+            page: SEARCH_PAGE.to_string(),
         });
     }
     let folders = page.folders();
@@ -210,6 +217,11 @@ mod tests {
         (path.into(), InputErrorKind::ReservedPage { page })
     }
 
+    fn search_page(path: &str) -> (String, InputErrorKind) {
+        let page = "search.html".into();
+        (path.into(), InputErrorKind::SearchPageClash { page })
+    }
+
     #[rstest]
     #[case::with_each_other(
         &["a.feature", "a.story", "A"],
@@ -218,6 +230,11 @@ mod tests {
     #[case::with_the_step_sentences(
         &["Steps.feature", "a.feature", "steps.feature", "sub/steps.feature"],
         vec![reserved("Steps.feature"), reserved("steps.feature")]
+    )]
+    // Rule 215: a page at the place of the page of search results, in any case.
+    #[case::with_the_search_results(
+        &["Search.feature", "a.feature", "search.story", "sub/search.feature"],
+        vec![search_page("Search.feature"), search_page("search.story")]
     )]
     #[case::in_the_folder_of_the_tag_pages(
         &["Tags/a.feature", "tags.feature", "b/tags/c.feature"],

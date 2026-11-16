@@ -55,5 +55,36 @@ pub(crate) fn search_words() -> SearchWords {
             feature = "{feature}",
             rule = "{rule}"
         ),
+        background: fl!(
+            CATALOGUE,
+            "search-result-background",
+            name = "{name}",
+            feature = "{feature}"
+        ),
+        background_in_rule: fl!(
+            CATALOGUE,
+            "search-result-background-in-rule",
+            name = "{name}",
+            feature = "{feature}",
+            rule = "{rule}"
+        ),
+        examples: fl!(
+            CATALOGUE,
+            "search-result-examples",
+            name = "{name}",
+            feature = "{feature}",
+            outline = "{outline}"
+        ),
+        examples_in_rule: fl!(
+            CATALOGUE,
+            "search-result-examples-in-rule",
+            name = "{name}",
+            feature = "{feature}",
+            rule = "{rule}",
+            outline = "{outline}"
+        ),
+        numbered_examples: fl!(CATALOGUE, "numbered-examples", place = "{place}"),
+        all_results: fl!(CATALOGUE, "search-all-results", words = "{words}"),
+        results: fl!(CATALOGUE, "search-page-heading"),
     }
 }

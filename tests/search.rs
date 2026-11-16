@@ -36,9 +36,57 @@ fn every_page_has_the_search_box_before_its_main() {
         assert!(
             search.contains("<label>Search features, rules and scenarios <input type=\"search\"")
         );
-        assert!(search.contains("<p class=\"ghg-search-status\" role=\"status\"></p>"));
-        assert!(search.contains("<ol class=\"ghg-search-results\" hidden></ol>"));
+        // Rules 156 and 214: a combobox over the list box, then the link to every result.
+        assert!(search.contains(
+            "role=\"combobox\" aria-autocomplete=\"list\" aria-expanded=\"false\" aria-controls=\"ghg_search_results\""
+        ));
+        let link = search.find("<a class=\"ghg-search-all\"").expect(page);
+        let status = search
+            .find("<p class=\"ghg-search-status\" role=\"status\"></p>")
+            .expect(page);
+        let results = search
+            .find("<ol class=\"ghg-search-results\" id=\"ghg_search_results\" role=\"listbox\" aria-label=\"Search results\" hidden></ol>")
+            .expect(page);
+        assert!(link < status && status < results, "{page}");
+        assert!(
+            search[link..].starts_with("<a class=\"ghg-search-all\" href=\""),
+            "{page}"
+        );
+        assert!(
+            search[link..status].contains("search.html\" hidden></a>"),
+            "{page}"
+        );
     }
+}
+
+#[test]
+fn the_page_of_search_results_is_at_the_root_with_the_search_box_under_its_heading() {
+    // Rules 215 to 217.
+    let pages = fixture().parent().unwrap().join("pages/expected");
+    let html = fs::read_to_string(pages.join("search.html")).unwrap();
+    assert!(html.contains("<html lang=\"en\">"));
+    assert!(html.contains("<title>Search results, Banking &#38; &#60;more&#62;</title>"));
+    assert!(
+        html.contains("<li><a href=\"search.html\" aria-current=\"page\">Search results</a></li>")
+    );
+    assert_eq!(html.matches("role=\"search\"").count(), 1);
+    let main = html.find("<main id=\"ghg_main\">").unwrap();
+    let heading = html
+        .find("<h1 class=\"ghg-search-heading\">Search results</h1>\n<form class=\"ghg-search\" role=\"search\"")
+        .unwrap();
+    let field = html
+        .find("role=\"combobox\" aria-autocomplete=\"list\" aria-expanded=\"false\" aria-controls=\"ghg_search_results\"")
+        .unwrap();
+    let link = html
+        .find("<a class=\"ghg-search-all\" href=\"search.html\" hidden></a>")
+        .unwrap();
+    let status = html
+        .find("</form>\n<p class=\"ghg-results-status\" role=\"status\"></p>\n<div class=\"ghg-search-groups\" data-heading=")
+        .unwrap();
+    assert!(main < heading && heading < field && field < link && link < status);
+    // The page links to nothing but its breadcrumb's pages and its footer's.
+    let home = fs::read_to_string(pages.join("index.html")).unwrap();
+    assert!(!home.contains("<a href=\"search.html\""));
 }
 
 #[test]

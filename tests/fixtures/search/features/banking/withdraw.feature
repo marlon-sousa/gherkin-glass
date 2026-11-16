@@ -33,7 +33,7 @@ Feature: Withdraw cash
   @limits
   Rule: The daily limit applies
 
-    Background:
+    Background: Limits in force
       Given the daily limit is 500
 
     Scenario: Withdraw over the limit

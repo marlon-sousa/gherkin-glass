@@ -74,12 +74,43 @@ impl SitePieces<'_> {
 
 /// The whole page whose content, already rendered, is `main`.
 pub(super) fn whole_page(site: &SitePieces<'_>, around: &PageAround<'_>, main: String) -> String {
-    let root = around.place.root();
+    let search = search_box(site, around);
+    layout(site, around, &around.place.root(), search, main)
+}
+
+/// The search box of the page `around` places, rendered.
+pub(super) fn search_box(site: &SitePieces<'_>, around: &PageAround<'_>) -> String {
+    SearchBox {
+        root: &around.place.root(),
+        words: &site.page_frame.search,
+    }
+    .render()
+}
+
+/// The whole page whose content, already rendered, is `main`, and holds the search box itself,
+/// so that the page has none before it.
+pub(super) fn page_with_own_search(
+    site: &SitePieces<'_>,
+    around: &PageAround<'_>,
+    main: String,
+) -> String {
+    layout(site, around, &around.place.root(), String::new(), main)
+}
+
+/// The whole page whose search box, already rendered, is `search`, empty for none, and whose
+/// content is `main`; `root` leads from the page back to the site's root.
+fn layout(
+    site: &SitePieces<'_>,
+    around: &PageAround<'_>,
+    root: &str,
+    search: String,
+    main: String,
+) -> String {
     page(&LayoutTemplate {
         language: around.language,
         head: PageHead {
             title: around.title,
-            root: &root,
+            root,
             stylesheet: &site.stylesheet,
             indexing: site.page_frame.indexing,
         }
@@ -87,11 +118,7 @@ pub(super) fn whole_page(site: &SitePieces<'_>, around: &PageAround<'_>, main: S
         frame: &site.frame,
         tree: &site.tree,
         breadcrumb: around.place.breadcrumb(&site.page_frame.breadcrumb),
-        search: SearchBox {
-            root: &root,
-            words: &site.page_frame.search,
-        }
-        .render(),
+        search,
         main,
         only_note: site.page_frame.only_note.as_deref(),
         footer: &site.footer,

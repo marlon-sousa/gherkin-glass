@@ -1,4 +1,4 @@
-//! Policy: the addresses of the pages that more than one part of the code names, relative to the site's root: a feature file's page and a folder's page, which the input's checks name too, the step sentences, and the tag index, which the tags' names leave free.
+//! Policy: the addresses of the pages that more than one part of the code names, relative to the site's root: a feature file's page and a folder's page, which the input's checks name too, the step sentences, the search results, and the tag index, which the tags' names leave free.
 
 use std::path::{Component, Path};
 
@@ -9,6 +9,9 @@ pub(crate) const FOLDER_PAGE: &str = "index.html";
 
 /// The page of step sentences, at the site's root.
 pub(crate) const SENTENCES_PAGE: &str = "steps.html";
+
+/// The page of search results, at the site's root.
+pub(crate) const SEARCH_PAGE: &str = "search.html";
 
 /// The name of the index of every tag, in the folder of the tag pages, which no tag's page takes.
 pub(crate) const TAG_INDEX_NAME: &str = "index";

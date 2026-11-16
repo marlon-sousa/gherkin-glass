@@ -1,4 +1,4 @@
-//! Policy: the site tree of a site's features, made anew from the last one: its version, its folders with their pages, each feature's page kept from the last site tree when its file and the names of its tags are the same, its page of step sentences, its tag pages, its folder tree's and search's data, and its assets, and for a site with versions, the versions the output folder holds and the versions page.
+//! Policy: the site tree of a site's features, made anew from the last one: its version, its folders with their pages, each feature's page kept from the last site tree when its file and the names of its tags are the same, its page of step sentences, its tag pages, its folder tree's and search's data, its page of search results, and its assets, and for a site with versions, the versions the output folder holds and the versions page.
 
 use std::borrow::Cow;
 use std::collections::{BTreeSet, HashMap};
@@ -10,8 +10,8 @@ use crate::entities::{
     SiteTree, SiteTreeBuilder, SiteVersion, TagNames, VersionName,
 };
 use crate::policies::site::{
-    build_folder_pages, build_folder_tree, build_page, build_sentences_page, build_tag_pages,
-    build_versions_page, name_tags, same_tag_names, search_documents,
+    build_folder_pages, build_folder_tree, build_page, build_search_page, build_sentences_page,
+    build_tag_pages, build_versions_page, name_tags, same_tag_names, search_documents,
 };
 use crate::policies::{page_address, page_frame};
 
@@ -43,6 +43,7 @@ pub(crate) fn site_tree(
     site.folder_tree(folder_tree);
     site.tag_pages(tag_pages);
     site.search_documents(documents);
+    site.search_page(build_search_page(options));
     site.assets(SiteAssets::iter().map(Cow::into_owned));
     if let Some(version) = version {
         add_versions(&mut site, version, built_versions);

@@ -1,6 +1,6 @@
-// Port: the search box of the page, as src/policies/rendering/search_box.html writes it, and what the reader does in it.
+// Port: the search box of the page, a combobox over its list of results, as src/policies/rendering/search_box.html writes it, and what the reader does in it.
 
-/** The page's words for the search box, each `{count}`, `{name}`, `{feature}` and `{rule}` a placeholder. */
+/** The page's words for the search box, each `{count}`, `{name}`, `{feature}`, `{rule}`, `{outline}`, `{place}` and `{words}` a placeholder. */
 export interface SearchWords {
   readonly shown: number;
   readonly loading: string;
@@ -15,6 +15,12 @@ export interface SearchWords {
   readonly scenarioInRule: string;
   readonly scenarioOutline: string;
   readonly scenarioOutlineInRule: string;
+  readonly background: string;
+  readonly backgroundInRule: string;
+  readonly examples: string;
+  readonly examplesInRule: string;
+  readonly numberedExamples: string;
+  readonly allResults: string;
 }
 
 /** A piece of a result's words; a name is isolated from the words around it. */
@@ -31,14 +37,26 @@ export interface Result {
 
 export interface SearchBox {
   words(): SearchWords;
+  /** The words already in the field as the box starts, such as those the page of search results puts there. */
+  fieldText(): string;
   onInput(handler: (text: string) => void): void;
+  onDown(handler: () => void): void;
+  onUp(handler: () => void): void;
   onEnter(handler: () => void): void;
   onEscape(handler: () => void): void;
+  /** Called with the place of the result the reader chose with the pointer. */
+  onPick(handler: (place: number) => void): void;
   setStatus(text: string): void;
-  /** An empty list hides the results. */
+  /** Replaces the options with `results`, none chosen. */
   showResults(results: readonly Result[]): void;
+  /** Shows or hides the list, and says which in the field. */
+  setOpen(open: boolean): void;
+  /** Marks the option at `place` chosen, or none. */
+  choose(place: number | null): void;
+  /** Shows the link to the page of search results, or hides it for null. */
+  showAllResults(link: Result | null): void;
   /** Empties the field. */
   clear(): void;
-  /** Does nothing when there is no result. */
-  focusFirstResult(): void;
+  /** Opens `address`, relative to the site's root. */
+  go(address: string): void;
 }

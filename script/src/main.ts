@@ -4,6 +4,7 @@ import { DomBackgrounds } from "./adapters/dom_backgrounds.ts";
 import { DomNoteDialog } from "./adapters/dom_note_dialog.ts";
 import { DomPage } from "./adapters/dom_page.ts";
 import { DomSearchBox } from "./adapters/dom_search_box.ts";
+import { DomSearchPage } from "./adapters/dom_search_page.ts";
 import { DomTheme } from "./adapters/dom_theme.ts";
 import { DomTree } from "./adapters/dom_tree.ts";
 import { DomTreeSwitch } from "./adapters/dom_tree_switch.ts";
@@ -17,6 +18,7 @@ import { NARROW, pageAddress } from "./policies/tree_state.ts";
 import { startCollapsing } from "./services/collapsing.ts";
 import { startFolderTree } from "./services/folder_tree.ts";
 import { startNoteExplaining } from "./services/note_explaining.ts";
+import { startListing } from "./services/results_listing.ts";
 import { startSearching } from "./services/searching.ts";
 import { startThemeSwitching } from "./services/theme_switching.ts";
 
@@ -46,7 +48,14 @@ void startFolderTree(
   memory,
   { sitePath, page },
 );
+const searchDocuments = new FetchedDocuments(new URL("search.json", import.meta.url));
+// The page of search results fills the search box's field before its first wait, so the box,
+// started after it, begins with those words.
+const searchPage = DomSearchPage.find(document);
+if (searchPage !== null) {
+  void startListing(searchPage, searchDocuments);
+}
 const searchBox = DomSearchBox.find(document);
 if (searchBox !== null) {
-  startSearching(searchBox, new FetchedDocuments(new URL("search.json", import.meta.url)), new WindowTimer());
+  startSearching(searchBox, searchDocuments, new WindowTimer());
 }

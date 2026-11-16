@@ -1,23 +1,24 @@
-// Service: searching the site's documents from the search box, the index built the first time a search is typed.
+// Service: searching the site's documents from the search box, a combobox, the index built the first time a search is typed.
 
-import MiniSearch from "minisearch";
-
-import { INDEX_OPTIONS, type Indexed, PAUSE_MILLISECONDS, SEARCH_OPTIONS, result, status } from "../policies/search_results.ts";
-import type { Documents, SearchDocument } from "../ports/documents.ts";
-import type { SearchBox } from "../ports/search_box.ts";
+import { PAUSE_MILLISECONDS, allResults, moved, result, status } from "../policies/search_results.ts";
+import { type Index, indexOf } from "../policies/search_index.ts";
+import type { Documents } from "../ports/documents.ts";
+import type { Result, SearchBox } from "../ports/search_box.ts";
 import type { Timer } from "../ports/timer.ts";
-
-interface Index {
-  readonly documents: readonly SearchDocument[];
-  readonly search: MiniSearch<Indexed>;
-}
 
 export function startSearching(box: SearchBox, documents: Documents, timer: Timer): void {
   const words = box.words();
   let index: Index | null = null;
   let loading: Promise<Index | null> | null = null;
-  let text = "";
+  // The words the field already holds, so that its link and Enter work before the reader types.
+  let text = box.fieldText();
   let started = false;
+  let results: readonly Result[] = [];
+  let chosen: number | null = null;
+  let open = false;
+  /** The status of the last search, until the reader has paused. */
+  let pending: string | null = null;
+  let paused = false;
 
   /** Null when the documents cannot be fetched or read; the next call tries again. */
   const load = (): Promise<Index | null> => {
@@ -27,9 +28,7 @@ export function startSearching(box: SearchBox, documents: Documents, timer: Time
     loading ??= documents
       .load()
       .then((found) => {
-        const search = new MiniSearch<Indexed>(INDEX_OPTIONS);
-        search.addAll(found.map((document, id) => ({ ...document, id })));
-        index = { documents: found, search };
+        index = indexOf(found);
         return index;
       })
       .catch(() => {
@@ -39,41 +38,56 @@ export function startSearching(box: SearchBox, documents: Documents, timer: Time
     return loading;
   };
 
-  /** True when it showed the results of the text still in the field. */
-  const run = async (): Promise<boolean> => {
-    const asked = text;
-    if (asked.trim() === "") {
-      empty();
-      return false;
+  const announce = (): void => {
+    if (paused && pending !== null) {
+      box.setStatus(pending);
+      pending = null;
     }
+  };
+
+  const show = (shown: readonly Result[]): void => {
+    results = shown;
+    chosen = null;
+    box.showResults(results);
+    setOpen(results.length > 0);
+  };
+
+  const setOpen = (opened: boolean): void => {
+    open = opened;
+    box.setOpen(opened);
+  };
+
+  /** Shows the results of the text in the field, once the documents are loaded. */
+  const run = async (): Promise<void> => {
+    const asked = text;
     if (index === null) {
       box.setStatus(words.loading);
     }
     const found = await load();
     if (asked !== text) {
-      return false;
+      return;
     }
     if (found === null) {
-      box.showResults([]);
-      box.setStatus(words.failed);
-      return false;
+      show([]);
+      pending = words.failed;
+    } else {
+      const matches = found.search(asked);
+      show(matches.slice(0, words.shown).map((match) => result(words, match.document)));
+      pending = status(words, matches.length);
     }
-    const matches = found.search.search(asked, SEARCH_OPTIONS);
-    box.showResults(
-      matches.slice(0, words.shown).map((match) => result(words, found.documents[match.id as number] as SearchDocument)),
-    );
-    box.setStatus(status(words, matches.length));
-    return true;
+    announce();
   };
 
   const empty = (): void => {
     timer.cancel();
-    box.showResults([]);
+    pending = null;
+    show([]);
     box.setStatus("");
   };
 
   box.onInput((typed) => {
     text = typed;
+    box.showAllResults(allResults(words, typed));
     if (typed.trim() === "") {
       empty();
       return;
@@ -83,19 +97,49 @@ export function startSearching(box: SearchBox, documents: Documents, timer: Time
       started = true;
       void load();
     }
-    timer.after(PAUSE_MILLISECONDS, () => void run());
-  });
-  box.onEnter(() => {
-    timer.cancel();
-    void run().then((shown) => {
-      if (shown) {
-        box.focusFirstResult();
-      }
+    paused = false;
+    timer.after(PAUSE_MILLISECONDS, () => {
+      paused = true;
+      announce();
     });
+    void run();
+  });
+  const move = (step: 1 | -1): void => {
+    if (!open) {
+      if (results.length === 0) {
+        return;
+      }
+      setOpen(true);
+    }
+    chosen = moved(chosen, results.length, step);
+    box.choose(chosen);
+  };
+  box.showAllResults(allResults(words, text));
+  box.onDown(() => move(1));
+  box.onUp(() => move(-1));
+  box.onEnter(() => {
+    const picked = open && chosen !== null ? results[chosen] : undefined;
+    const target = picked ?? allResults(words, text);
+    if (target !== null) {
+      box.go(target.address);
+    }
+  });
+  box.onPick((place) => {
+    const picked = results[place];
+    if (picked !== undefined) {
+      box.go(picked.address);
+    }
   });
   box.onEscape(() => {
+    if (open) {
+      chosen = null;
+      box.choose(null);
+      setOpen(false);
+      return;
+    }
     text = "";
     box.clear();
+    box.showAllResults(null);
     empty();
   });
 }

@@ -11,4 +11,8 @@ Feature:
         | amount |
         | 10     |
 
+      Examples:
+        | amount | payer |
+        | 20     | Emma  |
+
   Rule: Nothing yet

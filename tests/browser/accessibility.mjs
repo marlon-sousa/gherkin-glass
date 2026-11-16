@@ -264,12 +264,18 @@ async function treeProblems(page) {
 }
 
 // A word of the first named entry of the site's search documents, typed into
-// the search box, then Enter, which moves the focus to the first result, and
-// the box checked with axe-core while its results are shown; Escape then
-// empties it. Returns null for a page without a search box.
+// the search box, a combobox: Down chooses the first result while the focus
+// stays in the field, and the box is checked with axe-core while its results
+// are shown; Escape closes the list and keeps the words, and a second Escape
+// empties it. The word typed again, Enter with no result chosen opens the page
+// of search results, which is checked with axe-core while it lists them, and
+// whose own field searches again with Enter, as a new page that Back leaves.
+// The page searched from is then opened again. Returns null for a page without
+// a search box. docs/BEHAVIOUR.md, rules 156, 214 and 217.
 async function searchProblems(page) {
-  const field = page.locator(".ghg-search-field");
+  const field = page.locator("form.ghg-search .ghg-search-field");
   if ((await field.count()) === 0) return null;
+  const searchedFrom = page.url();
   const word = await page.evaluate(async () => {
     const root = document.querySelector("form.ghg-search").dataset.root;
     const documents = await (await fetch(`${root}assets/search.json`)).json();
@@ -283,17 +289,63 @@ async function searchProblems(page) {
   const problems = [];
   await field.focus();
   await page.keyboard.type(word);
-  await page.keyboard.press("Enter");
   try {
-    await page.waitForFunction(() => document.activeElement?.closest(".ghg-search-results") !== null, null, { timeout: 5000 });
+    await page.waitForFunction(() => document.querySelector(".ghg-search-field")?.getAttribute("aria-expanded") === "true", null, { timeout: 5000 });
   } catch {
-    problems.push(`search: Enter after typing "${word}" did not move the focus to a result`);
+    problems.push(`search: typing "${word}" did not open the list of results`);
+    return problems;
   }
+  await page.keyboard.press("ArrowDown");
+  const chosen = await page.evaluate(() => {
+    const field = document.querySelector("form.ghg-search .ghg-search-field");
+    const first = document.querySelector(".ghg-search-results [role=option]");
+    return document.activeElement === field && field.getAttribute("aria-activedescendant") === first?.id && first?.getAttribute("aria-selected") === "true";
+  });
+  if (!chosen) problems.push(`search: Down after typing "${word}" did not choose the first result with the focus in the field`);
   for (const line of await violations(page)) problems.push(`search, with results: ${line}`);
+  // The borders of the chosen result, measured while it is chosen; the measure
+  // moves the focus, which goes back to the field for the keys that follow.
+  for (const line of (await partProblems(page)).lines) problems.push(`search, with a result chosen: ${line}`);
   await field.focus();
   await page.keyboard.press("Escape");
-  const left = await page.evaluate(() => [document.querySelector(".ghg-search-field").value, document.querySelectorAll(".ghg-search-results li").length]);
-  if (left[0] !== "" || left[1] !== 0) problems.push(`search: Escape left ${JSON.stringify(left)}`);
+  const closed = await page.evaluate(() => [document.querySelector("form.ghg-search .ghg-search-field").value, document.querySelector(".ghg-search-results").hidden]);
+  if (closed[0] !== word || closed[1] !== true) problems.push(`search: the first Escape left ${JSON.stringify(closed)}`);
+  await page.keyboard.press("Escape");
+  const left = await page.evaluate(() => [document.querySelector("form.ghg-search .ghg-search-field").value, document.querySelectorAll(".ghg-search-results li").length]);
+  if (left[0] !== "" || left[1] !== 0) problems.push(`search: the second Escape left ${JSON.stringify(left)}`);
+  await page.keyboard.type(word);
+  await page.keyboard.press("Enter");
+  try {
+    await page.waitForURL(/\/search\.html\?q=/, { timeout: 5000 });
+    await page.waitForFunction(() => document.querySelector(".ghg-search-groups")?.children.length > 0, null, { timeout: 5000 });
+    for (const line of await violations(page)) problems.push(`search results for "${word}": ${line}`);
+    for (const line of (await partProblems(page)).lines) problems.push(`search results for "${word}": ${line}`);
+    // Rule 217: the page's field is the same combobox, holding the words.
+    const own = page.locator("main form.ghg-search .ghg-search-field");
+    if ((await own.inputValue()) !== word) problems.push(`search results for "${word}": the field holds ${JSON.stringify(await own.inputValue())}`);
+    if (!(await page.locator("main .ghg-search-all").isVisible())) problems.push(`search results for "${word}": the link to every result is hidden while the field holds the words`);
+    await own.focus();
+    await page.keyboard.press("End");
+    await page.keyboard.type(` ${word}`);
+    await page.waitForFunction(() => document.querySelectorAll("main .ghg-search-results [role=option]").length > 0, null, { timeout: 5000 });
+    await page.keyboard.press("ArrowDown");
+    const ownChosen = await page.evaluate(() => {
+      const field = document.querySelector("main form.ghg-search .ghg-search-field");
+      const first = document.querySelector("main .ghg-search-results [role=option]");
+      return document.activeElement === field && field.getAttribute("aria-activedescendant") === first?.id;
+    });
+    if (!ownChosen) problems.push(`search results for "${word}": Down after typing did not choose the first result with the focus in the field`);
+    for (const line of await violations(page)) problems.push(`search results for "${word}", with a result chosen: ${line}`);
+    await page.keyboard.press("ArrowUp");
+    await page.keyboard.press("Enter");
+    await page.waitForURL((url) => url.searchParams.get("q") === `${word} ${word}`, { timeout: 5000 });
+    await page.goBack();
+    await page.waitForURL((url) => url.searchParams.get("q") === word, { timeout: 5000 });
+  } catch (error) {
+    problems.push(`search: the page of search results for "${word}" did not list them, or search again: ${error.message.split("\n")[0]}`);
+  }
+  await page.goto(searchedFrom);
+  await treeBuilt(page);
   return problems;
 }
 

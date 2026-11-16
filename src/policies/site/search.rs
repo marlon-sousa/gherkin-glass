@@ -1,4 +1,4 @@
-//! Policy: search, the documents it reads.
+//! Policy: the documents search reads.
 
 mod search_documents;
 
