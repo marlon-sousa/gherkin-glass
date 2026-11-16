@@ -53,7 +53,7 @@ fn a_version_name_that_cannot_be_one_is_a_mistake_on_the_command_line() {
     assert_eq!(output.status.code(), Some(2));
     assert_eq!(
         String::from_utf8(output.stderr).expect("UTF-8"),
-        "release/1.0 cannot be a version name. A version name is made of letters, digits, dots, hyphens, underscores and plus signs, starts with a letter or a digit, does not end with a dot, and is not assets, index.html, ghg-versions.json, or a name Windows keeps for a device, such as con or nul.\n"
+        "release/1.0 cannot be a version name. A version name is made of letters, digits, dots, hyphens, underscores and plus signs, starts with a letter or a digit, does not end with a dot, and is not assets, index.html, ghg-versions.json, previews, or a name Windows keeps for a device, such as con or nul.\n"
     );
 }
 
@@ -67,7 +67,7 @@ fn a_version_name_that_cannot_be_one_is_a_problem_of_the_configuration() {
     assert_eq!(output.status.code(), Some(1));
     assert_eq!(
         String::from_utf8(output.stderr).expect("UTF-8"),
-        "ghg.toml:2: release/1.0 cannot be a version name. A version name is made of letters, digits, dots, hyphens, underscores and plus signs, starts with a letter or a digit, does not end with a dot, and is not assets, index.html, ghg-versions.json, or a name Windows keeps for a device, such as con or nul.\n"
+        "ghg.toml:2: release/1.0 cannot be a version name. A version name is made of letters, digits, dots, hyphens, underscores and plus signs, starts with a letter or a digit, does not end with a dot, and is not assets, index.html, ghg-versions.json, previews, or a name Windows keeps for a device, such as con or nul.\n"
     );
 }
 
@@ -268,4 +268,94 @@ fn an_output_folder_holding_a_site_without_versions_stops_a_versioned_build() {
         )
     );
     assert!(!output.join("main").exists());
+}
+
+// Rules 121 and 122: the `previews` folder of a versioned output folder.
+
+/// Copies the fixture's `previews` folder into `output`.
+fn with_previews(output: &Path) -> PathBuf {
+    let previews = output.join("previews");
+    copy_folder(&fixture().join("previews"), &previews);
+    previews
+}
+
+/// Every file below `folder`, with its text, in order.
+fn texts(folder: &Path) -> Vec<(PathBuf, String)> {
+    let mut found: Vec<_> = read_dir(folder)
+        .expect("listed")
+        .map(|entry| entry.expect("an entry").path())
+        .flat_map(|path| {
+            if path.is_dir() {
+                texts(&path)
+            } else {
+                let text = read_to_string(&path).expect("read");
+                vec![(path, text)]
+            }
+        })
+        .collect();
+    found.sort();
+    found
+}
+
+#[test]
+fn a_versioned_build_leaves_the_previews_folder_alone() {
+    let output = output_copy("beside-previews");
+    let previews = with_previews(&output);
+    let before = texts(&previews);
+    let (report, status) = ghg("suite", &output, &["--version-name", "v1.0.0"]);
+    assert_eq!((report.as_str(), status), ("", 0));
+    assert_eq!(texts(&previews), before);
+    let page = read_to_string(output.join("index.html")).expect("read");
+    assert!(!page.contains("previews"), "{page}");
+}
+
+#[test]
+fn a_folder_holding_only_previews_is_marked_by_a_versioned_build() {
+    let output = Path::new(env!("CARGO_TARGET_TMPDIR")).join("versions/only-previews");
+    let _ = remove_dir_all(&output);
+    let previews = with_previews(&output);
+    let before = texts(&previews);
+    let (report, status) = ghg("suite", &output, &["--version-name", "main"]);
+    assert_eq!((report.as_str(), status), ("", 0));
+    assert_eq!(texts(&previews), before);
+    assert_eq!(
+        listing(&output),
+        [
+            "assets",
+            "ghg-versions.json",
+            "index.html",
+            "main",
+            "previews"
+        ]
+    );
+}
+
+#[test]
+fn a_site_without_versions_does_not_leave_a_previews_folder_alone() {
+    let output = Path::new(env!("CARGO_TARGET_TMPDIR")).join("versions/site-previews");
+    let _ = remove_dir_all(&output);
+    with_previews(&output);
+    let (report, status) = ghg("suite", &output, &[]);
+    assert_eq!(status, 1);
+    assert_eq!(
+        report,
+        format!(
+            "{}: this is not a site ghg built, so it is left as it is. Build into an empty or new folder.\n",
+            output.display()
+        )
+    );
+}
+
+#[test]
+fn previews_cannot_be_a_version_name() {
+    let (report, status) = ghg(
+        "suite",
+        &Path::new(env!("CARGO_TARGET_TMPDIR")).join("versions/named-previews"),
+        &["--version-name", "Previews"],
+    );
+    assert_eq!(status, 2);
+    assert!(
+        report.starts_with("Previews cannot be a version name."),
+        "{report}"
+    );
 }

@@ -133,7 +133,7 @@ config-unknown-group = { $key } names the group { $group }, which the pattern do
 ## version_name. assets, index.html, ghg-versions.json, con and nul are names,
 ## never translated.
 
-invalid-version-name = { $name } cannot be a version name. A version name is made of letters, digits, dots, hyphens, underscores and plus signs, starts with a letter or a digit, does not end with a dot, and is not assets, index.html, ghg-versions.json, or a name Windows keeps for a device, such as con or nul.
+invalid-version-name = { $name } cannot be a version name. A version name is made of letters, digits, dots, hyphens, underscores and plus signs, starts with a letter or a digit, does not end with a dot, and is not assets, index.html, ghg-versions.json, previews, or a name Windows keeps for a device, such as con or nul.
 
 ## What stops a build without a version, said of the output folder.
 ## replace_existing_version is a key, never translated.

@@ -150,7 +150,7 @@ So keep the output folder for the site alone, and put anything you want served b
 
 ### Versions
 
-One site can hold several versions of the same suite, so that readers read the version they use. Give each build a version name, with `--version-name` or `version_name`, such as `v1.2.0` or `main`. A version name is one folder name, of the letters `a` to `z` and `A` to `Z`, digits, `.`, `-`, `_` and `+`. A name such as `1.2.0` or `v1.2.0` is a release, one such as `2.0.0-rc.1` a pre-release, and any other, such as `main`, a development version. Each version is written into a folder of its own in the output folder, such as `site/v1.2.0/`, and the output folder's `index.html` lists every version: development versions, releases newest first, and pre-releases, listed collapsed.
+One site can hold several versions of the same suite, so that readers read the version they use. Give each build a version name, with `--version-name` or `version_name`, such as `v1.2.0` or `main`. A version name is one folder name, of the letters `a` to `z` and `A` to `Z`, digits, `.`, `-`, `_` and `+`, other than `previews`, which is kept for previews, as "A site of only some feature files" below describes. A name such as `1.2.0` or `v1.2.0` is a release, one such as `2.0.0-rc.1` a pre-release, and any other, such as `main`, a development version. Each version is written into a folder of its own in the output folder, such as `site/v1.2.0/`, and the output folder's `index.html` lists every version: development versions, releases newest first, and pre-releases, listed collapsed.
 
 ghg does not read git. To build several versions, check each one out into a folder of its own and run ghg once for each, into the same output folder. Building a version again replaces it, unless `replace_existing_version` is `false`.
 
@@ -170,7 +170,7 @@ To publish such a site for the reviewers of a pull request, build it as a previe
 git diff --name-only origin/main...HEAD | ghg build --only - --preview --output previews/pr-131
 ```
 
-A preview is an ordinary site without versions, even when `ghg.toml` names a version, and every page of it asks search engines not to index it. Nothing links to it: readers reach it through its link, wherever you deploy the folder, such as `previews/pr-131/` on your site's branch.
+A preview is an ordinary site without versions, even when `ghg.toml` names a version, and every page of it asks search engines not to index it. Nothing links to it: readers reach it through its link, wherever you deploy the folder. A versioned output folder keeps a `previews` folder at its top for them: ghg never looks into it, writes or removes anything there, so `--output site/previews/pr-131` deploys a preview beside the versions built into `site`, and the next version built into `site` still runs.
 
 ### The front page
 

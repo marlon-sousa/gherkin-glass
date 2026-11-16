@@ -124,7 +124,7 @@ impl SiteWriter {
         let error = |kind| refusal(output, target, kind);
         let contents = self
             .folders
-            .contents(output)
+            .contents(output, target.left_alone())
             .map_err(|io| error(cannot_be_read(&io)))?;
         let record = output_safety(contents, target, moment).map_err(error)?;
         Ok(BuildFolder::new(output, target.clone(), record))

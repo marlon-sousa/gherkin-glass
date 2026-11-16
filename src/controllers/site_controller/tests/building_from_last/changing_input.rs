@@ -95,7 +95,7 @@ impl FileReader for ChangingInput {
 
 /// A site built in memory touches no output folder, so there is none.
 impl OutputFolders for ChangingInput {
-    fn contents(&self, _: &Path) -> IoResult<OutputContents> {
+    fn contents(&self, _: &Path, _: Option<&str>) -> IoResult<OutputContents> {
         Err(not_found())
     }
 
