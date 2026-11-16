@@ -160,6 +160,11 @@ fn only_the_listed_files_of_the_input_are_collected_and_no_other_folder_is_liste
     Some("\n\n"),
     "changed.txt: names no path, so there is nothing to build.\n"
 )]
+#[case::a_file_of_blank_lines(
+    PathList::File(PathBuf::from("changed.txt")),
+    Some("  \n\t\r\n"),
+    "changed.txt: names no path, so there is nothing to build.\n"
+)]
 #[case::nothing_on_standard_input(
     PathList::StandardInput,
     Some(""),
@@ -182,12 +187,11 @@ fn a_list_that_cannot_be_read_or_names_no_path_stops_the_run(
 #[rstest]
 // Rule 209: a change to a file the list does not name rebuilds nothing, and the files are those
 // the last tree was walked for, the list not being read again.
-#[case::a_listed_file("in/a.feature", true, &["in/a.feature"])]
-#[case::a_file_not_listed("in/b.feature", false, &["in/a.feature"])]
+#[case::a_listed_file("in/a.feature", true)]
+#[case::a_file_not_listed("in/b.feature", false)]
 fn only_a_change_to_a_listed_file_calls_for_a_rebuild(
     #[case] changed: &str,
     #[case] rebuilds: bool,
-    #[case] allowed: &[&str],
 ) {
     let only = listed(&["in/a.feature"]);
     let folders = || Arc::new(MemoryFolders::with_files(["in/a.feature", "in/b.feature"]));
@@ -198,6 +202,8 @@ fn only_a_change_to_a_listed_file_calls_for_a_rebuild(
     // A collector whose list cannot be read, which collect_changes never reads.
     let changes = input_collector(folders()).collect_changes(&last, &paths);
     assert_eq!(changes.calls_for_rebuild, rebuilds);
-    let allowed: Vec<_> = allowed.iter().map(PathBuf::from).collect();
-    assert_eq!(changes.input_tree.allowed_files(), allowed);
+    assert_eq!(
+        changes.input_tree.allowed_files(),
+        [PathBuf::from("in/a.feature")]
+    );
 }

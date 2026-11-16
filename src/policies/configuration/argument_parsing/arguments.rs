@@ -113,7 +113,6 @@ impl TryFrom<ServeArguments> for ServeOptions {
         let build = arguments.build.options("ghg serve")?;
         let mode = match (arguments.no_build, arguments.watch) {
             (true, true) => return Err(ArgumentError::WatchWithoutBuild),
-            // The list chooses what is built, and nothing is.
             (true, false) if build.only.is_some() => return Err(ArgumentError::OnlyWithoutBuild),
             (true, false) => ServeMode::Folder,
             (false, true) => ServeMode::Watch,
