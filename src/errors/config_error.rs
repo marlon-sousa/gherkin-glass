@@ -1,6 +1,7 @@
 //! Error: what is wrong with a configuration file, each error a thing that stops the run.
 
 use std::fmt::{Display, Formatter, Result as FmtResult};
+use std::io::Error as IoError;
 use std::path::PathBuf;
 
 use i18n_embed_fl::fl;
@@ -100,7 +101,27 @@ impl Display for ConfigErrors {
     }
 }
 
+impl ConfigErrors {
+    /// The report of `file`, named as it was given, when it cannot be read.
+    pub(crate) fn unreadable(file: PathBuf, error: &IoError) -> Self {
+        ConfigErrors {
+            file,
+            errors: vec![ConfigError::cannot_be_read(error)],
+        }
+    }
+}
+
 impl ConfigError {
+    /// The error of a file that cannot be read, in the operating system's words.
+    pub(crate) fn cannot_be_read(error: &IoError) -> Self {
+        ConfigError {
+            line: None,
+            kind: ConfigErrorKind::CannotBeRead {
+                reason: error.to_string(),
+            },
+        }
+    }
+
     /// The error said of `path`, the file it is in, on a line of its own.
     fn report(&self, path: &str, f: &mut Formatter<'_>) -> FmtResult {
         located(f, path, self.line, &self.kind.to_string())?;

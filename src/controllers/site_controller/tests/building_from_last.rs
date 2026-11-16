@@ -131,8 +131,12 @@ fn builds_from_the_last_build_match_builds_from_nothing(
         .chain([&LIST])
         .for_each(|change| input.apply(change));
     let controller = SiteController::new(
-        Arc::new(SettingsService::new(input.clone(), input.clone())),
-        Arc::new(InputCollector::new(input.clone())),
+        Arc::new(SettingsService::new(input.clone())),
+        Arc::new(InputCollector::new(
+            input.clone(),
+            input.clone(),
+            input.clone(),
+        )),
         Arc::new(GherkinParser::new(input.clone())),
         Arc::new(Converter),
         Arc::new(SiteWriter::new(
@@ -148,18 +152,18 @@ fn builds_from_the_last_build_match_builds_from_nothing(
         only,
         ..BuildOptions::default()
     };
-    let settings = controller
-        .settings
-        .load(&options, Destination::Memory)
-        .expect("the settings");
+    let settings = Arc::new(
+        controller
+            .settings
+            .load(&options, Destination::Memory)
+            .expect("the settings"),
+    );
     let mut last = controller
-        .build_from_nothing(settings.clone())
+        .build_from_nothing(Arc::clone(&settings))
         .expect("the first site")
         .snapshot;
-    let mut before = controller.build_from(
-        BuildStart::FromNothing(Box::new(settings.clone())),
-        &options,
-    );
+    let mut before =
+        controller.build_from(BuildStart::FromNothing(Arc::clone(&settings)), &options);
     for change in changes {
         input.apply(change);
         let paths = change.paths();
@@ -168,10 +172,8 @@ fn builds_from_the_last_build_match_builds_from_nothing(
             paths: &paths,
         };
         let from_last = controller.build_from(start, &options);
-        let from_nothing = controller.build_from(
-            BuildStart::FromNothing(Box::new(settings.clone())),
-            &options,
-        );
+        let from_nothing =
+            controller.build_from(BuildStart::FromNothing(Arc::clone(&settings)), &options);
         let expected = match &from_last {
             BuildOutcome::NothingToBuild(_) => &before,
             built_or_stopped => built_or_stopped,

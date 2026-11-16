@@ -9,12 +9,14 @@ use rstest::rstest;
 use super::*;
 use crate::entities::PathList;
 use crate::errors::{InputError, InputErrorKind};
-use crate::test_support::MemoryFolders;
+use crate::test_support::{MemoryFolders, input_collector, listing_collector};
 
 /// The errors of the input tree of the input `in` that `folders` holds, each as its path and
 /// what is wrong, in the order they are reported.
 fn errors_of(folders: MemoryFolders) -> Vec<(String, InputErrorKind)> {
-    let input_tree = InputCollector::new(Arc::new(folders)).collect(Path::new("in"), None);
+    let input_tree = input_collector(Arc::new(folders))
+        .collect(Path::new("in"), None)
+        .expect("no list");
     let errors = input_tree.input_errors().expect("errors");
     errors.as_slice().iter().map(path_and_kind).collect()
 }
@@ -75,7 +77,9 @@ fn a_folder_the_rules_leave_out_is_not_listed() {
     // listed.
     let mut folders = MemoryFolders::with_files(["in/.hidden/a.feature", "in/b.feature"]);
     folders.unlistable.insert(PathBuf::from("in/.hidden"));
-    let input_tree = InputCollector::new(Arc::new(folders)).collect(Path::new("in"), None);
+    let input_tree = input_collector(Arc::new(folders))
+        .collect(Path::new("in"), None)
+        .expect("no list");
     assert!(input_tree.input_errors().is_none());
     assert_eq!(input_tree.allowed_files(), [PathBuf::from("in/b.feature")]);
 }
@@ -93,26 +97,32 @@ fn changes_call_for_a_rebuild_judged_against_the_last_tree(
     #[case] rebuilds: bool,
 ) {
     let last_input = MemoryFolders::with_files(["in/gone.feature", "in/kept.feature"]);
-    let last = InputCollector::new(Arc::new(last_input)).collect(Path::new("in"), None);
+    let last = input_collector(Arc::new(last_input))
+        .collect(Path::new("in"), None)
+        .expect("no list");
     let input = MemoryFolders::with_files(["in/kept.feature", "in/new.feature", "in/notes.txt"]);
-    let input_collector = InputCollector::new(Arc::new(input));
+    let input_collector = input_collector(Arc::new(input));
     let paths = BTreeSet::from([PathBuf::from(changed)]);
-    let changes = input_collector.collect_changes(&last, &paths, None);
+    let changes = input_collector
+        .collect_changes(&last, &paths, None)
+        .expect("no list");
     assert_eq!(changes.calls_for_rebuild, rebuilds);
 }
 
-/// The list `--only` gives, of `paths`.
-fn listed(paths: &[&str]) -> ListedFiles {
-    ListedFiles {
-        list: PathList::StandardInput,
-        paths: paths.iter().map(PathBuf::from).collect(),
-    }
+/// The list `--only` gives, of `paths`, one on each line.
+fn listed(paths: &[&str]) -> String {
+    paths.iter().map(|path| format!("{path}\n")).collect()
 }
 
-#[test]
-fn only_the_listed_files_of_the_input_are_collected_and_no_other_folder_is_listed() {
-    // Rules 205 and 206: a listed path is matched once made absolute, a path outside the input
-    // is passed over, and a folder with no listed file below it is not entered.
+#[rstest]
+// Rules 205 and 206: a listed path is matched once made absolute, a path outside the input is
+// passed over, and a folder with no listed file below it is not entered; rule 204: the list is
+// read from its file or standard input.
+#[case::a_file(PathList::File(PathBuf::from("changed.txt")))]
+#[case::standard_input(PathList::StandardInput)]
+fn only_the_listed_files_of_the_input_are_collected_and_no_other_folder_is_listed(
+    #[case] list: PathList,
+) {
     let mut folders = MemoryFolders::with_files([
         "in/a.feature",
         "in/sub/b.feature",
@@ -121,7 +131,9 @@ fn only_the_listed_files_of_the_input_are_collected_and_no_other_folder_is_liste
     ]);
     folders.unlistable.insert(PathBuf::from("in/other"));
     let only = listed(&["in/a.feature", "./in/x/../sub/b.feature", "src/main.rs"]);
-    let input_tree = InputCollector::new(Arc::new(folders)).collect(Path::new("in"), Some(&only));
+    let input_tree = listing_collector(Arc::new(folders), Some(&only))
+        .collect(Path::new("in"), Some(&list))
+        .expect("the list is read");
     assert!(input_tree.input_errors().is_none());
     assert_eq!(
         input_tree.allowed_files(),
@@ -129,6 +141,22 @@ fn only_the_listed_files_of_the_input_are_collected_and_no_other_folder_is_liste
             PathBuf::from("in/a.feature"),
             PathBuf::from("in/sub/b.feature")
         ]
+    );
+}
+
+#[rstest]
+// Rule 204: named as it was given, `-` for standard input.
+#[case::a_file_that_does_not_exist(
+    PathList::File(PathBuf::from("changed.txt")),
+    "changed.txt: cannot be read: not found\n"
+)]
+#[case::standard_input_that_is_not_text(PathList::StandardInput, "-: cannot be read: not UTF-8\n")]
+fn a_list_that_cannot_be_read_stops_the_run(#[case] list: PathList, #[case] report: &str) {
+    let collector = input_collector(Arc::new(MemoryFolders::with_files(["in/a.feature"])));
+    let collected = collector.collect(Path::new("in"), Some(&list));
+    assert_eq!(
+        collected.map_err(|errors| errors.to_string()).err(),
+        Some(report.to_string())
     );
 }
 
@@ -141,9 +169,17 @@ fn only_a_change_to_a_listed_file_calls_for_a_rebuild(
     #[case] rebuilds: bool,
 ) {
     let only = listed(&["in/a.feature"]);
-    let input = || Arc::new(MemoryFolders::with_files(["in/a.feature", "in/b.feature"]));
-    let last = InputCollector::new(input()).collect(Path::new("in"), Some(&only));
+    let list = PathList::StandardInput;
+    let collector = || {
+        let folders = MemoryFolders::with_files(["in/a.feature", "in/b.feature"]);
+        listing_collector(Arc::new(folders), Some(&only))
+    };
+    let last = collector()
+        .collect(Path::new("in"), Some(&list))
+        .expect("the list is read");
     let paths = BTreeSet::from([PathBuf::from(changed)]);
-    let changes = InputCollector::new(input()).collect_changes(&last, &paths, Some(&only));
+    let changes = collector()
+        .collect_changes(&last, &paths, Some(&list))
+        .expect("the list is read");
     assert_eq!(changes.calls_for_rebuild, rebuilds);
 }

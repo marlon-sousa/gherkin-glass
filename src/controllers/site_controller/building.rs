@@ -42,7 +42,8 @@ pub(super) struct Built {
 pub(super) struct Stopped {
     /// What the next build starts from: the new input tree beside the site tree and the site
     /// rendered from it that the build started from, or none when the output check stopped a
-    /// build from nothing, which leaves the last build as it was.
+    /// build from nothing, or the list of `--only` could not be read, which leaves the last build
+    /// as it was.
     pub(super) left: Option<BuildSnapshot>,
     pub(super) error: BuildError,
 }
@@ -52,7 +53,7 @@ impl SiteController {
     /// from the last build and the paths concern what a build reads.
     pub(super) fn build_from(&self, start: BuildStart<'_>, options: &BuildOptions) -> BuildOutcome {
         match start {
-            BuildStart::FromNothing(settings) => match self.build_from_nothing(*settings) {
+            BuildStart::FromNothing(settings) => match self.build_from_nothing(settings) {
                 Ok(built) => BuildOutcome::Built(built),
                 Err(stopped) => BuildOutcome::Stopped(*stopped),
             },
@@ -62,14 +63,21 @@ impl SiteController {
 
     /// Checks the output folder, then collects the input from nothing, and builds the site, as
     /// `settings` say.
-    pub(super) fn build_from_nothing(&self, settings: Settings) -> Result<Built, Box<Stopped>> {
+    pub(super) fn build_from_nothing(
+        &self,
+        settings: Arc<Settings>,
+    ) -> Result<Built, Box<Stopped>> {
         let built_versions = self.site_writer.check(&settings).map_err(|error| Stopped {
             left: None,
             error: BuildError::Output(error),
         })?;
         let input_tree = self
             .input_collector
-            .collect(&settings.input, settings.only.as_ref());
+            .collect(&settings.input, settings.only.as_ref())
+            .map_err(|errors| Stopped {
+                left: None,
+                error: BuildError::Config(errors),
+            })?;
         self.parse_convert_and_write(BuildSnapshot {
             settings,
             input_tree,
@@ -86,16 +94,25 @@ impl SiteController {
         paths: &BTreeSet<PathBuf>,
         options: &BuildOptions,
     ) -> BuildOutcome {
-        let CollectedChanges {
-            input_tree,
-            calls_for_rebuild,
-        } = self.input_collector.collect_changes(
+        let collected = self.input_collector.collect_changes(
             &last.input_tree,
             paths,
             last.settings.only.as_ref(),
         );
+        let CollectedChanges {
+            input_tree,
+            calls_for_rebuild,
+        } = match collected {
+            Ok(collected) => collected,
+            Err(errors) => {
+                return BuildOutcome::Stopped(Stopped {
+                    left: None,
+                    error: BuildError::Config(errors),
+                });
+            }
+        };
         let left = BuildSnapshot {
-            settings: last.settings.clone(),
+            settings: Arc::clone(&last.settings),
             input_tree,
             site: last.site.clone(),
             built_versions: last.built_versions.clone(),
@@ -112,7 +129,7 @@ impl SiteController {
                 });
             }
         };
-        if settings != last.settings {
+        if settings != *last.settings {
             return BuildOutcome::SettingsChanged { left, settings };
         }
         match self.parse_convert_and_write(left) {

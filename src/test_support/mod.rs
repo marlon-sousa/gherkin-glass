@@ -25,7 +25,7 @@ use crate::entities::{
 };
 use crate::errors::InputErrors;
 use crate::policies::site_tree;
-use crate::ports::{FeatureParser, InputFolders};
+use crate::ports::{FeatureParser, FileReader, InputFolders, StandardInput};
 use crate::services::{GherkinParser, GherkinParserApi, InputCollector, InputCollectorApi};
 
 pub(crate) use output::{folder, name, set, two_versions};
@@ -103,6 +103,45 @@ pub(crate) fn fixture(name: &str) -> PathBuf {
         .join(name)
 }
 
+/// The list `--only` names, its file and standard input alike: `text`, or, when it is `None`, not
+/// found as a file and not text on standard input.
+pub(crate) struct FakeList {
+    pub(crate) text: Option<String>,
+}
+
+impl FileReader for FakeList {
+    fn read(&self, _: &Path) -> IoResult<String> {
+        self.text
+            .clone()
+            .ok_or_else(|| IoError::new(ErrorKind::NotFound, "not found"))
+    }
+}
+
+impl StandardInput for FakeList {
+    fn read(&self) -> IoResult<String> {
+        self.text
+            .clone()
+            .ok_or_else(|| IoError::new(ErrorKind::InvalidData, "not UTF-8"))
+    }
+}
+
+/// The input collector over `input_folders`, whose list of `--only` holds `list`, or cannot be
+/// read when it is `None`.
+pub(crate) fn listing_collector(
+    input_folders: Arc<dyn InputFolders>,
+    list: Option<&str>,
+) -> InputCollector {
+    let list = Arc::new(FakeList {
+        text: list.map(str::to_string),
+    });
+    InputCollector::new(input_folders, list.clone(), list)
+}
+
+/// The input collector over `input_folders`, for a build without `--only`.
+pub(crate) fn input_collector(input_folders: Arc<dyn InputFolders>) -> InputCollector {
+    listing_collector(input_folders, None)
+}
+
 /// The input tree of the folder `input`, collected through `input_folders`, with its files
 /// parsed through `feature_parser`, as a build from nothing makes it.
 pub(crate) fn parsed_input(
@@ -111,7 +150,9 @@ pub(crate) fn parsed_input(
     input: &Path,
     unnamed: Unnamed,
 ) -> InputTree {
-    let mut input_tree = InputCollector::new(input_folders).collect(input, None);
+    let mut input_tree = input_collector(input_folders)
+        .collect(input, None)
+        .expect("no list");
     let files = input_tree.files_to_parse();
     input_tree.put_parsed(GherkinParser::new(feature_parser).parse(input, files, unnamed));
     input_tree

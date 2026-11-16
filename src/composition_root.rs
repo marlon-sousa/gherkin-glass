@@ -21,11 +21,12 @@ use crate::services::{
 /// Runs ghg with `arguments`, those after the command's own name.
 pub fn run(arguments: impl IntoIterator<Item = OsString>) -> ExitCode {
     let site = SiteController::new(
-        Arc::new(SettingsService::new(
+        Arc::new(SettingsService::new(Arc::new(FileSystemReader))),
+        Arc::new(InputCollector::new(
+            Arc::new(InputFolderReader),
             Arc::new(FileSystemReader),
             Arc::new(StandardInputReader::default()),
         )),
-        Arc::new(InputCollector::new(Arc::new(InputFolderReader))),
         Arc::new(GherkinParser::new(Arc::new(GherkinCrate))),
         Arc::new(Converter),
         Arc::new(SiteWriter::new(

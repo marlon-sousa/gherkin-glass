@@ -9,7 +9,9 @@ use crate::test_support::parsed_at;
 
 /// The tree of the input `in` that `folders` holds, every allowed file parsed.
 fn parsed_tree(folders: MemoryFolders) -> InputTree {
-    let mut input_tree = InputCollector::new(Arc::new(folders)).collect(Path::new("in"), None);
+    let mut input_tree = input_collector(Arc::new(folders))
+        .collect(Path::new("in"), None)
+        .expect("no list");
     let parsed = input_tree
         .files_to_parse()
         .into_iter()
@@ -40,8 +42,10 @@ fn to_parse(input_tree: &InputTree) -> Vec<PathBuf> {
 fn only_the_files_the_paths_name_are_parsed_again() {
     let files = ["in/a.feature", "in/b.feature", "in/sub/c.feature"];
     let last = parsed_tree(MemoryFolders::with_files(files));
-    let input_collector = InputCollector::new(Arc::new(MemoryFolders::with_files(files)));
-    let changes = input_collector.collect_changes(&last, &changed(&["in/b.feature"]), None);
+    let input_collector = input_collector(Arc::new(MemoryFolders::with_files(files)));
+    let changes = input_collector
+        .collect_changes(&last, &changed(&["in/b.feature"]), None)
+        .expect("no list");
     assert!(changes.calls_for_rebuild);
     assert_eq!(
         to_parse(&changes.input_tree),
@@ -65,8 +69,10 @@ fn a_folder_no_path_concerns_is_copied_without_being_listed_again() {
     ]));
     let mut folders = MemoryFolders::with_files(["in/a.feature", "in/sub/c.feature"]);
     folders.unlistable.insert(PathBuf::from("in/sub"));
-    let input_collector = InputCollector::new(Arc::new(folders));
-    let changes = input_collector.collect_changes(&last, &changed(&["in/a.feature"]), None);
+    let input_collector = input_collector(Arc::new(folders));
+    let changes = input_collector
+        .collect_changes(&last, &changed(&["in/a.feature"]), None)
+        .expect("no list");
     assert!(changes.input_tree.input_errors().is_none());
     assert_eq!(
         changes.input_tree.allowed_files(),
@@ -91,8 +97,10 @@ fn a_ghg_ignore_judges_again_its_folder_and_below_and_marks_what_it_leaves_out()
         PathBuf::from("in/sub/.ghg-ignore"),
         "c.feature\ndeeper/\n".into(),
     );
-    let input_collector = InputCollector::new(Arc::new(folders));
-    let changes = input_collector.collect_changes(&last, &changed(&["in/sub/.ghg-ignore"]), None);
+    let input_collector = input_collector(Arc::new(folders));
+    let changes = input_collector
+        .collect_changes(&last, &changed(&["in/sub/.ghg-ignore"]), None)
+        .expect("no list");
     assert!(changes.calls_for_rebuild);
     assert_eq!(
         changes.input_tree.allowed_files(),
@@ -104,8 +112,10 @@ fn a_ghg_ignore_judges_again_its_folder_and_below_and_marks_what_it_leaves_out()
 #[test]
 fn paths_outside_the_input_leave_the_tree_as_it_was() {
     let last = parsed_tree(MemoryFolders::with_files(["in/a.feature"]));
-    let input_collector = InputCollector::new(Arc::new(MemoryFolders::default()));
-    let changes = input_collector.collect_changes(&last, &changed(&["elsewhere/a.feature"]), None);
+    let input_collector = input_collector(Arc::new(MemoryFolders::default()));
+    let changes = input_collector
+        .collect_changes(&last, &changed(&["elsewhere/a.feature"]), None)
+        .expect("no list");
     assert!(!changes.calls_for_rebuild);
     assert_eq!(
         changes.input_tree.allowed_files(),

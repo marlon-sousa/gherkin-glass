@@ -2,11 +2,12 @@
 
 use std::iter::once;
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 
 use super::building::{BuildOutcome, Built, Stopped};
 use super::{SiteController, SiteListener};
 use crate::entities::{
-    BuildOptions, BuildSnapshot, BuildStart, Destination, InputChanges, Preview, Settings,
+    BuildOptions, BuildSnapshot, BuildStart, Destination, InputChanges, PathList, Preview, Settings,
 };
 use crate::errors::{BuildError, RebuildError, ServeError, WatchError};
 use crate::services::WatchedChanges;
@@ -81,7 +82,7 @@ impl Watching<'_> {
             };
             let outcome = self
                 .controller
-                .build_from(BuildStart::FromNothing(Box::new(settings)), self.options);
+                .build_from(BuildStart::FromNothing(Arc::new(settings)), self.options);
             last = self.served(outcome, last);
         }
     }
@@ -174,6 +175,6 @@ fn list_file(settings: &Settings) -> Option<PathBuf> {
     settings
         .only
         .as_ref()
-        .and_then(|only| only.list.file())
+        .and_then(PathList::file)
         .map(Path::to_path_buf)
 }

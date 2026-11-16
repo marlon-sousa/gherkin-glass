@@ -3,8 +3,7 @@
 use std::path::{Path, PathBuf};
 
 use crate::entities::{
-    Accents, BuildOptions, Config, Destination, ListedFiles, PageOptions, Settings, SiteScope,
-    Unnamed,
+    Accents, BuildOptions, Config, Destination, PageOptions, Settings, SiteScope, Unnamed,
 };
 
 /// The input folder when neither the command line nor the file names one,
@@ -17,14 +16,12 @@ pub(crate) const DEFAULT_OUTPUT: &str = "site";
 
 /// `folder` is the configuration file's folder, the current folder when the
 /// file is `ghg.toml` there or there is none; paths from the command line are
-/// kept as given, relative to the current folder. `only` is what the list `--only` names holds,
-/// `None` without it.
+/// kept as given, relative to the current folder.
 pub(crate) fn resolve_settings(
     options: &BuildOptions,
     folder: &Path,
     config: &Config,
     destination: Destination,
-    only: Option<ListedFiles>,
 ) -> Settings {
     let path = |option: &Option<PathBuf>, set: &Option<PathBuf>, default: &str| match (option, set)
     {
@@ -38,7 +35,7 @@ pub(crate) fn resolve_settings(
         Some(false) => Unnamed::Refused,
         Some(true) | None => Unnamed::Allowed,
     };
-    let scope = match only {
+    let scope = match options.only {
         Some(_) => SiteScope::OnlyListed,
         None => SiteScope::EveryFeature,
     };
@@ -57,7 +54,7 @@ pub(crate) fn resolve_settings(
             .front_page
             .clone()
             .or_else(|| config.front_page.as_ref().map(|set| folder.join(set))),
-        only,
+        only: options.only.clone(),
         pages: PageOptions {
             title: options.title.clone().or_else(|| config.title.clone()),
             source_link: config.source_link.clone(),
@@ -102,7 +99,6 @@ mod tests {
             &config_folder(Path::new(file)),
             &config,
             Destination::Folder,
-            None,
         )
         .input
     }
@@ -152,7 +148,7 @@ mod tests {
                 title: set.map(str::to_string),
                 ..Config::default()
             };
-            resolve_settings(&options, Path::new(""), &config, Destination::Folder, None)
+            resolve_settings(&options, Path::new(""), &config, Destination::Folder)
                 .pages
                 .title
         };
@@ -172,14 +168,7 @@ mod tests {
                 output: set.map(PathBuf::from),
                 ..Config::default()
             };
-            resolve_settings(
-                &options,
-                Path::new("ci"),
-                &config,
-                Destination::Folder,
-                None,
-            )
-            .output
+            resolve_settings(&options, Path::new("ci"), &config, Destination::Folder).output
         };
         assert_eq!(resolve(None, None), Path::new("ci").join("site"));
         assert_eq!(resolve(None, Some("out")), Path::new("ci").join("out"));
@@ -195,7 +184,6 @@ mod tests {
                 Path::new(""),
                 &config,
                 Destination::Folder,
-                None,
             )
             .pages
         };
@@ -227,7 +215,6 @@ mod tests {
                 Path::new(""),
                 &config,
                 Destination::Folder,
-                None,
             )
             .unnamed
         };
@@ -248,7 +235,6 @@ mod tests {
             Path::new(""),
             &config,
             Destination::Folder,
-            None,
         )
         .pages
         .accents;
@@ -274,8 +260,7 @@ mod tests {
                 replace_existing_version: replace,
                 ..Config::default()
             };
-            let settings =
-                resolve_settings(&options, Path::new(""), &config, Destination::Folder, None);
+            let settings = resolve_settings(&options, Path::new(""), &config, Destination::Folder);
             (settings.version, settings.replace)
         };
         assert_eq!(settings(None, None, Some(false)), (None, false));
