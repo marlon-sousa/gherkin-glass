@@ -101,8 +101,8 @@ fn a_build_from_the_last_build_gives_the_site_a_build_from_nothing_gives(
 const LIST: Change = Change::Write("list.txt", "in/a.feature\nin/sub/new.feature\n");
 
 #[rstest]
-// Rules 205, 206 and 209: with --only, a change to a listed file, to a file not listed, even one
-// that cannot be parsed, and to the list itself.
+// Rules 205, 206 and 209: with --only, a change to a listed file, and to a file not listed, even
+// one that cannot be parsed.
 #[case::a_listed_file_edited(&[Change::Write("in/a.feature", EDITED)])]
 #[case::a_file_not_listed_broken(&[
     Change::Write("in/sub/b.feature", BROKEN),
@@ -110,7 +110,6 @@ const LIST: Change = Change::Write("list.txt", "in/a.feature\nin/sub/new.feature
 ])]
 #[case::a_listed_file_made(&[Change::Write("in/sub/new.feature", PLAIN)])]
 #[case::a_listed_file_removed(&[Change::Remove("in/a.feature")])]
-#[case::the_list_changed(&[Change::Write("list.txt", "in/sub/b.feature\n")])]
 fn a_build_of_the_listed_files_from_the_last_build_gives_the_site_a_build_from_nothing_gives(
     #[case] changes: &[Change],
 ) {

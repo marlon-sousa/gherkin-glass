@@ -102,14 +102,15 @@ mod tests {
     }
 
     proptest! {
-        // Rule 205: whatever its `.` and `..` parts, a listed path is kept only as a path below
-        // the input folder, with none of those parts left.
+        // Rule 205: whatever its `.` and `..` parts, a listed path is kept only as the path
+        // below the input folder it names once those parts are resolved.
         #[test]
-        fn no_path_outside_the_input_is_kept(parts in proptest::collection::vec("\\.|\\.\\.|features|work|a", 0..8)) {
+        fn a_listed_path_is_kept_as_the_path_it_names_below_the_input(parts in proptest::collection::vec("\\.|\\.\\.|features|work|a", 0..8)) {
             let path = Path::new("/").join(parts.join("/"));
             let kept = selection(&[path.to_str().unwrap_or_default()]);
             for file in &kept.files {
                 assert!(file.components().all(|part| matches!(part, Component::Normal(_))), "{path:?}: {file:?}");
+                assert_eq!(Path::new("/work/features").join(file), lexically_normal(&path));
             }
         }
     }
