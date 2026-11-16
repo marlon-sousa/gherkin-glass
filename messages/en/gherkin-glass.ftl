@@ -108,6 +108,7 @@ search-documents-large = The search documents are { $size } MB, larger than the 
 ## system's words, and $key a key as the file writes it.
 
 config-cannot-be-read = cannot be read: { $reason }
+config-empty-list = names no path, so there is nothing to build.
 config-unknown-key = ghg has no setting named { $key }.
 config-not-text = { $key } must be text, in quotes.
 config-not-boolean = { $key } must be true or false.

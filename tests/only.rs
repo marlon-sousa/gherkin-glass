@@ -121,6 +121,24 @@ fn a_list_that_cannot_be_read_stops_the_run_before_the_input_is_read() {
     assert!(!written.exists());
 }
 
+// Rule 204: a list that names no path stops the run, as one that cannot be read does.
+#[rstest]
+#[case::a_file_of_empty_lines(&["--only", "empty.txt"], "", "empty.txt")]
+#[case::nothing_on_standard_input(&["--only", "-"], "", "-")]
+fn a_list_that_names_no_path_stops_the_run(
+    #[case] arguments: &[&str],
+    #[case] standard_input: &str,
+    #[case] named: &str,
+) {
+    let (written, run) = build(arguments, standard_input, "empty");
+    assert_eq!(
+        text(&run.stderr),
+        format!("{named}: names no path, so there is nothing to build.\n")
+    );
+    assert_eq!(run.status.code(), Some(1));
+    assert!(!written.exists());
+}
+
 // Rule 204: serving without building has no use for a list.
 #[test]
 fn a_list_given_with_no_build_is_a_mistake_on_the_command_line() {

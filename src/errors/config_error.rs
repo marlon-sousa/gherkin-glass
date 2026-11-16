@@ -31,6 +31,9 @@ pub(crate) enum ConfigErrorKind {
     /// `reason` is the operating system's.
     #[error(fmt = Self::cannot_be_read)]
     CannotBeRead { reason: String },
+    /// The list of `--only`, empty or of blank lines only.
+    #[error(fmt = Self::empty_list)]
+    EmptyList,
     /// Not TOML; `message` is the `toml` crate's, passed through as it is.
     #[error("{message}")]
     Syntax { message: String },
@@ -109,6 +112,17 @@ impl ConfigErrors {
             errors: vec![ConfigError::cannot_be_read(error)],
         }
     }
+
+    /// The report of `file`, the list of `--only` named as it was given, when it names no path.
+    pub(crate) fn empty_list(file: PathBuf) -> Self {
+        ConfigErrors {
+            file,
+            errors: vec![ConfigError {
+                line: None,
+                kind: ConfigErrorKind::EmptyList,
+            }],
+        }
+    }
 }
 
 impl ConfigError {
@@ -132,6 +146,10 @@ impl ConfigError {
 impl ConfigErrorKind {
     fn cannot_be_read(reason: &str, f: &mut Formatter<'_>) -> FmtResult {
         f.write_str(&fl!(CATALOGUE, "config-cannot-be-read", reason = reason))
+    }
+
+    fn empty_list(f: &mut Formatter<'_>) -> FmtResult {
+        f.write_str(&fl!(CATALOGUE, "config-empty-list"))
     }
 
     fn unknown_key(key: &str, f: &mut Formatter<'_>) -> FmtResult {

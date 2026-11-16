@@ -143,14 +143,35 @@ fn only_the_listed_files_of_the_input_are_collected_and_no_other_folder_is_liste
 }
 
 #[rstest]
-// Rule 204: named as it was given, `-` for standard input.
+// Rule 204: named as it was given, `-` for standard input, a list that cannot be read and one
+// that names no path alike.
 #[case::a_file_that_does_not_exist(
     PathList::File(PathBuf::from("changed.txt")),
+    None,
     "changed.txt: cannot be read: not found\n"
 )]
-#[case::standard_input_that_is_not_text(PathList::StandardInput, "-: cannot be read: not UTF-8\n")]
-fn a_list_that_cannot_be_read_stops_the_run(#[case] list: PathList, #[case] report: &str) {
-    let collector = input_collector(Arc::new(MemoryFolders::with_files(["in/a.feature"])));
+#[case::standard_input_that_is_not_text(
+    PathList::StandardInput,
+    None,
+    "-: cannot be read: not UTF-8\n"
+)]
+#[case::a_file_of_empty_lines(
+    PathList::File(PathBuf::from("changed.txt")),
+    Some("\n\n"),
+    "changed.txt: names no path, so there is nothing to build.\n"
+)]
+#[case::nothing_on_standard_input(
+    PathList::StandardInput,
+    Some(""),
+    "-: names no path, so there is nothing to build.\n"
+)]
+fn a_list_that_cannot_be_read_or_names_no_path_stops_the_run(
+    #[case] list: PathList,
+    #[case] text: Option<&str>,
+    #[case] report: &str,
+) {
+    let folders = Arc::new(MemoryFolders::with_files(["in/a.feature"]));
+    let collector = listing_collector(folders, text);
     let collected = collector.collect(Path::new("in"), Some(&list));
     assert_eq!(
         collected.map_err(|errors| errors.to_string()).err(),

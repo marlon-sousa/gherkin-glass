@@ -63,9 +63,13 @@ impl InputCollector {
             PathList::StandardInput => self.standard_input.read(),
         }
         .map_err(|error| ConfigErrors::unreadable(list.as_given(), &error))?;
+        let paths = listed_paths(&text);
+        if paths.is_empty() {
+            return Err(ConfigErrors::empty_list(list.as_given()));
+        }
         Ok(Some(ListedSelection::new(
             &self.absolute(input),
-            listed_paths(&text).iter().map(|path| self.absolute(path)),
+            paths.iter().map(|path| self.absolute(path)),
         )))
     }
 
