@@ -3,7 +3,8 @@
 use std::path::{Path, PathBuf};
 
 use crate::entities::{
-    Accents, BuildOptions, Config, Destination, PageOptions, Settings, SiteScope, Unnamed,
+    Accents, BuildOptions, Config, Destination, PageOptions, SearchIndexing, Settings, SiteScope,
+    Unnamed,
 };
 
 /// The input folder when neither the command line nor the file names one,
@@ -39,10 +40,13 @@ pub(crate) fn resolve_settings(
         Some(_) => SiteScope::OnlyListed,
         None => SiteScope::EveryFeature,
     };
-    let version = options
-        .version_name
-        .clone()
-        .or_else(|| config.version_name.clone());
+    let version = match options.indexing {
+        SearchIndexing::Allowed => options
+            .version_name
+            .clone()
+            .or_else(|| config.version_name.clone()),
+        SearchIndexing::Refused => None,
+    };
     Settings {
         input,
         output,
@@ -68,6 +72,7 @@ pub(crate) fn resolve_settings(
                 dark: config.accent_dark.unwrap_or(Accents::DEFAULT.dark),
             },
             scope,
+            indexing: options.indexing,
         },
     }
 }
@@ -79,199 +84,4 @@ pub(crate) fn config_folder(config: &Path) -> PathBuf {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::entities::Colour;
-    use crate::entities::VersionName;
-
-    fn input(options: (Option<&str>, Option<&str>), file: &str, set: Option<&str>) -> PathBuf {
-        let options = BuildOptions {
-            config: options.0.map(PathBuf::from),
-            input: options.1.map(PathBuf::from),
-            ..BuildOptions::default()
-        };
-        let config = Config {
-            input: set.map(PathBuf::from),
-            ..Config::default()
-        };
-        resolve_settings(
-            &options,
-            &config_folder(Path::new(file)),
-            &config,
-            Destination::Folder,
-        )
-        .input
-    }
-
-    #[test]
-    fn the_option_wins_over_the_file_and_the_file_over_the_default() {
-        assert_eq!(
-            input((None, Some("cli")), "ghg.toml", Some("file")),
-            PathBuf::from("cli")
-        );
-        assert_eq!(
-            input((None, None), "ghg.toml", Some("file")),
-            PathBuf::from("file")
-        );
-        assert_eq!(
-            input((None, None), "ghg.toml", None),
-            PathBuf::from("features")
-        );
-    }
-
-    #[test]
-    fn the_file_s_paths_start_from_its_folder_and_the_option_s_from_the_current_one() {
-        let file = Path::new("ci").join("ghg.toml");
-        let file = file.to_str().expect("UTF-8");
-        assert_eq!(
-            input((Some(file), None), file, Some("specs")),
-            Path::new("ci").join("specs")
-        );
-        assert_eq!(
-            input((Some(file), None), file, None),
-            Path::new("ci").join("features")
-        );
-        assert_eq!(
-            input((Some(file), Some("x")), file, Some("specs")),
-            PathBuf::from("x")
-        );
-    }
-
-    #[test]
-    fn the_title_option_wins_over_the_file_s() {
-        let title = |option: Option<&str>, set: Option<&str>| {
-            let options = BuildOptions {
-                title: option.map(str::to_string),
-                ..BuildOptions::default()
-            };
-            let config = Config {
-                title: set.map(str::to_string),
-                ..Config::default()
-            };
-            resolve_settings(&options, Path::new(""), &config, Destination::Folder)
-                .pages
-                .title
-        };
-        assert_eq!(title(Some("cli"), Some("file")).as_deref(), Some("cli"));
-        assert_eq!(title(None, Some("file")).as_deref(), Some("file"));
-        assert_eq!(title(None, None), None);
-    }
-
-    #[test]
-    fn the_output_resolves_as_the_input_does() {
-        let resolve = |output: Option<&str>, set: Option<&str>| {
-            let options = BuildOptions {
-                output: output.map(PathBuf::from),
-                ..BuildOptions::default()
-            };
-            let config = Config {
-                output: set.map(PathBuf::from),
-                ..Config::default()
-            };
-            resolve_settings(&options, Path::new("ci"), &config, Destination::Folder).output
-        };
-        assert_eq!(resolve(None, None), Path::new("ci").join("site"));
-        assert_eq!(resolve(None, Some("out")), Path::new("ci").join("out"));
-        assert_eq!(resolve(Some("x"), Some("out")), PathBuf::from("x"));
-    }
-
-    #[test]
-    fn pages_start_expanded_with_backgrounds_inline_and_no_source_link_unless_the_file_says_otherwise()
-     {
-        let pages = |config: Config| {
-            resolve_settings(
-                &BuildOptions::default(),
-                Path::new(""),
-                &config,
-                Destination::Folder,
-            )
-            .pages
-        };
-        assert_eq!(pages(Config::default()), PageOptions::default());
-        let set = pages(Config {
-            source_link: Some("https://x/{path}".into()),
-            collapse_rules: Some(true),
-            collapse_scenarios: Some(true),
-            show_tree: Some(false),
-            inline_backgrounds: Some(false),
-            ..Config::default()
-        });
-        assert_eq!(set.source_link.as_deref(), Some("https://x/{path}"));
-        assert!(set.collapse_rules && set.collapse_scenarios);
-        assert!(!set.show_tree);
-        assert!(pages(Config::default()).show_tree);
-        assert!(!set.inline_backgrounds);
-    }
-
-    #[test]
-    fn unnamed_blocks_are_allowed_unless_the_file_says_otherwise() {
-        let unnamed = |allow_unnamed| {
-            let config = Config {
-                allow_unnamed,
-                ..Config::default()
-            };
-            resolve_settings(
-                &BuildOptions::default(),
-                Path::new(""),
-                &config,
-                Destination::Folder,
-            )
-            .unnamed
-        };
-        assert_eq!(unnamed(None), Unnamed::Allowed);
-        assert_eq!(unnamed(Some(true)), Unnamed::Allowed);
-        assert_eq!(unnamed(Some(false)), Unnamed::Refused);
-    }
-
-    #[test]
-    fn each_accent_the_file_does_not_set_takes_its_default() {
-        let light = Colour::new(0, 0, 0x80);
-        let config = Config {
-            accent_light: Some(light),
-            ..Config::default()
-        };
-        let accents = resolve_settings(
-            &BuildOptions::default(),
-            Path::new(""),
-            &config,
-            Destination::Folder,
-        )
-        .pages
-        .accents;
-        assert_eq!(
-            accents,
-            Accents {
-                light,
-                dark: Accents::DEFAULT.dark
-            }
-        );
-    }
-
-    #[test]
-    fn the_version_name_option_wins_and_builds_are_replaced_by_default() {
-        let name = |text: &str| VersionName::new(text).expect("a version name");
-        let settings = |option: Option<&str>, set: Option<&str>, replace| {
-            let options = BuildOptions {
-                version_name: option.map(name),
-                ..BuildOptions::default()
-            };
-            let config = Config {
-                version_name: set.map(name),
-                replace_existing_version: replace,
-                ..Config::default()
-            };
-            let settings = resolve_settings(&options, Path::new(""), &config, Destination::Folder);
-            (settings.version, settings.replace)
-        };
-        assert_eq!(settings(None, None, Some(false)), (None, false));
-        assert_eq!(settings(None, None, None), (None, true));
-        assert_eq!(
-            settings(None, Some("main"), None),
-            (Some(name("main")), true)
-        );
-        assert_eq!(
-            settings(Some("v2"), Some("main"), Some(false)),
-            (Some(name("v2")), false)
-        );
-    }
-}
+mod tests;

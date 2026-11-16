@@ -8,8 +8,8 @@ use super::page_frame::{DiskNotice, PageFooter, SkipLink, ThemeControl};
 use super::page_head::PageHead;
 use super::page_layout::SitePieces;
 use crate::entities::{
-    HeadingLevel, SiteAddress, SiteNode, SiteTreeNode, VersionEntry, VersionsList, VersionsPage,
-    VersionsWords,
+    HeadingLevel, SearchIndexing, SiteAddress, SiteNode, SiteTreeNode, VersionEntry, VersionsList,
+    VersionsPage, VersionsWords,
 };
 use crate::errors::FrontPageError;
 
@@ -78,6 +78,7 @@ impl RenderFile for NodeOf<'_, VersionsPage> {
                 title: &front.title,
                 root: "",
                 stylesheet: site.stylesheet(),
+                indexing: SearchIndexing::Allowed,
             }
             .render(),
             disk_notice: DiskNotice {

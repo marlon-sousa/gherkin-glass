@@ -20,6 +20,7 @@ help =
       --version-name <name>: builds the site as the version of that name, instead of the configuration's version_name.
       --front-page <file>: the Markdown template of the site's front page, instead of the configuration's front_page.
       --only <file>: builds the site from the feature files the file lists, one path on each line, alone. --only - reads the list from standard input.
+      --preview: builds a preview, a site without versions whose every page asks search engines not to index it.
 
     Options of ghg serve only:
       --host <address>: the address to listen on, instead of 127.0.0.1.
@@ -45,6 +46,7 @@ unexpected-argument = { $command } takes no argument { $argument }.
 not-a-port = The option --port needs a whole number from 0 to 65535, not { $value }.
 watch-without-build = The options --watch and --no-build cannot be used together.
 only-without-build = The options --only and --no-build cannot be used together.
+preview-with-version-name = The option --preview builds a site without versions, so it cannot be given with --version-name.
 
 ## One line of the report of what stops a build: the path, the line when
 ## there is one, and what is wrong.
@@ -128,10 +130,10 @@ config-regex-too-large = { $key } is too large a regular expression.
 config-unknown-group = { $key } names the group { $group }, which the pattern does not have.
 
 ## A version name that cannot be one, given with --version-name or
-## version_name. assets, index.html, ghg-versions.json, con and nul are names,
+## version_name. assets, index.html, ghg-versions.json, previews, con and nul are names,
 ## never translated.
 
-invalid-version-name = { $name } cannot be a version name. A version name is made of letters, digits, dots, hyphens, underscores and plus signs, starts with a letter or a digit, does not end with a dot, and is not assets, index.html, ghg-versions.json, or a name Windows keeps for a device, such as con or nul.
+invalid-version-name = { $name } cannot be a version name. A version name is made of letters, digits, dots, hyphens, underscores and plus signs, starts with a letter or a digit, does not end with a dot, and is not assets, index.html, ghg-versions.json, previews, or a name Windows keeps for a device, such as con or nul.
 
 ## What stops a build without a version, said of the output folder.
 ## replace_existing_version is a key, never translated.

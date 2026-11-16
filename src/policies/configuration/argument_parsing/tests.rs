@@ -4,11 +4,13 @@ mod mistakes;
 use std::collections::BTreeSet;
 use std::path::PathBuf;
 
-use clap::CommandFactory;
+use clap::{Arg, CommandFactory};
 use rstest::rstest;
 
 use super::*;
-use crate::entities::{BuildOptions, PathList, ServeMode, ServeOptions, VersionName};
+use crate::entities::{
+    BuildOptions, PathList, SearchIndexing, ServeMode, ServeOptions, VersionName,
+};
 
 fn parse(arguments: &[&str]) -> Result<Invocation, ArgumentError> {
     parse_arguments(arguments.iter().map(OsString::from))
@@ -29,12 +31,23 @@ fn paths(config: Option<&str>, input: Option<&str>) -> BuildOptions {
 /// The long options `command` takes, without their dashes, but for
 /// `--help` and `--version`, which every command takes.
 fn long_options(command: &str) -> BTreeSet<String> {
+    long_names(command, |_| true)
+}
+
+/// The long names of the options of `command` that take no value.
+fn flags_of(command: &str) -> BTreeSet<String> {
+    long_names(command, |argument| !argument.get_action().takes_values())
+}
+
+/// The long names of the options of `command` that `keep` keeps, but those of every command.
+fn long_names(command: &str, keep: impl Fn(&Arg) -> bool) -> BTreeSet<String> {
     let mut arguments = Arguments::command();
     arguments.build();
     arguments
         .find_subcommand(command)
         .into_iter()
         .flat_map(|command| command.get_arguments())
+        .filter(|argument| keep(argument))
         .filter_map(|argument| argument.get_long())
         .filter(|long| !is_every_command_s(long))
         .map(str::to_string)
@@ -96,6 +109,12 @@ fn serve_takes_every_option_of_build() {
 })]
 #[case::a_list_on_standard_input(&["build", "--only=-"], BuildOptions {
     only: Some(PathList::StandardInput),
+    ..BuildOptions::default()
+})]
+// Rule 211.
+#[case::a_preview(&["build", "--preview", "--output", "previews/pr-131"], BuildOptions {
+    output: Some(PathBuf::from("previews/pr-131")),
+    indexing: SearchIndexing::Refused,
     ..BuildOptions::default()
 })]
 fn build_takes_its_options_in_either_spelling_and_order(

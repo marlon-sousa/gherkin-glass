@@ -78,6 +78,11 @@ fn unknown_command(name: &str) -> ArgumentError {
 #[case::watching_without_building(&["serve", "--no-build", "--watch"], ArgumentError::WatchWithoutBuild)]
 // Rule 204.
 #[case::a_list_without_building(&["serve", "--no-build", "--only", "-"], ArgumentError::OnlyWithoutBuild)]
+// Rule 212.
+#[case::a_preview_with_a_version_name(
+    &["build", "--preview", "--version-name", "pr-131"],
+    ArgumentError::PreviewWithVersionName
+)]
 #[case::a_path_as_version_name(
     &["build", "--version-name", "../v1"],
     ArgumentError::InvalidVersionName { name: "../v1".into() }

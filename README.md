@@ -91,7 +91,7 @@ text = "Issue $1 on GitHub"
 | `tag_links` | a list of tables, each written `[[tag_links]]` | none | Links from tags to another site. Each table has a `pattern`, a regular expression matched against the whole tag with its `@`; an `address`; and a `text` for the link. In the address and the text, `$1` or `$name` is replaced by what that group of the pattern matched. |
 | `accent_light` | a colour, `#` and six or three hexadecimal digits, in quotes, such as `"#0b4f9c"` | `"#0b4f9c"` | The light theme's colour for links and the focus outline. It must reach a contrast of 7:1 against the theme's backgrounds. |
 | `accent_dark` | a colour, written as `accent_light`'s, such as `"#8cc4ff"` | `"#8cc4ff"` | The dark theme's colour for links and the focus outline, held to the same contrast. |
-| `version_name` | text | none | Builds the site as a version of that name, as "Versions" below describes. |
+| `version_name` | text | none | Builds the site as a version of that name, as "Versions" below describes, unless `--preview` is given. |
 | `replace_existing_version` | `true` or `false` | `true` | Whether a build replaces the site, or the version, that an earlier build wrote in the output folder. When `false`, it stops instead. |
 | `front_page` | a path | none | A Markdown file that introduces the site on its front page, as "The front page" below describes. |
 
@@ -119,6 +119,7 @@ ghg serve [options]
 | `--version-name <name>` | `build` and `serve` | Builds the site as that version, instead of the configuration's `version_name`. |
 | `--front-page <file>` | `build` and `serve` | The Markdown file of the site's front page, instead of the configuration's `front_page`. |
 | `--only <file>` | `build` and `serve` | Builds the site from the feature files listed in that file, one path on each line, alone, as "A site of only some feature files" below describes. `--only -` reads the list from standard input. |
+| `--preview` | `build` and `serve` | Builds a preview: the site without versions, whatever the configuration's `version_name` says, every page of which asks search engines not to index it, as "A site of only some feature files" below describes. It cannot be given with `--version-name`. |
 | `--host <address>` | `serve` | Listens on that address instead of `127.0.0.1`, such as `0.0.0.0` to be reached from other machines. |
 | `--port <number>` | `serve` | Listens at that port instead of 8000. `0` lets the system choose a free one. |
 | `--no-build` | `serve` | Serves the output folder as it is, without building it. It cannot be given with `--watch` or `--only`. |
@@ -149,7 +150,7 @@ So keep the output folder for the site alone, and put anything you want served b
 
 ### Versions
 
-One site can hold several versions of the same suite, so that readers read the version they use. Give each build a version name, with `--version-name` or `version_name`, such as `v1.2.0` or `main`. A version name is one folder name, of the letters `a` to `z` and `A` to `Z`, digits, `.`, `-`, `_` and `+`. A name such as `1.2.0` or `v1.2.0` is a release, one such as `2.0.0-rc.1` a pre-release, and any other, such as `main`, a development version. Each version is written into a folder of its own in the output folder, such as `site/v1.2.0/`, and the output folder's `index.html` lists every version: development versions, releases newest first, and pre-releases, listed collapsed.
+One site can hold several versions of the same suite, so that readers read the version they use. Give each build a version name, with `--version-name` or `version_name`, such as `v1.2.0` or `main`. A version name is one folder name, of the letters `a` to `z` and `A` to `Z`, digits, `.`, `-`, `_` and `+`, other than `previews`, which is kept for previews, as "A site of only some feature files" below describes. A name such as `1.2.0` or `v1.2.0` is a release, one such as `2.0.0-rc.1` a pre-release, and any other, such as `main`, a development version. Each version is written into a folder of its own in the output folder, such as `site/v1.2.0/`, and the output folder's `index.html` lists every version: development versions, releases newest first, and pre-releases, listed collapsed.
 
 ghg does not read git. To build several versions, check each one out into a folder of its own and run ghg once for each, into the same output folder. Building a version again replaces it, unless `replace_existing_version` is `false`.
 
@@ -162,6 +163,14 @@ git diff --name-only origin/main...HEAD | ghg build --only -
 ```
 
 Every path in the list that is not a feature file ghg would read is passed over quietly: a removed file, a file that is not a feature file, or a path outside the input folder, so the list needs no filter. A list that names no path at all, such as an empty one, stops the build; one whose paths are none of them feature files builds a home page that says so. The site's folder pages, folder tree, tags, step sentences and search hold only the listed features, and every page says that the site shows only the feature files given with `--only`. git quotes paths with characters outside ASCII; `git -c core.quotePath=false diff --name-only` prints them as they are. With `ghg serve --watch`, a list given as a file is read again whenever it changes.
+
+To publish such a site for the reviewers of a pull request, build it as a preview, into a folder of its own:
+
+```sh
+git diff --name-only origin/main...HEAD | ghg build --only - --preview --output previews/pr-131
+```
+
+A preview is an ordinary site without versions, even when `ghg.toml` names a version, and every page of it asks search engines not to index it. Nothing links to it: readers reach it through its link, wherever you deploy the folder. A versioned output folder keeps a `previews` folder at its top for them: ghg never looks into it, writes or removes anything there, so `--output site/previews/pr-131` deploys a preview beside the versions built into `site`, and the next version built into `site` still runs.
 
 ### The front page
 

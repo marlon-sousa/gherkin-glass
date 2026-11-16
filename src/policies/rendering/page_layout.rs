@@ -81,6 +81,7 @@ pub(super) fn whole_page(site: &SitePieces<'_>, around: &PageAround<'_>, main: S
             title: around.title,
             root: &root,
             stylesheet: &site.stylesheet,
+            indexing: site.page_frame.indexing,
         }
         .render(),
         frame: &site.frame,

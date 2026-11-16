@@ -54,7 +54,7 @@ impl FakeFolders {
 }
 
 impl OutputFolders for FakeFolders {
-    fn contents(&self, _output: &Path) -> IoResult<OutputContents> {
+    fn contents(&self, _output: &Path, _left_alone: Option<&str>) -> IoResult<OutputContents> {
         let mut looks = self.looks.lock().expect("lock");
         let look = if looks.len() > 1 {
             looks.remove(0)

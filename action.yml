@@ -8,7 +8,8 @@ author: marlon-sousa
 # same name, and every option of ghg build that sets how a site is built is an
 # input: a test in src/policies/configuration/argument_parsing/tests/action_inputs.rs fails
 # when they differ. The build step names them all in GHG_OPTIONS, and passes
-# each as GHG_OPTION_ and its name in capitals, with _ for -.
+# each as GHG_OPTION_ and its name in capitals, with _ for -. GHG_FLAGS names
+# those that take no value, which are true or false.
 
 inputs:
   version:
@@ -47,6 +48,10 @@ inputs:
     description: The --only option of ghg build, the file listing the feature files to build the site from, alone. Left out when empty.
     required: false
     default: ""
+  preview:
+    description: true to give ghg build the --preview option, building a site without versions whose every page asks search engines not to index it. Left out when false or empty.
+    required: false
+    default: ""
 
 runs:
   using: composite
@@ -67,7 +72,8 @@ runs:
       env:
         GHG_BIN: ${{ steps.install.outputs.bin }}
         GHG_ACTION_PATH: ${{ github.action_path }}
-        GHG_OPTIONS: config input output title version-name front-page only
+        GHG_OPTIONS: config input output title version-name front-page only preview
+        GHG_FLAGS: preview
         GHG_OPTION_CONFIG: ${{ inputs.config }}
         GHG_OPTION_INPUT: ${{ inputs.input }}
         GHG_OPTION_OUTPUT: ${{ inputs.output }}
@@ -75,4 +81,5 @@ runs:
         GHG_OPTION_VERSION_NAME: ${{ inputs.version-name }}
         GHG_OPTION_FRONT_PAGE: ${{ inputs.front-page }}
         GHG_OPTION_ONLY: ${{ inputs.only }}
+        GHG_OPTION_PREVIEW: ${{ inputs.preview }}
       run: bash "$GHG_ACTION_PATH/action/build.sh"

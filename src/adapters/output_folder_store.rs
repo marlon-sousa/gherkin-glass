@@ -19,7 +19,7 @@ use crate::ports::OutputFolders;
 pub(crate) struct OutputFolderStore;
 
 impl OutputFolders for OutputFolderStore {
-    fn contents(&self, output: &Path) -> IoResult<OutputContents> {
+    fn contents(&self, output: &Path, left_alone: Option<&str>) -> IoResult<OutputContents> {
         let metadata = match symlink_metadata(output) {
             Ok(metadata) => metadata,
             Err(error) if error.kind() == ErrorKind::NotFound => {
@@ -31,7 +31,10 @@ impl OutputFolders for OutputFolderStore {
         if !metadata.is_dir() {
             return Ok(OutputContents::NotAFolder);
         }
-        let mut found = Found::default();
+        let mut found = Found {
+            left_alone,
+            ..Found::default()
+        };
         found.walk(output, "")?;
         let record = match marker(output, Record::VERSIONS_MARKER)? {
             Some(text) => versions_record(&text),
@@ -76,14 +79,16 @@ impl OutputFolders for OutputFolderStore {
     }
 }
 
-/// Every file and folder met while walking a folder.
+/// Every file and folder met while walking a folder, but the folder at its
+/// top named `left_alone`.
 #[derive(Default)]
-struct Found {
+struct Found<'a> {
+    left_alone: Option<&'a str>,
     files: BTreeSet<FilePath>,
     folders: BTreeSet<FilePath>,
 }
 
-impl Found {
+impl Found<'_> {
     /// Adds what is in `folder`, whose path below the output folder is
     /// `below`, empty for the output folder itself, never following a link.
     fn walk(&mut self, folder: &Path, below: &str) -> IoResult<()> {
@@ -96,7 +101,11 @@ impl Found {
             } else {
                 format!("{below}/{name}")
             };
-            if entry.file_type()?.is_dir() {
+            let is_folder = entry.file_type()?.is_dir();
+            if is_folder && self.left_alone == Some(path.as_str()) {
+                continue;
+            }
+            if is_folder {
                 self.walk(&entry.path(), &path)?;
                 self.folders.insert(path);
             } else {

@@ -2,8 +2,13 @@
 
 use derive_more::Display;
 
-/// Names the versions page and the output folder's marker use, compared ignoring capitals.
-const RESERVED: [&str; 3] = ["assets", "index.html", "ghg-versions.json"];
+/// Names the versions page, the output folder's marker and the previews use, compared ignoring capitals.
+const RESERVED: [&str; 4] = [
+    "assets",
+    "index.html",
+    "ghg-versions.json",
+    VersionName::PREVIEWS,
+];
 
 /// The names Windows keeps for devices, alone or before a dot, compared ignoring capitals.
 const DEVICES: [&str; 4] = ["con", "prn", "aux", "nul"];
@@ -13,6 +18,9 @@ const NUMBERED_DEVICES: [&str; 2] = ["com", "lpt"];
 pub(crate) struct VersionName(String);
 
 impl VersionName {
+    /// The folder at the top of a versioned output folder that ghg leaves alone, for the previews.
+    pub(crate) const PREVIEWS: &str = "previews";
+
     /// `None` when `name` cannot be a version name.
     pub(crate) fn new(name: &str) -> Option<Self> {
         let allowed = |c: char| c.is_ascii_alphanumeric() || matches!(c, '.' | '-' | '_' | '+');
@@ -71,6 +79,8 @@ mod tests {
             "Index.HTML",
             "ghg-versions.json",
             "GHG-Versions.JSON",
+            "previews",
+            "Previews",
             "con",
             "NUL",
             "nul.txt",
