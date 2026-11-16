@@ -194,7 +194,7 @@ impl ConverterApi for FakeConverter {
         input_tree: &InputTree,
         last: Option<&SiteTree>,
         settings: &Settings,
-        listed_versions: &BTreeSet<VersionName>,
+        built_versions: &BTreeSet<VersionName>,
     ) -> SiteTree {
         let version = SiteVersion {
             name: None,
@@ -203,7 +203,7 @@ impl ConverterApi for FakeConverter {
         let mut site = SiteTreeBuilder::new(page_frame(&settings.pages), version);
         site.assets(input_tree.features().map(asset_of));
         let tree = site.build();
-        let versions: Vec<_> = listed_versions.iter().map(VersionName::as_str).collect();
+        let versions: Vec<_> = built_versions.iter().map(VersionName::as_str).collect();
         let after = last.map_or_else(String::new, |last| format!(" after {}", asset_names(last)));
         self.calls.note(format!(
             "converter.convert {} beside {}{after}",

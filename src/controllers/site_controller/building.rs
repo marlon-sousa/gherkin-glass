@@ -67,7 +67,7 @@ impl SiteController {
         &self,
         settings: Arc<Settings>,
     ) -> Result<Built, Box<Stopped>> {
-        let listed_versions = self.site_writer.check(&settings).map_err(|error| Stopped {
+        let built_versions = self.site_writer.check(&settings).map_err(|error| Stopped {
             left: None,
             error: BuildError::Output(error),
         })?;
@@ -82,7 +82,7 @@ impl SiteController {
             settings,
             input_tree,
             site: None,
-            listed_versions,
+            built_versions,
         })
     }
 
@@ -104,7 +104,7 @@ impl SiteController {
             settings: Arc::clone(&last.settings),
             input_tree,
             site: last.site.clone(),
-            listed_versions: last.listed_versions.clone(),
+            built_versions: last.built_versions.clone(),
         };
         if !calls_for_rebuild {
             return BuildOutcome::NothingToBuild(left);
@@ -147,7 +147,7 @@ impl SiteController {
             &snapshot.input_tree,
             snapshot.site_tree(),
             &snapshot.settings,
-            &snapshot.listed_versions,
+            &snapshot.built_versions,
         );
         let written =
             self.site_writer

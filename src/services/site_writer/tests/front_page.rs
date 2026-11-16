@@ -27,8 +27,8 @@ fn build_with_template(
     };
     let empty =
         InputTreeBuilder::listed("in".into(), IgnoreRules::default(), Revision::default()).build();
-    let listed_versions = site_writer.check(&settings)?;
-    let tree = Converter.convert(&empty, None, &settings, &listed_versions);
+    let built_versions = site_writer.check(&settings)?;
+    let tree = Converter.convert(&empty, None, &settings, &built_versions);
     let (_, rendered) = site_writer.write(&settings, tree, None)?;
     Ok(rendered)
 }

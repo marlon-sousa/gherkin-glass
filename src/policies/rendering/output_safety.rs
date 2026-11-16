@@ -71,7 +71,7 @@ pub(crate) fn output_safety(
 fn lists_only_inside(record: &Record) -> bool {
     match record {
         Record::Site(files) => files.iter().all(is_inside),
-        Record::Versions { page, versions, .. } => page
+        Record::Versions { page, versions } => page
             .iter()
             .chain(versions.values().flatten())
             .all(is_inside),
@@ -91,14 +91,9 @@ fn is_plain_name(name: &str) -> bool {
 /// whatever a system reads as a separator.
 fn found_only(record: Record, files: &BTreeSet<FilePath>) -> Record {
     match record {
-        Record::Versions {
-            page,
-            versions,
-            previews,
-        } => Record::Versions {
+        Record::Versions { page, versions } => Record::Versions {
             page: page.intersection(files).cloned().collect(),
             versions,
-            previews,
         },
         site => site,
     }
@@ -121,7 +116,7 @@ fn written(record: &Record) -> BTreeSet<FilePath> {
             .cloned()
             .chain([Record::SITE_MARKER.to_string()])
             .collect(),
-        Record::Versions { page, versions, .. } => page
+        Record::Versions { page, versions } => page
             .iter()
             .cloned()
             .chain([Record::VERSIONS_MARKER.to_string()])

@@ -119,7 +119,7 @@ ghg serve [options]
 | `--version-name <name>` | `build` and `serve` | Builds the site as that version, instead of the configuration's `version_name`. |
 | `--front-page <file>` | `build` and `serve` | The Markdown file of the site's front page, instead of the configuration's `front_page`. |
 | `--only <file>` | `build` and `serve` | Builds the site from the feature files listed in that file, one path on each line, alone, as "A site of only some feature files" below describes. `--only -` reads the list from standard input. |
-| `--preview` | `build` and `serve` | Builds the version `--version-name` names as a preview, which the versions page does not list and search engines are asked not to index, as "Versions" below describes. It needs `--version-name`. |
+| `--preview` | `build` and `serve` | Builds a preview: the site without versions, whatever the configuration's `version_name` says, every page of which asks search engines not to index it, as "A site of only some feature files" below describes. It cannot be given with `--version-name`. |
 | `--host <address>` | `serve` | Listens on that address instead of `127.0.0.1`, such as `0.0.0.0` to be reached from other machines. |
 | `--port <number>` | `serve` | Listens at that port instead of 8000. `0` lets the system choose a free one. |
 | `--no-build` | `serve` | Serves the output folder as it is, without building it. It cannot be given with `--watch` or `--only`. |
@@ -150,11 +150,9 @@ So keep the output folder for the site alone, and put anything you want served b
 
 ### Versions
 
-One site can hold several versions of the same suite, so that readers read the version they use. Give each build a version name, with `--version-name` or `version_name`, such as `v1.2.0` or `main`. A version name is one folder name, of the letters `a` to `z` and `A` to `Z`, digits, `.`, `-`, `_` and `+`. A name such as `1.2.0` or `v1.2.0` is a release, one such as `2.0.0-rc.1` a pre-release, and any other, such as `main`, a development version. Each version is written into a folder of its own in the output folder, such as `site/v1.2.0/`, and the output folder's `index.html` lists every version but the previews: development versions, releases newest first, and pre-releases, listed collapsed.
+One site can hold several versions of the same suite, so that readers read the version they use. Give each build a version name, with `--version-name` or `version_name`, such as `v1.2.0` or `main`. A version name is one folder name, of the letters `a` to `z` and `A` to `Z`, digits, `.`, `-`, `_` and `+`. A name such as `1.2.0` or `v1.2.0` is a release, one such as `2.0.0-rc.1` a pre-release, and any other, such as `main`, a development version. Each version is written into a folder of its own in the output folder, such as `site/v1.2.0/`, and the output folder's `index.html` lists every version: development versions, releases newest first, and pre-releases, listed collapsed.
 
 ghg does not read git. To build several versions, check each one out into a folder of its own and run ghg once for each, into the same output folder. Building a version again replaces it, unless `replace_existing_version` is `false`.
-
-A version built with `--preview` as well as `--version-name` is a preview, such as the site of a pull request for its reviewers. It is written into its own folder as any version is, and reached through its link, but `index.html` does not list it, and every page of it asks search engines not to index it. Building the same version again without `--preview` lists it. With `ghg serve --watch`, which builds in memory, `--preview` changes nothing, as `--version-name` changes nothing.
 
 ### A site of only some feature files
 
@@ -166,13 +164,13 @@ git diff --name-only origin/main...HEAD | ghg build --only -
 
 Every path in the list that is not a feature file ghg would read is passed over quietly: a removed file, a file that is not a feature file, or a path outside the input folder, so the list needs no filter. A list that names no path at all, such as an empty one, stops the build; one whose paths are none of them feature files builds a home page that says so. The site's folder pages, folder tree, tags, step sentences and search hold only the listed features, and every page says that the site shows only the feature files given with `--only`. git quotes paths with characters outside ASCII; `git -c core.quotePath=false diff --name-only` prints them as they are. With `ghg serve --watch`, a list given as a file is read again whenever it changes.
 
-To publish such a site beside your released versions, for the reviewers of a pull request, build it as a version and add `--preview`:
+To publish such a site for the reviewers of a pull request, build it as a preview, into a folder of its own:
 
 ```sh
-git diff --name-only origin/main...HEAD | ghg build --only - --version-name pr-131 --preview
+git diff --name-only origin/main...HEAD | ghg build --only - --preview --output previews/pr-131
 ```
 
-The preview is written into `site/pr-131/`, and the versions page does not list it, as "Versions" above describes.
+A preview is an ordinary site without versions, even when `ghg.toml` names a version, and every page of it asks search engines not to index it. Nothing links to it: readers reach it through its link, wherever you deploy the folder, such as `previews/pr-131/` on your site's branch.
 
 ### The front page
 

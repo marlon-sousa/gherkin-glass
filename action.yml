@@ -49,7 +49,7 @@ inputs:
     required: false
     default: ""
   preview:
-    description: true to give ghg build the --preview option, building the version version-name names as a preview, which the versions page does not list. Left out when false or empty.
+    description: true to give ghg build the --preview option, building a site without versions whose every page asks search engines not to index it. Left out when false or empty.
     required: false
     default: ""
 

@@ -58,7 +58,7 @@ fn refused(output: &Path, target: &BuildTarget) -> OutputErrorKind {
 #[test]
 fn a_folder_holding_only_what_ghg_wrote_is_safe_and_its_versions_read() {
     let record = check(&fixture().join("output"), &version("v1.0.0"), REPLACE).expect("safe");
-    let Some(Record::Versions { page, versions, .. }) = record else {
+    let Some(Record::Versions { page, versions }) = record else {
         panic!("{record:?}");
     };
     assert_eq!(page.into_iter().collect::<Vec<_>>(), ["index.html"]);

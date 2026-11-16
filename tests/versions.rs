@@ -9,13 +9,9 @@ use std::fs::{copy, create_dir_all, read, read_dir, read_to_string, remove_dir_a
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-#[path = "support/site_files.rs"]
-#[expect(dead_code, reason = "these tests compare pages, not whole sites")]
-mod site_files;
 #[path = "support/version_placeholder.rs"]
 mod version_placeholder;
 
-use site_files::files;
 use version_placeholder::with_version_placeholder;
 
 fn fixture() -> PathBuf {
@@ -272,111 +268,4 @@ fn an_output_folder_holding_a_site_without_versions_stops_a_versioned_build() {
         )
     );
     assert!(!output.join("main").exists());
-}
-
-// A preview: rules 211 to 213.
-
-#[test]
-fn preview_needs_a_version_name() {
-    let output = Command::new(env!("CARGO_BIN_EXE_ghg"))
-        .args(["build", "--preview"])
-        .current_dir(fixture().join("suite"))
-        .output()
-        .expect("the command runs");
-    assert_eq!(output.status.code(), Some(2));
-    assert_eq!(
-        String::from_utf8(output.stderr).expect("UTF-8"),
-        "The option --preview needs --version-name.\n"
-    );
-}
-
-/// The HTML pages below `folder`, by their paths in it.
-fn pages(folder: &Path) -> Vec<(String, String)> {
-    files(folder)
-        .into_iter()
-        .filter(|(name, _)| name.ends_with(".html"))
-        .map(as_text)
-        .collect()
-}
-
-fn as_text((name, bytes): (String, Vec<u8>)) -> (String, String) {
-    (name, String::from_utf8_lossy(&bytes).into_owned())
-}
-
-/// The robots element of rule 212, right after the page's title.
-const NOINDEX: &str = "</title>\n<meta name=\"robots\" content=\"noindex\">";
-
-#[test]
-fn a_preview_is_not_listed_and_every_page_of_it_asks_not_to_be_indexed() {
-    let output = output_copy("preview");
-    let (report, status) = ghg("suite", &output, &["--version-name", "pr-1", "--preview"]);
-    assert_eq!((report.as_str(), status), ("", 0));
-    // The versions page is the one rule 126 writes for the versions already
-    // listed, with nothing of the preview.
-    let page = read(output.join("index.html")).expect("read");
-    let expected = read_to_string(fixture().join("expected/index.html")).expect("read");
-    assert_eq!(
-        String::from_utf8(with_version_placeholder(page, env!("CARGO_PKG_VERSION"))),
-        Ok(expected)
-    );
-    let previewed = pages(&output.join("pr-1"));
-    assert!(previewed.len() > 3, "{previewed:?}");
-    for (path, text) in previewed {
-        assert!(text.contains(NOINDEX), "{path}");
-    }
-    for (path, text) in pages(&output.join("main")) {
-        assert!(!text.contains("noindex"), "{path}");
-    }
-    let marker = read_to_string(output.join("ghg-versions.json")).expect("read");
-    assert!(
-        marker.contains("\"previews\": [\n    \"pr-1\"\n  ]"),
-        "{marker}"
-    );
-}
-
-#[test]
-fn a_preview_built_again_without_preview_is_listed_and_indexed() {
-    let output = output_copy("preview-then-listed");
-    let (report, status) = ghg("suite", &output, &["--version-name", "pr-1", "--preview"]);
-    assert_eq!((report.as_str(), status), ("", 0));
-    let (report, status) = ghg("suite", &output, &["--version-name", "pr-1"]);
-    assert_eq!((report.as_str(), status), ("", 0));
-    let page = read_to_string(output.join("index.html")).expect("read");
-    assert!(page.contains("href=\"pr-1/index.html\""), "{page}");
-    for (path, text) in pages(&output.join("pr-1")) {
-        assert!(!text.contains("noindex"), "{path}");
-    }
-    let marker = read_to_string(output.join("ghg-versions.json")).expect("read");
-    assert!(!marker.contains("previews"), "{marker}");
-}
-
-#[test]
-fn a_listed_version_built_again_as_a_preview_leaves_the_versions_page() {
-    let output = output_copy("listed-then-preview");
-    let (report, status) = ghg("suite", &output, &["--version-name", "v1.0.0", "--preview"]);
-    assert_eq!((report.as_str(), status), ("", 0));
-    let page = read_to_string(output.join("index.html")).expect("read");
-    assert!(!page.contains("v1.0.0/index.html"), "{page}");
-    assert!(page.contains("main/index.html"), "{page}");
-    // A version built later keeps it out.
-    let (report, status) = ghg("suite", &output, &["--version-name", "v1.1.0"]);
-    assert_eq!((report.as_str(), status), ("", 0));
-    let page = read_to_string(output.join("index.html")).expect("read");
-    assert!(!page.contains("v1.0.0/index.html"), "{page}");
-    assert!(page.contains("v1.1.0/index.html"), "{page}");
-}
-
-// Rule 212: when every version is a preview, the versions page lists none.
-#[test]
-fn a_versions_page_of_previews_alone_lists_no_version() {
-    let output = Path::new(env!("CARGO_TARGET_TMPDIR"))
-        .join("versions")
-        .join("previews-alone");
-    let _ = remove_dir_all(&output);
-    let (report, status) = ghg("suite", &output, &["--version-name", "pr-1", "--preview"]);
-    assert_eq!((report.as_str(), status), ("", 0));
-    let page = read_to_string(output.join("index.html")).expect("read");
-    assert!(page.contains("<h1"), "{page}");
-    assert!(!page.contains("<h2"), "{page}");
-    assert!(!page.contains("pr-1/index.html"), "{page}");
 }

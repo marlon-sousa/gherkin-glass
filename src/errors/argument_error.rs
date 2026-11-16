@@ -32,8 +32,8 @@ pub(crate) enum ArgumentError {
     WatchWithoutBuild,
     #[error(fmt = Self::only_without_build)]
     OnlyWithoutBuild,
-    #[error(fmt = Self::preview_without_version_name)]
-    PreviewWithoutVersionName,
+    #[error(fmt = Self::preview_with_version_name)]
+    PreviewWithVersionName,
     #[error(fmt = invalid_version_name)]
     InvalidVersionName { name: String },
 }
@@ -89,7 +89,7 @@ impl ArgumentError {
         f.write_str(&fl!(CATALOGUE, "only-without-build"))
     }
 
-    fn preview_without_version_name(f: &mut Formatter<'_>) -> FmtResult {
-        f.write_str(&fl!(CATALOGUE, "preview-without-version-name"))
+    fn preview_with_version_name(f: &mut Formatter<'_>) -> FmtResult {
+        f.write_str(&fl!(CATALOGUE, "preview-with-version-name"))
     }
 }

@@ -1,0 +1,3 @@
+# The site of ghg.toml, with a version name, which a build with --preview does not read.
+title = "Changed features"
+version_name = "main"

@@ -3,7 +3,7 @@
 use askama::Template;
 
 use super::node_rendering::{Render, rendered};
-use crate::entities::VersionListing;
+use crate::entities::SearchIndexing;
 
 /// The head of one page.
 pub(super) struct PageHead<'a> {
@@ -11,8 +11,8 @@ pub(super) struct PageHead<'a> {
     pub(super) root: &'a str,
     /// Already rendered from the site's accents.
     pub(super) stylesheet: &'a str,
-    /// Whether the page is a preview's, which search engines are asked not to index.
-    pub(super) listing: VersionListing,
+    /// Whether the page lets search engines index it.
+    pub(super) indexing: SearchIndexing,
 }
 
 #[derive(Template)]
@@ -27,9 +27,9 @@ impl Render for PageHead<'_> {
     fn render(&self) -> String {
         rendered(&HeadTemplate {
             head: self,
-            robots: match self.listing {
-                VersionListing::Preview => Some("noindex"),
-                VersionListing::Listed => None,
+            robots: match self.indexing {
+                SearchIndexing::Refused => Some("noindex"),
+                SearchIndexing::Allowed => None,
             },
         })
     }

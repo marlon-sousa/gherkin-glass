@@ -1,6 +1,6 @@
 //! Entity: what every page has around its content, a feature's or a folder's: the dialog opened when it is opened from disk, the skip link, the folder tree's checkbox and the tree's landmark, the Theme control, the search box, the words every breadcrumb has, the footer, and the themes' colours.
 
-use crate::entities::{Accents, BreadcrumbWords, SearchWords, VersionListing};
+use crate::entities::{Accents, BreadcrumbWords, SearchIndexing, SearchWords};
 
 /// The words of the dialog a page opens when it is opened from disk.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -40,7 +40,6 @@ pub(crate) struct PageFrame {
     pub(crate) footer: FooterWords,
     /// The note that the site shows only the feature files `--only` lists; `None` without it.
     pub(crate) only_note: Option<String>,
-    /// Whether the version's pages are those of a preview, which search engines are asked not
-    /// to index.
-    pub(crate) listing: VersionListing,
+    /// Whether the pages let search engines index them.
+    pub(crate) indexing: SearchIndexing,
 }

@@ -9,7 +9,7 @@ use rstest::rstest;
 
 use super::*;
 use crate::entities::{
-    BuildOptions, PathList, ServeMode, ServeOptions, VersionListing, VersionName,
+    BuildOptions, PathList, SearchIndexing, ServeMode, ServeOptions, VersionName,
 };
 
 fn parse(arguments: &[&str]) -> Result<Invocation, ArgumentError> {
@@ -112,9 +112,9 @@ fn serve_takes_every_option_of_build() {
     ..BuildOptions::default()
 })]
 // Rule 211.
-#[case::a_preview(&["build", "--preview", "--version-name", "pr-131"], BuildOptions {
-    version_name: VersionName::new("pr-131"),
-    listing: VersionListing::Preview,
+#[case::a_preview(&["build", "--preview", "--output", "previews/pr-131"], BuildOptions {
+    output: Some(PathBuf::from("previews/pr-131")),
+    indexing: SearchIndexing::Refused,
     ..BuildOptions::default()
 })]
 fn build_takes_its_options_in_either_spelling_and_order(

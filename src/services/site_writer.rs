@@ -1,6 +1,6 @@
 //! Service: the site writer, reading the front page's template, rendering the site tree, keeping from the last site the file of every node that has not changed, and writing its files into its output folder, with or without versions, once the folder is safe, or into memory.
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use std::io::Error as IoError;
 use std::path::Path;
 use std::sync::Arc;
@@ -16,9 +16,8 @@ use crate::ports::{FileReader, FileWriter, OutputFolders};
 /// What the controller asks of the site writer.
 pub(crate) trait SiteWriterApi: Send + Sync {
     /// Checks, before the input is read, that the site may be built into the
-    /// output folder, and returns the versions it already holds that its
-    /// versions page lists, every one but the previews, none when it holds a
-    /// site without versions; a site built in memory needs no
+    /// output folder, and returns the versions it already holds, none when
+    /// it holds a site without versions; a site built in memory needs no
     /// check and has no versions.
     fn check(&self, settings: &Settings) -> Result<BTreeSet<VersionName>, OutputError>;
 
@@ -98,12 +97,10 @@ impl SiteWriter {
             }
             BuildTarget::Version(name) => {
                 self.clear_version(&folder, name)?;
-                let record = Record::with_version(
-                    folder.record(),
-                    paths(&site.root_files),
-                    (name, written),
-                    settings.pages.listing,
-                );
+                let record = Record::Versions {
+                    page: paths(&site.root_files),
+                    versions: versions(&folder, name, &written),
+                };
                 self.mark(&folder, &record)?;
                 write_files(
                     self.folder_files.as_ref(),
@@ -173,10 +170,7 @@ impl SiteWriterApi for SiteWriter {
             replace: settings.replace,
         };
         let folder = self.check_folder(&settings.output, &target(settings), moment)?;
-        Ok(folder
-            .record()
-            .map(Record::listed_versions)
-            .unwrap_or_default())
+        Ok(built_versions(&folder))
     }
 
     fn write(
@@ -215,6 +209,31 @@ fn write_file(writer: &dyn FileWriter, output: &Path, file: &SiteFile) -> Result
     writer
         .write(output, file.address.as_str(), &file.contents)
         .map_err(|io| file_not_written(output, file, &io))
+}
+
+/// The versions the output folder holds, as its marker records them.
+fn built_versions(folder: &BuildFolder) -> BTreeSet<VersionName> {
+    recorded_versions(folder).into_keys().collect()
+}
+
+/// Each version the output folder's marker records, with its files.
+fn recorded_versions(folder: &BuildFolder) -> BTreeMap<VersionName, BTreeSet<FilePath>> {
+    match folder.record() {
+        Some(Record::Versions { versions, .. }) => versions.clone(),
+        _ => BTreeMap::new(),
+    }
+}
+
+/// The versions the output folder holds once the version `name`, with
+/// `files`, is written into it.
+fn versions(
+    folder: &BuildFolder,
+    name: &VersionName,
+    files: &BTreeSet<FilePath>,
+) -> BTreeMap<VersionName, BTreeSet<FilePath>> {
+    let mut versions = recorded_versions(folder);
+    versions.insert(name.clone(), files.clone());
+    versions
 }
 
 /// The path of each of `files`.

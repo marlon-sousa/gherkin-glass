@@ -606,29 +606,22 @@ fn each_option_input_is_passed_to_ghg_build() {
 
 // Rule 175: a flag is passed when its input is true, and left out when it is false.
 #[rstest]
-#[case::true_("true", false)]
-#[case::false_("false", true)]
+#[case::true_("true", true)]
+#[case::false_("false", false)]
 fn a_flag_input_is_passed_to_ghg_build_when_it_is_true(
     #[case] preview: &str,
-    #[case] listed: bool,
+    #[case] refused: bool,
 ) {
-    let (output, workspace) = build(&[
-        ("GHG_OPTION_VERSION_NAME", "pr-1"),
-        ("GHG_OPTION_PREVIEW", preview),
-    ]);
+    let (output, workspace) = build(&[("GHG_OPTION_PREVIEW", preview)]);
     built(&output);
-    assert!(workspace.join("site/pr-1/read.html").is_file());
-    let versions = fs::read_to_string(workspace.join("site/index.html")).unwrap();
-    assert_eq!(versions.contains("pr-1/index.html"), listed, "{versions}");
+    let page = fs::read_to_string(workspace.join("site/read.html")).unwrap();
+    assert_eq!(page.contains("noindex"), refused, "{page}");
 }
 
 // Rule 175.
 #[test]
 fn a_flag_input_is_true_or_false() {
-    let (output, workspace) = build(&[
-        ("GHG_OPTION_VERSION_NAME", "pr-1"),
-        ("GHG_OPTION_PREVIEW", "yes"),
-    ]);
+    let (output, workspace) = build(&[("GHG_OPTION_PREVIEW", "yes")]);
     assert_eq!(output.status.code(), Some(1));
     assert_eq!(text(&output.stderr), "preview must be true or false.\n");
     assert!(!workspace.join("site").exists());

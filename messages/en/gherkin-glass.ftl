@@ -20,7 +20,7 @@ help =
       --version-name <name>: builds the site as the version of that name, instead of the configuration's version_name.
       --front-page <file>: the Markdown template of the site's front page, instead of the configuration's front_page.
       --only <file>: builds the site from the feature files the file lists, one path on each line, alone. --only - reads the list from standard input.
-      --preview: builds the version --version-name names as a preview, which the versions page does not list and search engines are asked not to index.
+      --preview: builds a preview, a site without versions whose every page asks search engines not to index it.
 
     Options of ghg serve only:
       --host <address>: the address to listen on, instead of 127.0.0.1.
@@ -46,7 +46,7 @@ unexpected-argument = { $command } takes no argument { $argument }.
 not-a-port = The option --port needs a whole number from 0 to 65535, not { $value }.
 watch-without-build = The options --watch and --no-build cannot be used together.
 only-without-build = The options --only and --no-build cannot be used together.
-preview-without-version-name = The option --preview needs --version-name.
+preview-with-version-name = The option --preview builds a site without versions, so it cannot be given with --version-name.
 
 ## One line of the report of what stops a build: the path, the line when
 ## there is one, and what is wrong.

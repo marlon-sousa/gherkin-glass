@@ -3,8 +3,8 @@
 use std::path::{Path, PathBuf};
 
 use crate::entities::{
-    Accents, BuildOptions, Config, Destination, PageOptions, Settings, SiteScope, Unnamed,
-    VersionListing,
+    Accents, BuildOptions, Config, Destination, PageOptions, SearchIndexing, Settings, SiteScope,
+    Unnamed,
 };
 
 /// The input folder when neither the command line nor the file names one,
@@ -40,14 +40,13 @@ pub(crate) fn resolve_settings(
         Some(_) => SiteScope::OnlyListed,
         None => SiteScope::EveryFeature,
     };
-    let version = options
-        .version_name
-        .clone()
-        .or_else(|| config.version_name.clone());
-    // Only a version written into a folder can be a preview.
-    let listing = match (destination, &version) {
-        (Destination::Folder, Some(_)) => options.listing,
-        (Destination::Folder, None) | (Destination::Memory, _) => VersionListing::Listed,
+    // A preview is a site without versions, whatever the configuration names.
+    let version = match options.indexing {
+        SearchIndexing::Allowed => options
+            .version_name
+            .clone()
+            .or_else(|| config.version_name.clone()),
+        SearchIndexing::Refused => None,
     };
     Settings {
         input,
@@ -74,7 +73,7 @@ pub(crate) fn resolve_settings(
                 dark: config.accent_dark.unwrap_or(Accents::DEFAULT.dark),
             },
             scope,
-            listing,
+            indexing: options.indexing,
         },
     }
 }
@@ -284,23 +283,22 @@ mod tests {
         );
     }
 
-    // Rules 211 and 213: a preview is a version built into a folder, and changes nothing in
-    // memory.
+    // Rule 211: a preview is built without versions, whatever the configuration names, and its
+    // pages ask not to be indexed, built in memory too.
     #[rstest]
-    #[case::into_a_folder(Destination::Folder, Some("pr-1"), VersionListing::Preview)]
-    #[case::in_memory(Destination::Memory, Some("pr-1"), VersionListing::Listed)]
-    #[case::without_a_version(Destination::Folder, None, VersionListing::Listed)]
-    fn a_preview_is_built_only_as_a_version_into_a_folder(
-        #[case] destination: Destination,
-        #[case] version: Option<&str>,
-        #[case] listing: VersionListing,
-    ) {
+    #[case::into_a_folder(Destination::Folder)]
+    #[case::in_memory(Destination::Memory)]
+    fn a_preview_is_a_site_without_versions(#[case] destination: Destination) {
         let options = BuildOptions {
-            version_name: version.and_then(VersionName::new),
-            listing: VersionListing::Preview,
+            indexing: SearchIndexing::Refused,
             ..BuildOptions::default()
         };
-        let settings = resolve_settings(&options, Path::new(""), &Config::default(), destination);
-        assert_eq!(settings.pages.listing, listing);
+        let config = Config {
+            version_name: VersionName::new("main"),
+            ..Config::default()
+        };
+        let settings = resolve_settings(&options, Path::new(""), &config, destination);
+        assert_eq!(settings.version, None);
+        assert_eq!(settings.pages.indexing, SearchIndexing::Refused);
     }
 }

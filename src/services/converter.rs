@@ -10,14 +10,14 @@ pub(crate) trait ConverterApi: Send + Sync {
     /// The tree of the site, from the features of `input_tree` parsed without an error, each
     /// feature's page in its folder, copied from `last`, the last site tree, when its file is
     /// unchanged and it links to the same tag pages, with the version the settings name when the
-    /// site is built into a folder, beside `listed_versions`, those the output folder already
-    /// holds and lists.
+    /// site is built into a folder, beside `built_versions`, those the output folder already
+    /// holds.
     fn convert(
         &self,
         input_tree: &InputTree,
         last: Option<&SiteTree>,
         settings: &Settings,
-        listed_versions: &BTreeSet<VersionName>,
+        built_versions: &BTreeSet<VersionName>,
     ) -> SiteTree;
 }
 
@@ -30,7 +30,7 @@ impl ConverterApi for Converter {
         input_tree: &InputTree,
         last: Option<&SiteTree>,
         settings: &Settings,
-        listed_versions: &BTreeSet<VersionName>,
+        built_versions: &BTreeSet<VersionName>,
     ) -> SiteTree {
         let features: Vec<_> = input_tree.features().collect();
         site_tree(
@@ -38,7 +38,7 @@ impl ConverterApi for Converter {
             last,
             &settings.pages,
             built_version(settings),
-            listed_versions,
+            built_versions,
         )
     }
 }

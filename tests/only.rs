@@ -1,5 +1,6 @@
 //! A site of only the feature files a list names, checked by building `tests/fixtures/only`
-//! with `--only` and comparing what is written with the sites committed beside it.
+//! with `--only`, and as a preview with `--preview`, and comparing what is written with the sites
+//! committed beside it.
 
 #![expect(
     clippy::expect_used,
@@ -18,7 +19,7 @@ mod site_files;
 #[path = "support/version_placeholder.rs"]
 mod version_placeholder;
 
-use site_files::assert_same_site;
+use site_files::{assert_same_site, files};
 
 fn fixture() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/only")
@@ -173,4 +174,68 @@ fn a_version_of_only_the_listed_files_is_listed_as_any_other_and_says_what_it_sh
     assert!(!versions.contains("given with --only"), "{versions}");
     let page = read_to_string(written.join("pr-131/welcome.html")).expect("a page");
     assert!(page.contains("given with --only"), "{page}");
+}
+
+/// The robots element of rule 211, right after the page's title.
+const NOINDEX: &str = "</title>\n<meta name=\"robots\" content=\"noindex\">";
+
+/// `page`, an HTML page, without the robots element of rule 211.
+fn indexed(page: &str) -> String {
+    page.replace(NOINDEX, "</title>")
+}
+
+// Rules 211 and 213: a preview is the site without versions the build would make, whatever
+// version the configuration names, every page of it asking not to be indexed, and nothing else
+// changed.
+#[test]
+fn a_preview_is_the_site_without_versions_every_page_asking_not_to_be_indexed() {
+    let (written, run) = build(
+        &[
+            "--config",
+            "versioned.toml",
+            "--only",
+            "changed.txt",
+            "--preview",
+        ],
+        "",
+        "preview",
+    );
+    assert_eq!(text(&run.stderr), "");
+    assert_eq!(run.status.code(), Some(0));
+    let expected = files(&fixture().join("expected"));
+    let preview = files(&written);
+    assert_eq!(
+        preview.keys().collect::<Vec<_>>(),
+        expected.keys().collect::<Vec<_>>(),
+        "the files written"
+    );
+    for (name, contents) in &preview {
+        let page = text(contents);
+        if name.ends_with(".html") {
+            assert!(page.contains(NOINDEX), "{name}");
+        }
+        assert_eq!(indexed(&page), text(&expected[name]), "{name}");
+    }
+}
+
+// Rule 212.
+#[test]
+fn a_preview_with_a_version_name_is_a_mistake_on_the_command_line() {
+    let (written, run) = build(
+        &[
+            "--only",
+            "changed.txt",
+            "--preview",
+            "--version-name",
+            "pr-131",
+        ],
+        "",
+        "preview-versioned",
+    );
+    assert_eq!(
+        text(&run.stderr),
+        "The option --preview builds a site without versions, so it cannot be given with --version-name.\n"
+    );
+    assert_eq!(run.status.code(), Some(2));
+    assert!(!written.exists());
 }

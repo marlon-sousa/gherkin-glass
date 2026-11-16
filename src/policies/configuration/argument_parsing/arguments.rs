@@ -7,7 +7,7 @@ use clap::builder::{OsStringValueParser, TypedValueParser};
 use clap::{ArgAction, Args, Parser, Subcommand};
 
 use crate::entities::{
-    BuildOptions, Invocation, PathList, ServeMode, ServeOptions, VersionListing, VersionName,
+    BuildOptions, Invocation, PathList, SearchIndexing, ServeMode, ServeOptions, VersionName,
 };
 use crate::errors::ArgumentError;
 
@@ -98,10 +98,10 @@ impl BuildArguments {
                 argument: argument.to_string_lossy().into_owned(),
             });
         }
-        let listing = match (self.preview, &self.version_name) {
-            (true, None) => return Err(ArgumentError::PreviewWithoutVersionName),
-            (true, Some(_)) => VersionListing::Preview,
-            (false, _) => VersionListing::Listed,
+        let indexing = match (self.preview, &self.version_name) {
+            (true, Some(_)) => return Err(ArgumentError::PreviewWithVersionName),
+            (true, None) => SearchIndexing::Refused,
+            (false, _) => SearchIndexing::Allowed,
         };
         Ok(BuildOptions {
             config: self.config,
@@ -111,7 +111,7 @@ impl BuildArguments {
             title: self.title,
             front_page: self.front_page,
             only: self.only,
-            listing,
+            indexing,
         })
     }
 }
