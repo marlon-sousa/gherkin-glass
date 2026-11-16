@@ -4,7 +4,7 @@ use crate::entities::{Accents, SearchIndexing, SiteScope, TagLink};
 
 /// The defaults are the configuration's: the catalogue's title, no source
 /// link, every block expanded, the folder tree shown, backgrounds shown
-/// inside each scenario, no tag linked to another site, the default accents, every feature file shown, and the version listed.
+/// inside each scenario, no tag linked to another site, the default accents, every feature file shown, and the pages open to search engines.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct PageOptions {
     /// The site's title; `None` for the catalogue's default.

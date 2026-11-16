@@ -1,4 +1,4 @@
-//! Entity: how a build is run, what the command line asks for, what a configuration file sets, and the settings resolved from them, among them where a build writes, where `--only` reads its list of feature files from, whether a version is a preview, the theme and the accent colours.
+//! Entity: how a build is run, what the command line asks for, what a configuration file sets, and the settings resolved from them, among them where a build writes, where `--only` reads its list of feature files from, whether the site is a preview, whose pages ask not to be indexed, the theme and the accent colours.
 
 mod colour;
 mod config;
