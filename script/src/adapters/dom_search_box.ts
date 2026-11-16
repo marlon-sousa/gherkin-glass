@@ -155,6 +155,10 @@ export class DomSearchBox implements SearchBox {
     this.link.setAttribute("href", this.root() + link.address);
   }
 
+  fieldText(): string {
+    return this.field.value;
+  }
+
   clear(): void {
     this.field.value = "";
   }

@@ -8,7 +8,9 @@ import { test } from "node:test";
 
 import { Window } from "happy-dom";
 
+import { DomSearchBox } from "../../src/adapters/dom_search_box.ts";
 import { DomSearchPage } from "../../src/adapters/dom_search_page.ts";
+import { startSearching } from "../../src/services/searching.ts";
 import { startListing } from "../../src/services/results_listing.ts";
 import type { SearchDocument } from "../../src/ports/documents.ts";
 
@@ -23,7 +25,9 @@ async function open(query: string) {
   assert.ok(page);
   await startListing(page, { load: () => Promise.resolve(found) });
   return {
+    window,
     document,
+    found,
     heading: document.querySelector("h1") as HTMLElement,
     field: document.querySelector(".ghg-search-field") as HTMLInputElement,
     status: document.querySelector(".ghg-results-status") as HTMLElement,
@@ -69,4 +73,19 @@ test("each feature is a heading linking its page, over a list of its results, th
   }
   const count = page.groups.querySelectorAll(".ghg-search-group > li").length;
   assert.equal(page.status.textContent, `Results: ${count}. Features: ${headings.length}.`);
+});
+
+test("the search box, started after the page fills its field, links to and goes to the same words", async () => {
+  const page = await open("?q=refund");
+  const box = DomSearchBox.find(page.document);
+  assert.ok(box);
+  const went: string[] = [];
+  Object.defineProperty(page.window.location, "assign", { value: (address: string) => went.push(address) });
+  startSearching(box, { load: () => Promise.resolve(page.found) }, { after: () => {}, cancel: () => {} });
+  const link = page.document.querySelector(".ghg-search-all") as HTMLAnchorElement;
+  assert.equal(link.hidden, false);
+  assert.equal(link.textContent, 'All results for "refund"');
+  assert.equal(page.field.getAttribute("aria-expanded"), "false");
+  page.field.dispatchEvent(new page.window.KeyboardEvent("keydown", { key: "Enter", cancelable: true }) as unknown as Event);
+  assert.deepEqual(went, ["search.html?q=refund"]);
 });

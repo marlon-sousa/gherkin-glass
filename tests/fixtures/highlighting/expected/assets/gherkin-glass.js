@@ -324,6 +324,9 @@ var DomSearchBox = class _DomSearchBox {
     this.link.replaceChildren(...this.pieces(link.label));
     this.link.setAttribute("href", this.root() + link.address);
   }
+  fieldText() {
+    return this.field.value;
+  }
   clear() {
     this.field.value = "";
   }
@@ -3204,7 +3207,7 @@ function startSearching(box, documents, timer) {
   const words = box.words();
   let index = null;
   let loading = null;
-  let text = "";
+  let text = box.fieldText();
   let started = false;
   let results = [];
   let chosen = null;
@@ -3293,6 +3296,7 @@ function startSearching(box, documents, timer) {
     chosen = moved(chosen, results.length, step);
     box.choose(chosen);
   };
+  box.showAllResults(allResults(words, text));
   box.onDown(() => move(1));
   box.onUp(() => move(-1));
   box.onEnter(() => {
@@ -3372,11 +3376,11 @@ void startFolderTree(
   { sitePath, page }
 );
 var searchDocuments = new FetchedDocuments(new URL("search.json", import.meta.url));
-var searchBox = DomSearchBox.find(document);
-if (searchBox !== null) {
-  startSearching(searchBox, searchDocuments, new WindowTimer());
-}
 var searchPage = DomSearchPage.find(document);
 if (searchPage !== null) {
   void startListing(searchPage, searchDocuments);
+}
+var searchBox = DomSearchBox.find(document);
+if (searchBox !== null) {
+  startSearching(searchBox, searchDocuments, new WindowTimer());
 }

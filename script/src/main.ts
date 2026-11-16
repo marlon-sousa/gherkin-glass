@@ -49,11 +49,13 @@ void startFolderTree(
   { sitePath, page },
 );
 const searchDocuments = new FetchedDocuments(new URL("search.json", import.meta.url));
-const searchBox = DomSearchBox.find(document);
-if (searchBox !== null) {
-  startSearching(searchBox, searchDocuments, new WindowTimer());
-}
+// The page of search results fills the search box's field before its first wait, so the box,
+// started after it, begins with those words.
 const searchPage = DomSearchPage.find(document);
 if (searchPage !== null) {
   void startListing(searchPage, searchDocuments);
+}
+const searchBox = DomSearchBox.find(document);
+if (searchBox !== null) {
+  startSearching(searchBox, searchDocuments, new WindowTimer());
 }

@@ -10,7 +10,8 @@ export function startSearching(box: SearchBox, documents: Documents, timer: Time
   const words = box.words();
   let index: Index | null = null;
   let loading: Promise<Index | null> | null = null;
-  let text = "";
+  // The words the field already holds, so that its link and Enter work before the reader types.
+  let text = box.fieldText();
   let started = false;
   let results: readonly Result[] = [];
   let chosen: number | null = null;
@@ -113,6 +114,7 @@ export function startSearching(box: SearchBox, documents: Documents, timer: Time
     chosen = moved(chosen, results.length, step);
     box.choose(chosen);
   };
+  box.showAllResults(allResults(words, text));
   box.onDown(() => move(1));
   box.onUp(() => move(-1));
   box.onEnter(() => {

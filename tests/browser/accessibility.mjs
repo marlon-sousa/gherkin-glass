@@ -323,6 +323,7 @@ async function searchProblems(page) {
     // Rule 217: the page's field is the same combobox, holding the words.
     const own = page.locator("main form.ghg-search .ghg-search-field");
     if ((await own.inputValue()) !== word) problems.push(`search results for "${word}": the field holds ${JSON.stringify(await own.inputValue())}`);
+    if (!(await page.locator("main .ghg-search-all").isVisible())) problems.push(`search results for "${word}": the link to every result is hidden while the field holds the words`);
     await own.focus();
     await page.keyboard.press("End");
     await page.keyboard.type(` ${word}`);

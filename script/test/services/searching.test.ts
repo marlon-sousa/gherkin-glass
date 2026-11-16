@@ -32,6 +32,9 @@ class FakeBox implements SearchBox {
   words(): SearchWords {
     return this.given;
   }
+  fieldText(): string {
+    return this.field;
+  }
   onInput(handler: (text: string) => void): void {
     this.input = (text) => {
       this.field = text;
@@ -118,8 +121,10 @@ class FakeTimer implements Timer {
 
 const settled = (): Promise<void> => new Promise((resolve) => setTimeout(resolve, 0));
 
-function start(found = documents(), failing = false) {
+/** The service started over a box whose field already holds `filled`. */
+function start(found = documents(), failing = false, filled = "") {
   const box = new FakeBox(pageWords());
+  box.field = filled;
   const source = new FakeDocuments(found, failing);
   const timer = new FakeTimer();
   startSearching(box, source, timer);
@@ -130,6 +135,15 @@ function start(found = documents(), failing = false) {
   };
   return { box, source, timer, type };
 }
+
+test("words already in the field show the link and go with Enter, before the reader types", () => {
+  const { box, source } = start(documents(), false, "limit");
+  assert.equal(source.loads, 0);
+  assert.equal(box.open, false);
+  assert.equal(box.link?.address, "search.html?q=limit");
+  box.enter();
+  assert.equal(box.went, "search.html?q=limit");
+});
 
 test("the documents are fetched with the first letter typed, and only once", async () => {
   const { box, source, type } = start();

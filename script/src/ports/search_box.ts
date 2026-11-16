@@ -37,6 +37,8 @@ export interface Result {
 
 export interface SearchBox {
   words(): SearchWords;
+  /** The words already in the field as the box starts, such as those the page of search results puts there. */
+  fieldText(): string;
   onInput(handler: (text: string) => void): void;
   onDown(handler: () => void): void;
   onUp(handler: () => void): void;
