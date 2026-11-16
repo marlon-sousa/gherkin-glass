@@ -1,11 +1,10 @@
-// Adapter: the search page port over the page of search results src/policies/rendering/search_page.html writes.
+// Adapter: the search page port over the page of search results src/policies/rendering/search_page.html writes, its words on the element that holds the results and its field the search box's.
 
 import type { ListedResult, PageWords, Part, ResultGroup, Run, SearchPage } from "../ports/search_page.ts";
 
 export class DomSearchPage implements SearchPage {
   private readonly document: Document;
   private readonly heading: HTMLElement;
-  private readonly form: HTMLFormElement;
   private readonly field: HTMLInputElement;
   private readonly status: HTMLElement;
   private readonly groups: HTMLElement;
@@ -13,27 +12,25 @@ export class DomSearchPage implements SearchPage {
   /** Null when the page is not the page of search results, or not the whole of one. */
   static find(document: Document): DomSearchPage | null {
     const heading = document.querySelector<HTMLElement>("h1.ghg-search-heading");
-    const form = document.querySelector<HTMLFormElement>("form.ghg-search-page");
-    const field = form?.querySelector<HTMLInputElement>("input.ghg-search-field");
-    const status = document.querySelector<HTMLElement>(".ghg-search-status");
+    const field = document.querySelector<HTMLInputElement>("form.ghg-search input.ghg-search-field");
+    const status = document.querySelector<HTMLElement>(".ghg-results-status");
     const groups = document.querySelector<HTMLElement>(".ghg-search-groups");
-    if (heading && form && field && status && groups) {
-      return new DomSearchPage(document, heading, form, field, status, groups);
+    if (heading && field && status && groups) {
+      return new DomSearchPage(document, heading, field, status, groups);
     }
     return null;
   }
 
-  private constructor(document: Document, heading: HTMLElement, form: HTMLFormElement, field: HTMLInputElement, status: HTMLElement, groups: HTMLElement) {
+  private constructor(document: Document, heading: HTMLElement, field: HTMLInputElement, status: HTMLElement, groups: HTMLElement) {
     this.document = document;
     this.heading = heading;
-    this.form = form;
     this.field = field;
     this.status = status;
     this.groups = groups;
   }
 
   words(): PageWords {
-    const data = this.form.dataset;
+    const data = this.groups.dataset;
     const text = (key: string): string => data[key] ?? "";
     return {
       heading: text("heading"),

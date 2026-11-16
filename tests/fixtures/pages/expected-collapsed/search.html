@@ -84,11 +84,14 @@
 </nav>
 <main id="ghg_main">
 <h1 class="ghg-search-heading">Search results</h1>
-<form class="ghg-search-page" role="search" action="search.html" method="get" data-heading="Results for &#34;{words}&#34;" data-title="Results for &#34;{words}&#34;, Feature files" data-loading="Loading search." data-failed="Search could not be loaded." data-none="No results." data-count="Results: {count}. Features: {features}." data-within="In {blocks}." data-separator=", " data-matching-steps="Matching steps:" data-matching-tags="Matching tags:" data-matching-cells="Matching cells:" data-feature="Feature: {name}" data-unnamed-feature="Feature" data-rule="Rule: {name}" data-unnamed-rule="Rule" data-background="Background: {name}" data-unnamed-background="Background" data-scenario="Scenario: {name}" data-unnamed-scenario="Scenario" data-scenario-outline="Scenario outline: {name}" data-unnamed-scenario-outline="Scenario outline" data-examples="Examples: {name}" data-numbered-examples="Examples {place}">
-<label>Search features, rules and scenarios <input type="search" name="q" class="ghg-search-field" autocomplete="off" spellcheck="false" enterkeyhint="search"></label>
-</form>
+<form class="ghg-search" role="search" data-root="" data-shown="50" data-loading="Loading search." data-failed="Search could not be loaded." data-none="No results." data-count="Results: {count}." data-count-limited="Results: {count}. The first 50 are listed." data-no-name="no name" data-feature="{name}, feature" data-rule="{name}, rule in {feature}" data-scenario="{name}, scenario in {feature}" data-scenario-in-rule="{name}, scenario in {rule}, {feature}" data-scenario-outline="{name}, scenario outline in {feature}" data-scenario-outline-in-rule="{name}, scenario outline in {rule}, {feature}" data-background="{name}, background in {feature}" data-background-in-rule="{name}, background in {rule}, {feature}" data-examples="{name}, examples in {outline}, {feature}" data-examples-in-rule="{name}, examples in {outline}, {rule}, {feature}" data-numbered-examples="Examples {place}" data-all-results="All results for &#34;{words}&#34;">
+<label>Search features, rules and scenarios <input type="search" class="ghg-search-field" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="ghg_search_results" autocomplete="off" spellcheck="false" enterkeyhint="search"></label>
+<a class="ghg-search-all" href="search.html" hidden></a>
 <p class="ghg-search-status" role="status"></p>
-<div class="ghg-search-groups"></div>
+<ol class="ghg-search-results" id="ghg_search_results" role="listbox" aria-label="Search results" hidden></ol>
+</form>
+<p class="ghg-results-status" role="status"></p>
+<div class="ghg-search-groups" data-heading="Results for &#34;{words}&#34;" data-title="Results for &#34;{words}&#34;, Feature files" data-loading="Loading search." data-failed="Search could not be loaded." data-none="No results." data-count="Results: {count}. Features: {features}." data-within="In {blocks}." data-separator=", " data-matching-steps="Matching steps:" data-matching-tags="Matching tags:" data-matching-cells="Matching cells:" data-feature="Feature: {name}" data-unnamed-feature="Feature" data-rule="Rule: {name}" data-unnamed-rule="Rule" data-background="Background: {name}" data-unnamed-background="Background" data-scenario="Scenario: {name}" data-unnamed-scenario="Scenario" data-scenario-outline="Scenario outline: {name}" data-unnamed-scenario-outline="Scenario outline" data-examples="Examples: {name}" data-numbered-examples="Examples {place}"></div>
 </main>
 <footer class="ghg-footer">
 <p>Built with <a href="https://github.com/marlon-sousa/gherkin-glass">gherkin-glass</a> {version}</p>

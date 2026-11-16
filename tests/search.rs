@@ -60,7 +60,7 @@ fn every_page_has_the_search_box_before_its_main() {
 }
 
 #[test]
-fn the_page_of_search_results_is_at_the_root_with_its_own_form_and_no_search_box() {
+fn the_page_of_search_results_is_at_the_root_with_the_search_box_under_its_heading() {
     // Rules 215 to 217.
     let pages = fixture().parent().unwrap().join("pages/expected");
     let html = fs::read_to_string(pages.join("search.html")).unwrap();
@@ -69,24 +69,21 @@ fn the_page_of_search_results_is_at_the_root_with_its_own_form_and_no_search_box
     assert!(
         html.contains("<li><a href=\"search.html\" aria-current=\"page\">Search results</a></li>")
     );
-    assert!(!html.contains("class=\"ghg-search\""));
     assert_eq!(html.matches("role=\"search\"").count(), 1);
     let main = html.find("<main id=\"ghg_main\">").unwrap();
     let heading = html
-        .find("<h1 class=\"ghg-search-heading\">Search results</h1>")
-        .unwrap();
-    let form = html
-        .find(
-            "<form class=\"ghg-search-page\" role=\"search\" action=\"search.html\" method=\"get\"",
-        )
+        .find("<h1 class=\"ghg-search-heading\">Search results</h1>\n<form class=\"ghg-search\" role=\"search\"")
         .unwrap();
     let field = html
-        .find("<label>Search features, rules and scenarios <input type=\"search\" name=\"q\"")
+        .find("role=\"combobox\" aria-autocomplete=\"list\" aria-expanded=\"false\" aria-controls=\"ghg_search_results\"")
+        .unwrap();
+    let link = html
+        .find("<a class=\"ghg-search-all\" href=\"search.html\" hidden></a>")
         .unwrap();
     let status = html
-        .find("</form>\n<p class=\"ghg-search-status\" role=\"status\"></p>\n<div class=\"ghg-search-groups\"></div>\n</main>")
+        .find("</form>\n<p class=\"ghg-results-status\" role=\"status\"></p>\n<div class=\"ghg-search-groups\" data-heading=")
         .unwrap();
-    assert!(main < heading && heading < form && form < field && field < status);
+    assert!(main < heading && heading < field && field < link && link < status);
     // The page links to nothing but its breadcrumb's pages and its footer's.
     let home = fs::read_to_string(pages.join("index.html")).unwrap();
     assert!(!home.contains("<a href=\"search.html\""));

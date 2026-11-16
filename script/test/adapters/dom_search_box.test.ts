@@ -1,6 +1,6 @@
 // The search box adapter of src/adapters/dom_search_box.ts, on a page gherkin-glass wrote:
-// tests/fixtures/pages/expected/billing/refunds.html, with the service and that site's search.json behind it.
-// docs/BEHAVIOUR.md, rules 151 to 156 and 214.
+// tests/fixtures/pages/expected/billing/refunds.html, and the page of search results, search.html, with the
+// service and that site's search.json behind it. docs/BEHAVIOUR.md, rules 151 to 156, 214 and 217.
 
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -18,9 +18,10 @@ const SITE = new URL("../../../tests/fixtures/pages/expected/", import.meta.url)
 /** Runs at once, as if the reader had paused. */
 const noPause: Timer = { after: (_milliseconds, handler) => handler(), cancel: () => {} };
 
-function open() {
-  const window = new Window({ url: "https://example.com/site/billing/refunds.html" });
-  window.document.write(readFileSync(new URL("billing/refunds.html", SITE), "utf8"));
+/** The page at `path` in the site, opened with `query` in its address. */
+function open(path = "billing/refunds.html", query = "") {
+  const window = new Window({ url: `https://example.com/site/${path}${query}` });
+  window.document.write(readFileSync(new URL(path, SITE), "utf8"));
   const found = JSON.parse(readFileSync(new URL("assets/search.json", SITE), "utf8")) as SearchDocument[];
   let loads = 0;
   const documents: Documents = {
@@ -158,4 +159,21 @@ test("Escape closes the list and keeps the words, and a second empties the field
   assert.equal(page.results.hidden, true);
   assert.equal(page.results.children.length, 0);
   assert.equal(page.link.hidden, true);
+});
+
+test("the page of search results has the same combobox under its heading, searching as the reader types", async () => {
+  const page = open("search.html", "?q=refund");
+  const heading = page.document.querySelector("main h1");
+  const form = page.document.querySelector("main form.ghg-search");
+  assert.ok(heading && form && heading.compareDocumentPosition(form as unknown as Node) & 4);
+  await page.type("refunds");
+  assert.equal(page.results.hidden, false);
+  assert.equal(page.field.getAttribute("aria-expanded"), "true");
+  await page.press("ArrowDown");
+  const first = page.results.querySelector("[role=option]");
+  assert.equal(page.field.getAttribute("aria-activedescendant"), first?.id);
+  await page.press("ArrowUp");
+  assert.equal(page.field.hasAttribute("aria-activedescendant"), false);
+  assert.equal(await page.press("Enter"), true);
+  assert.deepEqual(page.went, ["search.html?q=refunds"]);
 });

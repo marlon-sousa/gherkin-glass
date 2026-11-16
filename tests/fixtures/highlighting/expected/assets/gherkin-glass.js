@@ -358,32 +358,29 @@ var DomSearchBox = class _DomSearchBox {
 var DomSearchPage = class _DomSearchPage {
   document;
   heading;
-  form;
   field;
   status;
   groups;
   /** Null when the page is not the page of search results, or not the whole of one. */
   static find(document2) {
     const heading = document2.querySelector("h1.ghg-search-heading");
-    const form = document2.querySelector("form.ghg-search-page");
-    const field = form?.querySelector("input.ghg-search-field");
-    const status2 = document2.querySelector(".ghg-search-status");
+    const field = document2.querySelector("form.ghg-search input.ghg-search-field");
+    const status2 = document2.querySelector(".ghg-results-status");
     const groups = document2.querySelector(".ghg-search-groups");
-    if (heading && form && field && status2 && groups) {
-      return new _DomSearchPage(document2, heading, form, field, status2, groups);
+    if (heading && field && status2 && groups) {
+      return new _DomSearchPage(document2, heading, field, status2, groups);
     }
     return null;
   }
-  constructor(document2, heading, form, field, status2, groups) {
+  constructor(document2, heading, field, status2, groups) {
     this.document = document2;
     this.heading = heading;
-    this.form = form;
     this.field = field;
     this.status = status2;
     this.groups = groups;
   }
   words() {
-    const data = this.form.dataset;
+    const data = this.groups.dataset;
     const text = (key) => data[key] ?? "";
     return {
       heading: text("heading"),

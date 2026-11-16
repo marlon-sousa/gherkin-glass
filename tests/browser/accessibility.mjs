@@ -320,9 +320,23 @@ async function searchProblems(page) {
     await page.waitForFunction(() => document.querySelector(".ghg-search-groups")?.children.length > 0, null, { timeout: 5000 });
     for (const line of await violations(page)) problems.push(`search results for "${word}": ${line}`);
     for (const line of (await partProblems(page)).lines) problems.push(`search results for "${word}": ${line}`);
-    const own = page.locator("form.ghg-search-page .ghg-search-field");
-    await own.fill(`${word} ${word}`);
-    await own.press("Enter");
+    // Rule 217: the page's field is the same combobox, holding the words.
+    const own = page.locator("main form.ghg-search .ghg-search-field");
+    if ((await own.inputValue()) !== word) problems.push(`search results for "${word}": the field holds ${JSON.stringify(await own.inputValue())}`);
+    await own.focus();
+    await page.keyboard.press("End");
+    await page.keyboard.type(` ${word}`);
+    await page.waitForFunction(() => document.querySelectorAll("main .ghg-search-results [role=option]").length > 0, null, { timeout: 5000 });
+    await page.keyboard.press("ArrowDown");
+    const ownChosen = await page.evaluate(() => {
+      const field = document.querySelector("main form.ghg-search .ghg-search-field");
+      const first = document.querySelector("main .ghg-search-results [role=option]");
+      return document.activeElement === field && field.getAttribute("aria-activedescendant") === first?.id;
+    });
+    if (!ownChosen) problems.push(`search results for "${word}": Down after typing did not choose the first result with the focus in the field`);
+    for (const line of await violations(page)) problems.push(`search results for "${word}", with a result chosen: ${line}`);
+    await page.keyboard.press("ArrowUp");
+    await page.keyboard.press("Enter");
     await page.waitForURL((url) => url.searchParams.get("q") === `${word} ${word}`, { timeout: 5000 });
     await page.goBack();
     await page.waitForURL((url) => url.searchParams.get("q") === word, { timeout: 5000 });

@@ -10,8 +10,6 @@ pub(crate) struct SearchPage {
     pub(crate) language: String,
     pub(crate) title: String,
     pub(crate) heading: String,
-    /// The search field's label.
-    pub(crate) label: String,
     pub(crate) words: SearchPageWords,
 }
 

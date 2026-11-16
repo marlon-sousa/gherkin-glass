@@ -23,7 +23,6 @@ pub(crate) fn build_search_page(options: &PageOptions) -> SearchPage {
         language: CATALOGUE.current_language().to_string(),
         title: fl!(CATALOGUE, "search-page-title", site = site.as_str()),
         heading,
-        label: fl!(CATALOGUE, "search-label"),
         words: SearchPageWords {
             heading: fl!(CATALOGUE, "search-page-heading-for", words = "{words}"),
             title: fl!(

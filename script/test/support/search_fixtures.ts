@@ -10,10 +10,11 @@ import type { PageWords } from "../../src/ports/search_page.ts";
 
 const fixtures = new URL("../../../tests/fixtures/", import.meta.url);
 
-/** The text of each `data-` attribute of the first form of `page` whose class is `form`. */
-function formData(page: string, form: string): (name: string) => string {
+/** The text of each `data-` attribute of the first element of `page` whose tag and class are `element`, such as `form.ghg-search`. */
+function elementData(page: string, element: string): (name: string) => string {
   const html = readFileSync(new URL(page, fixtures), "utf8");
-  const tag = new RegExp(`<form class="${form}"[^>]*>`).exec(html)?.[0] ?? "";
+  const [name, className] = element.split(".");
+  const tag = new RegExp(`<${name} class="${className}"[^>]*>`).exec(html)?.[0] ?? "";
   return (name) => {
     const value = new RegExp(` data-${name}="([^"]*)"`).exec(tag)?.[1];
     if (value === undefined) {
@@ -29,7 +30,7 @@ function formData(page: string, form: string): (name: string) => string {
 }
 
 export function pageWords(): SearchWords {
-  const data = formData("pages/expected/stories/read.html", "ghg-search");
+  const data = elementData("pages/expected/stories/read.html", "form.ghg-search");
   return {
     shown: Number(data("shown")),
     loading: data("loading"),
@@ -54,7 +55,7 @@ export function pageWords(): SearchWords {
 }
 
 export function searchPageWords(): PageWords {
-  const data = formData("pages/expected/search.html", "ghg-search-page");
+  const data = elementData("pages/expected/search.html", "div.ghg-search-groups");
   return {
     heading: data("heading"),
     title: data("title"),

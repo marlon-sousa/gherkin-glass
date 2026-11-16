@@ -324,9 +324,12 @@ fn every_page_has_one_h1_and_a_lang_and_its_content_in_its_html() {
             "ghg_show_tree",
             "ghg_tree",
         ];
-        // Rule 151: the search box's list of results, on every page but the
-        // page of search results, which has its own form (rule 217).
-        let search_box = (name != "search.html").then_some("ghg_search_results");
+        // Rule 151: the search box's list of results, before the page's
+        // `main`, but in it, under its heading, on the page of search
+        // results (rule 217).
+        let in_main = name == "search.html";
+        let search_box = (!in_main).then_some("ghg_search_results");
+        let search_box_in_main = in_main.then_some("ghg_search_results");
         // Rule 45: the block of the scenarios outside every rule, in a file
         // with a rule; rule 197: the dialog of a page with a keyword's note.
         let dialog = [
@@ -338,6 +341,7 @@ fn every_page_has_one_h1_and_a_lang_and_its_content_in_its_html() {
             .into_iter()
             .chain(search_box)
             .chain(["ghg_main"])
+            .chain(search_box_in_main)
             .chain(
                 page.contains("ghg-outside-rules")
                     .then_some("outside_rules"),

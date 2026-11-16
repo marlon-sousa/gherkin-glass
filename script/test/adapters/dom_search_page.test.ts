@@ -26,7 +26,7 @@ async function open(query: string) {
     document,
     heading: document.querySelector("h1") as HTMLElement,
     field: document.querySelector(".ghg-search-field") as HTMLInputElement,
-    status: document.querySelector(".ghg-search-status") as HTMLElement,
+    status: document.querySelector(".ghg-results-status") as HTMLElement,
     groups: document.querySelector(".ghg-search-groups") as HTMLElement,
   };
 }

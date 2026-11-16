@@ -408,6 +408,13 @@ figcaption {
   box-sizing: border-box;
 }
 
+/* On the page of search results, the search box is in the content's column, under its heading. */
+.ghg-search-heading + .ghg-search {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
 /* No margin while it is empty, until the reader searches, so that it takes no room. */
 .ghg-search-status {
   margin: 0;
@@ -415,6 +422,11 @@ figcaption {
 
 .ghg-search-status:not(:empty) {
   margin-top: 0.5rem;
+}
+
+/* The page of search results' own status, between its search box and its results. */
+.ghg-results-status {
+  margin: 1rem 0 0;
 }
 
 /* The link to the page of search results, on a line of its own under the field. */
@@ -520,8 +532,7 @@ figcaption {
     display: inline-block;
   }
 
-  .ghg-search label,
-  .ghg-search-page label {
+  .ghg-search label {
     display: block;
   }
 
