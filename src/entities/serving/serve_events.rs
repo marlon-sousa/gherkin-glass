@@ -11,7 +11,7 @@ pub(crate) type StopTeller = Box<dyn Fn() + Send>;
 pub(crate) type BurstTeller = Box<dyn Fn(Burst) + Send>;
 
 /// Whatever keeps a watch going; dropping it ends the watch.
-pub(crate) type Watching = Box<dyn Any + Send>;
+pub(crate) type WatchKeeper = Box<dyn Any + Send>;
 
 /// What a wait for a change or a request to stop ended with.
 #[derive(Debug, Clone, PartialEq, Eq)]

@@ -9,8 +9,8 @@ use std::sync::mpsc::{Receiver, Sender, channel};
 use std::sync::{Arc, Mutex, PoisonError};
 
 use crate::entities::{
-    Burst, BurstTeller, ChangeOrStop, Listening, Preview, ServerWords, StopTeller, Watched,
-    Watching,
+    Burst, BurstTeller, ChangeOrStop, Listening, Preview, ServerWords, StopTeller, WatchKeeper,
+    Watched,
 };
 use crate::errors::{ListenErrorKind, SignalsError, WatchError};
 use crate::ports::{
@@ -70,7 +70,7 @@ pub(crate) struct FakeWatcher {
 }
 
 impl ChangeWatcher for FakeWatcher {
-    fn watch(&self, watched: &[Watched], tell: BurstTeller) -> Result<Watching, WatchError> {
+    fn watch(&self, watched: &[Watched], tell: BurstTeller) -> Result<WatchKeeper, WatchError> {
         *self.watched.lock().unwrap_or_else(PoisonError::into_inner) = watched.to_vec();
         if self.failing {
             return Err(WatchError {
@@ -140,14 +140,16 @@ impl FakeSignals {
 }
 
 /// Waits on standard channels: for a request to stop, until one is told, and for a change or
-/// a request to stop, by handing back the bursts told to the last watch, or, when none was,
-/// the next of `script`, or the end of the watching once `script` is empty. Runs at once what
-/// another request to stop would run, as if one came at once.
+/// a request to stop, by handing back the bursts told to the watch, or, when none was, the next
+/// of `script`, or the end of the watching once `script` is empty; while `asking_while_waiting`,
+/// a request to stop comes during that wait too. Runs at once what another request to stop
+/// would run, as if one came at once.
 pub(crate) struct FakeWaiter {
     sender: Sender<()>,
     requests: Mutex<Receiver<()>>,
     asked: AtomicBool,
     pub(crate) script: Arc<Mutex<VecDeque<ChangeOrStop>>>,
+    pub(crate) asking_while_waiting: Arc<AtomicBool>,
 }
 
 impl Default for FakeWaiter {
@@ -158,6 +160,7 @@ impl Default for FakeWaiter {
             requests: Mutex::new(requests),
             asked: AtomicBool::default(),
             script: Arc::default(),
+            asking_while_waiting: Arc::default(),
         }
     }
 }
@@ -200,6 +203,8 @@ impl ServeEventWaiter for FakeWaiter {
         let waiter = ScriptedWaiter {
             told,
             script: self.script.clone(),
+            asking: self.asking_while_waiting.clone(),
+            sender: self.sender.clone(),
         };
         (tell, Box::new(waiter))
     }
@@ -209,10 +214,15 @@ impl ServeEventWaiter for FakeWaiter {
 struct ScriptedWaiter {
     told: Arc<Mutex<Vec<Burst>>>,
     script: Arc<Mutex<VecDeque<ChangeOrStop>>>,
+    asking: Arc<AtomicBool>,
+    sender: Sender<()>,
 }
 
 impl ChangeOrStopWaiter for ScriptedWaiter {
     fn wait_for_change_or_stop(&self) -> ChangeOrStop {
+        if self.asking.load(Ordering::SeqCst) {
+            self.sender.send(()).expect("waited for");
+        }
         let told = take(&mut *self.told.lock().unwrap_or_else(PoisonError::into_inner));
         if !told.is_empty() {
             return ChangeOrStop::Changed(told);
