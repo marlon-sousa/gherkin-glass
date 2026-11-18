@@ -6,6 +6,8 @@ use std::io::{Write, stderr, stdout};
 use std::process::ExitCode;
 use std::sync::Arc;
 
+use snapfit::container;
+
 use crate::adapters::{
     CrossbeamEventWaiter, CtrlcSignals, FileSystemReader, FileWatcher, FolderFiles, GherkinCrate,
     HttpPreviewServer, InputFolderReader, MemoryFiles, OutputFolderStore, StandardInputReader,
@@ -18,31 +20,56 @@ use crate::services::{
     Converter, GherkinParser, InputCollector, ServerService, SettingsService, SiteWriter,
 };
 
+#[container(leaf_build = default)]
+struct GhgParts {
+    #[singleton]
+    file_system_reader: Arc<FileSystemReader>,
+    #[singleton(deps = [file_system_reader])]
+    settings: Arc<SettingsService>,
+    #[singleton]
+    input_folder_reader: Arc<InputFolderReader>,
+    #[singleton]
+    standard_input_reader: Arc<StandardInputReader>,
+    #[singleton(deps = [input_folder_reader, file_system_reader, standard_input_reader])]
+    input_collector: Arc<InputCollector>,
+    #[singleton]
+    gherkin_crate: Arc<GherkinCrate>,
+    #[singleton(deps = [gherkin_crate])]
+    gherkin_parser: Arc<GherkinParser>,
+    #[singleton]
+    converter: Arc<Converter>,
+    #[singleton]
+    output_folder_store: Arc<OutputFolderStore>,
+    #[singleton]
+    folder_files: Arc<FolderFiles>,
+    #[singleton]
+    memory_files: Arc<MemoryFiles>,
+    #[singleton(
+        deps = [file_reader = file_system_reader, folders = output_folder_store, folder_files, memory_files],
+        build = builder
+    )]
+    site_writer: Arc<SiteWriter>,
+    #[singleton]
+    http_preview_server: Arc<HttpPreviewServer>,
+    #[singleton]
+    file_watcher: Arc<FileWatcher>,
+    #[singleton]
+    ctrlc_signals: Arc<CtrlcSignals>,
+    #[singleton]
+    crossbeam_event_waiter: Arc<CrossbeamEventWaiter>,
+    #[singleton(deps = [http_preview_server, file_watcher, ctrlc_signals, crossbeam_event_waiter])]
+    server: Arc<ServerService>,
+    #[singleton(deps = [settings, input_collector, gherkin_parser, converter, site_writer, server])]
+    site: Arc<SiteController>,
+    #[singleton]
+    standard_streams: Arc<StandardStreams>,
+    #[singleton(deps = [site, standard_streams])]
+    command_line: Arc<CommandLine>,
+}
+
 /// Runs ghg with `arguments`, those after the command's own name.
 pub fn run(arguments: impl IntoIterator<Item = OsString>) -> ExitCode {
-    let site = SiteController::new(
-        Arc::new(SettingsService::new(Arc::new(FileSystemReader))),
-        Arc::new(InputCollector::new(
-            Arc::new(InputFolderReader),
-            Arc::new(FileSystemReader),
-            Arc::new(StandardInputReader::default()),
-        )),
-        Arc::new(GherkinParser::new(Arc::new(GherkinCrate))),
-        Arc::new(Converter),
-        Arc::new(SiteWriter::new(
-            Arc::new(FileSystemReader),
-            Arc::new(OutputFolderStore),
-            Arc::new(FolderFiles),
-            Arc::new(MemoryFiles::default()),
-        )),
-        Arc::new(ServerService::new(
-            Arc::new(HttpPreviewServer),
-            Arc::new(FileWatcher),
-            Arc::new(CtrlcSignals),
-            Arc::new(CrossbeamEventWaiter::default()),
-        )),
-    );
-    let reply = CommandLine::new(Arc::new(site), Arc::new(StandardStreams)).run(arguments);
+    let reply = GhgParts::new().get_command_line().run(arguments);
     // A closed pipe or a full disk leaves nothing more to say, so the status still stands.
     let _ = stdout().write_all(reply.stdout.as_bytes());
     let _ = stderr().write_all(reply.stderr.as_bytes());

@@ -15,12 +15,12 @@ fn build_with_template(
     folders: Arc<FakeFolders>,
     writer: Arc<FakeWriter>,
 ) -> Result<RenderedSite, BuildError> {
-    let site_writer = SiteWriter::new(
-        Arc::new(FakeTemplate { text }),
-        folders,
-        writer,
-        Arc::new(FakeWriter::default()),
-    );
+    let site_writer = SiteWriter::builder()
+        .file_reader(Arc::new(FakeTemplate { text }))
+        .folders(folders)
+        .folder_files(writer)
+        .memory_files(Arc::new(FakeWriter::default()))
+        .build();
     let settings = Settings {
         front_page: Some(PathBuf::from("docs/front.md")),
         ..settings(Destination::Folder, None)

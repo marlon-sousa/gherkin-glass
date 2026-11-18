@@ -142,12 +142,12 @@ pub(super) fn build(
         &settings.input,
         settings.unnamed,
     );
-    let site_writer = SiteWriter::new(
-        Arc::new(FakeTemplate::default()),
-        folders,
-        writer,
-        Arc::new(FakeWriter::default()),
-    );
+    let site_writer = SiteWriter::builder()
+        .file_reader(Arc::new(FakeTemplate::default()))
+        .folders(folders)
+        .folder_files(writer)
+        .memory_files(Arc::new(FakeWriter::default()))
+        .build();
     let built_versions = site_writer.check(&settings)?;
     let tree = Converter.convert(&input_tree, None, &settings, &built_versions);
     let (served, _) = site_writer.write(&settings, tree, None)?;

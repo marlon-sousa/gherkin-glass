@@ -5,6 +5,8 @@ use std::io::Error as IoError;
 use std::path::Path;
 use std::sync::Arc;
 
+use bon::Builder;
+
 use crate::entities::{
     BuildFolder, BuildTarget, Destination, FilePath, FrontPageTemplate, Record, RenderedSite,
     ServedSite, Settings, SiteFile, SiteFiles, SiteTree, VersionName,
@@ -37,31 +39,17 @@ pub(crate) trait SiteWriterApi: Send + Sync {
     ) -> Result<(ServedSite, RenderedSite), BuildError>;
 }
 
+#[derive(Builder)]
 pub(crate) struct SiteWriter {
+    /// Reads the front page's template.
     file_reader: Arc<dyn FileReader>,
     folders: Arc<dyn OutputFolders>,
+    /// Writes into the output folder; the destination of the settings chooses between it and `memory_files`.
     folder_files: Arc<dyn FileWriter>,
     memory_files: Arc<dyn FileWriter>,
 }
 
 impl SiteWriter {
-    /// `file_reader` reads the front page's template, `folder_files` writes into
-    /// the output folder, and `memory_files` keeps the site in memory; the
-    /// destination of the settings chooses between the last two.
-    pub(crate) fn new(
-        file_reader: Arc<dyn FileReader>,
-        folders: Arc<dyn OutputFolders>,
-        folder_files: Arc<dyn FileWriter>,
-        memory_files: Arc<dyn FileWriter>,
-    ) -> Self {
-        SiteWriter {
-            file_reader,
-            folders,
-            folder_files,
-            memory_files,
-        }
-    }
-
     /// The front page's template the settings name, read; `None` when they name none.
     fn front_page(&self, settings: &Settings) -> Result<Option<FrontPageTemplate>, FrontPageError> {
         let Some(file) = &settings.front_page else {
