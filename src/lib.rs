@@ -2,7 +2,7 @@
 //
 // The library exists so that the two binaries, `ghg` and the cargo plugin `cargo-ghg`, share
 // their code, and offers nothing else: gherkin-glass is used through the `ghg` command.
-#![doc = include_str!("../README.md")]
+#![doc = include_str!("../README.crate.md")]
 
 mod adapters;
 mod composition_root;

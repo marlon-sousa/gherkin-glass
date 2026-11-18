@@ -192,7 +192,8 @@ fn only_one_ghg_is_dropped() {
 /// The files of the repository that are not built into the binaries, so
 /// that the published crate leaves them out. `script/` is the source of
 /// `assets/gherkin-glass.js`, which is committed, `xtask/` a crate of its
-/// own, and `action.yml` with `action/` the GitHub Action. A file git tracks
+/// own, `action.yml` with `action/` the GitHub Action, and `README.md` the
+/// source of `README.crate.md`, which is published. A file git tracks
 /// anywhere else must be published: a new folder fails the test until it is
 /// placed here or in Cargo.toml's `include`.
 const NOT_PUBLISHED: &[&str] = &[
@@ -212,6 +213,7 @@ const NOT_PUBLISHED: &[&str] = &[
     "CHANGELOG.md",
     "CLAUDE.md",
     "CONTRIBUTING.md",
+    "README.md",
     "cliff.toml",
     "clippy.toml",
     "deny.toml",
