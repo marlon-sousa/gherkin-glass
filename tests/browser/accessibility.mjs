@@ -48,7 +48,6 @@ const builds = [
   { folder: "step-sentences", args: ["--input", "."] },
   { folder: "no-steps", args: ["--input", "."] },
   { folder: "search/features", args: ["--input", ".", "--title", "Search"] },
-  { folder: "action", args: [] },
   { folder: "front-page", args: ["--config", "ghg.toml"] },
   { folder: "front-page", args: ["--config", "versioned.toml"] },
   { folder: "hostile", args: [] },
