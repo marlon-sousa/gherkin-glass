@@ -46,7 +46,6 @@ pub(crate) struct SiteWriter {
     folders: Arc<dyn OutputFolders>,
     /// Writes into the output folder; the destination of the settings chooses between it and `memory_files`.
     folder_files: Arc<dyn FileWriter>,
-    /// Keeps the site in memory.
     memory_files: Arc<dyn FileWriter>,
 }
 
