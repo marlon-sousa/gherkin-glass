@@ -139,12 +139,14 @@ fn builds_from_the_last_build_match_builds_from_nothing(
         )),
         Arc::new(GherkinParser::new(input.clone())),
         Arc::new(Converter),
-        Arc::new(SiteWriter::new(
-            input.clone(),
-            input.clone(),
-            Arc::new(MemoryFiles::default()),
-            Arc::new(MemoryFiles::default()),
-        )),
+        Arc::new(
+            SiteWriter::builder()
+                .file_reader(input.clone())
+                .folders(input.clone())
+                .folder_files(Arc::new(MemoryFiles::default()))
+                .memory_files(Arc::new(MemoryFiles::default()))
+                .build(),
+        ),
         world().server,
     );
     let options = BuildOptions {

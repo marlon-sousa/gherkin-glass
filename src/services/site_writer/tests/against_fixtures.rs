@@ -40,12 +40,12 @@ fn check(
     target: &BuildTarget,
     moment: Moment,
 ) -> Result<Option<Record>, OutputError> {
-    let writer = SiteWriter::new(
-        Arc::new(FileSystemReader),
-        Arc::new(OutputFolderStore),
-        Arc::new(FolderFiles),
-        Arc::new(MemoryFiles::default()),
-    );
+    let writer = SiteWriter::builder()
+        .file_reader(Arc::new(FileSystemReader))
+        .folders(Arc::new(OutputFolderStore))
+        .folder_files(Arc::new(FolderFiles))
+        .memory_files(Arc::new(MemoryFiles::default()))
+        .build();
     writer
         .check_folder(output, target, moment)
         .map(|folder| folder.record().cloned())
