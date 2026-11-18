@@ -20,45 +20,45 @@ use crate::services::{
     Converter, GherkinParser, InputCollector, ServerService, SettingsService, SiteWriter,
 };
 
-#[container]
+#[container(leaf_build = default)]
 struct GhgParts {
-    #[singleton(constructor = default)]
+    #[singleton]
     file_system_reader: Arc<FileSystemReader>,
     #[singleton(deps = [file_system_reader])]
     settings: Arc<SettingsService>,
-    #[singleton(constructor = default)]
+    #[singleton]
     input_folder_reader: Arc<InputFolderReader>,
-    #[singleton(constructor = default)]
+    #[singleton]
     standard_input_reader: Arc<StandardInputReader>,
     #[singleton(deps = [input_folder_reader, file_system_reader, standard_input_reader])]
     input_collector: Arc<InputCollector>,
-    #[singleton(constructor = default)]
+    #[singleton]
     gherkin_crate: Arc<GherkinCrate>,
     #[singleton(deps = [gherkin_crate])]
     gherkin_parser: Arc<GherkinParser>,
-    #[singleton(constructor = default)]
+    #[singleton]
     converter: Arc<Converter>,
-    #[singleton(constructor = default)]
+    #[singleton]
     output_folder_store: Arc<OutputFolderStore>,
-    #[singleton(constructor = default)]
+    #[singleton]
     folder_files: Arc<FolderFiles>,
-    #[singleton(constructor = default)]
+    #[singleton]
     memory_files: Arc<MemoryFiles>,
     #[singleton(deps = [file_system_reader, output_folder_store, folder_files, memory_files])]
     site_writer: Arc<SiteWriter>,
-    #[singleton(constructor = default)]
+    #[singleton]
     http_preview_server: Arc<HttpPreviewServer>,
-    #[singleton(constructor = default)]
+    #[singleton]
     file_watcher: Arc<FileWatcher>,
-    #[singleton(constructor = default)]
+    #[singleton]
     ctrlc_signals: Arc<CtrlcSignals>,
-    #[singleton(constructor = default)]
+    #[singleton]
     crossbeam_event_waiter: Arc<CrossbeamEventWaiter>,
     #[singleton(deps = [http_preview_server, file_watcher, ctrlc_signals, crossbeam_event_waiter])]
     server: Arc<ServerService>,
     #[singleton(deps = [settings, input_collector, gherkin_parser, converter, site_writer, server])]
     site: Arc<SiteController>,
-    #[singleton(constructor = default)]
+    #[singleton]
     standard_streams: Arc<StandardStreams>,
     #[singleton(deps = [site, standard_streams])]
     command_line: Arc<CommandLine>,
