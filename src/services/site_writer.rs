@@ -44,10 +44,12 @@ pub(crate) struct SiteWriter {
     memory_files: Arc<dyn FileWriter>,
 }
 
+#[bon::bon]
 impl SiteWriter {
     /// `file_reader` reads the front page's template, `folder_files` writes into
     /// the output folder, and `memory_files` keeps the site in memory; the
     /// destination of the settings chooses between the last two.
+    #[builder(start_fn = builder)]
     pub(crate) fn new(
         file_reader: Arc<dyn FileReader>,
         folders: Arc<dyn OutputFolders>,

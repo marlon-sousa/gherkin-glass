@@ -44,7 +44,10 @@ struct GhgParts {
     folder_files: Arc<FolderFiles>,
     #[singleton]
     memory_files: Arc<MemoryFiles>,
-    #[singleton(deps = [file_system_reader, output_folder_store, folder_files, memory_files])]
+    #[singleton(
+        deps = [file_reader = file_system_reader, folders = output_folder_store, folder_files, memory_files],
+        build = builder
+    )]
     site_writer: Arc<SiteWriter>,
     #[singleton]
     http_preview_server: Arc<HttpPreviewServer>,
