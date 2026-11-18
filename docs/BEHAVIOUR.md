@@ -32,7 +32,7 @@ Agreed so far:
 - [A site of only some feature files](#a-site-of-only-some-feature-files), issue [#128](https://github.com/marlon-sousa/gherkin-glass/issues/128).
 - [A preview](#a-preview), issue [#128](https://github.com/marlon-sousa/gherkin-glass/issues/128).
 
-The other features planned for the first version are the [issues](https://github.com/marlon-sousa/gherkin-glass/issues) labelled `feature`. Each adds its own keys and options to "The command line and its configuration" as it is built.
+The features planned for later versions are the [issues](https://github.com/marlon-sousa/gherkin-glass/issues) labelled `feature`. Each adds its own keys and options to "The command line and its configuration" as it is built.
 
 ## Reading the input
 

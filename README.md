@@ -127,7 +127,7 @@ ghg serve [options]
 
 An option on the command line wins over the configuration file's key, and the key wins over the default. `ghg --help` lists the commands and options, and `ghg --version` prints the version.
 
-`ghg build` exits with status 0 when it wrote the site, 1 when the configuration, a feature file or the output folder stopped it, and 2 for a mistake on the command line. `ghg serve` exits the same way, and with 1 when it cannot listen, such as on a port already in use.
+`ghg build` exits with status 0 when it wrote the site, 1 when the configuration, a feature file or the output folder stopped it, and 2 for a mistake on the command line. `ghg serve` exits the same way, and with 1 when it cannot listen, such as on a port already in use. Control+C, or the signal a terminal or a process manager sends, stops it gracefully: it finishes a build that is running, says "The site is no longer served." and exits with status 0. Asked to stop again while it finishes answering, it ends at once with status 130.
 
 ### Looking at a site and publishing it
 
