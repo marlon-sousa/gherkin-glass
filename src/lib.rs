@@ -1,7 +1,8 @@
-//! Facade: gherkin-glass turns a folder of Gherkin feature files into a static website.
-//!
-//! This library is not a stable API. It exists so that the two binaries, `ghg` and the cargo
-//! plugin `cargo-ghg`, share their code: use gherkin-glass through the `ghg` command.
+// Facade: gherkin-glass turns a folder of Gherkin feature files into a static website.
+//
+// The library exists so that the two binaries, `ghg` and the cargo plugin `cargo-ghg`, share
+// their code, and offers nothing else: gherkin-glass is used through the `ghg` command.
+#![doc = include_str!("../README.md")]
 
 mod adapters;
 mod composition_root;
