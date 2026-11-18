@@ -20,7 +20,6 @@ use crate::services::{
     Converter, GherkinParser, InputCollector, ServerService, SettingsService, SiteWriter,
 };
 
-/// The parts of the ghg command, each built once and wired to the real world.
 #[container]
 struct GhgParts {
     #[singleton(constructor = default)]
