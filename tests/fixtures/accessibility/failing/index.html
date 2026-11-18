@@ -13,6 +13,8 @@
   .translucent-border { border: 1px solid rgba(0, 0, 0, 0.1); }
   /* 1.16 to 1 on white: a focus outline short of 3 to 1. */
   a:focus-visible { outline: 2px solid #eeeeee; }
+  /* Wider than the 320 pixels of a narrow window, so the page scrolls sideways. */
+  .too-wide { width: 400px; }
   /* Dark text on a dark background, in the dark scheme only. */
   @media (prefers-color-scheme: dark) {
     body { background: #161616; color: #ececec; }
@@ -29,6 +31,7 @@
 <p class="faint-border">Text in a border with too little contrast.</p>
 <p class="translucent-border">Text in a translucent border with too little contrast.</p>
 <img src="missing.png" width="10" height="10">
+<p class="too-wide">A paragraph wider than a narrow window.</p>
 <h2><span class="ghg-toggle" role="button" tabindex="0" aria-expanded="true">A block whose button Space does not turn over</span></h2>
 <p><a href="#first">Reached second by Tab</a> <a href="#second" tabindex="1">Reached first by Tab</a></p>
 </main>

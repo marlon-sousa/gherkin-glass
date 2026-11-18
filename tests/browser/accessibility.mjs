@@ -1,10 +1,10 @@
 // docs/BEHAVIOUR.md, "Accessibility", checked in Chromium with Playwright and
 // axe-core: every fixture that builds, and the example suite of
-// project-site, is built into a site, served with
-// ghg serve --no-build, and each page is checked with axe-core in the light
-// and the dark colour scheme and in each theme a reader can pick, then driven
-// with the keyboard, and found with the dialog for a page opened from disk
-// closed.
+// project-site, alone and with the README's front page, is built into a
+// site, served with ghg serve --no-build, and each page is checked with
+// axe-core in the light and the dark colour scheme and in each theme a
+// reader can pick, then driven with the keyboard, and found with the dialog
+// for a page opened from disk closed.
 //
 // Run from the repository's root, after cargo build and npm ci in script/,
 // with Playwright's Chromium installed:
@@ -18,6 +18,7 @@ import { availableParallelism, tmpdir } from "node:os";
 import { join, relative, resolve, sep } from "node:path";
 import assert from "node:assert/strict";
 import { partProblems } from "./part_contrast.mjs";
+import { reflowProblems } from "./reflow.mjs";
 import { axeSource, chromium, ghg, serve, stop, violations } from "./support.mjs";
 
 const fixtures = resolve("tests/fixtures");
@@ -55,6 +56,9 @@ const builds = [
   { folder: "only", args: ["--only", "changed.txt"] },
   { folder: "only", args: ["--config", "nothing.toml", "--only", "nothing.txt"] },
   { root: ".", folder: "project-site", args: ["--config", "ghg.toml"] },
+  // The example suite as the release's site shows it, opening on the front
+  // page that project-site/front-page.sh writes from the README, rule 192.
+  { root: ".", folder: "project-site", args: ["--config", "ghg.toml"], readme: true },
 ];
 
 // The fixtures that make no site: those whose build is meant to fail, and
@@ -122,8 +126,16 @@ function checkEveryFixtureIsCounted() {
   );
 }
 
-function build({ root, folder, args }, output) {
-  const run = spawnSync(ghg, ["build", ...args, "--output", output], {
+function build({ root, folder, args, readme }, output) {
+  const frontPageArgs = [];
+  if (readme) {
+    // Run through bash, which Windows has where Git Bash is installed.
+    const frontPage = `${output}-front-page.md`;
+    const written = spawnSync("bash", ["project-site/front-page.sh", "README.md", frontPage], { encoding: "utf8" });
+    assert.equal(written.status, 0, `project-site/front-page.sh README.md: ${written.stderr}`);
+    frontPageArgs.push("--front-page", frontPage);
+  }
+  const run = spawnSync(ghg, ["build", ...args, ...frontPageArgs, "--output", output], {
     cwd: root ? resolve(root, folder) : join(fixtures, folder),
     encoding: "utf8",
   });
@@ -395,6 +407,7 @@ export async function checkSite(browser, folder) {
           const tree = await treeProblems(page);
           if (tree !== null) trees += 1;
           for (const line of tree ?? []) problems.push(`${path}: ${line}`);
+          for (const line of await reflowProblems(page)) problems.push(`${path}: ${line}`);
           // One page a site is enough: every page has the same box.
           if (searched === 0) {
             const search = await searchProblems(page);
@@ -456,7 +469,8 @@ async function main() {
     });
     const results = await checkAll(browser, sites);
     for (const [index, result] of results.entries()) {
-      const name = [builds[index].folder, ...builds[index].args].join(" ");
+      const { folder, args, readme } = builds[index];
+      const name = [folder, ...args, ...(readme ? ["with the README's front page"] : [])].join(" ");
       if (result.pages === 0) failures.push(`${name}: the site has no page`);
       checked += result.pages;
       pressed += result.pressed;
@@ -481,6 +495,7 @@ async function main() {
       [", light: contrast of a part: a outline with the focus", "a focus outline with too little contrast"],
       [": keyboard: Tab reached", "the keyboard order"],
       [": keyboard: the first block's button", "a block's button that Space does not turn over"],
+      [": reflow:", "a page wider than a narrow window"],
     ]) {
       if (!found(start)) failures.push(`tests/fixtures/accessibility/failing: the check did not find ${what}`);
     }
