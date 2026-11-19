@@ -15,6 +15,9 @@ body {
   color: var(--ghg-text);
   font-family: system-ui, sans-serif;
   line-height: 1.5;
+  /* A long word, such as a file's name or an address, breaks where it must,
+     so that the page fits a narrow window. */
+  overflow-wrap: anywhere;
 }
 
 main {
@@ -128,16 +131,37 @@ h1, h2, h3, h4, h5 {
   color: var(--ghg-placeholder);
 }
 
-.ghg-table {
+/* A feature file's tables and a front page's alike. */
+table {
   border-collapse: collapse;
   margin: 0.5rem 0;
 }
 
-.ghg-table th,
-.ghg-table td {
+th,
+td {
   border: 1px solid var(--ghg-border);
   padding: 0.25rem 0.5rem;
   text-align: left;
+  /* Not anywhere, which would let the table's layout break a word that fits
+     whole: a cell breaks a word only when the word is wider than the window. */
+  overflow-wrap: break-word;
+}
+
+/* On a narrower window, a code word in a cell, such as a configuration key,
+   breaks so that its column leaves room for the others, and on a phone every
+   word of a cell does. */
+@media not all and (min-width: 48em) {
+  th code,
+  td code {
+    overflow-wrap: anywhere;
+  }
+}
+
+@media not all and (min-width: 24em) {
+  th,
+  td {
+    overflow-wrap: anywhere;
+  }
 }
 
 .ghg-doc-string {

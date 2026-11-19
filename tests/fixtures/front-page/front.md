@@ -8,6 +8,7 @@ Read [how to contribute](CONTRIBUTING.md) before changing them.
 | Area | Owner |
 | --- | --- |
 | Billing | The billing team |
+| Statements | `the_statements_and_reconciliations_team_of_the_billing_department` |
 
 ## What the suite covers
 
