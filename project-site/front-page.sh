@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Writes the project's front page from the README's marked parts:
-# docs/BEHAVIOUR.md, "The project's own site", rule 193.
+# docs/BEHAVIOUR.md, "The front page", rule 193.
 #
 # Usage:
 #   project-site/front-page.sh <readme> <front page>

@@ -1,6 +1,6 @@
 [package]
 name = "gherkin-glass"
-version = "0.1.0-alpha.2"
+version = "1.0.0"
 edition = "2024"
 # The oldest Rust that builds gherkin-glass, checked by its own CI job. The
 # toolchain contributors and CI build with is pinned in rust-toolchain.toml.
@@ -8,15 +8,16 @@ rust-version = "1.88"
 description = "An accessible static viewer for Gherkin feature files"
 repository = "https://github.com/marlon-sousa/gherkin-glass"
 license = "MIT OR Apache-2.0"
-readme = "README.md"
+readme = "README.crate.md"
 # What `cargo run` runs, of the two binaries below.
 default-run = "ghg"
 keywords = ["gherkin", "cucumber", "bdd", "accessibility", "cargo-subcommand"]
 categories = ["command-line-utilities", "development-tools::cargo-plugins", "development-tools::testing"]
 # What crates.io receives: what builds the binaries, with the licences and the
-# README it shows. The tests and their fixtures, the script's sources and
-# xtask stay in the repository.
-include = ["/src/", "/askama.toml", "/assets/", "/messages/", "/i18n.toml", "/README.md", "/LICENSE-APACHE", "/LICENSE-MIT"]
+# README it shows, written from README.md without the parts only GitHub shows.
+# The tests and their fixtures, the script's sources and xtask stay in the
+# repository.
+include = ["/src/", "/askama.toml", "/assets/", "/messages/", "/i18n.toml", "/README.crate.md", "/LICENSE-APACHE", "/LICENSE-MIT"]
 
 [workspace]
 # The crate behind cargo xtask, never shipped.
@@ -68,7 +69,7 @@ rust-embed = { version = "8.13.0", features = ["debug-embed"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 semver = "1.0.28"
-snapfit = "0.1.0"
+snapfit = "0.1.1"
 thiserror = "2"
 tiny_http = "0.12.0"
 toml = { version = "1.2.1", default-features = false, features = ["std", "parse"] }

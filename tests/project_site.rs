@@ -694,7 +694,7 @@ fn every_release_s_site_opens_on_the_readme_of_its_tag() {
     );
     assert!(page.contains("<h2>Status</h2>\n<p>"), "{page}");
     assert!(
-        page.contains("<h2>The example suite</h2>\n<p>Each version below"),
+        page.contains("<h2>The example suite</h2>\n<p>Each version of gherkin-glass builds"),
         "{page}"
     );
     assert!(page.contains("<h3 id=\"releases\">Releases</h3>"), "{page}");
@@ -791,4 +791,33 @@ fn front_page_of(readme: &Path, front_page: &Path) -> Output {
         .arg(front_page)
         .output()
         .expect("the script runs")
+}
+
+/// Rule 223: the crate's README is what `project-site/crate-readme.sh` writes from the README.
+#[cfg(unix)]
+#[test]
+fn the_crate_s_readme_is_written_from_the_readme() {
+    let scratch = scratch("crate-readme");
+    let crate_readme = scratch.join("README.crate.md");
+    let output = Command::new(repository().join("project-site/crate-readme.sh"))
+        .arg(repository().join("README.md"))
+        .arg(&crate_readme)
+        .output()
+        .expect("the script runs");
+    assert_eq!(text(&output.stderr), "");
+    assert!(output.status.success());
+    let written = read_to_string(&crate_readme).expect("the crate's README is written");
+    let committed = read_to_string(repository().join("README.crate.md"))
+        .expect("the committed crate's README is read");
+    assert_eq!(
+        committed, written,
+        "README.crate.md is not what README.md gives: run project-site/crate-readme.sh README.md README.crate.md"
+    );
+    assert!(!written.contains("## Contributing"), "{written}");
+    assert!(
+        written.contains(
+            "to show what its pages look like.\n\nSee them on [the project's site](https://marlon-sousa.github.io/gherkin-glass/).\n"
+        ),
+        "{written}"
+    );
 }

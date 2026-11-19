@@ -18,7 +18,7 @@ Reading them is harder than it should be. They live in a repository, spread acro
 - A heading and a stable link for every rule, scenario and background, so that a link to a scenario keeps working as long as its file and its name do, and no block before it on its page takes the same name.
 - A page for every tag, listing the features and scenarios that carry it, and optional links from tags to another site, such as an issue tracker.
 - A page of step sentences, listing every distinct step sentence, with quoted values and placeholders as slots, and where it is used.
-- Search across features, rules and scenarios.
+- Search across features, rules, scenarios, backgrounds and examples, with a page of every result.
 - Every Gherkin construct: rules, backgrounds, scenario outlines and their examples, shown as scenarios too, data tables, doc strings, tags, descriptions, and every spoken language Gherkin supports.
 - Highlighting of keywords, quoted parameters, placeholders and numbers in steps, which never carries meaning on its own.
 - Reader options the browser remembers: a light or a dark theme, or the system's, showing or hiding the folder tree, showing a background's steps inside each scenario or once at the top, and collapsing rules and scenarios.
@@ -27,25 +27,25 @@ Reading them is harder than it should be. They live in a repository, spread acro
 
 ## Status
 
-The latest release is an alpha, `0.1.0-alpha.2`: a preview, to try gherkin-glass and say what you think, before its first stable version. It is on the [releases page](https://github.com/marlon-sousa/gherkin-glass/releases), not yet on crates.io; the section Installing and running, below, says how to install it. The newest code, not yet released, can be built from the repository with `cargo install --git https://github.com/marlon-sousa/gherkin-glass gherkin-glass --locked`, which installs `ghg` and `cargo-ghg` and needs [Rust](https://rustup.rs/).
+The latest release is `1.0.0`, the first stable version, on crates.io and on the [releases page](https://github.com/marlon-sousa/gherkin-glass/releases). From it on, versions follow [Semantic Versioning](https://semver.org/): the addresses of pages and their anchors, the command line, the configuration keys and the names of the release archives change in a way that breaks a site, a command or an installation only in a new major version. The newest code, not yet released, can be built from the repository with `cargo install --git https://github.com/marlon-sousa/gherkin-glass gherkin-glass --locked`, which installs `ghg` and `cargo-ghg` and needs [Rust](https://rustup.rs/).
 
 <!-- site-only
 ## The example suite
 
-Each version below is the example suite of gherkin-glass's repository, built with that version of gherkin-glass, to show what its pages look like.
+Each version of gherkin-glass builds the example suite of its repository, to show what its pages look like.
 -->
 
 <!-- ghg:contents -->
 
 ## Installing and running
 
-Once a stable version of gherkin-glass is released, install it in one of these ways:
+Install gherkin-glass in one of these ways:
 
 - `cargo install gherkin-glass`, which builds it with Rust's package manager;
 - `cargo binstall gherkin-glass`, which downloads the released binary instead of building it;
 - or download the archive for your system from the [releases page](https://github.com/marlon-sousa/gherkin-glass/releases), check it against the release's `SHA256SUMS` if you wish, and put `ghg`, and `cargo-ghg` for `cargo ghg`, somewhere on your path. There are archives for Linux on x86-64 and ARM64, macOS on Intel and Apple silicon, and Windows on x86-64.
 
-An alpha or a beta, such as `0.1.0-alpha.2`, is not on crates.io, so `cargo install gherkin-glass` and `cargo binstall gherkin-glass` cannot install it. Install it from its archive on the releases page, build it with `cargo install --git https://github.com/marlon-sousa/gherkin-glass --tag v0.1.0-alpha.2 gherkin-glass --locked`, or install it in a GitHub Actions workflow with `uses: marlon-sousa/gherkin-glass@v0.1.0-alpha.2` and the input `version: 0.1.0-alpha.2`, since without `version` the action installs only a stable release.
+An alpha or a beta, a preview of a version released before it, such as 1.1.0-alpha.1 before 1.1.0, is released on GitHub only, not on crates.io. Install it from its archive on the releases page, or build it with `cargo install --git https://github.com/marlon-sousa/gherkin-glass --tag <tag> gherkin-glass --locked`, naming its tag, such as `v1.1.0-alpha.1`.
 
 Each way installs `ghg`, and `cargo-ghg`, which lets you run it as `cargo ghg` beside `cargo test`. `cargo ghg build` is the same as `ghg build`.
 
@@ -127,7 +127,7 @@ ghg serve [options]
 
 An option on the command line wins over the configuration file's key, and the key wins over the default. `ghg --help` lists the commands and options, and `ghg --version` prints the version.
 
-`ghg build` exits with status 0 when it wrote the site, 1 when the configuration, a feature file or the output folder stopped it, and 2 for a mistake on the command line. `ghg serve` exits the same way, and with 1 when it cannot listen, such as on a port already in use.
+`ghg build` exits with status 0 when it wrote the site, 1 when the configuration, a feature file or the output folder stopped it, and 2 for a mistake on the command line. `ghg serve` exits the same way, and with 1 when it cannot listen, such as on a port already in use. Control+C, or the signal a terminal or a process manager sends, stops it gracefully: it finishes a build that is running, says "The site is no longer served." and exits with status 0. Asked to stop again while it finishes answering, it ends at once with status 130.
 
 ### Looking at a site and publishing it
 
@@ -213,7 +213,7 @@ If you don't change the frontend, Rust is enough: `cargo build` builds `ghg`, `c
 
 | Command | What it does | Needs Node |
 | --- | --- | --- |
-| `cargo xtask build` | Type-checks, tests and compiles the script into `assets/gherkin-glass.js`, writes again the expected sites of the test fixtures and of the example suite, and builds the release binary. Run it after changing the script, the stylesheet, a template or interface text, and commit what it writes. | Yes |
+| `cargo xtask build` | Type-checks, tests and compiles the script into `assets/gherkin-glass.js`, writes again the expected sites of the test fixtures and of the example suite, and the crate's README, `README.crate.md`, from this one, and builds the release binary. Run it after changing the script, the stylesheet, a template or interface text, and commit what it writes. After changing only this README, `project-site/crate-readme.sh README.md README.crate.md` writes the crate's README again, with no Node. | Yes |
 | `cargo xtask check` | Runs every check a pull request runs: formatting, lints, tests on the pinned and the minimum supported Rust, documentation, dependencies, the package, the script check and the browser check. | Yes |
 | `cargo xtask check-script` | Type-checks and tests the script, and fails when the committed `assets/gherkin-glass.js` is not what `script/` compiles to. | Yes |
 | `cargo xtask check-browser` | Installs a headless Chromium and checks every test site in it, the README's own front page included: accessibility in both colour schemes, the keyboard, a window 320 pixels wide, pages opened from disk, the folder tree on a narrow window, and the reload of `ghg serve --watch`. | Yes |
