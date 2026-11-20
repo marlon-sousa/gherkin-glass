@@ -3,7 +3,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use rstest::rstest;
 
 use super::*;
-use crate::entities::KeptPattern;
+use crate::test_support::kept_in_output;
 
 const KEEP: Moment<'static> = Moment::Checking { replace: false };
 const REPLACE: Moment<'static> = Moment::Checking { replace: true };
@@ -321,12 +321,7 @@ fn what_is_kept_counts_as_nothing_in_the_folder(
     #[case] contents: OutputContents,
     #[case] outcome: Result<Option<Record>, OutputErrorKind>,
 ) {
-    let kept = KeptInOutput::new(
-        [".nojekyll", ".git", "CNAME"]
-            .iter()
-            .map(|text| KeptPattern::new(text).expect("valid"))
-            .collect(),
-    );
+    let kept = kept_in_output(&[".nojekyll", ".git", "CNAME"]);
     assert_eq!(
         output_safety(contents, &BuildTarget::Site, REPLACE, &kept),
         outcome
@@ -340,9 +335,52 @@ fn a_marked_folder_holding_what_is_kept_is_safe() {
     if let OutputContents::Folder { kept, .. } = &mut contents {
         kept.insert("CNAME".into(), EntryKind::File);
     }
-    let kept = KeptInOutput::new(vec![KeptPattern::new("CNAME").expect("valid")]);
+    let kept = kept_in_output(&["CNAME"]);
     assert_eq!(
         output_safety(contents, &BuildTarget::Site, REPLACE, &kept),
         Ok(Some(site()))
+    );
+}
+
+// Rule 228: a file of the versions page the marker lists, kept, stops the build.
+#[test]
+fn a_kept_file_of_the_versions_page_is_a_clash() {
+    let mut contents = versions_folder(&[], &[], &["assets/ghg.css"]);
+    if let OutputContents::Folder { kept, .. } = &mut contents {
+        kept.insert("assets/ghg.css".into(), EntryKind::File);
+    }
+    assert_eq!(
+        output_safety(
+            contents,
+            &version("main"),
+            REPLACE,
+            &kept_in_output(&["ghg.css"])
+        ),
+        Err(OutputErrorKind::KeptClash {
+            found: "assets/ghg.css".into(),
+            pattern: "ghg.css".into(),
+        })
+    );
+}
+
+// Rule 38: what an earlier site is emptied of is always something found in the folder.
+#[test]
+fn a_site_s_marker_keeps_only_the_files_under_a_name_found_at_the_top() {
+    let listed = [
+        "index.html",
+        "sub/page.html",
+        "gone/a.html",
+        "..\\victim.html",
+        "C:\\victim",
+    ];
+    let contents = OutputContents::Folder {
+        files: set(&["ghg-site.json", "index.html"]),
+        folders: set(&["sub"]),
+        kept: BTreeMap::new(),
+        record: Some(Record::Site(set(&listed))),
+    };
+    assert_eq!(
+        judged(contents, &BuildTarget::Site, REPLACE),
+        Ok(Some(Record::Site(set(&["index.html", "sub/page.html"]))))
     );
 }

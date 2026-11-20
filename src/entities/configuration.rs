@@ -16,7 +16,7 @@ pub(crate) use colour::Colour;
 pub(crate) use config::Config;
 pub(crate) use destination::Destination;
 pub(crate) use invocation::{BuildOptions, Invocation, ServeMode, ServeOptions};
-pub(crate) use kept_in_output::{KeptInOutput, KeptPattern};
+pub(crate) use kept_in_output::{KeptInOutput, KeptPattern, LetterCase};
 pub(crate) use path_list::PathList;
 pub(crate) use search_indexing::SearchIndexing;
 pub(crate) use settings::Settings;

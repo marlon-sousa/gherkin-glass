@@ -30,7 +30,7 @@ use crate::ports::{FeatureParser, InputFolders};
 use crate::services::{GherkinParser, GherkinParserApi, InputCollectorApi};
 
 pub(crate) use list::{input_collector, listing_collector};
-pub(crate) use output::{folder, name, set, two_versions};
+pub(crate) use output::{folder, kept_in_output, name, set, two_versions};
 pub(crate) use serving::{Counted, FakeServer, FakeSignals, FakeWaiter, FakeWatcher, changed};
 
 /// A link from the tags that `pattern` matches whole, as the configuration gives it, for a

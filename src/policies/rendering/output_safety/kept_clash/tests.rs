@@ -1,16 +1,7 @@
 use rstest::rstest;
 
 use super::*;
-use crate::entities::KeptPattern;
-
-fn kept(patterns: &[&str]) -> KeptInOutput {
-    KeptInOutput::new(
-        patterns
-            .iter()
-            .map(|text| KeptPattern::new(text).expect("a valid pattern"))
-            .collect(),
-    )
-}
+use crate::test_support::kept_in_output as kept;
 
 fn set(paths: &[&str]) -> BTreeSet<FilePath> {
     paths.iter().map(|path| path.to_string()).collect()
@@ -41,6 +32,7 @@ const CHECKING: Moment<'static> = Moment::Checking { replace: true };
 #[case::the_marker(&["*.json"], clash("ghg-site.json", "*.json"))]
 #[case::a_folder_ghg_wrote(&["billing/"], clash("billing", "billing/"))]
 #[case::the_last_pattern_decides(&["*.html", "!*.html"], Ok(()))]
+#[case::whatever_the_case(&["Index.HTML"], clash("index.html", "Index.HTML"))]
 #[case::the_first_folder_by_folder(&["a.html", "index.html"], clash("billing/a.html", "a.html"))]
 fn a_pattern_that_keeps_what_ghg_wrote_clashes(
     #[case] patterns: &[&str],
@@ -100,6 +92,11 @@ fn a_pattern_that_keeps_a_version_clashes(
 )]
 #[case::at_the_root("custom.css", EntryKind::File, Ok(()))]
 #[case::in_a_folder_of_its_own("docs/custom.css", EntryKind::File, Ok(()))]
+#[case::in_a_folder_ghg_wrote_in_other_capitals(
+    "Billing/custom.css",
+    EntryKind::File,
+    clash("Billing/custom.css", "custom.css")
+)]
 fn something_kept_in_a_folder_ghg_writes_clashes(
     #[case] path: &str,
     #[case] kind: EntryKind,

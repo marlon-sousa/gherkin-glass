@@ -12,7 +12,7 @@ use std::path::Path;
 
 use marker_file::{marker_text, site_record, versions_record};
 
-use crate::entities::{EntryKind, FilePath, KeptInOutput, OutputContents, Record};
+use crate::entities::{EntryKind, FilePath, KeptInOutput, LetterCase, OutputContents, Record};
 use crate::ports::OutputFolders;
 
 #[derive(Debug, Default, Clone, Copy)]
@@ -115,7 +115,11 @@ impl Found<'_> {
             } else {
                 EntryKind::File
             };
-            if self.kept_in_output.keeping(&path, kind).is_some() {
+            if self
+                .kept_in_output
+                .keeping(&path, kind, LetterCase::AsWritten)
+                .is_some()
+            {
                 self.kept.insert(path, kind);
                 continue;
             }

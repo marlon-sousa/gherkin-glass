@@ -3,13 +3,17 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use super::{Moment, folder_by_folder, folders_of, made, written};
-use crate::entities::{BuildTarget, EntryKind, FilePath, KeptInOutput, Record, VersionName};
+use crate::entities::{
+    BuildTarget, EntryKind, FilePath, KeptInOutput, LetterCase, Record, VersionName,
+};
 use crate::errors::OutputErrorKind;
 
 /// What ghg writes, by its path in the output folder: its files and the folders that hold them.
 struct Written {
     files: BTreeSet<FilePath>,
     folders: BTreeSet<FilePath>,
+    /// Every path of `files` and `folders`, in small letters.
+    lowered: BTreeSet<String>,
 }
 
 /// Nothing, when `kept` keeps nothing ghg writes and `found_kept`, what the
@@ -39,7 +43,8 @@ pub(super) fn kept_clash(
         .chain(folders)
         .chain(found)
         .min_by(|one, other| folder_by_folder(&one.found, &other.found))
-        .map_or(Ok(()), |clash| Err(clash.into_error()))
+        .map(Clash::into_error)
+        .map_or(Ok(()), Err)
 }
 
 /// What ghg writes into the output folder: what the marker lists, the marker
@@ -60,21 +65,32 @@ fn what_ghg_writes(record: Option<&Record>, target: &BuildTarget, moment: Moment
     let recorded = record
         .map(|record| made(record, &files))
         .unwrap_or_default();
-    let folders = files
+    let folders: BTreeSet<FilePath> = files
         .iter()
         .flat_map(|file| folders_of(file))
         .chain(recorded)
         .chain(version_folder(target))
         .collect();
-    Written { files, folders }
+    let lowered = files
+        .iter()
+        .chain(&folders)
+        .map(|path| path.to_lowercase())
+        .collect();
+    Written {
+        files,
+        folders,
+        lowered,
+    }
 }
 
 impl Written {
-    /// Whether `path` is something ghg writes, or is in a folder ghg writes.
+    /// Whether `path` is something ghg writes, or is in a folder ghg writes,
+    /// whatever the case of its letters, as a file system that does not tell
+    /// capitals apart would find it.
     fn holds(&self, path: &str) -> bool {
-        self.files.contains(path)
-            || self.folders.contains(path)
-            || folders_of(path).any(|folder| self.folders.contains(&folder))
+        let path = path.to_lowercase();
+        self.lowered.contains(&path)
+            || folders_of(&path).any(|folder| self.lowered.contains(&folder))
     }
 }
 
@@ -109,7 +125,7 @@ impl Clash {
 
 /// The clash at `path`, when `kept` keeps it.
 fn clash_at(kept: &KeptInOutput, path: &str, kind: EntryKind) -> Option<Clash> {
-    let pattern = kept.keeping(path, kind)?;
+    let pattern = kept.keeping(path, kind, LetterCase::Whatever)?;
     Some(Clash {
         found: path.to_string(),
         pattern: pattern.as_str().to_string(),

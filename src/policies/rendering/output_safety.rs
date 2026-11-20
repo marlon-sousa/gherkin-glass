@@ -42,16 +42,17 @@ pub(crate) fn output_safety(
             record,
         } => (files, folders, kept, record),
     };
-    let record = marked(files, folders, &found_kept, record, target, moment)?;
+    let tops: BTreeSet<_> = files.iter().chain(&folders).filter_map(top_of).collect();
+    let record = marked(&files, &folders, &found_kept, record, target, moment)?;
     kept_clash(kept, &found_kept, record.as_ref(), target, moment)?;
-    Ok(record)
+    Ok(record.map(|record| found_only(record, &files, &tops)))
 }
 
 /// What the marker records, `None` when the folder holds nothing but what is
 /// kept, once nothing but what is kept stops `target` being written into it.
 fn marked(
-    files: BTreeSet<FilePath>,
-    folders: BTreeSet<FilePath>,
+    files: &BTreeSet<FilePath>,
+    folders: &BTreeSet<FilePath>,
     found_kept: &BTreeMap<FilePath, EntryKind>,
     record: Option<Record>,
     target: &BuildTarget,
@@ -92,7 +93,7 @@ fn marked(
         return Err(OutputErrorKind::MissingVersion { name: name.clone() });
     }
     already_built(&record, target, moment)?;
-    Ok(Some(found_only(record, &files)))
+    Ok(Some(record))
 }
 
 /// Whether every path `record` lists is a path inside the output folder:
@@ -115,17 +116,34 @@ fn is_plain_name(name: &str) -> bool {
     !matches!(name, "" | "." | "..")
 }
 
-/// `record`, its versions page listing only the files found, so that what is
-/// removed before the page is written again is always something in the folder,
-/// whatever a system reads as a separator.
-fn found_only(record: Record, files: &BTreeSet<FilePath>) -> Record {
+/// `record`, its versions page listing only the files found, and a site
+/// only the files whose name at the top of the folder, `tops`, was found
+/// there, so that what is removed before the page or the site is written
+/// again is always something in the folder, whatever a system reads as a
+/// separator.
+fn found_only(record: Record, files: &BTreeSet<FilePath>, tops: &BTreeSet<&str>) -> Record {
     match record {
         Record::Versions { page, versions } => Record::Versions {
             page: page.intersection(files).cloned().collect(),
             versions,
         },
-        site => site,
+        Record::Site(listed) => Record::Site(
+            listed
+                .into_iter()
+                .filter(|file| is_under(file, tops))
+                .collect(),
+        ),
     }
+}
+
+/// Whether the name at the top of the folder that `file` is, or is in, is one of `tops`.
+fn is_under(file: &FilePath, tops: &BTreeSet<&str>) -> bool {
+    top_of(file).is_some_and(|top| tops.contains(top))
+}
+
+/// The name at the top of the output folder that `path` is, or is in.
+fn top_of(path: &FilePath) -> Option<&str> {
+    path.split('/').next()
 }
 
 /// Paths compared folder by folder, as every list of paths is sorted.

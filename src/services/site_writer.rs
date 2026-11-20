@@ -1,5 +1,7 @@
 //! Service: the site writer, reading the front page's template, rendering the site tree, keeping from the last site the file of every node that has not changed, and writing its files into its output folder, with or without versions, once the folder is safe, or into memory.
 
+mod written_paths;
+
 use std::collections::{BTreeMap, BTreeSet};
 use std::io::Error as IoError;
 use std::path::Path;
@@ -14,6 +16,8 @@ use crate::entities::{
 use crate::errors::{BuildError, FrontPageError, FrontPageErrorKind, OutputError, OutputErrorKind};
 use crate::policies::{Moment, output_safety, render_site};
 use crate::ports::{FileReader, FileWriter, OutputFolders};
+
+use written_paths::{paths, planned, top_of};
 
 /// What the controller asks of the site writer.
 pub(crate) trait SiteWriterApi: Send + Sync {
@@ -239,36 +243,6 @@ fn versions(
     let mut versions = recorded_versions(folder);
     versions.insert(name.clone(), files.clone());
     versions
-}
-
-/// Every file the build of `target` writes, by its path in the output folder.
-fn planned(target: &BuildTarget, site: &SiteFiles) -> BTreeSet<FilePath> {
-    match target {
-        BuildTarget::Site => paths(&site.files),
-        BuildTarget::Version(name) => site
-            .files
-            .iter()
-            .map(|file| in_version(name, file))
-            .chain(paths(&site.root_files))
-            .collect(),
-    }
-}
-
-fn in_version(name: &VersionName, file: &SiteFile) -> FilePath {
-    format!("{name}/{}", file.address.as_str())
-}
-
-/// The name at the top of the output folder that `file` is, or is in.
-fn top_of(file: &str) -> Option<&str> {
-    file.split('/').next()
-}
-
-/// The path of each of `files`.
-fn paths(files: &[SiteFile]) -> BTreeSet<FilePath> {
-    files
-        .iter()
-        .map(|file| file.address.as_str().to_string())
-        .collect()
 }
 
 /// What stops writing `target` into `output`, said of the version's folder

@@ -3,34 +3,44 @@
 use std::path::Path;
 use std::sync::Arc;
 
+use derive_more::Constructor;
+
 use ignore::gitignore::{Gitignore, GitignoreBuilder};
 use ignore::{Error as IgnoreError, Match};
 
 use crate::entities::EntryKind;
 
 /// Every pattern, in the order given; the last that matches a path decides.
-#[derive(Debug, Clone, Default, PartialEq, Eq)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Constructor)]
 pub(crate) struct KeptInOutput {
     patterns: Vec<KeptPattern>,
 }
 
-/// One pattern, as it was given, with the gitignore rule it is.
+/// One pattern, as it was given, with the gitignore rule it is, and the same
+/// rule matching letters whatever their case.
 #[derive(Debug, Clone)]
 pub(crate) struct KeptPattern {
     text: String,
     rule: Arc<Gitignore>,
+    rule_whatever_the_case: Arc<Gitignore>,
+}
+
+/// How a pattern's letters are matched: as written, as git does, or whatever
+/// their case, as a file system that does not tell capitals apart would.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum LetterCase {
+    AsWritten,
+    Whatever,
 }
 
 impl KeptPattern {
     /// The pattern `text` is; `Err` with the `ignore` crate's words when it
     /// is not valid in the gitignore syntax.
     pub(crate) fn new(text: &str) -> Result<KeptPattern, String> {
-        let mut builder = GitignoreBuilder::new(".");
-        builder.add_line(None, text).map_err(glob_reason)?;
-        let rule = builder.build().map_err(glob_reason)?;
         Ok(KeptPattern {
             text: text.to_string(),
-            rule: Arc::new(rule),
+            rule: Arc::new(rule(text, LetterCase::AsWritten)?),
+            rule_whatever_the_case: Arc::new(rule(text, LetterCase::Whatever)?),
         })
     }
 
@@ -40,8 +50,12 @@ impl KeptPattern {
 
     /// The pattern with `true` when it keeps `path`, `false` when it gives
     /// it back to ghg, with `!`, and `None` when it does not match it.
-    fn decision(&self, path: &str, is_folder: bool) -> Option<(&Self, bool)> {
-        match self.rule.matched(Path::new(path), is_folder) {
+    fn decision(&self, path: &str, is_folder: bool, case: LetterCase) -> Option<(&Self, bool)> {
+        let rule = match case {
+            LetterCase::AsWritten => &self.rule,
+            LetterCase::Whatever => &self.rule_whatever_the_case,
+        };
+        match rule.matched(Path::new(path), is_folder) {
             Match::Ignore(_) => Some((self, true)),
             Match::Whitelist(_) => Some((self, false)),
             Match::None => None,
@@ -60,26 +74,33 @@ impl PartialEq for KeptPattern {
 impl Eq for KeptPattern {}
 
 impl KeptInOutput {
-    pub(crate) fn new(patterns: Vec<KeptPattern>) -> Self {
-        KeptInOutput { patterns }
-    }
-
     /// The pattern that keeps `path`, a path inside the output folder, or a
-    /// folder it is in, `None` when it is ghg's to write. What a folder
-    /// kept holds is kept whatever a later pattern says, as in gitignore.
-    pub(crate) fn keeping(&self, path: &str, kind: EntryKind) -> Option<&KeptPattern> {
+    /// folder it is in, its letters matched as `case` says, `None` when it is
+    /// ghg's to write. What a folder kept holds is kept whatever a later
+    /// pattern says, as in gitignore.
+    pub(crate) fn keeping(
+        &self,
+        path: &str,
+        kind: EntryKind,
+        case: LetterCase,
+    ) -> Option<&KeptPattern> {
         folders_of(path)
-            .find_map(|folder| self.keeping_itself(folder, true))
-            .or_else(|| self.keeping_itself(path, kind == EntryKind::Folder))
+            .find_map(|folder| self.keeping_itself(folder, true, case))
+            .or_else(|| self.keeping_itself(path, kind == EntryKind::Folder, case))
     }
 
     /// The pattern that keeps `path` itself, the last that matches it.
-    fn keeping_itself(&self, path: &str, is_folder: bool) -> Option<&KeptPattern> {
+    fn keeping_itself(
+        &self,
+        path: &str,
+        is_folder: bool,
+        case: LetterCase,
+    ) -> Option<&KeptPattern> {
         let (pattern, keeps) = self
             .patterns
             .iter()
             .rev()
-            .find_map(|pattern| pattern.decision(path, is_folder))?;
+            .find_map(|pattern| pattern.decision(path, is_folder, case))?;
         keeps.then_some(pattern)
     }
 }
@@ -88,6 +109,16 @@ impl KeptInOutput {
 fn folders_of(path: &str) -> impl Iterator<Item = &str> {
     path.match_indices('/')
         .filter_map(|(end, _)| path.get(..end))
+}
+
+/// The rule of the pattern `text`, its letters matched as `case` says.
+fn rule(text: &str, case: LetterCase) -> Result<Gitignore, String> {
+    let mut builder = GitignoreBuilder::new(".");
+    builder
+        .case_insensitive(case == LetterCase::Whatever)
+        .map_err(glob_reason)?;
+    builder.add_line(None, text).map_err(glob_reason)?;
+    builder.build().map_err(glob_reason)
 }
 
 /// The words of `error`: for a glob, only what is wrong with it, since the
@@ -104,15 +135,7 @@ mod tests {
     use rstest::rstest;
 
     use super::*;
-
-    fn kept_in_output(patterns: &[&str]) -> KeptInOutput {
-        KeptInOutput::new(
-            patterns
-                .iter()
-                .map(|text| KeptPattern::new(text).expect("a valid pattern"))
-                .collect(),
-        )
-    }
+    use crate::test_support::kept_in_output;
 
     // Rule 225.
     #[rstest]
@@ -134,7 +157,22 @@ mod tests {
         #[case] keeping: Option<&str>,
     ) {
         let kept = kept_in_output(patterns);
-        assert_eq!(kept.keeping(path, kind).map(KeptPattern::as_str), keeping);
+        let keeping_as_written = kept.keeping(path, kind, LetterCase::AsWritten);
+        assert_eq!(keeping_as_written.map(KeptPattern::as_str), keeping);
+    }
+
+    #[test]
+    fn letters_match_as_written_or_whatever_their_case() {
+        let kept = kept_in_output(&["Assets"]);
+        let folder = EntryKind::Folder;
+        assert!(
+            kept.keeping("assets", folder, LetterCase::AsWritten)
+                .is_none()
+        );
+        assert!(
+            kept.keeping("assets", folder, LetterCase::Whatever)
+                .is_some()
+        );
     }
 
     // Rule 226.
