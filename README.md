@@ -43,7 +43,7 @@ Install gherkin-glass in one of these ways:
 
 - `cargo install gherkin-glass`, which builds it with Rust's package manager;
 - `cargo binstall gherkin-glass`, which downloads the released binary instead of building it;
-- or download the archive for your system from the [releases page](https://github.com/marlon-sousa/gherkin-glass/releases), check it against the release's `SHA256SUMS` if you wish, and put `ghg`, and `cargo-ghg` for `cargo ghg`, somewhere on your path. There are archives for Linux on x86-64 and ARM64, macOS on Intel and Apple silicon, and Windows on x86-64.
+- or download the archive for your system from the [releases page](https://github.com/marlon-sousa/gherkin-glass/releases), check it against the release's `SHA256SUMS` if you wish, and put `ghg`, and `cargo-ghg` for `cargo ghg`, somewhere on your path. There are archives for Linux on x86-64 and ARM64, macOS on Intel and Apple silicon, and Windows on x86-64 and ARM64.
 
 An alpha or a beta, a preview of a version released before it, such as 1.1.0-alpha.1 before 1.1.0, is released on GitHub only, not on crates.io. Install it from its archive on the releases page, or build it with `cargo install --git https://github.com/marlon-sousa/gherkin-glass --tag <tag> gherkin-glass --locked`, naming its tag, such as `v1.1.0-alpha.1`.
 

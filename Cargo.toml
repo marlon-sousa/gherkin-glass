@@ -90,6 +90,10 @@ bin-dir = "{ bin }{ binary-ext }"
 pkg-url = "{ repo }/releases/download/v{ version }/ghg-v{ version }-{ target }.zip"
 pkg-fmt = "zip"
 
+[package.metadata.binstall.overrides.aarch64-pc-windows-msvc]
+pkg-url = "{ repo }/releases/download/v{ version }/ghg-v{ version }-{ target }.zip"
+pkg-fmt = "zip"
+
 [dev-dependencies]
 proptest = { version = "1.12.0", default-features = false, features = ["std"] }
 rstest = { version = "0.28.0", default-features = false }

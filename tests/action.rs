@@ -420,6 +420,7 @@ fn the_archive_is_the_runners_system_and_processor() {
         ("macOS", "X64", "x86_64-apple-darwin"),
         ("macOS", "ARM64", "aarch64-apple-darwin"),
         ("Windows", "X64", "x86_64-pc-windows-msvc"),
+        ("Windows", "ARM64", "aarch64-pc-windows-msvc"),
     ];
     for (os, arch, target) in platforms {
         github.release("1.0.0", target, None);
@@ -439,7 +440,7 @@ fn the_archive_is_the_runners_system_and_processor() {
             "{target}"
         );
     }
-    for (os, arch) in [("Linux", "ARM"), ("Windows", "ARM64"), ("Linux", "X86")] {
+    for (os, arch) in [("Linux", "ARM"), ("Windows", "X86"), ("Linux", "X86")] {
         let runner = Runner::new("1.0.0").on(os, arch);
         fails(
             &runner,

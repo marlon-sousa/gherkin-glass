@@ -503,7 +503,7 @@ The workflow's own checks test these rules: on every tag before anything is publ
 
 ### The archives
 
-161. A release has one archive for each of five targets, all 64-bit, named `ghg-<tag>-<target>.tar.gz`, or `ghg-<tag>-<target>.zip` for Windows, such as `ghg-v0.1.0-x86_64-unknown-linux-musl.tar.gz`, where the tag is the one pushed and the target is the Rust target the binaries were built for:
+161. A release has one archive for each of six targets, all 64-bit, named `ghg-<tag>-<target>.tar.gz`, or `ghg-<tag>-<target>.zip` for Windows, such as `ghg-v0.1.0-x86_64-unknown-linux-musl.tar.gz`, where the tag is the one pushed and the target is the Rust target the binaries were built for:
 
     | Target | Platform | Archive |
     | --- | --- | --- |
@@ -512,6 +512,7 @@ The workflow's own checks test these rules: on every tag before anything is publ
     | `x86_64-apple-darwin` | macOS on Intel | `.tar.gz` |
     | `aarch64-apple-darwin` | macOS on Apple silicon | `.tar.gz` |
     | `x86_64-pc-windows-msvc` | Windows on x86-64 | `.zip` |
+    | `aarch64-pc-windows-msvc` | Windows on ARM64 | `.zip` |
 
     Checked by `.github/release/check-archive.sh` and `.github/release/check-binstall.sh` on every build, and the first by `.github/release/test-check-archive.sh` with archives it makes.
 162. Each archive holds, at its root and not inside a folder, every binary the crate declares, `ghg` and `cargo-ghg`, ending in `.exe` on Windows, and the licence files `LICENSE-MIT` and `LICENSE-APACHE`, and nothing else. Checked by `.github/release/check-archive.sh` on every build, and by `.github/release/test-check-archive.sh` with archives it makes.
@@ -535,7 +536,7 @@ When the action stops, it says why in one sentence, which the workflow's log sho
 
 169. The action always installs `ghg`, and puts its folder on the `PATH` of the job's later steps, so that a workflow can also run `ghg` itself. Fixture: made by the test.
 170. The input `version` names the release to install, such as `1.2.0`, or `v1.2.0` with the tag's `v`, a pre-release such as `1.3.0-rc.1` included, written as [Semantic Versioning](https://semver.org/) writes a version without build metadata. Anything that is not a version stops the action with `version must be a version of ghg, such as 1.2.0.` When `version` is empty, its default, the action installs the newest release compatible with its own version, the one in the `Cargo.toml` of the action's commit, as Cargo counts compatibility: the same major version, so that `@v1` never installs a 2.x `ghg`, and while the major version is 0, the same minor version too. Only a published release whose tag is a plain version, such as `v1.2.0`, is counted, never a draft, so a pre-release is installed only when `version` names it. When none is compatible, the action stops with `ghg has no release compatible with this action's version.` Fixture: made by the test.
-171. The action installs the release's archive for the runner's system and processor, as [Releases](#releases), rules 161 to 163, describes it: Linux on x86-64 or ARM64, macOS on Intel or Apple silicon, and Windows on x86-64. On any other, it stops with `ghg has no build for <system> on <processor>.`, in the runner's own words for them, such as `Windows on ARM64`. An archive the release does not have stops it with `<archive> cannot be downloaded from the release v<version> of ghg.` Fixture: made by the test.
+171. The action installs the release's archive for the runner's system and processor, as [Releases](#releases), rules 161 to 163, describes it: Linux on x86-64 or ARM64, macOS on Intel or Apple silicon, and Windows on x86-64 or ARM64. On any other, it stops with `ghg has no build for <system> on <processor>.`, in the runner's own words for them, such as `Linux on ARM`. An archive the release does not have stops it with `<archive> cannot be downloaded from the release v<version> of ghg.` Fixture: made by the test.
 172. The archive is checked against the release's `SHA256SUMS` file before anything is installed. An archive whose checksum differs stops the action with `<archive> does not match its checksum in SHA256SUMS.`, and one the file does not list with `<archive> is not in the release's SHA256SUMS.` Fixture: made by the test.
 173. An installed `ghg` is kept in the runner's tool cache, by version and platform, and a later run that finds it there installs it without downloading it again. GitHub's own runners start every job with an empty tool cache, so there it saves the download only when the action runs again in the same job; a self-hosted runner keeps it from job to job. Fixture: made by the test.
 
