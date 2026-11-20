@@ -3,9 +3,13 @@ use std::collections::{BTreeMap, BTreeSet};
 use rstest::rstest;
 
 use super::*;
+use crate::test_support::kept_in_output;
 
-const KEEP: Moment = Moment::Checking { replace: false };
-const REPLACE: Moment = Moment::Checking { replace: true };
+const KEEP: Moment<'static> = Moment::Checking { replace: false };
+const REPLACE: Moment<'static> = Moment::Checking { replace: true };
+const WRITING: Moment<'static> = Moment::Writing {
+    site: &BTreeSet::new(),
+};
 
 fn name(text: &str) -> VersionName {
     VersionName::new(text).unwrap_or_else(|| panic!("{text} is a version name"))
@@ -13,6 +17,15 @@ fn name(text: &str) -> VersionName {
 
 fn set(paths: &[&str]) -> BTreeSet<FilePath> {
     paths.iter().map(|path| path.to_string()).collect()
+}
+
+/// What the policy says of `contents`, with nothing kept.
+fn judged(
+    contents: OutputContents,
+    target: &BuildTarget,
+    moment: Moment<'_>,
+) -> Result<Option<Record>, OutputErrorKind> {
+    output_safety(contents, target, moment, &KeptInOutput::default())
 }
 
 fn version(text: &str) -> BuildTarget {
@@ -43,6 +56,7 @@ fn site_folder(files: &[&str], folders: &[&str]) -> OutputContents {
             .chain(set(files))
             .collect(),
         folders: set(&["sub"]).into_iter().chain(set(folders)).collect(),
+        kept: BTreeMap::new(),
         record: Some(site()),
     }
 }
@@ -70,6 +84,7 @@ fn versions_folder(files: &[&str], folders: &[&str], gone: &[&str]) -> OutputCon
             files,
         ),
         folders: all(&["assets", "main", "v1.0.0", "v1.0.0/sub"], folders),
+        kept: BTreeMap::new(),
         record: Some(versions()),
     }
 }
@@ -78,14 +93,14 @@ fn versions_folder(files: &[&str], folders: &[&str], gone: &[&str]) -> OutputCon
 #[case::missing(OutputContents::Missing, BuildTarget::Site)]
 #[case::missing_for_a_version(OutputContents::Missing, version("main"))]
 #[case::empty(
-    OutputContents::Folder { files: BTreeSet::new(), folders: BTreeSet::new(), record: None },
+    OutputContents::Folder { files: BTreeSet::new(), folders: BTreeSet::new(), kept: BTreeMap::new(), record: None },
     version("main")
 )]
 fn a_missing_or_empty_folder_is_marked(
     #[case] contents: OutputContents,
     #[case] target: BuildTarget,
 ) {
-    assert_eq!(output_safety(contents, &target, REPLACE), Ok(None));
+    assert_eq!(judged(contents, &target, REPLACE), Ok(None));
 }
 
 #[rstest]
@@ -102,7 +117,7 @@ fn a_safe_folder_is_built_into(
     #[case] target: BuildTarget,
     #[case] record: Record,
 ) {
-    assert_eq!(output_safety(contents, &target, REPLACE), Ok(Some(record)));
+    assert_eq!(judged(contents, &target, REPLACE), Ok(Some(record)));
 }
 
 #[rstest]
@@ -112,12 +127,12 @@ fn a_safe_folder_is_built_into(
     OutputErrorKind::NotASite
 )]
 #[case::unmarked(
-    OutputContents::Folder { files: set(&["notes.txt"]), folders: BTreeSet::new(), record: None },
+    OutputContents::Folder { files: set(&["notes.txt"]), folders: BTreeSet::new(), kept: BTreeMap::new(), record: None },
     version("main"),
     OutputErrorKind::NotASite
 )]
 #[case::unmarked_folder(
-    OutputContents::Folder { files: BTreeSet::new(), folders: set(&["docs"]), record: None },
+    OutputContents::Folder { files: BTreeSet::new(), folders: set(&["docs"]), kept: BTreeMap::new(), record: None },
     BuildTarget::Site,
     OutputErrorKind::NotASite
 )]
@@ -154,27 +169,27 @@ fn an_unsafe_folder_is_refused(
     #[case] target: BuildTarget,
     #[case] refused: OutputErrorKind,
 ) {
-    assert_eq!(output_safety(contents, &target, REPLACE), Err(refused));
+    assert_eq!(judged(contents, &target, REPLACE), Err(refused));
 }
 
 #[rstest]
 #[case::site(site_folder(&[], &[]), BuildTarget::Site, KEEP, Err(OutputErrorKind::AlreadyBuilt))]
 #[case::listed_version(versions_folder(&[], &[], &[]), version("main"), KEEP, Err(OutputErrorKind::AlreadyBuilt))]
 #[case::new_version(versions_folder(&[], &[], &[]), version("v2.0.0"), KEEP, Ok(Some(versions())))]
-#[case::site_when_writing(site_folder(&[], &[]), BuildTarget::Site, Moment::Writing, Ok(Some(site())))]
+#[case::site_when_writing(site_folder(&[], &[]), BuildTarget::Site, WRITING, Ok(Some(site())))]
 #[case::version_when_writing(
     versions_folder(&[], &[], &[]),
     version("main"),
-    Moment::Writing,
+    WRITING,
     Ok(Some(versions()))
 )]
 fn a_build_replaces_only_when_allowed(
     #[case] contents: OutputContents,
     #[case] target: BuildTarget,
-    #[case] moment: Moment,
+    #[case] moment: Moment<'static>,
     #[case] outcome: Result<Option<Record>, OutputErrorKind>,
 ) {
-    assert_eq!(output_safety(contents, &target, moment), outcome);
+    assert_eq!(judged(contents, &target, moment), outcome);
 }
 
 #[rstest]
@@ -189,6 +204,7 @@ fn listing(listed: &str) -> OutputContents {
     OutputContents::Folder {
         files: set(&["ghg-site.json"]),
         folders: BTreeSet::new(),
+        kept: BTreeMap::new(),
         record: Some(Record::Site(set(&[listed]))),
     }
 }
@@ -202,7 +218,7 @@ fn listing(listed: &str) -> OutputContents {
 #[case::this_folder("./index.html")]
 fn a_marker_listing_a_path_outside_the_folder_is_no_marker(#[case] listed: &str) {
     assert_eq!(
-        output_safety(listing(listed), &BuildTarget::Site, REPLACE),
+        judged(listing(listed), &BuildTarget::Site, REPLACE),
         Err(OutputErrorKind::NotASite)
     );
 }
@@ -220,10 +236,11 @@ fn a_versions_marker_listing_a_path_outside_the_folder_is_no_marker(#[case] reco
     let contents = OutputContents::Folder {
         files: set(&["ghg-versions.json"]),
         folders: BTreeSet::new(),
+        kept: BTreeMap::new(),
         record: Some(record),
     };
     assert_eq!(
-        output_safety(contents, &version("main"), REPLACE),
+        judged(contents, &version("main"), REPLACE),
         Err(OutputErrorKind::NotASite)
     );
 }
@@ -233,10 +250,11 @@ fn the_first_thing_found_is_named_folder_by_folder() {
     let contents = OutputContents::Folder {
         files: set(&["ghg-site.json", "a/index.html", "a/b.txt", "a-c.txt"]),
         folders: set(&["a"]),
+        kept: BTreeMap::new(),
         record: Some(Record::Site(set(&["a/index.html"]))),
     };
     assert_eq!(
-        output_safety(contents, &BuildTarget::Site, REPLACE),
+        judged(contents, &BuildTarget::Site, REPLACE),
         Err(OutputErrorKind::NotSafe {
             found: "a/b.txt".into()
         })
@@ -250,10 +268,11 @@ fn a_page_name_any_system_allows_is_ghg_s(#[case] page: &str) {
     let contents = OutputContents::Folder {
         files: set(&["ghg-site.json", page]),
         folders: BTreeSet::new(),
+        kept: BTreeMap::new(),
         record: Some(Record::Site(set(&[page]))),
     };
     assert_eq!(
-        output_safety(contents, &BuildTarget::Site, REPLACE),
+        judged(contents, &BuildTarget::Site, REPLACE),
         Ok(Some(Record::Site(set(&[page]))))
     );
 }
@@ -270,10 +289,98 @@ fn only_the_versions_page_s_files_found_are_kept_for_removal() {
             ]),
         });
     }
-    let Ok(Some(Record::Versions { page, .. })) =
-        output_safety(contents, &version("main"), REPLACE)
+    let Ok(Some(Record::Versions { page, .. })) = judged(contents, &version("main"), REPLACE)
     else {
         panic!("the folder is safe");
     };
     assert_eq!(page, set(&["index.html"]));
+}
+
+/// A folder holding `files` and `folders`, with `kept` found kept, and no marker.
+fn holding_kept(files: &[&str], folders: &[&str], kept: &[(&str, EntryKind)]) -> OutputContents {
+    OutputContents::Folder {
+        files: set(files),
+        folders: set(folders),
+        kept: kept
+            .iter()
+            .map(|(path, kind)| (path.to_string(), *kind))
+            .collect(),
+        record: None,
+    }
+}
+
+// Rule 227.
+#[rstest]
+#[case::only_what_is_kept(holding_kept(&[], &[], &[(".nojekyll", EntryKind::File), (".git", EntryKind::Folder)]), Ok(None))]
+#[case::a_folder_holding_only_what_is_kept(holding_kept(&[], &["docs"], &[("docs/CNAME", EntryKind::File)]), Ok(None))]
+#[case::a_folder_holding_more(
+    holding_kept(&["docs/notes.txt"], &["docs"], &[("docs/CNAME", EntryKind::File)]),
+    Err(OutputErrorKind::NotASite)
+)]
+fn what_is_kept_counts_as_nothing_in_the_folder(
+    #[case] contents: OutputContents,
+    #[case] outcome: Result<Option<Record>, OutputErrorKind>,
+) {
+    let kept = kept_in_output(&[".nojekyll", ".git", "CNAME"]);
+    assert_eq!(
+        output_safety(contents, &BuildTarget::Site, REPLACE, &kept),
+        outcome
+    );
+}
+
+// Rule 227: a marked folder holding what is kept beside what ghg wrote is still safe.
+#[test]
+fn a_marked_folder_holding_what_is_kept_is_safe() {
+    let mut contents = site_folder(&[], &[]);
+    if let OutputContents::Folder { kept, .. } = &mut contents {
+        kept.insert("CNAME".into(), EntryKind::File);
+    }
+    let kept = kept_in_output(&["CNAME"]);
+    assert_eq!(
+        output_safety(contents, &BuildTarget::Site, REPLACE, &kept),
+        Ok(Some(site()))
+    );
+}
+
+// Rule 228: a file of the versions page the marker lists, kept, stops the build.
+#[test]
+fn a_kept_file_of_the_versions_page_is_a_clash() {
+    let mut contents = versions_folder(&[], &[], &["assets/ghg.css"]);
+    if let OutputContents::Folder { kept, .. } = &mut contents {
+        kept.insert("assets/ghg.css".into(), EntryKind::File);
+    }
+    assert_eq!(
+        output_safety(
+            contents,
+            &version("main"),
+            REPLACE,
+            &kept_in_output(&["ghg.css"])
+        ),
+        Err(OutputErrorKind::KeptClash {
+            found: "assets/ghg.css".into(),
+            pattern: "ghg.css".into(),
+        })
+    );
+}
+
+// Rule 38: what an earlier site is emptied of is always something found in the folder.
+#[test]
+fn a_site_s_marker_keeps_only_the_files_under_a_name_found_at_the_top() {
+    let listed = [
+        "index.html",
+        "sub/page.html",
+        "gone/a.html",
+        "..\\victim.html",
+        "C:\\victim",
+    ];
+    let contents = OutputContents::Folder {
+        files: set(&["ghg-site.json", "index.html"]),
+        folders: set(&["sub"]),
+        kept: BTreeMap::new(),
+        record: Some(Record::Site(set(&listed))),
+    };
+    assert_eq!(
+        judged(contents, &BuildTarget::Site, REPLACE),
+        Ok(Some(Record::Site(set(&["index.html", "sub/page.html"]))))
+    );
 }

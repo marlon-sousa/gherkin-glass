@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Checks the archives of a release, and what Cargo.toml tells cargo binstall
 # about them, against docs/BEHAVIOUR.md, "Releases", rules 161 and 168: there is
-# one archive for each of the five targets, and for each target the address
+# one archive for each of the six targets, and for each target the address
 # [package.metadata.binstall] gives is that archive's on the release of the
 # tag, with every binary at the archive's root.
 # Usage: check-binstall.sh <tag> <folder holding the archives>
@@ -9,7 +9,7 @@
 set -euo pipefail
 
 tag=$1 dist=$2
-targets="aarch64-apple-darwin aarch64-unknown-linux-musl x86_64-apple-darwin x86_64-pc-windows-msvc x86_64-unknown-linux-musl"
+targets="aarch64-apple-darwin aarch64-pc-windows-msvc aarch64-unknown-linux-musl x86_64-apple-darwin x86_64-pc-windows-msvc x86_64-unknown-linux-musl"
 package=$(cargo metadata --no-deps --format-version 1 | jq '.packages[] | select(.name == "gherkin-glass")')
 version=$(jq -r .version <<< "$package")
 repository=$(jq -r .repository <<< "$package")

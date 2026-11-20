@@ -1,0 +1,3 @@
+title = "Kept files"
+# What a GitHub Pages branch holds beside the site.
+keep_in_output = [".nojekyll", "/CNAME", ".git"]

@@ -1,5 +1,7 @@
 //! Service: the site writer, reading the front page's template, rendering the site tree, keeping from the last site the file of every node that has not changed, and writing its files into its output folder, with or without versions, once the folder is safe, or into memory.
 
+mod written_paths;
+
 use std::collections::{BTreeMap, BTreeSet};
 use std::io::Error as IoError;
 use std::path::Path;
@@ -8,12 +10,14 @@ use std::sync::Arc;
 use bon::Builder;
 
 use crate::entities::{
-    BuildFolder, BuildTarget, Destination, FilePath, FrontPageTemplate, Record, RenderedSite,
-    ServedSite, Settings, SiteFile, SiteFiles, SiteTree, VersionName,
+    BuildFolder, BuildTarget, Destination, FilePath, FrontPageTemplate, KeptInOutput, Record,
+    RenderedSite, ServedSite, Settings, SiteFile, SiteFiles, SiteTree, VersionName,
 };
 use crate::errors::{BuildError, FrontPageError, FrontPageErrorKind, OutputError, OutputErrorKind};
 use crate::policies::{Moment, output_safety, render_site};
 use crate::ports::{FileReader, FileWriter, OutputFolders};
+
+use written_paths::{paths, planned, top_of};
 
 /// What the controller asks of the site writer.
 pub(crate) trait SiteWriterApi: Send + Sync {
@@ -75,7 +79,10 @@ impl SiteWriter {
             write_files(self.memory_files.as_ref(), output, files)?;
             return Ok(self.memory_files.site(output));
         }
-        let folder = self.check_folder(output, &target(settings), Moment::Writing)?;
+        let target = target(settings);
+        let planned = planned(&target, site);
+        let moment = Moment::Writing { site: &planned };
+        let folder = self.check_folder(output, &target, moment, &settings.keep_in_output)?;
         let written = paths(files);
         match folder.target() {
             BuildTarget::Site => {
@@ -102,26 +109,35 @@ impl SiteWriter {
     }
 
     /// The output folder, once nothing stops `target` being written into it
-    /// at `moment`, with what its marker records. Nothing is written.
+    /// at `moment`, leaving alone what `kept` keeps, with what its marker
+    /// records. Nothing is written.
     fn check_folder(
         &self,
         output: &Path,
         target: &BuildTarget,
-        moment: Moment,
+        moment: Moment<'_>,
+        kept: &KeptInOutput,
     ) -> Result<BuildFolder, OutputError> {
         let error = |kind| refusal(output, target, kind);
         let contents = self
             .folders
-            .contents(output, target.left_alone())
+            .contents(output, target.left_alone(), kept)
             .map_err(|io| error(cannot_be_read(&io)))?;
-        let record = output_safety(contents, target, moment).map_err(error)?;
+        let record = output_safety(contents, target, moment, kept).map_err(error)?;
         Ok(BuildFolder::new(output, target.clone(), record))
     }
 
-    /// Empties the output folder of a site without versions.
+    /// Empties the output folder of a site without versions of what ghg
+    /// wrote there, which is all it holds but what is kept, and which holds
+    /// nothing kept.
     fn clear(&self, folder: &BuildFolder) -> Result<(), OutputError> {
-        self.folders
-            .clear(folder.output())
+        let Some(Record::Site(files)) = folder.record() else {
+            return Ok(());
+        };
+        let output = folder.output();
+        let tops: BTreeSet<_> = files.iter().filter_map(|file| top_of(file)).collect();
+        tops.into_iter()
+            .try_for_each(|top| self.folders.remove(&output.join(top)))
             .map_err(|io| cannot_write(folder, None, &io))
     }
 
@@ -157,7 +173,12 @@ impl SiteWriterApi for SiteWriter {
         let moment = Moment::Checking {
             replace: settings.replace,
         };
-        let folder = self.check_folder(&settings.output, &target(settings), moment)?;
+        let folder = self.check_folder(
+            &settings.output,
+            &target(settings),
+            moment,
+            &settings.keep_in_output,
+        )?;
         Ok(built_versions(&folder))
     }
 
@@ -222,14 +243,6 @@ fn versions(
     let mut versions = recorded_versions(folder);
     versions.insert(name.clone(), files.clone());
     versions
-}
-
-/// The path of each of `files`.
-fn paths(files: &[SiteFile]) -> BTreeSet<FilePath> {
-    files
-        .iter()
-        .map(|file| file.address.as_str().to_string())
-        .collect()
 }
 
 /// What stops writing `target` into `output`, said of the version's folder

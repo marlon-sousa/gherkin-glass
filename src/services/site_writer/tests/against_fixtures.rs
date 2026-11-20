@@ -7,7 +7,7 @@ use std::sync::Arc;
 use rstest::rstest;
 
 use crate::adapters::{FileSystemReader, FolderFiles, MemoryFiles, OutputFolderStore};
-use crate::entities::{BuildTarget, Record, VersionName};
+use crate::entities::{BuildTarget, KeptInOutput, Record, VersionName};
 use crate::errors::{OutputError, OutputErrorKind};
 use crate::policies::Moment;
 use crate::services::SiteWriter;
@@ -32,13 +32,13 @@ fn version(text: &str) -> BuildTarget {
     BuildTarget::Version(name(text))
 }
 
-const REPLACE: Moment = Moment::Checking { replace: true };
-const KEEP: Moment = Moment::Checking { replace: false };
+const REPLACE: Moment<'static> = Moment::Checking { replace: true };
+const KEEP: Moment<'static> = Moment::Checking { replace: false };
 
 fn check(
     output: &Path,
     target: &BuildTarget,
-    moment: Moment,
+    moment: Moment<'_>,
 ) -> Result<Option<Record>, OutputError> {
     let writer = SiteWriter::builder()
         .file_reader(Arc::new(FileSystemReader))
@@ -47,7 +47,7 @@ fn check(
         .memory_files(Arc::new(MemoryFiles::default()))
         .build();
     writer
-        .check_folder(output, target, moment)
+        .check_folder(output, target, moment, &KeptInOutput::default())
         .map(|folder| folder.record().cloned())
 }
 
@@ -179,12 +179,14 @@ mod links {
     }
 
     #[test]
-    fn clearing_a_folder_removes_a_link_and_never_what_it_points_to() {
+    fn removing_a_folder_removes_a_link_and_never_what_it_points_to() {
         let output = output_copy("link-cleared");
         let kept = scratch("output/link-kept");
         write(kept.join("notes.txt"), "kept").expect("written");
         symlink(&kept, output.join("v1.0.0/kept")).expect("linked");
-        OutputFolderStore.clear(&output).expect("cleared");
+        OutputFolderStore
+            .remove(&output.join("v1.0.0"))
+            .expect("removed");
         assert!(kept.join("notes.txt").is_file());
     }
 }

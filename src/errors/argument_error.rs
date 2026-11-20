@@ -5,7 +5,7 @@ use std::fmt::{Formatter, Result as FmtResult};
 use i18n_embed_fl::fl;
 use thiserror::Error;
 
-use super::invalid_version_name;
+use super::{invalid_kept_pattern, invalid_version_name};
 use crate::policies::CATALOGUE;
 
 /// Each `String` is what was typed, shown as it was typed, an option with its dashes.
@@ -36,6 +36,9 @@ pub(crate) enum ArgumentError {
     PreviewWithVersionName,
     #[error(fmt = invalid_version_name)]
     InvalidVersionName { name: String },
+    /// `reason` is the `ignore` crate's.
+    #[error(fmt = invalid_kept_pattern)]
+    InvalidKeptPattern { pattern: String, reason: String },
 }
 
 impl ArgumentError {

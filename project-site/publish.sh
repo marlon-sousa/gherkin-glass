@@ -4,16 +4,15 @@
 # site". Run from inside the repository's checkout, whose origin is GitHub.
 #
 # Usage:
-#   project-site/publish.sh open <pages> <site>
+#   project-site/publish.sh open <pages>
 #     Checks out the gh-pages branch into <pages>, a new git worktree,
 #     creating the branch, with only a .nojekyll file, when origin has none.
-#     Copies what ghg wrote there into <site>, a new folder, for ghg to build
-#     into: ghg builds only into a folder that holds nothing but what it wrote.
-#   project-site/publish.sh publish <pages> <site> <version>
-#     After ghg has built <version> into <site>, puts <site> in place of what
-#     ghg wrote in <pages>, commits <version>/, the versions page, its assets/
-#     and the marker, and pushes gh-pages to origin. It fails, committing
-#     nothing, when anything else has changed.
+#     ghg then builds the version straight into <pages>, keeping .nojekyll and
+#     .git, the worktree's own file, with --keep-in-output.
+#   project-site/publish.sh publish <pages> <version>
+#     After ghg has built <version> into <pages>, commits <version>/, the
+#     versions page, its assets/ and the marker, and pushes gh-pages to
+#     origin. It fails, committing nothing, when anything else has changed.
 
 set -euo pipefail
 
@@ -25,23 +24,12 @@ versions_assets=assets
 marker=ghg-versions.json
 
 usage() {
-  echo "Usage: project-site/publish.sh open <pages> <site> | project-site/publish.sh publish <pages> <site> <version>" >&2
+  echo "Usage: project-site/publish.sh open <pages> | project-site/publish.sh publish <pages> <version>" >&2
   exit 2
 }
 
-# Copies every file and folder at the root of <from>, but .git and .nojekyll,
-# which ghg did not write, into <to>.
-copy_site() {
-  local from=$1 to=$2
-  find "$from" -mindepth 1 -maxdepth 1 ! -name .git ! -name .nojekyll -exec cp -R {} "$to"/ \;
-}
-
 open() {
-  local folder=$1 site=$2
-  if [ -e "$site" ]; then
-    echo "$site: already exists, so ghg could not build into it alone." >&2
-    exit 1
-  fi
+  local folder=$1
   local found=0
   git ls-remote --exit-code origin refs/heads/gh-pages >/dev/null || found=$?
   if [ "$found" -eq 0 ]; then
@@ -56,12 +44,10 @@ open() {
     # Jekyll leaves out every file and folder whose name starts with _.
     touch "$folder/.nojekyll"
   fi
-  mkdir -p "$site"
-  copy_site "$folder" "$site"
 }
 
 publish() {
-  local folder=$1 site=$2 version=$3
+  local folder=$1 version=$2
   case "$version" in
     "" | . | .. | .* | */* | *\\*)
       echo "$version: a version is one folder name, not empty and not starting with a dot." >&2
@@ -72,16 +58,14 @@ publish() {
       exit 1
       ;;
   esac
-  if [ ! -d "$site/$version" ]; then
-    echo "$site/$version: ghg wrote no folder for this version." >&2
+  if [ ! -d "$folder/$version" ]; then
+    echo "$folder/$version: ghg wrote no folder for this version." >&2
     exit 1
   fi
-  if [ ! -f "$site/$versions_page" ]; then
-    echo "$site/$versions_page: ghg wrote no versions page." >&2
+  if [ ! -f "$folder/$versions_page" ]; then
+    echo "$folder/$versions_page: ghg wrote no versions page." >&2
     exit 1
   fi
-  find "$folder" -mindepth 1 -maxdepth 1 ! -name .git ! -name .nojekyll -exec rm -rf {} +
-  copy_site "$site" "$folder"
 
   # The push is made from the checkout, whose credentials a worktree may not see.
   local checkout=$PWD
@@ -116,12 +100,12 @@ publish() {
 
 case "${1-}" in
   open)
-    [ "$#" -eq 3 ] || usage
-    open "$2" "$3"
+    [ "$#" -eq 2 ] || usage
+    open "$2"
     ;;
   publish)
-    [ "$#" -eq 4 ] || usage
-    publish "$2" "$3" "$4"
+    [ "$#" -eq 3 ] || usage
+    publish "$2" "$3"
     ;;
   *) usage ;;
 esac

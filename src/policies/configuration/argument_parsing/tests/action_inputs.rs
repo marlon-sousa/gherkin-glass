@@ -4,7 +4,7 @@ use std::collections::BTreeSet;
 
 use yaml_rust2::{Yaml, YamlLoader};
 
-use super::{flags_of, long_options};
+use super::{flags_of, long_options, repeatable_of};
 
 const ACTION: &str = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/action.yml"));
 
@@ -82,6 +82,13 @@ fn the_build_step_passes_every_option_input_and_nothing_else() {
         .map(str::to_string)
         .collect();
     assert_eq!(flags, flags_of("build"));
+    let lists: BTreeSet<String> = build["env"]["GHG_LISTS"]
+        .as_str()
+        .expect("the build step names its lists")
+        .split_whitespace()
+        .map(str::to_string)
+        .collect();
+    assert_eq!(lists, repeatable_of("build"));
 }
 
 #[test]

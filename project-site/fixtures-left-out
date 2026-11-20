@@ -31,3 +31,6 @@ release
 
 # Its builds read only the files a list names, and a file it holds beside them does not parse.
 only
+
+# Its cases are runs of the command line into output folders that hold a host's files, and one of them fails.
+keep-in-output

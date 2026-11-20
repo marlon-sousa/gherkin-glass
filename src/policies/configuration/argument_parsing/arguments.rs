@@ -7,11 +7,12 @@ use clap::builder::{OsStringValueParser, TypedValueParser};
 use clap::{ArgAction, Args, Parser, Subcommand};
 
 use crate::entities::{
-    BuildOptions, Invocation, PathList, SearchIndexing, ServeMode, ServeOptions, VersionName,
+    BuildOptions, Invocation, KeptInOutput, KeptPattern, PathList, SearchIndexing, ServeMode,
+    ServeOptions, VersionName,
 };
 use crate::errors::ArgumentError;
 
-use super::option_values::{path_list, port, text, version_name};
+use super::option_values::{kept_pattern, path_list, port, text, version_name};
 
 /// clap prints nothing: `--help` and `--version` are answered with the
 /// catalogue's words, and its mistakes become [`ArgumentError`]s.
@@ -58,6 +59,9 @@ struct BuildArguments {
     only: Option<PathList>,
     #[arg(long)]
     preview: bool,
+    /// The only option that may be given more than once.
+    #[arg(long, allow_hyphen_values = true, action = ArgAction::Append, value_parser = OsStringValueParser::new().try_map(kept_pattern))]
+    keep_in_output: Vec<KeptPattern>,
     /// What follows `--`, which no command takes.
     #[arg(last = true)]
     after_the_options: Vec<OsString>,
@@ -112,6 +116,8 @@ impl BuildArguments {
             front_page: self.front_page,
             only: self.only,
             indexing,
+            keep_in_output: (!self.keep_in_output.is_empty())
+                .then(|| KeptInOutput::new(self.keep_in_output)),
         })
     }
 }

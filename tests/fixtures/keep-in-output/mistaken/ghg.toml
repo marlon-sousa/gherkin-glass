@@ -1,0 +1,5 @@
+keep_in_output = [
+  ".nojekyll",
+  "",
+  "{draft",
+]

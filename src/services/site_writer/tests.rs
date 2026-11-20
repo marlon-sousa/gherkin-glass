@@ -15,20 +15,25 @@ use crate::services::{Converter, ConverterApi};
 use fakes::*;
 
 #[rstest]
-#[case::missing(OutputContents::Missing)]
-#[case::empty(folder(&[], &[], None))]
-#[case::a_site_ghg_built(folder(
-    &["ghg-site.json", "old.html"],
-    &[],
-    Some(Record::Site(set(&["old.html"])))
-))]
+#[case::missing(OutputContents::Missing, &[])]
+#[case::empty(folder(&[], &[], None), &[])]
+#[case::a_site_ghg_built(
+    folder(
+        &["ghg-site.json", "old.html", "sub/old.html"],
+        &["sub"],
+        Some(Record::Site(set(&["old.html", "sub/old.html"])))
+    ),
+    &["remove site/old.html", "remove site/sub"]
+)]
 fn a_site_is_built_into_a_missing_empty_or_safe_folder_marked_with_its_files(
     #[case] contents: OutputContents,
+    #[case] removed: &[&str],
 ) {
     let folders = FakeFolders::holding(contents);
     let writer = Arc::new(FakeWriter::default());
     build(vec!["a.feature"], None, folders.clone(), writer.clone()).expect("built");
-    assert_eq!(folders.done(), ["clear site", "record site"]);
+    let done: Vec<_> = removed.iter().copied().chain(["record site"]).collect();
+    assert_eq!(folders.done(), done);
     let written = written(&writer);
     assert_eq!(written.first().map(String::as_str), Some("site/a.html"));
     let Some(Record::Site(files)) = folders.recorded.lock().expect("lock").clone() else {

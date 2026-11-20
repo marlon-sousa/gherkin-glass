@@ -8,7 +8,7 @@ use std::sync::{Mutex, PoisonError};
 
 use gherkin::{Feature, GherkinEnv};
 
-use crate::entities::{FolderEntry, OutputContents, RawFeature, Record};
+use crate::entities::{FolderEntry, KeptInOutput, OutputContents, RawFeature, Record};
 use crate::errors::{InputErrorKind, ParseError};
 use crate::ports::{FeatureParser, FileReader, InputFolders, OutputFolders, StandardInput};
 use crate::test_support::MemoryFolders;
@@ -95,11 +95,7 @@ impl FileReader for ChangingInput {
 
 /// A site built in memory touches no output folder, so there is none.
 impl OutputFolders for ChangingInput {
-    fn contents(&self, _: &Path, _: Option<&str>) -> IoResult<OutputContents> {
-        Err(not_found())
-    }
-
-    fn clear(&self, _: &Path) -> IoResult<()> {
+    fn contents(&self, _: &Path, _: Option<&str>, _: &KeptInOutput) -> IoResult<OutputContents> {
         Err(not_found())
     }
 

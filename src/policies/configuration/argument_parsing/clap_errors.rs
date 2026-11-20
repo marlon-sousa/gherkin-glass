@@ -54,10 +54,14 @@ fn rejected(error: &Error) -> ArgumentError {
     let value = context(error, ContextKind::InvalidValue);
     let reason = std::error::Error::source(error)
         .and_then(|source| source.downcast_ref::<Rejected>())
-        .copied();
+        .cloned();
     match reason {
         Some(Rejected::NotAPort) => ArgumentError::NotAPort { value },
         Some(Rejected::NotAVersionName) => ArgumentError::InvalidVersionName { name: value },
+        Some(Rejected::NotAPattern { reason }) => ArgumentError::InvalidKeptPattern {
+            pattern: value,
+            reason,
+        },
         Some(Rejected::Empty) | None => ArgumentError::MissingValue {
             option: option(error),
         },

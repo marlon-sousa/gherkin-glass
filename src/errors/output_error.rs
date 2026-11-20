@@ -40,6 +40,10 @@ pub(crate) enum OutputErrorKind {
     /// is its path in the folder, the outermost when it is a folder.
     #[error(fmt = Self::not_safe)]
     NotSafe { found: FilePath },
+    /// Something ghg writes, or something in a folder ghg writes, that the
+    /// pattern `pattern` keeps; `found` is its path in the folder.
+    #[error(fmt = Self::kept_clash)]
+    KeptClash { found: FilePath, pattern: String },
     /// A version the marker lists whose folder is missing.
     #[error(fmt = Self::missing_version)]
     MissingVersion { name: VersionName },
@@ -66,7 +70,7 @@ impl Display for OutputError {
                 format!("{output}/{name}"),
                 fl!(CATALOGUE, "version-already-built", name = name.as_str()),
             ),
-            (_, OutputErrorKind::NotSafe { found }) => {
+            (_, OutputErrorKind::NotSafe { found } | OutputErrorKind::KeptClash { found, .. }) => {
                 (format!("{output}/{found}"), self.kind.to_string())
             }
             (_, OutputErrorKind::FileNotWritten { file, .. }) => {
@@ -101,6 +105,10 @@ impl OutputErrorKind {
 
     fn not_safe(_found: &FilePath, f: &mut Formatter<'_>) -> FmtResult {
         f.write_str(&fl!(CATALOGUE, "output-not-safe"))
+    }
+
+    fn kept_clash(_found: &FilePath, pattern: &str, f: &mut Formatter<'_>) -> FmtResult {
+        f.write_str(&fl!(CATALOGUE, "output-kept-clash", pattern = pattern))
     }
 
     fn missing_version(_name: &VersionName, f: &mut Formatter<'_>) -> FmtResult {
@@ -159,6 +167,11 @@ mod tests {
         None,
         OutputErrorKind::NotSafe { found: "docs/notes.txt".into() },
         "site/out/docs/notes.txt: ghg did not write this, so the output folder is left as it is."
+    )]
+    #[case::kept_clash(
+        None,
+        OutputErrorKind::KeptClash { found: "assets".into(), pattern: "assets".into() },
+        "site/out/assets: the pattern assets keeps this, but ghg writes it or the folder it is in, so the output folder is left as it is."
     )]
     #[case::missing_version(
         None,

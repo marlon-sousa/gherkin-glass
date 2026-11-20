@@ -3,16 +3,19 @@
 use std::io::Result as IoResult;
 use std::path::Path;
 
-use crate::entities::{OutputContents, Record};
+use crate::entities::{KeptInOutput, OutputContents, Record};
 
 pub(crate) trait OutputFolders: Send + Sync {
     /// What is at `output`'s place: every file and folder below it, and what
     /// its marker records, but the folder `left_alone` at its top, when there is
-    /// one, which is neither looked into nor listed.
-    fn contents(&self, output: &Path, left_alone: Option<&str>) -> IoResult<OutputContents>;
-
-    /// Leaves `folder` existing and empty, creating it and the folders above when missing.
-    fn clear(&self, folder: &Path) -> IoResult<()>;
+    /// one, which is neither looked into nor listed; what `kept` keeps is
+    /// listed apart, and a folder kept is not looked into.
+    fn contents(
+        &self,
+        output: &Path,
+        left_alone: Option<&str>,
+        kept: &KeptInOutput,
+    ) -> IoResult<OutputContents>;
 
     /// Removes what is at `path`, a file, a link or a folder with all in it,
     /// never following a link; nothing when there is nothing there.

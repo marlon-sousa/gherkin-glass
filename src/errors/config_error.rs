@@ -7,7 +7,7 @@ use std::path::PathBuf;
 use i18n_embed_fl::fl;
 use thiserror::Error;
 
-use super::{invalid_version_name, located};
+use super::{invalid_kept_pattern, invalid_version_name, located};
 use crate::entities::{Colour, Theme};
 use crate::policies::CATALOGUE;
 
@@ -53,6 +53,12 @@ pub(crate) enum ConfigErrorKind {
     },
     #[error(fmt = Self::not_table_list)]
     NotTableList,
+    /// `keep_in_output`, not a list of text.
+    #[error(fmt = Self::not_text_list)]
+    NotTextList,
+    /// `reason` is the `ignore` crate's.
+    #[error(fmt = invalid_kept_pattern)]
+    InvalidKeptPattern { pattern: String, reason: String },
     /// A key a table of `tag_links` needs.
     #[error(fmt = Self::missing)]
     Missing { key: String },
@@ -203,6 +209,10 @@ impl ConfigErrorKind {
 
     fn not_table_list(f: &mut Formatter<'_>) -> FmtResult {
         f.write_str(&fl!(CATALOGUE, "config-not-table-list"))
+    }
+
+    fn not_text_list(f: &mut Formatter<'_>) -> FmtResult {
+        f.write_str(&fl!(CATALOGUE, "config-not-text-list"))
     }
 
     fn missing(key: &str, f: &mut Formatter<'_>) -> FmtResult {

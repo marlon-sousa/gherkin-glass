@@ -615,7 +615,12 @@ fn an_output_folder_that_cannot_be_written_stops_the_build() {
     // service's own tests check a file that cannot be written.
     let written = output("cannot-be-written");
     create_dir_all(&written).expect("made");
-    write(written.join("ghg-site.json"), "{\"files\": []}\n").expect("written");
+    write(
+        written.join("ghg-site.json"),
+        "{\"files\": [\"index.html\"]}\n",
+    )
+    .expect("written");
+    write(written.join("index.html"), "an earlier page").expect("written");
     set_permissions(&written, Permissions::from_mode(0o500)).expect("set");
     let given = written.to_str().expect("UTF-8");
     let result = build(&fixtures().join("pages"), &["--output", given]);
