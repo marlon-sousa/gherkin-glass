@@ -112,3 +112,18 @@ fn something_kept_in_a_folder_ghg_writes_clashes(
     );
     assert_eq!(judged, outcome);
 }
+
+// Rules 227 and 228: what is found kept as its patterns are written clashes, even when a pattern
+// ignoring the case of its letters gives it back.
+#[test]
+fn something_kept_as_written_clashes_whatever_a_pattern_in_other_capitals_gives_back() {
+    let found = BTreeMap::from([("billing/NOTES.TXT".to_string(), EntryKind::File)]);
+    let judged = kept_clash(
+        &kept(&["*.TXT", "!notes.txt"]),
+        &found,
+        Some(&site()),
+        &BuildTarget::Site,
+        CHECKING,
+    );
+    assert_eq!(judged, clash("billing/NOTES.TXT", "*.TXT"));
+}

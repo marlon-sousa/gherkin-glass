@@ -123,9 +123,12 @@ impl Clash {
     }
 }
 
-/// The clash at `path`, when `kept` keeps it.
+/// The clash at `path`, when `kept` keeps it as its patterns are written or whatever the case of
+/// their letters: either way, a file system could keep it.
 fn clash_at(kept: &KeptInOutput, path: &str, kind: EntryKind) -> Option<Clash> {
-    let pattern = kept.keeping(path, kind, LetterCase::Whatever)?;
+    let pattern = kept
+        .keeping(path, kind, LetterCase::AsWritten)
+        .or_else(|| kept.keeping(path, kind, LetterCase::Whatever))?;
     Some(Clash {
         found: path.to_string(),
         pattern: pattern.as_str().to_string(),
