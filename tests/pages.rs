@@ -610,14 +610,17 @@ fn a_file_in_the_output_folder_s_place_is_left_as_it_is() {
 fn an_output_folder_that_cannot_be_written_stops_the_build() {
     use std::fs::{Permissions, set_permissions};
     use std::os::unix::fs::PermissionsExt;
-    // An earlier build that listed no file leaves nothing to remove, and its
-    // marker can be written again, but no folder or page can be made in a
-    // folder that cannot be written into, so the first page stops the build.
-    // Root writes anywhere, so there the build succeeds, and the service's own
-    // tests check a file that cannot be written.
+    // An earlier build in a folder that cannot be written into cannot be
+    // emptied. Root writes anywhere, so there the build succeeds, and the
+    // service's own tests check a file that cannot be written.
     let written = output("cannot-be-written");
     create_dir_all(&written).expect("made");
-    write(written.join("ghg-site.json"), "{\"files\": []}\n").expect("written");
+    write(
+        written.join("ghg-site.json"),
+        "{\"files\": [\"index.html\"]}\n",
+    )
+    .expect("written");
+    write(written.join("index.html"), "an earlier page").expect("written");
     set_permissions(&written, Permissions::from_mode(0o500)).expect("set");
     let given = written.to_str().expect("UTF-8");
     let result = build(&fixtures().join("pages"), &["--output", given]);
@@ -628,8 +631,10 @@ fn an_output_folder_that_cannot_be_written_stops_the_build() {
     let report = String::from_utf8_lossy(&result.stderr).into_owned();
     assert_eq!(result.status.code(), Some(1));
     assert_eq!(report.lines().count(), 1, "{report}");
-    let (path, _) = report.split_once(": cannot be written: ").expect("a path");
-    assert!(path.starts_with(&format!("{given}/")), "{report}");
+    assert!(
+        report.starts_with(&format!("{given}: cannot be written: ")),
+        "{report}"
+    );
 }
 
 // Rules 39, 79 and 85: every link within the site is relative, and reaches a
