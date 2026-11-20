@@ -4,12 +4,13 @@ mod mistakes;
 use std::collections::BTreeSet;
 use std::path::PathBuf;
 
-use clap::{Arg, CommandFactory};
+use clap::{Arg, ArgAction, CommandFactory};
 use rstest::rstest;
 
 use super::*;
 use crate::entities::{
-    BuildOptions, PathList, SearchIndexing, ServeMode, ServeOptions, VersionName,
+    BuildOptions, KeptInOutput, KeptPattern, PathList, SearchIndexing, ServeMode, ServeOptions,
+    VersionName,
 };
 
 fn parse(arguments: &[&str]) -> Result<Invocation, ArgumentError> {
@@ -37,6 +38,13 @@ fn long_options(command: &str) -> BTreeSet<String> {
 /// The long names of the options of `command` that take no value.
 fn flags_of(command: &str) -> BTreeSet<String> {
     long_names(command, |argument| !argument.get_action().takes_values())
+}
+
+/// The long names of the options of `command` that may be given more than once.
+fn repeatable_of(command: &str) -> BTreeSet<String> {
+    long_names(command, |argument| {
+        matches!(argument.get_action(), ArgAction::Append)
+    })
 }
 
 /// The long names of the options of `command` that `keep` keeps, but those of every command.
@@ -115,6 +123,14 @@ fn serve_takes_every_option_of_build() {
 #[case::a_preview(&["build", "--preview", "--output", "previews/pr-131"], BuildOptions {
     output: Some(PathBuf::from("previews/pr-131")),
     indexing: SearchIndexing::Refused,
+    ..BuildOptions::default()
+})]
+// Rule 224.
+#[case::patterns_to_keep(&["build", "--keep-in-output", ".nojekyll", "--keep-in-output=CNAME"], BuildOptions {
+    keep_in_output: Some(KeptInOutput::new(vec![
+        KeptPattern::new(".nojekyll").expect("valid"),
+        KeptPattern::new("CNAME").expect("valid"),
+    ])),
     ..BuildOptions::default()
 })]
 fn build_takes_its_options_in_either_spelling_and_order(

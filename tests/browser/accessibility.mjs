@@ -55,6 +55,7 @@ const builds = [
   { folder: "hostile", args: [] },
   { folder: "only", args: ["--only", "changed.txt"] },
   { folder: "only", args: ["--config", "nothing.toml", "--only", "nothing.txt"] },
+  { folder: "keep-in-output", args: [] },
   { root: ".", folder: "project-site", args: ["--config", "ghg.toml"] },
   // The example suite as the release's site shows it, opening on the front
   // page that project-site/front-page.sh writes from the README, rule 192.
@@ -88,6 +89,7 @@ const noSite = [
   "versions/broken",
   "front-page/expected",
   "front-page/broken",
+  "keep-in-output/mistaken",
 ];
 
 // The browser's colour scheme, light and dark, and each theme a reader can

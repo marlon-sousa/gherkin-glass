@@ -54,7 +54,12 @@ impl FakeFolders {
 }
 
 impl OutputFolders for FakeFolders {
-    fn contents(&self, _output: &Path, _left_alone: Option<&str>) -> IoResult<OutputContents> {
+    fn contents(
+        &self,
+        _output: &Path,
+        _left_alone: Option<&str>,
+        _kept: &KeptInOutput,
+    ) -> IoResult<OutputContents> {
         let mut looks = self.looks.lock().expect("lock");
         let look = if looks.len() > 1 {
             looks.remove(0)
@@ -62,10 +67,6 @@ impl OutputFolders for FakeFolders {
             looks.first().cloned().flatten()
         };
         look.ok_or_else(|| IoError::new(ErrorKind::PermissionDenied, "denied"))
-    }
-
-    fn clear(&self, folder: &Path) -> IoResult<()> {
-        self.note("clear", folder)
     }
 
     fn remove(&self, path: &Path) -> IoResult<()> {
@@ -167,6 +168,7 @@ pub(super) fn settings(destination: Destination, version: Option<&str>) -> Setti
         replace: true,
         front_page: None,
         only: None,
+        keep_in_output: KeptInOutput::default(),
     }
 }
 

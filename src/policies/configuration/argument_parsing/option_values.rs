@@ -4,10 +4,10 @@ use std::ffi::OsString;
 
 use std::path::PathBuf;
 
-use crate::entities::{PathList, VersionName};
+use crate::entities::{KeptPattern, PathList, VersionName};
 
 /// Why a value was refused, which clap keeps as the source of its error.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, thiserror::Error)]
+#[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
 pub(super) enum Rejected {
     #[error("the value is empty")]
     Empty,
@@ -15,6 +15,9 @@ pub(super) enum Rejected {
     NotAPort,
     #[error("the value is not a version name")]
     NotAVersionName,
+    /// `reason` is the `ignore` crate's.
+    #[error("the value is not a pattern: {reason}")]
+    NotAPattern { reason: String },
 }
 
 /// A value as text, with what is not Unicode replaced. An empty value
@@ -40,6 +43,10 @@ pub(super) fn port(value: OsString) -> Result<u16, Rejected> {
 
 pub(super) fn version_name(value: OsString) -> Result<VersionName, Rejected> {
     VersionName::new(&text(value)?).ok_or(Rejected::NotAVersionName)
+}
+
+pub(super) fn kept_pattern(value: OsString) -> Result<KeptPattern, Rejected> {
+    KeptPattern::new(&text(value)?).map_err(|reason| Rejected::NotAPattern { reason })
 }
 
 /// `-` for standard input, and any other value for the file of that path.

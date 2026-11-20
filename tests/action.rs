@@ -523,24 +523,36 @@ fn copy(from: &Path, to: &Path) {
 /// Runs build.sh with the real ghg in a copy of the action's fixture, with
 /// `options` as the environment action.yml gives it, and returns the copy.
 fn build(options: &[(&str, &str)]) -> (Output, PathBuf) {
+    let workspace = workspace();
+    (build_in(&workspace, options), workspace)
+}
+
+/// A copy of the action's fixture.
+fn workspace() -> PathBuf {
     let workspace = scratch("workspace");
     copy(&root().join("tests/fixtures/action"), &workspace);
+    workspace
+}
+
+/// Runs build.sh as `build` does, in `workspace`.
+fn build_in(workspace: &Path, options: &[(&str, &str)]) -> Output {
     let mut command = bash();
     command
         .arg(root().join("action/build.sh"))
-        .current_dir(&workspace)
+        .current_dir(workspace)
         .env_clear()
         .env("PATH", std::env::var_os("PATH").unwrap_or_default())
         .env("GHG_BIN", env!("CARGO_BIN_EXE_ghg"))
         .env(
             "GHG_OPTIONS",
-            "config input output title version-name preview",
+            "config input output title version-name preview keep-in-output",
         )
-        .env("GHG_FLAGS", "preview");
+        .env("GHG_FLAGS", "preview")
+        .env("GHG_LISTS", "keep-in-output");
     for (name, value) in options {
         command.env(name, value);
     }
-    (run(&mut command), workspace)
+    run(&mut command)
 }
 
 fn built(output: &Output) {
@@ -625,4 +637,32 @@ fn a_flag_input_is_true_or_false() {
     assert_eq!(output.status.code(), Some(1));
     assert_eq!(text(&output.stderr), "preview must be true or false.\n");
     assert!(!workspace.join("site").exists());
+}
+
+// Rule 175: an option given more than once takes one value on each line of its input.
+#[test]
+fn each_line_of_a_list_input_is_passed_as_its_own_option() {
+    let workspace = workspace();
+    let site = workspace.join("site");
+    create_dir_all(&site).unwrap();
+    fs::write(site.join(".nojekyll"), "").unwrap();
+    fs::write(site.join("CNAME"), "features.example.org\n").unwrap();
+    let output = build_in(
+        &workspace,
+        &[("GHG_OPTION_KEEP_IN_OUTPUT", ".nojekyll\n\n  \r\nCNAME\r\n")],
+    );
+    built(&output);
+    assert!(site.join("read.html").is_file());
+    assert_eq!(
+        fs::read_to_string(site.join("CNAME")).unwrap(),
+        "features.example.org\n"
+    );
+    let output = build_in(&workspace, &[("GHG_OPTION_KEEP_IN_OUTPUT", ".nojekyll")]);
+    assert_eq!(output.status.code(), Some(1));
+    assert!(
+        text(&output.stderr)
+            .ends_with("CNAME: ghg did not write this, so the output folder is left as it is.\n"),
+        "{}",
+        text(&output.stderr)
+    );
 }

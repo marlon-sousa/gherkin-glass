@@ -2,7 +2,7 @@
 
 use std::path::PathBuf;
 
-use crate::entities::{Destination, PathList, SearchIndexing, VersionName};
+use crate::entities::{Destination, KeptInOutput, PathList, SearchIndexing, VersionName};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) enum Invocation {
@@ -23,6 +23,7 @@ pub(crate) struct BuildOptions {
     pub(crate) front_page: Option<PathBuf>,
     pub(crate) only: Option<PathList>,
     pub(crate) indexing: SearchIndexing,
+    pub(crate) keep_in_output: Option<KeptInOutput>,
 }
 
 /// The options of `ghg serve`: those of `ghg build`, and how it serves.

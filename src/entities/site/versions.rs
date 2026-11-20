@@ -1,4 +1,4 @@
-//! Entity: the output folder and its versions, what is in it and what its marker records, what a build writes into it and where, the versions and their names, and the versions page.
+//! Entity: the output folder and its versions, what is in it, what is kept there and what its marker records, what a build writes into it and where, the versions and their names, and the versions page.
 
 mod build_folder;
 mod build_target;

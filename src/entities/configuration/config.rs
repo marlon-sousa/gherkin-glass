@@ -2,7 +2,7 @@
 
 use std::path::PathBuf;
 
-use crate::entities::{Colour, TagLink, VersionName};
+use crate::entities::{Colour, KeptInOutput, TagLink, VersionName};
 
 /// Each value is `None` when the file does not set it.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
@@ -25,4 +25,5 @@ pub(crate) struct Config {
     pub(crate) show_tree: Option<bool>,
     pub(crate) inline_backgrounds: Option<bool>,
     pub(crate) tag_links: Option<Vec<TagLink>>,
+    pub(crate) keep_in_output: Option<KeptInOutput>,
 }

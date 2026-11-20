@@ -48,6 +48,15 @@ fn invalid_version_name(name: &str, f: &mut Formatter<'_>) -> FmtResult {
     f.write_str(&fl!(CATALOGUE, "invalid-version-name", name = name))
 }
 
+fn invalid_kept_pattern(pattern: &str, reason: &str, f: &mut Formatter<'_>) -> FmtResult {
+    f.write_str(&fl!(
+        CATALOGUE,
+        "invalid-kept-pattern",
+        pattern = pattern,
+        reason = reason
+    ))
+}
+
 /// Each of `errors` on a line of its own.
 fn each_on_a_line<T: Display>(f: &mut Formatter<'_>, errors: &[T]) -> FmtResult {
     errors.iter().try_for_each(|error| writeln!(f, "{error}"))

@@ -1,39 +1,68 @@
-//! Policy: whether a build may write into an output folder, from what the folder holds, what its marker records, and when it is looked at.
+//! Policy: whether a build may write into an output folder, from what the folder holds, what its marker records, what the build leaves alone there, and when it is looked at.
+
+mod kept_clash;
 
 use std::cmp::Ordering;
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 
-use crate::entities::{BuildTarget, FilePath, OutputContents, Record, VersionName};
+use crate::entities::{
+    BuildTarget, EntryKind, FilePath, KeptInOutput, OutputContents, Record, VersionName,
+};
 use crate::errors::OutputErrorKind;
+
+use kept_clash::kept_clash;
 
 /// When a folder is looked at: when it is checked, before the input is read, or again just
 /// before it is written, once the input has been read.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(crate) enum Moment {
+pub(crate) enum Moment<'a> {
     /// `replace` says whether a build already there may be replaced.
-    Checking {
-        replace: bool,
-    },
-    Writing,
+    Checking { replace: bool },
+    /// `site` is every file the build writes, by its path in the output folder.
+    Writing { site: &'a BTreeSet<FilePath> },
 }
 
 /// What the output folder's marker records, `None` when the folder is
-/// missing or empty, once nothing stops `target` being written into it; or
-/// what stops it. A folder ghg marked must hold only what it wrote there.
+/// missing or holds only what `kept` keeps, once nothing stops `target` being
+/// written into it; or what stops it. A folder ghg marked must hold only what
+/// it wrote there and what `kept` keeps, which must be nothing ghg writes.
 pub(crate) fn output_safety(
     contents: OutputContents,
     target: &BuildTarget,
-    moment: Moment,
+    moment: Moment<'_>,
+    kept: &KeptInOutput,
 ) -> Result<Option<Record>, OutputErrorKind> {
-    let (files, folders, record) = match contents {
-        OutputContents::Missing => return Ok(None),
+    let (files, folders, found_kept, record) = match contents {
+        OutputContents::Missing => (BTreeSet::new(), BTreeSet::new(), BTreeMap::new(), None),
         OutputContents::NotAFolder => return Err(OutputErrorKind::NotASite),
         OutputContents::Folder {
             files,
             folders,
+            kept,
             record,
-        } => (files, folders, record),
+        } => (files, folders, kept, record),
     };
+    let record = marked(files, folders, &found_kept, record, target, moment)?;
+    kept_clash(kept, &found_kept, record.as_ref(), target, moment)?;
+    Ok(record)
+}
+
+/// What the marker records, `None` when the folder holds nothing but what is
+/// kept, once nothing but what is kept stops `target` being written into it.
+fn marked(
+    files: BTreeSet<FilePath>,
+    folders: BTreeSet<FilePath>,
+    found_kept: &BTreeMap<FilePath, EntryKind>,
+    record: Option<Record>,
+    target: &BuildTarget,
+    moment: Moment<'_>,
+) -> Result<Option<Record>, OutputErrorKind> {
+    // A folder holding what is kept is no stray, though what else it holds may be.
+    let holding: BTreeSet<_> = found_kept
+        .keys()
+        .flat_map(|path| folders_of(path))
+        .collect();
+    let folders: BTreeSet<_> = folders.difference(&holding).cloned().collect();
     if files.is_empty() && folders.is_empty() {
         return Ok(None);
     }
@@ -161,7 +190,7 @@ fn folders_of(file: &str) -> impl Iterator<Item = FilePath> + '_ {
 fn already_built(
     record: &Record,
     target: &BuildTarget,
-    moment: Moment,
+    moment: Moment<'_>,
 ) -> Result<(), OutputErrorKind> {
     let keep = moment == Moment::Checking { replace: false };
     match (record, target) {

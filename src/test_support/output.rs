@@ -17,6 +17,7 @@ pub(crate) fn folder(files: &[&str], folders: &[&str], record: Option<Record>) -
     OutputContents::Folder {
         files: set(files),
         folders: set(folders),
+        kept: BTreeMap::new(),
         record,
     }
 }

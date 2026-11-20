@@ -9,9 +9,10 @@ use gherkin::{Feature, GherkinEnv};
 
 use super::*;
 use crate::entities::{
-    CollectedChanges, FileToParse, IgnoreRules, InputTree, InputTreeBuilder, PageOptions,
-    ParsedFeature, ParsedFile, PathList, RenderedSite, RevisedFeature, Revision, Settings,
-    SiteFiles, SiteNode, SiteTree, SiteTreeBuilder, SiteVersion, TagNames, Unnamed, VersionName,
+    CollectedChanges, FileToParse, IgnoreRules, InputTree, InputTreeBuilder, KeptInOutput,
+    PageOptions, ParsedFeature, ParsedFile, PathList, RenderedSite, RevisedFeature, Revision,
+    Settings, SiteFiles, SiteNode, SiteTree, SiteTreeBuilder, SiteVersion, TagNames, Unnamed,
+    VersionName,
 };
 use crate::policies::page_frame;
 use crate::test_support::name;
@@ -81,6 +82,7 @@ impl SettingsApi for FakeSettingsService {
                 .unwrap_or_else(PoisonError::into_inner)
                 .clone(),
             only: None,
+            keep_in_output: KeptInOutput::default(),
         })
     }
 }

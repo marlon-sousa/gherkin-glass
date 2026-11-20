@@ -94,6 +94,7 @@ text = "Issue $1 on GitHub"
 | `version_name` | text | none | Builds the site as a version of that name, as "Versions" below describes, unless `--preview` is given. |
 | `replace_existing_version` | `true` or `false` | `true` | Whether a build replaces the site, or the version, that an earlier build wrote in the output folder. When `false`, it stops instead. |
 | `front_page` | a path | none | A Markdown file that introduces the site on its front page, as "The front page" below describes. |
+| `keep_in_output` | a list of text, such as `[".nojekyll", "CNAME"]` | none | Patterns of what ghg leaves alone in the output folder, in the syntax of a `.gitignore` file, as "The output folder belongs to ghg" below describes. |
 
 A key ghg does not know, or a value of the wrong kind, stops the run with a message naming the file and the line, so that nothing is silently ignored.
 
@@ -119,6 +120,7 @@ ghg serve [options]
 | `--version-name <name>` | `build` and `serve` | Builds the site as that version, instead of the configuration's `version_name`. |
 | `--front-page <file>` | `build` and `serve` | The Markdown file of the site's front page, instead of the configuration's `front_page`. |
 | `--only <file>` | `build` and `serve` | Builds the site from the feature files listed in that file, one path on each line, alone, as "A site of only some feature files" below describes. `--only -` reads the list from standard input. |
+| `--keep-in-output <pattern>` | `build` and `serve` | Leaves alone what the pattern matches in the output folder, in the syntax of a `.gitignore` file, as "The output folder belongs to ghg" below describes. Give it once for each pattern; the patterns given replace the configuration's `keep_in_output`. |
 | `--preview` | `build` and `serve` | Builds a preview: the site without versions, whatever the configuration's `version_name` says, every page of which asks search engines not to index it, as "A site of only some feature files" below describes. It cannot be given with `--version-name`. |
 | `--host <address>` | `serve` | Listens on that address instead of `127.0.0.1`, such as `0.0.0.0` to be reached from other machines. |
 | `--port <number>` | `serve` | Listens at that port instead of 8000. `0` lets the system choose a free one. |
@@ -135,7 +137,7 @@ A site is meant to be served by a web server, not opened from disk. Opened from 
 
 To look at a site on your own machine, use `ghg serve`. Without `--watch` or `--no-build`, it builds the site into the output folder, as `ghg build` does, then serves it. With `--watch`, the site is built in memory and served from there, the output folder is left as it is, and the page you are reading reloads at the same heading after each change. With `--no-build`, ghg serves a site already built, such as one downloaded from a CI run.
 
-To publish a site, put the output folder on any static web host, GitHub Pages included. Every link in a site is relative, so it works at any address, below a path such as `/<repository>/` too. GitHub Pages publishing from a branch runs Jekyll, which leaves out files whose names start with `_`, such as the page of `_draft.feature`; publish with GitHub's Pages action instead, or add a `.nojekyll` file beside the site on that branch, never inside the output folder.
+To publish a site, put the output folder on any static web host, GitHub Pages included. Every link in a site is relative, so it works at any address, below a path such as `/<repository>/` too. GitHub Pages publishing from a branch runs Jekyll, which leaves out files whose names start with `_`, such as the page of `_draft.feature`; publish with GitHub's Pages action instead, or put a `.nojekyll` file at the root of that branch. To build straight into a checkout of the branch, tell ghg to leave that file alone, and git's own `.git` with it, and `CNAME` when the site has a custom domain: `ghg build --output gh-pages --keep-in-output .nojekyll --keep-in-output .git --keep-in-output CNAME`.
 
 ### The output folder belongs to ghg
 
@@ -146,7 +148,7 @@ To keep that from happening by mistake:
 - ghg marks an output folder only when it is missing or empty. It refuses to build into a folder that holds anything and no marker.
 - Before every build, ghg checks that a marked folder holds only what it wrote there. When it holds anything else, ghg names it and stops, before reading the features, and writes and deletes nothing.
 
-So keep the output folder for the site alone, and put anything you want served beside it somewhere else.
+So keep the output folder for the site alone, and put anything you want served beside it somewhere else, unless you name it with `keep_in_output` or `--keep-in-output`. Each is a pattern in the syntax of a `.gitignore` file, such as `.nojekyll`, `/CNAME` for the one at the root only, or `drafts/` for a folder. ghg never writes, empties or deletes what a pattern matches, nor anything in a folder it matches, and does not count it as something it did not write, so a folder holding only those things counts as empty. A pattern that matches anything ghg writes, such as `assets` or the version being built, stops the build before anything is written.
 
 ### Versions
 

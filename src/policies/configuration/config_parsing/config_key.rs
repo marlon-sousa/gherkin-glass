@@ -4,10 +4,12 @@ use std::path::PathBuf;
 
 use crate::entities::{Colour, Config, Theme};
 
-/// A key the configuration knows: `tag_links`, whose value is a list of tables, or a setting.
+/// A key the configuration knows: `tag_links`, whose value is a list of tables,
+/// `keep_in_output`, whose value is a list of text, or a setting.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(super) enum ConfigKey {
     TagLinks,
+    KeepInOutput,
     Setting(SettingKey),
 }
 
@@ -46,6 +48,7 @@ impl ConfigKey {
     pub(super) fn named(name: &str) -> Option<ConfigKey> {
         Some(ConfigKey::Setting(match name {
             "tag_links" => return Some(ConfigKey::TagLinks),
+            "keep_in_output" => return Some(ConfigKey::KeepInOutput),
             "input" => SettingKey::Text(TextKey::Input),
             "output" => SettingKey::Text(TextKey::Output),
             "source_link" => SettingKey::Text(TextKey::SourceLink),

@@ -2,7 +2,7 @@
 
 mod marker_file;
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fs::{
     create_dir_all, read_dir, read_to_string, remove_dir, remove_dir_all, remove_file,
     symlink_metadata, write,
@@ -12,14 +12,19 @@ use std::path::Path;
 
 use marker_file::{marker_text, site_record, versions_record};
 
-use crate::entities::{FilePath, OutputContents, Record};
+use crate::entities::{EntryKind, FilePath, KeptInOutput, OutputContents, Record};
 use crate::ports::OutputFolders;
 
 #[derive(Debug, Default, Clone, Copy)]
 pub(crate) struct OutputFolderStore;
 
 impl OutputFolders for OutputFolderStore {
-    fn contents(&self, output: &Path, left_alone: Option<&str>) -> IoResult<OutputContents> {
+    fn contents(
+        &self,
+        output: &Path,
+        left_alone: Option<&str>,
+        kept: &KeptInOutput,
+    ) -> IoResult<OutputContents> {
         let metadata = match symlink_metadata(output) {
             Ok(metadata) => metadata,
             Err(error) if error.kind() == ErrorKind::NotFound => {
@@ -33,7 +38,10 @@ impl OutputFolders for OutputFolderStore {
         }
         let mut found = Found {
             left_alone,
-            ..Found::default()
+            kept_in_output: kept,
+            files: BTreeSet::new(),
+            folders: BTreeSet::new(),
+            kept: BTreeMap::new(),
         };
         found.walk(output, "")?;
         let record = match marker(output, Record::VERSIONS_MARKER)? {
@@ -45,13 +53,9 @@ impl OutputFolders for OutputFolderStore {
         Ok(OutputContents::Folder {
             files: found.files,
             folders: found.folders,
+            kept: found.kept,
             record,
         })
-    }
-
-    fn clear(&self, folder: &Path) -> IoResult<()> {
-        create_dir_all(folder)?;
-        read_dir(folder)?.try_for_each(|entry| self.remove(&entry?.path()))
     }
 
     fn remove(&self, path: &Path) -> IoResult<()> {
@@ -80,12 +84,13 @@ impl OutputFolders for OutputFolderStore {
 }
 
 /// Every file and folder met while walking a folder, but the folder at its
-/// top named `left_alone`.
-#[derive(Default)]
+/// top named `left_alone`, and what `kept_in_output` keeps, which is in `kept`.
 struct Found<'a> {
     left_alone: Option<&'a str>,
+    kept_in_output: &'a KeptInOutput,
     files: BTreeSet<FilePath>,
     folders: BTreeSet<FilePath>,
+    kept: BTreeMap<FilePath, EntryKind>,
 }
 
 impl Found<'_> {
@@ -103,6 +108,15 @@ impl Found<'_> {
             };
             let is_folder = entry.file_type()?.is_dir();
             if is_folder && self.left_alone == Some(path.as_str()) {
+                continue;
+            }
+            let kind = if is_folder {
+                EntryKind::Folder
+            } else {
+                EntryKind::File
+            };
+            if self.kept_in_output.keeping(&path, kind).is_some() {
+                self.kept.insert(path, kind);
                 continue;
             }
             if is_folder {
