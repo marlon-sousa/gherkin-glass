@@ -9,8 +9,8 @@ use rstest::rstest;
 
 use super::*;
 use crate::entities::{
-    BuildOptions, KeptInOutput, KeptPattern, PathList, SearchIndexing, ServeMode, ServeOptions,
-    VersionName,
+    BuildOptions, KeptInOutput, KeptPattern, MessageFormat, PathList, SearchIndexing, ServeMode,
+    ServeOptions, VersionName,
 };
 
 fn parse(arguments: &[&str]) -> Result<Invocation, ArgumentError> {
@@ -18,7 +18,10 @@ fn parse(arguments: &[&str]) -> Result<Invocation, ArgumentError> {
 }
 
 fn build(options: BuildOptions) -> Result<Invocation, ArgumentError> {
-    Ok(Invocation::Build(options))
+    Ok(Invocation::Build {
+        options,
+        message_format: MessageFormat::Human,
+    })
 }
 
 fn paths(config: Option<&str>, input: Option<&str>) -> BuildOptions {
@@ -33,6 +36,14 @@ fn paths(config: Option<&str>, input: Option<&str>) -> BuildOptions {
 /// `--help` and `--version`, which every command takes.
 fn long_options(command: &str) -> BTreeSet<String> {
     long_names(command, |_| true)
+}
+
+/// The long options of `ghg build` that set how a site is built, which `ghg serve` takes too:
+/// all but `--message-format`, which sets how `ghg build` says how it ended.
+fn building_options() -> BTreeSet<String> {
+    let mut options = long_options("build");
+    options.remove("message-format");
+    options
 }
 
 /// The long names of the options of `command` that take no value.
@@ -71,12 +82,12 @@ fn clap_accepts_the_commands_as_they_are_declared() {
     Arguments::command().debug_assert();
 }
 
-// Rule 56: ghg serve has the options of ghg build.
+// Rule 56: ghg serve has the options of ghg build that set how a site is built.
 #[test]
-fn serve_takes_every_option_of_build() {
+fn serve_takes_every_option_of_build_that_sets_how_a_site_is_built() {
     let serve = long_options("serve");
     assert!(
-        long_options("build").is_subset(&serve),
+        building_options().is_subset(&serve),
         "ghg serve takes {serve:?}"
     );
 }
@@ -138,6 +149,18 @@ fn build_takes_its_options_in_either_spelling_and_order(
     #[case] options: BuildOptions,
 ) {
     assert_eq!(parse(arguments), build(options));
+}
+
+#[rstest]
+// Rule 231.
+#[case::by_default(&["build"], MessageFormat::Human)]
+#[case::for_a_person(&["build", "--message-format", "human"], MessageFormat::Human)]
+#[case::for_a_program(&["build", "--message-format=json"], MessageFormat::Json)]
+fn build_takes_its_message_format(#[case] arguments: &[&str], #[case] format: MessageFormat) {
+    let Ok(Invocation::Build { message_format, .. }) = parse(arguments) else {
+        panic!("{arguments:?} is not a build");
+    };
+    assert_eq!(message_format, format);
 }
 
 #[rstest]

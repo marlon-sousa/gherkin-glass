@@ -23,6 +23,9 @@ help =
       --preview: builds a preview, a site without versions whose every page asks search engines not to index it.
       --keep-in-output <pattern>: leaves alone what the pattern matches in the output folder, in the gitignore syntax, instead of the configuration's keep_in_output. Give it once for each pattern.
 
+    Options of ghg build only:
+      --message-format <format>: human, the default, or json, which also prints one JSON object to standard output saying how the build ended, for a program to read.
+
     Options of ghg serve only:
       --host <address>: the address to listen on, instead of 127.0.0.1.
       --port <number>: the port to listen at, instead of 8000. 0 lets the system choose one.
@@ -45,6 +48,7 @@ unexpected-value = The option { $option } takes no value.
 repeated-option = The option { $option } is given more than once.
 unexpected-argument = { $command } takes no argument { $argument }.
 not-a-port = The option --port needs a whole number from 0 to 65535, not { $value }.
+not-a-message-format = The option --message-format takes human or json, not { $value }.
 watch-without-build = The options --watch and --no-build cannot be used together.
 only-without-build = The options --only and --no-build cannot be used together.
 preview-with-version-name = The option --preview builds a site without versions, so it cannot be given with --version-name.
@@ -116,7 +120,6 @@ search-documents-large = The search documents are { $size } MB, larger than the 
 ## system's words, and $key a key as the file writes it.
 
 config-cannot-be-read = cannot be read: { $reason }
-config-empty-list = names no path, so there is nothing to build.
 config-unknown-key = ghg has no setting named { $key }.
 config-not-text = { $key } must be text, in quotes.
 config-not-boolean = { $key } must be true or false.
@@ -206,6 +209,23 @@ default-title = Feature files
 ## line nor ghg.toml gives the site a title. title is a key, never translated.
 
 no-title = The site has no title, so its home page is called Feature files. Set title in ghg.toml, or give --title.
+
+## What ghg build and ghg serve say when they read no feature file, so that
+## they write nothing:
+## $input is the input folder, and $list the list of --only, - for standard
+## input.
+
+nothing-to-build = { $input }: the input folder holds no feature file, so no site was built.
+nothing-to-build-only = { $list }: names no feature file of the input, so no site was built.
+nothing-to-build-no-path = { $list }: names no path, so there is nothing to build.
+
+## What ghg serve --watch says when the site it serves was built from no
+## feature file, $input and $list as above.
+
+empty-site = { $input }: the input folder holds no feature file, so the site served shows none.
+empty-site-only = { $list }: names no feature file of the input, so the site served shows none.
+empty-site-no-path = { $list }: names no path, so the site served shows none.
+
 folder-page-title = { $folder }, { $site }
 folders = Folders
 features = Features

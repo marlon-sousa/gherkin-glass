@@ -1,5 +1,6 @@
 //! The controller's tests of ghg serve, with and without --watch, up to the first change.
 
+mod nothing_to_build;
 mod rebuilding;
 
 use std::path::Path;
@@ -136,7 +137,10 @@ fn serve_serves_until_it_is_asked_to_stop(#[case] mode: ServeMode) {
         assert_eq!(events.wait_for(1), ["listening at 127.0.0.1:8000"]);
         assert_eq!(world.server.no_longer_served.load(Ordering::SeqCst), 0);
         world.server.signals.ask_to_stop();
-        assert_eq!(serving.join().expect("no panic"), Ok(()));
+        assert_eq!(
+            serving.join().expect("no panic"),
+            Ok(ServeEnd::NoLongerServed)
+        );
     });
     assert_eq!(world.server.no_longer_served.load(Ordering::SeqCst), 1);
     // Rule 202: while it stops, another request ends ghg at once.
@@ -165,7 +169,7 @@ fn a_request_to_stop_during_the_first_build_lets_it_finish_then_serves_nothing(
         .store(true, Ordering::SeqCst);
     let events = Recorded::default();
     let outcome = world.controller().serve(&serve_options(mode), &events);
-    assert_eq!(outcome, Ok(()));
+    assert_eq!(outcome, Ok(ServeEnd::NoLongerServed));
     let expected: Vec<String> = [
         "server.listen_for_stops".to_string(),
         format!("settings.load {destination}"),

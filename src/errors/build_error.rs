@@ -2,7 +2,7 @@
 
 use thiserror::Error;
 
-use super::{ConfigErrors, FrontPageError, InputErrors, OutputError};
+use super::{ConfigErrors, FrontPageError, InputErrors, LocatedError, OutputError};
 
 #[derive(Debug, Clone, PartialEq, Eq, Error)]
 pub(crate) enum BuildError {
@@ -14,4 +14,16 @@ pub(crate) enum BuildError {
     Output(#[from] OutputError),
     #[error(transparent)]
     FrontPage(#[from] FrontPageError),
+}
+
+impl BuildError {
+    /// Each line of the report, in its order.
+    pub(crate) fn problems(&self) -> Vec<LocatedError> {
+        match self {
+            BuildError::Config(errors) => errors.problems(),
+            BuildError::Input(errors) => errors.problems(),
+            BuildError::Output(error) => vec![error.problem()],
+            BuildError::FrontPage(error) => vec![error.problem()],
+        }
+    }
 }

@@ -4,7 +4,9 @@
 // site, served with ghg serve --no-build, and each page is checked with
 // axe-core in the light and the dark colour scheme and in each theme a
 // reader can pick, then driven with the keyboard, and found with the dialog
-// for a page opened from disk closed.
+// for a page opened from disk closed. The site ghg serve --watch serves
+// in memory when a list of --only names no feature file, which no build
+// writes, is checked too, in both colour schemes (rule 208).
 //
 // Run from the repository's root, after cargo build and npm ci in script/,
 // with Playwright's Chromium installed:
@@ -54,7 +56,6 @@ const builds = [
   { folder: "front-page", args: ["--config", "versioned.toml"] },
   { folder: "hostile", args: [] },
   { folder: "only", args: ["--only", "changed.txt"] },
-  { folder: "only", args: ["--config", "nothing.toml", "--only", "nothing.txt"] },
   { folder: "keep-in-output", args: [] },
   { root: ".", folder: "project-site", args: ["--config", "ghg.toml"] },
   // The example suite as the release's site shows it, opening on the front
@@ -90,6 +91,7 @@ const noSite = [
   "front-page/expected",
   "front-page/broken",
   "keep-in-output/mistaken",
+  "no-features",
 ];
 
 // The browser's colour scheme, light and dark, and each theme a reader can
@@ -433,6 +435,38 @@ export async function checkSite(browser, folder) {
   return { pages: pages.length, pressed, trees, searched, outlined, problems };
 }
 
+// The home page ghg serve --watch serves in memory for tests/fixtures/only
+// with a list that names no feature file, docs/BEHAVIOUR.md, rule 208: it
+// must say that no feature file was given, and pass axe-core in both colour
+// schemes. Returns the problems, one line each.
+async function checkServedWithNothingGiven(browser) {
+  const { server, address } = await serve(
+    ["--watch", "--config", "nothing.toml", "--only", "nothing.txt", "--port", "0"],
+    join(fixtures, "only"),
+  );
+  const problems = [];
+  try {
+    for (const scheme of ["light", "dark"]) {
+      const context = await browser.newContext({ colorScheme: scheme });
+      await context.addInitScript({ path: axeSource });
+      const page = await context.newPage();
+      // The address ghg prints ends with the home page's slash.
+      await page.goto(address);
+      await page.emulateMedia({ colorScheme: scheme });
+      await treeBuilt(page);
+      const said = await page.evaluate(() => document.querySelector(".ghg-nothing-given")?.textContent?.trim());
+      if (said !== "No feature file was given with --only.") {
+        problems.push(`${scheme}: the home page says ${JSON.stringify(said)}`);
+      }
+      for (const line of await violations(page)) problems.push(`${scheme}: ${line}`);
+      await context.close();
+    }
+  } finally {
+    await stop(server);
+  }
+  return problems;
+}
+
 // Checks the sites in `sites`, as many at a time as the machine has cores, the
 // one with the most pages first, and returns each site's result in the order
 // of `sites`. A site whose check throws stops no other: once every check has
@@ -480,6 +514,9 @@ async function main() {
       searched += result.searched;
       outlined += result.outlined;
       for (const problem of result.problems) failures.push(`${name}: ${problem}`);
+    }
+    for (const problem of await checkServedWithNothingGiven(browser)) {
+      failures.push(`only --config nothing.toml --only nothing.txt, served with --watch: ${problem}`);
     }
     if (pressed === 0) failures.push("no page had a block whose buttons the check could press");
     if (trees === 0) failures.push("no page showed a folder tree the check could move through");

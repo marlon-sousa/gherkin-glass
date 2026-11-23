@@ -34,3 +34,6 @@ only
 
 # Its cases are runs of the command line into output folders that hold a host's files, and one of them fails.
 keep-in-output
+
+# Its input holds no feature file that is read, so its build writes nothing.
+no-features

@@ -45,6 +45,8 @@ pub(crate) fn render_site(
             .map(|file| file.contents.len())
             .filter(is_large),
         untitled: options.title.is_none(),
+        features: tree.feature_pages().count(),
+        scenarios: tree.feature_pages().map(|page| page.scenario_count()).sum(),
     };
     Ok(SiteFiles {
         files,

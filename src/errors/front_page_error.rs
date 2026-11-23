@@ -6,7 +6,7 @@ use std::path::PathBuf;
 use i18n_embed_fl::fl;
 use thiserror::Error;
 
-use super::located;
+use super::LocatedError;
 use crate::policies::CATALOGUE;
 
 /// Its display is the template's file, as the settings give it, its line when there is one,
@@ -44,14 +44,20 @@ pub(crate) enum FrontPageErrorKind {
     RawHtml,
 }
 
+impl FrontPageError {
+    /// The error as its line of the report, said of the template as it was given.
+    pub(crate) fn problem(&self) -> LocatedError {
+        LocatedError {
+            path: self.file.to_string_lossy().into_owned(),
+            line: self.line,
+            message: self.kind.to_string(),
+        }
+    }
+}
+
 impl Display for FrontPageError {
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
-        located(
-            f,
-            &self.file.to_string_lossy(),
-            self.line,
-            &self.kind.to_string(),
-        )
+        self.problem().fmt(f)
     }
 }
 

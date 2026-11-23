@@ -7,4 +7,8 @@ pub(crate) struct BuiltSite {
     pub(crate) large_search_documents: Option<usize>,
     /// Whether no title was given, so that the default stands.
     pub(crate) untitled: bool,
+    /// How many feature pages the site has.
+    pub(crate) features: usize,
+    /// How many scenarios its feature pages hold, counted as the home page counts them.
+    pub(crate) scenarios: usize,
 }

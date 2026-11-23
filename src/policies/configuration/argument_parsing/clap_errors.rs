@@ -62,6 +62,7 @@ fn rejected(error: &Error) -> ArgumentError {
             pattern: value,
             reason,
         },
+        Some(Rejected::NotAMessageFormat) => ArgumentError::NotAMessageFormat { value },
         Some(Rejected::Empty) | None => ArgumentError::MissingValue {
             option: option(error),
         },

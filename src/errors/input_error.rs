@@ -6,7 +6,7 @@ use std::path::{Component, Path};
 
 use thiserror::Error;
 
-use super::{InputErrorKind, each_on_a_line, located};
+use super::{InputErrorKind, LocatedError, each_on_a_line};
 
 /// One thing that cannot be read: a feature file, a `.ghg-ignore` file or a
 /// folder of the input; or a block of a feature that needs a name.
@@ -37,11 +37,20 @@ impl InputError {
             kind,
         }
     }
+
+    /// The error as its line of the report.
+    pub(crate) fn problem(&self) -> LocatedError {
+        LocatedError {
+            path: self.path.clone(),
+            line: self.line,
+            message: self.kind.to_string(),
+        }
+    }
 }
 
 impl Display for InputError {
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
-        located(f, &self.path, self.line, &self.kind.to_string())
+        self.problem().fmt(f)
     }
 }
 
@@ -79,6 +88,11 @@ impl InputErrors {
     #[cfg(test)]
     pub(crate) fn as_slice(&self) -> &[InputError] {
         &self.errors
+    }
+
+    /// Each error as its line of the report, in the report's order.
+    pub(crate) fn problems(&self) -> Vec<LocatedError> {
+        self.errors.iter().map(InputError::problem).collect()
     }
 }
 

@@ -49,7 +49,7 @@ fn left_by(outcome: BuildOutcome, last: BuildSnapshot) -> BuildSnapshot {
     match outcome {
         BuildOutcome::Built(Built { snapshot, .. }) => snapshot,
         BuildOutcome::Stopped(Stopped { left, .. }) => left.unwrap_or(last),
-        BuildOutcome::NothingToBuild(left) | BuildOutcome::SettingsChanged { left, .. } => left,
+        BuildOutcome::NothingConcerned(left) | BuildOutcome::SettingsChanged { left, .. } => left,
     }
 }
 
@@ -177,7 +177,7 @@ fn builds_from_the_last_build_match_builds_from_nothing(
         let from_nothing =
             controller.build_from(BuildStart::FromNothing(Arc::clone(&settings)), &options);
         let expected = match &from_last {
-            BuildOutcome::NothingToBuild(_) => &before,
+            BuildOutcome::NothingConcerned(_) => &before,
             built_or_stopped => built_or_stopped,
         };
         assert_eq!(site_of(&from_nothing), site_of(expected), "{change:?}");

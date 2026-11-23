@@ -1,17 +1,23 @@
 //! Handler: the `ghg` command, from its arguments to what the person at the terminal reads.
 
+mod build_notes;
 mod exit_status;
+mod json_report;
 
 use std::ffi::OsString;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
 use std::process::ExitCode;
 use std::sync::Arc;
 
+use build_notes::{empty_site, notes_of, nothing_to_build};
 use exit_status::ExitStatus;
 use i18n_embed_fl::fl;
+use json_report::json_report;
 
 use crate::controllers::{SiteApi, SiteListener};
-use crate::entities::{BuildOptions, BuiltSite, Invocation, ServeOptions};
+use crate::entities::{
+    BuildOptions, Invocation, MessageFormat, NothingToBuild, ServeEnd, ServeOptions,
+};
 use crate::errors::{RebuildError, WatchError};
 use crate::policies::{CATALOGUE, parse_arguments};
 use crate::ports::Terminal;
@@ -46,7 +52,10 @@ impl CommandLine {
                 "version",
                 version = env!("CARGO_PKG_VERSION")
             )),
-            Ok(Invocation::Build(options)) => self.build(&options),
+            Ok(Invocation::Build {
+                options,
+                message_format,
+            }) => self.build(&options, message_format),
             Ok(Invocation::Serve(options)) => self.serve(&options),
         }
     }
@@ -56,18 +65,35 @@ impl CommandLine {
             terminal: self.terminal.as_ref(),
         };
         match self.site.serve(options, &listener) {
-            Ok(()) => Reply::success(fl!(CATALOGUE, "serve-stopped")),
+            Ok(ServeEnd::NoLongerServed) => Reply::success(fl!(CATALOGUE, "serve-stopped")),
+            Ok(ServeEnd::NothingToBuild(nothing)) => Reply {
+                stderr: lines(nothing_to_build(&nothing)),
+                ..Reply::success(String::new())
+            },
             Err(error) => Reply::failure(ExitStatus::Stopped, error.to_string()),
         }
     }
 
-    fn build(&self, options: &BuildOptions) -> Reply {
-        match self.site.build(options) {
-            Ok(built) => Reply {
-                stderr: lines(warnings(&built)),
+    /// The notes of the build on standard error, or what stopped it, and with
+    /// `--message-format json`, the report of how it ended on standard output.
+    fn build(&self, options: &BuildOptions, message_format: MessageFormat) -> Reply {
+        let ended = self.site.build(options);
+        let reply = match &ended {
+            Ok(report) => Reply {
+                stderr: notes_of(report)
+                    .into_iter()
+                    .map(|note| lines(note.message))
+                    .collect(),
                 ..Reply::success(String::new())
             },
             Err(error) => Reply::failure(ExitStatus::Stopped, error.to_string()),
+        };
+        match message_format {
+            MessageFormat::Human => reply,
+            MessageFormat::Json => Reply {
+                stdout: lines(json_report(&ended)),
+                ..reply
+            },
         }
     }
 }
@@ -124,20 +150,10 @@ impl SiteListener for TerminalListener<'_> {
     fn not_watched(&self, error: &WatchError) {
         self.terminal.warn(&lines(error.to_string()));
     }
-}
 
-/// The hint of a site with no title given, then the warning of large search
-/// documents; empty when the build has neither.
-fn warnings(built: &BuiltSite) -> String {
-    let untitled = built.untitled.then(|| lines(fl!(CATALOGUE, "no-title")));
-    let large = built.large_search_documents.map(large_search_documents);
-    untitled.into_iter().chain(large).collect()
-}
-
-fn large_search_documents(bytes: usize) -> String {
-    // Rounded up, so that a size above 5 MB never reads as 5.0.
-    let size = format!("{:.1}", (bytes as f64 / 100_000.0).ceil() / 10.0);
-    fl!(CATALOGUE, "search-documents-large", size = size.as_str())
+    fn empty(&self, nothing: &NothingToBuild) {
+        self.terminal.warn(&lines(empty_site(nothing)));
+    }
 }
 
 /// Text ending in a line break, unless it is empty.

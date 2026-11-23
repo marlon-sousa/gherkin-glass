@@ -122,6 +122,7 @@ ghg serve [options]
 | `--only <file>` | `build` and `serve` | Builds the site from the feature files listed in that file, one path on each line, alone, as "A site of only some feature files" below describes. `--only -` reads the list from standard input. |
 | `--keep-in-output <pattern>` | `build` and `serve` | Leaves alone what the pattern matches in the output folder, in the syntax of a `.gitignore` file, as "The output folder belongs to ghg" below describes. Give it once for each pattern; the patterns given replace the configuration's `keep_in_output`. |
 | `--preview` | `build` and `serve` | Builds a preview: the site without versions, whatever the configuration's `version_name` says, every page of which asks search engines not to index it, as "A site of only some feature files" below describes. It cannot be given with `--version-name`. |
+| `--message-format <format>` | `build` | `human`, the default, or `json`, which also prints one JSON object to standard output, on one line, saying how the build ended, for a program such as a CI step to read, as "A report for programs" below describes. |
 | `--host <address>` | `serve` | Listens on that address instead of `127.0.0.1`, such as `0.0.0.0` to be reached from other machines. |
 | `--port <number>` | `serve` | Listens at that port instead of 8000. `0` lets the system choose a free one. |
 | `--no-build` | `serve` | Serves the output folder as it is, without building it. It cannot be given with `--watch` or `--only`. |
@@ -129,7 +130,7 @@ ghg serve [options]
 
 An option on the command line wins over the configuration file's key, and the key wins over the default. `ghg --help` lists the commands and options, and `ghg --version` prints the version.
 
-`ghg build` exits with status 0 when it wrote the site, 1 when the configuration, a feature file or the output folder stopped it, and 2 for a mistake on the command line. `ghg serve` exits the same way, and with 1 when it cannot listen, such as on a port already in use. Control+C, or the signal a terminal or a process manager sends, stops it gracefully: it finishes a build that is running, says "The site is no longer served." and exits with status 0. Asked to stop again while it finishes answering, it ends at once with status 130.
+`ghg build` exits with status 0 when it wrote the site, or when it read no feature file, so that it wrote nothing, as "When there is no feature file" below describes, 1 when the configuration, a feature file or the output folder stopped it, and 2 for a mistake on the command line. `ghg serve` exits the same way, and with 1 when it cannot listen, such as on a port already in use. Control+C, or the signal a terminal or a process manager sends, stops it gracefully: it finishes a build that is running, says "The site is no longer served." and exits with status 0. Asked to stop again while it finishes answering, it ends at once with status 130.
 
 ### Looking at a site and publishing it
 
@@ -164,7 +165,7 @@ To review a change to your feature files, such as a pull request, you can build 
 git diff --name-only origin/main...HEAD | ghg build --only -
 ```
 
-Every path in the list that is not a feature file ghg would read is passed over quietly: a removed file, a file that is not a feature file, or a path outside the input folder, so the list needs no filter. A list that names no path at all, such as an empty one, stops the build; one whose paths are none of them feature files builds a home page that says so. The site's folder pages, folder tree, tags, step sentences and search hold only the listed features, and every page says that the site shows only the feature files given with `--only`. git quotes paths with characters outside ASCII; `git -c core.quotePath=false diff --name-only` prints them as they are. With `ghg serve --watch`, a list given as a file is read again whenever it changes.
+Every path in the list that is not a feature file ghg would read is passed over quietly: a removed file, a file that is not a feature file, or a path outside the input folder, so the list needs no filter. A list that names no path at all, such as an empty one, and one whose paths are none of them feature files build nothing, and say so, as "When there is no feature file" below describes. The site's folder pages, folder tree, tags, step sentences and search hold only the listed features, and every page says that the site shows only the feature files given with `--only`. git quotes paths with characters outside ASCII; `git -c core.quotePath=false diff --name-only` prints them as they are. With `ghg serve --watch`, a list given as a file is read again whenever it changes.
 
 To publish such a site for the reviewers of a pull request, build it as a preview, into a folder of its own:
 
@@ -173,6 +174,32 @@ git diff --name-only origin/main...HEAD | ghg build --only - --preview --output 
 ```
 
 A preview is an ordinary site without versions, even when `ghg.toml` names a version, and every page of it asks search engines not to index it. Nothing links to it: readers reach it through its link, wherever you deploy the folder. A versioned output folder keeps a `previews` folder at its top for them: ghg never looks into it, writes or removes anything there, so `--output site/previews/pr-131` deploys a preview beside the versions built into `site`, and the next version built into `site` still runs.
+
+### When there is no feature file
+
+An input folder that holds no feature file ghg reads, such as a suite whose first feature is not written yet, or a list given to `--only` that names none, such as the changes of a pull request that touches no feature file, is nothing to build rather than a mistake. `ghg build` then writes nothing, not even the output folder, so that no empty site or empty version is published. It says why on standard error, such as `features: the input folder holds no feature file, so no site was built.`, and exits with status 0. It still checks the output folder first, and an input folder that does not exist still stops it. `ghg serve` does the same, and serves nothing. `ghg serve --watch`, which never writes the output folder, serves the empty site all the same, so that you can start a suite with it and see the first feature appear, and says on standard error that the site served is empty.
+
+### A report for programs
+
+A program that runs `ghg build`, such as a step of a CI workflow, can ask for `--message-format json`. Standard error then holds the same sentences as ever, and standard output one JSON object, on one line, such as:
+
+```json
+{"outcome":"built","output":"site","version":null,"features":12,"scenarios":48,"notes":[],"errors":[]}
+```
+
+Every key is always there, `null` when it does not apply:
+
+| Key | What it holds |
+| --- | --- |
+| `outcome` | `built`, when the site was written; `nothing-to-build`, when no feature file was read; `stopped`, when the configuration, a feature file, the output folder or the front page stopped the build. |
+| `output` | The output folder, when the site was written. |
+| `version` | The version built, when the site was written as a version. |
+| `features` | How many feature files the site shows, when it was written. |
+| `scenarios` | How many scenarios they hold, when it was written. |
+| `notes` | What ghg says of a build that was not stopped, each with a `kind`, `no-title`, `large-search-documents` or `nothing-to-build`, and the `message` it prints. |
+| `errors` | Every problem that stopped the build, each with its `path`, its `line`, or `null`, and its `message`. |
+
+The exit status is the same as without the option, and a mistake on the command line prints no JSON.
 
 ### The front page
 

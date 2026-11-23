@@ -93,6 +93,16 @@ fn unknown_command(name: &str) -> ArgumentError {
         reason: KeptPattern::new("{draft").expect_err("not valid"),
     }
 )]
+// Rule 231.
+#[case::a_message_format_ghg_does_not_have(
+    &["build", "--message-format", "JSON"],
+    ArgumentError::NotAMessageFormat { value: "JSON".into() }
+)]
+#[case::an_empty_message_format(&["build", "--message-format="], missing_value("--message-format"))]
+#[case::a_message_format_for_serve(
+    &["serve", "--message-format", "json"],
+    ArgumentError::UnknownOption { command: "ghg serve".into(), option: "--message-format".into() }
+)]
 #[case::a_path_as_version_name(
     &["build", "--version-name", "../v1"],
     ArgumentError::InvalidVersionName { name: "../v1".into() }

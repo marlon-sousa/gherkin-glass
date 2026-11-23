@@ -165,3 +165,13 @@ fn a_file_handed_out_by_another_tree_changes_nothing() {
     assert_eq!(tree.files_to_parse().len(), 3);
     assert!(tree.features().next().is_none());
 }
+
+#[test]
+fn a_tree_reads_no_file_only_when_it_holds_no_allowed_file() {
+    assert!(!tree().reads_no_file());
+    let mut builder = listed("in");
+    let root = builder.root();
+    builder.add_file_not_allowed(root, "in/notes.md".into());
+    builder.add_listed_folder(root, "in/sub".into(), IgnoreRules::default());
+    assert!(builder.build().reads_no_file());
+}

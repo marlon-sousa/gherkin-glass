@@ -7,7 +7,7 @@ use std::path::PathBuf;
 use i18n_embed_fl::fl;
 use thiserror::Error;
 
-use super::{invalid_kept_pattern, invalid_version_name, located};
+use super::{LocatedError, each_on_a_line, invalid_kept_pattern, invalid_version_name};
 use crate::entities::{Colour, Theme};
 use crate::policies::CATALOGUE;
 
@@ -31,9 +31,6 @@ pub(crate) enum ConfigErrorKind {
     /// `reason` is the operating system's.
     #[error(fmt = Self::cannot_be_read)]
     CannotBeRead { reason: String },
-    /// The list of `--only`, empty or of blank lines only.
-    #[error(fmt = Self::empty_list)]
-    EmptyList,
     /// Not TOML; `message` is the `toml` crate's, passed through as it is.
     #[error("{message}")]
     Syntax { message: String },
@@ -103,30 +100,29 @@ pub(crate) enum PatternErrorKind {
 
 impl Display for ConfigErrors {
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
-        let path = self.file.to_string_lossy();
-        self.errors
-            .iter()
-            .try_for_each(|error| error.report(&path, f))
+        each_on_a_line(f, &self.problems())
     }
 }
 
 impl ConfigErrors {
+    /// Each error as its line of the report, said of the file as it was given.
+    pub(crate) fn problems(&self) -> Vec<LocatedError> {
+        let path = self.file.to_string_lossy();
+        self.errors
+            .iter()
+            .map(|error| LocatedError {
+                path: path.to_string(),
+                line: error.line,
+                message: error.kind.to_string(),
+            })
+            .collect()
+    }
+
     /// The report of `file`, named as it was given, when it cannot be read.
     pub(crate) fn unreadable(file: PathBuf, error: &IoError) -> Self {
         ConfigErrors {
             file,
             errors: vec![ConfigError::cannot_be_read(error)],
-        }
-    }
-
-    /// The report of `file`, the list of `--only` named as it was given, when it names no path.
-    pub(crate) fn empty_list(file: PathBuf) -> Self {
-        ConfigErrors {
-            file,
-            errors: vec![ConfigError {
-                line: None,
-                kind: ConfigErrorKind::EmptyList,
-            }],
         }
     }
 }
@@ -141,21 +137,11 @@ impl ConfigError {
             },
         }
     }
-
-    /// The error said of `path`, the file it is in, on a line of its own.
-    fn report(&self, path: &str, f: &mut Formatter<'_>) -> FmtResult {
-        located(f, path, self.line, &self.kind.to_string())?;
-        writeln!(f)
-    }
 }
 
 impl ConfigErrorKind {
     fn cannot_be_read(reason: &str, f: &mut Formatter<'_>) -> FmtResult {
         f.write_str(&fl!(CATALOGUE, "config-cannot-be-read", reason = reason))
-    }
-
-    fn empty_list(f: &mut Formatter<'_>) -> FmtResult {
-        f.write_str(&fl!(CATALOGUE, "config-empty-list"))
     }
 
     fn unknown_key(key: &str, f: &mut Formatter<'_>) -> FmtResult {

@@ -2,13 +2,18 @@
 
 use std::path::PathBuf;
 
-use crate::entities::{Destination, KeptInOutput, PathList, SearchIndexing, VersionName};
+use crate::entities::{
+    Destination, KeptInOutput, MessageFormat, PathList, SearchIndexing, VersionName,
+};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) enum Invocation {
     Help,
     Version,
-    Build(BuildOptions),
+    Build {
+        options: BuildOptions,
+        message_format: MessageFormat,
+    },
     Serve(ServeOptions),
 }
 

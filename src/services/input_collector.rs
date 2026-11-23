@@ -8,7 +8,7 @@ use std::sync::Arc;
 
 use input_walk::{walk_changes, walk_input};
 
-use crate::entities::{CollectedChanges, InputTree, PathList};
+use crate::entities::{CollectedChanges, InputTree, ListedFiles, PathList};
 use crate::errors::ConfigErrors;
 use crate::policies::{ListedSelection, Read, listed_paths, page_collisions};
 use crate::ports::{FileReader, InputFolders, StandardInput};
@@ -48,13 +48,13 @@ impl InputCollector {
         }
     }
 
-    /// The files the list `only` holds inside the folder `input`, `None` without a list, or the
+    /// What the list `only` names inside the folder `input`, `None` without a list, or the
     /// error of the list when it cannot be read.
-    fn listed_selection(
+    fn listed_files(
         &self,
         input: &Path,
         only: Option<&PathList>,
-    ) -> Result<Option<ListedSelection>, ConfigErrors> {
+    ) -> Result<Option<ListedFiles>, ConfigErrors> {
         let Some(list) = only else {
             return Ok(None);
         };
@@ -65,12 +65,13 @@ impl InputCollector {
         .map_err(|error| ConfigErrors::unreadable(list.as_given(), &error))?;
         let paths = listed_paths(&text);
         if paths.is_empty() {
-            return Err(ConfigErrors::empty_list(list.as_given()));
+            return Ok(Some(ListedFiles::NoPath));
         }
-        Ok(Some(ListedSelection::new(
+        let selection = ListedSelection::new(
             &self.absolute(input),
             paths.iter().map(|path| self.absolute(path)),
-        )))
+        );
+        Ok(Some(ListedFiles::Below(selection.into_files())))
     }
 
     /// `path` from the current folder, or as written when the current folder cannot be found.
@@ -83,14 +84,18 @@ impl InputCollector {
 
 impl InputCollectorApi for InputCollector {
     fn collect(&self, input: &Path, only: Option<&PathList>) -> Result<InputTree, ConfigErrors> {
-        let listed = self.listed_selection(input, only)?;
-        let files = listed.as_ref().map(|listed| listed.files().clone());
-        let input_tree = walk_input(self.input_folders.as_ref(), input, listed);
-        Ok(with_page_errors(input_tree.walked_for(files)))
+        let listed = self.listed_files(input, only)?;
+        let selection = listed
+            .as_ref()
+            .map(|listed| ListedSelection::of(listed.files()));
+        let input_tree = walk_input(self.input_folders.as_ref(), input, selection);
+        Ok(with_page_errors(input_tree.walked_for(listed)))
     }
 
     fn collect_changes(&self, last: &InputTree, paths: &BTreeSet<PathBuf>) -> CollectedChanges {
-        let listed = last.listed().cloned().map(ListedSelection::of);
+        let listed = last
+            .listed()
+            .map(|listed| ListedSelection::of(listed.files()));
         let input_tree = walk_changes(self.input_folders.as_ref(), last, paths, listed)
             .walked_for(last.listed().cloned());
         let read = Read {

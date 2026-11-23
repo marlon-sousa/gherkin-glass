@@ -24,16 +24,17 @@ impl ListedSelection {
         }
     }
 
-    /// The selection of `files`, the listed paths below the input folder, as [`files`] gave them.
+    /// The selection of `files`, the listed paths below the input folder, as [`into_files`] gave
+    /// them.
     ///
-    /// [`files`]: ListedSelection::files
+    /// [`into_files`]: ListedSelection::into_files
     pub(crate) fn of(files: BTreeSet<PathBuf>) -> Self {
         ListedSelection { files }
     }
 
-    /// The listed paths below the input folder.
-    pub(crate) fn files(&self) -> &BTreeSet<PathBuf> {
-        &self.files
+    /// The listed paths below the input folder, without the selection.
+    pub(crate) fn into_files(self) -> BTreeSet<PathBuf> {
+        self.files
     }
 
     /// Whether the entry at `relative`, the path below the input folder, is left out: a file

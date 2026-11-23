@@ -1,9 +1,10 @@
-//! Entity: the values a run of ghg reads, computes and reports, each stage of the pipeline in a module of its own, where a build starts and what it made, which hold the parts of several stages, and the colours of each theme, which every stage that paints a page uses.
+//! Entity: the values a run of ghg reads, computes and reports, each stage of the pipeline in a module of its own, where a build starts, what it made and why it read no feature file, which hold the parts of several stages, and the colours of each theme, which every stage that paints a page uses.
 
 mod build_snapshot;
 mod build_start;
 mod collecting;
 mod configuration;
+mod nothing_to_build;
 mod palette;
 mod serving;
 mod site;
@@ -12,6 +13,7 @@ pub(crate) use build_snapshot::BuildSnapshot;
 pub(crate) use build_start::BuildStart;
 pub(crate) use collecting::*;
 pub(crate) use configuration::*;
+pub(crate) use nothing_to_build::NothingToBuild;
 pub(crate) use palette::Palette;
 pub(crate) use serving::*;
 pub(crate) use site::*;

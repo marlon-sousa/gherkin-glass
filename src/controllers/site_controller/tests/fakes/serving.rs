@@ -189,6 +189,9 @@ impl SiteListener for Recorded {
     fn not_watched(&self, error: &WatchError) {
         self.push(format!("not watched: {error}"));
     }
+    fn empty(&self, nothing: &NothingToBuild) {
+        self.push(format!("empty: {nothing:?}"));
+    }
 }
 
 impl Recorded {

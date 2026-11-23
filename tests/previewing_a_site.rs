@@ -642,10 +642,17 @@ fn watching_rebuilds_on_a_change_and_keeps_the_last_site_that_built() {
         build() == "4"
     });
     assert_eq!(get(&address, "/withdraw.html").status, 404);
-
-    write(folder.join("ghg.toml"), "inputs = \"features\"\n").expect("written");
+    // Rule 230: the site, now of no feature file, is served all the same, and said to be empty.
     let mut stderr = BufReader::new(serving.child.stderr.take().expect("piped"));
     let mut report = String::new();
+    stderr.read_line(&mut report).expect("a line");
+    assert_eq!(
+        report,
+        "features: the input folder holds no feature file, so the site served shows none.\n"
+    );
+
+    write(folder.join("ghg.toml"), "inputs = \"features\"\n").expect("written");
+    report.clear();
     stderr.read_line(&mut report).expect("a line");
     assert_eq!(report, "ghg.toml:1: ghg has no setting named inputs.\n");
     report.clear();
@@ -657,6 +664,12 @@ fn watching_rebuilds_on_a_change_and_keeps_the_last_site_that_built() {
     assert_eq!(build(), "4");
     write(folder.join("ghg.toml"), "input = \"features\"\n").expect("written");
     eventually("a rebuild after ghg.toml was mended", || build() == "5");
+    report.clear();
+    stderr.read_line(&mut report).expect("a line");
+    assert!(
+        report.ends_with("so the site served shows none.\n"),
+        "{report}"
+    );
 
     write(folder.join("features/broken.feature"), "").expect("written");
     report.clear();
@@ -885,4 +898,34 @@ fn a_watch_that_cannot_start_again_keeps_the_last_site_served_and_the_configurat
     let mut line = String::new();
     serving.stdout.read_line(&mut line).expect("a line");
     assert_eq!(line, "The site was rebuilt.\n");
+}
+
+#[test]
+fn a_list_that_names_no_feature_file_is_served_with_a_home_page_that_says_so() {
+    // Rules 208 and 230.
+    let only = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/only");
+    let mut serving = serve(
+        &only,
+        &[
+            "--watch",
+            "--config",
+            "nothing.toml",
+            "--only",
+            "nothing.txt",
+            "--port",
+            "0",
+        ],
+    );
+    let mut stderr = BufReader::new(serving.child.stderr.take().expect("piped"));
+    let mut line = String::new();
+    stderr.read_line(&mut line).expect("a line");
+    assert_eq!(
+        line,
+        "nothing.txt: names no feature file of the input, so the site served shows none.\n"
+    );
+    let home = get(&serving.address, "/").text();
+    assert!(
+        home.contains("<p class=\"ghg-nothing-given\">No feature file was given with --only.</p>"),
+        "{home}"
+    );
 }

@@ -7,7 +7,6 @@ mod input_node;
 mod parsed_file;
 mod revised_feature;
 
-use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
@@ -20,7 +19,7 @@ use input_node::{FileState, FolderState, InputNode, NodeKind};
 pub(crate) use parsed_file::ParsedFile;
 pub(crate) use revised_feature::RevisedFeature;
 
-use crate::entities::{PageClash, Revision};
+use crate::entities::{ListedFiles, PageClash, Revision};
 use crate::errors::{InputError, InputErrors};
 
 /// Its root is the input folder.
@@ -29,9 +28,9 @@ pub(crate) struct InputTree {
     tree: Tree<InputNode>,
     /// The revision the next file taken in is given.
     next_revision: Revision,
-    /// The files the list of `--only` held, below the input folder, which the tree was walked
-    /// for, and a tree made from it is walked for too; `None` for every file.
-    listed: Option<BTreeSet<PathBuf>>,
+    /// What the list of `--only` named, which the tree was walked for, and a tree made from it
+    /// is walked for too; `None` for every file.
+    listed: Option<ListedFiles>,
 }
 
 impl InputTree {
@@ -50,15 +49,14 @@ impl InputTree {
         }
     }
 
-    /// The files the list of `--only` held, below the input folder, which the tree was walked
-    /// for; `None` for every file.
-    pub(crate) fn listed(&self) -> Option<&BTreeSet<PathBuf>> {
+    /// What the list of `--only` named, which the tree was walked for; `None` for every file.
+    pub(crate) fn listed(&self) -> Option<&ListedFiles> {
         self.listed.as_ref()
     }
 
-    /// The tree, walked for `listed`, the files the list of `--only` held, below the input
-    /// folder, or for every file when it is `None`.
-    pub(crate) fn walked_for(self, listed: Option<BTreeSet<PathBuf>>) -> Self {
+    /// The tree, walked for `listed`, what the list of `--only` named, or for every file when it
+    /// is `None`.
+    pub(crate) fn walked_for(self, listed: Option<ListedFiles>) -> Self {
         InputTree { listed, ..self }
     }
 
@@ -88,6 +86,15 @@ impl InputTree {
             .descendants()
             .filter_map(allowed_file)
             .collect()
+    }
+
+    /// Whether the tree holds no allowed file, so that a build from it reads no feature file.
+    pub(crate) fn reads_no_file(&self) -> bool {
+        self.tree
+            .root()
+            .descendants()
+            .find_map(allowed_file)
+            .is_none()
     }
 
     /// The allowed files with nothing parsed, in file order.

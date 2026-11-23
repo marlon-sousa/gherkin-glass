@@ -4,7 +4,7 @@ use std::ffi::OsString;
 
 use std::path::PathBuf;
 
-use crate::entities::{KeptPattern, PathList, VersionName};
+use crate::entities::{KeptPattern, MessageFormat, PathList, VersionName};
 
 /// Why a value was refused, which clap keeps as the source of its error.
 #[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
@@ -18,6 +18,8 @@ pub(super) enum Rejected {
     /// `reason` is the `ignore` crate's.
     #[error("the value is not a pattern: {reason}")]
     NotAPattern { reason: String },
+    #[error("the value is not a message format")]
+    NotAMessageFormat,
 }
 
 /// A value as text, with what is not Unicode replaced. An empty value
@@ -58,4 +60,13 @@ pub(super) fn path_list(value: OsString) -> Result<PathList, Rejected> {
         return Ok(PathList::StandardInput);
     }
     Ok(PathList::File(PathBuf::from(value)))
+}
+
+/// `human` or `json`, as written, in lower case.
+pub(super) fn message_format(value: OsString) -> Result<MessageFormat, Rejected> {
+    match text(value)?.as_str() {
+        "human" => Ok(MessageFormat::Human),
+        "json" => Ok(MessageFormat::Json),
+        _ => Err(Rejected::NotAMessageFormat),
+    }
 }

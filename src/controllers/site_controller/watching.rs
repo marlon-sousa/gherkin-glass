@@ -7,7 +7,8 @@ use std::sync::Arc;
 use super::building::{BuildOutcome, Built, Stopped};
 use super::{SiteController, SiteListener};
 use crate::entities::{
-    BuildOptions, BuildSnapshot, BuildStart, Destination, InputChanges, PathList, Preview, Settings,
+    BuildOptions, BuildSnapshot, BuildStart, Destination, InputChanges, NothingToBuild, PathList,
+    Preview, Settings,
 };
 use crate::errors::{BuildError, RebuildError, ServeError, WatchError};
 use crate::services::WatchedChanges;
@@ -94,13 +95,20 @@ impl Watching<'_> {
             BuildOutcome::Built(Built { snapshot, site, .. }) => {
                 self.preview.replace(site);
                 self.listener.rebuilt();
+                if let Some(nothing) =
+                    NothingToBuild::found(&snapshot.settings, &snapshot.input_tree)
+                {
+                    self.listener.empty(&nothing);
+                }
                 snapshot
             }
             BuildOutcome::Stopped(Stopped { left, error }) => {
                 self.listener.not_rebuilt(&RebuildError { build: error });
                 left.unwrap_or(last)
             }
-            BuildOutcome::NothingToBuild(left) | BuildOutcome::SettingsChanged { left, .. } => left,
+            BuildOutcome::NothingConcerned(left) | BuildOutcome::SettingsChanged { left, .. } => {
+                left
+            }
         }
     }
 

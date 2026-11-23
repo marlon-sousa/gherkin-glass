@@ -6,7 +6,7 @@ use std::path::{MAIN_SEPARATOR, PathBuf};
 use i18n_embed_fl::fl;
 use thiserror::Error;
 
-use super::located;
+use super::LocatedError;
 use crate::entities::{FilePath, VersionName};
 use crate::policies::CATALOGUE;
 
@@ -62,10 +62,12 @@ pub(crate) enum OutputErrorKind {
     FileNotWritten { file: FilePath, reason: String },
 }
 
-impl Display for OutputError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+impl OutputError {
+    /// The error as its line of the report, said of the output folder, or of the folder or file
+    /// in it that it concerns.
+    pub(crate) fn problem(&self) -> LocatedError {
         let output = self.output.to_string_lossy();
-        let (folder, message) = match (&self.version, &self.kind) {
+        let (path, message) = match (&self.version, &self.kind) {
             (Some(name), OutputErrorKind::AlreadyBuilt) => (
                 format!("{output}/{name}"),
                 fl!(CATALOGUE, "version-already-built", name = name.as_str()),
@@ -82,7 +84,17 @@ impl Display for OutputError {
             (Some(name), kind) => (format!("{output}/{name}"), kind.to_string()),
             (None, kind) => (output.into_owned(), kind.to_string()),
         };
-        located(f, &folder, None, &message)
+        LocatedError {
+            path,
+            line: None,
+            message,
+        }
+    }
+}
+
+impl Display for OutputError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+        self.problem().fmt(f)
     }
 }
 

@@ -28,6 +28,8 @@ pub(crate) enum ArgumentError {
     UnexpectedArgument { command: String, argument: String },
     #[error(fmt = Self::not_a_port)]
     NotAPort { value: String },
+    #[error(fmt = Self::not_a_message_format)]
+    NotAMessageFormat { value: String },
     #[error(fmt = Self::watch_without_build)]
     WatchWithoutBuild,
     #[error(fmt = Self::only_without_build)]
@@ -82,6 +84,10 @@ impl ArgumentError {
 
     fn not_a_port(value: &str, f: &mut Formatter<'_>) -> FmtResult {
         f.write_str(&fl!(CATALOGUE, "not-a-port", value = value))
+    }
+
+    fn not_a_message_format(value: &str, f: &mut Formatter<'_>) -> FmtResult {
+        f.write_str(&fl!(CATALOGUE, "not-a-message-format", value = value))
     }
 
     fn watch_without_build(f: &mut Formatter<'_>) -> FmtResult {
