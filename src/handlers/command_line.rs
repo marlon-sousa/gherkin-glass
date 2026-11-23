@@ -1,7 +1,9 @@
 //! Handler: the `ghg` command, from its arguments to what the person at the terminal reads.
 
 mod build_notes;
+mod build_reporter;
 mod exit_status;
+mod human_report;
 mod json_report;
 
 use std::ffi::OsString;
@@ -9,10 +11,12 @@ use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
 use std::process::ExitCode;
 use std::sync::Arc;
 
-use build_notes::{empty_site, notes_of, nothing_to_build};
+use build_notes::{empty_site, nothing_to_build};
+use build_reporter::BuildReporter;
 use exit_status::ExitStatus;
+use human_report::HumanReport;
 use i18n_embed_fl::fl;
-use json_report::json_report;
+use json_report::JsonReport;
 
 use crate::controllers::{SiteApi, SiteListener};
 use crate::entities::{
@@ -74,27 +78,17 @@ impl CommandLine {
         }
     }
 
-    /// The notes of the build on standard error, or what stopped it, and with
-    /// `--message-format json`, the report of how it ended on standard output.
+    /// How the build ended, worded by the reporter `message_format` names.
     fn build(&self, options: &BuildOptions, message_format: MessageFormat) -> Reply {
-        let ended = self.site.build(options);
-        let reply = match &ended {
-            Ok(report) => Reply {
-                stderr: notes_of(report)
-                    .into_iter()
-                    .map(|note| lines(note.message))
-                    .collect(),
-                ..Reply::success(String::new())
-            },
-            Err(error) => Reply::failure(ExitStatus::Stopped, error.to_string()),
-        };
-        match message_format {
-            MessageFormat::Human => reply,
-            MessageFormat::Json => Reply {
-                stdout: lines(json_report(&ended)),
-                ..reply
-            },
-        }
+        reporter(message_format).report(&self.site.build(options))
+    }
+}
+
+/// The reporter of `message_format`.
+fn reporter(message_format: MessageFormat) -> &'static dyn BuildReporter {
+    match message_format {
+        MessageFormat::Human => &HumanReport,
+        MessageFormat::Json => &JsonReport,
     }
 }
 
