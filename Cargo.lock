@@ -1703,18 +1703,19 @@ checksum = "e8e2fb0f499abb4d162f2bedad68f5ef91a1682b5a03596ddb67efd37768d100"
 
 [[package]]
 name = "snapfit"
-version = "0.1.1"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "88b5bf10f92abe83733e2f46f763a7d92ddbc2403fb23d50753455b1bd428177"
+checksum = "3ebcdc7edb975aa7a4d27ee8b79931df3516234a981e6d9f003438e47d891c7b"
 dependencies = [
  "snapfit-macros",
+ "thiserror 2.0.21",
 ]
 
 [[package]]
 name = "snapfit-macros"
-version = "0.1.1"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b04a6394eabce45af486c3acf5687df5ed30383268c42dfb2795ea606a8a3ed1"
+checksum = "46abb83724cfcd414b5bdd2b2fba75f4edfed2985dfc6bd0ea939693705ef1ca"
 dependencies = [
  "darling 0.21.3",
  "derive-new",
