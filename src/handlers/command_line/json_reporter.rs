@@ -4,7 +4,7 @@ use serde::Serialize;
 
 use super::build_notes::{BuildNote, notes_of};
 use super::build_reporter::BuildReporter;
-use super::human_report::HumanReport;
+use super::human_reporter::HumanReporter;
 use super::{Reply, lines};
 use crate::entities::{BuildReport, VersionName};
 use crate::errors::{BuildError, LocatedError};
@@ -50,15 +50,15 @@ impl From<LocatedError> for JsonError {
 
 /// The reporter of `--message-format json`.
 #[derive(Debug, Clone, Copy)]
-pub(super) struct JsonReport;
+pub(super) struct JsonReporter;
 
 /// What a person reads is still on standard error, as without the option, and the exit status
 /// is the same, so that a program can read either.
-impl BuildReporter for JsonReport {
+impl BuildReporter for JsonReporter {
     fn report(&self, ended: &Result<BuildReport, BuildError>) -> Reply {
         Reply {
             stdout: lines(json_report(ended)),
-            ..HumanReport.report(ended)
+            ..HumanReporter.report(ended)
         }
     }
 }

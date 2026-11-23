@@ -9,9 +9,9 @@ use crate::errors::BuildError;
 
 /// The reporter of `--message-format human`, the default.
 #[derive(Debug, Clone, Copy)]
-pub(super) struct HumanReport;
+pub(super) struct HumanReporter;
 
-impl BuildReporter for HumanReport {
+impl BuildReporter for HumanReporter {
     fn report(&self, ended: &Result<BuildReport, BuildError>) -> Reply {
         match ended {
             Ok(report) => Reply {

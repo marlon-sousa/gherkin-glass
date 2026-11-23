@@ -1,10 +1,10 @@
-//! Handler: the `ghg` command, from its arguments to what the person at the terminal reads.
+//! Handler: the `ghg` command, from its arguments to what the person at the terminal reads, or a program takes apart.
 
 mod build_notes;
 mod build_reporter;
 mod exit_status;
-mod human_report;
-mod json_report;
+mod human_reporter;
+mod json_reporter;
 
 use std::ffi::OsString;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
@@ -14,9 +14,9 @@ use std::sync::Arc;
 use build_notes::{empty_site, nothing_to_build};
 use build_reporter::BuildReporter;
 use exit_status::ExitStatus;
-use human_report::HumanReport;
+use human_reporter::HumanReporter;
 use i18n_embed_fl::fl;
-use json_report::JsonReport;
+use json_reporter::JsonReporter;
 
 use crate::controllers::{SiteApi, SiteListener};
 use crate::entities::{
@@ -87,8 +87,8 @@ impl CommandLine {
 /// The reporter of `message_format`.
 fn reporter(message_format: MessageFormat) -> &'static dyn BuildReporter {
     match message_format {
-        MessageFormat::Human => &HumanReport,
-        MessageFormat::Json => &JsonReport,
+        MessageFormat::Human => &HumanReporter,
+        MessageFormat::Json => &JsonReporter,
     }
 }
 
