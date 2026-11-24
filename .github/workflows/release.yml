@@ -6,8 +6,10 @@ name: Release
 # them, and the GitHub release for crates.io. An alpha, a beta or any other
 # pre-release but a release candidate skips crates.io, and the GitHub release
 # then waits for the rest only. On a pull request that changes how releases
-# are made, the tests, builds and archives run, and nothing is published.
-# rust.yml packs the crate on every pull request.
+# are made, the tests, builds and archives run, and nothing is published;
+# on any other, they are skipped, and "release builds and checks", a required
+# check, tells the two apart, since a check that never runs would block every
+# pull request. rust.yml packs the crate on every pull request.
 
 on:
   push:
@@ -15,18 +17,6 @@ on:
   pull_request:
     # Not on "edited", as rust.yml says (#123).
     types: [opened, synchronize, reopened]
-    paths:
-      - .github/workflows/release.yml
-      - .github/release/**
-      - tests/fixtures/release/**
-      - cliff.toml
-      - Cargo.toml
-      - Cargo.lock
-      - rust-toolchain.toml
-      - build.rs
-      - .cargo/**
-      - src/main.rs
-      - src/cargo_ghg.rs
 
 permissions:
   contents: read
@@ -61,6 +51,31 @@ jobs:
           publish=$(.github/release/crates-io.sh "$TAG")
           echo "publish=$publish" >> "$GITHUB_OUTPUT"
 
+  # Whether the release is made, or a pull request changes how it is made,
+  # so that the release tools, the builds and the archives run.
+  scope:
+    name: what the release checks
+    runs-on: ubuntu-latest
+    outputs:
+      releasing: ${{ steps.paths.outputs.releasing }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Tell whether the release is made or changed
+        id: paths
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = pull_request ]; then
+            releasing=$(git diff --name-only "$BASE...$HEAD" | .github/release/release-paths.sh)
+          else
+            releasing=true
+          fi
+          echo "releasing=$releasing" >> "$GITHUB_OUTPUT"
+          echo "The release tools, the builds and the archives run: $releasing."
+
   ci:
     name: checks
     needs: gate
@@ -68,6 +83,8 @@ jobs:
 
   release-tools:
     name: release tools, against their fixtures
+    needs: scope
+    if: needs.scope.outputs.releasing == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -78,10 +95,12 @@ jobs:
       - run: .github/release/test-check-archive.sh
       - run: .github/release/test-action-tag.sh
       - run: .github/release/test-crates-io.sh
+      - run: .github/release/test-release-paths.sh
 
   build:
     name: build for ${{ matrix.target }}
-    needs: release-tools
+    needs: [scope, release-tools]
+    if: needs.scope.outputs.releasing == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -159,6 +178,35 @@ jobs:
           name: release-assets
           path: dist/
           if-no-files-found: error
+
+  # The one check of this workflow a pull request needs to pass: the release
+  # tools, every build and the archives passed when the pull request changes
+  # how the release is made, and all were skipped when it does not. One check
+  # for them all, so that the required checks need not follow the matrix.
+  checked:
+    name: release builds and checks
+    if: github.event_name == 'pull_request' && !cancelled()
+    needs: [scope, release-tools, build, archives]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check the jobs ran as the pull request calls for
+        env:
+          RELEASING: ${{ needs.scope.outputs.releasing }}
+          SCOPE: ${{ needs.scope.result }}
+          RESULTS: ${{ needs.release-tools.result }} ${{ needs.build.result }} ${{ needs.archives.result }}
+        run: |
+          if [ "$SCOPE" != success ]; then
+            echo "::error::Whether the pull request changes the release could not be told: $SCOPE."
+            exit 1
+          fi
+          if [ "$RELEASING" = true ]; then expected=success; else expected=skipped; fi
+          for result in $RESULTS; do
+            if [ "$result" != "$expected" ]; then
+              echo "::error::The release tools, the builds and the archives should all be $expected; they are: $RESULTS."
+              exit 1
+            fi
+          done
+          echo "The release tools, the builds and the archives are all $expected."
 
   publish:
     # docs/BEHAVIOUR.md, "Releases", rule 167: only a version without a

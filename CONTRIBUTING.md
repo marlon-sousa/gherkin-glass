@@ -114,7 +114,7 @@ The release workflow, `.github/workflows/release.yml`, then runs these jobs. Pub
 6. **crates.io**, in the `crates-io` environment, publishes the crate with the `publish-crates` action of [itinera-dev/actions](https://github.com/itinera-dev/actions), through crates.io's trusted publishing, unless that version is there already; it is skipped for an alpha, a beta or any other pre-release but a release candidate;
 7. **GitHub release** creates the release with the `create-release` action of itinera-dev/actions, with the version's section of `CHANGELOG.md` as its notes, a pre-release for a version such as `0.2.0-rc.1`, and the archives and `SHA256SUMS` attached.
 
-A pull request that changes how releases are made runs the same builds, archives and checks, and packs the crate, without publishing anything.
+A pull request that changes how releases are made runs the same builds, archives and checks, and packs the crate, without publishing anything. It merges only once they pass: the required check "release builds and checks" says so, and passes at once on a pull request that changes none of the paths `.github/release/release-paths.sh` names, where they are skipped.
 
 ### Trusted publishing
 
