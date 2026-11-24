@@ -3,6 +3,7 @@
 use rstest::rstest;
 
 use super::*;
+use crate::entities::KeptPattern;
 
 fn unknown_option(command: &str, option: &str) -> ArgumentError {
     ArgumentError::UnknownOption {
@@ -82,6 +83,25 @@ fn unknown_command(name: &str) -> ArgumentError {
 #[case::a_preview_with_a_version_name(
     &["build", "--preview", "--version-name", "pr-131"],
     ArgumentError::PreviewWithVersionName
+)]
+// Rule 226.
+#[case::an_empty_pattern(&["build", "--keep-in-output="], missing_value("--keep-in-output"))]
+#[case::a_pattern_that_is_not_valid(
+    &["serve", "--keep-in-output", "{draft"],
+    ArgumentError::InvalidKeptPattern {
+        pattern: "{draft".into(),
+        reason: KeptPattern::new("{draft").expect_err("not valid"),
+    }
+)]
+// Rule 231.
+#[case::a_message_format_ghg_does_not_have(
+    &["build", "--message-format", "JSON"],
+    ArgumentError::NotAMessageFormat { value: "JSON".into() }
+)]
+#[case::an_empty_message_format(&["build", "--message-format="], missing_value("--message-format"))]
+#[case::a_message_format_for_serve(
+    &["serve", "--message-format", "json"],
+    ArgumentError::UnknownOption { command: "ghg serve".into(), option: "--message-format".into() }
 )]
 #[case::a_path_as_version_name(
     &["build", "--version-name", "../v1"],

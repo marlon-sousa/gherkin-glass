@@ -10,11 +10,13 @@ use crate::errors::{ConfigError, ConfigErrorKind, ValueType};
 
 mod accent_contrast;
 mod config_key;
+mod kept_patterns;
 mod tag_link_tables;
 mod tag_patterns;
 
 use accent_contrast::check_accent;
 use config_key::{ConfigKey, SettingKey, accent_of};
+use kept_patterns::kept_patterns;
 use tag_link_tables::tag_links;
 
 /// The values `source` sets, or every error in it, sorted by line. A file
@@ -60,6 +62,13 @@ fn take(
         ConfigKey::TagLinks => match tag_links(source, value) {
             Ok(links) => {
                 config.tag_links = Some(links);
+                Vec::new()
+            }
+            Err(found) => found,
+        },
+        ConfigKey::KeepInOutput => match kept_patterns(source, value) {
+            Ok(patterns) => {
+                config.keep_in_output = Some(patterns);
                 Vec::new()
             }
             Err(found) => found,

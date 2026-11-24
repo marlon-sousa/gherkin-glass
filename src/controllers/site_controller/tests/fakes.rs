@@ -12,6 +12,7 @@ use std::thread::sleep;
 use std::time::{Duration, Instant};
 
 use super::*;
+use crate::entities::BuiltSite;
 use crate::errors::{
     ConfigError, ConfigErrorKind, ConfigErrors, InputError, InputErrorKind, InputErrors,
     ListenErrorKind, OutputError, OutputErrorKind,
@@ -147,6 +148,7 @@ pub(super) fn built_site() -> BuiltSite {
     BuiltSite {
         large_search_documents: None,
         untitled: true,
+        ..BuiltSite::default()
     }
 }
 

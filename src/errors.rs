@@ -6,6 +6,7 @@ mod config_error;
 mod front_page_error;
 mod input_error;
 mod input_error_kind;
+mod located_error;
 mod output_error;
 mod parse_error;
 mod serve_error;
@@ -22,30 +23,24 @@ pub(crate) use config_error::{
 pub(crate) use front_page_error::{FrontPageError, FrontPageErrorKind};
 pub(crate) use input_error::{InputError, InputErrors};
 pub(crate) use input_error_kind::{InputErrorKind, UnnamedBlock};
+pub(crate) use located_error::LocatedError;
 pub(crate) use output_error::{OutputError, OutputErrorKind};
 pub(crate) use parse_error::ParseError;
 pub(crate) use serve_error::{ListenErrorKind, RebuildError, ServeError, SignalsError, WatchError};
 
 use crate::policies::CATALOGUE;
 
-/// `message` said of `path`, and of its line when there is one. The line
-/// number is passed as text, so that Fluent never groups its digits.
-fn located(f: &mut Formatter<'_>, path: &str, line: Option<usize>, message: &str) -> FmtResult {
-    let text = match line {
-        Some(line) => fl!(
-            CATALOGUE,
-            "problem-with-line",
-            path = path,
-            line = line.to_string(),
-            message = message
-        ),
-        None => fl!(CATALOGUE, "problem", path = path, message = message),
-    };
-    f.write_str(&text)
-}
-
 fn invalid_version_name(name: &str, f: &mut Formatter<'_>) -> FmtResult {
     f.write_str(&fl!(CATALOGUE, "invalid-version-name", name = name))
+}
+
+fn invalid_kept_pattern(pattern: &str, reason: &str, f: &mut Formatter<'_>) -> FmtResult {
+    f.write_str(&fl!(
+        CATALOGUE,
+        "invalid-kept-pattern",
+        pattern = pattern,
+        reason = reason
+    ))
 }
 
 /// Each of `errors` on a line of its own.

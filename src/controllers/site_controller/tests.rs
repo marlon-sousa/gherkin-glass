@@ -3,6 +3,7 @@ mod fakes;
 mod serving;
 
 use std::path::PathBuf;
+use std::sync::atomic::Ordering;
 
 use fakes::*;
 use rstest::rstest;
@@ -29,7 +30,14 @@ fn a_build_loads_the_settings_checks_the_output_then_collects_parses_converts_an
         input: Some(PathBuf::from("specs")),
         ..BuildOptions::default()
     };
-    assert_eq!(world.controller().build(&options), Ok(built_site()));
+    assert_eq!(
+        world.controller().build(&options),
+        Ok(BuildReport::Written {
+            site: built_site(),
+            output: PathBuf::from("site"),
+            version: None,
+        })
+    );
     assert_eq!(
         world.calls.taken(),
         [
@@ -71,4 +79,43 @@ fn what_stops_a_build_is_reported_and_ends_it(
         )
         .collect();
     assert_eq!(world.calls.taken(), expected);
+}
+
+// Rule 229: a build that reads no feature file checks the output folder and collects the input,
+// then writes nothing, saying where it read from.
+#[test]
+fn a_build_that_reads_no_feature_file_writes_nothing() {
+    let world = world();
+    world.input_collector.no_file.store(true, Ordering::SeqCst);
+    assert_eq!(
+        world.controller().build(&BuildOptions::default()),
+        Ok(BuildReport::NothingToBuild(
+            NothingToBuild::InputHoldsNone {
+                input: PathBuf::from("features"),
+            }
+        ))
+    );
+    assert_eq!(
+        world.calls.taken(),
+        [
+            "settings.load Folder",
+            "site_writer.check Folder",
+            "input_collector.collect features",
+        ]
+    );
+}
+
+// Rules 16 and 229: an input that holds an error stops the build, even with no feature file.
+#[test]
+fn an_input_with_an_error_and_no_feature_file_stops_the_build() {
+    let world = world();
+    world.input_collector.no_file.store(true, Ordering::SeqCst);
+    world
+        .input_collector
+        .input_missing
+        .store(true, Ordering::SeqCst);
+    assert!(matches!(
+        world.controller().build(&BuildOptions::default()),
+        Err(BuildError::Input(_))
+    ));
 }

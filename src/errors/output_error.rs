@@ -6,7 +6,7 @@ use std::path::{MAIN_SEPARATOR, PathBuf};
 use i18n_embed_fl::fl;
 use thiserror::Error;
 
-use super::located;
+use super::LocatedError;
 use crate::entities::{FilePath, VersionName};
 use crate::policies::CATALOGUE;
 
@@ -40,6 +40,10 @@ pub(crate) enum OutputErrorKind {
     /// is its path in the folder, the outermost when it is a folder.
     #[error(fmt = Self::not_safe)]
     NotSafe { found: FilePath },
+    /// Something ghg writes, or something in a folder ghg writes, that the
+    /// pattern `pattern` keeps; `found` is its path in the folder.
+    #[error(fmt = Self::kept_clash)]
+    KeptClash { found: FilePath, pattern: String },
     /// A version the marker lists whose folder is missing.
     #[error(fmt = Self::missing_version)]
     MissingVersion { name: VersionName },
@@ -58,15 +62,17 @@ pub(crate) enum OutputErrorKind {
     FileNotWritten { file: FilePath, reason: String },
 }
 
-impl Display for OutputError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+impl OutputError {
+    /// The error as its line of the report, said of the output folder, or of the folder or file
+    /// in it that it concerns.
+    pub(crate) fn problem(&self) -> LocatedError {
         let output = self.output.to_string_lossy();
-        let (folder, message) = match (&self.version, &self.kind) {
+        let (path, message) = match (&self.version, &self.kind) {
             (Some(name), OutputErrorKind::AlreadyBuilt) => (
                 format!("{output}/{name}"),
                 fl!(CATALOGUE, "version-already-built", name = name.as_str()),
             ),
-            (_, OutputErrorKind::NotSafe { found }) => {
+            (_, OutputErrorKind::NotSafe { found } | OutputErrorKind::KeptClash { found, .. }) => {
                 (format!("{output}/{found}"), self.kind.to_string())
             }
             (_, OutputErrorKind::FileNotWritten { file, .. }) => {
@@ -78,7 +84,17 @@ impl Display for OutputError {
             (Some(name), kind) => (format!("{output}/{name}"), kind.to_string()),
             (None, kind) => (output.into_owned(), kind.to_string()),
         };
-        located(f, &folder, None, &message)
+        LocatedError {
+            path,
+            line: None,
+            message,
+        }
+    }
+}
+
+impl Display for OutputError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
+        self.problem().fmt(f)
     }
 }
 
@@ -101,6 +117,10 @@ impl OutputErrorKind {
 
     fn not_safe(_found: &FilePath, f: &mut Formatter<'_>) -> FmtResult {
         f.write_str(&fl!(CATALOGUE, "output-not-safe"))
+    }
+
+    fn kept_clash(_found: &FilePath, pattern: &str, f: &mut Formatter<'_>) -> FmtResult {
+        f.write_str(&fl!(CATALOGUE, "output-kept-clash", pattern = pattern))
     }
 
     fn missing_version(_name: &VersionName, f: &mut Formatter<'_>) -> FmtResult {
@@ -159,6 +179,11 @@ mod tests {
         None,
         OutputErrorKind::NotSafe { found: "docs/notes.txt".into() },
         "site/out/docs/notes.txt: ghg did not write this, so the output folder is left as it is."
+    )]
+    #[case::kept_clash(
+        None,
+        OutputErrorKind::KeptClash { found: "assets".into(), pattern: "assets".into() },
+        "site/out/assets: the pattern assets keeps this, but ghg writes it or the folder it is in, so the output folder is left as it is."
     )]
     #[case::missing_version(
         None,

@@ -2,10 +2,20 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use crate::entities::{FilePath, OutputContents, Record, VersionName};
+use crate::entities::{FilePath, KeptInOutput, KeptPattern, OutputContents, Record, VersionName};
 
 pub(crate) fn name(text: &str) -> VersionName {
     VersionName::new(text).expect("a version name")
+}
+
+/// The patterns `patterns`, in their order.
+pub(crate) fn kept_in_output(patterns: &[&str]) -> KeptInOutput {
+    KeptInOutput::new(
+        patterns
+            .iter()
+            .map(|text| KeptPattern::new(text).expect("a valid pattern"))
+            .collect(),
+    )
 }
 
 pub(crate) fn set(paths: &[&str]) -> BTreeSet<FilePath> {
@@ -17,6 +27,7 @@ pub(crate) fn folder(files: &[&str], folders: &[&str], record: Option<Record>) -
     OutputContents::Folder {
         files: set(files),
         folders: set(folders),
+        kept: BTreeMap::new(),
         record,
     }
 }

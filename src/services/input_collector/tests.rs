@@ -7,7 +7,7 @@ use std::path::PathBuf;
 use rstest::rstest;
 
 use super::*;
-use crate::entities::PathList;
+use crate::entities::{ListedFiles, PathList};
 use crate::errors::{InputError, InputErrorKind};
 use crate::test_support::{MemoryFolders, input_collector, listing_collector};
 
@@ -143,8 +143,7 @@ fn only_the_listed_files_of_the_input_are_collected_and_no_other_folder_is_liste
 }
 
 #[rstest]
-// Rule 204: named as it was given, `-` for standard input, a list that cannot be read and one
-// that names no path alike.
+// Rule 204: named as it was given, `-` for standard input.
 #[case::a_file_that_does_not_exist(
     PathList::File(PathBuf::from("changed.txt")),
     None,
@@ -155,22 +154,7 @@ fn only_the_listed_files_of_the_input_are_collected_and_no_other_folder_is_liste
     None,
     "-: cannot be read: not UTF-8\n"
 )]
-#[case::a_file_of_empty_lines(
-    PathList::File(PathBuf::from("changed.txt")),
-    Some("\n\n"),
-    "changed.txt: names no path, so there is nothing to build.\n"
-)]
-#[case::a_file_of_blank_lines(
-    PathList::File(PathBuf::from("changed.txt")),
-    Some("  \n\t\r\n"),
-    "changed.txt: names no path, so there is nothing to build.\n"
-)]
-#[case::nothing_on_standard_input(
-    PathList::StandardInput,
-    Some(""),
-    "-: names no path, so there is nothing to build.\n"
-)]
-fn a_list_that_cannot_be_read_or_names_no_path_stops_the_run(
+fn a_list_that_cannot_be_read_stops_the_run(
     #[case] list: PathList,
     #[case] text: Option<&str>,
     #[case] report: &str,
@@ -182,6 +166,21 @@ fn a_list_that_cannot_be_read_or_names_no_path_stops_the_run(
         collected.map_err(|errors| errors.to_string()).err(),
         Some(report.to_string())
     );
+}
+
+#[rstest]
+// Rules 204 and 229: a list that names no path reads no file, and the tree says so.
+#[case::a_file_of_empty_lines(PathList::File(PathBuf::from("changed.txt")), "\n\n")]
+#[case::a_file_of_blank_lines(PathList::File(PathBuf::from("changed.txt")), "  \n\t\r\n")]
+#[case::nothing_on_standard_input(PathList::StandardInput, "")]
+fn a_list_that_names_no_path_reads_no_file(#[case] list: PathList, #[case] text: &str) {
+    let folders = Arc::new(MemoryFolders::with_files(["in/a.feature"]));
+    let collector = listing_collector(folders, Some(text));
+    let tree = collector
+        .collect(Path::new("in"), Some(&list))
+        .expect("the list is read");
+    assert!(tree.allowed_files().is_empty());
+    assert_eq!(tree.listed(), Some(&ListedFiles::NoPath));
 }
 
 #[rstest]

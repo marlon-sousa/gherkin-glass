@@ -7,11 +7,12 @@ use clap::builder::{OsStringValueParser, TypedValueParser};
 use clap::{ArgAction, Args, Parser, Subcommand};
 
 use crate::entities::{
-    BuildOptions, Invocation, PathList, SearchIndexing, ServeMode, ServeOptions, VersionName,
+    BuildOptions, Invocation, KeptInOutput, KeptPattern, MessageFormat, PathList, SearchIndexing,
+    ServeMode, ServeOptions, VersionName,
 };
 use crate::errors::ArgumentError;
 
-use super::option_values::{path_list, port, text, version_name};
+use super::option_values::{kept_pattern, message_format, path_list, port, text, version_name};
 
 /// clap prints nothing: `--help` and `--version` are answered with the
 /// catalogue's words, and its mistakes become [`ArgumentError`]s.
@@ -35,7 +36,7 @@ pub(super) struct Arguments {
 
 #[derive(Debug, Subcommand)]
 enum Command {
-    Build(BuildArguments),
+    Build(BuildCommandArguments),
     Serve(ServeArguments),
 }
 
@@ -58,9 +59,21 @@ struct BuildArguments {
     only: Option<PathList>,
     #[arg(long)]
     preview: bool,
+    /// The only option that may be given more than once.
+    #[arg(long, allow_hyphen_values = true, action = ArgAction::Append, value_parser = OsStringValueParser::new().try_map(kept_pattern))]
+    keep_in_output: Vec<KeptPattern>,
     /// What follows `--`, which no command takes.
     #[arg(last = true)]
     after_the_options: Vec<OsString>,
+}
+
+/// The options of `ghg build`: those it shares with `ghg serve`, and how it says how it ended.
+#[derive(Debug, Args)]
+struct BuildCommandArguments {
+    #[command(flatten)]
+    build: BuildArguments,
+    #[arg(long, allow_hyphen_values = true, value_parser = OsStringValueParser::new().try_map(message_format))]
+    message_format: Option<MessageFormat>,
 }
 
 #[derive(Debug, Args)]
@@ -83,7 +96,10 @@ impl TryFrom<Arguments> for Invocation {
     fn try_from(arguments: Arguments) -> Result<Self, Self::Error> {
         match arguments.command {
             None => Err(ArgumentError::MissingCommand),
-            Some(Command::Build(build)) => Ok(Invocation::Build(build.options("ghg build")?)),
+            Some(Command::Build(build)) => Ok(Invocation::Build {
+                options: build.build.options("ghg build")?,
+                message_format: build.message_format.unwrap_or_default(),
+            }),
             Some(Command::Serve(serve)) => Ok(Invocation::Serve(serve.try_into()?)),
         }
     }
@@ -112,6 +128,8 @@ impl BuildArguments {
             front_page: self.front_page,
             only: self.only,
             indexing,
+            keep_in_output: (!self.keep_in_output.is_empty())
+                .then(|| KeptInOutput::new(self.keep_in_output)),
         })
     }
 }

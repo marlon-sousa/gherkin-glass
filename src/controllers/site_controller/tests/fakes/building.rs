@@ -9,9 +9,10 @@ use gherkin::{Feature, GherkinEnv};
 
 use super::*;
 use crate::entities::{
-    CollectedChanges, FileToParse, IgnoreRules, InputTree, InputTreeBuilder, PageOptions,
-    ParsedFeature, ParsedFile, PathList, RenderedSite, RevisedFeature, Revision, Settings,
-    SiteFiles, SiteNode, SiteTree, SiteTreeBuilder, SiteVersion, TagNames, Unnamed, VersionName,
+    CollectedChanges, FileToParse, IgnoreRules, InputTree, InputTreeBuilder, KeptInOutput,
+    PageOptions, ParsedFeature, ParsedFile, PathList, RenderedSite, RevisedFeature, Revision,
+    Settings, SiteFiles, SiteNode, SiteTree, SiteTreeBuilder, SiteVersion, TagNames, Unnamed,
+    VersionName,
 };
 use crate::policies::page_frame;
 use crate::test_support::name;
@@ -81,6 +82,7 @@ impl SettingsApi for FakeSettingsService {
                 .unwrap_or_else(PoisonError::into_inner)
                 .clone(),
             only: None,
+            keep_in_output: KeptInOutput::default(),
         })
     }
 }
@@ -88,12 +90,15 @@ impl SettingsApi for FakeSettingsService {
 /// Finds one file, `a.feature`, with nothing parsed, in whatever input it is given, from nothing
 /// or from the last tree, and says that every change calls for a rebuild, unless
 /// `nothing_read_changes`; from nothing, the errors of [`config_errors`] instead, as for a list
-/// of `--only` that cannot be read, while `list_failing`.
+/// of `--only` that cannot be read, while `list_failing`, and no file, while `no_file`, beside
+/// the input folder's error that it does not exist, while `input_missing` too.
 #[derive(Default)]
 pub(crate) struct FakeInputCollector {
     pub(super) calls: Arc<Calls>,
     pub(crate) nothing_read_changes: AtomicBool,
     pub(crate) list_failing: AtomicBool,
+    pub(crate) no_file: AtomicBool,
+    pub(crate) input_missing: AtomicBool,
 }
 
 impl InputCollectorApi for FakeInputCollector {
@@ -103,7 +108,23 @@ impl InputCollectorApi for FakeInputCollector {
         if self.list_failing.load(Ordering::SeqCst) {
             return Err(config_errors());
         }
-        Ok(one_file_in(input))
+        if !self.no_file.load(Ordering::SeqCst) {
+            return Ok(one_file_in(input));
+        }
+        let builder = InputTreeBuilder::listed(
+            input.to_path_buf(),
+            IgnoreRules::default(),
+            Revision::default(),
+        );
+        if !self.input_missing.load(Ordering::SeqCst) {
+            return Ok(builder.build());
+        }
+        let missing = InputError::new(input, input, None, InputErrorKind::InputMissing);
+        Ok(InputTree::unlisted_input(
+            input.to_path_buf(),
+            missing,
+            Revision::default(),
+        ))
     }
 
     fn collect_changes(&self, last: &InputTree, paths: &BTreeSet<PathBuf>) -> CollectedChanges {

@@ -13,56 +13,71 @@ use crate::adapters::{
     HttpPreviewServer, InputFolderReader, MemoryFiles, OutputFolderStore, StandardInputReader,
     StandardStreams,
 };
-use crate::controllers::SiteController;
+use crate::controllers::{SiteApi, SiteController};
 use crate::handlers::CommandLine;
 use crate::policies::cargo_plugin_arguments;
+use crate::ports::{
+    ChangeWatcher, FeatureParser, FileReader, FileWriter, InputFolders, OutputFolders,
+    PreviewServer, ServeEventWaiter, StandardInput, StopSignals, Terminal,
+};
 use crate::services::{
-    Converter, GherkinParser, InputCollector, ServerService, SettingsService, SiteWriter,
+    Converter, ConverterApi, GherkinParser, GherkinParserApi, InputCollector, InputCollectorApi,
+    ServerApi, ServerService, SettingsApi, SettingsService, SiteWriter, SiteWriterApi,
 };
 
 #[container(leaf_build = default)]
 struct GhgParts {
-    #[singleton]
-    file_system_reader: Arc<FileSystemReader>,
-    #[singleton(deps = [file_system_reader])]
-    settings: Arc<SettingsService>,
-    #[singleton]
-    input_folder_reader: Arc<InputFolderReader>,
-    #[singleton]
-    standard_input_reader: Arc<StandardInputReader>,
-    #[singleton(deps = [input_folder_reader, file_system_reader, standard_input_reader])]
-    input_collector: Arc<InputCollector>,
-    #[singleton]
-    gherkin_crate: Arc<GherkinCrate>,
-    #[singleton(deps = [gherkin_crate])]
-    gherkin_parser: Arc<GherkinParser>,
-    #[singleton]
-    converter: Arc<Converter>,
-    #[singleton]
-    output_folder_store: Arc<OutputFolderStore>,
-    #[singleton]
-    folder_files: Arc<FolderFiles>,
-    #[singleton]
-    memory_files: Arc<MemoryFiles>,
+    #[singleton(implementation = FileSystemReader)]
+    file_system_reader: Arc<dyn FileReader>,
+    #[singleton(implementation = SettingsService, deps = [file_system_reader])]
+    settings: Arc<dyn SettingsApi>,
+    #[singleton(implementation = InputFolderReader)]
+    input_folder_reader: Arc<dyn InputFolders>,
+    #[singleton(implementation = StandardInputReader)]
+    standard_input_reader: Arc<dyn StandardInput>,
     #[singleton(
+        implementation = InputCollector,
+        deps = [input_folder_reader, file_system_reader, standard_input_reader]
+    )]
+    input_collector: Arc<dyn InputCollectorApi>,
+    #[singleton(implementation = GherkinCrate)]
+    gherkin_crate: Arc<dyn FeatureParser>,
+    #[singleton(implementation = GherkinParser, deps = [gherkin_crate])]
+    gherkin_parser: Arc<dyn GherkinParserApi>,
+    #[singleton(implementation = Converter)]
+    converter: Arc<dyn ConverterApi>,
+    #[singleton(implementation = OutputFolderStore)]
+    output_folder_store: Arc<dyn OutputFolders>,
+    #[singleton(implementation = FolderFiles)]
+    folder_files: Arc<dyn FileWriter>,
+    #[singleton(implementation = MemoryFiles)]
+    memory_files: Arc<dyn FileWriter>,
+    #[singleton(
+        implementation = SiteWriter,
         deps = [file_reader = file_system_reader, folders = output_folder_store, folder_files, memory_files],
         build = builder
     )]
-    site_writer: Arc<SiteWriter>,
-    #[singleton]
-    http_preview_server: Arc<HttpPreviewServer>,
-    #[singleton]
-    file_watcher: Arc<FileWatcher>,
-    #[singleton]
-    ctrlc_signals: Arc<CtrlcSignals>,
-    #[singleton]
-    crossbeam_event_waiter: Arc<CrossbeamEventWaiter>,
-    #[singleton(deps = [http_preview_server, file_watcher, ctrlc_signals, crossbeam_event_waiter])]
-    server: Arc<ServerService>,
-    #[singleton(deps = [settings, input_collector, gherkin_parser, converter, site_writer, server])]
-    site: Arc<SiteController>,
-    #[singleton]
-    standard_streams: Arc<StandardStreams>,
+    site_writer: Arc<dyn SiteWriterApi>,
+    #[singleton(implementation = HttpPreviewServer)]
+    http_preview_server: Arc<dyn PreviewServer>,
+    #[singleton(implementation = FileWatcher)]
+    file_watcher: Arc<dyn ChangeWatcher>,
+    #[singleton(implementation = CtrlcSignals)]
+    ctrlc_signals: Arc<dyn StopSignals>,
+    #[singleton(implementation = CrossbeamEventWaiter)]
+    crossbeam_event_waiter: Arc<dyn ServeEventWaiter>,
+    #[singleton(
+        implementation = ServerService,
+        deps = [http_preview_server, file_watcher, ctrlc_signals, crossbeam_event_waiter]
+    )]
+    server: Arc<dyn ServerApi>,
+    #[singleton(
+        implementation = SiteController,
+        deps = [settings, input_collector, gherkin_parser, converter, site_writer, server]
+    )]
+    site: Arc<dyn SiteApi>,
+    #[singleton(implementation = StandardStreams)]
+    standard_streams: Arc<dyn Terminal>,
     #[singleton(deps = [site, standard_streams])]
     command_line: Arc<CommandLine>,
 }

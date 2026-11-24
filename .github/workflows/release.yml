@@ -2,7 +2,7 @@ name: Release
 
 # docs/BEHAVIOUR.md, "Releases". Pushing a tag v<version> releases that
 # version. The gate and the checks of rust.yml run beside the release tools'
-# own tests, the five builds and the archives; crates.io waits for all of
+# own tests, the six builds and the archives; crates.io waits for all of
 # them, and the GitHub release for crates.io. An alpha, a beta or any other
 # pre-release but a release candidate skips crates.io, and the GitHub release
 # then waits for the rest only. On a pull request that changes how releases
@@ -97,6 +97,8 @@ jobs:
             runner: macos-latest
           - target: x86_64-pc-windows-msvc
             runner: windows-latest
+          - target: aarch64-pc-windows-msvc
+            runner: windows-11-arm
     runs-on: ${{ matrix.runner }}
     defaults:
       run:

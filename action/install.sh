@@ -30,6 +30,7 @@ case "${RUNNER_OS:-}/${RUNNER_ARCH:-}" in
   macOS/X64) target=x86_64-apple-darwin ;;
   macOS/ARM64) target=aarch64-apple-darwin ;;
   Windows/X64) target=x86_64-pc-windows-msvc ;;
+  Windows/ARM64) target=aarch64-pc-windows-msvc ;;
   *) fail "ghg has no build for ${RUNNER_OS:-this system} on ${RUNNER_ARCH:-this processor}." ;;
 esac
 if [ "$RUNNER_OS" = Windows ]; then

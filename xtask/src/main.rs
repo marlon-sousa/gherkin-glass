@@ -74,7 +74,6 @@ fn build() -> Result<(), String> {
         ("highlighting", "ghg.toml", None),
         ("front-page", "ghg.toml", None),
         ("only", "ghg.toml", Some("changed.txt")),
-        ("only", "nothing.toml", Some("nothing.txt")),
     ] {
         let folder = root().join("tests/fixtures").join(fixture);
         let mut arguments = vec![

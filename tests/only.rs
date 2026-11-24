@@ -78,17 +78,21 @@ fn the_site_holds_only_the_listed_files_it_reads(
     assert_same_site(&written, &fixture().join("expected"));
 }
 
-// Rule 208.
+// Rules 208 and 229: a list none of whose files is read builds nothing, and says why.
 #[test]
-fn a_list_none_of_whose_files_is_read_builds_a_home_page_that_says_so() {
+fn a_list_none_of_whose_files_is_read_builds_nothing() {
     let (written, run) = build(
         &["--config", "nothing.toml", "--only", "nothing.txt"],
         "",
         "nothing",
     );
-    assert_eq!(text(&run.stderr), "");
+    assert_eq!(
+        text(&run.stderr),
+        "nothing.txt: names no feature file of the input, so no site was built.\n"
+    );
+    assert_eq!(text(&run.stdout), "");
     assert_eq!(run.status.code(), Some(0));
-    assert_same_site(&written, &fixture().join("expected-nothing"));
+    assert!(!written.exists());
 }
 
 // Rule 205: a listed file that is read but cannot be parsed fails the build as rule 14 says.
@@ -122,11 +126,11 @@ fn a_list_that_cannot_be_read_stops_the_run_before_the_input_is_read() {
     assert!(!written.exists());
 }
 
-// Rule 204: a list that names no path stops the run, as one that cannot be read does.
+// Rules 204 and 229: a list that names no path builds nothing, and says why.
 #[rstest]
 #[case::a_file_of_empty_lines(&["--only", "empty.txt"], "", "empty.txt")]
 #[case::nothing_on_standard_input(&["--only", "-"], "", "-")]
-fn a_list_that_names_no_path_stops_the_run(
+fn a_list_that_names_no_path_builds_nothing(
     #[case] arguments: &[&str],
     #[case] standard_input: &str,
     #[case] named: &str,
@@ -136,7 +140,8 @@ fn a_list_that_names_no_path_stops_the_run(
         text(&run.stderr),
         format!("{named}: names no path, so there is nothing to build.\n")
     );
-    assert_eq!(run.status.code(), Some(1));
+    assert_eq!(text(&run.stdout), "");
+    assert_eq!(run.status.code(), Some(0));
     assert!(!written.exists());
 }
 

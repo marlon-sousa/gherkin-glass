@@ -6,7 +6,8 @@ use std::sync::Arc;
 
 use super::SiteController;
 use crate::entities::{
-    BuildOptions, BuildSnapshot, BuildStart, BuiltSite, CollectedChanges, ServedSite, Settings,
+    BuildOptions, BuildSnapshot, BuildStart, BuiltSite, CollectedChanges, NothingToBuild,
+    ServedSite, Settings,
 };
 use crate::errors::BuildError;
 
@@ -17,13 +18,20 @@ pub(super) enum BuildOutcome {
     Stopped(Stopped),
     /// The paths concern nothing a build reads, so nothing is built or said, and the last build
     /// is left with the new input tree.
-    NothingToBuild(BuildSnapshot),
+    NothingConcerned(BuildSnapshot),
     /// The settings read again differ from the last build's, so the caller builds from nothing
     /// with `settings`, or keeps `left`, the last build with the new input tree, when it cannot.
     SettingsChanged {
         left: BuildSnapshot,
         settings: Settings,
     },
+}
+
+/// How a build into the output folder that nothing stopped ended.
+#[derive(Debug)]
+pub(super) enum IntoFolder {
+    Built(Built),
+    NothingToBuild(NothingToBuild),
 }
 
 /// A build that wrote its site.
@@ -67,6 +75,28 @@ impl SiteController {
         &self,
         settings: Arc<Settings>,
     ) -> Result<Built, Box<Stopped>> {
+        let collected = self.check_and_collect(settings)?;
+        self.parse_convert_and_write(collected)
+    }
+
+    /// Checks the output folder, then collects the input from nothing, and builds the site into
+    /// the folder `settings` name, or builds nothing, saying why, when the input holds no error
+    /// and no feature file is read.
+    pub(super) fn build_into_folder(
+        &self,
+        settings: Arc<Settings>,
+    ) -> Result<IntoFolder, Box<Stopped>> {
+        let collected = self.check_and_collect(settings)?;
+        if let Some(nothing) = NothingToBuild::found(&collected.settings, &collected.input_tree) {
+            return Ok(IntoFolder::NothingToBuild(nothing));
+        }
+        self.parse_convert_and_write(collected)
+            .map(IntoFolder::Built)
+    }
+
+    /// Checks the output folder, then collects the input from nothing, as `settings` say, into
+    /// the snapshot a build from nothing starts from.
+    fn check_and_collect(&self, settings: Arc<Settings>) -> Result<BuildSnapshot, Box<Stopped>> {
         let built_versions = self.site_writer.check(&settings).map_err(|error| Stopped {
             left: None,
             error: BuildError::Output(error),
@@ -78,7 +108,7 @@ impl SiteController {
                 left: None,
                 error: BuildError::Config(errors),
             })?;
-        self.parse_convert_and_write(BuildSnapshot {
+        Ok(BuildSnapshot {
             settings,
             input_tree,
             site: None,
@@ -107,7 +137,7 @@ impl SiteController {
             built_versions: last.built_versions.clone(),
         };
         if !calls_for_rebuild {
-            return BuildOutcome::NothingToBuild(left);
+            return BuildOutcome::NothingConcerned(left);
         }
         let settings = match self.settings.load(options, last.settings.destination) {
             Ok(settings) => settings,

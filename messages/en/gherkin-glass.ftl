@@ -21,6 +21,10 @@ help =
       --front-page <file>: the Markdown template of the site's front page, instead of the configuration's front_page.
       --only <file>: builds the site from the feature files the file lists, one path on each line, alone. --only - reads the list from standard input.
       --preview: builds a preview, a site without versions whose every page asks search engines not to index it.
+      --keep-in-output <pattern>: leaves alone what the pattern matches in the output folder, in the gitignore syntax, instead of the configuration's keep_in_output. Give it once for each pattern.
+
+    Options of ghg build only:
+      --message-format <format>: human, the default, or json, which also prints one JSON object to standard output saying how the build ended, for a program to read.
 
     Options of ghg serve only:
       --host <address>: the address to listen on, instead of 127.0.0.1.
@@ -44,6 +48,7 @@ unexpected-value = The option { $option } takes no value.
 repeated-option = The option { $option } is given more than once.
 unexpected-argument = { $command } takes no argument { $argument }.
 not-a-port = The option --port needs a whole number from 0 to 65535, not { $value }.
+not-a-message-format = The option --message-format takes human or json, not { $value }.
 watch-without-build = The options --watch and --no-build cannot be used together.
 only-without-build = The options --only and --no-build cannot be used together.
 preview-with-version-name = The option --preview builds a site without versions, so it cannot be given with --version-name.
@@ -115,7 +120,6 @@ search-documents-large = The search documents are { $size } MB, larger than the 
 ## system's words, and $key a key as the file writes it.
 
 config-cannot-be-read = cannot be read: { $reason }
-config-empty-list = names no path, so there is nothing to build.
 config-unknown-key = ghg has no setting named { $key }.
 config-not-text = { $key } must be text, in quotes.
 config-not-boolean = { $key } must be true or false.
@@ -129,6 +133,7 @@ config-not-colour = { $key } must be a colour in hexadecimal, in quotes, such as
 config-accent-light-contrast = { $key } is { $colour }, which reaches only { $ratio }:1 against the light theme's background { $background }. It needs at least 7:1.
 config-accent-dark-contrast = { $key } is { $colour }, which reaches only { $ratio }:1 against the dark theme's background { $background }. It needs at least 7:1.
 config-not-table-list = tag_links must be a list of tables, each written [[tag_links]].
+config-not-text-list = keep_in_output must be a list of text, each in quotes.
 config-missing = { $key } is missing.
 config-not-regex = { $key } is not a regular expression: { $reason }
 config-regex-too-large = { $key } is too large a regular expression.
@@ -138,6 +143,7 @@ config-unknown-group = { $key } names the group { $group }, which the pattern do
 ## version_name. assets, index.html, ghg-versions.json, previews, con and nul are names,
 ## never translated.
 
+invalid-kept-pattern = { $pattern } is not a pattern in the gitignore syntax: { $reason }
 invalid-version-name = { $name } cannot be a version name. A version name is made of letters, digits, dots, hyphens, underscores and plus signs, starts with a letter or a digit, does not end with a dot, and is not assets, index.html, ghg-versions.json, previews, or a name Windows keeps for a device, such as con or nul.
 
 ## What stops a build without a version, said of the output folder.
@@ -153,6 +159,7 @@ site-not-a-site = this is not a site ghg built, so it is left as it is. Build in
 output-cannot-be-read = cannot be read: { $reason }
 output-cannot-be-written = cannot be written: { $reason }
 output-not-safe = ghg did not write this, so the output folder is left as it is.
+output-kept-clash = the pattern { $pattern } keeps this, but ghg writes it or the folder it is in, so the output folder is left as it is.
 
 ## What stops a build writing its front page, said of the front page's
 ## template. $reason is the operating system's words.
@@ -202,6 +209,23 @@ default-title = Feature files
 ## line nor ghg.toml gives the site a title. title is a key, never translated.
 
 no-title = The site has no title, so its home page is called Feature files. Set title in ghg.toml, or give --title.
+
+## What ghg build and ghg serve say when they read no feature file, so that
+## they write nothing:
+## $input is the input folder, and $list the list of --only, - for standard
+## input.
+
+nothing-to-build = { $input }: the input folder holds no feature file, so no site was built.
+nothing-to-build-only = { $list }: names no feature file of the input, so no site was built.
+nothing-to-build-no-path = { $list }: names no path, so there is nothing to build.
+
+## What ghg serve --watch says when the site it serves was built from no
+## feature file, $input and $list as above.
+
+empty-site = { $input }: the input folder holds no feature file, so the site served shows none.
+empty-site-only = { $list }: names no feature file of the input, so the site served shows none.
+empty-site-no-path = { $list }: names no path, so the site served shows none.
+
 folder-page-title = { $folder }, { $site }
 folders = Folders
 features = Features

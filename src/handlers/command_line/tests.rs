@@ -4,34 +4,35 @@ use std::sync::Mutex;
 use rstest::rstest;
 
 use super::*;
+use crate::entities::{BuildReport, BuiltSite};
 use crate::errors::{
     BuildError, InputError, InputErrorKind, InputErrors, ListenErrorKind, ServeError, WatchError,
 };
 
 /// Answers every build and serve as it was made to, and counts how often it was asked.
 struct FakeSite {
-    build: Result<BuiltSite, BuildError>,
-    serve: Result<(), ServeError>,
+    build: Result<BuildReport, BuildError>,
+    serve: Result<ServeEnd, ServeError>,
     asked: Mutex<usize>,
 }
 
 impl Default for FakeSite {
     fn default() -> Self {
         FakeSite {
-            build: Ok(BuiltSite::default()),
-            serve: Ok(()),
+            build: Ok(written(BuiltSite::default())),
+            serve: Ok(ServeEnd::NoLongerServed),
             asked: Mutex::new(0),
         }
     }
 }
 
 impl SiteApi for FakeSite {
-    fn build(&self, _: &BuildOptions) -> Result<BuiltSite, BuildError> {
+    fn build(&self, _: &BuildOptions) -> Result<BuildReport, BuildError> {
         *self.asked.lock().expect("lock") += 1;
         self.build.clone()
     }
 
-    fn serve(&self, _: &ServeOptions, _: &dyn SiteListener) -> Result<(), ServeError> {
+    fn serve(&self, _: &ServeOptions, _: &dyn SiteListener) -> Result<ServeEnd, ServeError> {
         *self.asked.lock().expect("lock") += 1;
         self.serve.clone()
     }
@@ -51,6 +52,22 @@ impl Terminal for Said {
 
     fn warn(&self, text: &str) {
         self.err.lock().expect("lock").push_str(text);
+    }
+}
+
+/// A site written into `site`, without versions, that `built` says.
+fn written(built: BuiltSite) -> BuildReport {
+    BuildReport::Written {
+        site: built,
+        output: "site".into(),
+        version: None,
+    }
+}
+
+/// A build of the input `specs`, without `--only`, that read no feature file.
+fn nothing() -> NothingToBuild {
+    NothingToBuild::InputHoldsNone {
+        input: "specs".into(),
     }
 }
 
@@ -117,10 +134,11 @@ fn a_build_that_stops_prints_its_report_and_exits_with_1() {
 fn a_site_with_no_title_is_hinted_at_before_large_search_documents() {
     // Rule 17.
     let site = FakeSite {
-        build: Ok(BuiltSite {
+        build: Ok(written(BuiltSite {
             large_search_documents: Some(5_200_001),
             untitled: true,
-        }),
+            ..BuiltSite::default()
+        })),
         ..FakeSite::default()
     };
     let (reply, _) = run(site, &["build"]);
@@ -130,6 +148,72 @@ fn a_site_with_no_title_is_hinted_at_before_large_search_documents() {
          The search documents are 5.3 MB, larger than the 5 MB above which search can be slow to start, mostly on phones.\n"
     );
     assert_eq!(reply.status, ExitStatus::Done);
+}
+
+#[test]
+fn a_build_with_nothing_to_build_says_why_and_is_done() {
+    // Rule 229.
+    let site = FakeSite {
+        build: Ok(BuildReport::NothingToBuild(nothing())),
+        ..FakeSite::default()
+    };
+    let (reply, _) = run(site, &["build"]);
+    assert_eq!(
+        reply.stderr,
+        "specs: the input folder holds no feature file, so no site was built.\n"
+    );
+    assert_eq!(reply.stdout, "");
+    assert_eq!(reply.status, ExitStatus::Done);
+}
+
+#[test]
+fn a_build_asked_for_json_also_prints_its_report_on_standard_output() {
+    // Rule 231.
+    let site = FakeSite {
+        build: Ok(BuildReport::NothingToBuild(nothing())),
+        ..FakeSite::default()
+    };
+    let (reply, _) = run(site, &["build", "--message-format", "json"]);
+    assert!(
+        reply
+            .stdout
+            .starts_with("{\"outcome\":\"nothing-to-build\",")
+            && reply.stdout.ends_with("}\n"),
+        "{}",
+        reply.stdout
+    );
+    assert_eq!(
+        reply.stderr,
+        "specs: the input folder holds no feature file, so no site was built.\n"
+    );
+    assert_eq!(reply.status, ExitStatus::Done);
+}
+
+#[test]
+fn serve_with_nothing_to_build_says_why_and_is_done() {
+    // Rule 230.
+    let site = FakeSite {
+        serve: Ok(ServeEnd::NothingToBuild(nothing())),
+        ..FakeSite::default()
+    };
+    let (reply, _) = run(site, &["serve"]);
+    assert_eq!(
+        reply.stderr,
+        "specs: the input folder holds no feature file, so no site was built.\n"
+    );
+    assert_eq!(reply.stdout, "");
+    assert_eq!(reply.status, ExitStatus::Done);
+}
+
+#[test]
+fn an_empty_site_served_under_watch_is_named_on_standard_error() {
+    // Rule 230.
+    let said = Said::default();
+    TerminalListener { terminal: &said }.empty(&nothing());
+    assert_eq!(
+        *said.err.lock().expect("lock"),
+        "specs: the input folder holds no feature file, so the site served shows none.\n"
+    );
 }
 
 #[test]

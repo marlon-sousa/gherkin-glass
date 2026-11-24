@@ -1,10 +1,11 @@
-//! The action's inputs and the help, checked against the options of `ghg build`.
+//! The action's inputs and the help, checked against the options of `ghg build`, the action's
+//! inputs against those that set how a site is built.
 
 use std::collections::BTreeSet;
 
 use yaml_rust2::{Yaml, YamlLoader};
 
-use super::{flags_of, long_options};
+use super::{building_options, flags_of, long_options, repeatable_of};
 
 const ACTION: &str = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/action.yml"));
 
@@ -30,7 +31,7 @@ fn every_option_of_ghg_build_is_an_input_of_the_action_and_nothing_else_is() {
     for own in OWN_INPUTS {
         assert!(inputs.remove(own), "action.yml has the input {own}");
     }
-    assert_eq!(inputs, long_options("build"));
+    assert_eq!(inputs, building_options());
 }
 
 // docs/BEHAVIOUR.md, "The GitHub Action", rule 176.
@@ -64,8 +65,8 @@ fn the_build_step_passes_every_option_input_and_nothing_else() {
         .split_whitespace()
         .map(str::to_string)
         .collect();
-    assert_eq!(named, long_options("build"));
-    let expected: BTreeSet<(String, String)> = long_options("build")
+    assert_eq!(named, building_options());
+    let expected: BTreeSet<(String, String)> = building_options()
         .into_iter()
         .map(|name| {
             (
@@ -82,6 +83,13 @@ fn the_build_step_passes_every_option_input_and_nothing_else() {
         .map(str::to_string)
         .collect();
     assert_eq!(flags, flags_of("build"));
+    let lists: BTreeSet<String> = build["env"]["GHG_LISTS"]
+        .as_str()
+        .expect("the build step names its lists")
+        .split_whitespace()
+        .map(str::to_string)
+        .collect();
+    assert_eq!(lists, repeatable_of("build"));
 }
 
 #[test]

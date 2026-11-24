@@ -5,7 +5,8 @@ name: Site
 # tag as version, from a job that grants contents: write, since a called
 # workflow cannot have more permissions than its caller. It builds the site of
 # that version with the project's own action and the released binary, with the
-# tag's README as the site's front page, and adds it to the gh-pages branch.
+# tag's README as the site's front page, straight into a checkout of the
+# gh-pages branch, keeping its .nojekyll and .git, and adds it to the branch.
 
 on:
   workflow_call:
@@ -35,7 +36,7 @@ jobs:
         with:
           ref: ${{ inputs.version }}
       - name: Open the gh-pages branch
-        run: project-site/publish.sh open "$RUNNER_TEMP/pages" "$RUNNER_TEMP/site"
+        run: project-site/publish.sh open "$RUNNER_TEMP/pages"
       - name: Gather the example suite and the fixtures
         run: project-site/assemble-input.sh "$RUNNER_TEMP/input"
       - name: Write the front page from the README
@@ -47,10 +48,13 @@ jobs:
           build: true
           title: gherkin-glass examples
           input: ${{ runner.temp }}/input
-          output: ${{ runner.temp }}/site
+          output: ${{ runner.temp }}/pages
           version-name: ${{ inputs.version }}
           front-page: ${{ runner.temp }}/front-page.md
+          keep-in-output: |
+            .nojekyll
+            .git
       - name: Publish the version's folder and the versions page
-        run: project-site/publish.sh publish "$RUNNER_TEMP/pages" "$RUNNER_TEMP/site" "$VERSION"
+        run: project-site/publish.sh publish "$RUNNER_TEMP/pages" "$VERSION"
         env:
           VERSION: ${{ inputs.version }}

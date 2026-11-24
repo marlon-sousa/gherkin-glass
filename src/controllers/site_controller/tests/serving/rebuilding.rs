@@ -25,7 +25,10 @@ fn while_watching(world: &World, steps: impl FnOnce(&Recorded)) {
         );
         steps(&events);
         world.server.stop_watching();
-        assert_eq!(serving.join().expect("no panic"), Ok(()));
+        assert_eq!(
+            serving.join().expect("no panic"),
+            Ok(ServeEnd::NoLongerServed)
+        );
     });
     // Rule 199: and no longer serves.
     assert_eq!(world.server.no_longer_served.load(Ordering::SeqCst), 1);

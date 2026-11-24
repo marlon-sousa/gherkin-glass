@@ -5,7 +5,7 @@ use std::fmt::{Formatter, Result as FmtResult};
 use i18n_embed_fl::fl;
 use thiserror::Error;
 
-use super::invalid_version_name;
+use super::{invalid_kept_pattern, invalid_version_name};
 use crate::policies::CATALOGUE;
 
 /// Each `String` is what was typed, shown as it was typed, an option with its dashes.
@@ -28,6 +28,8 @@ pub(crate) enum ArgumentError {
     UnexpectedArgument { command: String, argument: String },
     #[error(fmt = Self::not_a_port)]
     NotAPort { value: String },
+    #[error(fmt = Self::not_a_message_format)]
+    NotAMessageFormat { value: String },
     #[error(fmt = Self::watch_without_build)]
     WatchWithoutBuild,
     #[error(fmt = Self::only_without_build)]
@@ -36,6 +38,9 @@ pub(crate) enum ArgumentError {
     PreviewWithVersionName,
     #[error(fmt = invalid_version_name)]
     InvalidVersionName { name: String },
+    /// `reason` is the `ignore` crate's.
+    #[error(fmt = invalid_kept_pattern)]
+    InvalidKeptPattern { pattern: String, reason: String },
 }
 
 impl ArgumentError {
@@ -79,6 +84,10 @@ impl ArgumentError {
 
     fn not_a_port(value: &str, f: &mut Formatter<'_>) -> FmtResult {
         f.write_str(&fl!(CATALOGUE, "not-a-port", value = value))
+    }
+
+    fn not_a_message_format(value: &str, f: &mut Formatter<'_>) -> FmtResult {
+        f.write_str(&fl!(CATALOGUE, "not-a-message-format", value = value))
     }
 
     fn watch_without_build(f: &mut Formatter<'_>) -> FmtResult {
