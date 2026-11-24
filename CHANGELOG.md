@@ -4,6 +4,8 @@ Every release of gherkin-glass: the `ghg` command, the `cargo ghg` plugin and th
 
 ## [1.1.0]
 
+As a one-time exception to Semantic Versioning, two changes under Changed break what 1.0.0 promised, and still come in a minor version: a build that reads no feature file writes nothing, and a list of --only that names no path exits with status 0. A script or workflow that relied on either needs a look before upgrading.
+
 ### Added
 
 - --keep-in-output <pattern>, of ghg build and ghg serve, and the keep_in_output key of ghg.toml name what ghg leaves alone in its output folder, such as .nojekyll or CNAME, in the gitignore syntax.
