@@ -8,12 +8,11 @@ Every release of gherkin-glass: the `ghg` command, the `cargo ghg` plugin and th
 
 - --keep-in-output <pattern>, of ghg build and ghg serve, and the keep_in_output key of ghg.toml name what ghg leaves alone in its output folder, such as .nojekyll or CNAME, in the gitignore syntax.
 - a release archive for Windows on ARM64, ghg-<tag>-aarch64-pc-windows-msvc.zip, which cargo binstall installs.
-- ghg serve --watch says on standard error when the site it serves holds no feature file.
 - ghg build --message-format json prints one JSON object on standard output saying how the build ended, for a program to read.
 
 ### Changed
 
-- ghg build and ghg serve write nothing when they read no feature file, saying so on standard error and exiting with status 0, instead of writing an empty site.
+- ghg build and ghg serve write nothing when they read no feature file, a list of --only naming none included, saying so on standard error and exiting with status 0, instead of writing an empty site; ghg serve --watch serves the empty site and says so on standard error.
 - a list of --only that names no path builds nothing and exits with status 0, instead of stopping with status 1.
 
 ## [1.0.0]

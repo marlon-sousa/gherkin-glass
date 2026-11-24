@@ -27,7 +27,7 @@ Reading them is harder than it should be. They live in a repository, spread acro
 
 ## Status
 
-The latest release is `1.1.0`, on crates.io and on the [releases page](https://github.com/marlon-sousa/gherkin-glass/releases). From `1.0.0`, the first stable version, on, versions follow [Semantic Versioning](https://semver.org/): the addresses of pages and their anchors, the command line, the configuration keys and the names of the release archives change in a way that breaks a site, a command or an installation only in a new major version. The newest code, not yet released, can be built from the repository with `cargo install --git https://github.com/marlon-sousa/gherkin-glass gherkin-glass --locked`, which installs `ghg` and `cargo-ghg` and needs [Rust](https://rustup.rs/).
+The latest release is `1.1.0`, on crates.io and on the [releases page](https://github.com/marlon-sousa/gherkin-glass/releases). Since `1.0.0`, the first stable version, versions follow [Semantic Versioning](https://semver.org/): the addresses of pages and their anchors, the command line, the configuration keys and the names of the release archives change in a way that breaks a site, a command or an installation only in a new major version. The newest code, not yet released, can be built from the repository with `cargo install --git https://github.com/marlon-sousa/gherkin-glass gherkin-glass --locked`, which installs `ghg` and `cargo-ghg` and needs [Rust](https://rustup.rs/).
 
 <!-- site-only
 ## The example suite
