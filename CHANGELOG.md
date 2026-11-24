@@ -2,6 +2,20 @@
 
 Every release of gherkin-glass: the `ghg` command, the `cargo ghg` plugin and the sites they build. Each section is written before its release, from the changelog entries its commits carry, as [CONTRIBUTING.md](CONTRIBUTING.md), "Releases", describes, and becomes the notes of its [GitHub release](https://github.com/marlon-sousa/gherkin-glass/releases). Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.1.0]
+
+### Added
+
+- --keep-in-output <pattern>, of ghg build and ghg serve, and the keep_in_output key of ghg.toml name what ghg leaves alone in its output folder, such as .nojekyll or CNAME, in the gitignore syntax.
+- a release archive for Windows on ARM64, ghg-<tag>-aarch64-pc-windows-msvc.zip, which cargo binstall installs.
+- ghg serve --watch says on standard error when the site it serves holds no feature file.
+- ghg build --message-format json prints one JSON object on standard output saying how the build ended, for a program to read.
+
+### Changed
+
+- ghg build and ghg serve write nothing when they read no feature file, saying so on standard error and exiting with status 0, instead of writing an empty site.
+- a list of --only that names no path builds nothing and exits with status 0, instead of stopping with status 1.
+
 ## [1.0.0]
 
 The first stable release, on crates.io and on GitHub. It holds everything the two alphas brought, described here as a whole, with the one change since 0.1.0-alpha.2, pages that fit a window 320 pixels wide, folded in. From this version on, the addresses of pages and their anchors, the command line, the configuration keys and the names of the release archives change in a way that breaks a site, a command or an installation only in a new major version.
