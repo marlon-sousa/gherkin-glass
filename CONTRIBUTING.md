@@ -108,7 +108,7 @@ The release workflow, `.github/workflows/release.yml`, then runs these jobs. Pub
 
 1. **release gate** refuses the tag unless it is `v` and the version in `Cargo.toml`, its commit is on `main`, and `CHANGELOG.md` has notes for the version, and tells whether the version goes to crates.io;
 2. **checks** runs every check of `.github/workflows/rust.yml`, the formatting, the lints, the tests, the script's checks and the browser check, again on the tagged commit, since their run on `main` after a merge blocks nothing;
-3. **release tools** tries the release gate, the changelog template, the archive check, the action's tag and which versions go to crates.io against their fixtures;
+3. **release tools** tries the release gate, the changelog template, the archive check, the action's tag, which versions go to crates.io and which pull requests change how releases are made against their fixtures;
 4. **builds**, one for each platform: Linux on x86-64 and ARM64, statically linked with musl; macOS on Apple silicon and on Intel, both built on Apple silicon; and Windows on x86-64 and ARM64, with the C runtime linked in. Each checks its binaries need nothing installed, packs them with the licence files, and checks the archive;
 5. **archives** checks there is one archive for each platform where `cargo binstall` looks for it, and writes `SHA256SUMS` and checks the archives against it;
 6. **crates.io**, in the `crates-io` environment, publishes the crate with the `publish-crates` action of [itinera-dev/actions](https://github.com/itinera-dev/actions), through crates.io's trusted publishing, unless that version is there already; it is skipped for an alpha, a beta or any other pre-release but a release candidate;

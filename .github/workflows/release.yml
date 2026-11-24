@@ -64,12 +64,15 @@ jobs:
           fetch-depth: 0
       - name: Tell whether the release is made or changed
         id: paths
+        # Named, so that a failing git diff fails the step: GitHub's default
+        # bash runs without pipefail.
+        shell: bash
         env:
           BASE: ${{ github.event.pull_request.base.sha }}
           HEAD: ${{ github.event.pull_request.head.sha }}
         run: |
           if [ "$GITHUB_EVENT_NAME" = pull_request ]; then
-            releasing=$(git diff --name-only "$BASE...$HEAD" | .github/release/release-paths.sh)
+            releasing=$(git diff --name-only --no-renames "$BASE...$HEAD" | .github/release/release-paths.sh)
           else
             releasing=true
           fi
@@ -179,13 +182,11 @@ jobs:
           path: dist/
           if-no-files-found: error
 
-  # The one check of this workflow a pull request needs to pass: the release
-  # tools, every build and the archives passed when the pull request changes
-  # how the release is made, and all were skipped when it does not. One check
-  # for them all, so that the required checks need not follow the matrix.
   checked:
     name: release builds and checks
-    if: github.event_name == 'pull_request' && !cancelled()
+    # Even when the run is cancelled, since a skipped job passes as a
+    # required check; the cancelled jobs then fail it.
+    if: github.event_name == 'pull_request' && always()
     needs: [scope, release-tools, build, archives]
     runs-on: ubuntu-latest
     steps:
