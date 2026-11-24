@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Feature: Doc strings, fixtures/doc-strings/doc-strings.feature</title>
+<script>try{var t=localStorage.getItem("gherkin-glass:theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}</script>
+<style>
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+  --ghg-background: #ffffff;
+  --ghg-surface: #f2f2f2;
+  --ghg-text: #1a1a1a;
+  --ghg-muted: #474747;
+  --ghg-border: #757575;
+  --ghg-accent: #0b4f9c;
+  --ghg-keyword: #6a1b9a;
+  --ghg-parameter: #14521a;
+  --ghg-number: #8a3000;
+  --ghg-placeholder: #00575e;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ghg-background: #141414;
+    --ghg-surface: #222222;
+    --ghg-text: #ececec;
+    --ghg-muted: #c4c4c4;
+    --ghg-border: #8f8f8f;
+    --ghg-accent: #8cc4ff;
+    --ghg-keyword: #e1b3ff;
+    --ghg-parameter: #9fe0a8;
+    --ghg-number: #ffbf8a;
+    --ghg-placeholder: #7fdbe0;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ghg-background: #141414;
+  --ghg-surface: #222222;
+  --ghg-text: #ececec;
+  --ghg-muted: #c4c4c4;
+  --ghg-border: #8f8f8f;
+  --ghg-accent: #8cc4ff;
+  --ghg-keyword: #e1b3ff;
+  --ghg-parameter: #9fe0a8;
+  --ghg-number: #ffbf8a;
+  --ghg-placeholder: #7fdbe0;
+}
+</style>
+<link rel="stylesheet" href="../../assets/gherkin-glass.css">
+<link rel="icon" href="../../assets/gherkin-glass.svg" type="image/svg+xml">
+<script type="module" src="../../assets/gherkin-glass.js"></script>
+</head>
+<body>
+<dialog id="ghg_from_disk" class="ghg-from-disk" tabindex="-1" aria-labelledby="ghg_from_disk_title" aria-describedby="ghg_from_disk_text">
+<p id="ghg_from_disk_title" class="ghg-from-disk-title">Opened from disk</p>
+<p id="ghg_from_disk_text">This site is meant to be served, so its folder tree and search do not work when a page is opened from disk. Run ghg serve in the folder of your ghg.toml, or serve the site&#39;s folder with any web server, then open the address it gives.</p>
+<form method="dialog"><button>I agree</button></form>
+</dialog>
+<script>if(location.protocol==="file:"){let d=document.getElementById("ghg_from_disk");d.showModal();d.focus()}</script>
+<a class="ghg-skip" href="#ghg_main">Skip to content</a>
+<div class="ghg-options">
+<span class="ghg-option ghg-tree-choice"><input type="checkbox" id="ghg_show_tree" class="ghg-show-tree" aria-controls="ghg_tree" checked> <label for="ghg_show_tree">Show the folder tree</label></span>
+<button type="button" class="ghg-tree-button" aria-expanded="false" aria-controls="ghg_tree">Folder tree</button>
+<fieldset class="ghg-theme">
+<legend>Theme</legend>
+<label><input type="radio" name="ghg-theme" value="system" checked> System</label>
+<label><input type="radio" name="ghg-theme" value="light"> Light</label>
+<label><input type="radio" name="ghg-theme" value="dark"> Dark</label>
+</fieldset>
+</div>
+<div class="ghg-layout">
+<nav id="ghg_tree" class="ghg-tree" aria-label="Folder tree"></nav>
+<div class="ghg-page">
+<nav class="ghg-breadcrumb" aria-label="Breadcrumb">
+<ol>
+<li><a href="../../index.html">gherkin-glass examples</a></li>
+<li><a href="../index.html">fixtures</a></li>
+<li><a href="index.html">doc-strings</a></li>
+<li><a href="doc-strings.html" aria-current="page">Feature: <bdi>Doc strings</bdi></a></li>
+</ol>
+</nav>
+<form class="ghg-search" role="search" data-root="../../" data-shown="50" data-loading="Loading search." data-failed="Search could not be loaded." data-none="No results." data-count="Results: {count}." data-count-limited="Results: {count}. The first 50 are listed." data-no-name="no name" data-feature="{name}, feature" data-rule="{name}, rule in {feature}" data-scenario="{name}, scenario in {feature}" data-scenario-in-rule="{name}, scenario in {rule}, {feature}" data-scenario-outline="{name}, scenario outline in {feature}" data-scenario-outline-in-rule="{name}, scenario outline in {rule}, {feature}" data-background="{name}, background in {feature}" data-background-in-rule="{name}, background in {rule}, {feature}" data-examples="{name}, examples in {outline}, {feature}" data-examples-in-rule="{name}, examples in {outline}, {rule}, {feature}" data-numbered-examples="Examples {place}" data-all-results="All results for &#34;{words}&#34;">
+<label>Search features, rules and scenarios <input type="search" class="ghg-search-field" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="ghg_search_results" autocomplete="off" spellcheck="false" enterkeyhint="search"></label>
+<a class="ghg-search-all" href="../../search.html" hidden></a>
+<p class="ghg-search-status" role="status"></p>
+<ol class="ghg-search-results" id="ghg_search_results" role="listbox" aria-label="Search results" hidden></ol>
+</form>
+<main id="ghg_main">
+<h1>Feature: <bdi>Doc strings</bdi></h1>
+<nav class="ghg-contents" aria-label="Contents">
+<ul>
+<li><a href="#outside_rules">Outside any rule</a>
+<ul>
+<li><a href="#a-media-type-nested-indentation-and-an-escaped-delimiter">Scenario: <bdi>A media type, nested indentation and an escaped delimiter</bdi></a></li>
+<li><a href="#backticks-with-their-own-escape">Scenario: <bdi>Backticks, with their own escape</bdi></a></li>
+<li><a href="#a-line-indented-less-than-the-delimiter">Scenario: <bdi>A line indented less than the delimiter</bdi></a></li>
+<li><a href="#blank-lines-and-a-comment-between-the-step-and-its-doc-string">Scenario: <bdi>Blank lines, and a comment between the step and its doc string</bdi></a></li>
+<li><a href="#tabs-and-a-delimiter-after-a-hash-inside-the-content">Scenario: <bdi>Tabs, and a delimiter after a hash inside the content</bdi></a></li>
+</ul></li>
+<li><a href="#doc-strings-inside-a-rule">Rule: <bdi>Doc strings inside a rule</bdi></a>
+<ul>
+<li><a href="#a-doc-string-inside-a-rule">Scenario: <bdi>A doc string inside a rule</bdi></a></li>
+</ul></li>
+</ul>
+</nav>
+<div class="ghg-controls">
+<button type="button" class="ghg-collapse-all">Collapse all</button>
+<button type="button" class="ghg-expand-all">Expand all</button>
+<label class="ghg-option"><input type="checkbox" class="ghg-inline-backgrounds" autocomplete="off" checked> Show backgrounds inside each scenario</label>
+</div>
+<div class="ghg-block ghg-background" data-expanded-when-unchecked="true">
+<h2 id="background"><button type="button" class="ghg-toggle" aria-expanded="false">Background</button></h2>
+<div class="ghg-content" hidden>
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>a background step with a doc string
+<pre class="ghg-doc-string">From the background.</pre></li>
+</ol>
+</div>
+</div>
+<div class="ghg-block ghg-outside-rules">
+<h2 id="outside_rules"><button type="button" class="ghg-toggle" aria-expanded="true">Outside any rule</button></h2>
+<div class="ghg-content">
+<div class="ghg-block ghg-scenario">
+<h3 id="a-media-type-nested-indentation-and-an-escaped-delimiter"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: <bdi>A media type, nested indentation and an escaped delimiter</bdi></button></h3>
+<div class="ghg-content">
+<div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
+<h4 id="a-media-type-nested-indentation-and-an-escaped-delimiter_background_1"><button type="button" class="ghg-toggle" aria-expanded="true">From the background</button></h4>
+<div class="ghg-content">
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>a background step with a doc string
+<pre class="ghg-doc-string">From the background.</pre></li>
+</ol>
+</div>
+</div>
+<h4 class="ghg-steps-heading">From the scenario</h4>
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>a request body
+<figure class="ghg-doc-string">
+<figcaption>json</figcaption>
+<pre>{
+  &#34;quote&#34;: &#34;&#34;&#34;&#34;&#34;
+}</pre>
+</figure></li>
+</ol>
+</div>
+</div>
+<div class="ghg-block ghg-scenario">
+<h3 id="backticks-with-their-own-escape"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: <bdi>Backticks, with their own escape</bdi></button></h3>
+<div class="ghg-content">
+<div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
+<h4 id="backticks-with-their-own-escape_background_1"><button type="button" class="ghg-toggle" aria-expanded="true">From the background</button></h4>
+<div class="ghg-content">
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>a background step with a doc string
+<pre class="ghg-doc-string">From the background.</pre></li>
+</ol>
+</div>
+</div>
+<h4 class="ghg-steps-heading">From the scenario</h4>
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>a snippet
+<figure class="ghg-doc-string">
+<figcaption>markdown</figcaption>
+<pre>Code fences look like ``` in Markdown.</pre>
+</figure></li>
+</ol>
+</div>
+</div>
+<div class="ghg-block ghg-scenario">
+<h3 id="a-line-indented-less-than-the-delimiter"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: <bdi>A line indented less than the delimiter</bdi></button></h3>
+<div class="ghg-content">
+<div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
+<h4 id="a-line-indented-less-than-the-delimiter_background_1"><button type="button" class="ghg-toggle" aria-expanded="true">From the background</button></h4>
+<div class="ghg-content">
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>a background step with a doc string
+<pre class="ghg-doc-string">From the background.</pre></li>
+</ol>
+</div>
+</div>
+<h4 class="ghg-steps-heading">From the scenario</h4>
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>uneven text
+<pre class="ghg-doc-string">indented as the delimiter
+indented less
+    indented more</pre></li>
+</ol>
+</div>
+</div>
+<div class="ghg-block ghg-scenario">
+<h3 id="blank-lines-and-a-comment-between-the-step-and-its-doc-string"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: <bdi>Blank lines, and a comment between the step and its doc string</bdi></button></h3>
+<div class="ghg-content">
+<div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
+<h4 id="blank-lines-and-a-comment-between-the-step-and-its-doc-string_background_1"><button type="button" class="ghg-toggle" aria-expanded="true">From the background</button></h4>
+<div class="ghg-content">
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>a background step with a doc string
+<pre class="ghg-doc-string">From the background.</pre></li>
+</ol>
+</div>
+</div>
+<h4 class="ghg-steps-heading">From the scenario</h4>
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>text with blank lines
+<pre class="ghg-doc-string">
+
+between blank lines
+</pre></li>
+</ol>
+</div>
+</div>
+<div class="ghg-block ghg-scenario">
+<h3 id="tabs-and-a-delimiter-after-a-hash-inside-the-content"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: <bdi>Tabs, and a delimiter after a hash inside the content</bdi></button></h3>
+<div class="ghg-content">
+<div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
+<h4 id="tabs-and-a-delimiter-after-a-hash-inside-the-content_background_1"><button type="button" class="ghg-toggle" aria-expanded="true">From the background</button></h4>
+<div class="ghg-content">
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>a background step with a doc string
+<pre class="ghg-doc-string">From the background.</pre></li>
+</ol>
+</div>
+</div>
+<h4 class="ghg-steps-heading">From the scenario</h4>
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>text with a tab and a hash
+<pre class="ghg-doc-string">one tab, as indentation
+	a tab after the indentation
+# A line like a comment, with &#34;&#34;&#34; in it, is content.
+x = 1 # and from a hash on any line, &#34;&#34;&#34; does not close it either</pre></li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div class="ghg-block ghg-rule">
+<h2 id="doc-strings-inside-a-rule"><button type="button" class="ghg-toggle" aria-expanded="true">Rule: <bdi>Doc strings inside a rule</bdi></button></h2>
+<div class="ghg-content">
+<div class="ghg-block ghg-scenario">
+<h3 id="a-doc-string-inside-a-rule"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: <bdi>A doc string inside a rule</bdi></button></h3>
+<div class="ghg-content">
+<p class="ghg-keyword-note" role="note">Note: in the Gherkin feature file, this scenario is <button type="button" class="ghg-note-opener" aria-haspopup="dialog" aria-controls="ghg_note_dialog">defined with the keyword &#34;<bdi>Example</bdi>&#34;.</button></p>
+<div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
+<h4 id="a-doc-string-inside-a-rule_background_1"><button type="button" class="ghg-toggle" aria-expanded="true">From the background</button></h4>
+<div class="ghg-content">
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>a background step with a doc string
+<pre class="ghg-doc-string">From the background.</pre></li>
+</ol>
+</div>
+</div>
+<h4 class="ghg-steps-heading">From the scenario</h4>
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>a step in a rule
+<figure class="ghg-doc-string">
+<figcaption>text</figcaption>
+<pre>Inside the rule.</pre>
+</figure></li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<dialog id="ghg_note_dialog" class="ghg-dialog" tabindex="-1" aria-labelledby="ghg_note_dialog_title" aria-describedby="ghg_note_dialog_text">
+<h2 id="ghg_note_dialog_title" class="ghg-dialog-title">About this note</h2>
+<p id="ghg_note_dialog_text">Gherkin lets authors use different words for the same kind of block. For example, Scenario and Example both define a scenario, and Examples and Scenarios both define examples. This site names every block by its kind, so pages read the same whichever word was used. The note only tells you which word the feature file uses; it changes nothing about the block.</p>
+<form method="dialog"><button>Got it</button></form>
+</dialog>
+</main>
+<footer class="ghg-footer">
+<p>Built with <a href="https://github.com/marlon-sousa/gherkin-glass">gherkin-glass</a> 1.1.0</p>
+</footer>
+</div>
+</div>
+</body>
+</html>
