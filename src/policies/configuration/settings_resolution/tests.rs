@@ -213,3 +213,5 @@ fn a_preview_is_a_site_without_versions(#[case] destination: Destination) {
     assert_eq!(settings.version, None);
     assert_eq!(settings.pages.indexing, SearchIndexing::Refused);
 }
+
+mod key_options;

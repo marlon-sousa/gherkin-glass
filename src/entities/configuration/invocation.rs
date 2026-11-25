@@ -3,7 +3,8 @@
 use std::path::PathBuf;
 
 use crate::entities::{
-    Destination, KeptInOutput, MessageFormat, PathList, SearchIndexing, VersionName,
+    Colour, Destination, KeptInOutput, MessageFormat, PathList, SearchIndexing, TagLink,
+    VersionName,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -29,6 +30,16 @@ pub(crate) struct BuildOptions {
     pub(crate) only: Option<PathList>,
     pub(crate) indexing: SearchIndexing,
     pub(crate) keep_in_output: Option<KeptInOutput>,
+    pub(crate) source_link: Option<String>,
+    pub(crate) allow_unnamed: Option<bool>,
+    pub(crate) collapse_rules: Option<bool>,
+    pub(crate) collapse_scenarios: Option<bool>,
+    pub(crate) show_tree: Option<bool>,
+    pub(crate) inline_backgrounds: Option<bool>,
+    pub(crate) replace_existing_version: Option<bool>,
+    pub(crate) accent_light: Option<Colour>,
+    pub(crate) accent_dark: Option<Colour>,
+    pub(crate) tag_links: Option<Vec<TagLink>>,
 }
 
 /// The options of `ghg serve`: those of `ghg build`, and how it serves.

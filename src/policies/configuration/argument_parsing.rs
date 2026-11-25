@@ -3,6 +3,7 @@
 mod arguments;
 mod clap_errors;
 mod option_values;
+mod tag_link_option;
 
 use std::ffi::OsString;
 

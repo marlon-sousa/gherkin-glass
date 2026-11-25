@@ -29,8 +29,18 @@ pub(super) fn argument_error(error: &Error, command: &str) -> ArgumentError {
                 }
             }
         }
-        // A path's value given empty, or a value not given at all.
-        ErrorKind::InvalidValue => ArgumentError::MissingValue {
+        // A path's value given empty, or a value not given at all; any other value is one that
+        // `BoolValueParser`, the only parser of clap's own these options use, refused.
+        ErrorKind::InvalidValue if context(error, ContextKind::InvalidValue).is_empty() => {
+            ArgumentError::MissingValue {
+                option: option(error),
+            }
+        }
+        ErrorKind::InvalidValue => ArgumentError::NotBoolean {
+            option: option(error),
+        },
+        // Fewer values than `--tag-link`'s three.
+        ErrorKind::WrongNumberOfValues => ArgumentError::MissingValue {
             option: option(error),
         },
         ErrorKind::ValueValidation => rejected(error),
@@ -63,6 +73,13 @@ fn rejected(error: &Error) -> ArgumentError {
             reason,
         },
         Some(Rejected::NotAMessageFormat) => ArgumentError::NotAMessageFormat { value },
+        Some(Rejected::NotAColour) => ArgumentError::NotColour {
+            option: option(error),
+        },
+        Some(Rejected::TooLittleContrast { shortfall }) => ArgumentError::TooLittleContrast {
+            option: option(error),
+            shortfall,
+        },
         Some(Rejected::Empty) | None => ArgumentError::MissingValue {
             option: option(error),
         },

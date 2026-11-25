@@ -32,7 +32,7 @@ pub(crate) fn resolve_settings(
     };
     let input = path(&options.input, &config.input, DEFAULT_INPUT);
     let output = path(&options.output, &config.output, DEFAULT_OUTPUT);
-    let unnamed = match config.allow_unnamed {
+    let unnamed = match options.allow_unnamed.or(config.allow_unnamed) {
         Some(false) => Unnamed::Refused,
         Some(true) | None => Unnamed::Allowed,
     };
@@ -53,7 +53,10 @@ pub(crate) fn resolve_settings(
         destination,
         unnamed,
         version,
-        replace: config.replace_existing_version.unwrap_or(true),
+        replace: options
+            .replace_existing_version
+            .or(config.replace_existing_version)
+            .unwrap_or(true),
         front_page: options
             .front_page
             .clone()
@@ -66,15 +69,37 @@ pub(crate) fn resolve_settings(
             .unwrap_or_default(),
         pages: PageOptions {
             title: options.title.clone().or_else(|| config.title.clone()),
-            source_link: config.source_link.clone(),
-            collapse_rules: config.collapse_rules.unwrap_or(false),
-            collapse_scenarios: config.collapse_scenarios.unwrap_or(false),
-            show_tree: config.show_tree.unwrap_or(true),
-            inline_backgrounds: config.inline_backgrounds.unwrap_or(true),
-            tag_links: config.tag_links.clone().unwrap_or_default(),
+            source_link: options
+                .source_link
+                .clone()
+                .or_else(|| config.source_link.clone()),
+            collapse_rules: options
+                .collapse_rules
+                .or(config.collapse_rules)
+                .unwrap_or(false),
+            collapse_scenarios: options
+                .collapse_scenarios
+                .or(config.collapse_scenarios)
+                .unwrap_or(false),
+            show_tree: options.show_tree.or(config.show_tree).unwrap_or(true),
+            inline_backgrounds: options
+                .inline_backgrounds
+                .or(config.inline_backgrounds)
+                .unwrap_or(true),
+            tag_links: options
+                .tag_links
+                .clone()
+                .or_else(|| config.tag_links.clone())
+                .unwrap_or_default(),
             accents: Accents {
-                light: config.accent_light.unwrap_or(Accents::DEFAULT.light),
-                dark: config.accent_dark.unwrap_or(Accents::DEFAULT.dark),
+                light: options
+                    .accent_light
+                    .or(config.accent_light)
+                    .unwrap_or(Accents::DEFAULT.light),
+                dark: options
+                    .accent_dark
+                    .or(config.accent_dark)
+                    .unwrap_or(Accents::DEFAULT.dark),
             },
             scope,
             indexing: options.indexing,

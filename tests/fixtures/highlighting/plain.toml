@@ -1,0 +1,3 @@
+# The site of ghg.toml without its accents, which the tests give as --accent-light and --accent-dark.
+input = "."
+title = "Highlighting"
