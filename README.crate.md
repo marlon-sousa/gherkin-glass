@@ -119,6 +119,16 @@ ghg serve [options]
 | `--front-page <file>` | `build` and `serve` | The Markdown file of the site's front page, instead of the configuration's `front_page`. |
 | `--only <file>` | `build` and `serve` | Builds the site from the feature files listed in that file, one path on each line, alone, as "A site of only some feature files" below describes. `--only -` reads the list from standard input. |
 | `--keep-in-output <pattern>` | `build` and `serve` | Leaves alone what the pattern matches in the output folder, in the syntax of a `.gitignore` file, as "The output folder belongs to ghg" below describes. Give it once for each pattern; the patterns given replace the configuration's `keep_in_output`. |
+| `--source-link <address>` | `build` and `serve` | The address of each feature file's source, with `{path}` and `{line}`, instead of the configuration's `source_link`. |
+| `--allow-unnamed <true or false>` | `build` and `serve` | Whether a feature, rule or scenario may have no name, instead of the configuration's `allow_unnamed`. |
+| `--collapse-rules <true or false>` | `build` and `serve` | Whether rules start collapsed, instead of the configuration's `collapse_rules`. |
+| `--collapse-scenarios <true or false>` | `build` and `serve` | Whether scenarios, scenario outlines and backgrounds start collapsed, instead of the configuration's `collapse_scenarios`. |
+| `--show-tree <true or false>` | `build` and `serve` | Whether the folder tree is shown when a reader first opens the site, instead of the configuration's `show_tree`. |
+| `--inline-backgrounds <true or false>` | `build` and `serve` | Whether pages start with the backgrounds inside each scenario expanded, instead of the configuration's `inline_backgrounds`. |
+| `--replace-existing-version <true or false>` | `build` and `serve` | Whether a build replaces the site, or the version, that an earlier build wrote, instead of the configuration's `replace_existing_version`. |
+| `--accent-light <colour>` | `build` and `serve` | The light theme's accent colour, such as `'#0b4f9c'`, in quotes so that the shell does not take `#` for a comment, instead of the configuration's `accent_light`. |
+| `--accent-dark <colour>` | `build` and `serve` | The dark theme's accent colour, written as `--accent-light`'s, instead of the configuration's `accent_dark`. |
+| `--tag-link <pattern> <address> <text>` | `build` and `serve` | Links the tags the pattern matches to another site, as a table of `tag_links` does, such as `--tag-link '@issue-(\d+)' 'https://github.com/owner/repo/issues/$1' 'Issue $1'`. Give it once for each link; the links given replace the configuration's `tag_links`. |
 | `--preview` | `build` and `serve` | Builds a preview: the site without versions, whatever the configuration's `version_name` says, every page of which asks search engines not to index it, as "A site of only some feature files" below describes. It cannot be given with `--version-name`. |
 | `--message-format <format>` | `build` | `human`, the default, or `json`, which also prints one JSON object to standard output, on one line, saying how the build ended, for a program such as a CI step to read, as "A report for programs" below describes. |
 | `--host <address>` | `serve` | Listens on that address instead of `127.0.0.1`, such as `0.0.0.0` to be reached from other machines. |

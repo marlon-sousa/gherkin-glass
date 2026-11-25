@@ -1,3 +1,5 @@
+mod key_option_mistakes;
+mod key_options;
 mod mistakes;
 
 use std::collections::BTreeSet;

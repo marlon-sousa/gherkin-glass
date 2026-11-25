@@ -8,13 +8,11 @@ use toml::de::{DeTable, DeValue};
 use crate::entities::{Colour, Config, VersionName};
 use crate::errors::{ConfigError, ConfigErrorKind, ValueType};
 
-mod accent_contrast;
 mod config_key;
 mod kept_patterns;
 mod tag_link_tables;
-mod tag_patterns;
 
-use accent_contrast::check_accent;
+use super::check_accent;
 use config_key::{ConfigKey, SettingKey, accent_of};
 use kept_patterns::kept_patterns;
 use tag_link_tables::tag_links;

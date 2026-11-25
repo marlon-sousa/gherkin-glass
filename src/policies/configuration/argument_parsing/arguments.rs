@@ -3,16 +3,19 @@
 use std::ffi::OsString;
 use std::path::PathBuf;
 
-use clap::builder::{OsStringValueParser, TypedValueParser};
+use clap::builder::{BoolValueParser, OsStringValueParser, TypedValueParser};
 use clap::{ArgAction, Args, Parser, Subcommand};
 
 use crate::entities::{
-    BuildOptions, Invocation, KeptInOutput, KeptPattern, MessageFormat, PathList, SearchIndexing,
-    ServeMode, ServeOptions, VersionName,
+    BuildOptions, Colour, Invocation, KeptInOutput, KeptPattern, MessageFormat, PathList,
+    SearchIndexing, ServeMode, ServeOptions, VersionName,
 };
 use crate::errors::ArgumentError;
 
-use super::option_values::{kept_pattern, message_format, path_list, port, text, version_name};
+use super::option_values::{
+    dark_accent, kept_pattern, light_accent, message_format, path_list, port, text, version_name,
+};
+use super::tag_link_option::tag_link;
 
 /// clap prints nothing: `--help` and `--version` are answered with the
 /// catalogue's words, and its mistakes become [`ArgumentError`]s.
@@ -59,9 +62,38 @@ struct BuildArguments {
     only: Option<PathList>,
     #[arg(long)]
     preview: bool,
-    /// The only option that may be given more than once.
+    /// One of the two options that may be given more than once.
     #[arg(long, allow_hyphen_values = true, action = ArgAction::Append, value_parser = OsStringValueParser::new().try_map(kept_pattern))]
     keep_in_output: Vec<KeptPattern>,
+    #[arg(long, allow_hyphen_values = true, value_parser = OsStringValueParser::new().try_map(text))]
+    source_link: Option<String>,
+    #[arg(long, value_parser = BoolValueParser::new())]
+    allow_unnamed: Option<bool>,
+    #[arg(long, value_parser = BoolValueParser::new())]
+    collapse_rules: Option<bool>,
+    #[arg(long, value_parser = BoolValueParser::new())]
+    collapse_scenarios: Option<bool>,
+    #[arg(long, value_parser = BoolValueParser::new())]
+    show_tree: Option<bool>,
+    #[arg(long, value_parser = BoolValueParser::new())]
+    inline_backgrounds: Option<bool>,
+    #[arg(long, value_parser = BoolValueParser::new())]
+    replace_existing_version: Option<bool>,
+    #[arg(long, allow_hyphen_values = true, value_parser = OsStringValueParser::new().try_map(light_accent))]
+    accent_light: Option<Colour>,
+    #[arg(long, allow_hyphen_values = true, value_parser = OsStringValueParser::new().try_map(dark_accent))]
+    accent_dark: Option<Colour>,
+    /// The other option that may be given more than once, each time with its three values, all
+    /// in one list, three by three.
+    #[arg(
+        long,
+        allow_hyphen_values = true,
+        action = ArgAction::Append,
+        num_args = 3,
+        value_names = ["pattern", "address", "text"],
+        value_parser = OsStringValueParser::new().try_map(text)
+    )]
+    tag_link: Vec<String>,
     /// What follows `--`, which no command takes.
     #[arg(last = true)]
     after_the_options: Vec<OsString>,
@@ -119,6 +151,16 @@ impl BuildArguments {
             (true, None) => SearchIndexing::Refused,
             (false, _) => SearchIndexing::Allowed,
         };
+        let tag_links = if self.tag_link.is_empty() {
+            None
+        } else {
+            Some(
+                self.tag_link
+                    .chunks(3)
+                    .map(tag_link)
+                    .collect::<Result<_, _>>()?,
+            )
+        };
         Ok(BuildOptions {
             config: self.config,
             input: self.input,
@@ -130,6 +172,16 @@ impl BuildArguments {
             indexing,
             keep_in_output: (!self.keep_in_output.is_empty())
                 .then(|| KeptInOutput::new(self.keep_in_output)),
+            source_link: self.source_link,
+            allow_unnamed: self.allow_unnamed,
+            collapse_rules: self.collapse_rules,
+            collapse_scenarios: self.collapse_scenarios,
+            show_tree: self.show_tree,
+            inline_backgrounds: self.inline_backgrounds,
+            replace_existing_version: self.replace_existing_version,
+            accent_light: self.accent_light,
+            accent_dark: self.accent_dark,
+            tag_links,
         })
     }
 }

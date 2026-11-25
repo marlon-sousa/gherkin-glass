@@ -4,7 +4,9 @@ use std::ffi::OsString;
 
 use std::path::PathBuf;
 
-use crate::entities::{KeptPattern, MessageFormat, PathList, VersionName};
+use crate::entities::{Colour, KeptPattern, MessageFormat, PathList, Theme, VersionName};
+use crate::errors::AccentShortfall;
+use crate::policies::configuration::check_accent;
 
 /// Why a value was refused, which clap keeps as the source of its error.
 #[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
@@ -20,6 +22,10 @@ pub(super) enum Rejected {
     NotAPattern { reason: String },
     #[error("the value is not a message format")]
     NotAMessageFormat,
+    #[error("the value is not a colour")]
+    NotAColour,
+    #[error("the accent has too little contrast")]
+    TooLittleContrast { shortfall: AccentShortfall },
 }
 
 /// A value as text, with what is not Unicode replaced. An empty value
@@ -68,5 +74,23 @@ pub(super) fn message_format(value: OsString) -> Result<MessageFormat, Rejected>
         "human" => Ok(MessageFormat::Human),
         "json" => Ok(MessageFormat::Json),
         _ => Err(Rejected::NotAMessageFormat),
+    }
+}
+
+pub(super) fn light_accent(value: OsString) -> Result<Colour, Rejected> {
+    accent(Theme::Light, value)
+}
+
+pub(super) fn dark_accent(value: OsString) -> Result<Colour, Rejected> {
+    accent(Theme::Dark, value)
+}
+
+/// A colour in hexadecimal, as `accent_light` and `accent_dark` take it, that reaches the
+/// contrast `theme` needs.
+fn accent(theme: Theme, value: OsString) -> Result<Colour, Rejected> {
+    let colour = Colour::from_hex(&text(value)?).ok_or(Rejected::NotAColour)?;
+    match check_accent(theme, colour) {
+        Some(shortfall) => Err(Rejected::TooLittleContrast { shortfall }),
+        None => Ok(colour),
     }
 }

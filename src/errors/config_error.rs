@@ -7,7 +7,10 @@ use std::path::PathBuf;
 use i18n_embed_fl::fl;
 use thiserror::Error;
 
-use super::{LocatedError, each_on_a_line, invalid_kept_pattern, invalid_version_name};
+use super::{
+    LocatedError, each_on_a_line, invalid_kept_pattern, invalid_version_name, not_boolean,
+    not_colour, not_regex, regex_too_large, too_little_contrast, unknown_group,
+};
 use crate::entities::{Colour, Theme};
 use crate::policies::CATALOGUE;
 
@@ -43,7 +46,7 @@ pub(crate) enum ConfigErrorKind {
     InvalidVersionName { name: String },
     #[error(fmt = Self::wrong_type)]
     WrongType { key: String, expected: ValueType },
-    #[error(fmt = Self::too_little_contrast)]
+    #[error(fmt = too_little_contrast)]
     TooLittleContrast {
         key: String,
         shortfall: AccentShortfall,
@@ -60,12 +63,12 @@ pub(crate) enum ConfigErrorKind {
     #[error(fmt = Self::missing)]
     Missing { key: String },
     /// `reason` is the `regex-syntax` crate's.
-    #[error(fmt = Self::not_regex)]
+    #[error(fmt = not_regex)]
     NotRegex { key: String, reason: String },
-    #[error(fmt = Self::regex_too_large)]
+    #[error(fmt = regex_too_large)]
     RegexTooLarge { key: String },
     /// `group` is a number or a name, as the replacement writes it.
-    #[error(fmt = Self::unknown_group)]
+    #[error(fmt = unknown_group)]
     UnknownGroup { key: String, group: String },
 }
 
@@ -153,44 +156,11 @@ impl ConfigErrorKind {
     }
 
     fn wrong_type(key: &str, expected: &ValueType, f: &mut Formatter<'_>) -> FmtResult {
-        f.write_str(&match expected {
-            ValueType::Text => fl!(CATALOGUE, "config-not-text", key = key),
-            ValueType::Boolean => fl!(CATALOGUE, "config-not-boolean", key = key),
-            ValueType::Colour => fl!(CATALOGUE, "config-not-colour", key = key),
-        })
-    }
-
-    /// The colours and the ratio are passed as text, so that Fluent never formats them.
-    fn too_little_contrast(
-        key: &str,
-        shortfall: &AccentShortfall,
-        f: &mut Formatter<'_>,
-    ) -> FmtResult {
-        let colour = shortfall.accent.to_string();
-        let background = shortfall.background.to_string();
-        let ratio = format!(
-            "{}.{:02}",
-            shortfall.hundredths / 100,
-            shortfall.hundredths % 100
-        );
-        f.write_str(&match shortfall.theme {
-            Theme::Light => fl!(
-                CATALOGUE,
-                "config-accent-light-contrast",
-                key = key,
-                colour = colour,
-                ratio = ratio,
-                background = background
-            ),
-            Theme::Dark => fl!(
-                CATALOGUE,
-                "config-accent-dark-contrast",
-                key = key,
-                colour = colour,
-                ratio = ratio,
-                background = background
-            ),
-        })
+        match expected {
+            ValueType::Text => f.write_str(&fl!(CATALOGUE, "config-not-text", key = key)),
+            ValueType::Boolean => not_boolean(key, f),
+            ValueType::Colour => not_colour(key, f),
+        }
     }
 
     fn not_table_list(f: &mut Formatter<'_>) -> FmtResult {
@@ -203,27 +173,5 @@ impl ConfigErrorKind {
 
     fn missing(key: &str, f: &mut Formatter<'_>) -> FmtResult {
         f.write_str(&fl!(CATALOGUE, "config-missing", key = key))
-    }
-
-    fn not_regex(key: &str, reason: &str, f: &mut Formatter<'_>) -> FmtResult {
-        f.write_str(&fl!(
-            CATALOGUE,
-            "config-not-regex",
-            key = key,
-            reason = reason
-        ))
-    }
-
-    fn regex_too_large(key: &str, f: &mut Formatter<'_>) -> FmtResult {
-        f.write_str(&fl!(CATALOGUE, "config-regex-too-large", key = key))
-    }
-
-    fn unknown_group(key: &str, group: &str, f: &mut Formatter<'_>) -> FmtResult {
-        f.write_str(&fl!(
-            CATALOGUE,
-            "config-unknown-group",
-            key = key,
-            group = group
-        ))
     }
 }

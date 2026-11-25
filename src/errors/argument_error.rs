@@ -5,7 +5,10 @@ use std::fmt::{Formatter, Result as FmtResult};
 use i18n_embed_fl::fl;
 use thiserror::Error;
 
-use super::{invalid_kept_pattern, invalid_version_name};
+use super::{
+    AccentShortfall, invalid_kept_pattern, invalid_version_name, not_boolean, not_colour,
+    not_regex, regex_too_large, too_little_contrast, unknown_group,
+};
 use crate::policies::CATALOGUE;
 
 /// Each `String` is what was typed, shown as it was typed, an option with its dashes.
@@ -41,6 +44,23 @@ pub(crate) enum ArgumentError {
     /// `reason` is the `ignore` crate's.
     #[error(fmt = invalid_kept_pattern)]
     InvalidKeptPattern { pattern: String, reason: String },
+    #[error(fmt = not_boolean)]
+    NotBoolean { option: String },
+    #[error(fmt = not_colour)]
+    NotColour { option: String },
+    #[error(fmt = too_little_contrast)]
+    TooLittleContrast {
+        option: String,
+        shortfall: AccentShortfall,
+    },
+    /// `reason` is the `regex-syntax` crate's.
+    #[error(fmt = not_regex)]
+    NotRegex { option: String, reason: String },
+    #[error(fmt = regex_too_large)]
+    RegexTooLarge { option: String },
+    /// `group` is a number or a name, as the replacement writes it.
+    #[error(fmt = unknown_group)]
+    UnknownGroup { option: String, group: String },
 }
 
 impl ArgumentError {

@@ -1,0 +1,2 @@
+# The site of ghg.toml without its links, which the tests give as --tag-link options.
+title = "Tagged suite"

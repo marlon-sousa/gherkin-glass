@@ -1,4 +1,4 @@
-//! Policy: the patterns of the configuration's `tag_links`, each made to match a whole tag, and the groups their replacements name.
+//! Policy: the patterns of the configuration's `tag_links` and of `--tag-link`, each made to match a whole tag, and the groups their replacements name.
 
 use std::cell::RefCell;
 

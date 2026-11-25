@@ -22,6 +22,16 @@ help =
       --only <file>: builds the site from the feature files the file lists, one path on each line, alone. --only - reads the list from standard input.
       --preview: builds a preview, a site without versions whose every page asks search engines not to index it.
       --keep-in-output <pattern>: leaves alone what the pattern matches in the output folder, in the gitignore syntax, instead of the configuration's keep_in_output. Give it once for each pattern.
+      --source-link <address>: the address of each feature file's source, with {"{"}path{"}"} and {"{"}line{"}"}, instead of the configuration's source_link.
+      --allow-unnamed <true or false>: whether features, rules and scenarios may have no name, instead of the configuration's allow_unnamed.
+      --collapse-rules <true or false>: whether rules start collapsed, instead of the configuration's collapse_rules.
+      --collapse-scenarios <true or false>: whether scenarios and backgrounds start collapsed, instead of the configuration's collapse_scenarios.
+      --show-tree <true or false>: whether the folder tree is shown when a reader first opens the site, instead of the configuration's show_tree.
+      --inline-backgrounds <true or false>: whether pages start with the backgrounds inside each scenario expanded, instead of the configuration's inline_backgrounds.
+      --replace-existing-version <true or false>: whether a build replaces the site or the version an earlier build wrote, instead of the configuration's replace_existing_version.
+      --accent-light <colour>: the light theme's accent colour, such as "#0b4f9c", instead of the configuration's accent_light.
+      --accent-dark <colour>: the dark theme's accent colour, such as "#8cc4ff", instead of the configuration's accent_dark.
+      --tag-link <pattern> <address> <text>: links the tags the pattern matches to that address, with that text. Give it once for each link; the links given replace the configuration's tag_links.
 
     Options of ghg build only:
       --message-format <format>: human, the default, or json, which also prints one JSON object to standard output saying how the build ended, for a program to read.
