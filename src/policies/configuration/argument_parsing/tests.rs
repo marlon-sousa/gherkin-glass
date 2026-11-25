@@ -1,10 +1,9 @@
-mod action_inputs;
 mod mistakes;
 
 use std::collections::BTreeSet;
 use std::path::PathBuf;
 
-use clap::{Arg, ArgAction, CommandFactory};
+use clap::CommandFactory;
 use rstest::rstest;
 
 use super::*;
@@ -35,7 +34,16 @@ fn paths(config: Option<&str>, input: Option<&str>) -> BuildOptions {
 /// The long options `command` takes, without their dashes, but for
 /// `--help` and `--version`, which every command takes.
 fn long_options(command: &str) -> BTreeSet<String> {
-    long_names(command, |_| true)
+    let mut arguments = Arguments::command();
+    arguments.build();
+    arguments
+        .find_subcommand(command)
+        .into_iter()
+        .flat_map(|command| command.get_arguments())
+        .filter_map(|argument| argument.get_long())
+        .filter(|long| !is_every_command_s(long))
+        .map(str::to_string)
+        .collect()
 }
 
 /// The long options of `ghg build` that set how a site is built, which `ghg serve` takes too:
@@ -46,35 +54,25 @@ fn building_options() -> BTreeSet<String> {
     options
 }
 
-/// The long names of the options of `command` that take no value.
-fn flags_of(command: &str) -> BTreeSet<String> {
-    long_names(command, |argument| !argument.get_action().takes_values())
-}
-
-/// The long names of the options of `command` that may be given more than once.
-fn repeatable_of(command: &str) -> BTreeSet<String> {
-    long_names(command, |argument| {
-        matches!(argument.get_action(), ArgAction::Append)
-    })
-}
-
-/// The long names of the options of `command` that `keep` keeps, but those of every command.
-fn long_names(command: &str, keep: impl Fn(&Arg) -> bool) -> BTreeSet<String> {
-    let mut arguments = Arguments::command();
-    arguments.build();
-    arguments
-        .find_subcommand(command)
-        .into_iter()
-        .flat_map(|command| command.get_arguments())
-        .filter(|argument| keep(argument))
-        .filter_map(|argument| argument.get_long())
-        .filter(|long| !is_every_command_s(long))
-        .map(str::to_string)
-        .collect()
-}
-
 fn is_every_command_s(long: &str) -> bool {
     ["help", "version"].contains(&long)
+}
+
+// Rule 18.
+#[test]
+fn the_help_names_every_option() {
+    let help = include_str!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/messages/en/gherkin-glass.ftl"
+    ));
+    for option in long_options("build") {
+        let with_a_value = format!("  --{option} <");
+        let without = format!("  --{option}:");
+        assert!(
+            help.contains(&with_a_value) || help.contains(&without),
+            "the help names --{option}"
+        );
+    }
 }
 
 #[test]

@@ -54,9 +54,6 @@ mod tests {
         expected.insert(format!("+MSRV {}", MINIMUM_RUST_TEST.join(" ")));
         expected.insert("xtask check-script".to_string());
         expected.insert("xtask check-browser".to_string());
-        // The action's scripts run on macOS too, in a job of their own, and the tests on
-        // Linux already run them.
-        expected.insert("test --locked --test action".to_string());
         assert_eq!(workflow_commands(), expected);
     }
 }

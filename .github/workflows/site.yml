@@ -4,7 +4,7 @@ name: Site
 # release workflow calls this once a release is published, with the release's
 # tag as version, from a job that grants contents: write, since a called
 # workflow cannot have more permissions than its caller. It builds the site of
-# that version with the project's own action and the released binary, with the
+# that version with gherkin-glass-action and the released binary, with the
 # tag's README as the site's front page, straight into a checkout of the
 # gh-pages branch, keeping its .nojekyll and .git, and adds it to the branch.
 
@@ -41,10 +41,10 @@ jobs:
         run: project-site/assemble-input.sh "$RUNNER_TEMP/input"
       - name: Write the front page from the README
         run: project-site/front-page.sh README.md "$RUNNER_TEMP/front-page.md"
-      - name: Build the site with the project's own action
-        uses: ./
+      - name: Build the site with gherkin-glass-action
+        uses: marlon-sousa/gherkin-glass-action@d58974eeb97773597626e53c7f2322eec2971a91 # v1.0.0
         with:
-          version: ${{ inputs.version }}
+          ghg-version: ${{ inputs.version }}
           build: true
           title: gherkin-glass examples
           input: ${{ runner.temp }}/input
