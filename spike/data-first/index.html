@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Data-first spike</title>
+<link rel="stylesheet" href="assets/gherkin-glass.css">
+<style>:root{color-scheme:light;--ghg-background:#fff;--ghg-surface:#f2f2f2;--ghg-text:#1a1a1a;--ghg-muted:#474747;--ghg-border:#757575;--ghg-accent:#0b4f9c}@media (prefers-color-scheme:dark){:root{color-scheme:dark;--ghg-background:#141414;--ghg-surface:#222;--ghg-text:#ececec;--ghg-muted:#c4c4c4;--ghg-border:#8f8f8f;--ghg-accent:#8cc4ff}}body{max-width:48rem;margin:0 auto;padding:1rem}</style>
+</head><body><main id="ghg_main">
+<h1>Data-first spike</h1>
+<p>Every page here is drawn by one script from shared data: one store of blocks, each kept once under the hash of its content, and one list per version of the blocks it holds. The HTML of each version is one small file that holds no content. Nothing here is gherkin-glass 2.0 yet; it is for trying the idea with a screen reader.</p>
+<p>The content is the project site's example suite, as two versions: v1.0.0, as the suite is, and v1.1.0, where one step changed, one scenario was renamed, one was added and one removed.</p>
+<h2>The two forms of address</h2>
+<ul>
+<li><a href="hash/index.html">Addresses after a hash</a>, such as <code>index.html#lending/borrowing#how-long-a-loan-lasts</code>. Moving between pages stays in one document, so the script announces each new page and moves the focus.</li>
+<li><a href="query/index.html">Addresses in a query</a>, such as <code>index.html?page=lending/borrowing#how-long-a-loan-lasts</code>. Moving between pages loads the page again, as today.</li>
+</ul>
+<h2>What to try</h2>
+<ul>
+<li>A link straight to a scenario, such as <a href="hash/v1.0.0/index.html#lending/borrowing#how-long-a-loan-lasts">a scenario outline, hash form</a> and <a href="query/v1.0.0/index.html?page=lending/borrowing#how-long-a-loan-lasts">the same, query form</a>: the page should open with the focus on that scenario's heading.</li>
+<li>A row of an outline, inside collapsed blocks: <a href="hash/v1.0.0/index.html#lending/borrowing#how-long-a-loan-lasts-row-3">hash form</a> and <a href="query/v1.0.0/index.html?page=lending/borrowing#how-long-a-loan-lasts-row-3">query form</a>.</li>
+<li>Moving from a folder page to a feature, and back with the browser's back button.</li>
+<li>The contents of a feature page, the skip link, and the headings.</li>
+<li>"This page in other versions" at the top of a feature page, and "In other versions" in each scenario, both from the hashes: compare <a href="hash/v1.1.0/index.html#lending/borrowing">lending/borrowing in v1.1.0</a> and <a href="hash/v1.1.0/index.html#catalogue/searching">catalogue/searching in v1.1.0</a>.</li>
+</ul>
+<p>Not in the spike: the folder tree, search, tag pages, step sentences, the backgrounds shown inside each scenario, and remembering what was collapsed.</p>
+</main></body></html>
