@@ -12,7 +12,8 @@ export interface BackgroundsOption {
   readonly siteRoot: string;
 }
 
-export function startCollapsing(page: Page, memory: Memory, pagePath: string, option: BackgroundsOption | null): void {
+/** Returns what expands the block an anchor or an element names and every block it is inside, as following a link to it does. */
+export function startCollapsing(page: Page, memory: Memory, pagePath: string, option: BackgroundsOption | null): (anchor: string) => void {
   const blocks = page.blocks();
   const followingTheForm = blocks.filter((block) => block.expandedWhenUnchecked !== null);
   let inline = false;
@@ -70,4 +71,5 @@ export function startCollapsing(page: Page, memory: Memory, pagePath: string, op
       }
     });
   }
+  return reveal;
 }
