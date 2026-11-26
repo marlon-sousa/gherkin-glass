@@ -366,11 +366,18 @@ function follow(first) {
     const t = document.getElementById(at.own); if (t) focusOn(t); return;
   }
   let title = null;
-  if (at.page !== current) title = draw(at.page);
-  const target = at.anchor ? reveal(at.anchor) : null;
-  if (target) focusOn(target);
-  else if (!first && title) { window.scrollTo(0, 0); focusOn(main.querySelector("h1")); }
-  if (!first && title) announce(title);
+  // The link followed is about to be removed with the page it is on: keep the focus in main
+  // meanwhile, so that it never falls back to the body and a screen reader to the page's top.
+  if (at.page !== current) { if (!first) main.focus({ preventScroll: true }); title = draw(at.page); }
+  const finish = () => {
+    const target = at.anchor ? reveal(at.anchor) : null;
+    if (target) focusOn(target);
+    else if (!first && title) { window.scrollTo(0, 0); focusOn(main.querySelector("h1")); }
+    if (!first && title) announce(title);
+  };
+  // A screen reader rebuilds its view of the page after the page changes; moving the focus
+  // before it has done so can leave its cursor at the page's top.
+  if (first || title === null) finish(); else setTimeout(() => requestAnimationFrame(finish), 150);
 }
 if (ROUTING === "hash") window.addEventListener("hashchange", () => follow(false));
 else window.addEventListener("hashchange", () => { const t = reveal(readAddress().anchor); if (t) focusOn(t); });
