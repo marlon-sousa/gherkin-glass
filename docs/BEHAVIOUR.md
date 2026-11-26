@@ -221,7 +221,7 @@ Every site, every version of one and every preview stores each feature file's co
 
     | Member | Holds |
     | --- | --- |
-    | `keyword` | The keyword as written, such as `Given`, `And`, `*` or `Dado`, without the space after it. |
+    | `keyword` | The keyword exactly as the language's list of keywords gives it, with the space after it when the list has one, such as `Given `, `And `, `* ` or `Dado `, and without one when it has none, such as `假如` in Chinese, so that the page writes the keyword, then the text, with nothing between them. |
     | `text` | The step's text after its keyword, as written. |
     | `kind` | `given`, `when` or `then`, the step's kind, as rule 137 gives it. |
     | `sentence` | The step's sentence, as rules 133 to 136 make it, each slot written `"…"`. |
