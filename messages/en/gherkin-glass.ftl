@@ -200,6 +200,15 @@ collapse-all = Collapse all
 expand-all = Expand all
 source-link = Source: { $path }
 
+## The page an address that names no page of its shell draws, its title
+## its $heading, then the $site's title, and the paragraph drawn in place of
+## a page whose site's data cannot be fetched or read.
+
+page-missing = Nothing is at this address
+page-missing-title = { $heading }, { $site }
+page-missing-text = This site has no page at this address.
+page-not-loaded = This page could not be loaded. Load it again, or check that the site is served.
+
 ## The control every page has to choose its theme, and its three choices.
 
 theme = Theme

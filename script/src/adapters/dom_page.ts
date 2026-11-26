@@ -33,10 +33,14 @@ export class DomPage implements Page {
   private readonly found: DomBlock[] = [];
   private readonly byElement = new Map<Element, DomBlock>();
   private readonly document: Document;
+  /** Whether the page catches the links to its anchors itself, as a page written whole does; a drawn page leaves them to the navigation. */
+  private readonly followsLinks: boolean;
 
-  constructor(document: Document) {
+  /** `root` holds the blocks, the document's or a drawn page's `main`. */
+  constructor(document: Document, root: ParentNode = document, followsLinks = true) {
     this.document = document;
-    for (const element of document.querySelectorAll(".ghg-block")) {
+    this.followsLinks = followsLinks;
+    for (const element of root.querySelectorAll(".ghg-block")) {
       // An item of an outline's list of examples holds its button itself, with no heading.
       const heading = element.querySelector<HTMLElement>(":scope > :is(h2, h3, h4, h5)") ?? element;
       const button = heading.querySelector<HTMLButtonElement>(":scope > button.ghg-toggle");
@@ -51,7 +55,7 @@ export class DomPage implements Page {
       this.found.push(block);
     }
     // A folder page's features, each known by its link's address.
-    for (const element of document.querySelectorAll(".ghg-feature")) {
+    for (const element of root.querySelectorAll(".ghg-feature")) {
       const link = element.querySelector<HTMLAnchorElement>(":scope > a[href]");
       const button = element.querySelector<HTMLButtonElement>(":scope > button.ghg-toggle");
       const content = element.querySelector<HTMLElement>(":scope > .ghg-content");
@@ -67,7 +71,7 @@ export class DomPage implements Page {
   }
 
   target(): string | null {
-    return anchorOf(this.document.location.hash);
+    return this.followsLinks ? anchorOf(this.document.location.hash) : null;
   }
 
   holder(anchor: string): Block | null {
@@ -94,6 +98,9 @@ export class DomPage implements Page {
   }
 
   onFollow(handler: (anchor: string) => void): void {
+    if (!this.followsLinks) {
+      return;
+    }
     const view = this.document.defaultView;
     view?.addEventListener("hashchange", () => {
       const anchor = anchorOf(this.document.location.hash);
