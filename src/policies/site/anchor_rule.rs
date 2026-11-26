@@ -5,7 +5,7 @@ use std::collections::HashSet;
 use gherkin::{Background, Examples, Rule, Scenario};
 
 use crate::entities::{Anchored, AnchoredFeature, AnchoredRule, AnchoredScenario, ParsedFeature};
-use crate::policies::site::feature_pages::example_rows;
+use crate::policies::site::example_rows;
 use crate::policies::site::{anchor_of, unique};
 
 /// The kinds of block that have an anchor, each named in English for when

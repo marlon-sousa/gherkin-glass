@@ -10,6 +10,7 @@ mod rendering;
 mod serving;
 mod site;
 mod site_title;
+mod version_order;
 
 pub(crate) use collecting::*;
 pub(crate) use configuration::*;
@@ -23,3 +24,4 @@ pub(crate) use rendering::*;
 pub(crate) use serving::*;
 pub(crate) use site::*;
 pub(crate) use site_title::site_title;
+pub(crate) use version_order::order_versions;

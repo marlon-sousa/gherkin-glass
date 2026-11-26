@@ -3,7 +3,7 @@
 use gherkin::{Scenario, Step, StepType, Table};
 
 use crate::entities::{DocStringView, ParsedFeature, StepContent, StepKind, StepView, TableView};
-use crate::policies::site::feature_pages::{ExampleRow, highlight_step};
+use crate::policies::site::{ExampleRow, highlight_step};
 
 /// `scenario` holds the steps, or is `None` for a background's.
 pub(super) fn step_contents(

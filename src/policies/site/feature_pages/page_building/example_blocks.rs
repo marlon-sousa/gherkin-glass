@@ -5,15 +5,15 @@ use i18n_embed_fl::fl;
 
 use super::block_building::{Builder, description, worded_heading};
 use super::heading_words::{
-    Kind, TEXT_MARKS, examples_heading, isolated, keyword_note, kind_alone, plain, worded_parts,
+    TEXT_MARKS, examples_heading, isolated, keyword_note, kind_alone, plain, worded_parts,
 };
 use super::step_views::{filled_step_contents, table};
 use crate::entities::{
-    Anchored, AnchoredScenario, ExampleScenario, ExamplesBlock, ExamplesContent, ExamplesRuns,
-    HeadingLevel, HeadingPart, plain_parts,
+    Anchored, AnchoredScenario, BlockKind, ExampleScenario, ExamplesBlock, ExamplesContent,
+    ExamplesRuns, HeadingLevel, HeadingPart, plain_parts,
 };
 use crate::policies::CATALOGUE;
-use crate::policies::site::feature_pages::{ExampleRow, block_rows};
+use crate::policies::site::{ExampleRow, block_rows};
 
 impl Builder<'_> {
     /// The block at `place` among its outline's, from 1.
@@ -30,7 +30,7 @@ impl Builder<'_> {
                 let words = fl!(CATALOGUE, "nothing-to-run", heading = TEXT_MARKS[0]);
                 worded_parts(&words, &[label])
             },
-            keyword_note: keyword_note(Kind::Examples, &examples.keyword),
+            keyword_note: keyword_note(BlockKind::Examples, &examples.keyword),
             tags: self.tags(&examples.tags),
             description: description(examples.description.as_deref()),
             table: examples.table.as_ref().map(table),
@@ -143,7 +143,7 @@ impl Builder<'_> {
 /// it has none, whatever keyword the file writes.
 fn outline_name(outline: &Scenario) -> Vec<HeadingPart> {
     match outline.name.trim() {
-        "" => kind_alone(Kind::ScenarioOutline),
+        "" => kind_alone(BlockKind::ScenarioOutline),
         name => isolated(name),
     }
 }

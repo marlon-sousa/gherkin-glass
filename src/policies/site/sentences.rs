@@ -1,6 +1,5 @@
-//! Policy: the step sentences, each step's sentence, the sentences of the suite, and their page.
+//! Policy: the step sentences, the sentences of the suite, grouped and sorted, and their page.
 
-mod sentence_slots;
 mod sentences_page_building;
 mod step_sentences;
 

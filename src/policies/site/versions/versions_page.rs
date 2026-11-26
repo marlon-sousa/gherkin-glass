@@ -3,11 +3,11 @@
 use i18n_embed::LanguageLoader;
 use i18n_embed_fl::fl;
 
-use super::order_versions;
 use crate::entities::{
     VersionEntry, VersionName, VersionsPage, VersionsPageContent, VersionsWords,
 };
 use crate::policies::CATALOGUE;
+use crate::policies::order_versions;
 
 /// The versions page listing `names`, every version the output folder holds.
 pub(crate) fn build_versions_page(

@@ -3,12 +3,12 @@
 use gherkin::Background;
 use i18n_embed_fl::fl;
 
-use super::heading_words::{Kind, heading, keyword_note};
+use super::heading_words::{heading, keyword_note};
 use super::step_views::step_contents;
 use crate::entities::{
     Anchored, AnchoredRule, AnchoredScenario, BackgroundBlock, BackgroundContent, BlockHeading,
-    HeadingLevel, HeadingPart, LinkAddress, PageOptions, Paragraph, ParsedFeature, RuleBlock,
-    RuleContent, ScenarioBlock, ScenarioContent, TagNames, TagView,
+    BlockKind, HeadingLevel, HeadingPart, LinkAddress, PageOptions, Paragraph, ParsedFeature,
+    RuleBlock, RuleContent, ScenarioBlock, ScenarioContent, TagNames, TagView,
 };
 use crate::policies::CATALOGUE;
 use crate::policies::site::outside_link;
@@ -43,7 +43,7 @@ impl Builder<'_> {
                 heading: kind_heading(
                     level,
                     &anchored.anchor,
-                    (Kind::Background, &background.keyword, &background.name),
+                    (BlockKind::Background, &background.keyword, &background.name),
                     collapsed,
                 ),
                 description: description(background.description.as_deref()),
@@ -61,7 +61,7 @@ impl Builder<'_> {
                 heading: kind_heading(
                     HeadingLevel::Two,
                     &anchored.anchor,
-                    (Kind::Rule, &rule.keyword, &rule.name),
+                    (BlockKind::Rule, &rule.keyword, &rule.name),
                     self.options.collapse_rules,
                 ),
                 name: rule.name.clone(),
@@ -92,9 +92,9 @@ impl Builder<'_> {
         let scenario = anchored.scenario;
         let below = level.below();
         let kind = if scenario.examples.is_empty() {
-            Kind::Scenario
+            BlockKind::Scenario
         } else {
-            Kind::ScenarioOutline
+            BlockKind::ScenarioOutline
         };
         ScenarioContent {
             block: ScenarioBlock {
@@ -154,7 +154,7 @@ pub(super) fn worded_heading(
 fn kind_heading(
     level: HeadingLevel,
     anchor: &str,
-    (kind, keyword, name): (Kind, &str, &str),
+    (kind, keyword, name): (BlockKind, &str, &str),
     collapsed: bool,
 ) -> BlockHeading {
     BlockHeading {

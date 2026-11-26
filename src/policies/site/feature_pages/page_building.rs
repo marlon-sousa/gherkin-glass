@@ -6,15 +6,15 @@ mod heading_words;
 mod step_views;
 
 use block_building::{Builder, description, has_scenarios, worded_heading};
-use heading_words::{Kind, heading, keyword_note};
+use heading_words::{heading, keyword_note};
 use i18n_embed_fl::fl;
 
 use crate::entities::{
-    BackgroundsOption, FeaturePath, HeadingLevel, NoteDialog, OwnCrumb, Page, PageContent,
-    PageOptions, PageWords, RevisedFeature, SourceLink, TagNames, Trail, percent_encoded,
-    plain_parts, text_of,
+    BackgroundsOption, BlockKind, FeaturePath, HeadingLevel, NoteDialog, OwnCrumb, Page,
+    PageContent, PageOptions, PageWords, RevisedFeature, SourceLink, TagNames, Trail,
+    percent_encoded, plain_parts, text_of,
 };
-use crate::policies::site::feature_pages::anchor_feature;
+use crate::policies::site::anchor_feature;
 use crate::policies::site::page_language;
 use crate::policies::{CATALOGUE, page_address};
 
@@ -41,7 +41,7 @@ pub(crate) fn build_page(
     let feature = &parsed.feature;
     let path = FeaturePath::below_input(&parsed.path);
     let address = page_address(&parsed.path);
-    let heading = heading(Kind::Feature, &feature.name);
+    let heading = heading(BlockKind::Feature, &feature.name);
     let heading_text = text_of(&heading);
     let builder = Builder {
         parsed,
@@ -106,7 +106,7 @@ pub(crate) fn build_page(
         name: feature.name.clone(),
         path: path.clone(),
         revision,
-        keyword_note: keyword_note(Kind::Feature, &feature.keyword),
+        keyword_note: keyword_note(BlockKind::Feature, &feature.keyword),
         tags: builder.tags(&feature.tags),
         description: description(feature.description.as_deref()),
         source: options

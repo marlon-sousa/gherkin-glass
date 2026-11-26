@@ -3,11 +3,11 @@
 use std::cmp::Ordering;
 use std::collections::BTreeMap;
 
-use super::sentence_slots::sentence_of;
 use crate::entities::{
     BlockHeading, ExamplesBlock, Sentence, SentenceGroup, SentenceUse, SiteFeaturePage, SiteNode,
     SiteTreeNode, StepKind, StepSentences, StepView, TableView,
 };
+use crate::policies::site::sentence_of;
 
 /// The sentences of the steps of `pages`, feature pages of the site tree with their blocks.
 pub(crate) fn find_step_sentences(pages: &[SiteFeaturePage<'_>]) -> StepSentences {

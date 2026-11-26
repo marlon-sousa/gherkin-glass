@@ -1,5 +1,6 @@
 //! Entity: the site stage, the site tree and its nodes: a feature's page, the folders' pages and the folder tree, search, the step sentences, the tags, and the output folder and its versions, with what every need of the stage uses: the tree itself, its files and their addresses, the feature files' paths, the frame every page has and what each page has of its own in its breadcrumb, the settings of every page, the levels of the headings under a page's `h1`, the front page's template, what a build that succeeded wrote, and how a build that nothing stopped ended.
 
+mod block_kind;
 mod breadcrumb;
 mod build_report;
 mod built_site;
@@ -21,6 +22,7 @@ mod site_tree;
 mod tags;
 mod versions;
 
+pub(crate) use block_kind::BlockKind;
 pub(crate) use breadcrumb::{BreadcrumbWords, OwnCrumb, Trail};
 pub(crate) use build_report::BuildReport;
 pub(crate) use built_site::BuiltSite;

@@ -5,7 +5,7 @@ use std::path::Path;
 use gherkin::{Scenario, Step};
 
 use crate::entities::{HighlightedStep, StepPart};
-use crate::policies::site::feature_pages::highlight_step;
+use crate::policies::site::highlight_step;
 use crate::test_support::{fixture, read_features};
 
 use super::text;
