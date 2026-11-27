@@ -6,7 +6,9 @@
 # Usage:
 #   project-site/publish.sh open <pages>
 #     Checks out the gh-pages branch into <pages>, a new git worktree,
-#     creating the branch, with only a .nojekyll file, when origin has none.
+#     creating the branch, with only a .nojekyll file, when origin has none,
+#     and emptying it but for a new .nojekyll when it holds a site of
+#     gherkin-glass 1, which ghg 2 refuses to add to.
 #     ghg then builds the version straight into <pages>, keeping .nojekyll and
 #     .git, the worktree's own file, with --keep-in-output.
 #   project-site/publish.sh publish <pages> <version>
@@ -29,6 +31,15 @@ usage() {
   exit 2
 }
 
+# Whether the output folder <folder> was marked by gherkin-glass 1: with the
+# marker of its versions, or with a site's marker that names no format of the
+# site's data, as docs/BEHAVIOUR.md, rule 256, tells them.
+holds_gherkin_glass_1() {
+  local folder=$1
+  [ -e "$folder/ghg-versions.json" ] && return 0
+  [ -f "$folder/$marker" ] && ! grep -q '"format"' "$folder/$marker"
+}
+
 open() {
   local folder=$1
   local found=0
@@ -36,6 +47,11 @@ open() {
   if [ "$found" -eq 0 ]; then
     git fetch --depth=1 origin refs/heads/gh-pages
     git worktree add -B gh-pages "$folder" FETCH_HEAD
+    if holds_gherkin_glass_1 "$folder"; then
+      echo "gh-pages holds a site of gherkin-glass 1, which ghg 2 cannot add to, so it starts afresh." >&2
+      git -C "$folder" rm -r --quiet -- .
+      touch "$folder/.nojekyll"
+    fi
   elif [ "$found" -ne 2 ]; then
     echo "origin cannot be asked whether it has a gh-pages branch." >&2
     exit 1

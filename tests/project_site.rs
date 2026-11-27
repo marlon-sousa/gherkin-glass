@@ -563,6 +563,70 @@ fn each_release_adds_only_its_own_folder_and_the_versions_page() {
     }
 }
 
+#[cfg(unix)]
+#[test]
+fn a_release_onto_a_site_of_gherkin_glass_1_starts_the_branch_afresh() {
+    // Rule 180: a gh-pages branch that holds an output folder of gherkin-glass 1 is emptied
+    // but for a new .nojekyll, and the release then adds only its own version.
+    let folder = scratch("publish-afresh");
+    let remote = folder.join("remote.git");
+    git_ok(&folder, &["init", "--quiet", "--bare", "remote.git"]);
+    let seed = folder.join("seed");
+    checkout(&remote, &seed);
+    git_ok(&seed, &["checkout", "--quiet", "--orphan", "gh-pages"]);
+    create_dir_all(seed.join("v1.1.0")).unwrap();
+    write(seed.join("v1.1.0/index.html"), "1.1.0\n").unwrap();
+    write(seed.join("index.html"), "v1.1.0\n").unwrap();
+    write(
+        seed.join("ghg-versions.json"),
+        "{\"versions\":[\"v1.1.0\"]}\n",
+    )
+    .unwrap();
+    write(seed.join(".nojekyll"), "").unwrap();
+    git_ok(&seed, &["add", "--all"]);
+    git_ok(&seed, &["commit", "--quiet", "-m", "site: v1.1.0"]);
+    git_ok(&seed, &["push", "--quiet", "origin", "gh-pages"]);
+
+    let release = folder.join("release");
+    checkout(&remote, &release);
+    let site = folder.join("pages");
+    publish_ok(&release, &["open", path(&site)]);
+    let mut names: Vec<_> = read_dir(&site)
+        .unwrap()
+        .map(|entry| entry.unwrap().file_name().into_string().unwrap())
+        .collect();
+    names.sort();
+    assert_eq!(names, [".git", ".nojekyll"]);
+    create_dir_all(site.join("v2.0.0")).unwrap();
+    write(site.join("v2.0.0/index.html"), "2.0.0\n").unwrap();
+    write(site.join("index.html"), "v2.0.0\n").unwrap();
+    write(site.join("ghg-site.json"), "{\"format\":1}\n").unwrap();
+    publish_ok(&release, &["publish", path(&site), "v2.0.0"]);
+    let files: Vec<_> = published(&remote)
+        .iter()
+        .map(|line| line.split('\t').nth(1).unwrap().to_string())
+        .collect();
+    assert_eq!(
+        files,
+        [
+            ".nojekyll",
+            "ghg-site.json",
+            "index.html",
+            "v2.0.0/index.html"
+        ]
+    );
+
+    // A site of gherkin-glass 2 is kept as it is.
+    let next = folder.join("next");
+    checkout(&remote, &next);
+    let site = folder.join("next-pages");
+    publish_ok(&next, &["open", path(&site)]);
+    assert_eq!(
+        read_to_string(site.join("v2.0.0/index.html")).unwrap(),
+        "2.0.0\n"
+    );
+}
+
 /// `ghg version add` of the site's input as `version`, into `site`, a
 /// checkout of gh-pages, keeping `.nojekyll` and `.git` as the release does.
 fn build_site(input: &Path, site: &Path, version: &str) {
@@ -674,7 +738,7 @@ fn every_release_s_site_opens_on_the_readme_of_its_tag() {
         "{workflow}"
     );
     assert!(
-        workflow.contains("\n          front-page: ${{ runner.temp }}/front-page.md\n"),
+        workflow.contains("\n          --front-page \"$RUNNER_TEMP/front-page.md\"\n"),
         "{workflow}"
     );
 }
