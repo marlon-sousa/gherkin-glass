@@ -11,6 +11,7 @@ test("a count is worded by the catalogue's plural forms", () => {
   assert.equal(words.text("tag-index-entry", { tag: "@draft", count: 0 }), "@draft, no scenarios");
   assert.equal(words.text("tag-index-entry", { tag: "@billing", count: 1 }), "@billing, one scenario");
   assert.equal(words.text("tag-index-entry", { tag: "@slow", count: 3 }), "@slow, 3 scenarios");
+  assert.equal(words.text("tag-index-entry", { tag: "@all", count: 1234 }), "@all, 1234 scenarios");
 });
 
 // Rule 43: feature text in a message is isolated, and no isolation mark is written around it.

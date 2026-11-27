@@ -1,6 +1,6 @@
-// Adapter: the words port over the catalogue's messages in Fluent's syntax, formatted by @fluent/bundle as Rust's i18n-embed formats them, without isolation marks.
+// Adapter: the words port over the catalogue's messages in Fluent's syntax, formatted by @fluent/bundle without isolation marks, and numbers without grouping, as Rust's i18n-embed formats them.
 
-import { FluentBundle, FluentResource } from "@fluent/bundle";
+import { FluentBundle, FluentNumber, FluentResource } from "@fluent/bundle";
 
 import type { Argument, Parts, WordPart, Words } from "../ports/words.ts";
 
@@ -21,7 +21,8 @@ export class FluentWords implements Words {
     if (message?.value == null) {
       return id;
     }
-    return this.bundle.formatPattern(message.value, { ...args }, []);
+    const values = Object.fromEntries(Object.entries(args).map(([key, value]) => [key, typeof value === "number" ? new FluentNumber(value, { useGrouping: false }) : value]));
+    return this.bundle.formatPattern(message.value, values, []);
   }
 
   parts(id: string, args: Readonly<Record<string, Argument>>, texts: Readonly<Record<string, Parts>>): Parts {
