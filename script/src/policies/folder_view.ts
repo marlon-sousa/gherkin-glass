@@ -1,4 +1,4 @@
-// Policy: the view of a folder's page, the home page of a version among them, as docs/BEHAVIOUR.md, rules 81 to 84, 105, 146 and 208, place its parts.
+// Policy: the view of a folder's page, the home page of a version among them.
 
 import { targetAddress } from "./address.ts";
 import { type ContentsEntry, contentsOf } from "./feature_view.ts";

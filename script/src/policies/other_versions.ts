@@ -1,4 +1,4 @@
-// Policy: the lists of a feature's page, and of each of its blocks, in the other versions of its site, worked out from the list of versions, the index of pages and the objects other versions have for the page, as docs/BEHAVIOUR.md, rules 259 to 262, give them.
+// Policy: the lists of a feature's page, and of each of its blocks, in the other versions of its site, worked out from the list of versions, the index of pages and the objects other versions have for the page.
 
 import { type PageName, targetAddress } from "./address.ts";
 import { isScenario } from "./block_views.ts";

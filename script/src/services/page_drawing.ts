@@ -30,7 +30,7 @@ export function pageDrawing(parts: DrawingParts): PageDrawing {
     return () => {
       const frame = draw();
       if (frame === null) {
-        // The front page arrives in its shell with the note of rule 207 already.
+        // The front page arrives in its shell with the note of a site of only some feature files already.
         return home(parts, descriptor);
       }
       if (descriptor.only) {

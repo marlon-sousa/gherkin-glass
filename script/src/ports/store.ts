@@ -1,4 +1,4 @@
-// Port: the site's data, its descriptors, objects, list of versions and index of pages, as docs/BEHAVIOUR.md, "The site's data", describes them member by member.
+// Port: the site's data, its descriptors, objects, list of versions and index of pages.
 
 export type BlockKind = "feature" | "background" | "rule" | "scenario" | "scenario-outline" | "examples";
 export type StepKind = "given" | "when" | "then";

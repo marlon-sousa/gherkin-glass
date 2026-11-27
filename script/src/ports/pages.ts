@@ -7,7 +7,7 @@ import type { SearchPageView } from "../policies/search_page_view.ts";
 import type { SentencesView } from "../policies/sentences_view.ts";
 import type { TagIndexView, TagPageView } from "../policies/tag_views.ts";
 
-/** The page of rule 239, or the paragraph of rule 243. */
+/** The page that says nothing is at an address, or the paragraph that says a page could not be loaded. */
 export interface NoticeView {
   readonly heading: string;
   readonly text: string;

@@ -1,4 +1,4 @@
-// Policy: the view of the page of step sentences, the descriptor's sentences with every step of its features' objects that uses each, as docs/BEHAVIOUR.md, rules 139 to 145, place them.
+// Policy: the view of the page of step sentences, the descriptor's sentences with every step of its features' objects that uses each.
 
 import { blockHeading, type Piece, pieces } from "./heading_words.ts";
 import type { LoadedFeature } from "./site_folders.ts";

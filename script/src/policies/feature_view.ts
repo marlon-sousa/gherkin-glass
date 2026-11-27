@@ -1,4 +1,4 @@
-// Policy: the view of a feature's page, worked out from its object and its descriptor's entry, as docs/BEHAVIOUR.md, "Pages", places its parts.
+// Policy: the view of a feature's page, worked out from its object and its descriptor's entry.
 
 import { targetAddress } from "./address.ts";
 import { type BlockView, type PageContext, type StartingBackground, type TagView, backgroundView, descriptionLines, isScenario, outsideRulesView, ruleView, scenarioView, tagViews } from "./block_views.ts";
@@ -77,7 +77,7 @@ export function featureView(words: Words, descriptor: Descriptor, entry: Feature
   };
 }
 
-/** The page's contents, as rule 46 lists them: its rules and scenarios, and the group of those outside every rule. */
+/** The page's contents: its rules and scenarios, and the group of those outside every rule. */
 export function contentsOf(words: Words, page: string, feature: Block): ContentsEntry[] {
   const link = (anchor: string, parts: Parts, entries: readonly ContentsEntry[] = []): ContentsEntry => ({ address: targetAddress({ kind: "feature", page }, anchor), heading: parts, entries });
   const scenarioEntry = (scenario: Block): ContentsEntry => link(scenario.anchor, heading(words, scenario.kind, scenario.name));

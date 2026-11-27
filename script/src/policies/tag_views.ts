@@ -1,4 +1,4 @@
-// Policy: the views of the index of tags and of a tag's page, worked out from the descriptor and its features' objects, as docs/BEHAVIOUR.md, rules 102 to 105, place their parts.
+// Policy: the views of the index of tags and of a tag's page, worked out from the descriptor and its features' objects.
 
 import { pageByName, targetAddress } from "./address.ts";
 import { isScenario } from "./block_views.ts";

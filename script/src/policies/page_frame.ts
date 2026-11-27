@@ -1,4 +1,4 @@
-// Policy: what surrounds a page's content in its shell, its title, its language and its breadcrumb, as docs/BEHAVIOUR.md, rules 81, 85 and 239, give them.
+// Policy: what surrounds a page's content in its shell, its title, its language and its breadcrumb.
 
 import { type PageName, targetAddress } from "./address.ts";
 import { plain } from "./heading_words.ts";
@@ -40,7 +40,7 @@ export function frameOf(siteTitle: string, title: string, lang: string, above: r
   return { title, lang, crumbs: [homeCrumb(siteTitle), ...above, { address: targetAddress(page), words, lang: null }] };
 }
 
-/** The page of rule 239, for an address that names no page of the shell. */
+/** The page that says nothing is at an address that names no page of the shell. */
 export function missingFrame(words: Words, siteTitle: string): PageFrame {
   const heading = words.text("page-missing");
   return { title: words.text("page-missing-title", { heading, site: siteTitle }), lang: "en", crumbs: [homeCrumb(siteTitle)] };

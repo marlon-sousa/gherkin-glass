@@ -1,4 +1,4 @@
-// Policy: the view of an outline's list of examples, each item with its table and the scenarios its rows produce, as docs/BEHAVIOUR.md, rules 45 and 129 to 132, places them.
+// Policy: the view of an outline's list of examples, each item with its table and the scenarios its rows produce.
 
 import { type BlockView, EMPTY_BLOCK, type ExamplesItemView, type ExamplesView, type PageContext, descriptionLines, outlineName, stepViews, tableView, tagViews } from "./block_views.ts";
 import { isolated, keywordNote, blockHeading, plain } from "./heading_words.ts";

@@ -104,7 +104,7 @@ export const WRITTEN_ADDRESSES: SearchAddresses = {
   results: (words) => `search.html?${new URLSearchParams({ q: words }).toString()}`,
 };
 
-/** A shell's own addresses, from its `#`, as rule 235 makes them. */
+/** A shell's own addresses, from its `#`. */
 export const SHELL_ADDRESSES: SearchAddresses = {
   entry: (document) => targetAddress(pageByName(document.page), document.anchor === "" ? null : document.anchor),
   results: (words) => targetAddress({ kind: "search", words }),

@@ -1,4 +1,4 @@
-// Policy: the view of the page of search results a shell draws, its words for the script that lists the results, and its title, as docs/BEHAVIOUR.md, rules 216 to 218, give them.
+// Policy: the view of the page of search results a shell draws, its words for the script that lists the results, and its title.
 
 import { searchedHeading } from "./result_groups.ts";
 import type { BlockKind } from "../ports/store.ts";
