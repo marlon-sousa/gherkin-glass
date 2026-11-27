@@ -5,10 +5,9 @@ name: Site
 # tag as version, from a job that grants contents: write, since a called
 # workflow cannot have more permissions than its caller. It builds the site of
 # that version with the binary the release has just published, downloaded
-# from it and checked against its SHA256SUMS, since gherkin-glass-action 1
-# drives only ghg 1, with the tag's README as the site's front page, straight
-# into a checkout of the gh-pages branch, keeping its .nojekyll and .git, and
-# adds it to the branch. When the branch holds a site of gherkin-glass 1, it
+# from it and checked against its SHA256SUMS, with the tag's README as the
+# site's front page, straight into a checkout of the gh-pages branch, keeping
+# its .nojekyll and .git, and adds it to the branch. When the branch holds a site of gherkin-glass 1, it
 # first adds again, with the same binary, every version that site held, each
 # from its own tag, and pushes them with the release's own version.
 
@@ -62,32 +61,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ inputs.version }}
       - name: Build again with the released ghg the versions of gherkin-glass 1
-        run: |
-          while IFS= read -r earlier; do
-            if ! git rev-parse --quiet --verify "refs/tags/$earlier^{commit}" >/dev/null; then
-              echo "$earlier: the site held this version, but the repository has no such tag to build it again from." >&2
-              exit 1
-            fi
-            git worktree add --quiet --detach "$RUNNER_TEMP/tags/$earlier" "refs/tags/$earlier"
-            "$RUNNER_TEMP/tags/$earlier/project-site/assemble-input.sh" "$RUNNER_TEMP/inputs/$earlier"
-            ghg version add "$earlier" \
-              --title "gherkin-glass examples" \
-              --input "$RUNNER_TEMP/inputs/$earlier" \
-              --output "$RUNNER_TEMP/pages" \
-              --front-page "$RUNNER_TEMP/front-page.md" \
-              --keep-in-output .nojekyll \
-              --keep-in-output .git
-            project-site/publish.sh commit "$RUNNER_TEMP/pages" "$earlier"
-          done < "$RUNNER_TEMP/earlier-versions"
+        run: project-site/publish.sh rebuild "$RUNNER_TEMP/pages" "$RUNNER_TEMP/front-page.md" < "$RUNNER_TEMP/earlier-versions"
       - name: Build the site with the released ghg
-        run: >-
-          ghg version add "$VERSION"
-          --title "gherkin-glass examples"
-          --input "$RUNNER_TEMP/input"
-          --output "$RUNNER_TEMP/pages"
-          --front-page "$RUNNER_TEMP/front-page.md"
-          --keep-in-output .nojekyll
-          --keep-in-output .git
+        run: project-site/publish.sh build "$RUNNER_TEMP/pages" "$VERSION" "$RUNNER_TEMP/input" "$RUNNER_TEMP/front-page.md"
         env:
           VERSION: ${{ inputs.version }}
       - name: Publish the version's folder and the versions page
