@@ -21,8 +21,6 @@ export interface ShellBehaviourParts {
   readonly memory: Memory;
   /** The path of the shell's folder, ending in `/`, under which the reader's choices are kept. */
   readonly shellPath: string;
-  /** The path of the output folder's root, under which the choice of the backgrounds' form is kept. */
-  readonly siteRoot: string;
 }
 
 export function shellBehaviour(parts: ShellBehaviourParts): PageBehaviour {
@@ -36,7 +34,7 @@ export function shellBehaviour(parts: ShellBehaviourParts): PageBehaviour {
       }
     }
     const backgrounds = parts.drawn.backgrounds();
-    const reveal = startCollapsing(parts.drawn.blocks(), parts.memory, `${parts.shellPath}${targetAddress(page)}`, backgrounds && { backgrounds, siteRoot: parts.siteRoot });
+    const reveal = startCollapsing(parts.drawn.blocks(), parts.memory, `${parts.shellPath}${targetAddress(page)}`, backgrounds && { backgrounds, siteRoot: parts.shellPath });
     const noteDialog = parts.drawn.noteDialog();
     if (noteDialog !== null) {
       startNoteExplaining(noteDialog);
