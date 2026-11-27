@@ -152,3 +152,24 @@ test("a background whose steps no scenario starts with is not collapsed by the c
     assert.deepEqual(backgroundsExpanded(open("expected", page)), [true], page);
   }
 });
+
+test("a page shown again from the browser's cache no longer reaches a checkbox a shell has replaced", () => {
+  const window = new Window({ url: "https://example.com/site/index.html" });
+  window.document.write('<main><input type="checkbox" class="ghg-inline-backgrounds"></main>');
+  const document = window.document as unknown as Document;
+  let returns = 0;
+  DomBackgrounds.of(document)!.onReturn(() => void (returns += 1));
+  const shown = (): void => {
+    const event = new window.Event("pageshow") as unknown as { persisted: boolean };
+    Object.defineProperty(event, "persisted", { value: true });
+    window.dispatchEvent(event as unknown as InstanceType<typeof window.Event>);
+  };
+  shown();
+  const main = window.document.querySelector("main")!;
+  const replaced = main.firstChild!;
+  main.replaceChildren();
+  shown();
+  main.append(replaced);
+  shown();
+  assert.equal(returns, 1);
+});

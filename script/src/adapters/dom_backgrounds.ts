@@ -31,10 +31,18 @@ export class DomBackgrounds implements Backgrounds {
   }
 
   onReturn(handler: () => void): void {
-    this.document.defaultView?.addEventListener("pageshow", (event) => {
-      if (event.persisted) {
-        handler();
-      }
-    });
+    const listening = new AbortController();
+    this.document.defaultView?.addEventListener(
+      "pageshow",
+      (event) => {
+        // In a shell, the page this checkbox is on may have been replaced by another since.
+        if (!this.checkbox.isConnected) {
+          listening.abort();
+        } else if (event.persisted) {
+          handler();
+        }
+      },
+      { signal: listening.signal },
+    );
   }
 }
