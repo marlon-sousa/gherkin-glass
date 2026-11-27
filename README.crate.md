@@ -153,7 +153,7 @@ To publish a site, put the output folder on any static web host, GitHub Pages in
 
 ### The output folder belongs to ghg
 
-ghg marks the output folder as its own with a file at its root, `ghg-site.json`, which lists every file ghg wrote there, whether the folder holds a site, versions or previews. From then on the output folder, and every folder in it, belongs to ghg: any command may empty it and write it again, so anything you put there by hand can be lost.
+ghg marks the output folder as its own with a file at its root, `ghg-site.json`, which lists every file ghg wrote there, whether the folder holds a site, versions or previews. Beside the pages and the site's data, `data/`, it writes the files every page shares into `assets/` and the version of ghg, such as `assets/2.0.0/`: the stylesheet, the script, the icon and `THIRD-PARTY-LICENSES.txt`, the licences of the packages the script holds. From then on the output folder, and every folder in it, belongs to ghg: any command may empty it and write it again, so anything you put there by hand can be lost.
 
 To keep that from happening by mistake:
 
@@ -172,7 +172,7 @@ Each version is written into a folder of its own in the output folder, such as `
 ghg does not read git. To build several versions, check each one out into a folder of its own and run `ghg version add` once for each, into the same output folder. To rebuild a site of versions that gherkin-glass 1 built, which gherkin-glass 2 does not add to, do that for every tag, into a new output folder. With git, from the root of the repository:
 
 ```sh
-site="$PWD/site"
+site="$PWD/site-2"
 for tag in $(git tag --list 'v*'); do
   git worktree add --detach "../version-$tag" "$tag"
   (cd "../version-$tag" && ghg version add "$tag" --output "$site")
@@ -230,7 +230,7 @@ The exit status is the same as without the option, and a mistake on the command 
 
 ### The front page
 
-The front page is the page at the root of the output folder: the home page, or, when the site has versions, the page that lists them. It can open with an introduction you write in Markdown, such as your project's README, named by `front_page` or `--front-page`. Every other page, each version's own home page included, stays as ghg writes it.
+The front page is the page at the root of the output folder: the home page, or, when the site has versions, the page that lists them. A preview's home page is its front page too. It can open with an introduction you write in Markdown, such as your project's README, named by `front_page` or `--front-page`. Every other page, each version's own home page included, stays as ghg writes it.
 
 Write the comment `<!-- ghg:contents -->` on a line of its own where ghg's part of the page goes: the totals, folders and features of a home page, or the lists of versions. Markdown viewers such as GitHub's do not show the comment, so a README that holds it reads as before there.
 
@@ -248,6 +248,7 @@ What the suite covers, and how to read it.
 - ghg's own headings, such as "Folders" or "Releases", go one level below the last heading before the comment, so in the example above they are level three. The comment cannot follow a level 5 or level 6 heading, and it cannot be inside a list, a quote or a table.
 - Everything Markdown writes is kept, GitHub's tables included. Other comments are left out of the page.
 - Links are written exactly as the file has them, neither rewritten nor checked. A relative link is relative to the front page, so a link to a file of your repository, such as `LICENSE`, works on GitHub and not on the site; write the file's full address to reach it from both.
+- On the home page of a site without versions or of a preview, a link written `#` and a page's name opens that page of the site, such as `[Searching](#catalogue/searching)` for the page of `catalogue/searching.feature`, and a link to an element of the front page itself is written `##` and the element's `id`.
 - HTML written in the file, other than comments, is not allowed.
 
 Without `front_page`, the front page has only its title and ghg's part, as without this setting. A file that cannot be read, or that breaks one of these rules, stops the build with a message naming the file, and the line when there is one, and nothing is written. With `ghg serve --watch`, a change to the file rebuilds the site.

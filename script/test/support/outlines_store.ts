@@ -1,4 +1,4 @@
-// The site's data of tests/fixtures/pages's outlines.feature, built with ghg.toml, as docs/BEHAVIOUR.md, "The site's data", says ghg writes it, so that the page the script draws from it can be compared with the page ghg 1 wrote, committed in script/test/expected/pages/outlines.html.
+// The site's data of tests/fixtures/pages's outlines.feature, built with ghg.toml, as docs/BEHAVIOUR.md, rules 248 to 252, say ghg writes it, so that the page the script draws from it can be compared with the page ghg 1 wrote, committed in script/test/expected/pages/outlines.html.
 
 import { block, descriptor, entry, number, object, placeholder, run, step, text } from "./store_building.ts";
 
