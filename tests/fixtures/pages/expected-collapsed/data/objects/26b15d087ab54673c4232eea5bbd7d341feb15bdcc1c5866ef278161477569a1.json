@@ -1,0 +1,38 @@
+{
+  "format": 1,
+  "language": "en",
+  "lang": "en",
+  "feature": {
+    "kind": "feature",
+    "keyword": "Feature",
+    "note": false,
+    "name": "Closed accounts",
+    "description": "",
+    "tags": [],
+    "anchor": "",
+    "hash": "faa5fe66c2d5b63d9ede6160978fe6c647d9c89501033041b5b36b63802b171d",
+    "blocks": [
+      {
+        "kind": "rule",
+        "keyword": "Rule",
+        "note": false,
+        "name": "No refunds once closed",
+        "description": "",
+        "tags": [],
+        "anchor": "no-refunds-once-closed",
+        "hash": "423bbb136d2786522ed3aedf6281c6202599cbba904800197997f17add1acfa5",
+        "blocks": [],
+        "steps": [],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      }
+    ],
+    "steps": [],
+    "examples": [],
+    "place": null,
+    "table": null,
+    "runs": []
+  }
+}

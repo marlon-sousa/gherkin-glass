@@ -1,0 +1,419 @@
+{
+  "format": 1,
+  "language": "en",
+  "lang": "en",
+  "feature": {
+    "kind": "feature",
+    "keyword": "Ability",
+    "note": true,
+    "name": "Kinds written with other words",
+    "description": "Each heading names its block's kind; the word the file writes,\nwhen it is another, is said at the top of the block.",
+    "tags": [],
+    "anchor": "",
+    "hash": "47b09f7d2d8c55cfcd5b5b548cfd61822bd936e491b8ca30ca33833b5e1084b9",
+    "blocks": [
+      {
+        "kind": "background",
+        "keyword": "Background",
+        "note": false,
+        "name": "",
+        "description": "",
+        "tags": [],
+        "anchor": "background",
+        "hash": "7b4f5d6b1e0f342bc58836db3099c2fc22631f34aaa548b03def8111c1941412",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "a shelf",
+            "kind": "given",
+            "sentence": "a shelf",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "a shelf",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "scenario",
+        "keyword": "Example",
+        "note": true,
+        "name": "Written as an example",
+        "description": "",
+        "tags": [],
+        "anchor": "written-as-an-example",
+        "hash": "a2a30b6139d62d213eefc791c31af0161f770c9d7d0977c1e6694eba895d188e",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "a book",
+            "kind": "given",
+            "sentence": "a book",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "a book",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "scenario-outline",
+        "keyword": "Scenario Template",
+        "note": true,
+        "name": "Written as a template",
+        "description": "",
+        "tags": [],
+        "anchor": "written-as-a-template",
+        "hash": "c9b8aa4a2b72209a5e10dfc4894b032fea981a3542c9e82d8f74a554886fdef3",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "<count> books",
+            "kind": "given",
+            "sentence": "\"…\" books",
+            "slots": [
+              "<count>"
+            ],
+            "parts": [
+              {
+                "kind": "placeholder",
+                "text": "<count>",
+                "parts": []
+              },
+              {
+                "kind": "text",
+                "text": " books",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [
+          {
+            "kind": "examples",
+            "keyword": "Scenarios",
+            "note": true,
+            "name": "Shelves",
+            "description": "",
+            "tags": [],
+            "anchor": "shelves",
+            "hash": "890102d469ca850d852b65c84c8f94cc53415e1d6b47651c4611371c5b1b6127",
+            "blocks": [],
+            "steps": [],
+            "examples": [],
+            "place": 1,
+            "table": [
+              [
+                "count"
+              ],
+              [
+                "2"
+              ]
+            ],
+            "runs": [
+              {
+                "anchor": "written-as-a-template-row-1",
+                "steps": [
+                  {
+                    "keyword": "Given ",
+                    "text": "2 books",
+                    "kind": "given",
+                    "sentence": "2 books",
+                    "slots": [],
+                    "parts": [
+                      {
+                        "kind": "number",
+                        "text": "2",
+                        "parts": []
+                      },
+                      {
+                        "kind": "text",
+                        "text": " books",
+                        "parts": []
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": null
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "scenario-outline",
+        "keyword": "Scenario",
+        "note": true,
+        "name": "Written as a scenario with examples",
+        "description": "",
+        "tags": [],
+        "anchor": "written-as-a-scenario-with-examples",
+        "hash": "dd183fe26fcbb825e3929e5bb317e1b03c5546aa9583d344cf9581a23c2d4f64",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "<count> books",
+            "kind": "given",
+            "sentence": "\"…\" books",
+            "slots": [
+              "<count>"
+            ],
+            "parts": [
+              {
+                "kind": "placeholder",
+                "text": "<count>",
+                "parts": []
+              },
+              {
+                "kind": "text",
+                "text": " books",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [
+          {
+            "kind": "examples",
+            "keyword": "Examples",
+            "note": false,
+            "name": "",
+            "description": "",
+            "tags": [],
+            "anchor": "examples",
+            "hash": "7dcceeeb789a9bcd209ee09a0dcff2826853c43a0ec8c1abb0f93ffa03619d7c",
+            "blocks": [],
+            "steps": [],
+            "examples": [],
+            "place": 1,
+            "table": [
+              [
+                "count"
+              ],
+              [
+                "3"
+              ]
+            ],
+            "runs": [
+              {
+                "anchor": "written-as-a-scenario-with-examples-row-1",
+                "steps": [
+                  {
+                    "keyword": "Given ",
+                    "text": "3 books",
+                    "kind": "given",
+                    "sentence": "3 books",
+                    "slots": [],
+                    "parts": [
+                      {
+                        "kind": "number",
+                        "text": "3",
+                        "parts": []
+                      },
+                      {
+                        "kind": "text",
+                        "text": " books",
+                        "parts": []
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": null
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "scenario",
+        "keyword": "Scenario Outline",
+        "note": true,
+        "name": "Written as an outline without examples",
+        "description": "",
+        "tags": [],
+        "anchor": "written-as-an-outline-without-examples",
+        "hash": "27e1f656b1bf3ffc839258c25569d74f080030b3fb5f780c974de8fa33a91288",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "a book",
+            "kind": "given",
+            "sentence": "a book",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "a book",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "scenario",
+        "keyword": "Example",
+        "note": true,
+        "name": "",
+        "description": "",
+        "tags": [],
+        "anchor": "example",
+        "hash": "787f9c099ad281100947a0bd7339abfe2702ada123a4b742fcba7f79ebce3ff9",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "nothing named",
+            "kind": "given",
+            "sentence": "nothing named",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "nothing named",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "scenario",
+        "keyword": "Scenario",
+        "note": false,
+        "name": "Outside any rule",
+        "description": "",
+        "tags": [],
+        "anchor": "outside-any-rule",
+        "hash": "9d0eb58383025006f49520803e22d7a80da1c25098c0e20e3227fece7c8cbcc7",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "a scenario named as the group",
+            "kind": "given",
+            "sentence": "a scenario named as the group",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "a scenario named as the group",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "rule",
+        "keyword": "Rule",
+        "note": false,
+        "name": "Kinds inside a rule",
+        "description": "",
+        "tags": [],
+        "anchor": "kinds-inside-a-rule",
+        "hash": "9b8be2b7823b6f7ff42470e153674c14bd9d7cf76bc2b68f4c3d88ebe9343ac9",
+        "blocks": [
+          {
+            "kind": "scenario",
+            "keyword": "Example",
+            "note": true,
+            "name": "Inside the rule",
+            "description": "",
+            "tags": [],
+            "anchor": "inside-the-rule",
+            "hash": "e8c0362dbb522758b9c9079a454c57caf984ec4b038b324ad1359210afc832e5",
+            "blocks": [],
+            "steps": [
+              {
+                "keyword": "Given ",
+                "text": "a book",
+                "kind": "given",
+                "sentence": "a book",
+                "slots": [],
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "a book",
+                    "parts": []
+                  }
+                ],
+                "table": null,
+                "doc_string": null
+              }
+            ],
+            "examples": [],
+            "place": null,
+            "table": null,
+            "runs": []
+          }
+        ],
+        "steps": [],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      }
+    ],
+    "steps": [],
+    "examples": [],
+    "place": null,
+    "table": null,
+    "runs": []
+  }
+}

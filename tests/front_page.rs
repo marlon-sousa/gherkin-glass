@@ -12,6 +12,8 @@ use std::process::{Command, Output};
 
 #[path = "support/site_files.rs"]
 mod site_files;
+#[path = "support/store_json.rs"]
+mod store_json;
 #[path = "support/version_placeholder.rs"]
 mod version_placeholder;
 

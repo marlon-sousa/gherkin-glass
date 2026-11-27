@@ -9,7 +9,7 @@ use rstest::rstest;
 
 use super::*;
 use crate::adapters::MemoryFiles;
-use crate::entities::{IgnoreRules, InputTreeBuilder, OutputContents, Revision};
+use crate::entities::{IgnoreRules, InputTreeBuilder, OutputContents, Record, Revision};
 use crate::errors::BuildError;
 use crate::services::{Converter, ConverterApi};
 use fakes::*;

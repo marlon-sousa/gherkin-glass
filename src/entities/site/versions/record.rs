@@ -12,10 +12,13 @@ pub(crate) enum Record {
     /// A site without versions, and its files.
     Site(BTreeSet<FilePath>),
     /// Versions of a site: the files of the versions page, at the output
-    /// folder's root, and each version with the files of its folder.
+    /// folder's root, each version with the files of its folder, and the
+    /// files of the store the versions share, by their paths in the output
+    /// folder, which a version rebuilt never clears.
     Versions {
         page: BTreeSet<FilePath>,
         versions: BTreeMap<VersionName, BTreeSet<FilePath>>,
+        data: BTreeSet<FilePath>,
     },
 }
 

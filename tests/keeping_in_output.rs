@@ -127,6 +127,7 @@ fn a_versioned_build_keeps_what_is_kept_beside_its_versions() {
             ".nojekyll",
             "CNAME",
             "assets",
+            "data",
             "ghg-versions.json",
             "index.html",
             "main",

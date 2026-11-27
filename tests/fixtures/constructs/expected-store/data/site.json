@@ -1,0 +1,106 @@
+{
+  "format": 1,
+  "ghg": "{version}",
+  "version": null,
+  "preview": null,
+  "title": "Feature files",
+  "only": false,
+  "start": {
+    "collapse_rules": false,
+    "collapse_scenarios": false,
+    "show_tree": true,
+    "inline_backgrounds": true
+  },
+  "features": [
+    {
+      "path": "em-portugues.feature",
+      "page": "em-portugues",
+      "object": "73d9026808ebfc62d4ad5455eb69496d21f6945403c54947ec1f30df0cc9153f",
+      "lines": [
+        2,
+        4,
+        7
+      ],
+      "source": null
+    },
+    {
+      "path": "every-construct.feature",
+      "page": "every-construct",
+      "object": "2b709ed9ee22f3955e14aa5834d98050e349d00229a2dedacdc93e4007ed115b",
+      "lines": [
+        3,
+        8,
+        11,
+        26,
+        31,
+        35,
+        39,
+        42,
+        46
+      ],
+      "source": null
+    }
+  ],
+  "tags": [
+    {
+      "tag": "@billing",
+      "page": "tags/billing",
+      "link": null
+    },
+    {
+      "tag": "@cheap",
+      "page": "tags/cheap",
+      "link": null
+    },
+    {
+      "tag": "@in-rule",
+      "page": "tags/in-rule",
+      "link": null
+    },
+    {
+      "tag": "@outline",
+      "page": "tags/outline",
+      "link": null
+    },
+    {
+      "tag": "@slow",
+      "page": "tags/slow",
+      "link": null
+    }
+  ],
+  "sentences": {
+    "given": [
+      "\"…\" items",
+      "a customer named \"…\"",
+      "a step with a doc string",
+      "an order with these lines:",
+      "the order is saved",
+      "the rule applies",
+      "um cliente"
+    ],
+    "when": [
+      "o cliente compra",
+      "the order is placed"
+    ],
+    "then": [
+      "a compra é registrada",
+      "a receipt is sent",
+      "no error is shown",
+      "nothing is charged twice",
+      "the total is \"…\"",
+      "um recibo é enviado"
+    ]
+  },
+  "front_page": null,
+  "settings": {
+    "title": null,
+    "source_link": null,
+    "tag_links": [],
+    "accent_light": "#0b4f9c",
+    "accent_dark": "#8cc4ff",
+    "collapse_rules": false,
+    "collapse_scenarios": false,
+    "show_tree": true,
+    "inline_backgrounds": true
+  }
+}

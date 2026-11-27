@@ -1,0 +1,55 @@
+{
+  "format": 1,
+  "language": "en",
+  "lang": "en",
+  "feature": {
+    "kind": "feature",
+    "keyword": "Feature",
+    "note": false,
+    "name": "A background and no scenario",
+    "description": "",
+    "tags": [],
+    "anchor": "",
+    "hash": "8be1a2cbc64689a94a284222ff8af2ed431d7e1409f05e5c9f347f3da69b7725",
+    "blocks": [
+      {
+        "kind": "background",
+        "keyword": "Background",
+        "note": false,
+        "name": "",
+        "description": "",
+        "tags": [],
+        "anchor": "background",
+        "hash": "efed926f3f8d37f898178bd7939181ae5f10e7e62043c27f4da031c165e63161",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "a step no scenario starts with",
+            "kind": "given",
+            "sentence": "a step no scenario starts with",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "a step no scenario starts with",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      }
+    ],
+    "steps": [],
+    "examples": [],
+    "place": null,
+    "table": null,
+    "runs": []
+  }
+}

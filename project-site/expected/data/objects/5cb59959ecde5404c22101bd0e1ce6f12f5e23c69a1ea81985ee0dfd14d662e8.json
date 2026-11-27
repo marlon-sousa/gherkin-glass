@@ -1,0 +1,642 @@
+{
+  "format": 1,
+  "language": "pt",
+  "lang": "pt",
+  "feature": {
+    "kind": "feature",
+    "keyword": "Funcionalidade",
+    "note": true,
+    "name": "Empréstimo de livros",
+    "description": "Os sócios da biblioteca levam livros para casa.",
+    "tags": [
+      "@empréstimo"
+    ],
+    "anchor": "",
+    "hash": "22a1f08df3e8ec1cba3176f024cdc2def1a8f7bbd4ba9366f23ad49957a98f46",
+    "blocks": [
+      {
+        "kind": "background",
+        "keyword": "Contexto",
+        "note": true,
+        "name": "Uma sócia no balcão",
+        "description": "",
+        "tags": [],
+        "anchor": "uma-sócia-no-balcão",
+        "hash": "540e01dabbd8c59b836935cf291fae9f7fe4ccc41e4618f067648c602caf3bfe",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Dado ",
+            "text": "uma sócia chamada \"Ana\" com o cartão 1024",
+            "kind": "given",
+            "sentence": "uma sócia chamada \"…\" com o cartão 1024",
+            "slots": [
+              "\"Ana\""
+            ],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "uma sócia chamada ",
+                "parts": []
+              },
+              {
+                "kind": "parameter",
+                "text": "\"Ana\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"Ana\"",
+                    "parts": []
+                  }
+                ]
+              },
+              {
+                "kind": "text",
+                "text": " com o cartão ",
+                "parts": []
+              },
+              {
+                "kind": "number",
+                "text": "1024",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "scenario",
+        "keyword": "Cenário",
+        "note": true,
+        "name": "Empréstimo de um livro na estante",
+        "description": "",
+        "tags": [],
+        "anchor": "empréstimo-de-um-livro-na-estante",
+        "hash": "6803522c822d396a2044f416de141722252262c1e9ca2026b31bbb1b127d2a8d",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Dado ",
+            "text": "que o livro \"Dom Casmurro\" está na estante",
+            "kind": "given",
+            "sentence": "que o livro \"…\" está na estante",
+            "slots": [
+              "\"Dom Casmurro\""
+            ],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "que o livro ",
+                "parts": []
+              },
+              {
+                "kind": "parameter",
+                "text": "\"Dom Casmurro\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"Dom Casmurro\"",
+                    "parts": []
+                  }
+                ]
+              },
+              {
+                "kind": "text",
+                "text": " está na estante",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "Quando ",
+            "text": "\"Ana\" leva \"Dom Casmurro\"",
+            "kind": "when",
+            "sentence": "\"…\" leva \"…\"",
+            "slots": [
+              "\"Ana\"",
+              "\"Dom Casmurro\""
+            ],
+            "parts": [
+              {
+                "kind": "parameter",
+                "text": "\"Ana\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"Ana\"",
+                    "parts": []
+                  }
+                ]
+              },
+              {
+                "kind": "text",
+                "text": " leva ",
+                "parts": []
+              },
+              {
+                "kind": "parameter",
+                "text": "\"Dom Casmurro\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"Dom Casmurro\"",
+                    "parts": []
+                  }
+                ]
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "Então ",
+            "text": "\"Dom Casmurro\" deve voltar em 21 dias",
+            "kind": "then",
+            "sentence": "\"…\" deve voltar em 21 dias",
+            "slots": [
+              "\"Dom Casmurro\""
+            ],
+            "parts": [
+              {
+                "kind": "parameter",
+                "text": "\"Dom Casmurro\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"Dom Casmurro\"",
+                    "parts": []
+                  }
+                ]
+              },
+              {
+                "kind": "text",
+                "text": " deve voltar em ",
+                "parts": []
+              },
+              {
+                "kind": "number",
+                "text": "21",
+                "parts": []
+              },
+              {
+                "kind": "text",
+                "text": " dias",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "scenario-outline",
+        "keyword": "Esquema do Cenário",
+        "note": true,
+        "name": "Quanto tempo dura um empréstimo",
+        "description": "",
+        "tags": [],
+        "anchor": "quanto-tempo-dura-um-empréstimo",
+        "hash": "991763ad1609077cb1a8a29aa77d24fa97ed09e7c68b36a5974c1b603a76574e",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Dado ",
+            "text": "que \"<título>\" está na estante",
+            "kind": "given",
+            "sentence": "que \"…\" está na estante",
+            "slots": [
+              "\"<título>\""
+            ],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "que ",
+                "parts": []
+              },
+              {
+                "kind": "parameter",
+                "text": "\"<título>\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"",
+                    "parts": []
+                  },
+                  {
+                    "kind": "placeholder",
+                    "text": "<título>",
+                    "parts": []
+                  },
+                  {
+                    "kind": "text",
+                    "text": "\"",
+                    "parts": []
+                  }
+                ]
+              },
+              {
+                "kind": "text",
+                "text": " está na estante",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "Quando ",
+            "text": "\"Ana\" leva \"<título>\"",
+            "kind": "when",
+            "sentence": "\"…\" leva \"…\"",
+            "slots": [
+              "\"Ana\"",
+              "\"<título>\""
+            ],
+            "parts": [
+              {
+                "kind": "parameter",
+                "text": "\"Ana\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"Ana\"",
+                    "parts": []
+                  }
+                ]
+              },
+              {
+                "kind": "text",
+                "text": " leva ",
+                "parts": []
+              },
+              {
+                "kind": "parameter",
+                "text": "\"<título>\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"",
+                    "parts": []
+                  },
+                  {
+                    "kind": "placeholder",
+                    "text": "<título>",
+                    "parts": []
+                  },
+                  {
+                    "kind": "text",
+                    "text": "\"",
+                    "parts": []
+                  }
+                ]
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "Então ",
+            "text": "\"<título>\" deve voltar em <dias> dias",
+            "kind": "then",
+            "sentence": "\"…\" deve voltar em \"…\" dias",
+            "slots": [
+              "\"<título>\"",
+              "<dias>"
+            ],
+            "parts": [
+              {
+                "kind": "parameter",
+                "text": "\"<título>\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"",
+                    "parts": []
+                  },
+                  {
+                    "kind": "placeholder",
+                    "text": "<título>",
+                    "parts": []
+                  },
+                  {
+                    "kind": "text",
+                    "text": "\"",
+                    "parts": []
+                  }
+                ]
+              },
+              {
+                "kind": "text",
+                "text": " deve voltar em ",
+                "parts": []
+              },
+              {
+                "kind": "placeholder",
+                "text": "<dias>",
+                "parts": []
+              },
+              {
+                "kind": "text",
+                "text": " dias",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [
+          {
+            "kind": "examples",
+            "keyword": "Exemplos",
+            "note": true,
+            "name": "Livros e filmes",
+            "description": "",
+            "tags": [],
+            "anchor": "livros-e-filmes",
+            "hash": "31c1e3c203f869b6cc1bef4da900d7487e4e52e023dc001e40328c4346401f27",
+            "blocks": [],
+            "steps": [],
+            "examples": [],
+            "place": 1,
+            "table": [
+              [
+                "título",
+                "dias"
+              ],
+              [
+                "Dom Casmurro",
+                "21"
+              ],
+              [
+                "Metrópolis",
+                "7"
+              ]
+            ],
+            "runs": [
+              {
+                "anchor": "quanto-tempo-dura-um-empréstimo-row-1",
+                "steps": [
+                  {
+                    "keyword": "Dado ",
+                    "text": "que \"Dom Casmurro\" está na estante",
+                    "kind": "given",
+                    "sentence": "que \"…\" está na estante",
+                    "slots": [
+                      "\"Dom Casmurro\""
+                    ],
+                    "parts": [
+                      {
+                        "kind": "text",
+                        "text": "que ",
+                        "parts": []
+                      },
+                      {
+                        "kind": "parameter",
+                        "text": "\"Dom Casmurro\"",
+                        "parts": [
+                          {
+                            "kind": "text",
+                            "text": "\"Dom Casmurro\"",
+                            "parts": []
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "text",
+                        "text": " está na estante",
+                        "parts": []
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": null
+                  },
+                  {
+                    "keyword": "Quando ",
+                    "text": "\"Ana\" leva \"Dom Casmurro\"",
+                    "kind": "when",
+                    "sentence": "\"…\" leva \"…\"",
+                    "slots": [
+                      "\"Ana\"",
+                      "\"Dom Casmurro\""
+                    ],
+                    "parts": [
+                      {
+                        "kind": "parameter",
+                        "text": "\"Ana\"",
+                        "parts": [
+                          {
+                            "kind": "text",
+                            "text": "\"Ana\"",
+                            "parts": []
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "text",
+                        "text": " leva ",
+                        "parts": []
+                      },
+                      {
+                        "kind": "parameter",
+                        "text": "\"Dom Casmurro\"",
+                        "parts": [
+                          {
+                            "kind": "text",
+                            "text": "\"Dom Casmurro\"",
+                            "parts": []
+                          }
+                        ]
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": null
+                  },
+                  {
+                    "keyword": "Então ",
+                    "text": "\"Dom Casmurro\" deve voltar em 21 dias",
+                    "kind": "then",
+                    "sentence": "\"…\" deve voltar em 21 dias",
+                    "slots": [
+                      "\"Dom Casmurro\""
+                    ],
+                    "parts": [
+                      {
+                        "kind": "parameter",
+                        "text": "\"Dom Casmurro\"",
+                        "parts": [
+                          {
+                            "kind": "text",
+                            "text": "\"Dom Casmurro\"",
+                            "parts": []
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "text",
+                        "text": " deve voltar em ",
+                        "parts": []
+                      },
+                      {
+                        "kind": "number",
+                        "text": "21",
+                        "parts": []
+                      },
+                      {
+                        "kind": "text",
+                        "text": " dias",
+                        "parts": []
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": null
+                  }
+                ]
+              },
+              {
+                "anchor": "quanto-tempo-dura-um-empréstimo-row-2",
+                "steps": [
+                  {
+                    "keyword": "Dado ",
+                    "text": "que \"Metrópolis\" está na estante",
+                    "kind": "given",
+                    "sentence": "que \"…\" está na estante",
+                    "slots": [
+                      "\"Metrópolis\""
+                    ],
+                    "parts": [
+                      {
+                        "kind": "text",
+                        "text": "que ",
+                        "parts": []
+                      },
+                      {
+                        "kind": "parameter",
+                        "text": "\"Metrópolis\"",
+                        "parts": [
+                          {
+                            "kind": "text",
+                            "text": "\"Metrópolis\"",
+                            "parts": []
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "text",
+                        "text": " está na estante",
+                        "parts": []
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": null
+                  },
+                  {
+                    "keyword": "Quando ",
+                    "text": "\"Ana\" leva \"Metrópolis\"",
+                    "kind": "when",
+                    "sentence": "\"…\" leva \"…\"",
+                    "slots": [
+                      "\"Ana\"",
+                      "\"Metrópolis\""
+                    ],
+                    "parts": [
+                      {
+                        "kind": "parameter",
+                        "text": "\"Ana\"",
+                        "parts": [
+                          {
+                            "kind": "text",
+                            "text": "\"Ana\"",
+                            "parts": []
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "text",
+                        "text": " leva ",
+                        "parts": []
+                      },
+                      {
+                        "kind": "parameter",
+                        "text": "\"Metrópolis\"",
+                        "parts": [
+                          {
+                            "kind": "text",
+                            "text": "\"Metrópolis\"",
+                            "parts": []
+                          }
+                        ]
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": null
+                  },
+                  {
+                    "keyword": "Então ",
+                    "text": "\"Metrópolis\" deve voltar em 7 dias",
+                    "kind": "then",
+                    "sentence": "\"…\" deve voltar em 7 dias",
+                    "slots": [
+                      "\"Metrópolis\""
+                    ],
+                    "parts": [
+                      {
+                        "kind": "parameter",
+                        "text": "\"Metrópolis\"",
+                        "parts": [
+                          {
+                            "kind": "text",
+                            "text": "\"Metrópolis\"",
+                            "parts": []
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "text",
+                        "text": " deve voltar em ",
+                        "parts": []
+                      },
+                      {
+                        "kind": "number",
+                        "text": "7",
+                        "parts": []
+                      },
+                      {
+                        "kind": "text",
+                        "text": " dias",
+                        "parts": []
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": null
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "place": null,
+        "table": null,
+        "runs": []
+      }
+    ],
+    "steps": [],
+    "examples": [],
+    "place": null,
+    "table": null,
+    "runs": []
+  }
+}

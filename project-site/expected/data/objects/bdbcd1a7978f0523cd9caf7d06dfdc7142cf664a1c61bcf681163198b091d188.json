@@ -1,0 +1,1537 @@
+{
+  "format": 1,
+  "language": "en",
+  "lang": "en",
+  "feature": {
+    "kind": "feature",
+    "keyword": "Feature",
+    "note": false,
+    "name": "Borrowing books",
+    "description": "Members of the library borrow books and take them home.\nEach member may hold a few books at a time, for a few weeks each.",
+    "tags": [
+      "@lending",
+      "@issue-19"
+    ],
+    "anchor": "",
+    "hash": "4779dbdecaaf264efe42111647d19612233ebcdf9e21ea29467c9d823ebd2af6",
+    "blocks": [
+      {
+        "kind": "background",
+        "keyword": "Background",
+        "note": false,
+        "name": "A member at the desk",
+        "description": "",
+        "tags": [],
+        "anchor": "a-member-at-the-desk",
+        "hash": "dc2e6e51485283c18d1a1e6c39c70cfecd807b8ddd0f0f247069d0d037fa6dd5",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "a member named \"Ana\" with card number 1024",
+            "kind": "given",
+            "sentence": "a member named \"…\" with card number 1024",
+            "slots": [
+              "\"Ana\""
+            ],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "a member named ",
+                "parts": []
+              },
+              {
+                "kind": "parameter",
+                "text": "\"Ana\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"Ana\"",
+                    "parts": []
+                  }
+                ]
+              },
+              {
+                "kind": "text",
+                "text": " with card number ",
+                "parts": []
+              },
+              {
+                "kind": "number",
+                "text": "1024",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "And ",
+            "text": "the library is open",
+            "kind": "given",
+            "sentence": "the library is open",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "the library is open",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "scenario",
+        "keyword": "Scenario",
+        "note": false,
+        "name": "Borrowing a book that is on the shelf",
+        "description": "A book on the shelf can be borrowed at once.",
+        "tags": [],
+        "anchor": "borrowing-a-book-that-is-on-the-shelf",
+        "hash": "5d5cea5e78d6db6435cc054b6a8aa6bdaa53560544c56627d928f8a4859af66b",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "the book \"The Hobbit\" is on the shelf",
+            "kind": "given",
+            "sentence": "the book \"…\" is on the shelf",
+            "slots": [
+              "\"The Hobbit\""
+            ],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "the book ",
+                "parts": []
+              },
+              {
+                "kind": "parameter",
+                "text": "\"The Hobbit\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"The Hobbit\"",
+                    "parts": []
+                  }
+                ]
+              },
+              {
+                "kind": "text",
+                "text": " is on the shelf",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "When ",
+            "text": "\"Ana\" borrows \"The Hobbit\"",
+            "kind": "when",
+            "sentence": "\"…\" borrows \"…\"",
+            "slots": [
+              "\"Ana\"",
+              "\"The Hobbit\""
+            ],
+            "parts": [
+              {
+                "kind": "parameter",
+                "text": "\"Ana\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"Ana\"",
+                    "parts": []
+                  }
+                ]
+              },
+              {
+                "kind": "text",
+                "text": " borrows ",
+                "parts": []
+              },
+              {
+                "kind": "parameter",
+                "text": "\"The Hobbit\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"The Hobbit\"",
+                    "parts": []
+                  }
+                ]
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "Then ",
+            "text": "\"The Hobbit\" is due back in 21 days",
+            "kind": "then",
+            "sentence": "\"…\" is due back in 21 days",
+            "slots": [
+              "\"The Hobbit\""
+            ],
+            "parts": [
+              {
+                "kind": "parameter",
+                "text": "\"The Hobbit\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"The Hobbit\"",
+                    "parts": []
+                  }
+                ]
+              },
+              {
+                "kind": "text",
+                "text": " is due back in ",
+                "parts": []
+              },
+              {
+                "kind": "number",
+                "text": "21",
+                "parts": []
+              },
+              {
+                "kind": "text",
+                "text": " days",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "And ",
+            "text": "\"Ana\" holds 1 book",
+            "kind": "then",
+            "sentence": "\"…\" holds 1 book",
+            "slots": [
+              "\"Ana\""
+            ],
+            "parts": [
+              {
+                "kind": "parameter",
+                "text": "\"Ana\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"Ana\"",
+                    "parts": []
+                  }
+                ]
+              },
+              {
+                "kind": "text",
+                "text": " holds ",
+                "parts": []
+              },
+              {
+                "kind": "number",
+                "text": "1",
+                "parts": []
+              },
+              {
+                "kind": "text",
+                "text": " book",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "scenario",
+        "keyword": "Scenario",
+        "note": false,
+        "name": "Borrowing several books at once",
+        "description": "",
+        "tags": [
+          "@slow"
+        ],
+        "anchor": "borrowing-several-books-at-once",
+        "hash": "a2830b3ea0a71fe26b021fb149bd3e007f13ba8c42135ffb27980d4be92000ca",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "these books are on the shelf:",
+            "kind": "given",
+            "sentence": "these books are on the shelf:",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "these books are on the shelf:",
+                "parts": []
+              }
+            ],
+            "table": [
+              [
+                "title",
+                "author"
+              ],
+              [
+                "Middlemarch",
+                "George Eliot"
+              ],
+              [
+                "Dom Casmurro",
+                "Machado de Assis"
+              ],
+              [
+                "Either | Or",
+                "Søren Kierkegaard"
+              ]
+            ],
+            "doc_string": null
+          },
+          {
+            "keyword": "When ",
+            "text": "\"Ana\" borrows every book on the shelf",
+            "kind": "when",
+            "sentence": "\"…\" borrows every book on the shelf",
+            "slots": [
+              "\"Ana\""
+            ],
+            "parts": [
+              {
+                "kind": "parameter",
+                "text": "\"Ana\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"Ana\"",
+                    "parts": []
+                  }
+                ]
+              },
+              {
+                "kind": "text",
+                "text": " borrows every book on the shelf",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "Then ",
+            "text": "\"Ana\" holds 3 books",
+            "kind": "then",
+            "sentence": "\"…\" holds 3 books",
+            "slots": [
+              "\"Ana\""
+            ],
+            "parts": [
+              {
+                "kind": "parameter",
+                "text": "\"Ana\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"Ana\"",
+                    "parts": []
+                  }
+                ]
+              },
+              {
+                "kind": "text",
+                "text": " holds ",
+                "parts": []
+              },
+              {
+                "kind": "number",
+                "text": "3",
+                "parts": []
+              },
+              {
+                "kind": "text",
+                "text": " books",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "scenario-outline",
+        "keyword": "Scenario Outline",
+        "note": false,
+        "name": "How long a loan lasts",
+        "description": "",
+        "tags": [
+          "@outline"
+        ],
+        "anchor": "how-long-a-loan-lasts",
+        "hash": "87fc771d2201b6184e6e45260dd4047b0d1b02730aeb751fd3b8d01475817e06",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "\"<title>\" is on the shelf",
+            "kind": "given",
+            "sentence": "\"…\" is on the shelf",
+            "slots": [
+              "\"<title>\""
+            ],
+            "parts": [
+              {
+                "kind": "parameter",
+                "text": "\"<title>\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"",
+                    "parts": []
+                  },
+                  {
+                    "kind": "placeholder",
+                    "text": "<title>",
+                    "parts": []
+                  },
+                  {
+                    "kind": "text",
+                    "text": "\"",
+                    "parts": []
+                  }
+                ]
+              },
+              {
+                "kind": "text",
+                "text": " is on the shelf",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "When ",
+            "text": "\"Ana\" borrows \"<title>\"",
+            "kind": "when",
+            "sentence": "\"…\" borrows \"…\"",
+            "slots": [
+              "\"Ana\"",
+              "\"<title>\""
+            ],
+            "parts": [
+              {
+                "kind": "parameter",
+                "text": "\"Ana\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"Ana\"",
+                    "parts": []
+                  }
+                ]
+              },
+              {
+                "kind": "text",
+                "text": " borrows ",
+                "parts": []
+              },
+              {
+                "kind": "parameter",
+                "text": "\"<title>\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"",
+                    "parts": []
+                  },
+                  {
+                    "kind": "placeholder",
+                    "text": "<title>",
+                    "parts": []
+                  },
+                  {
+                    "kind": "text",
+                    "text": "\"",
+                    "parts": []
+                  }
+                ]
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "Then ",
+            "text": "\"<title>\" is due back in <days> days",
+            "kind": "then",
+            "sentence": "\"…\" is due back in \"…\" days",
+            "slots": [
+              "\"<title>\"",
+              "<days>"
+            ],
+            "parts": [
+              {
+                "kind": "parameter",
+                "text": "\"<title>\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"",
+                    "parts": []
+                  },
+                  {
+                    "kind": "placeholder",
+                    "text": "<title>",
+                    "parts": []
+                  },
+                  {
+                    "kind": "text",
+                    "text": "\"",
+                    "parts": []
+                  }
+                ]
+              },
+              {
+                "kind": "text",
+                "text": " is due back in ",
+                "parts": []
+              },
+              {
+                "kind": "placeholder",
+                "text": "<days>",
+                "parts": []
+              },
+              {
+                "kind": "text",
+                "text": " days",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [
+          {
+            "kind": "examples",
+            "keyword": "Examples",
+            "note": false,
+            "name": "Books",
+            "description": "",
+            "tags": [
+              "@books"
+            ],
+            "anchor": "books",
+            "hash": "34247ab3331dd5a0390016a3a1a3dafa3f539c1a7e30546a497bff57607ddbfd",
+            "blocks": [],
+            "steps": [],
+            "examples": [],
+            "place": 1,
+            "table": [
+              [
+                "title",
+                "days"
+              ],
+              [
+                "The Hobbit",
+                "21"
+              ],
+              [
+                "Middlemarch",
+                "21"
+              ]
+            ],
+            "runs": [
+              {
+                "anchor": "how-long-a-loan-lasts-row-1",
+                "steps": [
+                  {
+                    "keyword": "Given ",
+                    "text": "\"The Hobbit\" is on the shelf",
+                    "kind": "given",
+                    "sentence": "\"…\" is on the shelf",
+                    "slots": [
+                      "\"The Hobbit\""
+                    ],
+                    "parts": [
+                      {
+                        "kind": "parameter",
+                        "text": "\"The Hobbit\"",
+                        "parts": [
+                          {
+                            "kind": "text",
+                            "text": "\"The Hobbit\"",
+                            "parts": []
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "text",
+                        "text": " is on the shelf",
+                        "parts": []
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": null
+                  },
+                  {
+                    "keyword": "When ",
+                    "text": "\"Ana\" borrows \"The Hobbit\"",
+                    "kind": "when",
+                    "sentence": "\"…\" borrows \"…\"",
+                    "slots": [
+                      "\"Ana\"",
+                      "\"The Hobbit\""
+                    ],
+                    "parts": [
+                      {
+                        "kind": "parameter",
+                        "text": "\"Ana\"",
+                        "parts": [
+                          {
+                            "kind": "text",
+                            "text": "\"Ana\"",
+                            "parts": []
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "text",
+                        "text": " borrows ",
+                        "parts": []
+                      },
+                      {
+                        "kind": "parameter",
+                        "text": "\"The Hobbit\"",
+                        "parts": [
+                          {
+                            "kind": "text",
+                            "text": "\"The Hobbit\"",
+                            "parts": []
+                          }
+                        ]
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": null
+                  },
+                  {
+                    "keyword": "Then ",
+                    "text": "\"The Hobbit\" is due back in 21 days",
+                    "kind": "then",
+                    "sentence": "\"…\" is due back in 21 days",
+                    "slots": [
+                      "\"The Hobbit\""
+                    ],
+                    "parts": [
+                      {
+                        "kind": "parameter",
+                        "text": "\"The Hobbit\"",
+                        "parts": [
+                          {
+                            "kind": "text",
+                            "text": "\"The Hobbit\"",
+                            "parts": []
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "text",
+                        "text": " is due back in ",
+                        "parts": []
+                      },
+                      {
+                        "kind": "number",
+                        "text": "21",
+                        "parts": []
+                      },
+                      {
+                        "kind": "text",
+                        "text": " days",
+                        "parts": []
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": null
+                  }
+                ]
+              },
+              {
+                "anchor": "how-long-a-loan-lasts-row-2",
+                "steps": [
+                  {
+                    "keyword": "Given ",
+                    "text": "\"Middlemarch\" is on the shelf",
+                    "kind": "given",
+                    "sentence": "\"…\" is on the shelf",
+                    "slots": [
+                      "\"Middlemarch\""
+                    ],
+                    "parts": [
+                      {
+                        "kind": "parameter",
+                        "text": "\"Middlemarch\"",
+                        "parts": [
+                          {
+                            "kind": "text",
+                            "text": "\"Middlemarch\"",
+                            "parts": []
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "text",
+                        "text": " is on the shelf",
+                        "parts": []
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": null
+                  },
+                  {
+                    "keyword": "When ",
+                    "text": "\"Ana\" borrows \"Middlemarch\"",
+                    "kind": "when",
+                    "sentence": "\"…\" borrows \"…\"",
+                    "slots": [
+                      "\"Ana\"",
+                      "\"Middlemarch\""
+                    ],
+                    "parts": [
+                      {
+                        "kind": "parameter",
+                        "text": "\"Ana\"",
+                        "parts": [
+                          {
+                            "kind": "text",
+                            "text": "\"Ana\"",
+                            "parts": []
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "text",
+                        "text": " borrows ",
+                        "parts": []
+                      },
+                      {
+                        "kind": "parameter",
+                        "text": "\"Middlemarch\"",
+                        "parts": [
+                          {
+                            "kind": "text",
+                            "text": "\"Middlemarch\"",
+                            "parts": []
+                          }
+                        ]
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": null
+                  },
+                  {
+                    "keyword": "Then ",
+                    "text": "\"Middlemarch\" is due back in 21 days",
+                    "kind": "then",
+                    "sentence": "\"…\" is due back in 21 days",
+                    "slots": [
+                      "\"Middlemarch\""
+                    ],
+                    "parts": [
+                      {
+                        "kind": "parameter",
+                        "text": "\"Middlemarch\"",
+                        "parts": [
+                          {
+                            "kind": "text",
+                            "text": "\"Middlemarch\"",
+                            "parts": []
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "text",
+                        "text": " is due back in ",
+                        "parts": []
+                      },
+                      {
+                        "kind": "number",
+                        "text": "21",
+                        "parts": []
+                      },
+                      {
+                        "kind": "text",
+                        "text": " days",
+                        "parts": []
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": null
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "examples",
+            "keyword": "Examples",
+            "note": false,
+            "name": "Films",
+            "description": "",
+            "tags": [
+              "@films"
+            ],
+            "anchor": "films",
+            "hash": "7d1512a1bde3df26d7fd4a1da5f1906c282e5f60f836b53f356b1710407ebcbe",
+            "blocks": [],
+            "steps": [],
+            "examples": [],
+            "place": 2,
+            "table": [
+              [
+                "title",
+                "days"
+              ],
+              [
+                "Metropolis",
+                "7"
+              ]
+            ],
+            "runs": [
+              {
+                "anchor": "how-long-a-loan-lasts-row-3",
+                "steps": [
+                  {
+                    "keyword": "Given ",
+                    "text": "\"Metropolis\" is on the shelf",
+                    "kind": "given",
+                    "sentence": "\"…\" is on the shelf",
+                    "slots": [
+                      "\"Metropolis\""
+                    ],
+                    "parts": [
+                      {
+                        "kind": "parameter",
+                        "text": "\"Metropolis\"",
+                        "parts": [
+                          {
+                            "kind": "text",
+                            "text": "\"Metropolis\"",
+                            "parts": []
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "text",
+                        "text": " is on the shelf",
+                        "parts": []
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": null
+                  },
+                  {
+                    "keyword": "When ",
+                    "text": "\"Ana\" borrows \"Metropolis\"",
+                    "kind": "when",
+                    "sentence": "\"…\" borrows \"…\"",
+                    "slots": [
+                      "\"Ana\"",
+                      "\"Metropolis\""
+                    ],
+                    "parts": [
+                      {
+                        "kind": "parameter",
+                        "text": "\"Ana\"",
+                        "parts": [
+                          {
+                            "kind": "text",
+                            "text": "\"Ana\"",
+                            "parts": []
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "text",
+                        "text": " borrows ",
+                        "parts": []
+                      },
+                      {
+                        "kind": "parameter",
+                        "text": "\"Metropolis\"",
+                        "parts": [
+                          {
+                            "kind": "text",
+                            "text": "\"Metropolis\"",
+                            "parts": []
+                          }
+                        ]
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": null
+                  },
+                  {
+                    "keyword": "Then ",
+                    "text": "\"Metropolis\" is due back in 7 days",
+                    "kind": "then",
+                    "sentence": "\"…\" is due back in 7 days",
+                    "slots": [
+                      "\"Metropolis\""
+                    ],
+                    "parts": [
+                      {
+                        "kind": "parameter",
+                        "text": "\"Metropolis\"",
+                        "parts": [
+                          {
+                            "kind": "text",
+                            "text": "\"Metropolis\"",
+                            "parts": []
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "text",
+                        "text": " is due back in ",
+                        "parts": []
+                      },
+                      {
+                        "kind": "number",
+                        "text": "7",
+                        "parts": []
+                      },
+                      {
+                        "kind": "text",
+                        "text": " days",
+                        "parts": []
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": null
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "rule",
+        "keyword": "Rule",
+        "note": false,
+        "name": "A member holds at most 5 books",
+        "description": "The limit keeps books on the shelves for everyone.",
+        "tags": [],
+        "anchor": "a-member-holds-at-most-5-books",
+        "hash": "38042f6f92e2fd8a979fa1a8a0b81b946eaa140a314aa1e3140c60bbb141e384",
+        "blocks": [
+          {
+            "kind": "background",
+            "keyword": "Background",
+            "note": false,
+            "name": "A member near the limit",
+            "description": "",
+            "tags": [],
+            "anchor": "a-member-near-the-limit",
+            "hash": "c7063b0749481145decdb9fc89c141cef516f1e53bc1d7f092ce9653c8ad60cf",
+            "blocks": [],
+            "steps": [
+              {
+                "keyword": "Given ",
+                "text": "\"Ana\" holds 5 books",
+                "kind": "given",
+                "sentence": "\"…\" holds 5 books",
+                "slots": [
+                  "\"Ana\""
+                ],
+                "parts": [
+                  {
+                    "kind": "parameter",
+                    "text": "\"Ana\"",
+                    "parts": [
+                      {
+                        "kind": "text",
+                        "text": "\"Ana\"",
+                        "parts": []
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "text",
+                    "text": " holds ",
+                    "parts": []
+                  },
+                  {
+                    "kind": "number",
+                    "text": "5",
+                    "parts": []
+                  },
+                  {
+                    "kind": "text",
+                    "text": " books",
+                    "parts": []
+                  }
+                ],
+                "table": null,
+                "doc_string": null
+              }
+            ],
+            "examples": [],
+            "place": null,
+            "table": null,
+            "runs": []
+          },
+          {
+            "kind": "scenario",
+            "keyword": "Scenario",
+            "note": false,
+            "name": "Borrowing over the limit is refused",
+            "description": "",
+            "tags": [],
+            "anchor": "borrowing-over-the-limit-is-refused",
+            "hash": "9a4c4e190902998730e8f8e86bba795d4851155cd3692d248be409fdc8932c49",
+            "blocks": [],
+            "steps": [
+              {
+                "keyword": "Given ",
+                "text": "the book \"Emma\" is on the shelf",
+                "kind": "given",
+                "sentence": "the book \"…\" is on the shelf",
+                "slots": [
+                  "\"Emma\""
+                ],
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "the book ",
+                    "parts": []
+                  },
+                  {
+                    "kind": "parameter",
+                    "text": "\"Emma\"",
+                    "parts": [
+                      {
+                        "kind": "text",
+                        "text": "\"Emma\"",
+                        "parts": []
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "text",
+                    "text": " is on the shelf",
+                    "parts": []
+                  }
+                ],
+                "table": null,
+                "doc_string": null
+              },
+              {
+                "keyword": "When ",
+                "text": "\"Ana\" borrows \"Emma\"",
+                "kind": "when",
+                "sentence": "\"…\" borrows \"…\"",
+                "slots": [
+                  "\"Ana\"",
+                  "\"Emma\""
+                ],
+                "parts": [
+                  {
+                    "kind": "parameter",
+                    "text": "\"Ana\"",
+                    "parts": [
+                      {
+                        "kind": "text",
+                        "text": "\"Ana\"",
+                        "parts": []
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "text",
+                    "text": " borrows ",
+                    "parts": []
+                  },
+                  {
+                    "kind": "parameter",
+                    "text": "\"Emma\"",
+                    "parts": [
+                      {
+                        "kind": "text",
+                        "text": "\"Emma\"",
+                        "parts": []
+                      }
+                    ]
+                  }
+                ],
+                "table": null,
+                "doc_string": null
+              },
+              {
+                "keyword": "Then ",
+                "text": "the loan is refused with \"You already hold 5 books.\"",
+                "kind": "then",
+                "sentence": "the loan is refused with \"…\"",
+                "slots": [
+                  "\"You already hold 5 books.\""
+                ],
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "the loan is refused with ",
+                    "parts": []
+                  },
+                  {
+                    "kind": "parameter",
+                    "text": "\"You already hold 5 books.\"",
+                    "parts": [
+                      {
+                        "kind": "text",
+                        "text": "\"You already hold 5 books.\"",
+                        "parts": []
+                      }
+                    ]
+                  }
+                ],
+                "table": null,
+                "doc_string": null
+              },
+              {
+                "keyword": "And ",
+                "text": "\"Ana\" holds 5 books",
+                "kind": "then",
+                "sentence": "\"…\" holds 5 books",
+                "slots": [
+                  "\"Ana\""
+                ],
+                "parts": [
+                  {
+                    "kind": "parameter",
+                    "text": "\"Ana\"",
+                    "parts": [
+                      {
+                        "kind": "text",
+                        "text": "\"Ana\"",
+                        "parts": []
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "text",
+                    "text": " holds ",
+                    "parts": []
+                  },
+                  {
+                    "kind": "number",
+                    "text": "5",
+                    "parts": []
+                  },
+                  {
+                    "kind": "text",
+                    "text": " books",
+                    "parts": []
+                  }
+                ],
+                "table": null,
+                "doc_string": null
+              }
+            ],
+            "examples": [],
+            "place": null,
+            "table": null,
+            "runs": []
+          },
+          {
+            "kind": "scenario",
+            "keyword": "Scenario",
+            "note": false,
+            "name": "Returning a book makes room for another",
+            "description": "",
+            "tags": [],
+            "anchor": "returning-a-book-makes-room-for-another",
+            "hash": "abfc94080d1b60678c25bd9dd30ca90f3bc3d301432e8d4157a5cfc301b9e60e",
+            "blocks": [],
+            "steps": [
+              {
+                "keyword": "Given ",
+                "text": "\"Ana\" returns \"The Hobbit\"",
+                "kind": "given",
+                "sentence": "\"…\" returns \"…\"",
+                "slots": [
+                  "\"Ana\"",
+                  "\"The Hobbit\""
+                ],
+                "parts": [
+                  {
+                    "kind": "parameter",
+                    "text": "\"Ana\"",
+                    "parts": [
+                      {
+                        "kind": "text",
+                        "text": "\"Ana\"",
+                        "parts": []
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "text",
+                    "text": " returns ",
+                    "parts": []
+                  },
+                  {
+                    "kind": "parameter",
+                    "text": "\"The Hobbit\"",
+                    "parts": [
+                      {
+                        "kind": "text",
+                        "text": "\"The Hobbit\"",
+                        "parts": []
+                      }
+                    ]
+                  }
+                ],
+                "table": null,
+                "doc_string": null
+              },
+              {
+                "keyword": "And ",
+                "text": "the book \"Emma\" is on the shelf",
+                "kind": "given",
+                "sentence": "the book \"…\" is on the shelf",
+                "slots": [
+                  "\"Emma\""
+                ],
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "the book ",
+                    "parts": []
+                  },
+                  {
+                    "kind": "parameter",
+                    "text": "\"Emma\"",
+                    "parts": [
+                      {
+                        "kind": "text",
+                        "text": "\"Emma\"",
+                        "parts": []
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "text",
+                    "text": " is on the shelf",
+                    "parts": []
+                  }
+                ],
+                "table": null,
+                "doc_string": null
+              },
+              {
+                "keyword": "When ",
+                "text": "\"Ana\" borrows \"Emma\"",
+                "kind": "when",
+                "sentence": "\"…\" borrows \"…\"",
+                "slots": [
+                  "\"Ana\"",
+                  "\"Emma\""
+                ],
+                "parts": [
+                  {
+                    "kind": "parameter",
+                    "text": "\"Ana\"",
+                    "parts": [
+                      {
+                        "kind": "text",
+                        "text": "\"Ana\"",
+                        "parts": []
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "text",
+                    "text": " borrows ",
+                    "parts": []
+                  },
+                  {
+                    "kind": "parameter",
+                    "text": "\"Emma\"",
+                    "parts": [
+                      {
+                        "kind": "text",
+                        "text": "\"Emma\"",
+                        "parts": []
+                      }
+                    ]
+                  }
+                ],
+                "table": null,
+                "doc_string": null
+              },
+              {
+                "keyword": "Then ",
+                "text": "\"Ana\" holds 5 books",
+                "kind": "then",
+                "sentence": "\"…\" holds 5 books",
+                "slots": [
+                  "\"Ana\""
+                ],
+                "parts": [
+                  {
+                    "kind": "parameter",
+                    "text": "\"Ana\"",
+                    "parts": [
+                      {
+                        "kind": "text",
+                        "text": "\"Ana\"",
+                        "parts": []
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "text",
+                    "text": " holds ",
+                    "parts": []
+                  },
+                  {
+                    "kind": "number",
+                    "text": "5",
+                    "parts": []
+                  },
+                  {
+                    "kind": "text",
+                    "text": " books",
+                    "parts": []
+                  }
+                ],
+                "table": null,
+                "doc_string": null
+              }
+            ],
+            "examples": [],
+            "place": null,
+            "table": null,
+            "runs": []
+          }
+        ],
+        "steps": [],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "rule",
+        "keyword": "Rule",
+        "note": false,
+        "name": "A book on hold waits for the member who asked first",
+        "description": "",
+        "tags": [
+          "@holds"
+        ],
+        "anchor": "a-book-on-hold-waits-for-the-member-who-asked-first",
+        "hash": "e9b4c6935d07a6c3dd96aac3c1a4905af9e1b530c243c43280b36a2b14948400",
+        "blocks": [
+          {
+            "kind": "scenario",
+            "keyword": "Scenario",
+            "note": false,
+            "name": "A book on hold cannot be borrowed by someone else",
+            "description": "",
+            "tags": [
+              "@queue"
+            ],
+            "anchor": "a-book-on-hold-cannot-be-borrowed-by-someone-else",
+            "hash": "ab0ce83f07002d8ea75b7df703683970f77da617331203fc2e203ac8f0376356",
+            "blocks": [],
+            "steps": [
+              {
+                "keyword": "Given ",
+                "text": "\"Bea\" asked to hold \"Emma\"",
+                "kind": "given",
+                "sentence": "\"…\" asked to hold \"…\"",
+                "slots": [
+                  "\"Bea\"",
+                  "\"Emma\""
+                ],
+                "parts": [
+                  {
+                    "kind": "parameter",
+                    "text": "\"Bea\"",
+                    "parts": [
+                      {
+                        "kind": "text",
+                        "text": "\"Bea\"",
+                        "parts": []
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "text",
+                    "text": " asked to hold ",
+                    "parts": []
+                  },
+                  {
+                    "kind": "parameter",
+                    "text": "\"Emma\"",
+                    "parts": [
+                      {
+                        "kind": "text",
+                        "text": "\"Emma\"",
+                        "parts": []
+                      }
+                    ]
+                  }
+                ],
+                "table": null,
+                "doc_string": null
+              },
+              {
+                "keyword": "And ",
+                "text": "the book \"Emma\" is on the shelf",
+                "kind": "given",
+                "sentence": "the book \"…\" is on the shelf",
+                "slots": [
+                  "\"Emma\""
+                ],
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "the book ",
+                    "parts": []
+                  },
+                  {
+                    "kind": "parameter",
+                    "text": "\"Emma\"",
+                    "parts": [
+                      {
+                        "kind": "text",
+                        "text": "\"Emma\"",
+                        "parts": []
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "text",
+                    "text": " is on the shelf",
+                    "parts": []
+                  }
+                ],
+                "table": null,
+                "doc_string": null
+              },
+              {
+                "keyword": "When ",
+                "text": "\"Ana\" borrows \"Emma\"",
+                "kind": "when",
+                "sentence": "\"…\" borrows \"…\"",
+                "slots": [
+                  "\"Ana\"",
+                  "\"Emma\""
+                ],
+                "parts": [
+                  {
+                    "kind": "parameter",
+                    "text": "\"Ana\"",
+                    "parts": [
+                      {
+                        "kind": "text",
+                        "text": "\"Ana\"",
+                        "parts": []
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "text",
+                    "text": " borrows ",
+                    "parts": []
+                  },
+                  {
+                    "kind": "parameter",
+                    "text": "\"Emma\"",
+                    "parts": [
+                      {
+                        "kind": "text",
+                        "text": "\"Emma\"",
+                        "parts": []
+                      }
+                    ]
+                  }
+                ],
+                "table": null,
+                "doc_string": null
+              },
+              {
+                "keyword": "Then ",
+                "text": "the loan is refused with \"Emma is on hold for another member.\"",
+                "kind": "then",
+                "sentence": "the loan is refused with \"…\"",
+                "slots": [
+                  "\"Emma is on hold for another member.\""
+                ],
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "the loan is refused with ",
+                    "parts": []
+                  },
+                  {
+                    "kind": "parameter",
+                    "text": "\"Emma is on hold for another member.\"",
+                    "parts": [
+                      {
+                        "kind": "text",
+                        "text": "\"Emma is on hold for another member.\"",
+                        "parts": []
+                      }
+                    ]
+                  }
+                ],
+                "table": null,
+                "doc_string": null
+              }
+            ],
+            "examples": [],
+            "place": null,
+            "table": null,
+            "runs": []
+          }
+        ],
+        "steps": [],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      }
+    ],
+    "steps": [],
+    "examples": [],
+    "place": null,
+    "table": null,
+    "runs": []
+  }
+}

@@ -1,0 +1,545 @@
+{
+  "format": 1,
+  "language": "en",
+  "lang": "en",
+  "feature": {
+    "kind": "feature",
+    "keyword": "Feature",
+    "note": false,
+    "name": "Logging in",
+    "description": "",
+    "tags": [],
+    "anchor": "",
+    "hash": "dd2ae5a8b6f56774447277318e9654c4c309463ae84f8b57b6a72c7c131912b6",
+    "blocks": [
+      {
+        "kind": "background",
+        "keyword": "Background",
+        "note": false,
+        "name": "",
+        "description": "",
+        "tags": [],
+        "anchor": "background",
+        "hash": "baaecd4806bbacf75ee5174996b8f0387ddb9d9d188c797dd0866b040e3d3720",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "the user \"ana\" exists",
+            "kind": "given",
+            "sentence": "the user \"…\" exists",
+            "slots": [
+              "\"ana\""
+            ],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "the user ",
+                "parts": []
+              },
+              {
+                "kind": "parameter",
+                "text": "\"ana\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"ana\"",
+                    "parts": []
+                  }
+                ]
+              },
+              {
+                "kind": "text",
+                "text": " exists",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "scenario",
+        "keyword": "Scenario",
+        "note": false,
+        "name": "Ana logs in",
+        "description": "",
+        "tags": [],
+        "anchor": "ana-logs-in",
+        "hash": "95d9919b90f0f4966ef53a6fd77137e1122978deb40b053f37bc1bc66c630f12",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "the user \"ana\" logs in",
+            "kind": "given",
+            "sentence": "the user \"…\" logs in",
+            "slots": [
+              "\"ana\""
+            ],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "the user ",
+                "parts": []
+              },
+              {
+                "kind": "parameter",
+                "text": "\"ana\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"ana\"",
+                    "parts": []
+                  }
+                ]
+              },
+              {
+                "kind": "text",
+                "text": " logs in",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "When ",
+            "text": "she opens her account",
+            "kind": "when",
+            "sentence": "she opens her account",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "she opens her account",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "Then ",
+            "text": "she sees \"Welcome\"",
+            "kind": "then",
+            "sentence": "she sees \"…\"",
+            "slots": [
+              "\"Welcome\""
+            ],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "she sees ",
+                "parts": []
+              },
+              {
+                "kind": "parameter",
+                "text": "\"Welcome\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"Welcome\"",
+                    "parts": []
+                  }
+                ]
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "And ",
+            "text": "she sees \"Welcome\"",
+            "kind": "then",
+            "sentence": "she sees \"…\"",
+            "slots": [
+              "\"Welcome\""
+            ],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "she sees ",
+                "parts": []
+              },
+              {
+                "kind": "parameter",
+                "text": "\"Welcome\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"Welcome\"",
+                    "parts": []
+                  }
+                ]
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "scenario",
+        "keyword": "Scenario",
+        "note": false,
+        "name": "Bia logs in",
+        "description": "",
+        "tags": [],
+        "anchor": "bia-logs-in",
+        "hash": "d015fe4e4b0e02622431315ccaddaf2f9fe547426235c427ce00ebc80c1a23f4",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "* ",
+            "text": "the user \"bia\" logs in",
+            "kind": "given",
+            "sentence": "the user \"…\" logs in",
+            "slots": [
+              "\"bia\""
+            ],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "the user ",
+                "parts": []
+              },
+              {
+                "kind": "parameter",
+                "text": "\"bia\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"bia\"",
+                    "parts": []
+                  }
+                ]
+              },
+              {
+                "kind": "text",
+                "text": " logs in",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "Then ",
+            "text": "She sees \"Welcome\"",
+            "kind": "then",
+            "sentence": "She sees \"…\"",
+            "slots": [
+              "\"Welcome\""
+            ],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "She sees ",
+                "parts": []
+              },
+              {
+                "kind": "parameter",
+                "text": "\"Welcome\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"Welcome\"",
+                    "parts": []
+                  }
+                ]
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "scenario-outline",
+        "keyword": "Scenario Outline",
+        "note": false,
+        "name": "Anyone logs in",
+        "description": "",
+        "tags": [],
+        "anchor": "anyone-logs-in",
+        "hash": "ed91c5088694cafd612a81e30f9a0cfae92c6788a6477bff7c4c4753e0b8861c",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "the user <name> logs in",
+            "kind": "given",
+            "sentence": "the user \"…\" logs in",
+            "slots": [
+              "<name>"
+            ],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "the user ",
+                "parts": []
+              },
+              {
+                "kind": "placeholder",
+                "text": "<name>",
+                "parts": []
+              },
+              {
+                "kind": "text",
+                "text": " logs in",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "And ",
+            "text": "the user \"<name>\" exists",
+            "kind": "given",
+            "sentence": "the user \"…\" exists",
+            "slots": [
+              "\"<name>\""
+            ],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "the user ",
+                "parts": []
+              },
+              {
+                "kind": "parameter",
+                "text": "\"<name>\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"",
+                    "parts": []
+                  },
+                  {
+                    "kind": "placeholder",
+                    "text": "<name>",
+                    "parts": []
+                  },
+                  {
+                    "kind": "text",
+                    "text": "\"",
+                    "parts": []
+                  }
+                ]
+              },
+              {
+                "kind": "text",
+                "text": " exists",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "When ",
+            "text": "I withdraw <amount>",
+            "kind": "when",
+            "sentence": "I withdraw \"…\"",
+            "slots": [
+              "<amount>"
+            ],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "I withdraw ",
+                "parts": []
+              },
+              {
+                "kind": "placeholder",
+                "text": "<amount>",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "Then ",
+            "text": "the balance is < 0 and <unknown>",
+            "kind": "then",
+            "sentence": "the balance is < 0 and <unknown>",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "the balance is < ",
+                "parts": []
+              },
+              {
+                "kind": "number",
+                "text": "0",
+                "parts": []
+              },
+              {
+                "kind": "text",
+                "text": " and <unknown>",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [
+          {
+            "kind": "examples",
+            "keyword": "Examples",
+            "note": false,
+            "name": "",
+            "description": "",
+            "tags": [],
+            "anchor": "examples",
+            "hash": "dcbb4c135e8dc53451ce648bfa9763795b8f36b2c98e242048742e94bac9086a",
+            "blocks": [],
+            "steps": [],
+            "examples": [],
+            "place": 1,
+            "table": [
+              [
+                "name",
+                "amount"
+              ],
+              [
+                "cleo",
+                "10"
+              ]
+            ],
+            "runs": [
+              {
+                "anchor": "anyone-logs-in-row-1",
+                "steps": [
+                  {
+                    "keyword": "Given ",
+                    "text": "the user cleo logs in",
+                    "kind": "given",
+                    "sentence": "the user cleo logs in",
+                    "slots": [],
+                    "parts": [
+                      {
+                        "kind": "text",
+                        "text": "the user cleo logs in",
+                        "parts": []
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": null
+                  },
+                  {
+                    "keyword": "And ",
+                    "text": "the user \"cleo\" exists",
+                    "kind": "given",
+                    "sentence": "the user \"…\" exists",
+                    "slots": [
+                      "\"cleo\""
+                    ],
+                    "parts": [
+                      {
+                        "kind": "text",
+                        "text": "the user ",
+                        "parts": []
+                      },
+                      {
+                        "kind": "parameter",
+                        "text": "\"cleo\"",
+                        "parts": [
+                          {
+                            "kind": "text",
+                            "text": "\"cleo\"",
+                            "parts": []
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "text",
+                        "text": " exists",
+                        "parts": []
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": null
+                  },
+                  {
+                    "keyword": "When ",
+                    "text": "I withdraw 10",
+                    "kind": "when",
+                    "sentence": "I withdraw 10",
+                    "slots": [],
+                    "parts": [
+                      {
+                        "kind": "text",
+                        "text": "I withdraw ",
+                        "parts": []
+                      },
+                      {
+                        "kind": "number",
+                        "text": "10",
+                        "parts": []
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": null
+                  },
+                  {
+                    "keyword": "Then ",
+                    "text": "the balance is < 0 and <unknown>",
+                    "kind": "then",
+                    "sentence": "the balance is < 0 and <unknown>",
+                    "slots": [],
+                    "parts": [
+                      {
+                        "kind": "text",
+                        "text": "the balance is < ",
+                        "parts": []
+                      },
+                      {
+                        "kind": "number",
+                        "text": "0",
+                        "parts": []
+                      },
+                      {
+                        "kind": "text",
+                        "text": " and <unknown>",
+                        "parts": []
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": null
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "place": null,
+        "table": null,
+        "runs": []
+      }
+    ],
+    "steps": [],
+    "examples": [],
+    "place": null,
+    "table": null,
+    "runs": []
+  }
+}

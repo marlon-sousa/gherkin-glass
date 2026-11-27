@@ -1,0 +1,24 @@
+{
+  "format": 1,
+  "language": "en",
+  "lang": "en",
+  "feature": {
+    "kind": "feature",
+    "keyword": "Feature",
+    "note": false,
+    "name": "Notes with no scenarios",
+    "description": "",
+    "tags": [
+      "@draft",
+      "@later"
+    ],
+    "anchor": "",
+    "hash": "f41374824ac5a5b4195626de9773ec00f9f1eb532247db1f0e07a1c028ec615a",
+    "blocks": [],
+    "steps": [],
+    "examples": [],
+    "place": null,
+    "table": null,
+    "runs": []
+  }
+}

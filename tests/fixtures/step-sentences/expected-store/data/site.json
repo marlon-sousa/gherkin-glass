@@ -1,0 +1,129 @@
+{
+  "format": 1,
+  "ghg": "{version}",
+  "version": null,
+  "preview": null,
+  "title": "Feature files",
+  "only": false,
+  "start": {
+    "collapse_rules": false,
+    "collapse_scenarios": false,
+    "show_tree": true,
+    "inline_backgrounds": true
+  },
+  "features": [
+    {
+      "path": "accounts/logging-in.feature",
+      "page": "accounts/logging-in",
+      "object": "d68fb29bc6cb46f46b8c594ab659ae8959347e35a5ac380b077c7f7ae828548b",
+      "lines": [
+        1,
+        3,
+        6,
+        12,
+        16,
+        22
+      ],
+      "source": null
+    },
+    {
+      "path": "accounts-old.feature",
+      "page": "accounts-old",
+      "object": "67adc7d1b5b96746045be8521c89e9fbf5c3919f7f941c7a0bf9764268848fe7",
+      "lines": [
+        1,
+        3,
+        16,
+        19,
+        23
+      ],
+      "source": null
+    },
+    {
+      "path": "em-portugues.feature",
+      "page": "em-portugues",
+      "object": "891e68dd818f84e24a7c5508dc5eb42deba037839bfd8e5d69f3e03abd3c6a55",
+      "lines": [
+        2,
+        4,
+        11
+      ],
+      "source": null
+    },
+    {
+      "path": "escapes.feature",
+      "page": "escapes",
+      "object": "89ca6f95457aea378e7a2dd842ba82271831faef5da4b74a7026f84d715917a2",
+      "lines": [
+        1,
+        3,
+        7
+      ],
+      "source": null
+    },
+    {
+      "path": "money.feature",
+      "page": "money",
+      "object": "c60a2bc1f5cb85650cfdbd1d6156a31b00e1f015b1dbe3f3b0cecfa921789c4a",
+      "lines": [
+        1,
+        3,
+        11,
+        15,
+        16,
+        19
+      ],
+      "source": null
+    }
+  ],
+  "tags": [],
+  "sentences": {
+    "given": [
+      "a star step",
+      "a step after a star",
+      "a step with a doc string:",
+      "a step with a table:",
+      "o usuário \"…\" entra",
+      "the first step is an and",
+      "the user \"…\" and \"…\" meet",
+      "the user \"…\" exists",
+      "the user \"…\" logs in"
+    ],
+    "when": [
+      "ela abre a conta",
+      "I withdraw \"…\"",
+      "I withdraw 10",
+      "I withdraw 20",
+      "she opens her account",
+      "the old account is opened",
+      "the user \"…\" logs in"
+    ],
+    "then": [
+      "ela não vê \"…\"",
+      "ela vê \"…\"",
+      "it is shown",
+      "She sees \"…\"",
+      "she sees \"…\"",
+      "the balance is < 0 and <unknown>",
+      "the café is paid",
+      "the note says \"…\" and \"…\"",
+      "the screen shows <> for \"…\"",
+      "the screen shows \\\"hi\\\" and \"…\" for \"…\"",
+      "the screen shows “hi”",
+      "the user <name> logs in",
+      "the user's card is \"kept"
+    ]
+  },
+  "front_page": null,
+  "settings": {
+    "title": null,
+    "source_link": null,
+    "tag_links": [],
+    "accent_light": "#0b4f9c",
+    "accent_dark": "#8cc4ff",
+    "collapse_rules": false,
+    "collapse_scenarios": false,
+    "show_tree": true,
+    "inline_backgrounds": true
+  }
+}

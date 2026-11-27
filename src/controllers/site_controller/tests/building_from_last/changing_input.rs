@@ -99,6 +99,10 @@ impl OutputFolders for ChangingInput {
         Err(not_found())
     }
 
+    fn read(&self, _: &Path, _: &str) -> IoResult<Option<String>> {
+        Err(not_found())
+    }
+
     fn remove(&self, _: &Path) -> IoResult<()> {
         Err(not_found())
     }

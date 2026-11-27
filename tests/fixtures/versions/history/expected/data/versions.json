@@ -1,0 +1,30 @@
+{
+  "format": 1,
+  "development": [
+    "main"
+  ],
+  "releases": [
+    "v2.0.0",
+    "v1.1.0",
+    "v1.0.0"
+  ],
+  "pre_releases": [],
+  "precedence": [
+    [
+      "v2.0.0"
+    ],
+    [
+      "v1.1.0"
+    ],
+    [
+      "v1.0.0"
+    ]
+  ],
+  "versions_page": {
+    "ghg": "{version}",
+    "title": "History",
+    "accent_light": "#0b4f9c",
+    "accent_dark": "#8cc4ff",
+    "front_page": null
+  }
+}

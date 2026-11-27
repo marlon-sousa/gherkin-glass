@@ -1,0 +1,169 @@
+{
+  "format": 1,
+  "language": "pt",
+  "lang": "pt",
+  "feature": {
+    "kind": "feature",
+    "keyword": "Funcionalidade",
+    "note": true,
+    "name": "Contas",
+    "description": "",
+    "tags": [],
+    "anchor": "",
+    "hash": "f5520d288e3d5fb6b9c06481045f8952d603fcc1343870bde2602dbbf174e0e9",
+    "blocks": [
+      {
+        "kind": "background",
+        "keyword": "Contexto",
+        "note": true,
+        "name": "",
+        "description": "",
+        "tags": [],
+        "anchor": "contexto",
+        "hash": "b1d3dae791b6a86d4485064ee19c72e3346a66dfb513229ad105c35bad0384bc",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Dado ",
+            "text": "um cliente",
+            "kind": "given",
+            "sentence": "um cliente",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "um cliente",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "scenario",
+        "keyword": "Cenário",
+        "note": true,
+        "name": "Saque em conta poupança",
+        "description": "",
+        "tags": [],
+        "anchor": "saque-em-conta-poupança",
+        "hash": "f14643770b2231f8662a3ca8ac33be8840921b1c65dd438ec5a7458cc0662955",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Dado ",
+            "text": "uma conta",
+            "kind": "given",
+            "sentence": "uma conta",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "uma conta",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "scenario-outline",
+        "keyword": "Esquema do Cenário",
+        "note": true,
+        "name": "",
+        "description": "",
+        "tags": [],
+        "anchor": "esquema-do-cenário",
+        "hash": "afced54591a968fb89a648da15014c02058606c17d977375cf8e3d1602861d01",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Dado ",
+            "text": "<valor>",
+            "kind": "given",
+            "sentence": "\"…\"",
+            "slots": [
+              "<valor>"
+            ],
+            "parts": [
+              {
+                "kind": "placeholder",
+                "text": "<valor>",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [
+          {
+            "kind": "examples",
+            "keyword": "Exemplos",
+            "note": true,
+            "name": "",
+            "description": "",
+            "tags": [],
+            "anchor": "exemplos",
+            "hash": "4296eb6d4d026ca8732e4f5d61a2b4a1dababca63b94ab4c3c41157af2008ec4",
+            "blocks": [],
+            "steps": [],
+            "examples": [],
+            "place": 1,
+            "table": [
+              [
+                "valor"
+              ],
+              [
+                "10"
+              ]
+            ],
+            "runs": [
+              {
+                "anchor": "esquema-do-cenário-row-1",
+                "steps": [
+                  {
+                    "keyword": "Dado ",
+                    "text": "10",
+                    "kind": "given",
+                    "sentence": "10",
+                    "slots": [],
+                    "parts": [
+                      {
+                        "kind": "number",
+                        "text": "10",
+                        "parts": []
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": null
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "place": null,
+        "table": null,
+        "runs": []
+      }
+    ],
+    "steps": [],
+    "examples": [],
+    "place": null,
+    "table": null,
+    "runs": []
+  }
+}

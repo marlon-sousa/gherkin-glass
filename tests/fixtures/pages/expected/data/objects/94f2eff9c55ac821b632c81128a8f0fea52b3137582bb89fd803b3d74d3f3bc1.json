@@ -1,0 +1,71 @@
+{
+  "format": 1,
+  "language": "pt",
+  "lang": "pt",
+  "feature": {
+    "kind": "feature",
+    "keyword": "Funcionalidade",
+    "note": true,
+    "name": "Saque em conta poupança",
+    "description": "",
+    "tags": [],
+    "anchor": "",
+    "hash": "23db70cfa044ede3471d887e075efc478a330b2bcc49812c8f4f3f109df73265",
+    "blocks": [
+      {
+        "kind": "scenario",
+        "keyword": "Cenário",
+        "note": true,
+        "name": "Saque com saldo",
+        "description": "",
+        "tags": [],
+        "anchor": "saque-com-saldo",
+        "hash": "615589ff2634c102f96adc1af1c7fa69832f4f7b74530c909fabd160b2652d28",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Dado ",
+            "text": "uma conta com saldo",
+            "kind": "given",
+            "sentence": "uma conta com saldo",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "uma conta com saldo",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "Então ",
+            "text": "o saque é feito",
+            "kind": "then",
+            "sentence": "o saque é feito",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "o saque é feito",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      }
+    ],
+    "steps": [],
+    "examples": [],
+    "place": null,
+    "table": null,
+    "runs": []
+  }
+}

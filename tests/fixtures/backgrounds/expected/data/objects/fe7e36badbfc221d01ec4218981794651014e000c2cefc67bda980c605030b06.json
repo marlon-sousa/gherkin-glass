@@ -1,0 +1,71 @@
+{
+  "format": 1,
+  "language": "en",
+  "lang": "en",
+  "feature": {
+    "kind": "feature",
+    "keyword": "Feature",
+    "note": false,
+    "name": "A background without steps",
+    "description": "",
+    "tags": [],
+    "anchor": "",
+    "hash": "045521abfa1d054473d5d6020766a75efc52bd37dab671d86c55d74b8428026a",
+    "blocks": [
+      {
+        "kind": "background",
+        "keyword": "Background",
+        "note": false,
+        "name": "",
+        "description": "It only describes.",
+        "tags": [],
+        "anchor": "background",
+        "hash": "a9b857f19253016b304a4756e34ff4f1c92547557377e05e3edfd979ea4bab36",
+        "blocks": [],
+        "steps": [],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "scenario",
+        "keyword": "Scenario",
+        "note": false,
+        "name": "Nothing to show",
+        "description": "",
+        "tags": [],
+        "anchor": "nothing-to-show",
+        "hash": "b7b8d390de538921ec6294947460a6651da0594a4c90a61864090490a85b3019",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Then ",
+            "text": "nothing comes before this step",
+            "kind": "then",
+            "sentence": "nothing comes before this step",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "nothing comes before this step",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      }
+    ],
+    "steps": [],
+    "examples": [],
+    "place": null,
+    "table": null,
+    "runs": []
+  }
+}

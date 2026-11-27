@@ -1,0 +1,61 @@
+{
+  "format": 1,
+  "language": "pt",
+  "lang": "pt",
+  "feature": {
+    "kind": "feature",
+    "keyword": "Funcionalidade",
+    "note": true,
+    "name": "Saque em conta",
+    "description": "",
+    "tags": [
+      "@needs:db",
+      "@🚀",
+      "@???"
+    ],
+    "anchor": "",
+    "hash": "ca467cbd0947c980db3290a84bf828fb31c6d6dc56656ca0b0f3d901af90d4c4",
+    "blocks": [
+      {
+        "kind": "scenario",
+        "keyword": "Cenário",
+        "note": true,
+        "name": "Saque no caixa",
+        "description": "",
+        "tags": [
+          "@issue-12"
+        ],
+        "anchor": "saque-no-caixa",
+        "hash": "a375c242e200252545136037669cfb95eaa88bbd3c1923c66e25d79509f72eab",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Dado ",
+            "text": "um cliente",
+            "kind": "given",
+            "sentence": "um cliente",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "um cliente",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      }
+    ],
+    "steps": [],
+    "examples": [],
+    "place": null,
+    "table": null,
+    "runs": []
+  }
+}

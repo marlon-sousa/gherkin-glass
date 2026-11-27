@@ -1,0 +1,55 @@
+{
+  "format": 1,
+  "language": "en",
+  "lang": "en",
+  "feature": {
+    "kind": "feature",
+    "keyword": "Feature",
+    "note": false,
+    "name": "read.feature",
+    "description": "",
+    "tags": [],
+    "anchor": "",
+    "hash": "6907dc33cf649cce4a7173170f9056ece50fbc411738f1a6cc79ed19d3ee8d5c",
+    "blocks": [
+      {
+        "kind": "scenario",
+        "keyword": "Scenario",
+        "note": false,
+        "name": "Present",
+        "description": "",
+        "tags": [],
+        "anchor": "present",
+        "hash": "78253a85e2b04cfa55792ca61b8838a5f5f1a0753598a9fd6f45c19b5fabe9d4",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "the file read.feature",
+            "kind": "given",
+            "sentence": "the file read.feature",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "the file read.feature",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      }
+    ],
+    "steps": [],
+    "examples": [],
+    "place": null,
+    "table": null,
+    "runs": []
+  }
+}

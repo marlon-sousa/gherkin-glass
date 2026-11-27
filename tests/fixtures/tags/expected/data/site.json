@@ -1,0 +1,161 @@
+{
+  "format": 1,
+  "ghg": "{version}",
+  "version": null,
+  "preview": null,
+  "title": "Tagged suite",
+  "only": false,
+  "start": {
+    "collapse_rules": false,
+    "collapse_scenarios": false,
+    "show_tree": true,
+    "inline_backgrounds": true
+  },
+  "features": [
+    {
+      "path": "accounts.feature",
+      "page": "accounts",
+      "object": "25c52a443b3473e6fa3800bd777f87493f5ed0c8d144662cba67ccfdbc5ad66e",
+      "lines": [
+        2,
+        6,
+        9,
+        13,
+        17,
+        21,
+        23,
+        26,
+        30
+      ],
+      "source": null
+    },
+    {
+      "path": "area/notes.feature",
+      "page": "area/notes",
+      "object": "6d1cc5f77d043c1dfefefafc8853709a42c55aebbf84473824b647617e13653d",
+      "lines": [
+        2
+      ],
+      "source": null
+    },
+    {
+      "path": "area/saque em conta.feature",
+      "page": "area/saque em conta",
+      "object": "8307e94ff4c977b04af070a7dabee18df2cbe51995f9c9b40055a171356795fb",
+      "lines": [
+        3,
+        6
+      ],
+      "source": null
+    }
+  ],
+  "tags": [
+    {
+      "tag": "@???",
+      "page": "tags/tag",
+      "link": null
+    },
+    {
+      "tag": "@draft",
+      "page": "tags/draft",
+      "link": null
+    },
+    {
+      "tag": "@index",
+      "page": "tags/index",
+      "link": null
+    },
+    {
+      "tag": "@issue-12",
+      "page": "tags/issue-12",
+      "link": {
+        "address": "https://github.com/owner/repo/issues/12",
+        "text": "Issue 12 on GitHub"
+      }
+    },
+    {
+      "tag": "@issue-7",
+      "page": "tags/issue-7",
+      "link": {
+        "address": "https://github.com/owner/repo/issues/7",
+        "text": "Issue 7 on GitHub"
+      }
+    },
+    {
+      "tag": "@later",
+      "page": "tags/later",
+      "link": null
+    },
+    {
+      "tag": "@needs:db",
+      "page": "tags/needs-db",
+      "link": null
+    },
+    {
+      "tag": "@Slow",
+      "page": "tags/slow",
+      "link": null
+    },
+    {
+      "tag": "@slow",
+      "page": "tags/slow-2",
+      "link": null
+    },
+    {
+      "tag": "@ticket:ç/1#2",
+      "page": "tags/ticket-ç-1-2",
+      "link": {
+        "address": "https://example.com/tickets/%C3%A7/1%232?view=$full",
+        "text": "Ticket ç/1#2"
+      }
+    },
+    {
+      "tag": "@🚀",
+      "page": "tags/tag-2",
+      "link": null
+    }
+  ],
+  "sentences": {
+    "given": [
+      "\"…\" accounts",
+      "a customer",
+      "two customers",
+      "um cliente"
+    ],
+    "when": [],
+    "then": []
+  },
+  "front_page": null,
+  "settings": {
+    "title": "Tagged suite",
+    "source_link": null,
+    "tag_links": [
+      {
+        "pattern": "@issue-(\\d+)",
+        "address": "https://github.com/owner/repo/issues/$1",
+        "text": "Issue $1 on GitHub"
+      },
+      {
+        "pattern": "@issue-(?<id>.+)",
+        "address": "https://example.com/other/${id}",
+        "text": "Other $id"
+      },
+      {
+        "pattern": "@later(.*)",
+        "address": "https://example.com/later/$1",
+        "text": "$1"
+      },
+      {
+        "pattern": "@ticket:(?<id>.+)",
+        "address": "https://example.com/tickets/${id}?view=$$full",
+        "text": "Ticket ${id}"
+      }
+    ],
+    "accent_light": "#0b4f9c",
+    "accent_dark": "#8cc4ff",
+    "collapse_rules": false,
+    "collapse_scenarios": false,
+    "show_tree": true,
+    "inline_backgrounds": true
+  }
+}

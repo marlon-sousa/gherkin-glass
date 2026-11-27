@@ -1,0 +1,359 @@
+{
+  "format": 1,
+  "language": "en",
+  "lang": "en",
+  "feature": {
+    "kind": "feature",
+    "keyword": "Feature",
+    "note": false,
+    "name": "Money",
+    "description": "",
+    "tags": [],
+    "anchor": "",
+    "hash": "0a51e08009aa6c5d7b2dae41c59b35f670f4fe3846df5a0010c6c8e7826d9b4c",
+    "blocks": [
+      {
+        "kind": "scenario",
+        "keyword": "Scenario",
+        "note": false,
+        "name": "Withdraw",
+        "description": "",
+        "tags": [],
+        "anchor": "withdraw",
+        "hash": "f1285cec9adf7b2d9e22d5b73fed2e3ca01588bfa6ef505c3d15e5fa8ec7c434",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "When ",
+            "text": "I withdraw 10",
+            "kind": "when",
+            "sentence": "I withdraw 10",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "I withdraw ",
+                "parts": []
+              },
+              {
+                "kind": "number",
+                "text": "10",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "And ",
+            "text": "I withdraw 20",
+            "kind": "when",
+            "sentence": "I withdraw 20",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "I withdraw ",
+                "parts": []
+              },
+              {
+                "kind": "number",
+                "text": "20",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "Then ",
+            "text": "the note says \"\" and \"it's done\"",
+            "kind": "then",
+            "sentence": "the note says \"…\" and \"…\"",
+            "slots": [
+              "\"\"",
+              "\"it's done\""
+            ],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "the note says ",
+                "parts": []
+              },
+              {
+                "kind": "parameter",
+                "text": "\"\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"\"",
+                    "parts": []
+                  }
+                ]
+              },
+              {
+                "kind": "text",
+                "text": " and ",
+                "parts": []
+              },
+              {
+                "kind": "parameter",
+                "text": "\"it's done\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"it's done\"",
+                    "parts": []
+                  }
+                ]
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "And ",
+            "text": "the user's card is \"kept",
+            "kind": "then",
+            "sentence": "the user's card is \"kept",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "the user's card is \"kept",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "And ",
+            "text": "the screen shows “hi”",
+            "kind": "then",
+            "sentence": "the screen shows “hi”",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "the screen shows “hi”",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "And ",
+            "text": "the café is paid",
+            "kind": "then",
+            "sentence": "the café is paid",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "the café is paid",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "scenario",
+        "keyword": "Scenario",
+        "note": false,
+        "name": "Starting with and",
+        "description": "",
+        "tags": [],
+        "anchor": "starting-with-and",
+        "hash": "a75bba53d698837051b959272353c60c6c6fbf0e3e607d97d58ead8bb6aba7c8",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "And ",
+            "text": "the first step is an and",
+            "kind": "given",
+            "sentence": "the first step is an and",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "the first step is an and",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "Then ",
+            "text": "the café is paid",
+            "kind": "then",
+            "sentence": "the café is paid",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "the café is paid",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "rule",
+        "keyword": "Rule",
+        "note": false,
+        "name": "Every user",
+        "description": "",
+        "tags": [],
+        "anchor": "every-user",
+        "hash": "b2dbd95c98a0afc595b8e7214915729770f20d13fac042d3ca71f06d885b3d5a",
+        "blocks": [
+          {
+            "kind": "background",
+            "keyword": "Background",
+            "note": false,
+            "name": "",
+            "description": "",
+            "tags": [],
+            "anchor": "background",
+            "hash": "734fd12357f95ac685c05d75b9436cecb0273a6517fa2d6bd6c5915151b20292",
+            "blocks": [],
+            "steps": [
+              {
+                "keyword": "Given ",
+                "text": "the user \"dan\" exists",
+                "kind": "given",
+                "sentence": "the user \"…\" exists",
+                "slots": [
+                  "\"dan\""
+                ],
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "the user ",
+                    "parts": []
+                  },
+                  {
+                    "kind": "parameter",
+                    "text": "\"dan\"",
+                    "parts": [
+                      {
+                        "kind": "text",
+                        "text": "\"dan\"",
+                        "parts": []
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "text",
+                    "text": " exists",
+                    "parts": []
+                  }
+                ],
+                "table": null,
+                "doc_string": null
+              }
+            ],
+            "examples": [],
+            "place": null,
+            "table": null,
+            "runs": []
+          },
+          {
+            "kind": "scenario",
+            "keyword": "Scenario",
+            "note": false,
+            "name": "Eve logs in",
+            "description": "",
+            "tags": [],
+            "anchor": "eve-logs-in",
+            "hash": "f2f3cf47ca090b5a1789270242a3461acc79b2a17eb174a13e99bd75b6f45f67",
+            "blocks": [],
+            "steps": [
+              {
+                "keyword": "When ",
+                "text": "the user \"eve\" logs in",
+                "kind": "when",
+                "sentence": "the user \"…\" logs in",
+                "slots": [
+                  "\"eve\""
+                ],
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "the user ",
+                    "parts": []
+                  },
+                  {
+                    "kind": "parameter",
+                    "text": "\"eve\"",
+                    "parts": [
+                      {
+                        "kind": "text",
+                        "text": "\"eve\"",
+                        "parts": []
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "text",
+                    "text": " logs in",
+                    "parts": []
+                  }
+                ],
+                "table": null,
+                "doc_string": null
+              },
+              {
+                "keyword": "Then ",
+                "text": "the user <name> logs in",
+                "kind": "then",
+                "sentence": "the user <name> logs in",
+                "slots": [],
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "the user <name> logs in",
+                    "parts": []
+                  }
+                ],
+                "table": null,
+                "doc_string": null
+              }
+            ],
+            "examples": [],
+            "place": null,
+            "table": null,
+            "runs": []
+          }
+        ],
+        "steps": [],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      }
+    ],
+    "steps": [],
+    "examples": [],
+    "place": null,
+    "table": null,
+    "runs": []
+  }
+}

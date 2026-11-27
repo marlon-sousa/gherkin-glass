@@ -1,9 +1,9 @@
 //! Policy: the steps of a page's blocks, with their data tables and doc strings, as written or filled with an example's values.
 
-use gherkin::{Scenario, Step, StepType, Table};
+use gherkin::{Scenario, Step, Table};
 
-use crate::entities::{DocStringView, ParsedFeature, StepContent, StepKind, StepView, TableView};
-use crate::policies::site::feature_pages::{ExampleRow, highlight_step};
+use crate::entities::{DocStringView, ParsedFeature, StepContent, StepView, TableView};
+use crate::policies::site::{ExampleRow, highlight_step, step_kind};
 
 /// `scenario` holds the steps, or is `None` for a background's.
 pub(super) fn step_contents(
@@ -22,7 +22,7 @@ fn step_content(parsed: &ParsedFeature, step: &Step, scenario: Option<&Scenario>
         step: StepView {
             keyword: step.keyword.clone(),
             parts: highlight_step(step, scenario).parts,
-            kind: kind_of(step.ty),
+            kind: step_kind(step.ty),
             line: step.position.line,
         },
         table: step.table.as_ref().map(table),
@@ -58,7 +58,7 @@ fn filled_step(parsed: &ParsedFeature, step: &Step, row: &ExampleRow<'_>) -> Ste
         step: StepView {
             keyword: filled.keyword.clone(),
             parts: highlight_step(&filled, None).parts,
-            kind: kind_of(step.ty),
+            kind: step_kind(step.ty),
             line: step.position.line,
         },
         table: step
@@ -85,17 +85,13 @@ fn filled_doc_string(
 fn filled_table(written: &Table, row: &ExampleRow<'_>) -> TableView {
     let view = table(written);
     TableView {
-        header: filled_row(&view.header, row),
+        header: row.fill_cells(&view.header),
         rows: view
             .rows
             .iter()
-            .map(|cells| filled_row(cells, row))
+            .map(|cells| row.fill_cells(cells))
             .collect(),
     }
-}
-
-fn filled_row(cells: &[String], row: &ExampleRow<'_>) -> Vec<String> {
-    cells.iter().map(|cell| row.fill(cell)).collect()
 }
 
 /// The first row is the header; a table has at least one row.
@@ -104,13 +100,5 @@ pub(super) fn table(table: &Table) -> TableView {
     TableView {
         header: rows.next().unwrap_or_default(),
         rows: rows.collect(),
-    }
-}
-
-fn kind_of(ty: StepType) -> StepKind {
-    match ty {
-        StepType::Given => StepKind::Given,
-        StepType::When => StepKind::When,
-        StepType::Then => StepKind::Then,
     }
 }

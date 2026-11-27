@@ -1,8 +1,10 @@
-//! Service: the site writer, reading the front page's template, rendering the site tree, keeping from the last site the file of every node that has not changed, and writing its files into its output folder, with or without versions, once the folder is safe, or into memory.
+//! Service: the site writer, reading the front page's template, rendering the site tree, keeping from the last site the file of every node that has not changed, rendering the site's store beside it, and writing their files into its output folder, with or without versions, once the folder is safe, by the plan of the store, or into memory.
 
+mod folder_writing;
+mod published;
 mod written_paths;
 
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeSet;
 use std::io::Error as IoError;
 use std::path::Path;
 use std::sync::Arc;
@@ -10,14 +12,19 @@ use std::sync::Arc;
 use bon::Builder;
 
 use crate::entities::{
-    BuildFolder, BuildTarget, Destination, FilePath, FrontPageTemplate, KeptInOutput, Record,
-    RenderedSite, ServedSite, Settings, SiteFile, SiteFiles, SiteTree, VersionName,
+    BuildFolder, BuildTarget, ConvertedSite, Destination, FrontPageTemplate, KeptInOutput,
+    OutputContents, PublishedStore, RenderedSite, ServedSite, Settings, SiteFile, SiteFiles,
+    StoreFiles, VersionName,
 };
 use crate::errors::{BuildError, FrontPageError, FrontPageErrorKind, OutputError, OutputErrorKind};
-use crate::policies::{Moment, output_safety, render_site};
+use crate::policies::{
+    DescriptorSettings, Moment, output_safety, plan_store, render_site, render_store,
+};
 use crate::ports::{FileReader, FileWriter, OutputFolders};
 
-use written_paths::{paths, planned, top_of};
+use folder_writing::recorded_versions;
+use published::published_store;
+use written_paths::planned;
 
 /// What the controller asks of the site writer.
 pub(crate) trait SiteWriterApi: Send + Sync {
@@ -28,17 +35,19 @@ pub(crate) trait SiteWriterApi: Send + Sync {
     fn check(&self, settings: &Settings) -> Result<BTreeSet<VersionName>, OutputError>;
 
     /// Reads the front page's template the settings name, if any, then
-    /// renders every file of `tree`, except one whose node is unchanged since
-    /// `last`, the site the last build rendered, which it keeps from there,
-    /// and writes it where the settings say, once every file is rendered. It returns the site as it is
-    /// served, and `tree` with the files rendered from it, which hold what the
-    /// build has to say of the site. Into the output folder, it is written as
-    /// the version its settings name, or without versions when they name none,
-    /// once the folder is checked again; in memory, as a site without versions.
+    /// renders every file of `converted`'s site tree, except one whose node is
+    /// unchanged since `last`, the site the last build rendered, which it
+    /// keeps from there, and the files of its store, and writes them where
+    /// the settings say, once every file is rendered. It returns the site as
+    /// it is served, and the site tree with the files rendered from it, which
+    /// hold what the build has to say of the site. Into the output folder, it
+    /// is written as the version its settings name, or without versions when
+    /// they name none, once the folder is checked again; in memory, as a site
+    /// without versions.
     fn write(
         &self,
         settings: &Settings,
-        tree: SiteTree,
+        converted: ConvertedSite,
         last: Option<&RenderedSite>,
     ) -> Result<(ServedSite, RenderedSite), BuildError>;
 }
@@ -69,42 +78,47 @@ impl SiteWriter {
         }))
     }
 
-    /// Writes `site` where the settings say, and returns the site as it is served.
-    fn write_site(&self, settings: &Settings, site: &SiteFiles) -> Result<ServedSite, OutputError> {
+    /// Writes `site` and `store` where the settings say, and returns the site as it is served.
+    fn write_site(
+        &self,
+        settings: &Settings,
+        site: &SiteFiles,
+        store: StoreFiles,
+        front_page: Option<&str>,
+    ) -> Result<ServedSite, OutputError> {
         let files = &site.files;
         let output = &settings.output;
         if settings.destination == Destination::Memory {
+            let plan = plan_store(
+                &PublishedStore::default(),
+                store,
+                None,
+                &settings.pages,
+                front_page,
+            );
             // A site that was not taken, if any, is dropped, so that nothing of it is served.
             self.memory_files.site(output);
             write_files(self.memory_files.as_ref(), output, files)?;
+            write_files(self.memory_files.as_ref(), output, &plan.writes)?;
             return Ok(self.memory_files.site(output));
         }
         let target = target(settings);
-        let planned = planned(&target, site);
+        let mut planned = planned(&target, site);
+        planned.extend(store.paths());
         let moment = Moment::Writing { site: &planned };
         let folder = self.check_folder(output, &target, moment, &settings.keep_in_output)?;
-        let written = paths(files);
-        match folder.target() {
-            BuildTarget::Site => {
-                self.clear(&folder)?;
-                self.mark(&folder, &Record::Site(written))?;
-                write_files(self.folder_files.as_ref(), output, files)?;
-            }
-            BuildTarget::Version(name) => {
-                self.clear_version(&folder, name)?;
-                let record = Record::Versions {
-                    page: paths(&site.root_files),
-                    versions: versions(&folder, name, &written),
-                };
-                self.mark(&folder, &record)?;
-                write_files(
-                    self.folder_files.as_ref(),
-                    &output.join(name.as_str()),
-                    files,
-                )?;
-                write_files(self.folder_files.as_ref(), output, &site.root_files)?;
-            }
-        }
+        let version = match folder.target() {
+            BuildTarget::Site => None,
+            BuildTarget::Version(name) => Some(name),
+        };
+        let plan = plan_store(
+            folder.published(),
+            store,
+            version,
+            &settings.pages,
+            front_page,
+        );
+        self.write_folder(&folder, site, plan)?;
         Ok(self.folder_files.site(output))
     }
 
@@ -123,45 +137,13 @@ impl SiteWriter {
             .folders
             .contents(output, target.left_alone(), kept)
             .map_err(|io| error(cannot_be_read(&io)))?;
+        let files = match (&contents, target) {
+            (OutputContents::Folder { files, .. }, BuildTarget::Version(_)) => files.clone(),
+            _ => BTreeSet::new(),
+        };
         let record = output_safety(contents, target, moment, kept).map_err(error)?;
-        Ok(BuildFolder::new(output, target.clone(), record))
-    }
-
-    /// Empties the output folder of a site without versions of what ghg
-    /// wrote there, which is all it holds but what is kept, and which holds
-    /// nothing kept.
-    fn clear(&self, folder: &BuildFolder) -> Result<(), OutputError> {
-        let Some(Record::Site(files)) = folder.record() else {
-            return Ok(());
-        };
-        let output = folder.output();
-        let tops: BTreeSet<_> = files.iter().filter_map(|file| top_of(file)).collect();
-        tops.into_iter()
-            .try_for_each(|top| self.folders.remove(&output.join(top)))
-            .map_err(|io| cannot_write(folder, None, &io))
-    }
-
-    /// Removes the folder of the version `name`, when it is already built,
-    /// and the versions page, which are written again.
-    fn clear_version(&self, folder: &BuildFolder, name: &VersionName) -> Result<(), OutputError> {
-        let output = folder.output();
-        self.folders
-            .remove(&output.join(name.as_str()))
-            .map_err(|io| cannot_write(folder, Some(name), &io))?;
-        let Some(Record::Versions { page, .. }) = folder.record() else {
-            return Ok(());
-        };
-        page.iter()
-            .try_for_each(|file| self.folders.remove(&output.join(file)))
-            .map_err(|io| cannot_write(folder, None, &io))
-    }
-
-    /// Writes the marker of the output folder, before the site's files, so
-    /// that it lists them even when one of them cannot be written.
-    fn mark(&self, folder: &BuildFolder, record: &Record) -> Result<(), OutputError> {
-        self.folders
-            .record(folder.output(), record)
-            .map_err(|io| cannot_write(folder, None, &io))
+        let published = published_store(self.folders.as_ref(), output, &files).map_err(error)?;
+        Ok(BuildFolder::new(output, target.clone(), record, published))
     }
 }
 
@@ -185,13 +167,33 @@ impl SiteWriterApi for SiteWriter {
     fn write(
         &self,
         settings: &Settings,
-        tree: SiteTree,
+        converted: ConvertedSite,
         last: Option<&RenderedSite>,
     ) -> Result<(ServedSite, RenderedSite), BuildError> {
+        let ConvertedSite { site_tree, store } = converted;
         let front_page = self.front_page(settings)?;
-        let files = render_site(&tree, last, &settings.pages, front_page.as_ref())?;
-        let served = self.write_site(settings, &files)?;
-        Ok((served, RenderedSite { tree, files }))
+        let files = render_site(&site_tree, last, &settings.pages, front_page.as_ref())?;
+        let template = front_page.as_ref().map(|template| template.text.as_str());
+        let version = match target(settings) {
+            BuildTarget::Version(name) if settings.destination == Destination::Folder => Some(name),
+            _ => None,
+        };
+        let store = render_store(
+            &store,
+            &DescriptorSettings {
+                version: version.as_ref(),
+                options: &settings.pages,
+                front_page: template,
+            },
+        );
+        let served = self.write_site(settings, &files, store, template)?;
+        Ok((
+            served,
+            RenderedSite {
+                tree: site_tree,
+                files,
+            },
+        ))
     }
 }
 
@@ -225,26 +227,6 @@ fn built_versions(folder: &BuildFolder) -> BTreeSet<VersionName> {
     recorded_versions(folder).into_keys().collect()
 }
 
-/// Each version the output folder's marker records, with its files.
-fn recorded_versions(folder: &BuildFolder) -> BTreeMap<VersionName, BTreeSet<FilePath>> {
-    match folder.record() {
-        Some(Record::Versions { versions, .. }) => versions.clone(),
-        _ => BTreeMap::new(),
-    }
-}
-
-/// The versions the output folder holds once the version `name`, with
-/// `files`, is written into it.
-fn versions(
-    folder: &BuildFolder,
-    name: &VersionName,
-    files: &BTreeSet<FilePath>,
-) -> BTreeMap<VersionName, BTreeSet<FilePath>> {
-    let mut versions = recorded_versions(folder);
-    versions.insert(name.clone(), files.clone());
-    versions
-}
-
 /// What stops writing `target` into `output`, said of the version's folder
 /// when it is about that version.
 fn refusal(output: &Path, target: &BuildTarget, kind: OutputErrorKind) -> OutputError {
@@ -259,20 +241,6 @@ fn refusal(output: &Path, target: &BuildTarget, kind: OutputErrorKind) -> Output
         output: output.to_path_buf(),
         version,
         kind,
-    }
-}
-
-fn cannot_write(
-    folder: &BuildFolder,
-    version: Option<&VersionName>,
-    error: &IoError,
-) -> OutputError {
-    OutputError {
-        output: folder.output().to_path_buf(),
-        version: version.cloned(),
-        kind: OutputErrorKind::CannotBeWritten {
-            reason: error.to_string(),
-        },
     }
 }
 

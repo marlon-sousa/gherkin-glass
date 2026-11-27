@@ -1,0 +1,773 @@
+{
+  "format": 1,
+  "language": "en",
+  "lang": "en",
+  "feature": {
+    "kind": "feature",
+    "keyword": "Feature",
+    "note": false,
+    "name": "Anchors",
+    "description": "",
+    "tags": [],
+    "anchor": "",
+    "hash": "6c14701bf2edbc75156da72ae781486573cb74812354965643fc59621ca6be91",
+    "blocks": [
+      {
+        "kind": "background",
+        "keyword": "Background",
+        "note": false,
+        "name": "",
+        "description": "",
+        "tags": [],
+        "anchor": "background",
+        "hash": "5f7381873b38225fdd1e6237715cdcadec9b2663addc5e13ea7cf907a80b5161",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "a customer",
+            "kind": "given",
+            "sentence": "a customer",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "a customer",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "scenario",
+        "keyword": "Scenario",
+        "note": false,
+        "name": "Withdraw  Cash, quickly!",
+        "description": "",
+        "tags": [],
+        "anchor": "withdraw-cash-quickly",
+        "hash": "ac86ddff99947b91facf467b38921343df5ddd20ce89dacbece3eaf62b47cf1c",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "an account",
+            "kind": "given",
+            "sentence": "an account",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "an account",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "scenario",
+        "keyword": "Scenario",
+        "note": false,
+        "name": "The customer's card",
+        "description": "",
+        "tags": [],
+        "anchor": "the-customers-card",
+        "hash": "4f2a5fed2c4f5fb567af8790766a11a302f411d9fa3115227c63ce9b721e39e0",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "a card",
+            "kind": "given",
+            "sentence": "a card",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "a card",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "scenario",
+        "keyword": "Scenario",
+        "note": false,
+        "name": "The customer’s card",
+        "description": "",
+        "tags": [],
+        "anchor": "the-customers-card-2",
+        "hash": "a8a6c55ebe4fc5f811d7c6a04aa11b6c9f0e570f5de3c93633a0036e531b0f5e",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "another card",
+            "kind": "given",
+            "sentence": "another card",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "another card",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "scenario",
+        "keyword": "Scenario",
+        "note": false,
+        "name": "???",
+        "description": "",
+        "tags": [],
+        "anchor": "scenario",
+        "hash": "8184a5b1b3d84013cc63631aa37b27fe4491ec2a0f372647f4d46ac29bc92160",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "nothing to name it by",
+            "kind": "given",
+            "sentence": "nothing to name it by",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "nothing to name it by",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "scenario",
+        "keyword": "Scenario",
+        "note": false,
+        "name": "Step 2: pay",
+        "description": "",
+        "tags": [],
+        "anchor": "step-2-pay",
+        "hash": "770bcf6bd2ff43a11c47ee0b258b41ce7700a0fdd2f935255d8774b946c85192",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "a payment",
+            "kind": "given",
+            "sentence": "a payment",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "a payment",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "scenario-outline",
+        "keyword": "Scenario Outline",
+        "note": false,
+        "name": "Withdraw cash",
+        "description": "",
+        "tags": [],
+        "anchor": "withdraw-cash",
+        "hash": "f5dc79dcac616efbb73621468ddd52805022da69bf81af11fd8d1815859fefa8",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "<amount>",
+            "kind": "given",
+            "sentence": "\"…\"",
+            "slots": [
+              "<amount>"
+            ],
+            "parts": [
+              {
+                "kind": "placeholder",
+                "text": "<amount>",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [
+          {
+            "kind": "examples",
+            "keyword": "Examples",
+            "note": false,
+            "name": "",
+            "description": "",
+            "tags": [],
+            "anchor": "examples",
+            "hash": "1e785e66093af304716b866fb9b5c61370f1f0efcfbf232405f7659f20252747",
+            "blocks": [],
+            "steps": [],
+            "examples": [],
+            "place": 1,
+            "table": [
+              [
+                "amount"
+              ],
+              [
+                "10"
+              ],
+              [
+                "20"
+              ]
+            ],
+            "runs": [
+              {
+                "anchor": "withdraw-cash-row-1",
+                "steps": [
+                  {
+                    "keyword": "Given ",
+                    "text": "10",
+                    "kind": "given",
+                    "sentence": "10",
+                    "slots": [],
+                    "parts": [
+                      {
+                        "kind": "number",
+                        "text": "10",
+                        "parts": []
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": null
+                  }
+                ]
+              },
+              {
+                "anchor": "withdraw-cash-row-2-2",
+                "steps": [
+                  {
+                    "keyword": "Given ",
+                    "text": "20",
+                    "kind": "given",
+                    "sentence": "20",
+                    "slots": [],
+                    "parts": [
+                      {
+                        "kind": "number",
+                        "text": "20",
+                        "parts": []
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": null
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "examples",
+            "keyword": "Examples",
+            "note": false,
+            "name": "Large amounts",
+            "description": "",
+            "tags": [],
+            "anchor": "large-amounts",
+            "hash": "7944accb87b8a04cbaf39ea5ff4e5b079a81f866d785e26d2f952e318607a6c4",
+            "blocks": [],
+            "steps": [],
+            "examples": [],
+            "place": 2,
+            "table": [
+              [
+                "amount"
+              ],
+              [
+                "1000"
+              ]
+            ],
+            "runs": [
+              {
+                "anchor": "withdraw-cash-row-3",
+                "steps": [
+                  {
+                    "keyword": "Given ",
+                    "text": "1000",
+                    "kind": "given",
+                    "sentence": "1000",
+                    "slots": [],
+                    "parts": [
+                      {
+                        "kind": "number",
+                        "text": "1000",
+                        "parts": []
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": null
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "scenario",
+        "keyword": "Scenario",
+        "note": false,
+        "name": "Withdraw cash row 2",
+        "description": "",
+        "tags": [],
+        "anchor": "withdraw-cash-row-2",
+        "hash": "1c83f021cc6f2ee6f93739bb9e4c1035329e1820ff9f864940e9a01a00fab990",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "a name like a row's anchor",
+            "kind": "given",
+            "sentence": "a name like a row's anchor",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "a name like a row's anchor",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "rule",
+        "keyword": "Rule",
+        "note": false,
+        "name": "",
+        "description": "",
+        "tags": [],
+        "anchor": "rule",
+        "hash": "3eab55e977c740794bd2ec694090645f8c24b75bd50f8817f154d32de4a06520",
+        "blocks": [
+          {
+            "kind": "background",
+            "keyword": "Background",
+            "note": false,
+            "name": "",
+            "description": "",
+            "tags": [],
+            "anchor": "background-2",
+            "hash": "6d9bbb400be33573bd754f3b724d569c3526d99cfd5a602ac069a256d2037fc2",
+            "blocks": [],
+            "steps": [
+              {
+                "keyword": "Given ",
+                "text": "a rule's background",
+                "kind": "given",
+                "sentence": "a rule's background",
+                "slots": [],
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "a rule's background",
+                    "parts": []
+                  }
+                ],
+                "table": null,
+                "doc_string": null
+              }
+            ],
+            "examples": [],
+            "place": null,
+            "table": null,
+            "runs": []
+          },
+          {
+            "kind": "scenario",
+            "keyword": "Scenario",
+            "note": false,
+            "name": "Withdraw cash",
+            "description": "",
+            "tags": [],
+            "anchor": "withdraw-cash-2",
+            "hash": "b2f885e2b0702a3ba797229444ddda1be31cc76df7a91ee5d4831f26dfb94362",
+            "blocks": [],
+            "steps": [
+              {
+                "keyword": "Given ",
+                "text": "a repeated name",
+                "kind": "given",
+                "sentence": "a repeated name",
+                "slots": [],
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "a repeated name",
+                    "parts": []
+                  }
+                ],
+                "table": null,
+                "doc_string": null
+              }
+            ],
+            "examples": [],
+            "place": null,
+            "table": null,
+            "runs": []
+          }
+        ],
+        "steps": [],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "rule",
+        "keyword": "Rule",
+        "note": false,
+        "name": "Étape SPÉCIALE",
+        "description": "",
+        "tags": [],
+        "anchor": "étape-spéciale",
+        "hash": "e072d957e953dcbad1ac08b9ef08bc7cccecd38691cb16b11187fdd09cc5c69c",
+        "blocks": [
+          {
+            "kind": "scenario",
+            "keyword": "Scenario",
+            "note": false,
+            "name": "Scenario",
+            "description": "",
+            "tags": [],
+            "anchor": "scenario-2",
+            "hash": "e2ae9e2d987206ddd4ab0282934f2eb61fe9486b3b96805b85b968303cd96f83",
+            "blocks": [],
+            "steps": [
+              {
+                "keyword": "Given ",
+                "text": "a name like the keyword",
+                "kind": "given",
+                "sentence": "a name like the keyword",
+                "slots": [],
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "a name like the keyword",
+                    "parts": []
+                  }
+                ],
+                "table": null,
+                "doc_string": null
+              }
+            ],
+            "examples": [],
+            "place": null,
+            "table": null,
+            "runs": []
+          },
+          {
+            "kind": "scenario",
+            "keyword": "Scenario",
+            "note": false,
+            "name": "Anchors",
+            "description": "",
+            "tags": [],
+            "anchor": "anchors",
+            "hash": "7ab90f2cc35d36cd5b8a155a9ac392ac555cb9b1659682e0ab9709257f8b956e",
+            "blocks": [],
+            "steps": [
+              {
+                "keyword": "Given ",
+                "text": "the feature's own name, which has no anchor",
+                "kind": "given",
+                "sentence": "the feature's own name, which has no anchor",
+                "slots": [],
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "the feature's own name, which has no anchor",
+                    "parts": []
+                  }
+                ],
+                "table": null,
+                "doc_string": null
+              }
+            ],
+            "examples": [],
+            "place": null,
+            "table": null,
+            "runs": []
+          },
+          {
+            "kind": "scenario",
+            "keyword": "Scenario",
+            "note": false,
+            "name": "ÉTAPE FINALE",
+            "description": "",
+            "tags": [],
+            "anchor": "étape-finale",
+            "hash": "58c06de202323083d1cb26caf044cd4c6a7bead5b87ba1494a909a1fc6275f6b",
+            "blocks": [],
+            "steps": [
+              {
+                "keyword": "Given ",
+                "text": "a name written with a combining accent",
+                "kind": "given",
+                "sentence": "a name written with a combining accent",
+                "slots": [],
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "a name written with a combining accent",
+                    "parts": []
+                  }
+                ],
+                "table": null,
+                "doc_string": null
+              }
+            ],
+            "examples": [],
+            "place": null,
+            "table": null,
+            "runs": []
+          },
+          {
+            "kind": "scenario",
+            "keyword": "Scenario",
+            "note": false,
+            "name": "हिन्दी में",
+            "description": "",
+            "tags": [],
+            "anchor": "हिन्दी-में",
+            "hash": "33bba0a985985c2c75af43e4d14076d7c7eac699a610d31d0f3932ac259fd5ff",
+            "blocks": [],
+            "steps": [
+              {
+                "keyword": "Given ",
+                "text": "a name in Devanagari, with its virama",
+                "kind": "given",
+                "sentence": "a name in Devanagari, with its virama",
+                "slots": [],
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "a name in Devanagari, with its virama",
+                    "parts": []
+                  }
+                ],
+                "table": null,
+                "doc_string": null
+              }
+            ],
+            "examples": [],
+            "place": null,
+            "table": null,
+            "runs": []
+          },
+          {
+            "kind": "scenario",
+            "keyword": "Scenario",
+            "note": false,
+            "name": "❤️ love",
+            "description": "",
+            "tags": [],
+            "anchor": "love",
+            "hash": "1cb8cd76119b5e1ccb80fec86a45e3c6042bf9c53e64034fa7a8d65f834932b2",
+            "blocks": [],
+            "steps": [
+              {
+                "keyword": "Given ",
+                "text": "an emoji with its variation selector",
+                "kind": "given",
+                "sentence": "an emoji with its variation selector",
+                "slots": [],
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "an emoji with its variation selector",
+                    "parts": []
+                  }
+                ],
+                "table": null,
+                "doc_string": null
+              }
+            ],
+            "examples": [],
+            "place": null,
+            "table": null,
+            "runs": []
+          },
+          {
+            "kind": "scenario",
+            "keyword": "Scenario",
+            "note": false,
+            "name": "می‌خواهم",
+            "description": "",
+            "tags": [],
+            "anchor": "می‌خواهم",
+            "hash": "88e5f6e2897cd26daa7614258e7f127ac6c4dafd0146a067a6c40437ad7d2b1f",
+            "blocks": [],
+            "steps": [
+              {
+                "keyword": "Given ",
+                "text": "a Persian word with its zero width non-joiner",
+                "kind": "given",
+                "sentence": "a Persian word with its zero width non-joiner",
+                "slots": [],
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "a Persian word with its zero width non-joiner",
+                    "parts": []
+                  }
+                ],
+                "table": null,
+                "doc_string": null
+              }
+            ],
+            "examples": [],
+            "place": null,
+            "table": null,
+            "runs": []
+          },
+          {
+            "kind": "scenario-outline",
+            "keyword": "Scenario Outline",
+            "note": false,
+            "name": "Headers only",
+            "description": "",
+            "tags": [],
+            "anchor": "headers-only",
+            "hash": "74f9f6dce31c07ba9de57ac7e9eabbe56fd5f704ec3d7e3407f684c30688ba28",
+            "blocks": [],
+            "steps": [
+              {
+                "keyword": "Given ",
+                "text": "<n>",
+                "kind": "given",
+                "sentence": "\"…\"",
+                "slots": [
+                  "<n>"
+                ],
+                "parts": [
+                  {
+                    "kind": "placeholder",
+                    "text": "<n>",
+                    "parts": []
+                  }
+                ],
+                "table": null,
+                "doc_string": null
+              }
+            ],
+            "examples": [
+              {
+                "kind": "examples",
+                "keyword": "Examples",
+                "note": false,
+                "name": "",
+                "description": "",
+                "tags": [],
+                "anchor": "examples-2",
+                "hash": "3335255ec0d03d56a0b365bcaa8184e6e1ffecfb36c4a4763027c74dad3606f3",
+                "blocks": [],
+                "steps": [],
+                "examples": [],
+                "place": 1,
+                "table": [
+                  [
+                    "n"
+                  ]
+                ],
+                "runs": []
+              },
+              {
+                "kind": "examples",
+                "keyword": "Examples",
+                "note": false,
+                "name": "No table",
+                "description": "",
+                "tags": [],
+                "anchor": "no-table",
+                "hash": "99de132338a576e3a6febfd4e9e3f1e76564acc8ea533c13f23db7788e835d05",
+                "blocks": [],
+                "steps": [],
+                "examples": [],
+                "place": 2,
+                "table": null,
+                "runs": []
+              }
+            ],
+            "place": null,
+            "table": null,
+            "runs": []
+          }
+        ],
+        "steps": [],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      }
+    ],
+    "steps": [],
+    "examples": [],
+    "place": null,
+    "table": null,
+    "runs": []
+  }
+}

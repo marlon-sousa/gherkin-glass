@@ -1,0 +1,323 @@
+{
+  "format": 1,
+  "language": "en",
+  "lang": "en",
+  "feature": {
+    "kind": "feature",
+    "keyword": "Feature",
+    "note": false,
+    "name": "Old accounts",
+    "description": "",
+    "tags": [],
+    "anchor": "",
+    "hash": "00ac1337418d9d88fd1649b78e468ba52c5afff79197bb4a75d4c8363ab68841",
+    "blocks": [
+      {
+        "kind": "scenario",
+        "keyword": "Scenario",
+        "note": false,
+        "name": "Star steps",
+        "description": "",
+        "tags": [],
+        "anchor": "star-steps",
+        "hash": "49e5157e286a2776ad06e7373ae4b43deb454d9fd3dff246e4a3504aa4f1fd3b",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "the user \"fay\" exists",
+            "kind": "given",
+            "sentence": "the user \"…\" exists",
+            "slots": [
+              "\"fay\""
+            ],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "the user ",
+                "parts": []
+              },
+              {
+                "kind": "parameter",
+                "text": "\"fay\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"fay\"",
+                    "parts": []
+                  }
+                ]
+              },
+              {
+                "kind": "text",
+                "text": " exists",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "When ",
+            "text": "the old account is opened",
+            "kind": "when",
+            "sentence": "the old account is opened",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "the old account is opened",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "Then ",
+            "text": "it is shown",
+            "kind": "then",
+            "sentence": "it is shown",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "it is shown",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "* ",
+            "text": "a star step",
+            "kind": "given",
+            "sentence": "a star step",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "a star step",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "And ",
+            "text": "a step after a star",
+            "kind": "given",
+            "sentence": "a step after a star",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "a step after a star",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "Given ",
+            "text": "a step with a table:",
+            "kind": "given",
+            "sentence": "a step with a table:",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "a step with a table:",
+                "parts": []
+              }
+            ],
+            "table": [
+              [
+                "a"
+              ]
+            ],
+            "doc_string": null
+          },
+          {
+            "keyword": "And ",
+            "text": "a step with a doc string:",
+            "kind": "given",
+            "sentence": "a step with a doc string:",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "a step with a doc string:",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": {
+              "media_type": null,
+              "content": "text"
+            }
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "scenario-outline",
+        "keyword": "Scenario Outline",
+        "note": false,
+        "name": "Two examples",
+        "description": "",
+        "tags": [],
+        "anchor": "two-examples",
+        "hash": "0a54049b2614df2f27f6cf3228480de49b70861c739708c2696c6156eeb29210",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "the user <first> and <second> meet",
+            "kind": "given",
+            "sentence": "the user \"…\" and \"…\" meet",
+            "slots": [
+              "<first>",
+              "<second>"
+            ],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "the user ",
+                "parts": []
+              },
+              {
+                "kind": "placeholder",
+                "text": "<first>",
+                "parts": []
+              },
+              {
+                "kind": "text",
+                "text": " and ",
+                "parts": []
+              },
+              {
+                "kind": "placeholder",
+                "text": "<second>",
+                "parts": []
+              },
+              {
+                "kind": "text",
+                "text": " meet",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [
+          {
+            "kind": "examples",
+            "keyword": "Examples",
+            "note": false,
+            "name": "",
+            "description": "",
+            "tags": [],
+            "anchor": "examples",
+            "hash": "46026e77aae2be6b9864c25f705733bc6e5c90760e99fceadc1fd297132a6a8b",
+            "blocks": [],
+            "steps": [],
+            "examples": [],
+            "place": 1,
+            "table": [
+              [
+                "first"
+              ],
+              [
+                "ana"
+              ]
+            ],
+            "runs": [
+              {
+                "anchor": "two-examples-row-1",
+                "steps": [
+                  {
+                    "keyword": "Given ",
+                    "text": "the user ana and <second> meet",
+                    "kind": "given",
+                    "sentence": "the user ana and <second> meet",
+                    "slots": [],
+                    "parts": [
+                      {
+                        "kind": "text",
+                        "text": "the user ana and <second> meet",
+                        "parts": []
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": null
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "examples",
+            "keyword": "Examples",
+            "note": false,
+            "name": "",
+            "description": "",
+            "tags": [],
+            "anchor": "examples-2",
+            "hash": "8a80ed2dafb253a940613ecf5b80c817d996987474377302618e938a99100d38",
+            "blocks": [],
+            "steps": [],
+            "examples": [],
+            "place": 2,
+            "table": [
+              [
+                "second"
+              ],
+              [
+                "bia"
+              ]
+            ],
+            "runs": [
+              {
+                "anchor": "two-examples-row-2",
+                "steps": [
+                  {
+                    "keyword": "Given ",
+                    "text": "the user <first> and bia meet",
+                    "kind": "given",
+                    "sentence": "the user <first> and bia meet",
+                    "slots": [],
+                    "parts": [
+                      {
+                        "kind": "text",
+                        "text": "the user <first> and bia meet",
+                        "parts": []
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": null
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "place": null,
+        "table": null,
+        "runs": []
+      }
+    ],
+    "steps": [],
+    "examples": [],
+    "place": null,
+    "table": null,
+    "runs": []
+  }
+}

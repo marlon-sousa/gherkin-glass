@@ -1,0 +1,665 @@
+{
+  "format": 1,
+  "language": "en",
+  "lang": "en",
+  "feature": {
+    "kind": "feature",
+    "keyword": "Feature",
+    "note": false,
+    "name": "Withdraw cash at the counter",
+    "description": "Outlines, and the scenarios their examples produce.",
+    "tags": [],
+    "anchor": "",
+    "hash": "c5d0dec8131ec244f7fdac78bb288fcc98fc1caac866047db7e30e02d6660370",
+    "blocks": [
+      {
+        "kind": "scenario-outline",
+        "keyword": "Scenario Outline",
+        "note": false,
+        "name": "Withdraw cash",
+        "description": "",
+        "tags": [],
+        "anchor": "withdraw-cash",
+        "hash": "5a7813a2679ac703e0a20b39ec4a3b2dbe85415f04dcd6ec6ab46f5d633900ff",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "a balance of <balance>",
+            "kind": "given",
+            "sentence": "a balance of \"…\"",
+            "slots": [
+              "<balance>"
+            ],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "a balance of ",
+                "parts": []
+              },
+              {
+                "kind": "placeholder",
+                "text": "<balance>",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "When ",
+            "text": "<amount> is withdrawn by <who>",
+            "kind": "when",
+            "sentence": "\"…\" is withdrawn by <who>",
+            "slots": [
+              "<amount>"
+            ],
+            "parts": [
+              {
+                "kind": "placeholder",
+                "text": "<amount>",
+                "parts": []
+              },
+              {
+                "kind": "text",
+                "text": " is withdrawn by <who>",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "Then ",
+            "text": "the account shows",
+            "kind": "then",
+            "sentence": "the account shows",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "the account shows",
+                "parts": []
+              }
+            ],
+            "table": [
+              [
+                "balance",
+                "<amount>"
+              ],
+              [
+                "<left>",
+                "<none>"
+              ]
+            ],
+            "doc_string": null
+          },
+          {
+            "keyword": "And ",
+            "text": "the receipt reads",
+            "kind": "then",
+            "sentence": "the receipt reads",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "the receipt reads",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": {
+              "media_type": "<format>",
+              "content": "Withdrawn: <amount>"
+            }
+          }
+        ],
+        "examples": [
+          {
+            "kind": "examples",
+            "keyword": "Examples",
+            "note": false,
+            "name": "Small",
+            "description": "",
+            "tags": [],
+            "anchor": "small",
+            "hash": "5d9a47bb788f4b601a94047934f9473669b3220904dfbf97fdd86803729527d1",
+            "blocks": [],
+            "steps": [],
+            "examples": [],
+            "place": 1,
+            "table": [
+              [
+                "amount",
+                "balance",
+                "left",
+                "format"
+              ],
+              [
+                "10",
+                "100",
+                "90",
+                "text"
+              ],
+              [
+                "20",
+                "100",
+                "80",
+                "text"
+              ]
+            ],
+            "runs": [
+              {
+                "anchor": "withdraw-cash-row-1",
+                "steps": [
+                  {
+                    "keyword": "Given ",
+                    "text": "a balance of 100",
+                    "kind": "given",
+                    "sentence": "a balance of 100",
+                    "slots": [],
+                    "parts": [
+                      {
+                        "kind": "text",
+                        "text": "a balance of ",
+                        "parts": []
+                      },
+                      {
+                        "kind": "number",
+                        "text": "100",
+                        "parts": []
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": null
+                  },
+                  {
+                    "keyword": "When ",
+                    "text": "10 is withdrawn by <who>",
+                    "kind": "when",
+                    "sentence": "10 is withdrawn by <who>",
+                    "slots": [],
+                    "parts": [
+                      {
+                        "kind": "number",
+                        "text": "10",
+                        "parts": []
+                      },
+                      {
+                        "kind": "text",
+                        "text": " is withdrawn by <who>",
+                        "parts": []
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": null
+                  },
+                  {
+                    "keyword": "Then ",
+                    "text": "the account shows",
+                    "kind": "then",
+                    "sentence": "the account shows",
+                    "slots": [],
+                    "parts": [
+                      {
+                        "kind": "text",
+                        "text": "the account shows",
+                        "parts": []
+                      }
+                    ],
+                    "table": [
+                      [
+                        "balance",
+                        "10"
+                      ],
+                      [
+                        "90",
+                        "<none>"
+                      ]
+                    ],
+                    "doc_string": null
+                  },
+                  {
+                    "keyword": "And ",
+                    "text": "the receipt reads",
+                    "kind": "then",
+                    "sentence": "the receipt reads",
+                    "slots": [],
+                    "parts": [
+                      {
+                        "kind": "text",
+                        "text": "the receipt reads",
+                        "parts": []
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": {
+                      "media_type": "text",
+                      "content": "Withdrawn: 10"
+                    }
+                  }
+                ]
+              },
+              {
+                "anchor": "withdraw-cash-row-2",
+                "steps": [
+                  {
+                    "keyword": "Given ",
+                    "text": "a balance of 100",
+                    "kind": "given",
+                    "sentence": "a balance of 100",
+                    "slots": [],
+                    "parts": [
+                      {
+                        "kind": "text",
+                        "text": "a balance of ",
+                        "parts": []
+                      },
+                      {
+                        "kind": "number",
+                        "text": "100",
+                        "parts": []
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": null
+                  },
+                  {
+                    "keyword": "When ",
+                    "text": "20 is withdrawn by <who>",
+                    "kind": "when",
+                    "sentence": "20 is withdrawn by <who>",
+                    "slots": [],
+                    "parts": [
+                      {
+                        "kind": "number",
+                        "text": "20",
+                        "parts": []
+                      },
+                      {
+                        "kind": "text",
+                        "text": " is withdrawn by <who>",
+                        "parts": []
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": null
+                  },
+                  {
+                    "keyword": "Then ",
+                    "text": "the account shows",
+                    "kind": "then",
+                    "sentence": "the account shows",
+                    "slots": [],
+                    "parts": [
+                      {
+                        "kind": "text",
+                        "text": "the account shows",
+                        "parts": []
+                      }
+                    ],
+                    "table": [
+                      [
+                        "balance",
+                        "20"
+                      ],
+                      [
+                        "80",
+                        "<none>"
+                      ]
+                    ],
+                    "doc_string": null
+                  },
+                  {
+                    "keyword": "And ",
+                    "text": "the receipt reads",
+                    "kind": "then",
+                    "sentence": "the receipt reads",
+                    "slots": [],
+                    "parts": [
+                      {
+                        "kind": "text",
+                        "text": "the receipt reads",
+                        "parts": []
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": {
+                      "media_type": "text",
+                      "content": "Withdrawn: 20"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "examples",
+            "keyword": "Examples",
+            "note": false,
+            "name": "Large",
+            "description": "",
+            "tags": [],
+            "anchor": "large",
+            "hash": "35864c0445da6d942158b594fb89f3e30edd1245b889c4fe287632d25a79e9bb",
+            "blocks": [],
+            "steps": [],
+            "examples": [],
+            "place": 2,
+            "table": [
+              [
+                "amount",
+                "balance",
+                "left",
+                "format"
+              ],
+              [
+                "500",
+                "1000",
+                "500",
+                "json"
+              ]
+            ],
+            "runs": [
+              {
+                "anchor": "withdraw-cash-row-3",
+                "steps": [
+                  {
+                    "keyword": "Given ",
+                    "text": "a balance of 1000",
+                    "kind": "given",
+                    "sentence": "a balance of 1000",
+                    "slots": [],
+                    "parts": [
+                      {
+                        "kind": "text",
+                        "text": "a balance of ",
+                        "parts": []
+                      },
+                      {
+                        "kind": "number",
+                        "text": "1000",
+                        "parts": []
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": null
+                  },
+                  {
+                    "keyword": "When ",
+                    "text": "500 is withdrawn by <who>",
+                    "kind": "when",
+                    "sentence": "500 is withdrawn by <who>",
+                    "slots": [],
+                    "parts": [
+                      {
+                        "kind": "number",
+                        "text": "500",
+                        "parts": []
+                      },
+                      {
+                        "kind": "text",
+                        "text": " is withdrawn by <who>",
+                        "parts": []
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": null
+                  },
+                  {
+                    "keyword": "Then ",
+                    "text": "the account shows",
+                    "kind": "then",
+                    "sentence": "the account shows",
+                    "slots": [],
+                    "parts": [
+                      {
+                        "kind": "text",
+                        "text": "the account shows",
+                        "parts": []
+                      }
+                    ],
+                    "table": [
+                      [
+                        "balance",
+                        "500"
+                      ],
+                      [
+                        "500",
+                        "<none>"
+                      ]
+                    ],
+                    "doc_string": null
+                  },
+                  {
+                    "keyword": "And ",
+                    "text": "the receipt reads",
+                    "kind": "then",
+                    "sentence": "the receipt reads",
+                    "slots": [],
+                    "parts": [
+                      {
+                        "kind": "text",
+                        "text": "the receipt reads",
+                        "parts": []
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": {
+                      "media_type": "json",
+                      "content": "Withdrawn: 500"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "examples",
+            "keyword": "Examples",
+            "note": false,
+            "name": "None yet",
+            "description": "",
+            "tags": [],
+            "anchor": "none-yet",
+            "hash": "06e772a4275ee2b7d2d5e21072f8bc964411f8e6628a110fbc84089343744b40",
+            "blocks": [],
+            "steps": [],
+            "examples": [],
+            "place": 3,
+            "table": [
+              [
+                "amount",
+                "balance",
+                "left",
+                "format"
+              ]
+            ],
+            "runs": []
+          }
+        ],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "scenario-outline",
+        "keyword": "Scenario Outline",
+        "note": false,
+        "name": "",
+        "description": "",
+        "tags": [],
+        "anchor": "scenario-outline",
+        "hash": "a8c13d78f18511b68ba77d0f4280e53367b3056d5141cad814fcfd003335b773",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "<x> and <y>",
+            "kind": "given",
+            "sentence": "\"…\" and \"…\"",
+            "slots": [
+              "<x>",
+              "<y>"
+            ],
+            "parts": [
+              {
+                "kind": "placeholder",
+                "text": "<x>",
+                "parts": []
+              },
+              {
+                "kind": "text",
+                "text": " and ",
+                "parts": []
+              },
+              {
+                "kind": "placeholder",
+                "text": "<y>",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [
+          {
+            "kind": "examples",
+            "keyword": "Examples",
+            "note": false,
+            "name": "",
+            "description": "",
+            "tags": [],
+            "anchor": "examples",
+            "hash": "cdab196a8bb758f791115a82c1d14cde6c72cbd72fba2e45048267044246aa40",
+            "blocks": [],
+            "steps": [],
+            "examples": [],
+            "place": 1,
+            "table": [
+              [
+                "x",
+                "y",
+                "x"
+              ],
+              [
+                "1",
+                "<x>",
+                "3"
+              ]
+            ],
+            "runs": [
+              {
+                "anchor": "scenario-outline-row-1",
+                "steps": [
+                  {
+                    "keyword": "Given ",
+                    "text": "1 and <x>",
+                    "kind": "given",
+                    "sentence": "1 and <x>",
+                    "slots": [],
+                    "parts": [
+                      {
+                        "kind": "number",
+                        "text": "1",
+                        "parts": []
+                      },
+                      {
+                        "kind": "text",
+                        "text": " and <x>",
+                        "parts": []
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": null
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "scenario-outline",
+        "keyword": "Scenario Outline",
+        "note": false,
+        "name": "Nothing to produce",
+        "description": "",
+        "tags": [],
+        "anchor": "nothing-to-produce",
+        "hash": "1d58b8e78f4bd1b2bcc93653dbd630498c7f130b10854cb8b40da61028fcfbd4",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "<x>",
+            "kind": "given",
+            "sentence": "\"…\"",
+            "slots": [
+              "<x>"
+            ],
+            "parts": [
+              {
+                "kind": "placeholder",
+                "text": "<x>",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [
+          {
+            "kind": "examples",
+            "keyword": "Examples",
+            "note": false,
+            "name": "",
+            "description": "",
+            "tags": [],
+            "anchor": "examples-2",
+            "hash": "bd9c52f8a4b4f1258f93b26a803086e81f2aecbe38cd551891cc2e51dcda7a38",
+            "blocks": [],
+            "steps": [],
+            "examples": [],
+            "place": 1,
+            "table": [
+              [
+                "x"
+              ]
+            ],
+            "runs": []
+          },
+          {
+            "kind": "examples",
+            "keyword": "Examples",
+            "note": false,
+            "name": "",
+            "description": "",
+            "tags": [],
+            "anchor": "examples-3",
+            "hash": "894797e5a4c09a75e1e813336d04b6cc9836b8937343554118981faad250fac5",
+            "blocks": [],
+            "steps": [],
+            "examples": [],
+            "place": 2,
+            "table": null,
+            "runs": []
+          }
+        ],
+        "place": null,
+        "table": null,
+        "runs": []
+      }
+    ],
+    "steps": [],
+    "examples": [],
+    "place": null,
+    "table": null,
+    "runs": []
+  }
+}

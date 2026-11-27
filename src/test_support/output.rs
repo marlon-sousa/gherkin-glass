@@ -41,6 +41,7 @@ pub(crate) fn two_versions() -> OutputContents {
     let record = Record::Versions {
         page: set(&["index.html"]),
         versions,
+        data: set(&[]),
     };
     folder(
         &[

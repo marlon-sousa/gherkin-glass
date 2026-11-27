@@ -1,0 +1,227 @@
+{
+  "format": 1,
+  "language": "pt",
+  "lang": "pt",
+  "feature": {
+    "kind": "feature",
+    "keyword": "Funcionalidade",
+    "note": true,
+    "name": "Entrar",
+    "description": "",
+    "tags": [],
+    "anchor": "",
+    "hash": "d586ed3e7ec008eb2c4f208122737d131349ea2a30e084e33fc766878098dd41",
+    "blocks": [
+      {
+        "kind": "scenario",
+        "keyword": "Cenário",
+        "note": true,
+        "name": "Ana entra",
+        "description": "",
+        "tags": [],
+        "anchor": "ana-entra",
+        "hash": "405741e600b6e54d0f125d73a754809ae2ae938ae8c2efa6594c0f3785ad02d4",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Dado ",
+            "text": "o usuário \"ana\" entra",
+            "kind": "given",
+            "sentence": "o usuário \"…\" entra",
+            "slots": [
+              "\"ana\""
+            ],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "o usuário ",
+                "parts": []
+              },
+              {
+                "kind": "parameter",
+                "text": "\"ana\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"ana\"",
+                    "parts": []
+                  }
+                ]
+              },
+              {
+                "kind": "text",
+                "text": " entra",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "Quando ",
+            "text": "ela abre a conta",
+            "kind": "when",
+            "sentence": "ela abre a conta",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "ela abre a conta",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "Então ",
+            "text": "ela vê \"Bem-vinda\"",
+            "kind": "then",
+            "sentence": "ela vê \"…\"",
+            "slots": [
+              "\"Bem-vinda\""
+            ],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "ela vê ",
+                "parts": []
+              },
+              {
+                "kind": "parameter",
+                "text": "\"Bem-vinda\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"Bem-vinda\"",
+                    "parts": []
+                  }
+                ]
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "E ",
+            "text": "ela vê \"Bem-vinda\"",
+            "kind": "then",
+            "sentence": "ela vê \"…\"",
+            "slots": [
+              "\"Bem-vinda\""
+            ],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "ela vê ",
+                "parts": []
+              },
+              {
+                "kind": "parameter",
+                "text": "\"Bem-vinda\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"Bem-vinda\"",
+                    "parts": []
+                  }
+                ]
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "Mas ",
+            "text": "ela não vê \"Erro\"",
+            "kind": "then",
+            "sentence": "ela não vê \"…\"",
+            "slots": [
+              "\"Erro\""
+            ],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "ela não vê ",
+                "parts": []
+              },
+              {
+                "kind": "parameter",
+                "text": "\"Erro\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"Erro\"",
+                    "parts": []
+                  }
+                ]
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "scenario",
+        "keyword": "Cenário",
+        "note": true,
+        "name": "Gil",
+        "description": "",
+        "tags": [],
+        "anchor": "gil",
+        "hash": "712488e62f9d70bdad37669b9b7cb706a8dffa4a090ae84e5ff60f22636a7fb1",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Dado ",
+            "text": "the user \"gil\" exists",
+            "kind": "given",
+            "sentence": "the user \"…\" exists",
+            "slots": [
+              "\"gil\""
+            ],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "the user ",
+                "parts": []
+              },
+              {
+                "kind": "parameter",
+                "text": "\"gil\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"gil\"",
+                    "parts": []
+                  }
+                ]
+              },
+              {
+                "kind": "text",
+                "text": " exists",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      }
+    ],
+    "steps": [],
+    "examples": [],
+    "place": null,
+    "table": null,
+    "runs": []
+  }
+}

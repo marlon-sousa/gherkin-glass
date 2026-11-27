@@ -1,0 +1,354 @@
+{
+  "format": 1,
+  "language": "en",
+  "lang": "en",
+  "feature": {
+    "kind": "feature",
+    "keyword": "Feature",
+    "note": false,
+    "name": "Transfers",
+    "description": "",
+    "tags": [],
+    "anchor": "",
+    "hash": "20e1df7e6ae2247c65c35cb090a36e46f445ac6bad83c120ebaf153ff8e2df70",
+    "blocks": [
+      {
+        "kind": "background",
+        "keyword": "Background",
+        "note": false,
+        "name": "",
+        "description": "",
+        "tags": [],
+        "anchor": "background",
+        "hash": "003c2ebf4dcf4bc62e2093db8341cc02a43bf5ce57cbfd6bae507ea6d344732a",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "an account with these balances:",
+            "kind": "given",
+            "sentence": "an account with these balances:",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "an account with these balances:",
+                "parts": []
+              }
+            ],
+            "table": [
+              [
+                "account",
+                "balance"
+              ],
+              [
+                "current",
+                "100"
+              ]
+            ],
+            "doc_string": null
+          },
+          {
+            "keyword": "And ",
+            "text": "a note",
+            "kind": "given",
+            "sentence": "a note",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "a note",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": {
+              "media_type": "text",
+              "content": "Opened today."
+            }
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "scenario",
+        "keyword": "Scenario",
+        "note": false,
+        "name": "Outside any rule",
+        "description": "",
+        "tags": [],
+        "anchor": "outside-any-rule",
+        "hash": "c1ee42aba1484fcc70cb6ec86ec970bbee9c41385bc5ab35bf76739eca6ba0bf",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "When ",
+            "text": "10 is moved",
+            "kind": "when",
+            "sentence": "10 is moved",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "number",
+                "text": "10",
+                "parts": []
+              },
+              {
+                "kind": "text",
+                "text": " is moved",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "Then ",
+            "text": "the balance is 90",
+            "kind": "then",
+            "sentence": "the balance is 90",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "the balance is ",
+                "parts": []
+              },
+              {
+                "kind": "number",
+                "text": "90",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "rule",
+        "keyword": "Rule",
+        "note": false,
+        "name": "Limits",
+        "description": "",
+        "tags": [],
+        "anchor": "limits",
+        "hash": "0e1266e04564cc6adf52545f82faf47256c48cd7106d230acfdb7d00f5598d07",
+        "blocks": [
+          {
+            "kind": "background",
+            "keyword": "Background",
+            "note": false,
+            "name": "Over the limit",
+            "description": "",
+            "tags": [],
+            "anchor": "over-the-limit",
+            "hash": "539e9154d6fdcf3fd3e59a3a118124e718c38ba56d9fc7998896d5443f04d840",
+            "blocks": [],
+            "steps": [
+              {
+                "keyword": "Given ",
+                "text": "a limit of 50",
+                "kind": "given",
+                "sentence": "a limit of 50",
+                "slots": [],
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "a limit of ",
+                    "parts": []
+                  },
+                  {
+                    "kind": "number",
+                    "text": "50",
+                    "parts": []
+                  }
+                ],
+                "table": null,
+                "doc_string": null
+              }
+            ],
+            "examples": [],
+            "place": null,
+            "table": null,
+            "runs": []
+          },
+          {
+            "kind": "scenario-outline",
+            "keyword": "Scenario Outline",
+            "note": false,
+            "name": "Move <amount>",
+            "description": "",
+            "tags": [],
+            "anchor": "move-amount",
+            "hash": "19a6a714b4a26acae553d48bc1027e3e7cb67c623d021a385e83f5700ed783ae",
+            "blocks": [],
+            "steps": [
+              {
+                "keyword": "When ",
+                "text": "<amount> is moved",
+                "kind": "when",
+                "sentence": "\"…\" is moved",
+                "slots": [
+                  "<amount>"
+                ],
+                "parts": [
+                  {
+                    "kind": "placeholder",
+                    "text": "<amount>",
+                    "parts": []
+                  },
+                  {
+                    "kind": "text",
+                    "text": " is moved",
+                    "parts": []
+                  }
+                ],
+                "table": null,
+                "doc_string": null
+              }
+            ],
+            "examples": [
+              {
+                "kind": "examples",
+                "keyword": "Examples",
+                "note": false,
+                "name": "",
+                "description": "",
+                "tags": [],
+                "anchor": "examples",
+                "hash": "782a96d9d30b49af4b6e1dd9af0b131fe23787ebfc94180ff94f9b97f72ec384",
+                "blocks": [],
+                "steps": [],
+                "examples": [],
+                "place": 1,
+                "table": [
+                  [
+                    "amount"
+                  ],
+                  [
+                    "60"
+                  ]
+                ],
+                "runs": [
+                  {
+                    "anchor": "move-amount-row-1",
+                    "steps": [
+                      {
+                        "keyword": "When ",
+                        "text": "60 is moved",
+                        "kind": "when",
+                        "sentence": "60 is moved",
+                        "slots": [],
+                        "parts": [
+                          {
+                            "kind": "number",
+                            "text": "60",
+                            "parts": []
+                          },
+                          {
+                            "kind": "text",
+                            "text": " is moved",
+                            "parts": []
+                          }
+                        ],
+                        "table": null,
+                        "doc_string": null
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "place": null,
+            "table": null,
+            "runs": []
+          }
+        ],
+        "steps": [],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "rule",
+        "keyword": "Rule",
+        "note": false,
+        "name": "No background of its own",
+        "description": "",
+        "tags": [],
+        "anchor": "no-background-of-its-own",
+        "hash": "9d6cc4fec7a839a32e90f2cdbe231f87b6b76d945505f9c2a7ec25965182f870",
+        "blocks": [
+          {
+            "kind": "scenario",
+            "keyword": "Scenario",
+            "note": false,
+            "name": "Only the feature's background",
+            "description": "",
+            "tags": [],
+            "anchor": "only-the-features-background",
+            "hash": "d7c2a2a5bd9038acaec06d7b5524a24879bbe0fe1bc35c3a36690c37d8e41601",
+            "blocks": [],
+            "steps": [
+              {
+                "keyword": "Then ",
+                "text": "nothing changes",
+                "kind": "then",
+                "sentence": "nothing changes",
+                "slots": [],
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "nothing changes",
+                    "parts": []
+                  }
+                ],
+                "table": null,
+                "doc_string": null
+              }
+            ],
+            "examples": [],
+            "place": null,
+            "table": null,
+            "runs": []
+          },
+          {
+            "kind": "scenario",
+            "keyword": "Scenario",
+            "note": false,
+            "name": "Nothing of its own",
+            "description": "",
+            "tags": [],
+            "anchor": "nothing-of-its-own",
+            "hash": "c99f64e49b1efa9a53450c8ae4f1293a21fc47334b4a6584d0bbb3cc93f3b30a",
+            "blocks": [],
+            "steps": [],
+            "examples": [],
+            "place": null,
+            "table": null,
+            "runs": []
+          }
+        ],
+        "steps": [],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      }
+    ],
+    "steps": [],
+    "examples": [],
+    "place": null,
+    "table": null,
+    "runs": []
+  }
+}

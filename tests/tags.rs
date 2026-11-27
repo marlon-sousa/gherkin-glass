@@ -9,15 +9,18 @@
     reason = "a test file's helpers are test code, which clippy.toml lets panic"
 )]
 
-use std::collections::BTreeMap;
-use std::fs::{read, read_dir, remove_dir_all};
+use std::fs::{read, remove_dir_all};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 
+#[path = "support/site_files.rs"]
+mod site_files;
+#[path = "support/store_json.rs"]
+mod store_json;
 #[path = "support/version_placeholder.rs"]
 mod version_placeholder;
 
-use version_placeholder::with_version_placeholder;
+use site_files::{assert_same_site, files};
 
 fn fixtures() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures")
@@ -31,28 +34,6 @@ fn build(folder: &Path, arguments: &[&str]) -> Output {
         .current_dir(folder)
         .output()
         .expect("the command runs")
-}
-
-/// Every file below `folder`, by its `/`-joined path in it.
-fn files(folder: &Path) -> BTreeMap<String, Vec<u8>> {
-    let mut found = BTreeMap::new();
-    let mut folders = vec![(folder.to_path_buf(), String::new())];
-    while let Some((path, prefix)) = folders.pop() {
-        for entry in read_dir(&path).expect("the folder is listed") {
-            let entry = entry.expect("the folder is listed");
-            let name = format!("{prefix}{}", entry.file_name().to_string_lossy());
-            if entry.path().is_dir() {
-                folders.push((entry.path(), format!("{name}/")));
-            } else {
-                let file = read(entry.path()).expect("the file is read");
-                found.insert(
-                    name,
-                    with_version_placeholder(file, env!("CARGO_PKG_VERSION")),
-                );
-            }
-        }
-    }
-    found
 }
 
 fn output(name: &str) -> PathBuf {
@@ -74,20 +55,7 @@ fn every_tag_has_its_page_and_every_page_links_its_tags_as_the_expected_site_sho
     let result = build(&fixtures().join("tags"), &["--output", given]);
     assert_eq!(String::from_utf8_lossy(&result.stderr), "");
     assert_eq!(result.status.code(), Some(0));
-    let expected = files(&fixtures().join("tags/expected"));
-    let written = files(&written);
-    assert_eq!(
-        written.keys().collect::<Vec<_>>(),
-        expected.keys().collect::<Vec<_>>(),
-        "the files written"
-    );
-    for (name, contents) in &expected {
-        assert!(
-            written[name] == *contents,
-            "{name} differs from the expected file:\n{}",
-            String::from_utf8_lossy(&written[name])
-        );
-    }
+    assert_same_site(&written, &fixtures().join("tags/expected"));
 }
 
 #[test]

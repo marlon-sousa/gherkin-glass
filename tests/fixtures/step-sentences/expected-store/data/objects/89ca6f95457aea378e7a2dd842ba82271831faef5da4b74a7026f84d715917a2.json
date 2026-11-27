@@ -1,0 +1,184 @@
+{
+  "format": 1,
+  "language": "en",
+  "lang": "en",
+  "feature": {
+    "kind": "feature",
+    "keyword": "Feature",
+    "note": false,
+    "name": "Escapes",
+    "description": "",
+    "tags": [],
+    "anchor": "",
+    "hash": "709e07c5feb3ae14e72a0facc10019ad02a47ddfe121d596d58c24ca672fe5be",
+    "blocks": [
+      {
+        "kind": "scenario-outline",
+        "keyword": "Scenario Outline",
+        "note": false,
+        "name": "Quotes after a backslash",
+        "description": "",
+        "tags": [],
+        "anchor": "quotes-after-a-backslash",
+        "hash": "5603956cc35c53d521b7b82b3302c86155836538ce6e32f938d9c44395aa0769",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Then ",
+            "text": "the screen shows \\\"hi\\\" and \"a \\\" b\" for <name>",
+            "kind": "then",
+            "sentence": "the screen shows \\\"hi\\\" and \"…\" for \"…\"",
+            "slots": [
+              "\"a \\\" b\"",
+              "<name>"
+            ],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "the screen shows \\\"hi\\\" and ",
+                "parts": []
+              },
+              {
+                "kind": "parameter",
+                "text": "\"a \\\" b\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"a \\\" b\"",
+                    "parts": []
+                  }
+                ]
+              },
+              {
+                "kind": "text",
+                "text": " for ",
+                "parts": []
+              },
+              {
+                "kind": "placeholder",
+                "text": "<name>",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "And ",
+            "text": "the screen shows <> for <name>",
+            "kind": "then",
+            "sentence": "the screen shows <> for \"…\"",
+            "slots": [
+              "<name>"
+            ],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "the screen shows <> for ",
+                "parts": []
+              },
+              {
+                "kind": "placeholder",
+                "text": "<name>",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [
+          {
+            "kind": "examples",
+            "keyword": "Examples",
+            "note": false,
+            "name": "",
+            "description": "",
+            "tags": [],
+            "anchor": "examples",
+            "hash": "f982df6396f89b82d2b0c36250e364d6136cbcbd30eaaeeadaa2969fa11c5f69",
+            "blocks": [],
+            "steps": [],
+            "examples": [],
+            "place": 1,
+            "table": [
+              [
+                "name",
+                ""
+              ],
+              [
+                "ana",
+                ""
+              ]
+            ],
+            "runs": [
+              {
+                "anchor": "quotes-after-a-backslash-row-1",
+                "steps": [
+                  {
+                    "keyword": "Then ",
+                    "text": "the screen shows \\\"hi\\\" and \"a \\\" b\" for ana",
+                    "kind": "then",
+                    "sentence": "the screen shows \\\"hi\\\" and \"…\" for ana",
+                    "slots": [
+                      "\"a \\\" b\""
+                    ],
+                    "parts": [
+                      {
+                        "kind": "text",
+                        "text": "the screen shows \\\"hi\\\" and ",
+                        "parts": []
+                      },
+                      {
+                        "kind": "parameter",
+                        "text": "\"a \\\" b\"",
+                        "parts": [
+                          {
+                            "kind": "text",
+                            "text": "\"a \\\" b\"",
+                            "parts": []
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "text",
+                        "text": " for ana",
+                        "parts": []
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": null
+                  },
+                  {
+                    "keyword": "And ",
+                    "text": "the screen shows <> for ana",
+                    "kind": "then",
+                    "sentence": "the screen shows <> for ana",
+                    "slots": [],
+                    "parts": [
+                      {
+                        "kind": "text",
+                        "text": "the screen shows <> for ana",
+                        "parts": []
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": null
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "place": null,
+        "table": null,
+        "runs": []
+      }
+    ],
+    "steps": [],
+    "examples": [],
+    "place": null,
+    "table": null,
+    "runs": []
+  }
+}

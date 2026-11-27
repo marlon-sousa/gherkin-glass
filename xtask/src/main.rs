@@ -3,6 +3,7 @@
 mod checks;
 mod comment_ratio;
 mod expected_sites;
+mod expected_stores;
 
 use std::env::consts::EXE_SUFFIX;
 use std::env::{args, var_os};
@@ -13,12 +14,13 @@ use std::process::{Command, ExitCode};
 use checks::{CARGO_CHECKS, MINIMUM_RUST_TEST};
 use comment_ratio::Lines;
 use expected_sites::put_back_placeholder;
+use expected_stores::{fixture_stores, history_store};
 
 const USAGE: &str = "\
 Usage: cargo xtask <command>
 
 Commands:
-  build: builds the pages' script from script/ into assets/gherkin-glass.js, writes the fixtures' and the example suite's expected sites again, and the crate's README, README.crate.md, from README.md, then builds the release binary.
+  build: builds the pages' script from script/ into assets/gherkin-glass.js, writes the fixtures' and the example suite's expected sites again, the expected stores of the fixtures that commit no site and of the history of versions, and the crate's README, README.crate.md, from README.md, then builds the release binary.
   check: runs every check a pull request runs: formatting, lints, the tests on both Rust versions, the documentation, the dependencies with cargo deny, the package, the script check and the browser check.
   check-script: type-checks and tests the script, and checks that assets/gherkin-glass.js is what it compiles to.
   check-browser: builds ghg, installs the browser, and checks every fixture's site and the example suite's, alone and with the README's front page, in it: accessibility, the keyboard, the width of a narrow window, pages opened from disk, the folder tree on a narrow window, the dialog of a keyword's note, markup in feature files shown as text by the folder tree and search, and the reload of ghg serve --watch.
@@ -102,6 +104,8 @@ fn build() -> Result<(), String> {
         "--config",
         "project-site/ghg.toml",
     ])?;
+    fixture_stores()?;
+    history_store()?;
     let version = manifest_value("version")?;
     put_back_placeholder(&root().join("tests/fixtures"), &version)?;
     put_back_placeholder(&root().join("project-site/expected"), &version)?;

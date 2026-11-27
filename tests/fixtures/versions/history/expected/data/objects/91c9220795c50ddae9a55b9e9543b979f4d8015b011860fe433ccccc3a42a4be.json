@@ -1,0 +1,152 @@
+{
+  "format": 1,
+  "language": "en",
+  "lang": "en",
+  "feature": {
+    "kind": "feature",
+    "keyword": "Feature",
+    "note": false,
+    "name": "Refunds",
+    "description": "A refund gives the money back.",
+    "tags": [],
+    "anchor": "",
+    "hash": "1ee821a71a7a8de51b84b2d497e44f224d92b9c12eb70892e0edb83243592417",
+    "blocks": [
+      {
+        "kind": "scenario",
+        "keyword": "Scenario",
+        "note": false,
+        "name": "Card",
+        "description": "",
+        "tags": [],
+        "anchor": "card",
+        "hash": "66d5579c6ad7e9240cd760ee617c4c0f468b7f86aef448ae3f84cf1071226dc9",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "a paid order",
+            "kind": "given",
+            "sentence": "a paid order",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "a paid order",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "When ",
+            "text": "I refund it",
+            "kind": "when",
+            "sentence": "I refund it",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "I refund it",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "Then ",
+            "text": "the card is credited",
+            "kind": "then",
+            "sentence": "the card is credited",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "the card is credited",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "scenario",
+        "keyword": "Scenario",
+        "note": false,
+        "name": "Cash",
+        "description": "",
+        "tags": [],
+        "anchor": "cash",
+        "hash": "3021119a8e5767920cb806fe97c966fa111fe556afc66ef95ca8d752bfd12aa3",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "a paid order",
+            "kind": "given",
+            "sentence": "a paid order",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "a paid order",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "When ",
+            "text": "I refund it in cash",
+            "kind": "when",
+            "sentence": "I refund it in cash",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "I refund it in cash",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "Then ",
+            "text": "the till is short",
+            "kind": "then",
+            "sentence": "the till is short",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "the till is short",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      }
+    ],
+    "steps": [],
+    "examples": [],
+    "place": null,
+    "table": null,
+    "runs": []
+  }
+}

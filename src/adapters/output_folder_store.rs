@@ -58,6 +58,15 @@ impl OutputFolders for OutputFolderStore {
         })
     }
 
+    fn read(&self, output: &Path, file: &str) -> IoResult<Option<String>> {
+        let path = output.join(file);
+        if symlink_metadata(&path)?.is_file() {
+            read_to_string(path).map(Some)
+        } else {
+            Ok(None)
+        }
+    }
+
     fn remove(&self, path: &Path) -> IoResult<()> {
         let kind = match symlink_metadata(path) {
             Ok(metadata) => metadata.file_type(),
@@ -142,5 +151,35 @@ fn marker(output: &Path, name: &str) -> IoResult<Option<String>> {
         Ok(_) => Ok(None),
         Err(error) if error.kind() == ErrorKind::NotFound => Ok(None),
         Err(error) => Err(error),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::fs::create_dir_all;
+
+    use super::*;
+    use crate::test_support::scratch;
+
+    #[test]
+    fn only_a_file_is_read_never_a_folder_nor_a_link() {
+        let output = scratch("output-folder-store-read");
+        create_dir_all(output.join("data/versions/v1.json")).expect("a folder");
+        write(output.join("data/site.json"), "{}").expect("written");
+        let store = OutputFolderStore;
+        assert_eq!(
+            store.read(&output, "data/site.json").ok(),
+            Some(Some("{}".to_string()))
+        );
+        assert_eq!(
+            store.read(&output, "data/versions/v1.json").ok(),
+            Some(None)
+        );
+        #[cfg(unix)]
+        {
+            std::os::unix::fs::symlink(output.join("data/site.json"), output.join("link.json"))
+                .expect("a link");
+            assert_eq!(store.read(&output, "link.json").ok(), Some(None));
+        }
     }
 }

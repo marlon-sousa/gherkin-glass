@@ -1,0 +1,202 @@
+{
+  "format": 1,
+  "language": "em",
+  "lang": "und",
+  "feature": {
+    "kind": "feature",
+    "keyword": "📚",
+    "note": true,
+    "name": "Emoji",
+    "description": "",
+    "tags": [],
+    "anchor": "",
+    "hash": "416ffd6b7defe6e6a12e090fbd861ee710eeaf5d1bcbe6481dad5367b801c005",
+    "blocks": [
+      {
+        "kind": "background",
+        "keyword": "💤",
+        "note": true,
+        "name": "",
+        "description": "",
+        "tags": [],
+        "anchor": "background",
+        "hash": "c7e586490399e845cf86d20bf9b4967f73aef8e46e3d251d9e15f2b4830b6f22",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "😐 ",
+            "text": "an unnamed background",
+            "kind": "given",
+            "sentence": "an unnamed background",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "an unnamed background",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "scenario",
+        "keyword": "📕",
+        "note": true,
+        "name": "",
+        "description": "",
+        "tags": [],
+        "anchor": "scenario",
+        "hash": "fdacf59ae8159c3bfc3ffbe958e74738ca129106625697ad009ac82e6d2039f8",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "😐 ",
+            "text": "an unnamed scenario",
+            "kind": "given",
+            "sentence": "an unnamed scenario",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "an unnamed scenario",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "scenario",
+        "keyword": "📕",
+        "note": true,
+        "name": "🙂",
+        "description": "",
+        "tags": [],
+        "anchor": "scenario-2",
+        "hash": "a31d19a74ace67b3809d0c90c0ee549c05b974feb944941943f731f520c9bbe4",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "😐 ",
+            "text": "a name of nothing but an emoji",
+            "kind": "given",
+            "sentence": "a name of nothing but an emoji",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "a name of nothing but an emoji",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "scenario-outline",
+        "keyword": "📖",
+        "note": true,
+        "name": "",
+        "description": "",
+        "tags": [],
+        "anchor": "scenario-outline",
+        "hash": "efcd00df4c8d4cf763cc5f83ea8630fcd51dbe404677f2193b6fdf760b6cf0af",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "😐 ",
+            "text": "<n>",
+            "kind": "given",
+            "sentence": "\"…\"",
+            "slots": [
+              "<n>"
+            ],
+            "parts": [
+              {
+                "kind": "placeholder",
+                "text": "<n>",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [
+          {
+            "kind": "examples",
+            "keyword": "📓",
+            "note": true,
+            "name": "",
+            "description": "",
+            "tags": [],
+            "anchor": "examples",
+            "hash": "2ba499a4ecc8c60b398f4fef663ed216ea0a4821c0b8bac01c742502240a7188",
+            "blocks": [],
+            "steps": [],
+            "examples": [],
+            "place": 1,
+            "table": [
+              [
+                "n"
+              ],
+              [
+                "1"
+              ]
+            ],
+            "runs": [
+              {
+                "anchor": "scenario-outline-row-1",
+                "steps": [
+                  {
+                    "keyword": "😐 ",
+                    "text": "1",
+                    "kind": "given",
+                    "sentence": "1",
+                    "slots": [],
+                    "parts": [
+                      {
+                        "kind": "number",
+                        "text": "1",
+                        "parts": []
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": null
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "place": null,
+        "table": null,
+        "runs": []
+      }
+    ],
+    "steps": [],
+    "examples": [],
+    "place": null,
+    "table": null,
+    "runs": []
+  }
+}

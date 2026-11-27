@@ -1,0 +1,87 @@
+{
+  "format": 1,
+  "language": "en",
+  "lang": "en",
+  "feature": {
+    "kind": "feature",
+    "keyword": "Feature",
+    "note": false,
+    "name": "Welcome",
+    "description": "",
+    "tags": [],
+    "anchor": "",
+    "hash": "a4c638a0f80182a4de407becda5f8508e9b5dd6cdaf2b237cde82470a6dd12b2",
+    "blocks": [
+      {
+        "kind": "scenario",
+        "keyword": "Scenario",
+        "note": false,
+        "name": "A visitor opens the front page",
+        "description": "",
+        "tags": [],
+        "anchor": "a-visitor-opens-the-front-page",
+        "hash": "498f8f234fcab2d4382a3157ca800939f0a8c00374a0d72f95db229cd55be8c2",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "the site is served",
+            "kind": "given",
+            "sentence": "the site is served",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "the site is served",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "When ",
+            "text": "a visitor opens its address",
+            "kind": "when",
+            "sentence": "a visitor opens its address",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "a visitor opens its address",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "Then ",
+            "text": "the front page introduces the suite",
+            "kind": "then",
+            "sentence": "the front page introduces the suite",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "the front page introduces the suite",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      }
+    ],
+    "steps": [],
+    "examples": [],
+    "place": null,
+    "table": null,
+    "runs": []
+  }
+}

@@ -1,0 +1,120 @@
+{
+  "format": 1,
+  "language": "pt",
+  "lang": "pt",
+  "feature": {
+    "kind": "feature",
+    "keyword": "Funcionalidade",
+    "note": true,
+    "name": "Uma funcionalidade em português",
+    "description": "",
+    "tags": [],
+    "anchor": "",
+    "hash": "a47f0936f9f3bbfe4bbd024e3c6dced4b1e4dc444075b864f6757ae22a64e986",
+    "blocks": [
+      {
+        "kind": "background",
+        "keyword": "Contexto",
+        "note": true,
+        "name": "",
+        "description": "",
+        "tags": [],
+        "anchor": "contexto",
+        "hash": "b1d3dae791b6a86d4485064ee19c72e3346a66dfb513229ad105c35bad0384bc",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Dado ",
+            "text": "um cliente",
+            "kind": "given",
+            "sentence": "um cliente",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "um cliente",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "scenario",
+        "keyword": "Cenário",
+        "note": true,
+        "name": "Um cenário",
+        "description": "",
+        "tags": [],
+        "anchor": "um-cenário",
+        "hash": "2280d08dcd99b762a19f616356094804b3de0364c042798cb4a4faa67b9c980b",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Quando ",
+            "text": "o cliente compra",
+            "kind": "when",
+            "sentence": "o cliente compra",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "o cliente compra",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "Então ",
+            "text": "a compra é registrada",
+            "kind": "then",
+            "sentence": "a compra é registrada",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "a compra é registrada",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "E ",
+            "text": "um recibo é enviado",
+            "kind": "then",
+            "sentence": "um recibo é enviado",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "um recibo é enviado",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      }
+    ],
+    "steps": [],
+    "examples": [],
+    "place": null,
+    "table": null,
+    "runs": []
+  }
+}

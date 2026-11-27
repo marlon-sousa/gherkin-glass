@@ -1,0 +1,646 @@
+{
+  "format": 1,
+  "language": "en",
+  "lang": "en",
+  "feature": {
+    "kind": "feature",
+    "keyword": "Feature",
+    "note": false,
+    "name": "Highlighting",
+    "description": "Every part highlighting finds, beside text that only looks like one.",
+    "tags": [],
+    "anchor": "",
+    "hash": "0e2a46fa7436bf3b7aecae616868e57ec960998cd45062771ee7f06ba0b30c14",
+    "blocks": [
+      {
+        "kind": "background",
+        "keyword": "Background",
+        "note": false,
+        "name": "",
+        "description": "",
+        "tags": [],
+        "anchor": "background",
+        "hash": "25bc0695c8846b86d72e66dbe194006347a1844d36e3cf5cd9f0e8166431c556",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "an account with 100 and a \"<amount>\" note",
+            "kind": "given",
+            "sentence": "an account with 100 and a \"…\" note",
+            "slots": [
+              "\"<amount>\""
+            ],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "an account with ",
+                "parts": []
+              },
+              {
+                "kind": "number",
+                "text": "100",
+                "parts": []
+              },
+              {
+                "kind": "text",
+                "text": " and a ",
+                "parts": []
+              },
+              {
+                "kind": "parameter",
+                "text": "\"<amount>\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"<amount>\"",
+                    "parts": []
+                  }
+                ]
+              },
+              {
+                "kind": "text",
+                "text": " note",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "scenario",
+        "keyword": "Scenario",
+        "note": false,
+        "name": "Parameters",
+        "description": "",
+        "tags": [],
+        "anchor": "parameters",
+        "hash": "b1d97c6e0912698e6ec1ccd3ff31e128ed6e602ce8f4cfd4db0cda6c1b4073d5",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "When ",
+            "text": "the customer types \"hello 42\" and \"\"",
+            "kind": "when",
+            "sentence": "the customer types \"…\" and \"…\"",
+            "slots": [
+              "\"hello 42\"",
+              "\"\""
+            ],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "the customer types ",
+                "parts": []
+              },
+              {
+                "kind": "parameter",
+                "text": "\"hello 42\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"hello 42\"",
+                    "parts": []
+                  }
+                ]
+              },
+              {
+                "kind": "text",
+                "text": " and ",
+                "parts": []
+              },
+              {
+                "kind": "parameter",
+                "text": "\"\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"\"",
+                    "parts": []
+                  }
+                ]
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "And ",
+            "text": "the customer types \"a \\\"quoted\\\" word\"",
+            "kind": "when",
+            "sentence": "the customer types \"…\"",
+            "slots": [
+              "\"a \\\"quoted\\\" word\""
+            ],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "the customer types ",
+                "parts": []
+              },
+              {
+                "kind": "parameter",
+                "text": "\"a \\\"quoted\\\" word\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"a \\\"quoted\\\" word\"",
+                    "parts": []
+                  }
+                ]
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "But ",
+            "text": "a \"lone quote stays plain",
+            "kind": "when",
+            "sentence": "a \"lone quote stays plain",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "a \"lone quote stays plain",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "* ",
+            "text": "the customer's 'name' is plain",
+            "kind": "given",
+            "sentence": "the customer's 'name' is plain",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "the customer's 'name' is plain",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "scenario",
+        "keyword": "Scenario",
+        "note": false,
+        "name": "Numbers",
+        "description": "",
+        "tags": [],
+        "anchor": "numbers",
+        "hash": "0b45aea7d0a4df35b1b5fdb63499f4b15733b308102dcac45bcc04a559d020f5",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Then ",
+            "text": "the balance is -3.5, then 1.000,50 or $7 on 2026-11-10.",
+            "kind": "then",
+            "sentence": "the balance is -3.5, then 1.000,50 or $7 on 2026-11-10.",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "the balance is ",
+                "parts": []
+              },
+              {
+                "kind": "number",
+                "text": "-3.5",
+                "parts": []
+              },
+              {
+                "kind": "text",
+                "text": ", then ",
+                "parts": []
+              },
+              {
+                "kind": "number",
+                "text": "1.000,50",
+                "parts": []
+              },
+              {
+                "kind": "text",
+                "text": " or $",
+                "parts": []
+              },
+              {
+                "kind": "number",
+                "text": "7",
+                "parts": []
+              },
+              {
+                "kind": "text",
+                "text": " on ",
+                "parts": []
+              },
+              {
+                "kind": "number",
+                "text": "2026",
+                "parts": []
+              },
+              {
+                "kind": "text",
+                "text": "-",
+                "parts": []
+              },
+              {
+                "kind": "number",
+                "text": "11",
+                "parts": []
+              },
+              {
+                "kind": "text",
+                "text": "-",
+                "parts": []
+              },
+              {
+                "kind": "number",
+                "text": "10",
+                "parts": []
+              },
+              {
+                "kind": "text",
+                "text": ".",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "And ",
+            "text": "R2D2 is 3rd in v1.2, 2.x, x_1 and item-4",
+            "kind": "then",
+            "sentence": "R2D2 is 3rd in v1.2, 2.x, x_1 and item-4",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "R2D2 is 3rd in v1.2, 2.x, x_1 and item-",
+                "parts": []
+              },
+              {
+                "kind": "number",
+                "text": "4",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "And ",
+            "text": "the quote in \"a\\\\\" b\" closes after b",
+            "kind": "then",
+            "sentence": "the quote in \"…\" closes after b",
+            "slots": [
+              "\"a\\\\\" b\""
+            ],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "the quote in ",
+                "parts": []
+              },
+              {
+                "kind": "parameter",
+                "text": "\"a\\\\\" b\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"a\\\\\" b\"",
+                    "parts": []
+                  }
+                ]
+              },
+              {
+                "kind": "text",
+                "text": " closes after b",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "scenario",
+        "keyword": "Scenario",
+        "note": false,
+        "name": "Not an outline",
+        "description": "",
+        "tags": [],
+        "anchor": "not-an-outline",
+        "hash": "9b52444b143b500f46ba6657750cac6035815736913c6bc20c189cb46759f48b",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "<amount> is plain here",
+            "kind": "given",
+            "sentence": "<amount> is plain here",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "<amount> is plain here",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "scenario-outline",
+        "keyword": "Scenario Outline",
+        "note": false,
+        "name": "Placeholders",
+        "description": "",
+        "tags": [],
+        "anchor": "placeholders",
+        "hash": "45f6988f26437fa61a70ac91a5716860e8b436cdd070296344e7bd12e04b739a",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "<amount> in \"<currency> 3\" and <unknown>",
+            "kind": "given",
+            "sentence": "\"…\" in \"…\" and <unknown>",
+            "slots": [
+              "<amount>",
+              "\"<currency> 3\""
+            ],
+            "parts": [
+              {
+                "kind": "placeholder",
+                "text": "<amount>",
+                "parts": []
+              },
+              {
+                "kind": "text",
+                "text": " in ",
+                "parts": []
+              },
+              {
+                "kind": "parameter",
+                "text": "\"<currency> 3\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"",
+                    "parts": []
+                  },
+                  {
+                    "kind": "placeholder",
+                    "text": "<currency>",
+                    "parts": []
+                  },
+                  {
+                    "kind": "text",
+                    "text": " 3\"",
+                    "parts": []
+                  }
+                ]
+              },
+              {
+                "kind": "text",
+                "text": " and <unknown>",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "When ",
+            "text": "the customer asks for < 5 >",
+            "kind": "when",
+            "sentence": "the customer asks for < 5 >",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "the customer asks for < ",
+                "parts": []
+              },
+              {
+                "kind": "number",
+                "text": "5",
+                "parts": []
+              },
+              {
+                "kind": "text",
+                "text": " >",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [
+          {
+            "kind": "examples",
+            "keyword": "Examples",
+            "note": false,
+            "name": "",
+            "description": "",
+            "tags": [],
+            "anchor": "examples",
+            "hash": "01cbfd77c594091999a7d16c71cdabaf78eb5a2a6fc302adb9c7095a65016680",
+            "blocks": [],
+            "steps": [],
+            "examples": [],
+            "place": 1,
+            "table": [
+              [
+                "amount",
+                "currency"
+              ],
+              [
+                "10",
+                "EUR"
+              ]
+            ],
+            "runs": [
+              {
+                "anchor": "placeholders-row-1",
+                "steps": [
+                  {
+                    "keyword": "Given ",
+                    "text": "10 in \"EUR 3\" and <unknown>",
+                    "kind": "given",
+                    "sentence": "10 in \"…\" and <unknown>",
+                    "slots": [
+                      "\"EUR 3\""
+                    ],
+                    "parts": [
+                      {
+                        "kind": "number",
+                        "text": "10",
+                        "parts": []
+                      },
+                      {
+                        "kind": "text",
+                        "text": " in ",
+                        "parts": []
+                      },
+                      {
+                        "kind": "parameter",
+                        "text": "\"EUR 3\"",
+                        "parts": [
+                          {
+                            "kind": "text",
+                            "text": "\"EUR 3\"",
+                            "parts": []
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "text",
+                        "text": " and <unknown>",
+                        "parts": []
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": null
+                  },
+                  {
+                    "keyword": "When ",
+                    "text": "the customer asks for < 5 >",
+                    "kind": "when",
+                    "sentence": "the customer asks for < 5 >",
+                    "slots": [],
+                    "parts": [
+                      {
+                        "kind": "text",
+                        "text": "the customer asks for < ",
+                        "parts": []
+                      },
+                      {
+                        "kind": "number",
+                        "text": "5",
+                        "parts": []
+                      },
+                      {
+                        "kind": "text",
+                        "text": " >",
+                        "parts": []
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": null
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "rule",
+        "keyword": "Rule",
+        "note": false,
+        "name": "Steps inside a rule",
+        "description": "",
+        "tags": [],
+        "anchor": "steps-inside-a-rule",
+        "hash": "4ec33b59945fab7a2c771d6823ca4b2c36df14a88a4ef82591167f943949b999",
+        "blocks": [
+          {
+            "kind": "scenario",
+            "keyword": "Scenario",
+            "note": false,
+            "name": "In a rule",
+            "description": "",
+            "tags": [],
+            "anchor": "in-a-rule",
+            "hash": "ce47f260acfc41dc2849811e10a7fea278e66614ecef7fb98b808606084eecdf",
+            "blocks": [],
+            "steps": [
+              {
+                "keyword": "Given ",
+                "text": "2 \"items\"",
+                "kind": "given",
+                "sentence": "2 \"…\"",
+                "slots": [
+                  "\"items\""
+                ],
+                "parts": [
+                  {
+                    "kind": "number",
+                    "text": "2",
+                    "parts": []
+                  },
+                  {
+                    "kind": "text",
+                    "text": " ",
+                    "parts": []
+                  },
+                  {
+                    "kind": "parameter",
+                    "text": "\"items\"",
+                    "parts": [
+                      {
+                        "kind": "text",
+                        "text": "\"items\"",
+                        "parts": []
+                      }
+                    ]
+                  }
+                ],
+                "table": null,
+                "doc_string": null
+              }
+            ],
+            "examples": [],
+            "place": null,
+            "table": null,
+            "runs": []
+          }
+        ],
+        "steps": [],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      }
+    ],
+    "steps": [],
+    "examples": [],
+    "place": null,
+    "table": null,
+    "runs": []
+  }
+}

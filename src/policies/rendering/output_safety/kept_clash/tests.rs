@@ -77,6 +77,7 @@ fn a_pattern_that_keeps_a_version_clashes(
     let record = Record::Versions {
         page: set(&["index.html"]),
         versions: BTreeMap::from([(main, set(&["index.html"]))]),
+        data: set(&[]),
     };
     let found = BTreeMap::new();
     let judged = kept_clash(&kept(patterns), &found, Some(&record), &target, CHECKING);
