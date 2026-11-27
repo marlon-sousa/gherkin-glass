@@ -1,5 +1,6 @@
 // Adapter: the page port over the page's markup, as feature_block.html, examples_item.html, feature_page.html and folder_feature.html in src/policies/rendering write it.
 
+import { followedLink } from "./followed_link.ts";
 import type { Block, Page } from "../ports/page.ts";
 
 class DomBlock implements Block {
@@ -110,12 +111,7 @@ export class DomPage implements Page {
     });
     // A link to the anchor already in the address changes nothing, so it is caught as it is followed.
     this.document.addEventListener("click", (event) => {
-      // A click that opens another tab or window, or that a script stopped, changes nothing here.
-      if (event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) {
-        return;
-      }
-      const target = event.target as Element | null;
-      const link = typeof target?.closest === "function" ? target.closest<HTMLAnchorElement>("a[href]") : null;
+      const link = followedLink(event);
       const anchor = link ? this.anchorOnPage(link) : null;
       if (anchor !== null) {
         handler(anchor);
