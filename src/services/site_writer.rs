@@ -1,4 +1,4 @@
-//! Service: the site writer, reading the front page's template, rendering the site's store, the shell of a site, a version or a preview, and the versions page, and writing them into the output folder, once it is safe, by the plan of the store, or into memory; and removing a version or a preview from the output folder by that plan.
+//! Service: the site writer, reading the front page's template, having the target's files rendered and planned by the policies of rendering, and writing them into the output folder, once it is safe, by the plan of the store, or into memory; and removing a version or a preview from the output folder by that plan.
 
 mod folder_writing;
 mod published;
@@ -26,11 +26,11 @@ pub(crate) trait SiteWriterApi: Send + Sync {
     /// itself.
     fn check(&self, settings: &Settings) -> Result<(), OutputError>;
 
-    /// Reads the front page's template the settings name, if any, renders the store of `store`,
-    /// the shell of the settings' target and, for a version, the versions page, and writes them
-    /// where the settings say: into the output folder once it is checked again, by the plan of
-    /// the store, or in memory, as a site without versions. It returns the site as it is
-    /// served, and what the build says of it.
+    /// Reads the front page's template the settings name, if any, has the files of the settings'
+    /// target rendered from `store` with `TargetFiles`, and writes them where the settings say:
+    /// into the output folder once it is checked again, by the plan of the store, or in memory,
+    /// as a site without versions. It returns the site as it is served, and what the build says
+    /// of it.
     fn write(
         &self,
         settings: &Settings,

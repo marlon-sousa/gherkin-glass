@@ -1,4 +1,4 @@
-// Tool: draws every page of every shell of the site in a folder with the site's own script, in happy-dom, and writes each page's HTML below another folder, as CONTRIBUTING.md, "Fixtures", names them.
+// Tool: draws every page of every shell of the site in a folder with the site's own script, in happy-dom, and writes each page's HTML below another folder.
 
 import { mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, relative, sep } from "node:path";
