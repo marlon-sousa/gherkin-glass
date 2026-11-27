@@ -1,32 +1,18 @@
-//! Entity: a link's address, a path of the site percent-encoded, with a block's anchor after `#` when it links to one.
+//! Entity: a link's address in a shell: `#` and the name of a page, percent-encoded.
 
 use derive_more::Display;
-/// Always percent-encoded, as [`percent_encoded`] says, except for the anchor.
+/// Always percent-encoded, as [`percent_encoded`] says.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Display)]
 pub(crate) struct LinkAddress {
     address: String,
 }
 
 impl LinkAddress {
-    /// The address of `path`, a path of the site as written, relative to the page that links it.
-    pub(crate) fn to(path: &str) -> LinkAddress {
+    /// The address of the page named `page`, as written, in the shell that links it: `#` and the
+    /// name, percent-encoded.
+    pub(crate) fn of_page(page: &str) -> LinkAddress {
         LinkAddress {
-            address: percent_encoded(path),
-        }
-    }
-
-    /// The address of the block whose anchor is `anchor`, on the page this address names.
-    pub(crate) fn at(&self, anchor: &str) -> LinkAddress {
-        LinkAddress {
-            address: format!("{}#{anchor}", self.address),
-        }
-    }
-
-    /// This address followed by `inner`: when this one names a folder, written with its last `/`,
-    /// and `inner` is relative to that folder, the address of what `inner` names.
-    pub(crate) fn then(&self, inner: &LinkAddress) -> LinkAddress {
-        LinkAddress {
-            address: format!("{}{}", self.address, inner.address),
+            address: format!("#{}", percent_encoded(page)),
         }
     }
 }
@@ -53,6 +39,15 @@ mod tests {
         assert_eq!(
             percent_encoded("a b/ç?#%.html"),
             "a%20b/%C3%A7%3F%23%25.html"
+        );
+    }
+
+    // Rule 235: a page's address is `#` and its name, percent-encoded.
+    #[test]
+    fn a_page_s_address_is_a_hash_and_its_name() {
+        assert_eq!(
+            LinkAddress::of_page("billing/a b").to_string(),
+            "#billing/a%20b"
         );
     }
 }

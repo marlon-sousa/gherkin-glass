@@ -61,6 +61,11 @@ impl CommandLine {
                 message_format,
             }) => self.build(&options, message_format),
             Ok(Invocation::Serve(options)) => self.serve(&options),
+            Ok(Invocation::Remove {
+                options,
+                target,
+                message_format,
+            }) => reporter(message_format).report_removal(&self.site.remove(&options, &target)),
         }
     }
 

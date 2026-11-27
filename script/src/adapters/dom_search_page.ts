@@ -8,10 +8,10 @@ export class DomSearchPage implements SearchPage {
   private readonly field: HTMLInputElement;
   private readonly status: HTMLElement;
   private readonly groups: HTMLElement;
-  private readonly searchedWords: string | null;
+  private readonly searchedWords: string;
 
-  /** Null when the page is not the page of search results, or not the whole of one; `searched`, when given, is the words of a shell's address. */
-  static find(document: Document, searched: string | null = null): DomSearchPage | null {
+  /** Null when the page is not the page of search results, or not the whole of one; `searched` is the words of the shell's address. */
+  static find(document: Document, searched: string): DomSearchPage | null {
     const heading = document.querySelector<HTMLElement>("h1.ghg-search-heading");
     const field = document.querySelector<HTMLInputElement>("form.ghg-search input.ghg-search-field");
     const status = document.querySelector<HTMLElement>(".ghg-results-status");
@@ -22,7 +22,7 @@ export class DomSearchPage implements SearchPage {
     return null;
   }
 
-  private constructor(document: Document, heading: HTMLElement, field: HTMLInputElement, status: HTMLElement, groups: HTMLElement, searched: string | null) {
+  private constructor(document: Document, heading: HTMLElement, field: HTMLInputElement, status: HTMLElement, groups: HTMLElement, searched: string) {
     this.searchedWords = searched;
     this.document = document;
     this.heading = heading;
@@ -64,11 +64,7 @@ export class DomSearchPage implements SearchPage {
   }
 
   searched(): string {
-    if (this.searchedWords !== null) {
-      return this.searchedWords;
-    }
-    const address = this.document.defaultView?.location.href ?? "";
-    return new URL(address, "https://example.invalid/").searchParams.get("q") ?? "";
+    return this.searchedWords;
   }
 
   showSearched(words: string, heading: readonly Part[], title: string): void {

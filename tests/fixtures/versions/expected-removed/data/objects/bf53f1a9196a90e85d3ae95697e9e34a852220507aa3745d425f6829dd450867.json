@@ -1,0 +1,60 @@
+{
+  "format": 1,
+  "language": "en",
+  "lang": "en",
+  "feature": {
+    "kind": "feature",
+    "keyword": "Feature",
+    "note": false,
+    "name": "Withdraw cash",
+    "description": "",
+    "tags": [],
+    "anchor": "",
+    "hash": "ffa7eee953efccdc66e506c76aa416aff990433d272cb71a6334730c210b0515",
+    "blocks": [
+      {
+        "kind": "scenario",
+        "keyword": "Scenario",
+        "note": false,
+        "name": "Withdraw from savings",
+        "description": "",
+        "tags": [],
+        "anchor": "withdraw-from-savings",
+        "hash": "8ea5b2730419a2f2da2615c32d7594e1d3eb164e9151d5a6b6b25bfa025fcd0a",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "an account with 100",
+            "kind": "given",
+            "sentence": "an account with 100",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "an account with ",
+                "parts": []
+              },
+              {
+                "kind": "number",
+                "text": "100",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      }
+    ],
+    "steps": [],
+    "examples": [],
+    "place": null,
+    "table": null,
+    "runs": []
+  }
+}

@@ -1,0 +1,26 @@
+<ul class="ghg-totals">
+{%- for total in folder.totals %}
+<li>{{ total }}</li>
+{%- endfor %}
+</ul>
+<p class="ghg-tag-index-link"><a href="{{ folder.tags.address }}">{{ folder.tags.name }}</a></p>
+<p class="ghg-sentences"><a href="{{ folder.sentences.address }}">{{ folder.sentences.name }}</a></p>
+{%- if let Some(nothing_given) = folder.nothing_given %}
+<p class="ghg-nothing-given">{{ nothing_given }}</p>
+{%- endif %}
+{%- if !folders.is_empty() %}
+<h{{ level.number() }}>{{ folder.words.folders }}</h{{ level.number() }}>
+<ul class="ghg-folders">
+{%- for subfolder in folders %}
+{{ subfolder|safe }}
+{%- endfor %}
+</ul>
+{%- endif %}
+{%- if !features.is_empty() %}
+<h{{ level.number() }}>{{ folder.words.features }}</h{{ level.number() }}>
+<ul class="ghg-features">
+{%- for feature in features %}
+{{ feature|safe }}
+{%- endfor %}
+</ul>
+{%- endif %}

@@ -3,4 +3,9 @@
 <p id="ghg_from_disk_text">{{ frame.opened_from_disk.text }}</p>
 <form method="dialog"><button>{{ frame.opened_from_disk.agree }}</button></form>
 </dialog>
+{%- match cannot_be_shown %}
+{%- when Some(paragraph) %}
+<script>if(location.protocol==="file:"){let d=document.getElementById("ghg_from_disk");d.showModal();d.focus();{% if !every_page %}let h=location.hash;if(h.length>1&&!h.startsWith("##")){% endif %}addEventListener("DOMContentLoaded",()=>{let m=document.getElementById("ghg_main"),p=document.createElement("p");p.textContent={{ paragraph|safe }};m.removeAttribute("aria-busy");m.replaceChildren(p)})}</script>
+{%- when None %}
 <script>if(location.protocol==="file:"){let d=document.getElementById("ghg_from_disk");d.showModal();d.focus()}</script>
+{%- endmatch %}

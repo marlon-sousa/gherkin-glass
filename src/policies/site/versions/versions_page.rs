@@ -9,16 +9,19 @@ use crate::entities::{
 use crate::policies::CATALOGUE;
 use crate::policies::order_versions;
 
-/// The versions page listing `names`, every version the output folder holds.
+/// The versions page listing `names`, every version the output folder holds, of the site titled
+/// `site`.
 pub(crate) fn build_versions_page(
     names: impl IntoIterator<Item = VersionName>,
+    site: &str,
 ) -> VersionsPageContent {
     let list = order_versions(names);
     VersionsPageContent {
         page: VersionsPage {
             // The page holds interface text only, in the catalogue's language.
             language: CATALOGUE.current_language().to_string(),
-            title: fl!(CATALOGUE, "versions-title"),
+            heading: fl!(CATALOGUE, "versions-title"),
+            title: fl!(CATALOGUE, "versions-page-title", site = site),
             words: VersionsWords {
                 development: fl!(CATALOGUE, "versions-development"),
                 releases: fl!(CATALOGUE, "versions-releases"),
@@ -62,7 +65,10 @@ mod tests {
 
     #[test]
     fn each_version_is_listed_once_by_its_kind_with_its_words() {
-        let page = build_versions_page([name("v2.0.0-rc.1"), name("main"), name("v1.0.0")]);
+        let page = build_versions_page(
+            [name("v2.0.0-rc.1"), name("main"), name("v1.0.0")],
+            "Itinera",
+        );
         let listed = |entries: &[VersionEntry]| -> Vec<(String, String)> {
             entries
                 .iter()
@@ -85,5 +91,6 @@ mod tests {
             [("v2.0.0-rc.1".to_string(), "v2.0.0-rc.1".to_string())]
         );
         assert_eq!(page.page.language, "en");
+        assert_eq!(page.page.title, "Versions, Itinera");
     }
 }

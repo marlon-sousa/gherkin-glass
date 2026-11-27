@@ -8,8 +8,8 @@ use i18n_embed_fl::fl;
 use thiserror::Error;
 
 use super::{
-    LocatedError, each_on_a_line, invalid_kept_pattern, invalid_version_name, not_boolean,
-    not_colour, not_regex, regex_too_large, too_little_contrast, unknown_group,
+    LocatedError, each_on_a_line, invalid_kept_pattern, not_boolean, not_colour, not_regex,
+    regex_too_large, too_little_contrast, unknown_group,
 };
 use crate::entities::{Colour, Theme};
 use crate::policies::CATALOGUE;
@@ -41,9 +41,6 @@ pub(crate) enum ConfigErrorKind {
     UnknownKey { key: String },
     #[error(fmt = Self::empty)]
     Empty { key: String },
-    /// `name` is the text `version_name` was given.
-    #[error(fmt = invalid_version_name)]
-    InvalidVersionName { name: String },
     #[error(fmt = Self::wrong_type)]
     WrongType { key: String, expected: ValueType },
     #[error(fmt = too_little_contrast)]

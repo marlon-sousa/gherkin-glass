@@ -140,9 +140,9 @@ test("words already in the field show the link and go with Enter, before the rea
   const { box, source } = start(documents(), false, "limit");
   assert.equal(source.loads, 0);
   assert.equal(box.open, false);
-  assert.equal(box.link?.address, "search.html?q=limit");
+  assert.equal(box.link?.address, "#search?q=limit");
   box.enter();
-  assert.equal(box.went, "search.html?q=limit");
+  assert.equal(box.went, "#search?q=limit");
 });
 
 test("the documents are fetched with the first letter typed, and only once", async () => {
@@ -225,19 +225,19 @@ test("results overtaken by more typing are not shown", async () => {
   box.input("limit refused");
   deliver(documents());
   await settled();
-  assert.deepEqual(box.addresses(), ["banking/withdraw.html#withdraw-over-the-limit"]);
+  assert.deepEqual(box.addresses(), ["#banking/withdraw#withdraw-over-the-limit"]);
 });
 
 test("every word must match, by its start or one letter in five away", async () => {
   const { box, type } = start();
   await type("limit refused");
-  assert.deepEqual(box.addresses(), ["banking/withdraw.html#withdraw-over-the-limit"]);
+  assert.deepEqual(box.addresses(), ["#banking/withdraw#withdraw-over-the-limit"]);
   await type("refus");
-  assert.deepEqual(box.addresses(), ["banking/withdraw.html#withdraw-over-the-limit"]);
+  assert.deepEqual(box.addresses(), ["#banking/withdraw#withdraw-over-the-limit"]);
   await type("withdrawl refused");
-  assert.deepEqual(box.addresses(), ["banking/withdraw.html#withdraw-over-the-limit"]);
+  assert.deepEqual(box.addresses(), ["#banking/withdraw#withdraw-over-the-limit"]);
   await type("poupança");
-  assert.deepEqual(box.addresses(), ["saque.html"]);
+  assert.deepEqual(box.addresses(), ["#saque"]);
   await type("zebra");
   assert.deepEqual(box.addresses(), []);
   assert.equal(box.status, "No results.");
@@ -246,20 +246,20 @@ test("every word must match, by its start or one letter in five away", async () 
 test("tags and steps are searched, and a name counts most", async () => {
   const { box, type } = start();
   await type("@slow");
-  assert.deepEqual(box.addresses(), ["banking/withdraw.html#withdraw-an-amount", "banking/withdraw.html#large-amounts"]);
+  assert.deepEqual(box.addresses(), ["#banking/withdraw#withdraw-an-amount", "#banking/withdraw#large-amounts"]);
   await type("balance");
-  assert.equal(box.addresses()[0], "banking/withdraw.html#withdraw-within-the-balance");
+  assert.equal(box.addresses()[0], "#banking/withdraw#withdraw-within-the-balance");
   assert.equal(box.status, `Results: ${box.results.length}.`);
 });
 
 test("a background is found by its name and steps, and an examples block by its cells", async () => {
   const { box, type } = start();
   await type("limits in force");
-  assert.deepEqual(box.addresses(), ["banking/withdraw.html#limits-in-force"]);
+  assert.deepEqual(box.addresses(), ["#banking/withdraw#limits-in-force"]);
   await type("account");
-  assert.deepEqual(box.addresses(), ["banking/withdraw.html#background"]);
+  assert.deepEqual(box.addresses(), ["#banking/withdraw#background"]);
   await type("emma");
-  assert.deepEqual(box.addresses(), ["unnamed.html#examples-2"]);
+  assert.deepEqual(box.addresses(), ["#unnamed#examples-2"]);
 });
 
 test("doc strings and the tables of steps are not searched", async () => {
@@ -281,7 +281,7 @@ test("at most 50 results are listed, and the status says how many there are", as
 test("an empty search empties the results, the status and the link to every result", async () => {
   const { box, type } = start();
   await type("withdraw");
-  assert.equal(box.link?.address, "search.html?q=withdraw");
+  assert.equal(box.link?.address, "#search?q=withdraw");
   box.input("  ");
   assert.deepEqual(box.results, []);
   assert.equal(box.status, "");
@@ -297,7 +297,7 @@ test("the link to every result names the words without the spaces around them", 
     { text: "limit  refused", isName: true },
     { text: "\"", isName: false },
   ]);
-  assert.equal(box.link?.address, "search.html?q=limit++refused");
+  assert.equal(box.link?.address, "#search?q=limit++refused");
 });
 
 test("the list opens with results, and no result is chosen until an arrow chooses one", async () => {
@@ -327,10 +327,10 @@ test("Enter opens the chosen result, or the page of every result when none is ch
   assert.equal(box.went, null);
   await type("limit refused");
   box.enter();
-  assert.equal(box.went, "search.html?q=limit+refused");
+  assert.equal(box.went, "#search?q=limit+refused");
   box.down();
   box.enter();
-  assert.equal(box.went, "banking/withdraw.html#withdraw-over-the-limit");
+  assert.equal(box.went, "#banking/withdraw#withdraw-over-the-limit");
 });
 
 test("Enter before the documents are had opens the page of every result", () => {
@@ -338,14 +338,14 @@ test("Enter before the documents are had opens the page of every result", () => 
   startSearching(box, { load: () => new Promise(() => {}) }, new FakeTimer());
   box.input("withdraw");
   box.enter();
-  assert.equal(box.went, "search.html?q=withdraw");
+  assert.equal(box.went, "#search?q=withdraw");
 });
 
 test("the pointer opens the result it picks", async () => {
   const { box, type } = start();
   await type("limit refused");
   box.pick(0);
-  assert.equal(box.went, "banking/withdraw.html#withdraw-over-the-limit");
+  assert.equal(box.went, "#banking/withdraw#withdraw-over-the-limit");
 });
 
 test("Escape closes the list and keeps the words, then a second Escape empties everything", async () => {

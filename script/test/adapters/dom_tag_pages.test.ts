@@ -6,7 +6,7 @@ import { test } from "node:test";
 import { tagIndex, tagPage } from "../../src/adapters/dom_tag_pages.ts";
 import { ElementBuilder } from "../../src/adapters/element_builder.ts";
 import { tagIndexView, tagPageView } from "../../src/policies/tag_views.ts";
-import { emptyDocument, markupOf, words, writtenMain } from "../support/drawn_pages.ts";
+import { emptyDocument, markupOf, words, expectedMain } from "../support/drawn_pages.ts";
 import { descriptor } from "../support/store_building.ts";
 import { tagsDescriptor, tagsFeatures } from "../support/tags_store.ts";
 
@@ -16,7 +16,7 @@ test("the index of tags is drawn as ghg 1 wrote it, but for its links' addresses
   const main = document.querySelector("main")!;
   const view = tagIndexView(words, tagsDescriptor, tagsFeatures);
   main.append(...tagIndex(new ElementBuilder(document), view));
-  assert.equal(markupOf(main), markupOf(writtenMain("tags/expected/tags/index.html", "tags/index.html")));
+  assert.equal(markupOf(main), markupOf(expectedMain("tags/tags/index.html")));
   assert.equal(view.title, "Tags");
 });
 
@@ -36,7 +36,7 @@ for (const entry of tagsDescriptor.tags) {
     const main = document.querySelector("main")!;
     const view = tagPageView(words, tagsDescriptor, tagsFeatures, name)!;
     main.append(...tagPage(new ElementBuilder(document), view));
-    assert.equal(markupOf(main), markupOf(writtenMain(`tags/expected/tags/${name}.html`, `tags/${name}.html`)));
+    assert.equal(markupOf(main), markupOf(expectedMain(`tags/tags/${name}.html`)));
     assert.equal(view.title, `Tag ${entry.tag}`);
   });
 }

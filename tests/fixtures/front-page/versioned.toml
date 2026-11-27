@@ -1,4 +1,3 @@
 title = "Banking"
 front_page = "front.md"
-version_name = "v1.0.0"
 output = "versions"

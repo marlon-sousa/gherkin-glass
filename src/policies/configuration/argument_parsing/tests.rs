@@ -1,6 +1,8 @@
 mod key_option_mistakes;
 mod key_options;
 mod mistakes;
+mod removing;
+mod serving;
 
 use std::collections::BTreeSet;
 use std::path::PathBuf;
@@ -10,9 +12,10 @@ use rstest::rstest;
 
 use super::*;
 use crate::entities::{
-    BuildOptions, KeptInOutput, KeptPattern, MessageFormat, PathList, SearchIndexing, ServeMode,
-    ServeOptions, VersionName,
+    BuildOptions, BuildTarget, KeptInOutput, KeptPattern, MessageFormat, PathList, RemoveOptions,
+    ServeMode, ServeOptions,
 };
+use crate::test_support::name;
 
 fn parse(arguments: &[&str]) -> Result<Invocation, ArgumentError> {
     parse_arguments(arguments.iter().map(OsString::from))
@@ -113,14 +116,6 @@ fn serve_takes_every_option_of_build_that_sets_how_a_site_is_built() {
     title: Some("Banking & more".into()),
     ..BuildOptions::default()
 })]
-#[case::a_version_name(&["build", "--version-name", "v1.2.0"], BuildOptions {
-    version_name: VersionName::new("v1.2.0"),
-    ..BuildOptions::default()
-})]
-#[case::a_joined_version_name(&["build", "--version-name=main"], BuildOptions {
-    version_name: VersionName::new("main"),
-    ..BuildOptions::default()
-})]
 // Rule 204.
 #[case::a_list_of_files(&["build", "--only", "changed.txt"], BuildOptions {
     only: Some(PathList::File(PathBuf::from("changed.txt"))),
@@ -130,10 +125,21 @@ fn serve_takes_every_option_of_build_that_sets_how_a_site_is_built() {
     only: Some(PathList::StandardInput),
     ..BuildOptions::default()
 })]
-// Rule 211.
-#[case::a_preview(&["build", "--preview", "--output", "previews/pr-131"], BuildOptions {
-    output: Some(PathBuf::from("previews/pr-131")),
-    indexing: SearchIndexing::Refused,
+// Rule 257.
+#[case::a_version(&["version", "add", "v1.2.0", "--input=specs"], BuildOptions {
+    input: Some(PathBuf::from("specs")),
+    target: BuildTarget::Version(name("v1.2.0")),
+    ..BuildOptions::default()
+})]
+#[case::a_version_not_replaced(&["version", "add", "--replace-existing-version", "false", "main"], BuildOptions {
+    target: BuildTarget::Version(name("main")),
+    replace_existing_version: Some(false),
+    ..BuildOptions::default()
+})]
+// Rule 258.
+#[case::a_preview(&["preview", "add", "pr-131", "--output", "site"], BuildOptions {
+    output: Some(PathBuf::from("site")),
+    target: BuildTarget::Preview(name("pr-131")),
     ..BuildOptions::default()
 })]
 // Rule 224.
@@ -161,31 +167,6 @@ fn build_takes_its_message_format(#[case] arguments: &[&str], #[case] format: Me
         panic!("{arguments:?} is not a build");
     };
     assert_eq!(message_format, format);
-}
-
-#[rstest]
-#[case::building_first(&["serve"], ServeMode::Build)]
-#[case::without_building(&["serve", "--no-build"], ServeMode::Folder)]
-#[case::watching(&["serve", "--watch"], ServeMode::Watch)]
-fn serve_s_flags_say_its_mode(#[case] arguments: &[&str], #[case] mode: ServeMode) {
-    let Ok(Invocation::Serve(options)) = parse(arguments) else {
-        panic!("{arguments:?} is not a serve");
-    };
-    assert_eq!(options.mode, mode);
-}
-
-#[test]
-fn serve_takes_the_options_of_build_and_its_own() {
-    let arguments = ["serve", "--input=specs", "--host", "0.0.0.0", "--port", "0"];
-    assert_eq!(
-        parse(&arguments),
-        Ok(Invocation::Serve(ServeOptions {
-            build: paths(None, Some("specs")),
-            host: Some("0.0.0.0".into()),
-            port: Some(0),
-            mode: ServeMode::Build,
-        }))
-    );
 }
 
 // Rule 18.

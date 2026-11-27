@@ -10,6 +10,8 @@ mod store_files;
 pub(crate) use feature_object::FeatureObject;
 pub(crate) use object_block::{BlockContent, BlockText, ObjectBlock, ObjectExamples, ObjectRun};
 pub(crate) use object_step::ObjectStep;
-pub(crate) use published_store::{PublishedFeature, PublishedStore};
+pub(crate) use published_store::{
+    PublishedDescriptor, PublishedFeature, PublishedStore, VersionsPageRecord,
+};
 pub(crate) use site_store::{DescriptorFeature, DescriptorSentences, DescriptorTag, SiteStore};
 pub(crate) use store_files::{StoreFiles, StorePlan};

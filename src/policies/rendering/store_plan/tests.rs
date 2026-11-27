@@ -1,6 +1,9 @@
 mod random_histories;
+mod removing;
+mod writing;
 
 use super::*;
+use crate::entities::{Accents, StoreFiles};
 use crate::test_support::{name, set};
 
 fn feature(page: &str, object: &str) -> PublishedFeature {
@@ -14,138 +17,101 @@ fn file(path: &str) -> SiteFile {
     json_file(path, b"{}".to_vec())
 }
 
-/// What a build renders: an object for each of `objects`, each the feature `a`, and a
-/// descriptor at `descriptor`.
-fn built(objects: &[&str], descriptor: &str) -> StoreFiles {
-    StoreFiles {
-        objects: objects
-            .iter()
-            .map(|name| file(&object_path(name)))
-            .collect(),
-        descriptor: file(descriptor),
-        features: objects.iter().map(|name| feature("a", name)).collect(),
-        indexes: vec![VERSIONS_LIST.to_string(), PAGES_INDEX.to_string()],
+fn version(text: &str) -> BuildTarget {
+    BuildTarget::Version(name(text))
+}
+
+/// What a build of `target` renders: an object for each of `objects`, each the page `a`, its
+/// descriptor and its shell, by the ghg `ghg`.
+fn written(target: &BuildTarget, objects: &[&str], ghg: &str) -> WrittenTarget {
+    WrittenTarget {
+        store: StoreFiles {
+            objects: objects
+                .iter()
+                .map(|name| file(&object_path(name)))
+                .collect(),
+            descriptor: file(&descriptor_path(target)),
+            features: objects.iter().map(|name| feature("a", name)).collect(),
+            large_site_data: None,
+        },
+        shell: file(&shell_path(target)),
+        ghg: ghg.to_string(),
     }
 }
 
-fn written(plan: &StorePlan) -> Vec<&str> {
-    plan.writes
-        .iter()
-        .map(|file| file.address.as_str())
-        .collect()
+fn record(ghg: &str) -> VersionsPageRecord {
+    VersionsPageRecord {
+        ghg: ghg.to_string(),
+        title: "Shop".to_string(),
+        accents: Accents::DEFAULT,
+        front_page: None,
+    }
 }
 
-/// The versions `main`, of the objects `shared` and `old`, and `v1.0.0`, of `shared`.
-fn published() -> PublishedStore {
+fn versions_page(ghg: &str) -> VersionsPageWrite {
+    VersionsPageWrite {
+        record: record(ghg),
+        page: file(ROOT_PAGE),
+    }
+}
+
+fn assets(ghg: &str) -> Vec<SiteFile> {
+    asset_paths(ghg).map(|path| file(&path)).collect()
+}
+
+fn paths(files: &[SiteFile]) -> Vec<&str> {
+    files.iter().map(|file| file.address.as_str()).collect()
+}
+
+/// The versions `main`, of the objects `shared` and `old`, and `v1.0.0`, of `shared`, written
+/// by the ghg 2.0.0, with the versions page.
+fn two_versions() -> PublishedStore {
     PublishedStore {
-        versions: BTreeMap::from([
+        descriptors: BTreeMap::from([
             (
-                name("main"),
-                vec![feature("a", "shared"), feature("b", "old")],
+                version("main"),
+                PublishedDescriptor {
+                    ghg: "2.0.0".into(),
+                    features: vec![feature("a", "shared"), feature("b", "old")],
+                },
             ),
-            (name("v1.0.0"), vec![feature("a", "shared")]),
+            (
+                version("v1.0.0"),
+                PublishedDescriptor {
+                    ghg: "2.0.0".into(),
+                    features: vec![feature("a", "shared")],
+                },
+            ),
         ]),
         objects: ["old", "shared"].map(str::to_string).into(),
+        versions_page: Some(record("2.0.0")),
     }
 }
 
-#[test]
-fn a_site_without_versions_writes_its_objects_and_its_descriptor() {
-    let plan = plan_store(
-        &PublishedStore::default(),
-        built(&["one"], "data/site.json"),
-        None,
-        &PageOptions::default(),
-        None,
-    );
-    assert_eq!(written(&plan), ["data/objects/one.json", "data/site.json"]);
-    assert!(plan.removes.is_empty());
-    assert_eq!(
-        plan.files,
-        set(&["data/objects/one.json", "data/site.json"])
-    );
+/// Every file of `two_versions()`, as its marker lists it and the folder holds it.
+fn two_versions_files() -> BTreeSet<FilePath> {
+    set(&[
+        "index.html",
+        "main/index.html",
+        "v1.0.0/index.html",
+        "data/versions/main.json",
+        "data/versions/v1.0.0.json",
+        "data/objects/shared.json",
+        "data/objects/old.json",
+        "data/versions.json",
+        "data/pages.json",
+        "assets/2.0.0/gherkin-glass.css",
+        "assets/2.0.0/gherkin-glass.js",
+        "assets/2.0.0/gherkin-glass.svg",
+        "assets/2.0.0/THIRD-PARTY-LICENSES.txt",
+    ])
 }
 
-// Rule 247: an object already in the store is not written again.
-#[test]
-fn a_version_writes_only_the_objects_the_store_lacks() {
-    let plan = plan_store(
-        &published(),
-        built(&["shared", "new"], "data/versions/v2.0.0.json"),
-        Some(&name("v2.0.0")),
-        &PageOptions::default(),
-        None,
-    );
-    assert_eq!(
-        written(&plan),
-        [
-            "data/objects/new.json",
-            "data/versions/v2.0.0.json",
-            "data/versions.json",
-            "data/pages.json"
-        ]
-    );
-    assert!(plan.removes.is_empty());
-}
-
-// Rule 255: a replaced version leaves the objects no descriptor names, which are removed, and
-// the store's files are every descriptor's, the objects they name and both indexes.
-#[test]
-fn a_replaced_version_removes_what_nothing_references() {
-    let plan = plan_store(
-        &published(),
-        built(&["new"], "data/versions/main.json"),
-        Some(&name("main")),
-        &PageOptions::default(),
-        None,
-    );
-    assert_eq!(plan.removes, set(&["data/objects/old.json"]));
-    assert_eq!(
-        plan.files,
-        set(&[
-            "data/objects/new.json",
-            "data/objects/shared.json",
-            "data/pages.json",
-            "data/versions.json",
-            "data/versions/main.json",
-            "data/versions/v1.0.0.json",
-        ])
-    );
-}
-
-// Rule 254: the index of pages is written from every version's descriptor, the new one in place
-// of the one it replaces.
-#[test]
-fn the_index_of_pages_holds_the_new_version_in_place_of_the_old() {
-    let plan = plan_store(
-        &published(),
-        built(&["new"], "data/versions/main.json"),
-        Some(&name("main")),
-        &PageOptions::default(),
-        None,
-    );
-    let index = plan
-        .writes
-        .iter()
-        .find(|file| file.address.as_str() == PAGES_INDEX)
-        .expect("the index");
-    let expected = pages_json(&BTreeMap::from([
-        (name("main"), vec![feature("a", "new")]),
-        (name("v1.0.0"), vec![feature("a", "shared")]),
-    ]));
-    assert_eq!(index.contents.as_ref(), expected.as_slice());
-}
-
-// Rules 228 and 255: a version may write its objects, its descriptor and both indexes.
-#[test]
-fn the_store_s_paths_are_what_a_build_may_write() {
-    assert_eq!(
-        built(&["one"], "data/versions/main.json").paths(),
-        [
-            "data/objects/one.json",
-            "data/versions/main.json",
-            "data/versions.json",
-            "data/pages.json"
-        ]
-    );
+fn plan(published: &PublishedStore, files: &BTreeSet<FilePath>, change: StoreChange) -> StorePlan {
+    let before = FolderBefore {
+        listed: files,
+        found: files,
+        published,
+    };
+    plan_store(&before, change)
 }

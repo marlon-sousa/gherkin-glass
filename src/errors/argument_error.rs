@@ -18,7 +18,7 @@ pub(crate) enum ArgumentError {
     MissingCommand,
     #[error(fmt = Self::unknown_command)]
     UnknownCommand { name: String },
-    /// `command` is `ghg`, `ghg build` or `ghg serve`.
+    /// `command` is `ghg`, or the command, such as `ghg build` or `ghg version add`.
     #[error(fmt = Self::unknown_option)]
     UnknownOption { command: String, option: String },
     #[error(fmt = Self::missing_value)]
@@ -37,8 +37,16 @@ pub(crate) enum ArgumentError {
     WatchWithoutBuild,
     #[error(fmt = Self::only_without_build)]
     OnlyWithoutBuild,
-    #[error(fmt = Self::preview_with_version_name)]
-    PreviewWithVersionName,
+    /// `command` is `ghg version` or `ghg preview`.
+    #[error(fmt = Self::missing_subcommand)]
+    MissingSubcommand { command: String },
+    /// `command` is `ghg version` or `ghg preview`, and `name` what was typed after it.
+    #[error(fmt = Self::unknown_subcommand)]
+    UnknownSubcommand { command: String, name: String },
+    /// `command` is one of the four commands of versions and previews, such as
+    /// `ghg version add`.
+    #[error(fmt = Self::missing_name)]
+    MissingName { command: String },
     #[error(fmt = invalid_version_name)]
     InvalidVersionName { name: String },
     /// `reason` is the `ignore` crate's.
@@ -118,7 +126,20 @@ impl ArgumentError {
         f.write_str(&fl!(CATALOGUE, "only-without-build"))
     }
 
-    fn preview_with_version_name(f: &mut Formatter<'_>) -> FmtResult {
-        f.write_str(&fl!(CATALOGUE, "preview-with-version-name"))
+    fn missing_subcommand(command: &str, f: &mut Formatter<'_>) -> FmtResult {
+        f.write_str(&fl!(CATALOGUE, "missing-subcommand", command = command))
+    }
+
+    fn unknown_subcommand(command: &str, name: &str, f: &mut Formatter<'_>) -> FmtResult {
+        f.write_str(&fl!(
+            CATALOGUE,
+            "unknown-subcommand",
+            command = command,
+            name = name
+        ))
+    }
+
+    fn missing_name(command: &str, f: &mut Formatter<'_>) -> FmtResult {
+        f.write_str(&fl!(CATALOGUE, "missing-name", command = command))
     }
 }

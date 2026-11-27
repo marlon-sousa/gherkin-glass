@@ -1,8 +1,9 @@
-//! Output folders as ghg finds them, for the tests of the site writer and the controller.
+//! Output folders as ghg finds them, for the tests of the output's checks, the site writer and the controller.
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use crate::entities::{FilePath, KeptInOutput, KeptPattern, OutputContents, Record, VersionName};
+use crate::entities::{FilePath, KeptInOutput, KeptPattern, OutputContents, VersionName};
+use crate::policies::marker_json;
 
 pub(crate) fn name(text: &str) -> VersionName {
     VersionName::new(text).expect("a version name")
@@ -22,35 +23,17 @@ pub(crate) fn set(paths: &[&str]) -> BTreeSet<FilePath> {
     paths.iter().map(|path| path.to_string()).collect()
 }
 
-/// A folder holding `files` and `folders`, whose marker records `record`.
-pub(crate) fn folder(files: &[&str], folders: &[&str], record: Option<Record>) -> OutputContents {
+/// A folder holding `files` and `folders`, whose marker's text is `marker`.
+pub(crate) fn folder(files: &[&str], folders: &[&str], marker: Option<String>) -> OutputContents {
     OutputContents::Folder {
         files: set(files),
         folders: set(folders),
         kept: BTreeMap::new(),
-        record,
+        marker,
     }
 }
 
-/// The output folder of the versions `main` and `v1.0.0`, as ghg wrote it.
-pub(crate) fn two_versions() -> OutputContents {
-    let versions = BTreeMap::from([
-        (name("main"), set(&["index.html"])),
-        (name("v1.0.0"), set(&["old.html"])),
-    ]);
-    let record = Record::Versions {
-        page: set(&["index.html"]),
-        versions,
-        data: set(&[]),
-    };
-    folder(
-        &[
-            "ghg-versions.json",
-            "index.html",
-            "main/index.html",
-            "v1.0.0/old.html",
-        ],
-        &["main", "v1.0.0"],
-        Some(record),
-    )
+/// The text of a marker of the store's format that lists `files`.
+pub(crate) fn marker(files: &[&str]) -> String {
+    String::from_utf8(marker_json(&set(files))).expect("UTF-8")
 }

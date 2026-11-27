@@ -1,12 +1,11 @@
-//! Policy: whether the patterns of what a build leaves alone keep anything ghg writes, or anything in a folder ghg writes.
+//! Policy: whether the patterns of what a command leaves alone keep anything ghg writes, or anything in a folder ghg writes.
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use super::{Moment, folder_by_folder, folders_of, made, written};
-use crate::entities::{
-    BuildTarget, EntryKind, FilePath, KeptInOutput, LetterCase, Record, VersionName,
-};
+use super::{Moment, folders_of};
+use crate::entities::{BuildTarget, EntryKind, FilePath, KeptInOutput, LetterCase, OutputMarker};
 use crate::errors::OutputErrorKind;
+use crate::policies::rendering::{PAGES_INDEX, ROOT_PAGE, VERSIONS_LIST, folder_by_folder};
 
 /// What ghg writes, by its path in the output folder: its files and the folders that hold them.
 struct Written {
@@ -16,17 +15,17 @@ struct Written {
     lowered: BTreeSet<String>,
 }
 
-/// Nothing, when `kept` keeps nothing ghg writes and `found_kept`, what the
-/// folder holds that is kept, is in no folder ghg writes; otherwise the first
-/// such thing, folder by folder, with the pattern that keeps it.
+/// Nothing, when `kept` keeps nothing ghg writes and `found_kept`, what the folder holds that is
+/// kept, is in no folder ghg writes; otherwise the first such thing, folder by folder, with the
+/// pattern that keeps it.
 pub(super) fn kept_clash(
     kept: &KeptInOutput,
     found_kept: &BTreeMap<FilePath, EntryKind>,
-    record: Option<&Record>,
+    listed: &BTreeSet<FilePath>,
     target: &BuildTarget,
     moment: Moment<'_>,
 ) -> Result<(), OutputErrorKind> {
-    let written = what_ghg_writes(record, target, moment);
+    let written = what_ghg_writes(listed, target, moment);
     let files = written
         .files
         .iter()
@@ -47,29 +46,36 @@ pub(super) fn kept_clash(
         .map_or(Ok(()), Err)
 }
 
-/// What ghg writes into the output folder: what the marker lists, the marker
-/// of `target`, the version's folder, and, when it is about to be written,
-/// the site.
-fn what_ghg_writes(record: Option<&Record>, target: &BuildTarget, moment: Moment<'_>) -> Written {
+/// What ghg writes into the output folder: what the marker lists, the marker, the target's
+/// folder, and, when it is about to be written, the target, with the files made from the
+/// descriptors of versions beside a version.
+fn what_ghg_writes(
+    listed: &BTreeSet<FilePath>,
+    target: &BuildTarget,
+    moment: Moment<'_>,
+) -> Written {
+    let derived = match target {
+        BuildTarget::Version(_) => [VERSIONS_LIST, PAGES_INDEX, ROOT_PAGE]
+            .map(str::to_string)
+            .to_vec(),
+        BuildTarget::Site | BuildTarget::Preview(_) => Vec::new(),
+    };
     let site = match moment {
-        Moment::Writing { site } => Some(site.iter().cloned()),
+        Moment::Writing { site } => Some(site.iter().cloned().chain(derived)),
         Moment::Checking { .. } => None,
     };
-    let files: BTreeSet<FilePath> = record
-        .map(written)
-        .unwrap_or_default()
-        .into_iter()
-        .chain([marker_of(target).to_string()])
+    let files: BTreeSet<FilePath> = listed
+        .iter()
+        .cloned()
+        .chain([OutputMarker::FILE.to_string()])
         .chain(site.into_iter().flatten())
         .collect();
-    let recorded = record
-        .map(|record| made(record, &files))
-        .unwrap_or_default();
+    let target_folder = target.folder();
     let folders: BTreeSet<FilePath> = files
         .iter()
+        .chain(&target_folder)
         .flat_map(|file| folders_of(file))
-        .chain(recorded)
-        .chain(version_folder(target))
+        .chain(target_folder.clone())
         .collect();
     let lowered = files
         .iter()
@@ -84,27 +90,12 @@ fn what_ghg_writes(record: Option<&Record>, target: &BuildTarget, moment: Moment
 }
 
 impl Written {
-    /// Whether `path` is something ghg writes, or is in a folder ghg writes,
-    /// whatever the case of its letters, as a file system that does not tell
-    /// capitals apart would find it.
+    /// Whether `path` is something ghg writes, or is in a folder ghg writes, whatever the case of
+    /// its letters, as a file system that does not tell capitals apart would find it.
     fn holds(&self, path: &str) -> bool {
         let path = path.to_lowercase();
         self.lowered.contains(&path)
             || folders_of(&path).any(|folder| self.lowered.contains(&folder))
-    }
-}
-
-fn marker_of(target: &BuildTarget) -> &'static str {
-    match target {
-        BuildTarget::Site => Record::SITE_MARKER,
-        BuildTarget::Version(_) => Record::VERSIONS_MARKER,
-    }
-}
-
-fn version_folder(target: &BuildTarget) -> Option<FilePath> {
-    match target {
-        BuildTarget::Site => None,
-        BuildTarget::Version(name) => Some(VersionName::to_string(name)),
     }
 }
 

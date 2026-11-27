@@ -1,30 +1,13 @@
 // Service: the folder tree, shown or hidden as the reader chose with the checkbox on a wide window and with the button on a narrow one, with the path to the current page expanded, the checkbox's choice remembered for the whole site.
 
-import { focusHidden, itemKey, pathTo, rememberedExpanded, rememberedShown, shownKey, startChecked, startExpanded, treeShown } from "../policies/tree_state.ts";
+import { focusHidden, itemKey, rememberedExpanded, rememberedShown, shownKey, startChecked, startExpanded, treeShown } from "../policies/tree_state.ts";
 import type { Memory } from "../ports/memory.ts";
-import type { TreeItem, TreeSource, TreeSwitch, TreeView } from "../ports/tree.ts";
+import type { TreeItem, TreeSwitch, TreeView } from "../ports/tree.ts";
 import type { WindowWidth } from "../ports/width.ts";
-
-export interface TreePlace {
-  /** The path of the site's root folder, ending in `/`. */
-  readonly sitePath: string;
-  /** The current page's address below it, decoded, or null. */
-  readonly page: string | null;
-}
 
 /** The tree's controls, which `disable` turns off for good once its items cannot be had. */
 export interface TreeControls {
   disable(): void;
-}
-
-export async function startFolderTree(source: TreeSource, toggle: TreeSwitch, view: TreeView, width: WindowWidth, memory: Memory, place: TreePlace): Promise<void> {
-  const controls = startTreeControls(toggle, width, memory, place.sitePath);
-  const items = await source.load();
-  if (items === null) {
-    controls.disable();
-    return;
-  }
-  buildTree(view, memory, place.sitePath, items, place.page === null ? [] : pathTo(items, place.page));
 }
 
 /** Builds the tree of `items`, the current page's item first in `path`, and every item it is inside after it, expanded. */

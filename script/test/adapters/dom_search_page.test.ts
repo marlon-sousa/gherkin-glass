@@ -1,28 +1,26 @@
-// The search page adapter of src/adapters/dom_search_page.ts, on the page gherkin-glass wrote:
-// tests/fixtures/pages/expected/search.html, with the service and that site's search.json behind it.
-// docs/BEHAVIOUR.md, rules 216 to 220.
+// The search page adapter of src/adapters/dom_search_page.ts, on the page of search results of tests/fixtures/pages drawn in
+// its shell, with the service and that site's documents, script/test/expected/pages/search.json, behind it.
+// docs/BEHAVIOUR.md, rules 216 to 220 and 237.
 
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
 
-import { Window } from "happy-dom";
-
 import { DomSearchBox } from "../../src/adapters/dom_search_box.ts";
 import { DomSearchPage } from "../../src/adapters/dom_search_page.ts";
 import { startSearching } from "../../src/services/searching.ts";
 import { startListing } from "../../src/services/results_listing.ts";
-import { SHELL_ADDRESSES } from "../../src/policies/search_index.ts";
 import type { SearchDocument } from "../../src/ports/documents.ts";
+import { drawnShell } from "../support/drawn_pages.ts";
 
-const SITE = new URL("../../../tests/fixtures/pages/expected/", import.meta.url);
+const FOUND = JSON.parse(readFileSync(new URL("../expected/pages/search.json", import.meta.url), "utf8")) as SearchDocument[];
 
-async function open(query: string) {
-  const window = new Window({ url: `https://example.com/site/search.html${query}` });
-  window.document.write(readFileSync(new URL("search.html", SITE), "utf8"));
-  const found = JSON.parse(readFileSync(new URL("assets/search.json", SITE), "utf8")) as SearchDocument[];
+/** The shell's page of search results, given `words`, the words of its address. */
+async function open(words: string) {
+  const window = drawnShell("pages/search.html", `https://example.com/site/#search?q=${encodeURIComponent(words)}`);
+  const found = FOUND;
   const document = window.document as unknown as Document;
-  const page = DomSearchPage.find(document);
+  const page = DomSearchPage.find(document, words);
   assert.ok(page);
   await startListing(page, { load: () => Promise.resolve(found) });
   return {
@@ -37,13 +35,12 @@ async function open(query: string) {
 }
 
 test("a page is found only where the page of search results is", () => {
-  const window = new Window({ url: "https://example.com/site/billing/refunds.html" });
-  window.document.write(readFileSync(new URL("billing/refunds.html", SITE), "utf8"));
-  assert.equal(DomSearchPage.find(window.document as unknown as Document), null);
+  const window = drawnShell("pages/billing/refunds.html", "https://example.com/site/#billing/refunds");
+  assert.equal(DomSearchPage.find(window.document as unknown as Document, ""), null);
 });
 
 test("the words of the address fill the field, the heading and the title", async () => {
-  const page = await open("?q=+refund+full");
+  const page = await open("refund full");
   assert.equal(page.field.value, "refund full");
   assert.equal(page.heading.textContent, 'Results for "refund full"');
   assert.equal(page.heading.querySelector("bdi")?.textContent, "refund full");
@@ -58,7 +55,7 @@ test("without words, the page keeps what its HTML says", async () => {
 });
 
 test("each feature is a heading linking its page, over a list of its results, their matched words marked", async () => {
-  const page = await open("?q=refund");
+  const page = await open("refund");
   const headings = [...page.groups.querySelectorAll("h2")];
   assert.ok(headings.length > 0);
   for (const heading of headings) {
@@ -67,7 +64,8 @@ test("each feature is a heading linking its page, over a list of its results, th
   }
   const result = page.groups.querySelector(".ghg-search-group > li") as HTMLElement;
   const link = result.querySelector("a") as HTMLAnchorElement;
-  assert.ok(link.getAttribute("href")?.includes(".html"));
+  assert.ok(link.getAttribute("href")?.startsWith("#"));
+  assert.equal(page.groups.querySelector("h2 a")?.getAttribute("href"), "#billing/refunds");
   assert.ok(page.groups.querySelectorAll("mark").length > 0);
   for (const mark of page.groups.querySelectorAll("mark")) {
     assert.match(mark.textContent ?? "", /^refund/i);
@@ -77,7 +75,7 @@ test("each feature is a heading linking its page, over a list of its results, th
 });
 
 test("the search box, started after the page fills its field, links to and goes to the same words", async () => {
-  const page = await open("?q=refund");
+  const page = await open("refund");
   const box = DomSearchBox.find(page.document);
   assert.ok(box);
   const went: string[] = [];
@@ -88,16 +86,5 @@ test("the search box, started after the page fills its field, links to and goes 
   assert.equal(link.textContent, 'All results for "refund"');
   assert.equal(page.field.getAttribute("aria-expanded"), "false");
   page.field.dispatchEvent(new page.window.KeyboardEvent("keydown", { key: "Enter", cancelable: true }) as unknown as Event);
-  assert.deepEqual(went, ["search.html?q=refund"]);
-});
-
-// Rule 237: in a shell, the words are those after `#search?q=`, which the script reads and gives the page.
-test("a shell's page of search results lists the words it is given, at the shell's addresses", async () => {
-  const window = new Window({ url: "https://example.com/site/index.html#search?q=ignored" });
-  window.document.write(readFileSync(new URL("search.html", SITE), "utf8"));
-  const document = window.document as unknown as Document;
-  const found = (JSON.parse(readFileSync(new URL("assets/search.json", SITE), "utf8")) as SearchDocument[]).map((entry) => ({ ...entry, page: entry.page.replace(/\.html$/, "") }));
-  await startListing(DomSearchPage.find(document, "refund")!, { load: () => Promise.resolve(found) }, SHELL_ADDRESSES);
-  assert.equal((document.querySelector(".ghg-search-field") as HTMLInputElement).value, "refund");
-  assert.equal(document.querySelector(".ghg-search-groups h2 a")?.getAttribute("href"), "#billing/refunds");
+  assert.deepEqual(went, ["#search?q=refund"]);
 });

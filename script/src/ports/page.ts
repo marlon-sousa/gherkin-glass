@@ -17,13 +17,9 @@ export interface Block {
 export interface Page {
   /** In the order of the page. */
   blocks(): readonly Block[];
-  /** The anchor the page was opened at, if any. */
-  target(): string | null;
   /** The block `anchor` names, or the one the element with that `id` is inside; null for neither. */
   holder(anchor: string): Block | null;
   onToggle(handler: (block: Block) => void): void;
   onCollapseAll(handler: () => void): void;
   onExpandAll(handler: () => void): void;
-  /** A link on the page to one of its anchors was followed. */
-  onFollow(handler: (anchor: string) => void): void;
 }

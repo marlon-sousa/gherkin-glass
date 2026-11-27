@@ -17,8 +17,8 @@ fn a_build(destination: &str, input: &str) -> Vec<String> {
         format!("site_writer.check {destination}"),
         format!("input_collector.collect {input}"),
         "gherkin_parser.parse a.feature Refused".into(),
-        "converter.convert a.feature beside v1.0.0".into(),
-        "site_writer.write a.feature".into(),
+        "converter.convert a.feature".into(),
+        "site_writer.write".into(),
     ]
     .into()
 }
@@ -35,7 +35,7 @@ fn a_build_loads_the_settings_checks_the_output_then_collects_parses_converts_an
         Ok(BuildReport::Written {
             site: built_site(),
             output: PathBuf::from("site"),
-            version: None,
+            target: BuildTarget::Site,
         })
     );
     assert_eq!(
@@ -45,8 +45,8 @@ fn a_build_loads_the_settings_checks_the_output_then_collects_parses_converts_an
             "site_writer.check Folder",
             "input_collector.collect specs",
             "gherkin_parser.parse a.feature Refused",
-            "converter.convert a.feature beside v1.0.0",
-            "site_writer.write a.feature",
+            "converter.convert a.feature",
+            "site_writer.write",
         ]
     );
 }

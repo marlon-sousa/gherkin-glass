@@ -9,7 +9,7 @@ use crate::errors::{InputError, InputErrorKind};
 
 /// A builder of a tree whose root, `input`, was listed and has no `.ghg-ignore`.
 fn listed(input: &str) -> InputTreeBuilder {
-    InputTreeBuilder::listed(input.into(), IgnoreRules::default(), Revision::default())
+    InputTreeBuilder::listed(input.into(), IgnoreRules::default())
 }
 
 fn error(path: &str, kind: InputErrorKind) -> InputError {
@@ -62,8 +62,8 @@ fn parsed_with_b_broken(file: FileToParse) -> ParsedFile {
     }
 }
 
-fn feature_path(revised: RevisedFeature<'_>) -> String {
-    revised.feature.path.display().to_string()
+fn feature_path(parsed: &ParsedFeature) -> String {
+    parsed.path.display().to_string()
 }
 
 #[test]
@@ -122,7 +122,7 @@ fn a_tree_whose_files_are_all_parsed_holds_no_error() {
 #[test]
 fn an_input_folder_that_could_not_be_listed_holds_only_its_error() {
     let missing = error("", InputErrorKind::InputMissing);
-    let tree = InputTree::unlisted_input("in".into(), missing.clone(), Revision::default());
+    let tree = InputTree::unlisted_input("in".into(), missing.clone());
     assert!(tree.allowed_files().is_empty());
     assert_eq!(tree.input_errors(), Some(InputErrors::new(vec![missing])));
 }

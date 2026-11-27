@@ -5,7 +5,7 @@ use std::borrow::Cow;
 use toml::Spanned;
 use toml::de::{DeTable, DeValue};
 
-use crate::entities::{Colour, Config, VersionName};
+use crate::entities::{Colour, Config};
 use crate::errors::{ConfigError, ConfigErrorKind, ValueType};
 
 mod config_key;
@@ -100,18 +100,6 @@ fn set(
             Some("") => Err(empty()),
             Some(text) => {
                 key.set(config, text);
-                Ok(())
-            }
-            None => Err(wrong_type(ValueType::Text)),
-        },
-        SettingKey::VersionName => match text(value) {
-            Some("") => Err(empty()),
-            Some(text) => {
-                config.version_name = Some(VersionName::new(text).ok_or_else(|| {
-                    ConfigErrorKind::InvalidVersionName {
-                        name: text.to_string(),
-                    }
-                })?);
                 Ok(())
             }
             None => Err(wrong_type(ValueType::Text)),

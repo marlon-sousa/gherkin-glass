@@ -1,6 +1,6 @@
-//! Entity: what every page has around its content, a feature's or a folder's: the dialog opened when it is opened from disk, the skip link, the folder tree's checkbox and the tree's landmark, the Theme control, the search box, the words every breadcrumb has, the footer, and the themes' colours.
+//! Entity: what every shell and the versions page have around their content: the dialog opened when a page is opened from disk and what a shell then says in its `main`, the skip link, the folder tree's checkbox and the tree's landmark, the Theme control, the search box, the footer, what a shell says without JavaScript, and the themes' colours.
 
-use crate::entities::{Accents, BreadcrumbWords, SearchIndexing, SearchWords};
+use crate::entities::{Accents, SearchWords};
 
 /// The words of the dialog a page opens when it is opened from disk.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -10,6 +10,8 @@ pub(crate) struct DiskNoticeWords {
     pub(crate) text: String,
     /// Its one button, which closes it.
     pub(crate) agree: String,
+    /// What a shell's `main` says when it cannot draw the page it is opened at.
+    pub(crate) cannot_be_shown: String,
 }
 
 /// The footer's words, before and after the link to gherkin-glass's repository, the version of ghg among them.
@@ -36,10 +38,11 @@ pub(crate) struct PageFrame {
     /// The site's accents, among the themes' colours.
     pub(crate) accents: Accents,
     pub(crate) search: SearchWords,
-    pub(crate) breadcrumb: BreadcrumbWords,
+    /// The name of the breadcrumb's landmark, which the script fills.
+    pub(crate) breadcrumb: String,
     pub(crate) footer: FooterWords,
+    /// What a shell says when JavaScript is turned off.
+    pub(crate) needs_script: String,
     /// The note that the site shows only the feature files `--only` lists; `None` without it.
     pub(crate) only_note: Option<String>,
-    /// Whether the pages let search engines index them.
-    pub(crate) indexing: SearchIndexing,
 }

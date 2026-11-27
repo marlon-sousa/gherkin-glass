@@ -1,4 +1,4 @@
-//! Policy: the contents of a feature's page, a link to each of its blocks, with a rule's scenarios inside it.
+//! Policy: the contents of a feature's page, as the home page lists them: a link to each of its rules and scenarios, with a rule's scenarios inside it.
 
 use askama::Template;
 
@@ -9,9 +9,9 @@ use crate::entities::ContentsEntry;
 /// The contents of the page at `page`, from the page that shows them.
 pub(super) struct Contents<'a> {
     pub(super) entries: &'a [ContentsEntry],
-    /// Empty on the feature's own page.
+    /// The address of the feature's page.
     pub(super) page: String,
-    /// The feature's language, on a page in another; `None` on its own page.
+    /// The feature's language, which the home page is not in.
     pub(super) language: Option<&'a str>,
 }
 
@@ -24,17 +24,5 @@ struct ContentsTemplate<'a> {
 impl Render for Contents<'_> {
     fn render(&self) -> String {
         rendered(&ContentsTemplate { contents: self })
-    }
-}
-
-/// The contents on the feature's own page.
-impl Render for [ContentsEntry] {
-    fn render(&self) -> String {
-        Contents {
-            entries: self,
-            page: String::new(),
-            language: None,
-        }
-        .render()
     }
 }

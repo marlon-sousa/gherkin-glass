@@ -1,8 +1,8 @@
-//! Entity: what is at the place of an output folder, every file and folder in it, and what its marker records.
+//! Entity: what is at the place of an output folder, every file and folder in it, and the text of its marker.
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use crate::entities::{EntryKind, FilePath, Record};
+use crate::entities::{EntryKind, FilePath};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) enum OutputContents {
@@ -14,9 +14,9 @@ pub(crate) enum OutputContents {
         files: BTreeSet<FilePath>,
         /// Every folder below it, but what is kept.
         folders: BTreeSet<FilePath>,
-        /// What the build leaves alone there, with its kind; a folder kept is not looked into.
+        /// What the command leaves alone there, with its kind; a folder kept is not looked into.
         kept: BTreeMap<FilePath, EntryKind>,
-        /// What its marker records; `None` when it holds no marker that can be read.
-        record: Option<Record>,
+        /// The text of its marker; `None` when it holds no marker that is a file of UTF-8.
+        marker: Option<String>,
     },
 }

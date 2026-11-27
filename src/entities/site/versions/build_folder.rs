@@ -1,33 +1,33 @@
-//! Entity: an output folder that nothing stops a build from writing into, what the build writes there, and what its store holds.
+//! Entity: an output folder that nothing stops a command from writing into, what its marker lists, what it holds, and what its store holds.
 
+use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 
-use crate::entities::{BuildTarget, PublishedStore, Record};
+use crate::entities::{FilePath, PublishedStore};
 
-/// Outside the crate, made only by [`crate::services::SiteWriter`]'s checks, so
-/// that no other folder is ever emptied.
+/// Outside the crate, made only by [`crate::services::SiteWriter`]'s checks, so that nothing is
+/// removed from another folder.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct BuildFolder {
     output: PathBuf,
-    target: BuildTarget,
-    record: Option<Record>,
+    listed: BTreeSet<FilePath>,
+    found: BTreeSet<FilePath>,
     published: PublishedStore,
 }
 
 impl BuildFolder {
-    /// The output folder `output`, found safe to write `target` into, what
-    /// its marker recorded then, `None` when it was missing or empty, and
-    /// what its store held then.
+    /// The output folder `output`, found safe, the files its marker `listed`, none when it was
+    /// missing or empty, the files `found` in it, and what its store held then.
     pub(crate) fn new(
         output: &Path,
-        target: BuildTarget,
-        record: Option<Record>,
+        listed: BTreeSet<FilePath>,
+        found: BTreeSet<FilePath>,
         published: PublishedStore,
     ) -> Self {
         BuildFolder {
             output: output.to_path_buf(),
-            target,
-            record,
+            listed,
+            found,
             published,
         }
     }
@@ -36,12 +36,14 @@ impl BuildFolder {
         &self.output
     }
 
-    pub(crate) fn target(&self) -> &BuildTarget {
-        &self.target
+    /// Every file the marker lists, some of which may be gone.
+    pub(crate) fn listed(&self) -> &BTreeSet<FilePath> {
+        &self.listed
     }
 
-    pub(crate) fn record(&self) -> Option<&Record> {
-        self.record.as_ref()
+    /// Every file in the folder, but what is kept.
+    pub(crate) fn found(&self) -> &BTreeSet<FilePath> {
+        &self.found
     }
 
     pub(crate) fn published(&self) -> &PublishedStore {

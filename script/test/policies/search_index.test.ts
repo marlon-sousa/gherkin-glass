@@ -3,7 +3,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { SHELL_ADDRESSES, WRITTEN_ADDRESSES, holdsMatch, indexOf, marked } from "../../src/policies/search_index.ts";
+import { entryAddress, holdsMatch, indexOf, marked, resultsAddress } from "../../src/policies/search_index.ts";
 import { documents } from "../support/search_fixtures.ts";
 
 const shown = (runs: ReturnType<typeof marked>): string => runs.map((run) => (run.marked ? `[${run.text}]` : run.text)).join("");
@@ -22,16 +22,10 @@ test("the words matched are marked, compared lower-cased, and the rest kept as w
   assert.equal(holdsMatch(marked("nothing here", new Set(["else"]))), false);
 });
 
-test("an entry's address and the page of every result are encoded", () => {
-  const odd = { ...documents()[0]!, page: "a b/c#d.html", anchor: "poupança" };
-  assert.equal(WRITTEN_ADDRESSES.entry(odd), "a%20b/c%23d.html#poupan%C3%A7a");
-  assert.equal(WRITTEN_ADDRESSES.results("ação & co"), "search.html?q=a%C3%A7%C3%A3o+%26+co");
-});
-
-// Rules 235, 237 and 238: in a shell, an entry is at its page's address, and the page of results at `#search?q=`.
-test("in a shell, an entry's address and the page of every result are the shell's own", () => {
+// Rules 235, 237 and 238: an entry is at its page's address in the shell, and the page of results at `#search?q=`, encoded.
+test("an entry's address and the page of every result are the shell's own, encoded", () => {
   const odd = { ...documents()[0]!, page: "a b/c#d", anchor: "poupança" };
-  assert.equal(SHELL_ADDRESSES.entry(odd), "#a%20b/c%23d#poupan%C3%A7a");
-  assert.equal(SHELL_ADDRESSES.entry({ ...odd, anchor: "" }), "#a%20b/c%23d");
-  assert.equal(SHELL_ADDRESSES.results("ação & co"), "#search?q=a%C3%A7%C3%A3o+%26+co");
+  assert.equal(entryAddress(odd), "#a%20b/c%23d#poupan%C3%A7a");
+  assert.equal(entryAddress({ ...odd, anchor: "" }), "#a%20b/c%23d");
+  assert.equal(resultsAddress("ação & co"), "#search?q=a%C3%A7%C3%A3o+%26+co");
 });

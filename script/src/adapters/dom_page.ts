@@ -1,6 +1,5 @@
 // Adapter: the page port over the page's markup, as feature_block.html, examples_item.html, feature_page.html and folder_feature.html in src/policies/rendering write it.
 
-import { followedLink } from "./followed_link.ts";
 import type { Block, Page } from "../ports/page.ts";
 
 class DomBlock implements Block {
@@ -34,13 +33,10 @@ export class DomPage implements Page {
   private readonly found: DomBlock[] = [];
   private readonly byElement = new Map<Element, DomBlock>();
   private readonly document: Document;
-  /** Whether the page catches the links to its anchors itself, as a page written whole does; a drawn page leaves them to the navigation. */
-  private readonly followsLinks: boolean;
 
   /** `root` holds the blocks, the document's or a drawn page's `main`. */
-  constructor(document: Document, root: ParentNode = document, followsLinks = true) {
+  constructor(document: Document, root: ParentNode = document) {
     this.document = document;
-    this.followsLinks = followsLinks;
     for (const element of root.querySelectorAll(".ghg-block")) {
       // An item of an outline's list of examples holds its button itself, with no heading.
       const heading = element.querySelector<HTMLElement>(":scope > :is(h2, h3, h4, h5)") ?? element;
@@ -71,10 +67,6 @@ export class DomPage implements Page {
     return this.found;
   }
 
-  target(): string | null {
-    return this.followsLinks ? anchorOf(this.document.location.hash) : null;
-  }
-
   holder(anchor: string): Block | null {
     const named = this.found.find((block) => block.anchor === anchor);
     if (named) {
@@ -98,39 +90,6 @@ export class DomPage implements Page {
     this.onClick(".ghg-expand-all", handler);
   }
 
-  onFollow(handler: (anchor: string) => void): void {
-    if (!this.followsLinks) {
-      return;
-    }
-    const view = this.document.defaultView;
-    view?.addEventListener("hashchange", () => {
-      const anchor = anchorOf(this.document.location.hash);
-      if (anchor !== null) {
-        handler(anchor);
-      }
-    });
-    // A link to the anchor already in the address changes nothing, so it is caught as it is followed.
-    this.document.addEventListener("click", (event) => {
-      const link = followedLink(event);
-      const anchor = link ? this.anchorOnPage(link) : null;
-      if (anchor !== null) {
-        handler(anchor);
-      }
-    });
-  }
-
-  /** The anchor a link leads to on this very page, such as the folder tree's, whatever its address is relative to. */
-  private anchorOnPage(link: HTMLAnchorElement): string | null {
-    let address: URL;
-    try {
-      address = new URL(link.getAttribute("href") ?? "", this.document.location.href);
-    } catch {
-      return null;
-    }
-    const here = this.document.location;
-    return address.origin === here.origin && address.pathname === here.pathname ? anchorOf(address.hash) : null;
-  }
-
   private onClick(selector: string, handler: () => void): void {
     this.document.querySelector(selector)?.addEventListener("click", handler);
   }
@@ -144,17 +103,5 @@ function expandedWhenUnchecked(element: Element): boolean | null {
       return false;
     default:
       return null;
-  }
-}
-
-/** A link's anchor, which the address may hold percent-encoded. */
-function anchorOf(hash: string): string | null {
-  if (!hash.startsWith("#") || hash.length === 1) {
-    return null;
-  }
-  try {
-    return decodeURIComponent(hash.slice(1));
-  } catch {
-    return hash.slice(1);
   }
 }

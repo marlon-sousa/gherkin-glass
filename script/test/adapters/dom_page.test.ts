@@ -1,8 +1,6 @@
-// The adapters of src/adapters/, on a page gherkin-glass wrote:
-// tests/fixtures/pages/expected/billing/refunds.html, with the service behind them.
+// The adapters of src/adapters/, on the pages billing/refunds and billing/ of tests/fixtures/pages as the script drew them, with the service behind them.
 
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
 import { test } from "node:test";
 
 import { Window } from "happy-dom";
@@ -12,18 +10,20 @@ import { DomPage } from "../../src/adapters/dom_page.ts";
 import { LocalMemory } from "../../src/adapters/local_memory.ts";
 import { startCollapsing } from "../../src/services/collapsing.ts";
 import type { Memory } from "../../src/ports/memory.ts";
+import { drawnPage } from "../support/drawn_pages.ts";
 
-const PAGE = new URL("../../../tests/fixtures/pages/expected/billing/refunds.html", import.meta.url);
+/** What expands the block an anchor names on each page opened, as the navigation does once it has drawn it. */
+const reveals = new WeakMap<Window, (anchor: string) => void>();
+const reveal = (window: Window, anchor: string): void => reveals.get(window)!(anchor);
 
-/** The page opened at `hash`, its script started with `memory`. */
-function open(hash = "", memory: Memory = new Map() as unknown as Memory): Window {
-  const window = new Window({ url: `https://example.com/site/billing/refunds.html${hash}` });
-  window.document.write(readFileSync(PAGE, "utf8"));
+/** The page, its script started with `memory`. */
+function open(memory: Memory = new Map() as unknown as Memory): Window {
+  const window = drawnPage("site/feature/billing/refunds.html", "https://example.com/site/#billing/refunds");
   const kept = new Map<string, string>();
   const store: Memory = memory instanceof Map ? { get: (key) => kept.get(key) ?? null, set: (key, value) => void kept.set(key, value) } : memory;
   const document = window.document as unknown as Document;
   const backgrounds = DomBackgrounds.of(document);
-  startCollapsing(new DomPage(document), store, window.location.pathname, backgrounds && { backgrounds, siteRoot: "/site/" });
+  reveals.set(window, startCollapsing(new DomPage(document), store, "/site/#billing/refunds", backgrounds && { backgrounds, siteRoot: "/site/" }));
   return window;
 }
 
@@ -84,22 +84,18 @@ test("every block of the page is found, with the blocks it is inside", () => {
   );
 });
 
-test("an examples block's runs start collapsed, and a link to a run, or to the line that once held them, expands them", () => {
+test("an examples block's runs start collapsed, and revealing a run, or the line that once held them, expands them", () => {
   const window = open();
   assert.equal(expanded(window, "again_runs"), false);
   assert.equal(content(window, "again_runs").hasAttribute("hidden"), true);
   (window.document.querySelector(".ghg-collapse-all") as unknown as HTMLElement).click();
-  const link = window.document.createElement("a");
-  link.setAttribute("href", "#refund-again-count-times-row-1");
-  window.document.body.appendChild(link);
-  link.dispatchEvent(new window.MouseEvent("click", { bubbles: true, cancelable: true }));
+  reveal(window, "refund-again-count-times-row-1");
   for (const anchor of ["refunds-after-thirty-days", "refund-again-count-times", "again", "again_runs", "refund-again-count-times-row-1"]) {
     assert.equal(expanded(window, anchor), true, anchor);
   }
   // An old link to the outline's examples as scenarios lands on the line before its examples, inside the outline.
   (window.document.querySelector(".ghg-collapse-all") as unknown as HTMLElement).click();
-  link.setAttribute("href", "#refund-again-count-times_scenarios");
-  link.dispatchEvent(new window.MouseEvent("click", { bubbles: true, cancelable: true }));
+  reveal(window, "refund-again-count-times_scenarios");
   assert.equal(window.document.querySelector("#refund-again-count-times_scenarios")!.matches("p.ghg-runs"), true);
   for (const anchor of ["refunds-after-thirty-days", "refund-again-count-times"]) {
     assert.equal(expanded(window, anchor), true, anchor);
@@ -107,7 +103,7 @@ test("an examples block's runs start collapsed, and a link to a run, or to the l
   assert.equal(expanded(window, "again"), false);
 });
 
-test("an outline's examples start collapsed, and their buttons and a link to one expand them", () => {
+test("an outline's examples start collapsed, and their buttons and revealing one expand them", () => {
   const window = open();
   for (const anchor of ["cheap", "examples", "again"]) {
     assert.equal(expanded(window, anchor), false, anchor);
@@ -118,10 +114,7 @@ test("an outline's examples start collapsed, and their buttons and a link to one
   assert.equal(content(window, "cheap").hasAttribute("hidden"), false);
   (window.document.querySelector(".ghg-collapse-all") as unknown as HTMLElement).click();
   assert.equal(expanded(window, "cheap"), false);
-  const link = window.document.createElement("a");
-  link.setAttribute("href", "#again");
-  window.document.body.appendChild(link);
-  link.dispatchEvent(new window.MouseEvent("click", { bubbles: true, cancelable: true }));
+  reveal(window, "again");
   for (const anchor of ["refunds-after-thirty-days", "refund-again-count-times", "again"]) {
     assert.equal(expanded(window, anchor), true, anchor);
   }
@@ -130,20 +123,20 @@ test("an outline's examples start collapsed, and their buttons and a link to one
 test("an examples item's state is remembered under its anchor, and wins when the page is opened again", () => {
   const kept = new Map<string, string>();
   const memory: Memory = { get: (key) => kept.get(key) ?? null, set: (key, value) => void kept.set(key, value) };
-  const window = open("", memory);
+  const window = open(memory);
   (button(window, "cheap") as unknown as HTMLElement).click();
-  assert.equal(kept.get("gherkin-glass:/site/billing/refunds.html#cheap"), "expanded");
-  assert.equal(expanded(open("", memory), "cheap"), true);
+  assert.equal(kept.get("gherkin-glass:/site/#billing/refunds#cheap"), "expanded");
+  assert.equal(expanded(open(memory), "cheap"), true);
 });
 
-test("the scenarios outside every rule are one block, which collapses and is found by a link", () => {
+test("the scenarios outside every rule are one block, which collapses and is revealed by a scenario's anchor", () => {
   const window = open();
   assert.equal(button(window, "outside_rules").textContent, "Outside any rule");
   (button(window, "outside_rules") as unknown as HTMLElement).click();
   assert.equal(expanded(window, "outside_rules"), false);
   assert.equal(content(window, "outside_rules").hasAttribute("hidden"), true);
-  const link = window.document.querySelector('nav a[href="#refund-a-card-payment"]')!;
-  link.dispatchEvent(new window.MouseEvent("click", { bubbles: true, cancelable: true }));
+  assert.ok(window.document.querySelector('nav a[href="#billing/refunds#refund-a-card-payment"]'));
+  reveal(window, "refund-a-card-payment");
   assert.equal(expanded(window, "outside_rules"), true);
 });
 
@@ -166,43 +159,18 @@ test("collapse all and expand all set every block of the page", () => {
   assert.equal(window.document.querySelectorAll(".ghg-content[hidden]").length, 0);
 });
 
-test("opening the page at an anchor, encoded or not, expands it and the blocks around it", () => {
+test("revealing an anchor expands it and the blocks around it, whatever was remembered", () => {
   const kept = new Map<string, string>();
   for (const anchor of ["refunds-after-thirty-days", "refund-again-count-times", "again"]) {
-    kept.set(`gherkin-glass:/site/billing/refunds.html#${anchor}`, "collapsed");
+    kept.set(`gherkin-glass:/site/#billing/refunds#${anchor}`, "collapsed");
   }
   const memory: Memory = { get: (key) => kept.get(key) ?? null, set: (key, value) => void kept.set(key, value) };
-  const window = open("#%61gain", memory);
+  const window = open(memory);
+  reveal(window, "again");
   for (const anchor of ["refunds-after-thirty-days", "refund-again-count-times", "again"]) {
     assert.equal(expanded(window, anchor), true, anchor);
   }
-  assert.equal(kept.get("gherkin-glass:/site/billing/refunds.html#again"), "expanded");
-});
-
-test("following a contents link expands its block, but a click that opens another tab does not", () => {
-  const window = open();
-  (window.document.querySelector(".ghg-collapse-all") as unknown as HTMLElement).click();
-  const link = window.document.querySelector('nav a[href="#store-credit"]')!;
-  link.dispatchEvent(new window.MouseEvent("click", { bubbles: true, cancelable: true, ctrlKey: true }));
-  assert.equal(expanded(window, "store-credit"), false);
-  link.dispatchEvent(new window.MouseEvent("click", { bubbles: true, cancelable: true }));
-  assert.equal(expanded(window, "store-credit"), true);
-  assert.equal(expanded(window, "refunds-after-thirty-days"), true);
-});
-
-test("following a link to an anchor of the page by its relative address, as the folder tree's are, expands its block", () => {
-  const window = open("#store-credit");
-  (window.document.querySelector(".ghg-collapse-all") as unknown as HTMLElement).click();
-  const link = window.document.createElement("a");
-  link.setAttribute("href", "../billing/refunds.html#store-credit");
-  window.document.body.append(link);
-  link.dispatchEvent(new window.MouseEvent("click", { bubbles: true, cancelable: true }));
-  assert.equal(expanded(window, "store-credit"), true);
-  // A link to another page changes nothing here.
-  (window.document.querySelector(".ghg-collapse-all") as unknown as HTMLElement).click();
-  link.setAttribute("href", "index.html#store-credit");
-  link.dispatchEvent(new window.MouseEvent("click", { bubbles: true, cancelable: true }));
-  assert.equal(expanded(window, "store-credit"), false);
+  assert.equal(kept.get("gherkin-glass:/site/#billing/refunds#again"), "expanded");
 });
 
 test("the browser's storage keeps each state, and a storage that refuses keeps nothing without failing", () => {
@@ -225,15 +193,12 @@ test("the browser's storage keeps each state, and a storage that refuses keeps n
   }
 });
 
-// A folder page: tests/fixtures/pages/expected/billing/index.html, docs/BEHAVIOUR.md, rule 84.
-
-const FOLDER = new URL("../../../tests/fixtures/pages/expected/billing/index.html", import.meta.url);
+// A folder page, the page billing/ of tests/fixtures/pages: docs/BEHAVIOUR.md, rule 84.
 
 function openFolder(kept: Map<string, string>): Window {
-  const window = new Window({ url: "https://example.com/site/billing/index.html" });
-  window.document.write(readFileSync(FOLDER, "utf8"));
+  const window = drawnPage("site/folder/billing/index.html", "https://example.com/site/#billing/");
   const memory: Memory = { get: (key) => kept.get(key) ?? null, set: (key, value) => void kept.set(key, value) };
-  startCollapsing(new DomPage(window.document as unknown as Document), memory, window.location.pathname, null);
+  startCollapsing(new DomPage(window.document as unknown as Document), memory, "/site/#billing/", null);
   return window;
 }
 
@@ -243,7 +208,7 @@ test("a folder page's feature shows its contents by its button, remembered under
   const page = new DomPage(window.document as unknown as Document);
   assert.deepEqual(
     page.blocks().map((block) => [block.anchor, block.parent]),
-    [["refunds.html", null]],
+    [["#billing/refunds", null]],
   );
   const toggle = window.document.querySelector(".ghg-feature > button") as unknown as HTMLElement;
   const contents = window.document.querySelector(".ghg-feature > .ghg-content")!;
@@ -252,7 +217,7 @@ test("a folder page's feature shows its contents by its button, remembered under
   toggle.click();
   assert.equal(toggle.getAttribute("aria-expanded"), "true");
   assert.equal(contents.hasAttribute("hidden"), false);
-  assert.equal(kept.get("gherkin-glass:/site/billing/index.html#refunds.html"), "expanded");
+  assert.equal(kept.get("gherkin-glass:/site/#billing/##billing/refunds"), "expanded");
   const again = openFolder(kept);
   assert.equal(again.document.querySelector(".ghg-feature > button")!.getAttribute("aria-expanded"), "true");
 });

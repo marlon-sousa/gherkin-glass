@@ -48,10 +48,9 @@ pub(super) struct Built {
 /// A build that `error` stopped.
 #[derive(Debug)]
 pub(super) struct Stopped {
-    /// What the next build starts from: the new input tree beside the site tree and the site
-    /// rendered from it that the build started from, or none when the output check stopped a
-    /// build from nothing, or the list of `--only` could not be read, which leaves the last
-    /// build as it was.
+    /// What the next build starts from: the new input tree, or none when the output check
+    /// stopped a build from nothing, or the list of `--only` could not be read, which leaves the
+    /// last build as it was.
     pub(super) left: Option<BuildSnapshot>,
     pub(super) error: BuildError,
 }
@@ -97,7 +96,7 @@ impl SiteController {
     /// Checks the output folder, then collects the input from nothing, as `settings` say, into
     /// the snapshot a build from nothing starts from.
     fn check_and_collect(&self, settings: Arc<Settings>) -> Result<BuildSnapshot, Box<Stopped>> {
-        let built_versions = self.site_writer.check(&settings).map_err(|error| Stopped {
+        self.site_writer.check(&settings).map_err(|error| Stopped {
             left: None,
             error: BuildError::Output(error),
         })?;
@@ -111,8 +110,6 @@ impl SiteController {
         Ok(BuildSnapshot {
             settings,
             input_tree,
-            site: None,
-            built_versions,
         })
     }
 
@@ -133,8 +130,6 @@ impl SiteController {
         let left = BuildSnapshot {
             settings: Arc::clone(&last.settings),
             input_tree,
-            site: last.site.clone(),
-            built_versions: last.built_versions.clone(),
         };
         if !calls_for_rebuild {
             return BuildOutcome::NothingConcerned(left);
@@ -158,8 +153,7 @@ impl SiteController {
     }
 
     /// Parses the files of `snapshot`'s input tree with nothing parsed, then converts the input
-    /// tree beside `snapshot`'s site tree and writes the site, keeping the files of `snapshot`'s
-    /// site whose nodes have not changed, unless the input holds an error.
+    /// tree into the site's store and writes the site, unless the input holds an error.
     fn parse_convert_and_write(&self, mut snapshot: BuildSnapshot) -> Result<Built, Box<Stopped>> {
         let settings = &snapshot.settings;
         let files = snapshot.input_tree.files_to_parse();
@@ -173,22 +167,13 @@ impl SiteController {
                 error: BuildError::Input(errors),
             }));
         }
-        let converted = self.converter.convert(
-            &snapshot.input_tree,
-            snapshot.site_tree(),
-            &snapshot.settings,
-            &snapshot.built_versions,
-        );
-        let written =
-            self.site_writer
-                .write(&snapshot.settings, converted, snapshot.site.as_deref());
-        match written {
-            Ok((site, rendered)) => Ok(Built {
-                built: rendered.files.built,
-                snapshot: BuildSnapshot {
-                    site: Some(Arc::new(rendered)),
-                    ..snapshot
-                },
+        let store = self
+            .converter
+            .convert(&snapshot.input_tree, &snapshot.settings);
+        match self.site_writer.write(&snapshot.settings, &store) {
+            Ok((site, built)) => Ok(Built {
+                built,
+                snapshot,
                 site,
             }),
             Err(error) => Err(Box::new(Stopped {

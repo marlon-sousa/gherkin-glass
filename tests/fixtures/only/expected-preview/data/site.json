@@ -1,0 +1,77 @@
+{
+  "format": 1,
+  "ghg": "{version}",
+  "version": null,
+  "preview": null,
+  "title": "Changed features",
+  "only": true,
+  "start": {
+    "collapse_rules": false,
+    "collapse_scenarios": false,
+    "show_tree": true,
+    "inline_backgrounds": true
+  },
+  "features": [
+    {
+      "path": "billing/refunds.feature",
+      "page": "billing/refunds",
+      "object": "dd20d23fbb7956a9b8daf7f890b898e5f4ff1a154bf85fd45e7dbfd3b0085e56",
+      "lines": [
+        2,
+        3,
+        8
+      ],
+      "source": null
+    },
+    {
+      "path": "welcome.feature",
+      "page": "welcome",
+      "object": "f8aa7c21a684aa1e9270d5015d05ce3d73ef921f131a6edc1fe8e45539a5deb1",
+      "lines": [
+        2,
+        3
+      ],
+      "source": null
+    }
+  ],
+  "tags": [
+    {
+      "tag": "@billing",
+      "page": "tags/billing",
+      "link": null
+    },
+    {
+      "tag": "@onboarding",
+      "page": "tags/onboarding",
+      "link": null
+    }
+  ],
+  "sentences": {
+    "given": [
+      "a new customer named \"…\"",
+      "an order paid by card"
+    ],
+    "when": [
+      "she opens the bank's app",
+      "the customer asks for store credit",
+      "the order is refunded"
+    ],
+    "then": [
+      "she reads \"…\"",
+      "the card gets the money back",
+      "the customer gets store credit"
+    ]
+  },
+  "front_page": null,
+  "settings": {
+    "title": "Changed features",
+    "source_link": null,
+    "tag_links": [],
+    "accent_light": "#0b4f9c",
+    "accent_dark": "#8cc4ff",
+    "collapse_rules": false,
+    "collapse_scenarios": false,
+    "show_tree": true,
+    "inline_backgrounds": true
+  }
+}

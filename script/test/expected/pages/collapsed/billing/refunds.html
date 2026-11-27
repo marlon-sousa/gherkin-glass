@@ -1,0 +1,271 @@
+<main id="ghg_main">
+<h1>Feature: <bdi>Refunds &amp; &lt;returns&gt;</bdi></h1>
+<ul class="ghg-tags">
+<li><a href="#tags/billing">@billing</a></li>
+<li><a href="#tags/slow">@slow</a></li>
+</ul>
+<div class="ghg-description">
+<p>A refund gives the money back,<br>
+in the way it was paid.</p>
+</div>
+<nav class="ghg-contents" aria-label="Contents">
+<ul>
+<li><a href="#billing/refunds#outside_rules">Outside any rule</a>
+<ul>
+<li><a href="#billing/refunds#refund-a-card-payment">Scenario: <bdi>Refund a card payment</bdi></a></li>
+<li><a href="#billing/refunds#refund-count-items">Scenario outline: <bdi>Refund &lt;count&gt; items</bdi></a></li>
+</ul></li>
+<li><a href="#billing/refunds#refunds-after-thirty-days">Rule: <bdi>Refunds after thirty days</bdi></a>
+<ul>
+<li><a href="#billing/refunds#store-credit">Scenario: <bdi>Store credit</bdi></a></li>
+<li><a href="#billing/refunds#refund-again-count-times">Scenario outline: <bdi>Refund again &lt;count&gt; times</bdi></a></li>
+</ul></li>
+<li><a href="#billing/refunds#rule">Rule</a>
+<ul>
+<li><a href="#billing/refunds#refund-a-refund">Scenario: <bdi>Refund a refund</bdi></a></li>
+</ul></li>
+</ul>
+</nav>
+<div class="ghg-controls">
+<button type="button" class="ghg-collapse-all">Collapse all</button>
+<button type="button" class="ghg-expand-all">Expand all</button>
+<label class="ghg-option"><input type="checkbox" class="ghg-inline-backgrounds" autocomplete="off" checked=""> Show backgrounds inside each scenario</label>
+</div>
+<div class="ghg-block ghg-background" data-expanded-when-unchecked="false">
+<h2 id="background"><button type="button" class="ghg-toggle" aria-expanded="false">Background</button></h2>
+<div class="ghg-content" hidden="">
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>a customer named <span class="ghg-parameter">"Ana"</span></li>
+</ol>
+</div>
+</div>
+<div class="ghg-block ghg-outside-rules">
+<h2 id="outside_rules"><button type="button" class="ghg-toggle" aria-expanded="false">Outside any rule</button></h2>
+<div class="ghg-content" hidden="">
+<div class="ghg-block ghg-scenario">
+<h3 id="refund-a-card-payment"><button type="button" class="ghg-toggle" aria-expanded="false">Scenario: <bdi>Refund a card payment</bdi></button></h3>
+<div class="ghg-content" hidden="">
+<div class="ghg-description">
+<p>The plain case.</p>
+</div>
+<div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
+<h4 id="refund-a-card-payment_background_1"><button type="button" class="ghg-toggle" aria-expanded="true">From the background</button></h4>
+<div class="ghg-content">
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>a customer named <span class="ghg-parameter">"Ana"</span></li>
+</ol>
+</div>
+</div>
+<h4 class="ghg-steps-heading">From the scenario</h4>
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>an order with these lines:
+<table class="ghg-table">
+<thead>
+<tr><th scope="col">item</th><th scope="col">price</th></tr>
+</thead>
+<tbody>
+<tr><td>pen</td><td>1.50</td></tr>
+<tr><td>a | b</td><td>2</td></tr>
+</tbody>
+</table></li>
+<li><span class="ghg-keyword">When </span>the order is refunded</li>
+<li><span class="ghg-keyword">Then </span>the card gets
+<figure class="ghg-doc-string">
+<figcaption>json</figcaption>
+<pre>{"amount": 3.50}</pre>
+</figure></li>
+<li><span class="ghg-keyword">And </span>a note is kept
+<pre class="ghg-doc-string">
+
+Refunded in full.
+  Indented.</pre></li>
+</ol>
+</div>
+</div>
+<div class="ghg-block ghg-scenario">
+<h3 id="refund-count-items"><button type="button" class="ghg-toggle" aria-expanded="false">Scenario outline: <bdi>Refund &lt;count&gt; items</bdi></button></h3>
+<div class="ghg-content" hidden="">
+<ul class="ghg-tags">
+<li><a href="#tags/outline">@outline</a></li>
+</ul>
+<div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
+<h4 id="refund-count-items_background_1"><button type="button" class="ghg-toggle" aria-expanded="true">From the background</button></h4>
+<div class="ghg-content">
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>a customer named <span class="ghg-parameter">"Ana"</span></li>
+</ol>
+</div>
+</div>
+<h4 class="ghg-steps-heading">From the scenario</h4>
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span><span class="ghg-placeholder">&lt;count&gt;</span> items</li>
+<li><span class="ghg-keyword">Then </span>the total is <span class="ghg-placeholder">&lt;total&gt;</span></li>
+</ol>
+<p id="refund-count-items_scenarios" class="ghg-runs">Runs once for each row of these examples:</p>
+<ul class="ghg-examples-list">
+<li id="cheap" class="ghg-block ghg-examples"><button type="button" class="ghg-toggle" aria-expanded="false">Examples: <bdi>Cheap</bdi></button>
+<div class="ghg-content" hidden="">
+<ul class="ghg-tags">
+<li><a href="#tags/cheap">@cheap</a></li>
+</ul>
+<table class="ghg-table">
+<thead>
+<tr><th scope="col">count</th><th scope="col">total</th></tr>
+</thead>
+<tbody>
+<tr><td>1</td><td>2</td></tr>
+</tbody>
+</table>
+<div class="ghg-block ghg-examples-as-scenarios">
+<h4 id="cheap_runs"><button type="button" class="ghg-toggle" aria-expanded="false">Runs, one per row</button></h4>
+<div class="ghg-content" hidden="">
+<div class="ghg-block ghg-scenario">
+<h5 id="refund-count-items-row-1"><button type="button" class="ghg-toggle" aria-expanded="false"><bdi>Refund &lt;count&gt; items</bdi> (<bdi>count</bdi>: <bdi>1</bdi>, <bdi>total</bdi>: <bdi>2</bdi>)</button></h5>
+<div class="ghg-content" hidden="">
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span><span class="ghg-number">1</span> items</li>
+<li><span class="ghg-keyword">Then </span>the total is <span class="ghg-number">2</span></li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+</div></li>
+<li id="examples" class="ghg-block ghg-examples"><button type="button" class="ghg-toggle" aria-expanded="false">Examples 2 (nothing to run)</button>
+<div class="ghg-content" hidden="">
+<table class="ghg-table">
+<thead>
+<tr><th scope="col">count</th><th scope="col">total</th></tr>
+</thead>
+</table>
+</div></li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div class="ghg-block ghg-rule">
+<h2 id="refunds-after-thirty-days"><button type="button" class="ghg-toggle" aria-expanded="false">Rule: <bdi>Refunds after thirty days</bdi></button></h2>
+<div class="ghg-content" hidden="">
+<div class="ghg-description">
+<p>Only store credit.</p>
+</div>
+<div class="ghg-block ghg-background" data-expanded-when-unchecked="false">
+<h3 id="an-old-order"><button type="button" class="ghg-toggle" aria-expanded="false">Background: <bdi>An old order</bdi></button></h3>
+<div class="ghg-content" hidden="">
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>an order from forty days ago</li>
+</ol>
+</div>
+</div>
+<div class="ghg-block ghg-scenario">
+<h3 id="store-credit"><button type="button" class="ghg-toggle" aria-expanded="false">Scenario: <bdi>Store credit</bdi></button></h3>
+<div class="ghg-content" hidden="">
+<p class="ghg-keyword-note" role="note">Note: in the Gherkin feature file, this scenario is <button type="button" class="ghg-note-opener" aria-haspopup="dialog" aria-controls="ghg_note_dialog">defined with the keyword "<bdi>Example</bdi>".</button></p>
+<ul class="ghg-tags">
+<li><a href="#tags/in-rule">@in-rule</a></li>
+</ul>
+<div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
+<h4 id="store-credit_background_1"><button type="button" class="ghg-toggle" aria-expanded="true">From the background</button></h4>
+<div class="ghg-content">
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>a customer named <span class="ghg-parameter">"Ana"</span></li>
+</ol>
+</div>
+</div>
+<div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
+<h4 id="store-credit_background_2"><button type="button" class="ghg-toggle" aria-expanded="true">From the rule's background</button></h4>
+<div class="ghg-content">
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>an order from forty days ago</li>
+</ol>
+</div>
+</div>
+<h4 class="ghg-steps-heading">From the scenario</h4>
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Then </span>store credit is given</li>
+</ol>
+</div>
+</div>
+<div class="ghg-block ghg-scenario">
+<h3 id="refund-again-count-times"><button type="button" class="ghg-toggle" aria-expanded="false">Scenario outline: <bdi>Refund again &lt;count&gt; times</bdi></button></h3>
+<div class="ghg-content" hidden="">
+<div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
+<h4 id="refund-again-count-times_background_1"><button type="button" class="ghg-toggle" aria-expanded="true">From the background</button></h4>
+<div class="ghg-content">
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>a customer named <span class="ghg-parameter">"Ana"</span></li>
+</ol>
+</div>
+</div>
+<div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
+<h4 id="refund-again-count-times_background_2"><button type="button" class="ghg-toggle" aria-expanded="true">From the rule's background</button></h4>
+<div class="ghg-content">
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>an order from forty days ago</li>
+</ol>
+</div>
+</div>
+<h4 class="ghg-steps-heading">From the scenario</h4>
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span><span class="ghg-placeholder">&lt;count&gt;</span> refunds</li>
+</ol>
+<p id="refund-again-count-times_scenarios" class="ghg-runs">Runs once for each row of these examples:</p>
+<ul class="ghg-examples-list">
+<li id="again" class="ghg-block ghg-examples"><button type="button" class="ghg-toggle" aria-expanded="false">Examples: <bdi>Again</bdi></button>
+<div class="ghg-content" hidden="">
+<table class="ghg-table">
+<thead>
+<tr><th scope="col">count</th></tr>
+</thead>
+<tbody>
+<tr><td>2</td></tr>
+</tbody>
+</table>
+<div class="ghg-block ghg-examples-as-scenarios">
+<h4 id="again_runs"><button type="button" class="ghg-toggle" aria-expanded="false">Runs, one per row</button></h4>
+<div class="ghg-content" hidden="">
+<div class="ghg-block ghg-scenario">
+<h5 id="refund-again-count-times-row-1"><button type="button" class="ghg-toggle" aria-expanded="false"><bdi>Refund again &lt;count&gt; times</bdi> (<bdi>count</bdi>: <bdi>2</bdi>)</button></h5>
+<div class="ghg-content" hidden="">
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span><span class="ghg-number">2</span> refunds</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+</div></li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div class="ghg-block ghg-rule">
+<h2 id="rule"><button type="button" class="ghg-toggle" aria-expanded="false">Rule</button></h2>
+<div class="ghg-content" hidden="">
+<div class="ghg-block ghg-scenario">
+<h3 id="refund-a-refund"><button type="button" class="ghg-toggle" aria-expanded="false">Scenario: <bdi>Refund a refund</bdi></button></h3>
+<div class="ghg-content" hidden="">
+<div class="ghg-block ghg-background-in-scenario" data-expanded-when-unchecked="false">
+<h4 id="refund-a-refund_background_1"><button type="button" class="ghg-toggle" aria-expanded="true">From the background</button></h4>
+<div class="ghg-content">
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Given </span>a customer named <span class="ghg-parameter">"Ana"</span></li>
+</ol>
+</div>
+</div>
+<h4 class="ghg-steps-heading">From the scenario</h4>
+<ol class="ghg-steps">
+<li><span class="ghg-keyword">Then </span>it is refused</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<dialog id="ghg_note_dialog" class="ghg-dialog" tabindex="-1" aria-labelledby="ghg_note_dialog_title" aria-describedby="ghg_note_dialog_text">
+<h2 id="ghg_note_dialog_title" class="ghg-dialog-title">About this note</h2>
+<p id="ghg_note_dialog_text">Gherkin lets authors use different words for the same kind of block. For example, Scenario and Example both define a scenario, and Examples and Scenarios both define examples. This site names every block by its kind, so pages read the same whichever word was used. The note only tells you which word the feature file uses; it changes nothing about the block.</p>
+<form method="dialog"><button>Got it</button></form>
+</dialog>
+</main>

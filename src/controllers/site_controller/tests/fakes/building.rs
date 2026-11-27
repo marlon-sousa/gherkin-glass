@@ -9,13 +9,9 @@ use gherkin::{Feature, GherkinEnv};
 
 use super::*;
 use crate::entities::{
-    CollectedChanges, ConvertedSite, FileToParse, IgnoreRules, InputTree, InputTreeBuilder,
-    KeptInOutput, PageOptions, ParsedFeature, ParsedFile, PathList, RenderedSite, RevisedFeature,
-    Revision, Settings, SiteFiles, SiteNode, SiteStore, SiteTree, SiteTreeBuilder, SiteVersion,
-    TagNames, Unnamed, VersionName,
+    BuildTarget, CollectedChanges, FileToParse, IgnoreRules, InputTree, InputTreeBuilder,
+    KeptInOutput, PageOptions, ParsedFeature, ParsedFile, PathList, Settings, SiteStore, Unnamed,
 };
-use crate::policies::page_frame;
-use crate::test_support::name;
 
 /// Gives the settings of a build from the input the configuration names, once a test sets it, or
 /// else from the one `options` name, or `features`, into `site`, or, while `failing`, the errors
@@ -74,7 +70,7 @@ impl SettingsApi for FakeSettingsService {
             destination,
             unnamed: Unnamed::Refused,
             pages: PageOptions::default(),
-            version: None,
+            target: options.target.clone(),
             replace: true,
             front_page: self
                 .front_page
@@ -111,20 +107,12 @@ impl InputCollectorApi for FakeInputCollector {
         if !self.no_file.load(Ordering::SeqCst) {
             return Ok(one_file_in(input));
         }
-        let builder = InputTreeBuilder::listed(
-            input.to_path_buf(),
-            IgnoreRules::default(),
-            Revision::default(),
-        );
+        let builder = InputTreeBuilder::listed(input.to_path_buf(), IgnoreRules::default());
         if !self.input_missing.load(Ordering::SeqCst) {
             return Ok(builder.build());
         }
         let missing = InputError::new(input, input, None, InputErrorKind::InputMissing);
-        Ok(InputTree::unlisted_input(
-            input.to_path_buf(),
-            missing,
-            Revision::default(),
-        ))
+        Ok(InputTree::unlisted_input(input.to_path_buf(), missing))
     }
 
     fn collect_changes(&self, last: &InputTree, paths: &BTreeSet<PathBuf>) -> CollectedChanges {
@@ -148,11 +136,7 @@ impl InputCollectorApi for FakeInputCollector {
 
 /// The tree of `input` with one file, `a.feature`, with nothing parsed.
 fn one_file_in(input: &Path) -> InputTree {
-    let mut builder = InputTreeBuilder::listed(
-        input.to_path_buf(),
-        IgnoreRules::default(),
-        Revision::default(),
-    );
+    let mut builder = InputTreeBuilder::listed(input.to_path_buf(), IgnoreRules::default());
     let root = builder.root();
     builder.add_allowed_file(root, input.join("a.feature"));
     builder.build()
@@ -203,45 +187,26 @@ fn parsed(input: &Path, file: FileToParse, failing: bool) -> ParsedFile {
     ParsedFile { file, result }
 }
 
-/// Makes a tree with one asset for each feature, named after the feature's path, and notes
-/// the versions it is given and the assets of the last site tree, when it is given one.
+/// Makes an empty store, and notes the paths of the features it is given.
 pub(crate) struct FakeConverter {
     pub(super) calls: Arc<Calls>,
 }
 
 impl ConverterApi for FakeConverter {
-    fn convert(
-        &self,
-        input_tree: &InputTree,
-        last: Option<&SiteTree>,
-        settings: &Settings,
-        built_versions: &BTreeSet<VersionName>,
-    ) -> ConvertedSite {
-        let version = SiteVersion {
-            name: None,
-            tag_names: TagNames::default(),
-        };
-        let mut site = SiteTreeBuilder::new(page_frame(&settings.pages), version);
-        site.assets(input_tree.features().map(asset_of));
-        let tree = site.build();
-        let versions: Vec<_> = built_versions.iter().map(VersionName::as_str).collect();
-        let after = last.map_or_else(String::new, |last| format!(" after {}", asset_names(last)));
-        self.calls.note(format!(
-            "converter.convert {} beside {}{after}",
-            asset_names(&tree),
-            versions.join(" ")
-        ));
-        ConvertedSite {
-            site_tree: tree,
-            store: SiteStore::default(),
-        }
+    fn convert(&self, input_tree: &InputTree, _: &Settings) -> SiteStore {
+        let paths: Vec<String> = input_tree
+            .features()
+            .map(|parsed| parsed.path.display().to_string())
+            .collect();
+        self.calls
+            .note(format!("converter.convert {}", paths.join(" ")));
+        SiteStore::default()
     }
 }
 
-/// Finds the version `v1.0.0` already in the output folder, and writes nothing: a site into a
-/// folder is that folder, and one in memory holds one empty file named after how many sites
-/// were written, `site 1` first. It renders no file, and notes the assets of the last site
-/// tree it is given, when it is given one. The check fails while
+/// Writes nothing: a site into a folder is that folder, and one in memory holds one empty file
+/// named after how many sites were written, `site 1` first. It finds the version `v1.0.0` in
+/// the output folder, and nothing else, so removes only that. The check fails while
 /// `check_failing`, and the writing while `write_failing`, each with [`output_error`].
 #[derive(Default)]
 pub(crate) struct FakeSiteWriter {
@@ -252,27 +217,21 @@ pub(crate) struct FakeSiteWriter {
 }
 
 impl SiteWriterApi for FakeSiteWriter {
-    fn check(&self, settings: &Settings) -> Result<BTreeSet<VersionName>, OutputError> {
+    fn check(&self, settings: &Settings) -> Result<(), OutputError> {
         self.calls
             .note(format!("site_writer.check {:?}", settings.destination));
         if self.check_failing.load(Ordering::SeqCst) {
             return Err(output_error());
         }
-        Ok(BTreeSet::from([name("v1.0.0")]))
+        Ok(())
     }
 
     fn write(
         &self,
         settings: &Settings,
-        converted: ConvertedSite,
-        last: Option<&RenderedSite>,
-    ) -> Result<(ServedSite, RenderedSite), BuildError> {
-        let tree = converted.site_tree;
-        let after = last.map_or_else(String::new, |last| {
-            format!(" after {}", asset_names(&last.tree))
-        });
-        self.calls
-            .note(format!("site_writer.write {}{after}", asset_names(&tree)));
+        _: &SiteStore,
+    ) -> Result<(ServedSite, BuiltSite), BuildError> {
+        self.calls.note("site_writer.write".into());
         if self.write_failing.load(Ordering::SeqCst) {
             return Err(BuildError::Output(output_error()));
         }
@@ -283,32 +242,15 @@ impl SiteWriterApi for FakeSiteWriter {
                 ServedSite::Memory(BTreeMap::from([(format!("site {number}"), Arc::from([]))]))
             }
         };
-        let files = SiteFiles {
-            files: Vec::new(),
-            root_files: Vec::new(),
-            built: built_site(),
-        };
-        Ok((site, RenderedSite { tree, files }))
+        Ok((site, built_site()))
     }
-}
 
-/// The names of the assets among the files of `tree`, joined with spaces.
-fn asset_names(tree: &SiteTree) -> String {
-    let names: Vec<_> = tree
-        .files()
-        .filter_map(|file| asset_name(file.value()))
-        .collect();
-    names.join(" ")
-}
-
-/// The name of the asset that stands for `revised`'s feature.
-fn asset_of(revised: RevisedFeature<'_>) -> String {
-    revised.feature.path.display().to_string()
-}
-
-fn asset_name(file: &SiteNode) -> Option<&str> {
-    match file {
-        SiteNode::Asset(name) => Some(name),
-        _ => None,
+    fn remove(&self, settings: &Settings) -> Result<bool, BuildError> {
+        self.calls
+            .note(format!("site_writer.remove {:?}", settings.target));
+        if self.write_failing.load(Ordering::SeqCst) {
+            return Err(BuildError::Output(output_error()));
+        }
+        Ok(settings.target == BuildTarget::Version(crate::test_support::name("v1.0.0")))
     }
 }

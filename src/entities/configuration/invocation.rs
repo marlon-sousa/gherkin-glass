@@ -3,8 +3,7 @@
 use std::path::PathBuf;
 
 use crate::entities::{
-    Colour, Destination, KeptInOutput, MessageFormat, PathList, SearchIndexing, TagLink,
-    VersionName,
+    BuildTarget, Colour, Destination, KeptInOutput, MessageFormat, PathList, TagLink,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -16,19 +15,25 @@ pub(crate) enum Invocation {
         message_format: MessageFormat,
     },
     Serve(ServeOptions),
+    /// `ghg version remove` or `ghg preview remove`, whose target is a version or a preview.
+    Remove {
+        options: RemoveOptions,
+        target: BuildTarget,
+        message_format: MessageFormat,
+    },
 }
 
-/// The options of `ghg build`, each `None` when not given.
+/// The options of `ghg build`, `ghg version add` and `ghg preview add`, each `None` when not
+/// given, and what the command writes.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub(crate) struct BuildOptions {
     pub(crate) config: Option<PathBuf>,
     pub(crate) input: Option<PathBuf>,
-    pub(crate) version_name: Option<VersionName>,
+    pub(crate) target: BuildTarget,
     pub(crate) output: Option<PathBuf>,
     pub(crate) title: Option<String>,
     pub(crate) front_page: Option<PathBuf>,
     pub(crate) only: Option<PathList>,
-    pub(crate) indexing: SearchIndexing,
     pub(crate) keep_in_output: Option<KeptInOutput>,
     pub(crate) source_link: Option<String>,
     pub(crate) allow_unnamed: Option<bool>,
@@ -40,6 +45,27 @@ pub(crate) struct BuildOptions {
     pub(crate) accent_light: Option<Colour>,
     pub(crate) accent_dark: Option<Colour>,
     pub(crate) tag_links: Option<Vec<TagLink>>,
+}
+
+/// The options of `ghg version remove` and `ghg preview remove`, each `None` when not given.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub(crate) struct RemoveOptions {
+    pub(crate) config: Option<PathBuf>,
+    pub(crate) output: Option<PathBuf>,
+    pub(crate) keep_in_output: Option<KeptInOutput>,
+}
+
+impl RemoveOptions {
+    /// The options of a build with these, which loads the same settings, writing `target`.
+    pub(crate) fn as_build(&self, target: &BuildTarget) -> BuildOptions {
+        BuildOptions {
+            config: self.config.clone(),
+            output: self.output.clone(),
+            keep_in_output: self.keep_in_output.clone(),
+            target: target.clone(),
+            ..BuildOptions::default()
+        }
+    }
 }
 
 /// The options of `ghg serve`: those of `ghg build`, and how it serves.

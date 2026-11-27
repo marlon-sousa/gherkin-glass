@@ -1,7 +1,6 @@
-// The service of src/services/shell_tree.ts, with the store in memory and the tree's adapters on the layout ghg 1 wrote, tests/fixtures/pages/expected/billing/refunds.html: docs/BEHAVIOUR.md, rules 89, 90 and 93.
+// The service of src/services/shell_tree.ts, with the store in memory and the tree's adapters on the shell of tests/fixtures/pages: docs/BEHAVIOUR.md, rules 89, 90 and 93.
 
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
 import { test } from "node:test";
 
 import { Window } from "happy-dom";
@@ -12,16 +11,15 @@ import type { Memory } from "../../src/ports/memory.ts";
 import type { Store } from "../../src/ports/store.ts";
 import { startShellTree, type ShellTree } from "../../src/services/shell_tree.ts";
 import { billingDescriptor, closedObject } from "../support/billing_store.ts";
-import { words } from "../support/drawn_pages.ts";
+import { SHELL, words } from "../support/drawn_pages.ts";
 import { MemoryStore } from "../support/memory_store.ts";
 import { refundsObject } from "../support/refunds_store.ts";
 import { settled } from "../support/shell_fakes.ts";
 
-const LAYOUT = readFileSync(new URL("../../../tests/fixtures/pages/expected/billing/refunds.html", import.meta.url), "utf8");
 
 function shell(store: Store, kept = new Map<string, string>()): { readonly document: Document; readonly tree: ShellTree } {
   const window = new Window({ url: "https://example.com/site/index.html#billing/refunds" });
-  window.document.write(LAYOUT);
+  window.document.write(SHELL);
   const document = window.document as unknown as Document;
   document.querySelector("nav.ghg-tree")!.replaceChildren();
   const memory: Memory = { get: (key) => kept.get(key) ?? null, set: (key, value) => void kept.set(key, value) };
@@ -29,7 +27,7 @@ function shell(store: Store, kept = new Map<string, string>()): { readonly docum
     store,
     words,
     toggle: new DomTreeSwitch(document),
-    view: DomTree.inShell(document),
+    view: new DomTree(document),
     width: { narrow: () => false, onChange: () => {} },
     memory,
     sitePath: "/site/",

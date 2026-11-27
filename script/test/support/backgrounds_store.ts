@@ -1,4 +1,4 @@
-// The site's data of three feature files of tests/fixtures/backgrounds, as docs/BEHAVIOUR.md, "The site's data", says ghg writes it, so that the pages the script draws from it can be compared with those ghg 1 wrote there, in expected and expected-unchecked.
+// The site's data of three feature files of tests/fixtures/backgrounds, as docs/BEHAVIOUR.md, rules 248 to 252, say ghg writes it, so that the pages the script draws from it can be compared with those ghg 1 wrote there, committed in script/test/expected/backgrounds.
 
 import { block, descriptor, entry, number, object, placeholder, run, step, text } from "./store_building.ts";
 

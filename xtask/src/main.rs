@@ -2,6 +2,7 @@
 
 mod checks;
 mod comment_ratio;
+mod drawn_pages;
 mod expected_sites;
 mod expected_stores;
 
@@ -13,16 +14,17 @@ use std::process::{Command, ExitCode};
 
 use checks::{CARGO_CHECKS, MINIMUM_RUST_TEST};
 use comment_ratio::Lines;
-use expected_sites::put_back_placeholder;
-use expected_stores::{fixture_stores, history_store};
+use drawn_pages::{check_drawn_pages, write_drawn_pages};
+use expected_sites::{put_back_placeholder, replace_folder};
+use expected_stores::{fixture_stores, history_store, versions_site};
 
 const USAGE: &str = "\
 Usage: cargo xtask <command>
 
 Commands:
-  build: builds the pages' script from script/ into assets/gherkin-glass.js, writes the fixtures' and the example suite's expected sites again, the expected stores of the fixtures that commit no site and of the history of versions, and the crate's README, README.crate.md, from README.md, then builds the release binary.
+  build: builds the pages' script from script/ into assets/gherkin-glass.js, minified, with the licences of the packages it holds in assets/THIRD-PARTY-LICENSES.txt, writes the fixtures' and the example suite's expected sites again, with the pages the script draws from each, the expected stores of the fixtures that commit no site and of the history of versions, and the crate's README, README.crate.md, from README.md, then builds the release binary.
   check: runs every check a pull request runs: formatting, lints, the tests on both Rust versions, the documentation, the dependencies with cargo deny, the package, the script check and the browser check.
-  check-script: type-checks and tests the script, and checks that assets/gherkin-glass.js is what it compiles to.
+  check-script: type-checks and tests the script, and checks that assets/gherkin-glass.js is what it compiles to, assets/THIRD-PARTY-LICENSES.txt the licences of what it holds, and the pages it draws from every expected site those committed beside it.
   check-browser: builds ghg, installs the browser, and checks every fixture's site and the example suite's, alone and with the README's front page, in it: accessibility, the keyboard, the width of a narrow window, pages opened from disk, the folder tree on a narrow window, the dialog of a keyword's note, markup in feature files shown as text by the folder tree and search, the reload of ghg serve --watch, and the pages a shell draws as it is navigated.
   comment-ratio [path ...]: counts the comment lines and the code lines of the given Rust and TypeScript files, or of every one git tracks, with the total last.";
 
@@ -39,6 +41,9 @@ const BROWSER_CHECKS: [&str; 7] = [
 
 /// The compiled script, committed so that building the crate needs no Node.
 const SCRIPT: &str = "assets/gherkin-glass.js";
+
+/// The licences of the packages the compiled script holds, committed beside it.
+const LICENSES: &str = "assets/THIRD-PARTY-LICENSES.txt";
 
 fn main() -> ExitCode {
     let command = args().nth(1);
@@ -66,19 +71,22 @@ fn main() -> ExitCode {
 fn build() -> Result<(), String> {
     prepare_script()?;
     bundle(&root().join(SCRIPT))?;
+    licenses(&root().join(LICENSES))?;
     // The expected sites of the fixtures hold the assets as built. Each is built in its
-    // fixture's folder, from its configuration file and the list `--only` names, if any.
-    for (fixture, config, only) in [
-        ("pages", "ghg.toml", None),
-        ("pages", "collapsed.toml", None),
-        ("backgrounds", "ghg.toml", None),
-        ("backgrounds", "unchecked.toml", None),
-        ("tags", "ghg.toml", None),
-        ("highlighting", "ghg.toml", None),
-        ("front-page", "ghg.toml", None),
-        ("only", "ghg.toml", Some("changed.txt")),
+    // fixture's folder, from its configuration file and the list `--only` names, if any, into
+    // the folder the file names, emptied first.
+    for (fixture, config, output, only) in [
+        ("pages", "ghg.toml", "expected", None),
+        ("pages", "collapsed.toml", "expected-collapsed", None),
+        ("backgrounds", "ghg.toml", "expected", None),
+        ("backgrounds", "unchecked.toml", "expected-unchecked", None),
+        ("tags", "ghg.toml", "expected", None),
+        ("highlighting", "ghg.toml", "expected", None),
+        ("front-page", "ghg.toml", "expected", None),
+        ("only", "ghg.toml", "expected", Some("changed.txt")),
     ] {
         let folder = root().join("tests/fixtures").join(fixture);
+        replace_folder(&folder.join(output), None)?;
         let mut arguments = vec![
             "run",
             "--quiet",
@@ -93,7 +101,29 @@ fn build() -> Result<(), String> {
         arguments.extend(only.into_iter().flat_map(only_arguments));
         cargo_in(&folder, &arguments)?;
     }
+    // The preview of `only`'s listed files, added beside its site.
+    let only = root().join("tests/fixtures/only");
+    replace_folder(&only.join("expected-preview"), Some(&only.join("expected")))?;
+    cargo_in(
+        &only,
+        &[
+            "run",
+            "--quiet",
+            "--locked",
+            "--package",
+            "gherkin-glass",
+            "--",
+            "preview",
+            "add",
+            "pr-131",
+            "--only",
+            "changed.txt",
+            "--output",
+            "expected-preview",
+        ],
+    )?;
     // So does the example suite's, which the project's site shows.
+    replace_folder(&root().join("project-site/expected"), None)?;
     cargo(&[
         "run",
         "--quiet",
@@ -106,10 +136,12 @@ fn build() -> Result<(), String> {
         "project-site/ghg.toml",
     ])?;
     fixture_stores()?;
+    versions_site()?;
     history_store()?;
     let version = manifest_value("version")?;
     put_back_placeholder(&root().join("tests/fixtures"), &version)?;
     put_back_placeholder(&root().join("project-site/expected"), &version)?;
+    write_drawn_pages()?;
     // The README crates.io and docs.rs show, through bash, which Windows has with Git Bash.
     run(Command::new("bash")
         .args([
@@ -199,14 +231,18 @@ fn check_script() -> Result<(), String> {
     prepare_script()?;
     let compiled = target().join("xtask/gherkin-glass.js");
     bundle(&compiled)?;
+    let written = target().join("xtask/THIRD-PARTY-LICENSES.txt");
+    licenses(&written)?;
     let read_file =
         |path: &Path| read(path).map_err(|error| format!("{}: {error}", path.display()));
-    if read_file(&compiled)? != read_file(&root().join(SCRIPT))? {
-        return Err(format!(
-            "{SCRIPT} is not what script/ compiles to. Run cargo xtask build, and commit {SCRIPT}."
-        ));
+    for (made, committed) in [(compiled, SCRIPT), (written, LICENSES)] {
+        if read_file(&made)? != read_file(&root().join(committed))? {
+            return Err(format!(
+                "{committed} is not what script/ makes. Run cargo xtask build, and commit {committed}."
+            ));
+        }
     }
-    Ok(())
+    check_drawn_pages()
 }
 
 fn check_browser() -> Result<(), String> {
@@ -248,6 +284,12 @@ fn prepare_script() -> Result<(), String> {
 fn bundle(to: &Path) -> Result<(), String> {
     let outfile = format!("--outfile={}", to.display());
     npm(&["run", "--silent", "bundle", "--", &outfile])
+}
+
+/// Writes the licences of the packages the compiled script holds into `to`.
+fn licenses(to: &Path) -> Result<(), String> {
+    let file = to.display().to_string();
+    npm(&["run", "--silent", "licenses", "--", &file])
 }
 
 fn npm(arguments: &[&str]) -> Result<(), String> {

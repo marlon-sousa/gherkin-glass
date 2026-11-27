@@ -1,0 +1,277 @@
+[
+  {
+    "text": "Banking & <more>",
+    "address": "#"
+  },
+  {
+    "text": "billing",
+    "address": "#billing/",
+    "items": [
+      {
+        "text": "archive",
+        "address": "#billing/archive/",
+        "items": [
+          {
+            "text": [
+              "Feature: ",
+              "Closed accounts"
+            ],
+            "address": "#billing/archive/closed%20%231",
+            "lang": "en",
+            "items": [
+              {
+                "text": [
+                  "Rule: ",
+                  "No refunds once closed"
+                ],
+                "address": "#billing/archive/closed%20%231#no-refunds-once-closed"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "text": [
+          "Feature: ",
+          "Refunds & <returns>"
+        ],
+        "address": "#billing/refunds",
+        "lang": "en",
+        "items": [
+          {
+            "text": "Outside any rule",
+            "address": "#billing/refunds#outside_rules",
+            "items": [
+              {
+                "text": [
+                  "Scenario: ",
+                  "Refund a card payment"
+                ],
+                "address": "#billing/refunds#refund-a-card-payment"
+              },
+              {
+                "text": [
+                  "Scenario outline: ",
+                  "Refund <count> items"
+                ],
+                "address": "#billing/refunds#refund-count-items"
+              }
+            ]
+          },
+          {
+            "text": [
+              "Rule: ",
+              "Refunds after thirty days"
+            ],
+            "address": "#billing/refunds#refunds-after-thirty-days",
+            "items": [
+              {
+                "text": [
+                  "Scenario: ",
+                  "Store credit"
+                ],
+                "address": "#billing/refunds#store-credit"
+              },
+              {
+                "text": [
+                  "Scenario outline: ",
+                  "Refund again <count> times"
+                ],
+                "address": "#billing/refunds#refund-again-count-times"
+              }
+            ]
+          },
+          {
+            "text": "Rule",
+            "address": "#billing/refunds#rule",
+            "items": [
+              {
+                "text": [
+                  "Scenario: ",
+                  "Refund a refund"
+                ],
+                "address": "#billing/refunds#refund-a-refund"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "text": "reports",
+    "address": "#reports/",
+    "items": [
+      {
+        "text": "monthly",
+        "address": "#reports/monthly/",
+        "items": [
+          {
+            "text": [
+              "Feature: ",
+              "Monthly totals"
+            ],
+            "address": "#reports/monthly/totals",
+            "lang": "en",
+            "items": [
+              {
+                "text": [
+                  "Scenario: ",
+                  "Totals add up"
+                ],
+                "address": "#reports/monthly/totals#totals-add-up"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "text": "stories",
+    "address": "#stories/",
+    "items": [
+      {
+        "text": [
+          "Feature: ",
+          "A story without scenarios"
+        ],
+        "address": "#stories/read",
+        "lang": "en"
+      }
+    ]
+  },
+  {
+    "text": [
+      "Feature: ",
+      "Emoji keywords"
+    ],
+    "address": "#emoji",
+    "lang": "und",
+    "items": [
+      {
+        "text": [
+          "Scenario: ",
+          "A scenario"
+        ],
+        "address": "#emoji#a-scenario"
+      }
+    ]
+  },
+  {
+    "text": [
+      "Feature: ",
+      "Kinds written with other words"
+    ],
+    "address": "#kinds",
+    "lang": "en",
+    "items": [
+      {
+        "text": "Outside any rule",
+        "address": "#kinds#outside_rules",
+        "items": [
+          {
+            "text": [
+              "Scenario: ",
+              "Written as an example"
+            ],
+            "address": "#kinds#written-as-an-example"
+          },
+          {
+            "text": [
+              "Scenario outline: ",
+              "Written as a template"
+            ],
+            "address": "#kinds#written-as-a-template"
+          },
+          {
+            "text": [
+              "Scenario outline: ",
+              "Written as a scenario with examples"
+            ],
+            "address": "#kinds#written-as-a-scenario-with-examples"
+          },
+          {
+            "text": [
+              "Scenario: ",
+              "Written as an outline without examples"
+            ],
+            "address": "#kinds#written-as-an-outline-without-examples"
+          },
+          {
+            "text": "Scenario",
+            "address": "#kinds#example"
+          },
+          {
+            "text": [
+              "Scenario: ",
+              "Outside any rule"
+            ],
+            "address": "#kinds#outside-any-rule"
+          }
+        ]
+      },
+      {
+        "text": [
+          "Rule: ",
+          "Kinds inside a rule"
+        ],
+        "address": "#kinds#kinds-inside-a-rule",
+        "items": [
+          {
+            "text": [
+              "Scenario: ",
+              "Inside the rule"
+            ],
+            "address": "#kinds#inside-the-rule"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "text": [
+      "Feature: ",
+      "Withdraw cash at the counter"
+    ],
+    "address": "#outlines",
+    "lang": "en",
+    "items": [
+      {
+        "text": [
+          "Scenario outline: ",
+          "Withdraw cash"
+        ],
+        "address": "#outlines#withdraw-cash"
+      },
+      {
+        "text": "Scenario outline",
+        "address": "#outlines#scenario-outline"
+      },
+      {
+        "text": [
+          "Scenario outline: ",
+          "Nothing to produce"
+        ],
+        "address": "#outlines#nothing-to-produce"
+      }
+    ]
+  },
+  {
+    "text": [
+      "Feature: ",
+      "Saque em conta poupança"
+    ],
+    "address": "#saque%20em%20conta%20poupan%C3%A7a",
+    "lang": "pt",
+    "items": [
+      {
+        "text": [
+          "Scenario: ",
+          "Saque com saldo"
+        ],
+        "address": "#saque%20em%20conta%20poupan%C3%A7a#saque-com-saldo"
+      }
+    ]
+  }
+]

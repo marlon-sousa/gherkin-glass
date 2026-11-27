@@ -31,7 +31,7 @@ test("each result says what it is and where, its names isolated", () => {
     spoken(result(words, named("Withdraw over the limit"))),
     "[Withdraw over the limit], scenario in [The daily limit applies], [Withdraw cash]",
   );
-  const unnamed = documents().filter((document) => document.page === "banking/withdraw.html" && document.name === "");
+  const unnamed = documents().filter((document) => document.page === "banking/withdraw" && document.name === "");
   assert.deepEqual(
     unnamed.map((document) => spoken(result(words, document))),
     ["no name, background in [Withdraw cash]", "no name, scenario in [The daily limit applies], [Withdraw cash]"],
@@ -41,7 +41,7 @@ test("each result says what it is and where, its names isolated", () => {
 });
 
 test("a feature or rule without a name reads as one, an unnamed examples block is numbered, and a block in a rule says so", () => {
-  const page = documents().filter((document) => document.page === "unnamed.html");
+  const page = documents().filter((document) => document.page === "unnamed");
   assert.deepEqual(
     page.map((document) => spoken(result(words, document))),
     [
@@ -56,17 +56,17 @@ test("a feature or rule without a name reads as one, an unnamed examples block i
 });
 
 test("each result leads to its page and anchor, encoded", () => {
-  assert.equal(result(words, named("Withdraw cash")).address, "banking/withdraw.html");
-  assert.equal(result(words, named("Withdraw over the limit")).address, "banking/withdraw.html#withdraw-over-the-limit");
-  assert.equal(result(words, named("Saque com saldo")).address, "saque.html#saque-com-saldo");
-  const odd = { ...named("Saque com saldo"), page: "a b/c#d.html", anchor: "poupança" };
-  assert.equal(result(words, odd).address, "a%20b/c%23d.html#poupan%C3%A7a");
+  assert.equal(result(words, named("Withdraw cash")).address, "#banking/withdraw");
+  assert.equal(result(words, named("Withdraw over the limit")).address, "#banking/withdraw#withdraw-over-the-limit");
+  assert.equal(result(words, named("Saque com saldo")).address, "#saque#saque-com-saldo");
+  const odd = { ...named("Saque com saldo"), page: "a b/c#d", anchor: "poupança" };
+  assert.equal(result(words, odd).address, "#a%20b/c%23d#poupan%C3%A7a");
 });
 
 test("the link to every result is there only for words that are not only spaces", () => {
   assert.equal(allResults(words, "   "), null);
   const link = allResults(words, " books & films ");
-  assert.equal(link?.address, "search.html?q=books+%26+films");
+  assert.equal(link?.address, "#search?q=books+%26+films");
   assert.equal(link?.label.map((piece) => (piece.isName ? `[${piece.text}]` : piece.text)).join(""), 'All results for "[books & films]"');
 });
 

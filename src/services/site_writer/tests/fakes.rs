@@ -1,120 +1,98 @@
-//! The site writer's fakes: an output folder held in memory, a parser, a writer and a front page's template.
+//! The site writer's fakes: an output folder held in memory, which it looks into and writes, and a front page's template.
 
+use std::collections::{BTreeMap, BTreeSet};
 use std::io::{ErrorKind, Result as IoResult};
 use std::path::PathBuf;
 use std::sync::Mutex;
 
-use gherkin::{Feature, GherkinEnv};
-
 use super::*;
-use crate::entities::{OutputContents, PageOptions, RawFeature, Unnamed};
-use crate::errors::{BuildError, ParseError};
-use crate::ports::{FeatureParser, FileReader};
-use crate::services::{Converter, ConverterApi};
-use crate::test_support::parsed_input;
-pub(super) use crate::test_support::{MemoryFolders, folder, name, set, two_versions};
+use crate::entities::{OutputContents, PageOptions, ParsedFeature, Unnamed};
+use crate::policies::build_store;
+use crate::test_support::{name, parsed_at};
 
-/// An output folder held in memory. Each look into it takes the next of
-/// `looks`, and the last one again once they run out; `None` cannot be read.
-/// Each operation named in `fails` fails, and every other is recorded. A file
-/// read is the text `texts` gives its path, and cannot be read when it gives none.
+/// An output folder held in memory, missing until a file is written into it. A path in `fails`
+/// cannot be written or removed, and the folder cannot be looked into while `unreadable`. Once
+/// `changes` is set, the next look after the first finds that file there too, as though written
+/// meanwhile.
 #[derive(Default)]
-pub(super) struct FakeFolders {
-    pub(super) looks: Mutex<Vec<Option<OutputContents>>>,
-    pub(super) texts: Vec<(&'static str, String)>,
-    pub(super) done: Mutex<Vec<String>>,
-    pub(super) recorded: Mutex<Option<Record>>,
-    pub(super) fails: Vec<&'static str>,
+pub(super) struct MemoryOutput {
+    pub(super) files: Mutex<BTreeMap<String, Arc<[u8]>>>,
+    pub(super) fails: Option<&'static str>,
+    pub(super) unreadable: bool,
+    pub(super) changes: Option<&'static str>,
+    pub(super) looks: Mutex<usize>,
 }
 
-impl FakeFolders {
-    pub(super) fn looking(looks: Vec<Option<OutputContents>>) -> Arc<Self> {
-        Arc::new(FakeFolders {
-            looks: Mutex::new(looks),
-            ..FakeFolders::default()
+impl MemoryOutput {
+    /// The paths of the files it holds.
+    pub(super) fn paths(&self) -> Vec<String> {
+        self.files.lock().expect("lock").keys().cloned().collect()
+    }
+
+    /// The text of the file at `path`, if it holds one.
+    pub(super) fn text(&self, path: &str) -> Option<String> {
+        let files = self.files.lock().expect("lock");
+        files
+            .get(path)
+            .map(|bytes| String::from_utf8_lossy(bytes).into_owned())
+    }
+}
+
+impl OutputFolders for MemoryOutput {
+    fn contents(&self, _: &Path, _: &KeptInOutput) -> IoResult<OutputContents> {
+        if self.unreadable {
+            return Err(IoError::new(ErrorKind::PermissionDenied, "denied"));
+        }
+        let mut looks = self.looks.lock().expect("lock");
+        *looks += 1;
+        let mut files: BTreeSet<String> = self.paths().into_iter().collect();
+        if *looks > 1 {
+            files.extend(self.changes.map(str::to_string));
+        }
+        if files.is_empty() {
+            return Ok(OutputContents::Missing);
+        }
+        let folders = files
+            .iter()
+            .flat_map(|file| {
+                file.match_indices('/')
+                    .map(|(end, _)| file[..end].to_string())
+            })
+            .collect();
+        Ok(OutputContents::Folder {
+            marker: self.text("ghg-site.json"),
+            files,
+            folders,
+            kept: BTreeMap::new(),
         })
     }
 
-    pub(super) fn holding(contents: OutputContents) -> Arc<Self> {
-        Self::looking(vec![Some(contents)])
+    fn read(&self, _: &Path, file: &str) -> IoResult<Option<String>> {
+        Ok(self.text(file))
     }
 
-    fn note(&self, operation: &str, path: &Path) -> IoResult<()> {
-        if self.fails.contains(&operation) {
-            return Err(IoError::new(ErrorKind::PermissionDenied, "denied"));
+    fn remove(&self, _: &Path, path: &str) -> IoResult<()> {
+        if self.fails == Some(path) {
+            return Err(IoError::other("disk full"));
         }
-        self.done
+        let folder = format!("{path}/");
+        self.files
             .lock()
             .expect("lock")
-            .push(format!("{operation} {}", path.display()));
-        Ok(())
-    }
-
-    pub(super) fn done(&self) -> Vec<String> {
-        self.done.lock().expect("lock").clone()
-    }
-}
-
-impl OutputFolders for FakeFolders {
-    fn contents(
-        &self,
-        _output: &Path,
-        _left_alone: Option<&str>,
-        _kept: &KeptInOutput,
-    ) -> IoResult<OutputContents> {
-        let mut looks = self.looks.lock().expect("lock");
-        let look = if looks.len() > 1 {
-            looks.remove(0)
-        } else {
-            looks.first().cloned().flatten()
-        };
-        look.ok_or_else(|| IoError::new(ErrorKind::PermissionDenied, "denied"))
-    }
-
-    fn read(&self, _output: &Path, file: &str) -> IoResult<Option<String>> {
-        self.texts
-            .iter()
-            .find(|(path, _)| *path == file)
-            .map(|(_, text)| Some(text.clone()))
-            .ok_or_else(|| IoError::new(ErrorKind::NotFound, "not found"))
-    }
-
-    fn remove(&self, path: &Path) -> IoResult<()> {
-        self.note("remove", path)
-    }
-
-    fn record(&self, output: &Path, record: &Record) -> IoResult<()> {
-        self.note("record", output)?;
-        *self.recorded.lock().expect("lock") = Some(record.clone());
+            .retain(|file, _| file != path && !file.starts_with(&folder));
         Ok(())
     }
 }
 
-/// Parses every file as a feature named after it.
-pub(super) struct FakeParser;
-
-impl FeatureParser for FakeParser {
-    fn parse(&self, path: &Path) -> Result<RawFeature, ParseError> {
-        let source = format!("Feature: {}\n", path.display());
-        let feature = Feature::parse(&source, GherkinEnv::default()).expect("parses");
-        Ok(RawFeature { feature, source })
-    }
-}
-
-/// Records every file written, by its folder and path, and fails `fails`.
-#[derive(Default)]
-pub(super) struct FakeWriter {
-    pub(super) written: Mutex<Vec<String>>,
-    pub(super) fails: Option<&'static str>,
-}
-
-impl FileWriter for FakeWriter {
-    fn write(&self, output: &Path, file: &str, _contents: &Arc<[u8]>) -> IoResult<()> {
+impl FileWriter for MemoryOutput {
+    fn write(&self, _: &Path, file: &str, contents: &Arc<[u8]>) -> IoResult<()> {
         if self.fails == Some(file) {
             return Err(IoError::other("disk full"));
         }
-        let path = format!("{}/{file}", output.display());
-        self.written.lock().expect("lock").push(path);
+        self.files
+            .lock()
+            .expect("lock")
+            .insert(file.to_string(), Arc::clone(contents));
         Ok(())
     }
 
@@ -123,7 +101,7 @@ impl FileWriter for FakeWriter {
     }
 }
 
-/// A front page's template, `text`, whatever its path; none when `text` is `None`.
+/// A front page's template, `text`, whatever its path; none can be read when it is `None`.
 #[derive(Default)]
 pub(super) struct FakeTemplate {
     pub(super) text: Option<&'static str>,
@@ -137,44 +115,29 @@ impl FileReader for FakeTemplate {
     }
 }
 
-/// Has the site writer check `site` and write into it the site of the
-/// features `files`, as the version `version` when there is one.
-pub(super) fn build(
-    files: Vec<&'static str>,
-    version: Option<&str>,
-    folders: Arc<FakeFolders>,
-    writer: Arc<FakeWriter>,
-) -> Result<ServedSite, BuildError> {
-    let folders_in = MemoryFolders::with_files_in(Path::new("in"), &files);
-    let settings = settings(Destination::Folder, version);
-    let input_tree = parsed_input(
-        Arc::new(folders_in),
-        Arc::new(FakeParser),
-        &settings.input,
-        settings.unnamed,
-    );
-    let site_writer = SiteWriter::builder()
-        .file_reader(Arc::new(FakeTemplate::default()))
-        .folders(folders)
-        .folder_files(writer)
-        .memory_files(Arc::new(FakeWriter::default()))
-        .build();
-    let built_versions = site_writer.check(&settings)?;
-    let tree = Converter.convert(&input_tree, None, &settings, &built_versions);
-    let (served, _) = site_writer.write(&settings, tree, None)?;
-    Ok(served)
+/// A site writer into `output`, with `memory` for a site in memory, reading `template`.
+pub(super) fn site_writer(
+    output: &Arc<MemoryOutput>,
+    memory: Arc<dyn FileWriter>,
+    template: FakeTemplate,
+) -> SiteWriter {
+    SiteWriter::builder()
+        .file_reader(Arc::new(template))
+        .folders(output.clone())
+        .folder_files(output.clone())
+        .memory_files(memory)
+        .build()
 }
 
-/// The settings of a build from `in` into `site`, as the version `version`
-/// when there is one.
-pub(super) fn settings(destination: Destination, version: Option<&str>) -> Settings {
+/// The settings of a build into `site` of `target`.
+pub(super) fn settings(destination: Destination, target: BuildTarget) -> Settings {
     Settings {
         input: PathBuf::from("in"),
         output: PathBuf::from("site"),
         destination,
         unnamed: Unnamed::Allowed,
         pages: PageOptions::default(),
-        version: version.map(name),
+        target,
         replace: true,
         front_page: None,
         only: None,
@@ -182,6 +145,36 @@ pub(super) fn settings(destination: Destination, version: Option<&str>) -> Setti
     }
 }
 
-pub(super) fn written(writer: &FakeWriter) -> Vec<String> {
-    writer.written.lock().expect("lock").clone()
+pub(super) fn version(text: &str) -> BuildTarget {
+    BuildTarget::Version(name(text))
+}
+
+pub(super) fn preview(text: &str) -> BuildTarget {
+    BuildTarget::Preview(name(text))
+}
+
+/// The store of one feature, `a`, whose step is `step`.
+pub(super) fn store(step: &str) -> SiteStore {
+    let parsed: ParsedFeature = parsed_at(
+        "a.feature",
+        &format!("Feature: A\n  Scenario: S\n    Given {step}\n"),
+    );
+    build_store(&[&parsed], &PageOptions::default())
+}
+
+/// Checks the output of `site_writer` for `target`, then writes into it the store of `step`.
+pub(super) fn add(
+    site_writer: &SiteWriter,
+    target: BuildTarget,
+    step: &str,
+) -> Result<(), BuildError> {
+    let settings = settings(Destination::Folder, target);
+    site_writer.check(&settings)?;
+    site_writer.write(&settings, &store(step)).map(drop)
+}
+
+/// Removes `target` from the output of `site_writer`.
+pub(super) fn remove(site_writer: &SiteWriter, target: BuildTarget) -> Result<bool, BuildError> {
+    let settings = settings(Destination::Folder, target);
+    site_writer.remove(&settings)
 }

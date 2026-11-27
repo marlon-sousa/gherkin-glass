@@ -5,10 +5,15 @@
     reason = "a test file's helpers are test code, which clippy.toml lets panic"
 )]
 
-use std::fs::{copy, create_dir_all, read_dir, read_to_string, remove_dir_all};
+use std::fs::{create_dir_all, read_to_string, remove_dir_all};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 use std::sync::atomic::{AtomicUsize, Ordering};
+
+#[path = "support/copied_folder.rs"]
+mod copied_folder;
+
+use copied_folder::copy_folder;
 
 fn fixture(name: &str) -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -40,19 +45,6 @@ fn in_a_copy(folder: &Path) -> PathBuf {
     let _ = remove_dir_all(&copy);
     copy_folder(&fixtures, &copy);
     copy.join(inside)
-}
-
-fn copy_folder(from: &Path, to: &Path) {
-    create_dir_all(to).expect("the folder is made");
-    for entry in read_dir(from).expect("the fixture is listed") {
-        let entry = entry.expect("the fixture is listed");
-        let path = entry.path();
-        if path.is_dir() {
-            copy_folder(&path, &to.join(entry.file_name()));
-        } else {
-            copy(&path, to.join(entry.file_name())).expect("the file is copied");
-        }
-    }
 }
 
 /// Rule 17: what a build that succeeds prints when the site has no title.
@@ -99,7 +91,10 @@ fn help_lists_the_commands_and_options() {
             "--input <folder>: ",
             "--output <folder>: ",
             "--title <text>: ",
-            "--version-name <name>: ",
+            "version add <name>: ",
+            "version remove <name>: ",
+            "preview add <name>: ",
+            "preview remove <name>: ",
         ] {
             assert!(help.contains(expected), "{expected:?} in:\n{help}");
         }
@@ -203,22 +198,23 @@ fn the_site_is_written_into_the_output_folder_the_option_or_the_file_names() {
             .expect("the command runs")
     };
     assert_eq!(report(run(&["build"]), 0), NO_TITLE);
-    assert!(folder.join("site/read.html").is_file());
-    assert!(folder.join("site/assets/gherkin-glass.css").is_file());
+    assert!(folder.join("site/index.html").is_file());
+    assert!(folder.join("site/data/site.json").is_file());
     assert_eq!(
         report(run(&["build", "--output", "elsewhere"]), 0),
         NO_TITLE
     );
-    assert!(folder.join("elsewhere/read.html").is_file());
+    assert!(folder.join("elsewhere/data/site.json").is_file());
     // ci/ghg.toml's output, out, is relative to its own folder; its input
     // is broken, so --input names the good one.
     let output = run(&["build", "--config", "ci/ghg.toml", "--input", "specs"]);
     assert_eq!(report(output, 0), NO_TITLE);
-    let page = read_to_string(folder.join("ci/out/read.html")).expect("the page is written");
+    let descriptor =
+        read_to_string(folder.join("ci/out/data/site.json")).expect("the descriptor is written");
     // Rule 47: ci/ghg.toml's source_link.
     assert!(
-        page.contains(r#"<a href="https://example.com/blob/main/specs/read.feature#L1">"#),
-        "{page}"
+        descriptor.contains(r#""source":"https://example.com/blob/main/specs/read.feature#L1""#),
+        "{descriptor}"
     );
 }
 
@@ -308,6 +304,15 @@ fn allow_unnamed_must_be_true_or_false() {
     assert_eq!(
         report(output, 1),
         "ghg.toml:1: allow_unnamed must be true or false.\n"
+    );
+}
+
+#[test]
+fn version_name_a_key_of_gherkin_glass_1_is_unknown() {
+    let output = ghg(&fixture("version-name"), &["build"]);
+    assert_eq!(
+        report(output, 1),
+        "ghg.toml:1: ghg has no setting named version_name.\n"
     );
 }
 

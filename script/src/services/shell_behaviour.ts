@@ -1,7 +1,6 @@
 // Service: what the page a shell has just drawn does, its item marked in the folder tree, its search box filled and its results listed, its blocks' buttons and its keywords' notes.
 
 import { type PageName, targetAddress } from "../policies/address.ts";
-import { SHELL_ADDRESSES } from "../policies/search_index.ts";
 import type { Documents } from "../ports/documents.ts";
 import type { DrawnPage } from "../ports/drawn_page.ts";
 import type { Memory } from "../ports/memory.ts";
@@ -30,7 +29,7 @@ export function shellBehaviour(parts: ShellBehaviourParts): PageBehaviour {
       parts.fillSearch?.(page.words);
       const searchPage = parts.drawn.searchPage(page.words);
       if (searchPage !== null) {
-        void startListing(searchPage, parts.documents, SHELL_ADDRESSES);
+        void startListing(searchPage, parts.documents);
       }
     }
     const backgrounds = parts.drawn.backgrounds();

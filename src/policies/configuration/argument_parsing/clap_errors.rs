@@ -7,12 +7,16 @@ use crate::errors::ArgumentError;
 
 use super::option_values::Rejected;
 
-/// The mistake `error` reports, made in `command`, `ghg`, `ghg build` or
-/// `ghg serve`. clap's words are never shown: only what was typed is kept.
+/// The mistake `error` reports, made in `command`, `ghg` or one of its commands. clap's words
+/// are never shown: only what was typed is kept.
 pub(super) fn argument_error(error: &Error, command: &str) -> ArgumentError {
     let command = command.to_string();
     match error.kind() {
-        ErrorKind::InvalidSubcommand => ArgumentError::UnknownCommand {
+        ErrorKind::InvalidSubcommand if command == "ghg" => ArgumentError::UnknownCommand {
+            name: context(error, ContextKind::InvalidSubcommand),
+        },
+        ErrorKind::InvalidSubcommand => ArgumentError::UnknownSubcommand {
+            command,
             name: context(error, ContextKind::InvalidSubcommand),
         },
         ErrorKind::UnknownArgument => {

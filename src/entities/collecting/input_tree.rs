@@ -5,7 +5,6 @@ mod file_to_parse;
 mod input_entry;
 mod input_node;
 mod parsed_file;
-mod revised_feature;
 
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -17,34 +16,25 @@ pub(crate) use file_to_parse::FileToParse;
 pub(crate) use input_entry::InputEntry;
 use input_node::{FileState, FolderState, InputNode, NodeKind};
 pub(crate) use parsed_file::ParsedFile;
-pub(crate) use revised_feature::RevisedFeature;
 
-use crate::entities::{ListedFiles, PageClash, Revision};
+use crate::entities::{ListedFiles, PageClash, ParsedFeature};
 use crate::errors::{InputError, InputErrors};
 
 /// Its root is the input folder.
 #[derive(Debug, Clone)]
 pub(crate) struct InputTree {
     tree: Tree<InputNode>,
-    /// The revision the next file taken in is given.
-    next_revision: Revision,
     /// What the list of `--only` named, which the tree was walked for, and a tree made from it
     /// is walked for too; `None` for every file.
     listed: Option<ListedFiles>,
 }
 
 impl InputTree {
-    /// The tree of an input folder `input` that could not be listed, which holds only its error,
-    /// and gives revisions from `next_revision` on.
-    pub(crate) fn unlisted_input(
-        input: PathBuf,
-        error: InputError,
-        next_revision: Revision,
-    ) -> Self {
+    /// The tree of an input folder `input` that could not be listed, which holds only its error.
+    pub(crate) fn unlisted_input(input: PathBuf, error: InputError) -> Self {
         let kind = NodeKind::Folder(FolderState::Unlisted(error));
         InputTree {
             tree: Tree::new(InputNode::new(input, kind)),
-            next_revision,
             listed: None,
         }
     }
@@ -71,12 +61,6 @@ impl InputTree {
         InputEntry {
             node: self.tree.root(),
         }
-    }
-
-    /// The revision the next file taken in is given, which a tree made from this one gives next
-    /// too, so that no revision is given twice.
-    pub(crate) fn next_revision(&self) -> Revision {
-        self.next_revision
     }
 
     /// The paths of the allowed files, in file order.
@@ -106,15 +90,13 @@ impl InputTree {
             .collect()
     }
 
-    /// Puts what parsing each file gave into its node, with a new revision.
+    /// Puts what parsing each file gave into its node.
     pub(crate) fn put_parsed(&mut self, parsed: Vec<ParsedFile>) {
         for ParsedFile { file, result } in parsed {
             if let Some(mut node) = self.tree.get_mut(file.node)
                 && is_handed_out(node.value(), &file)
             {
-                let revision = self.next_revision;
-                self.next_revision = revision.next();
-                node.value().kind = NodeKind::File(FileState::Parsed(revision, Arc::new(result)));
+                node.value().kind = NodeKind::File(FileState::Parsed(Arc::new(result)));
             }
         }
     }
@@ -144,10 +126,9 @@ impl InputTree {
         (!errors.is_empty()).then(|| InputErrors::new(errors))
     }
 
-    /// The features of the files parsed without an error, each with its file's revision, in file
-    /// order.
-    pub(crate) fn features(&self) -> impl Iterator<Item = RevisedFeature<'_>> {
-        self.tree.root().descendants().filter_map(revised_feature)
+    /// The features of the files parsed without an error, in file order.
+    pub(crate) fn features(&self) -> impl Iterator<Item = &ParsedFeature> {
+        self.tree.root().descendants().filter_map(parsed_feature)
     }
 
     fn node_at(&self, path: &Path) -> Option<NodeId> {
@@ -185,14 +166,9 @@ fn file_to_parse(node: NodeRef<'_, InputNode>) -> Option<FileToParse> {
     })
 }
 
-fn revised_feature(node: NodeRef<'_, InputNode>) -> Option<RevisedFeature<'_>> {
+fn parsed_feature(node: NodeRef<'_, InputNode>) -> Option<&ParsedFeature> {
     match &node.value().kind {
-        NodeKind::File(FileState::Parsed(revision, parsed)) => {
-            parsed.as_ref().as_ref().ok().map(|feature| RevisedFeature {
-                feature,
-                revision: *revision,
-            })
-        }
+        NodeKind::File(FileState::Parsed(parsed)) => parsed.as_ref().as_ref().ok(),
         _ => None,
     }
 }

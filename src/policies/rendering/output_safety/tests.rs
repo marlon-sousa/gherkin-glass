@@ -3,7 +3,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use rstest::rstest;
 
 use super::*;
-use crate::test_support::kept_in_output;
+use crate::test_support::{folder, kept_in_output, marker, name, set};
 
 const KEEP: Moment<'static> = Moment::Checking { replace: false };
 const REPLACE: Moment<'static> = Moment::Checking { replace: true };
@@ -11,296 +11,266 @@ const WRITING: Moment<'static> = Moment::Writing {
     site: &BTreeSet::new(),
 };
 
-fn name(text: &str) -> VersionName {
-    VersionName::new(text).unwrap_or_else(|| panic!("{text} is a version name"))
-}
-
-fn set(paths: &[&str]) -> BTreeSet<FilePath> {
-    paths.iter().map(|path| path.to_string()).collect()
-}
-
-/// What the policy says of `contents`, with nothing kept.
-fn judged(
-    contents: OutputContents,
-    target: &BuildTarget,
-    moment: Moment<'_>,
-) -> Result<Option<Record>, OutputErrorKind> {
-    output_safety(contents, target, moment, &KeptInOutput::default())
-}
-
 fn version(text: &str) -> BuildTarget {
     BuildTarget::Version(name(text))
 }
 
-/// A site without versions of `index.html` and `sub/page.html`.
-fn site() -> Record {
-    Record::Site(set(&["index.html", "sub/page.html"]))
+fn preview(text: &str) -> BuildTarget {
+    BuildTarget::Preview(name(text))
 }
 
-/// The versions `main` and `v1.0.0`, each of one `index.html`, and the versions page.
-fn versions() -> Record {
-    Record::Versions {
-        page: set(&["index.html", "assets/ghg.css"]),
-        versions: BTreeMap::from([
-            (name("main"), set(&["index.html"])),
-            (name("v1.0.0"), set(&["index.html", "sub/old.html"])),
-        ]),
-        data: set(&[]),
-    }
+/// What the policy says of adding `target` to `contents`, with nothing kept.
+fn judged(
+    contents: OutputContents,
+    target: &BuildTarget,
+    moment: Moment<'_>,
+) -> Result<SafeFolder, OutputErrorKind> {
+    output_safety(
+        contents,
+        target,
+        Change::Add,
+        moment,
+        &KeptInOutput::default(),
+    )
 }
 
-/// What ghg wrote for `site()`, with `files` and `folders` added.
-fn site_folder(files: &[&str], folders: &[&str]) -> OutputContents {
-    OutputContents::Folder {
-        files: set(&["ghg-site.json", "index.html", "sub/page.html"])
-            .into_iter()
-            .chain(set(files))
-            .collect(),
-        folders: set(&["sub"]).into_iter().chain(set(folders)).collect(),
-        kept: BTreeMap::new(),
-        record: Some(site()),
-    }
+/// The folders that hold `files`, each named once.
+fn folders_of_files(files: &[&str]) -> Vec<String> {
+    let folders: BTreeSet<String> = files.iter().flat_map(|file| folders_of(file)).collect();
+    folders.into_iter().collect()
 }
 
-/// What ghg wrote for `versions()`, with `files` and `folders` added and `gone` taken away.
-fn versions_folder(files: &[&str], folders: &[&str], gone: &[&str]) -> OutputContents {
-    let gone = set(gone);
-    let all = |made: &[&str], added: &[&str]| -> BTreeSet<FilePath> {
-        set(made)
-            .into_iter()
-            .chain(set(added))
-            .filter(|path| !gone.contains(path))
-            .collect()
-    };
-    OutputContents::Folder {
-        files: all(
-            &[
-                "ghg-versions.json",
-                "index.html",
-                "assets/ghg.css",
-                "main/index.html",
-                "v1.0.0/index.html",
-                "v1.0.0/sub/old.html",
-            ],
-            files,
-        ),
-        folders: all(&["assets", "main", "v1.0.0", "v1.0.0/sub"], folders),
-        kept: BTreeMap::new(),
-        record: Some(versions()),
-    }
+/// A folder ghg marked, holding the marker and `files`, every one of them listed.
+fn marked(files: &[&str]) -> OutputContents {
+    let folders = folders_of_files(files);
+    let folders: Vec<&str> = folders.iter().map(String::as_str).collect();
+    let found: Vec<&str> = files.iter().copied().chain(["ghg-site.json"]).collect();
+    folder(&found, &folders, Some(marker(files)))
 }
+
+/// The store of a site without versions.
+const SITE: [&str; 3] = ["index.html", "data/site.json", "data/objects/a.json"];
+
+/// The store of the versions `main` and `v1.0.0`.
+const VERSIONS: [&str; 6] = [
+    "index.html",
+    "main/index.html",
+    "v1.0.0/index.html",
+    "data/versions/main.json",
+    "data/versions/v1.0.0.json",
+    "data/versions.json",
+];
+
+/// The store of the preview `pr-1`.
+const PREVIEW: [&str; 2] = ["previews/pr-1/index.html", "data/previews/pr-1.json"];
 
 #[rstest]
-#[case::missing(OutputContents::Missing, BuildTarget::Site)]
-#[case::missing_for_a_version(OutputContents::Missing, version("main"))]
-#[case::empty(
-    OutputContents::Folder { files: BTreeSet::new(), folders: BTreeSet::new(), kept: BTreeMap::new(), record: None },
-    version("main")
-)]
-fn a_missing_or_empty_folder_is_marked(
-    #[case] contents: OutputContents,
-    #[case] target: BuildTarget,
-) {
-    assert_eq!(judged(contents, &target, REPLACE), Ok(None));
+#[case::missing(OutputContents::Missing)]
+#[case::empty(folder(&[], &[], None))]
+fn a_missing_or_empty_folder_is_safe_and_lists_nothing(#[case] contents: OutputContents) {
+    let safe = judged(contents, &BuildTarget::Site, KEEP);
+    assert_eq!(safe, Ok(SafeFolder::default()));
 }
 
+// Rule 38.
 #[rstest]
-#[case::site(site_folder(&[], &[]), BuildTarget::Site, site())]
-#[case::new_version(versions_folder(&[], &[], &[]), version("v2.0.0"), versions())]
-#[case::listed_version(versions_folder(&[], &[], &[]), version("main"), versions())]
-#[case::a_written_file_gone(
-    versions_folder(&[], &[], &["v1.0.0/sub/old.html", "v1.0.0/sub"]),
-    version("main"),
-    versions()
-)]
-fn a_safe_folder_is_built_into(
-    #[case] contents: OutputContents,
-    #[case] target: BuildTarget,
-    #[case] record: Record,
-) {
-    assert_eq!(judged(contents, &target, REPLACE), Ok(Some(record)));
+#[case::a_file(OutputContents::NotAFolder)]
+#[case::a_folder_with_no_marker(folder(&["notes.txt"], &[], None))]
+#[case::a_marker_that_is_not_one(folder(&["ghg-site.json"], &[], Some("[]".into())))]
+#[case::a_marker_listing_a_path_outside(folder(
+    &["ghg-site.json"],
+    &[],
+    Some(r#"{"format":1,"ghg":"2.0.0","files":["../notes.txt"]}"#.into())
+))]
+fn a_folder_ghg_did_not_mark_is_not_a_site(#[case] contents: OutputContents) {
+    let judged = judged(contents, &BuildTarget::Site, REPLACE);
+    assert_eq!(judged, Err(OutputErrorKind::NotASite));
 }
 
+// Rule 256.
 #[rstest]
-#[case::a_file(
-    OutputContents::NotAFolder,
-    BuildTarget::Site,
-    OutputErrorKind::NotASite
-)]
-#[case::unmarked(
-    OutputContents::Folder { files: set(&["notes.txt"]), folders: BTreeSet::new(), kept: BTreeMap::new(), record: None },
-    version("main"),
-    OutputErrorKind::NotASite
-)]
-#[case::unmarked_folder(
-    OutputContents::Folder { files: BTreeSet::new(), folders: set(&["docs"]), kept: BTreeMap::new(), record: None },
-    BuildTarget::Site,
-    OutputErrorKind::NotASite
-)]
-#[case::versions_for_a_site(versions_folder(&[], &[], &[]), BuildTarget::Site, OutputErrorKind::HoldsVersions)]
-#[case::a_site_for_a_version(site_folder(&[], &[]), version("main"), OutputErrorKind::HoldsSite)]
-#[case::a_stray_file(
-    site_folder(&["notes.txt"], &[]),
-    BuildTarget::Site,
-    OutputErrorKind::NotSafe { found: "notes.txt".into() }
-)]
-#[case::a_stray_file_in_a_made_folder(
-    versions_folder(&["v1.0.0/extra.html"], &[], &[]),
-    version("main"),
-    OutputErrorKind::NotSafe { found: "v1.0.0/extra.html".into() }
-)]
-#[case::a_stray_folder_named_outermost(
-    versions_folder(&["docs/a/notes.txt", "zz.txt"], &["docs", "docs/a"], &[]),
-    version("main"),
-    OutputErrorKind::NotSafe { found: "docs".into() }
-)]
-#[case::an_unlisted_version(
-    versions_folder(&["v0.9.0/index.html"], &["v0.9.0"], &[]),
-    version("main"),
-    OutputErrorKind::NotSafe { found: "v0.9.0".into() }
-)]
-#[case::a_listed_version_missing(
-    versions_folder(&[], &[], &["main/index.html", "main"]),
-    version("v1.0.0"),
-    OutputErrorKind::MissingVersion { name: name("main") }
-)]
-#[case::other_capitals(versions_folder(&[], &[], &[]), version("Main"), OutputErrorKind::OtherCapitals)]
-fn an_unsafe_folder_is_refused(
-    #[case] contents: OutputContents,
-    #[case] target: BuildTarget,
-    #[case] refused: OutputErrorKind,
-) {
-    assert_eq!(judged(contents, &target, REPLACE), Err(refused));
+#[case::its_versions_marker(folder(&["ghg-versions.json", "index.html"], &[], None))]
+#[case::its_site_marker(folder(
+    &["ghg-site.json", "index.html"],
+    &[],
+    Some(r#"{"files":["index.html"]}"#.into())
+))]
+fn a_folder_of_gherkin_glass_one_is_refused_first(#[case] contents: OutputContents) {
+    let judged = judged(contents, &version("v1"), REPLACE);
+    assert_eq!(judged, Err(OutputErrorKind::GherkinGlassOne));
 }
 
-#[rstest]
-#[case::site(site_folder(&[], &[]), BuildTarget::Site, KEEP, Err(OutputErrorKind::AlreadyBuilt))]
-#[case::listed_version(versions_folder(&[], &[], &[]), version("main"), KEEP, Err(OutputErrorKind::AlreadyBuilt))]
-#[case::new_version(versions_folder(&[], &[], &[]), version("v2.0.0"), KEEP, Ok(Some(versions())))]
-#[case::site_when_writing(site_folder(&[], &[]), BuildTarget::Site, WRITING, Ok(Some(site())))]
-#[case::version_when_writing(
-    versions_folder(&[], &[], &[]),
-    version("main"),
-    WRITING,
-    Ok(Some(versions()))
-)]
-fn a_build_replaces_only_when_allowed(
-    #[case] contents: OutputContents,
-    #[case] target: BuildTarget,
-    #[case] moment: Moment<'static>,
-    #[case] outcome: Result<Option<Record>, OutputErrorKind>,
-) {
-    assert_eq!(judged(contents, &target, moment), outcome);
-}
-
-#[rstest]
-#[case::at_the_root("index.html", &[])]
-#[case::nested("a/b/c.html", &["a", "a/b"])]
-fn the_folders_of_a_file_are_listed_outermost_first(#[case] file: &str, #[case] folders: &[&str]) {
-    assert_eq!(folders_of(file).collect::<Vec<_>>(), folders);
-}
-
-/// A folder marked as a site of the one file `listed`, holding only its marker.
-fn listing(listed: &str) -> OutputContents {
-    OutputContents::Folder {
-        files: set(&["ghg-site.json"]),
-        folders: BTreeSet::new(),
-        kept: BTreeMap::new(),
-        record: Some(Record::Site(set(&[listed]))),
-    }
-}
-
-#[rstest]
-#[case::the_folder_above("../victim.txt")]
-#[case::deeper_above("sub/../../victim.txt")]
-#[case::the_root("/home/user")]
-#[case::empty("")]
-#[case::an_empty_name("a//b.html")]
-#[case::this_folder("./index.html")]
-fn a_marker_listing_a_path_outside_the_folder_is_no_marker(#[case] listed: &str) {
-    assert_eq!(
-        judged(listing(listed), &BuildTarget::Site, REPLACE),
-        Err(OutputErrorKind::NotASite)
-    );
-}
-
-#[rstest]
-#[case::a_version_s_file(Record::Versions {
-    page: set(&["index.html"]),
-    versions: BTreeMap::from([(name("main"), set(&["../../victim.txt"]))]),
-    data: set(&[]),
-})]
-#[case::a_page_file(Record::Versions {
-    page: set(&["../victim.txt"]),
-    versions: BTreeMap::new(),
-    data: set(&[]),
-})]
-fn a_versions_marker_listing_a_path_outside_the_folder_is_no_marker(#[case] record: Record) {
-    let contents = OutputContents::Folder {
-        files: set(&["ghg-versions.json"]),
-        folders: BTreeSet::new(),
-        kept: BTreeMap::new(),
-        record: Some(record),
-    };
-    assert_eq!(
-        judged(contents, &version("main"), REPLACE),
-        Err(OutputErrorKind::NotASite)
-    );
-}
-
+// Rule 246.
 #[test]
-fn the_first_thing_found_is_named_folder_by_folder() {
-    let contents = OutputContents::Folder {
-        files: set(&["ghg-site.json", "a/index.html", "a/b.txt", "a-c.txt"]),
-        folders: set(&["a"]),
-        kept: BTreeMap::new(),
-        record: Some(Record::Site(set(&["a/index.html"]))),
-    };
+fn a_store_newer_than_this_ghg_s_is_refused_naming_its_ghg() {
+    let newer = folder(
+        &["ghg-site.json", "index.html"],
+        &[],
+        Some(r#"{"format":2,"ghg":"3.0.0","files":["index.html"]}"#.into()),
+    );
+    let judged = judged(newer, &BuildTarget::Site, REPLACE);
     assert_eq!(
-        judged(contents, &BuildTarget::Site, REPLACE),
-        Err(OutputErrorKind::NotSafe {
-            found: "a/b.txt".into()
+        judged,
+        Err(OutputErrorKind::NewerStore {
+            ghg: "3.0.0".into()
         })
     );
 }
 
-#[rstest]
-#[case::a_colon("time 10:30.html")]
-#[case::a_backslash("back\\slash.html")]
-fn a_page_name_any_system_allows_is_ghg_s(#[case] page: &str) {
-    let contents = OutputContents::Folder {
-        files: set(&["ghg-site.json", page]),
-        folders: BTreeSet::new(),
-        kept: BTreeMap::new(),
-        record: Some(Record::Site(set(&[page]))),
+// Rule 38: the first stray thing, folder by folder, a folder named rather than what it holds.
+#[test]
+fn a_marked_folder_holding_what_ghg_did_not_write_is_not_safe() {
+    let OutputContents::Folder {
+        mut files,
+        mut folders,
+        kept,
+        marker,
+    } = marked(&SITE)
+    else {
+        panic!("a folder");
     };
+    files.extend(set(&["z.txt", "notes/a.txt", "data/b.txt"]));
+    folders.insert("notes".into());
+    let contents = OutputContents::Folder {
+        files,
+        folders,
+        kept,
+        marker,
+    };
+    let judged = judged(contents, &BuildTarget::Site, REPLACE);
     assert_eq!(
-        judged(contents, &BuildTarget::Site, REPLACE),
-        Ok(Some(Record::Site(set(&[page]))))
+        judged,
+        Err(OutputErrorKind::NotSafe {
+            found: "data/b.txt".into()
+        })
     );
 }
 
 #[test]
-fn only_the_versions_page_s_files_found_are_kept_for_removal() {
-    let mut contents = versions_folder(&[], &[], &["assets/ghg.css", "assets"]);
-    if let OutputContents::Folder { record, .. } = &mut contents {
-        *record = Some(Record::Versions {
-            page: set(&["index.html", "assets/ghg.css", "..\\victim.txt"]),
-            versions: BTreeMap::from([
-                (name("main"), set(&["index.html"])),
-                (name("v1.0.0"), set(&["index.html", "sub/old.html"])),
-            ]),
-            data: set(&[]),
-        });
-    }
-    let Ok(Some(Record::Versions { page, .. })) = judged(contents, &version("main"), REPLACE)
-    else {
-        panic!("the folder is safe");
-    };
-    assert_eq!(page, set(&["index.html"]));
+fn a_safe_folder_gives_what_its_marker_lists_and_what_it_holds() {
+    let listed: Vec<&str> = SITE.iter().copied().chain(["gone.json"]).collect();
+    let contents = folder(
+        &[
+            "ghg-site.json",
+            "index.html",
+            "data/site.json",
+            "data/objects/a.json",
+        ],
+        &["data", "data/objects"],
+        Some(marker(&listed)),
+    );
+    let safe = judged(contents, &BuildTarget::Site, REPLACE).expect("safe");
+    assert_eq!(safe.listed, set(&listed));
+    assert_eq!(safe.found, set(&SITE));
 }
 
-/// A folder holding `files` and `folders`, with `kept` found kept, and no marker.
+// Rules 38 and 124: what a folder's store holds decides which builds it takes.
+#[rstest]
+#[case::a_site_beside_versions(&VERSIONS, BuildTarget::Site, Err(OutputErrorKind::HoldsVersions))]
+#[case::a_version_beside_a_site(&SITE, version("v2"), Err(OutputErrorKind::HoldsSite))]
+#[case::a_site_beside_previews(&PREVIEW, BuildTarget::Site, Ok(()))]
+#[case::a_version_beside_previews(&PREVIEW, version("v2"), Ok(()))]
+#[case::a_preview_beside_a_site(&SITE, preview("pr-2"), Ok(()))]
+#[case::a_preview_beside_versions(&VERSIONS, preview("pr-2"), Ok(()))]
+#[case::a_version_of_other_capitals(&VERSIONS, version("Main"), Err(OutputErrorKind::OtherCapitals))]
+#[case::a_preview_of_other_capitals(&PREVIEW, preview("PR-1"), Err(OutputErrorKind::OtherCapitals))]
+fn a_store_takes_only_builds_beside_what_it_holds(
+    #[case] files: &[&str],
+    #[case] target: BuildTarget,
+    #[case] outcome: Result<(), OutputErrorKind>,
+) {
+    let judged = judged(marked(files), &target, REPLACE).map(drop);
+    assert_eq!(judged, outcome);
+}
+
+/// The folder of the versions, its marker listing `v1.0.0/` but the folder gone.
+fn without_v1_folder() -> OutputContents {
+    let files: Vec<&str> = VERSIONS
+        .iter()
+        .copied()
+        .filter(|file| !file.starts_with("v1.0.0/"))
+        .collect();
+    let folders: Vec<&str> = vec!["data", "data/versions", "main"];
+    let found: Vec<&str> = files.iter().copied().chain(["ghg-site.json"]).collect();
+    folder(&found, &folders, Some(marker(&VERSIONS)))
+}
+
+// Rule 122.
+#[test]
+fn a_version_whose_folder_is_missing_stops_every_command() {
+    let contents = without_v1_folder;
+    let missing = Err(OutputErrorKind::MissingVersion {
+        name: "v1.0.0".into(),
+    });
+    assert_eq!(judged(contents(), &version("v2"), REPLACE), missing);
+    let removing = output_safety(
+        contents(),
+        &version("main"),
+        Change::Remove,
+        REPLACE,
+        &KeptInOutput::default(),
+    );
+    assert_eq!(removing, missing);
+}
+
+// Rule 257: the version being removed may have lost its folder.
+#[test]
+fn a_version_whose_folder_is_missing_may_be_removed() {
+    let removing = output_safety(
+        without_v1_folder(),
+        &version("v1.0.0"),
+        Change::Remove,
+        REPLACE,
+        &KeptInOutput::default(),
+    );
+    assert!(removing.is_ok(), "{removing:?}");
+}
+
+// Rules 38 and 123: a site or a version already built is replaced only when allowed, and is
+// checked again only before the input is read.
+#[rstest]
+#[case::a_site_kept(&SITE, BuildTarget::Site, KEEP, Err(OutputErrorKind::AlreadyBuilt))]
+#[case::a_site_replaced(&SITE, BuildTarget::Site, REPLACE, Ok(()))]
+#[case::a_version_kept(&VERSIONS, version("main"), KEEP, Err(OutputErrorKind::AlreadyBuilt))]
+#[case::a_version_replaced(&VERSIONS, version("main"), REPLACE, Ok(()))]
+#[case::a_new_version_kept(&VERSIONS, version("v2"), KEEP, Ok(()))]
+#[case::a_version_written(&VERSIONS, version("main"), WRITING, Ok(()))]
+#[case::a_preview_always_replaced(&PREVIEW, preview("pr-1"), KEEP, Ok(()))]
+fn what_is_built_already_is_replaced_only_when_allowed(
+    #[case] files: &[&str],
+    #[case] target: BuildTarget,
+    #[case] moment: Moment<'_>,
+    #[case] outcome: Result<(), OutputErrorKind>,
+) {
+    assert_eq!(judged(marked(files), &target, moment).map(drop), outcome);
+}
+
+// Rules 257 and 258: a removal is judged by the marker alone, whatever the store holds beside.
+#[rstest]
+#[case::a_version_beside_a_site(&SITE, version("main"))]
+#[case::a_preview_of_other_capitals(&PREVIEW, preview("PR-1"))]
+fn a_removal_is_not_held_to_what_the_store_holds(
+    #[case] files: &[&str],
+    #[case] target: BuildTarget,
+) {
+    let judged = output_safety(
+        marked(files),
+        &target,
+        Change::Remove,
+        REPLACE,
+        &KeptInOutput::default(),
+    );
+    assert!(judged.is_ok(), "{judged:?}");
+}
+
+#[rstest]
+#[case::at_the_root("index.html", &[])]
+#[case::two_folders_down("data/objects/a.json", &["data", "data/objects"])]
+fn the_folders_of_a_file_are_listed_outermost_first(#[case] file: &str, #[case] folders: &[&str]) {
+    assert_eq!(folders_of(file).collect::<Vec<_>>(), folders);
+}
+
+/// A folder holding `files` and `folders`, and `kept`, what the patterns keep, with no marker.
 fn holding_kept(files: &[&str], folders: &[&str], kept: &[(&str, EntryKind)]) -> OutputContents {
     OutputContents::Folder {
         files: set(files),
@@ -309,82 +279,49 @@ fn holding_kept(files: &[&str], folders: &[&str], kept: &[(&str, EntryKind)]) ->
             .iter()
             .map(|(path, kind)| (path.to_string(), *kind))
             .collect(),
-        record: None,
+        marker: None,
     }
 }
 
-// Rule 227.
+// Rule 227: what is kept counts as nothing in the folder, nor do the folders that hold it.
 #[rstest]
-#[case::only_what_is_kept(holding_kept(&[], &[], &[(".nojekyll", EntryKind::File), (".git", EntryKind::Folder)]), Ok(None))]
-#[case::a_folder_holding_only_what_is_kept(holding_kept(&[], &["docs"], &[("docs/CNAME", EntryKind::File)]), Ok(None))]
-#[case::a_folder_holding_more(
-    holding_kept(&["docs/notes.txt"], &["docs"], &[("docs/CNAME", EntryKind::File)]),
-    Err(OutputErrorKind::NotASite)
-)]
-fn what_is_kept_counts_as_nothing_in_the_folder(
-    #[case] contents: OutputContents,
-    #[case] outcome: Result<Option<Record>, OutputErrorKind>,
-) {
-    let kept = kept_in_output(&[".nojekyll", ".git", "CNAME"]);
-    assert_eq!(
-        output_safety(contents, &BuildTarget::Site, REPLACE, &kept),
-        outcome
+#[case::a_kept_file(holding_kept(&[], &[], &[(".nojekyll", EntryKind::File)]))]
+#[case::a_kept_file_in_a_folder(holding_kept(&[], &["docs"], &[("docs/CNAME", EntryKind::File)]))]
+fn what_is_kept_counts_as_nothing_in_the_folder(#[case] contents: OutputContents) {
+    let judged = output_safety(
+        contents,
+        &BuildTarget::Site,
+        Change::Add,
+        REPLACE,
+        &kept_in_output(&[".nojekyll", "CNAME"]),
     );
+    assert_eq!(judged, Ok(SafeFolder::default()));
 }
 
 // Rule 227: a marked folder holding what is kept beside what ghg wrote is still safe.
 #[test]
 fn a_marked_folder_holding_what_is_kept_is_safe() {
-    let mut contents = site_folder(&[], &[]);
-    if let OutputContents::Folder { kept, .. } = &mut contents {
-        kept.insert("CNAME".into(), EntryKind::File);
-    }
-    let kept = kept_in_output(&["CNAME"]);
-    assert_eq!(
-        output_safety(contents, &BuildTarget::Site, REPLACE, &kept),
-        Ok(Some(site()))
-    );
-}
-
-// Rule 228: a file of the versions page the marker lists, kept, stops the build.
-#[test]
-fn a_kept_file_of_the_versions_page_is_a_clash() {
-    let mut contents = versions_folder(&[], &[], &["assets/ghg.css"]);
-    if let OutputContents::Folder { kept, .. } = &mut contents {
-        kept.insert("assets/ghg.css".into(), EntryKind::File);
-    }
-    assert_eq!(
-        output_safety(
-            contents,
-            &version("main"),
-            REPLACE,
-            &kept_in_output(&["ghg.css"])
-        ),
-        Err(OutputErrorKind::KeptClash {
-            found: "assets/ghg.css".into(),
-            pattern: "ghg.css".into(),
-        })
-    );
-}
-
-// Rule 38: what an earlier site is emptied of is always something found in the folder.
-#[test]
-fn a_site_s_marker_keeps_only_the_files_under_a_name_found_at_the_top() {
-    let listed = [
-        "index.html",
-        "sub/page.html",
-        "gone/a.html",
-        "..\\victim.html",
-        "C:\\victim",
-    ];
-    let contents = OutputContents::Folder {
-        files: set(&["ghg-site.json", "index.html"]),
-        folders: set(&["sub"]),
-        kept: BTreeMap::new(),
-        record: Some(Record::Site(set(&listed))),
+    let OutputContents::Folder {
+        files,
+        folders,
+        marker,
+        ..
+    } = marked(&SITE)
+    else {
+        panic!("a folder");
     };
-    assert_eq!(
-        judged(contents, &BuildTarget::Site, REPLACE),
-        Ok(Some(Record::Site(set(&["index.html", "sub/page.html"]))))
+    let contents = OutputContents::Folder {
+        files,
+        folders,
+        kept: BTreeMap::from([(".git".to_string(), EntryKind::Folder)]),
+        marker,
+    };
+    let judged = output_safety(
+        contents,
+        &BuildTarget::Site,
+        Change::Add,
+        REPLACE,
+        &kept_in_output(&[".git"]),
     );
+    assert_eq!(judged.map(|safe| safe.listed), Ok(set(&SITE)));
 }

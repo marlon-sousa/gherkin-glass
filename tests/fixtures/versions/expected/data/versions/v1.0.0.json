@@ -1,0 +1,71 @@
+{
+  "format": 1,
+  "ghg": "{version}",
+  "version": "v1.0.0",
+  "preview": null,
+  "title": "Suite",
+  "only": false,
+  "start": {
+    "collapse_rules": false,
+    "collapse_scenarios": false,
+    "show_tree": true,
+    "inline_backgrounds": true
+  },
+  "features": [
+    {
+      "path": "balance.feature",
+      "page": "balance",
+      "object": "c1e77421c191dd208f634d13417ac966e978a9b2d57d74cf97d256a2a9379d66",
+      "lines": [
+        1,
+        2
+      ],
+      "source": null
+    },
+    {
+      "path": "transfer.feature",
+      "page": "transfer",
+      "object": "4148f424e2494493a7f6c553668710ea831b2445d4c1bdad0987ad48579fac35",
+      "lines": [
+        1,
+        2
+      ],
+      "source": null
+    },
+    {
+      "path": "withdraw.feature",
+      "page": "withdraw",
+      "object": "bf53f1a9196a90e85d3ae95697e9e34a852220507aa3745d425f6829dd450867",
+      "lines": [
+        1,
+        2
+      ],
+      "source": null
+    }
+  ],
+  "tags": [],
+  "sentences": {
+    "given": [
+      "an account with 100"
+    ],
+    "when": [
+      "30 is transferred"
+    ],
+    "then": [
+      "the balance reads 100",
+      "the balance reads 70"
+    ]
+  },
+  "front_page": null,
+  "settings": {
+    "title": "Suite",
+    "source_link": null,
+    "tag_links": [],
+    "accent_light": "#0b4f9c",
+    "accent_dark": "#8cc4ff",
+    "collapse_rules": false,
+    "collapse_scenarios": false,
+    "show_tree": true,
+    "inline_backgrounds": true
+  }
+}

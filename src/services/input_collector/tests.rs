@@ -27,22 +27,16 @@ fn path_and_kind(error: &InputError) -> (String, InputErrorKind) {
 
 #[test]
 fn files_with_the_same_page_are_reported_in_the_order_of_their_paths() {
-    // Rules 15 and 37: `A` sorts before `a.feature`.
+    // Rules 15 and 37: `A` is a page of its own, and `a.feature` sorts before `a.story`.
     let mut folders = MemoryFolders::with_files(["in/A", "in/a.feature", "in/a.story"]);
     folders
         .files
         .insert(PathBuf::from("in/.ghg-ignore"), "!*\n".to_string());
     let same_page = InputErrorKind::SamePage {
-        page: "a.html".into(),
-        first: "A".into(),
+        page: "a".into(),
+        first: "a.feature".into(),
     };
-    assert_eq!(
-        errors_of(folders),
-        [
-            ("a.feature".to_string(), same_page.clone()),
-            ("a.story".to_string(), same_page)
-        ]
-    );
+    assert_eq!(errors_of(folders), [("a.story".to_string(), same_page)]);
 }
 
 #[test]

@@ -2,7 +2,7 @@
 
 use std::path::PathBuf;
 
-use crate::entities::{Colour, KeptInOutput, TagLink, VersionName};
+use crate::entities::{Colour, KeptInOutput, TagLink};
 
 /// Each value is `None` when the file does not set it.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
@@ -12,7 +12,6 @@ pub(crate) struct Config {
     /// Relative to the configuration file's folder.
     pub(crate) output: Option<PathBuf>,
     pub(crate) allow_unnamed: Option<bool>,
-    pub(crate) version_name: Option<VersionName>,
     pub(crate) replace_existing_version: Option<bool>,
     pub(crate) source_link: Option<String>,
     pub(crate) collapse_rules: Option<bool>,

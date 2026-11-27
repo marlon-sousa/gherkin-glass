@@ -37,13 +37,13 @@ fn output_folder(test: &str) -> PathBuf {
 
 /// `ghg build` run in the fixture, writing into `output`, with `arguments`.
 fn build(output: &Path, arguments: &[&str]) -> Output {
-    ghg("build", output, arguments)
+    ghg(&["build"], output, arguments)
 }
 
-/// `ghg <command>` run in the fixture, writing into `output`, with `arguments`.
-fn ghg(command: &str, output: &Path, arguments: &[&str]) -> Output {
+/// `ghg` and `command` run in the fixture, writing into `output`, with `arguments`.
+fn ghg(command: &[&str], output: &Path, arguments: &[&str]) -> Output {
     Command::new(env!("CARGO_BIN_EXE_ghg"))
-        .arg(command)
+        .args(command)
         .arg("--output")
         .arg(output)
         .args(arguments)
@@ -56,18 +56,18 @@ fn text(bytes: &[u8]) -> String {
     String::from_utf8_lossy(bytes).into_owned()
 }
 
-// Rule 229: nothing is written, not even the output folder, whether the build is versioned or a
-// preview, and the build says why and is done.
+// Rule 229: nothing is written, not even the output folder, whether a site, a version or a
+// preview is added, and the command says why and is done.
 #[rstest]
-#[case::a_site(&[], "site")]
-#[case::a_version(&["--version-name", "v1.0.0"], "version")]
-#[case::a_preview(&["--preview"], "preview")]
+#[case::a_site(&["build"], "site")]
+#[case::a_version(&["version", "add", "v1.0.0"], "version")]
+#[case::a_preview(&["preview", "add", "pr-1"], "preview")]
 fn a_build_that_reads_no_feature_file_writes_nothing_and_says_why(
-    #[case] arguments: &[&str],
+    #[case] command: &[&str],
     #[case] test: &str,
 ) {
     let output = output_folder(test);
-    let run = build(&output, arguments);
+    let run = ghg(command, &output, &[]);
     assert_eq!(
         text(&run.stderr),
         "features: the input folder holds no feature file, so no site was built.\n"
@@ -106,18 +106,14 @@ fn an_output_folder_ghg_did_not_write_still_stops_a_build_that_reads_no_feature_
 fn a_version_that_reads_no_feature_file_leaves_the_versions_written_as_they_were() {
     let output = output_folder("versions-kept");
     let constructs = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/constructs");
-    let first = build(
+    let first = ghg(
+        &["version", "add", "v1"],
         &output,
-        &[
-            "--input",
-            &constructs.to_string_lossy(),
-            "--version-name",
-            "v1",
-        ],
+        &["--input", &constructs.to_string_lossy()],
     );
     assert_eq!(first.status.code(), Some(0), "{}", text(&first.stderr));
     let before = files(&output);
-    let run = build(&output, &["--version-name", "v2"]);
+    let run = ghg(&["version", "add", "v2"], &output, &[]);
     assert_eq!(run.status.code(), Some(0));
     assert_eq!(files(&output), before);
 }
@@ -126,7 +122,7 @@ fn a_version_that_reads_no_feature_file_leaves_the_versions_written_as_they_were
 #[test]
 fn serve_that_reads_no_feature_file_writes_and_serves_nothing() {
     let output = output_folder("serve");
-    let run = ghg("serve", &output, &["--port", "0"]);
+    let run = ghg(&["serve"], &output, &["--port", "0"]);
     assert_eq!(
         text(&run.stderr),
         "features: the input folder holds no feature file, so no site was built.\n"

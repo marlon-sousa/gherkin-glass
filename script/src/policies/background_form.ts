@@ -3,11 +3,6 @@
 const INLINE = "inline";
 const LINKED = "linked";
 
-/** The path of the site's root folder, from the address of the script, which is `assets/gherkin-glass.js` in it. */
-export function siteRoot(scriptAddress: string): string {
-  return new URL("..", scriptAddress).pathname;
-}
-
 /** Holds no `#`, which every block's key holds, so that the two never meet. */
 export function formKey(siteRoot: string): string {
   return `gherkin-glass:${siteRoot}:backgrounds`;

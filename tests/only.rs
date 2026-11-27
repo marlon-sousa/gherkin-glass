@@ -1,6 +1,6 @@
 //! A site of only the feature files a list names, checked by building `tests/fixtures/only`
-//! with `--only`, and as a preview with `--preview`, and comparing what is written with the sites
-//! committed beside it.
+//! with `--only`, adding it as a version and as a preview, and comparing what is written with the
+//! sites committed beside it.
 
 #![expect(
     clippy::expect_used,
@@ -21,7 +21,7 @@ mod store_json;
 #[path = "support/version_placeholder.rs"]
 mod version_placeholder;
 
-use site_files::{assert_same_site, files};
+use site_files::assert_same_site;
 
 fn fixture() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/only")
@@ -30,15 +30,25 @@ fn fixture() -> PathBuf {
 /// `ghg build` run in the fixture with `arguments`, `standard_input` given to it, writing into
 /// a fresh folder named `name`, which it returns with the run's output.
 fn build(arguments: &[&str], standard_input: &str, name: &str) -> (PathBuf, Output) {
-    let output = Path::new(env!("CARGO_TARGET_TMPDIR"))
-        .join("only")
-        .join(name);
+    let output = output_folder(name);
     let _ = remove_dir_all(&output);
+    let run = ghg(&[&["build"], arguments].concat(), standard_input, &output);
+    (output, run)
+}
+
+fn output_folder(name: &str) -> PathBuf {
+    Path::new(env!("CARGO_TARGET_TMPDIR"))
+        .join("only")
+        .join(name)
+}
+
+/// `ghg` run in the fixture with `arguments`, `standard_input` given to it, writing into
+/// `output`.
+fn ghg(arguments: &[&str], standard_input: &str, output: &Path) -> Output {
     let mut child = Command::new(env!("CARGO_BIN_EXE_ghg"))
-        .arg("build")
         .args(arguments)
         .arg("--output")
-        .arg(&output)
+        .arg(output)
         .current_dir(fixture())
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
@@ -51,8 +61,7 @@ fn build(arguments: &[&str], standard_input: &str, name: &str) -> (PathBuf, Outp
         .expect("standard input")
         .write_all(standard_input.as_bytes())
         .expect("standard input is written");
-    let run = child.wait_with_output().expect("the command ends");
-    (output, run)
+    child.wait_with_output().expect("the command ends")
 }
 
 fn text(bytes: &[u8]) -> String {
@@ -166,83 +175,70 @@ fn a_list_given_with_no_build_is_a_mistake_on_the_command_line() {
 // Rule 210.
 #[test]
 fn a_version_of_only_the_listed_files_is_listed_as_any_other_and_says_what_it_shows() {
-    let (written, run) = build(
-        &["--only", "changed.txt", "--version-name", "pr-131"],
+    let output = output_folder("version");
+    let _ = remove_dir_all(&output);
+    let run = ghg(
+        &["version", "add", "pr-131", "--only", "changed.txt"],
         "",
-        "version",
+        &output,
     );
     assert_eq!(text(&run.stderr), "");
     assert_eq!(run.status.code(), Some(0));
-    let versions = read_to_string(written.join("index.html")).expect("the versions page");
+    let versions = read_to_string(output.join("index.html")).expect("the versions page");
     assert!(
         versions.contains("href=\"pr-131/index.html\""),
         "{versions}"
     );
     assert!(!versions.contains("given with --only"), "{versions}");
-    let page = read_to_string(written.join("pr-131/welcome.html")).expect("a page");
-    assert!(page.contains("given with --only"), "{page}");
+    let descriptor =
+        read_to_string(output.join("data/versions/pr-131.json")).expect("the descriptor");
+    assert!(descriptor.contains("\"only\":true"), "{descriptor}");
 }
 
-/// The robots element of rule 211, right after the page's title.
-const NOINDEX: &str = "</title>\n<meta name=\"robots\" content=\"noindex\">";
-
-/// `page`, an HTML page, without the robots element of rule 211.
-fn indexed(page: &str) -> String {
-    page.replace(NOINDEX, "</title>")
-}
-
-// Rules 211 and 213: a preview is the site without versions the build would make, whatever
-// version the configuration names, every page of it asking not to be indexed, and nothing else
-// changed.
+// Rules 211, 213 and 258: a preview of the listed files, added beside the
+// site and removed again, which leaves the site as it was.
 #[test]
-fn a_preview_is_the_site_without_versions_every_page_asking_not_to_be_indexed() {
-    let (written, run) = build(
-        &[
-            "--config",
-            "versioned.toml",
-            "--only",
-            "changed.txt",
-            "--preview",
-        ],
+fn a_preview_is_added_beside_the_site_and_removed_from_it() {
+    let (output, run) = build(&["--only", "changed.txt"], "", "preview");
+    assert_eq!(run.status.code(), Some(0));
+    let run = ghg(
+        &["preview", "add", "pr-131", "--only", "changed.txt"],
         "",
-        "preview",
+        &output,
     );
     assert_eq!(text(&run.stderr), "");
     assert_eq!(run.status.code(), Some(0));
-    let expected = files(&fixture().join("expected"));
-    let preview = files(&written);
-    assert_eq!(
-        preview.keys().collect::<Vec<_>>(),
-        expected.keys().collect::<Vec<_>>(),
-        "the files written"
-    );
-    for (name, contents) in &preview {
-        let page = text(contents);
-        if name.ends_with(".html") {
-            assert!(page.contains(NOINDEX), "{name}");
-        }
-        assert_eq!(indexed(&page), text(&expected[name]), "{name}");
-    }
+    assert_same_site(&output, &fixture().join("expected-preview"));
+    let shell = read_to_string(output.join("previews/pr-131/index.html")).expect("the shell");
+    assert!(shell.contains("</title>\n<meta name=\"robots\" content=\"noindex\">"));
+    let run = ghg(&["preview", "remove", "pr-131"], "", &output);
+    assert_eq!(text(&run.stderr), "");
+    assert_eq!(run.status.code(), Some(0));
+    assert_same_site(&output, &fixture().join("expected"));
 }
 
-// Rule 212.
+// Rule 124: a preview named as another but for its capitals stops the run.
 #[test]
-fn a_preview_with_a_version_name_is_a_mistake_on_the_command_line() {
-    let (written, run) = build(
-        &[
-            "--only",
-            "changed.txt",
-            "--preview",
-            "--version-name",
-            "pr-131",
-        ],
+fn a_preview_named_as_another_but_for_its_capitals_stops_the_run() {
+    let output = output_folder("preview-capitals");
+    let _ = remove_dir_all(&output);
+    let run = ghg(
+        &["preview", "add", "pr-131", "--only", "changed.txt"],
         "",
-        "preview-versioned",
+        &output,
+    );
+    assert_eq!(run.status.code(), Some(0));
+    let run = ghg(
+        &["preview", "add", "PR-131", "--only", "changed.txt"],
+        "",
+        &output,
     );
     assert_eq!(
         text(&run.stderr),
-        "The option --preview builds a site without versions, so it cannot be given with --version-name.\n"
+        format!(
+            "{}/previews/PR-131: the output folder holds a preview whose name differs from this one only in its capitals, which some systems would put in the same folder, so it is left as it is.\n",
+            output.display()
+        )
     );
-    assert_eq!(run.status.code(), Some(2));
-    assert!(!written.exists());
+    assert_eq!(run.status.code(), Some(1));
 }

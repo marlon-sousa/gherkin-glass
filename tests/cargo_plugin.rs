@@ -8,11 +8,16 @@
 
 use std::env::{join_paths, split_paths, var_os};
 use std::ffi::OsStr;
-use std::fs::{copy, create_dir_all, read_dir, remove_dir_all};
+use std::fs::{create_dir_all, remove_dir_all};
 use std::iter::once;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 use std::sync::atomic::{AtomicUsize, Ordering};
+
+#[path = "support/copied_folder.rs"]
+mod copied_folder;
+
+use copied_folder::copy_folder;
 
 fn fixture(name: &str) -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -42,19 +47,6 @@ fn in_a_copy(folder: &Path) -> PathBuf {
     let _ = remove_dir_all(&copy);
     copy_folder(&fixtures, &copy);
     copy.join(inside)
-}
-
-fn copy_folder(from: &Path, to: &Path) {
-    create_dir_all(to).expect("the folder is made");
-    for entry in read_dir(from).expect("the fixture is listed") {
-        let entry = entry.expect("the fixture is listed");
-        let path = entry.path();
-        if path.is_dir() {
-            copy_folder(&path, &to.join(entry.file_name()));
-        } else {
-            copy(&path, to.join(entry.file_name())).expect("the file is copied");
-        }
-    }
 }
 
 fn ghg(folder: &Path, arguments: &[&str]) -> Output {

@@ -6,7 +6,7 @@ import { test } from "node:test";
 import { sentencesPage } from "../../src/adapters/dom_sentences_page.ts";
 import { ElementBuilder } from "../../src/adapters/element_builder.ts";
 import { sentencesView } from "../../src/policies/sentences_view.ts";
-import { emptyDocument, markupOf, words, writtenMain } from "../support/drawn_pages.ts";
+import { emptyDocument, markupOf, words, expectedMain } from "../support/drawn_pages.ts";
 import { sentencesDescriptor, sentencesFeatures } from "../support/sentences_store.ts";
 import { descriptor } from "../support/store_building.ts";
 
@@ -16,7 +16,7 @@ test("the page of step sentences is drawn as ghg 1 wrote it, but for its links' 
   const main = document.querySelector("main")!;
   const view = sentencesView(words, sentencesDescriptor, sentencesFeatures);
   main.append(...sentencesPage(new ElementBuilder(document), view));
-  assert.equal(markupOf(main), markupOf(writtenMain("step-sentences/expected/steps.html", "steps.html")));
+  assert.equal(markupOf(main), markupOf(expectedMain("step-sentences/steps.html")));
   assert.equal(view.title, "Step sentences, Fixture");
 });
 

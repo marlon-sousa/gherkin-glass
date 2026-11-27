@@ -1,11 +1,11 @@
-//! Handler: what `ghg build` says of a build that nothing stopped, each note with the kind a program reads and the sentence a person reads.
+//! Handler: what a command says when nothing stopped it, of a build or of a removal, each note with the kind a program reads and the sentence a person reads.
 
 use std::path::Path;
 
 use i18n_embed_fl::fl;
 use serde::Serialize;
 
-use crate::entities::{BuildReport, BuiltSite, NothingToBuild};
+use crate::entities::{BuildReport, BuildTarget, BuiltSite, NothingToBuild, RemoveReport};
 use crate::policies::CATALOGUE;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -18,13 +18,14 @@ pub(super) struct BuildNote {
 #[serde(rename_all = "kebab-case")]
 enum NoteKind {
     NoTitle,
-    LargeSearchDocuments,
+    LargeSiteData,
     NothingToBuild,
+    NothingToRemove,
 }
 
 /// The notes of `report`, in the order they are printed: for a site written, the hint of a site
-/// with no title given, then the warning of large search documents, either left out when it
-/// does not apply; for nothing to build, why nothing was written.
+/// with no title given, then the warning of a large site's data, either left out when it does
+/// not apply; for nothing to build, why nothing was written.
 pub(super) fn notes_of(report: &BuildReport) -> Vec<BuildNote> {
     match report {
         BuildReport::Written { site, .. } => site_notes(site),
@@ -35,9 +36,37 @@ pub(super) fn notes_of(report: &BuildReport) -> Vec<BuildNote> {
     }
 }
 
+/// The notes of `report`: none for a removal, and for nothing to remove, why nothing was.
+pub(super) fn removal_notes(report: &RemoveReport) -> Vec<BuildNote> {
+    match report {
+        RemoveReport::Removed { .. } => Vec::new(),
+        RemoveReport::NothingToRemove { output, target } => {
+            let output = shown(output);
+            let message = match target {
+                BuildTarget::Preview(name) => fl!(
+                    CATALOGUE,
+                    "preview-nothing-to-remove",
+                    output = output,
+                    name = name.as_str()
+                ),
+                BuildTarget::Site | BuildTarget::Version(_) => fl!(
+                    CATALOGUE,
+                    "version-nothing-to-remove",
+                    output = output,
+                    name = target.version().map_or("", |name| name.as_str())
+                ),
+            };
+            vec![BuildNote {
+                kind: NoteKind::NothingToRemove,
+                message,
+            }]
+        }
+    }
+}
+
 fn site_notes(site: &BuiltSite) -> Vec<BuildNote> {
     let untitled = site.untitled.then(no_title);
-    let large = site.large_search_documents.map(large_search_documents);
+    let large = site.large_site_data.map(large_site_data);
     untitled.into_iter().chain(large).collect()
 }
 
@@ -48,12 +77,12 @@ fn no_title() -> BuildNote {
     }
 }
 
-fn large_search_documents(bytes: usize) -> BuildNote {
+fn large_site_data(bytes: usize) -> BuildNote {
     // Rounded up, so that a size above 5 MB never reads as 5.0.
     let size = format!("{:.1}", (bytes as f64 / 100_000.0).ceil() / 10.0);
     BuildNote {
-        kind: NoteKind::LargeSearchDocuments,
-        message: fl!(CATALOGUE, "search-documents-large", size = size.as_str()),
+        kind: NoteKind::LargeSiteData,
+        message: fl!(CATALOGUE, "site-data-large", size = size.as_str()),
     }
 }
 
@@ -134,5 +163,28 @@ mod tests {
     ) {
         assert_eq!(nothing_to_build(&nothing), build);
         assert_eq!(empty_site(&nothing), served);
+    }
+
+    // Rules 257 and 258.
+    #[rstest]
+    #[case::a_version(
+        BuildTarget::Version(crate::test_support::name("v1")),
+        "site: holds no version v1, so nothing was removed."
+    )]
+    #[case::a_preview(
+        BuildTarget::Preview(crate::test_support::name("pr-1")),
+        "site: holds no preview pr-1, so nothing was removed."
+    )]
+    fn nothing_to_remove_names_the_output_folder_and_the_name(
+        #[case] target: BuildTarget,
+        #[case] expected: &str,
+    ) {
+        let report = RemoveReport::NothingToRemove {
+            output: "site".into(),
+            target,
+        };
+        let notes = removal_notes(&report);
+        let messages: Vec<_> = notes.iter().map(|note| note.message.as_str()).collect();
+        assert_eq!(messages, [expected]);
     }
 }

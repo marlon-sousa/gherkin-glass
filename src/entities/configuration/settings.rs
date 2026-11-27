@@ -2,7 +2,7 @@
 
 use std::path::PathBuf;
 
-use crate::entities::{Destination, KeptInOutput, PageOptions, PathList, Unnamed, VersionName};
+use crate::entities::{BuildTarget, Destination, KeptInOutput, PageOptions, PathList, Unnamed};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct Settings {
@@ -11,9 +11,9 @@ pub(crate) struct Settings {
     pub(crate) destination: Destination,
     pub(crate) unnamed: Unnamed,
     pub(crate) pages: PageOptions,
-    /// `None` when the build is not versioned.
-    pub(crate) version: Option<VersionName>,
-    /// Whether an earlier build of the site, or of the version, is replaced.
+    /// What the command writes or removes.
+    pub(crate) target: BuildTarget,
+    /// Whether an earlier build of the site, or of the version, is replaced; a preview always is.
     pub(crate) replace: bool,
     /// The front page's template; `None` for ghg's own.
     pub(crate) front_page: Option<PathBuf>,

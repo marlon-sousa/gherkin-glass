@@ -1,4 +1,4 @@
-//! Entity: the files of the store a build renders, and how the site writer writes them beside what the output folder's store already holds.
+//! Entity: the files of the store a build renders, and how a command writes the output folder: what it writes, in order, what it removes after them, and what the marker lists before and after.
 
 use std::collections::BTreeSet;
 
@@ -12,30 +12,21 @@ pub(crate) struct StoreFiles {
     pub(crate) descriptor: SiteFile,
     /// What the descriptor names, in its order.
     pub(crate) features: Vec<PublishedFeature>,
-    /// The paths of the list of versions and the index of pages, which a version writes
-    /// beside its descriptor; none for a site without versions.
-    pub(crate) indexes: Vec<FilePath>,
+    /// The size in bytes of the objects, only when it is above the size at which the pages and
+    /// search can be slow to start.
+    pub(crate) large_site_data: Option<usize>,
 }
 
-impl StoreFiles {
-    /// The path of every file writing these may write.
-    pub(crate) fn paths(&self) -> Vec<FilePath> {
-        self.objects
-            .iter()
-            .chain([&self.descriptor])
-            .map(SiteFile::path)
-            .chain(self.indexes.iter().cloned())
-            .collect()
-    }
-}
-
-/// Every path is below the output folder, such as `data/objects/<name>.json`.
+/// Every path is below the output folder.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub(crate) struct StorePlan {
-    /// The files to write, each address below the output folder.
+    /// What the marker lists before anything is written: every file about to be there and
+    /// every file still to be removed.
+    pub(crate) first_marker: BTreeSet<FilePath>,
+    /// In the order they are written.
     pub(crate) writes: Vec<SiteFile>,
-    /// What nothing references once the files are written, to remove after them.
-    pub(crate) removes: BTreeSet<FilePath>,
-    /// Every file of the store once the plan is followed.
-    pub(crate) files: BTreeSet<FilePath>,
+    /// Files and folders, each descriptor before anything else.
+    pub(crate) removes: Vec<FilePath>,
+    /// What the marker lists once the plan is followed.
+    pub(crate) last_marker: BTreeSet<FilePath>,
 }

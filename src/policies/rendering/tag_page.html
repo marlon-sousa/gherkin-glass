@@ -1,7 +1,0 @@
-<h1>{{ page.heading_before }}<bdi>{{ page.tag }}</bdi>{{ page.heading_after }}</h1>
-{%- if let Some(outside) = page.outside %}
-<p>{{ outside.render()|safe }}</p>
-{%- endif %}
-{%- for feature in features %}
-{{ feature|safe }}
-{%- endfor %}

@@ -1,10 +1,10 @@
-//! Policy: the pure decisions of a run of ghg, each stage of the pipeline in a module of its own, and what more than one stage uses: the interface text, the addresses of the pages that both the input and the site name, the frame every page has, the site's title, the order of versions, and the themes' colours.
+//! Policy: the pure decisions of a run of ghg, each stage of the pipeline in a module of its own, and what more than one stage uses: the interface text, the name of a feature file's page, which both the input and the site name, the frame every page has, the site's title, the order of versions, and the themes' colours.
 
 mod collecting;
 mod configuration;
 mod interface_text;
-mod page_address;
 mod page_frame;
+mod page_naming;
 mod palettes;
 mod rendering;
 mod serving;
@@ -15,11 +15,8 @@ mod version_order;
 pub(crate) use collecting::*;
 pub(crate) use configuration::*;
 pub(crate) use interface_text::CATALOGUE;
-pub(crate) use page_address::{
-    FOLDER_PAGE, SEARCH_PAGE, SENTENCES_PAGE, TAG_INDEX_NAME, page_address, page_name,
-    tag_index_address,
-};
 pub(crate) use page_frame::page_frame;
+pub(crate) use page_naming::page_name;
 pub(crate) use palettes::palette;
 pub(crate) use rendering::*;
 pub(crate) use serving::*;

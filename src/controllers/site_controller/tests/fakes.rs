@@ -12,7 +12,7 @@ use std::thread::sleep;
 use std::time::{Duration, Instant};
 
 use super::*;
-use crate::entities::BuiltSite;
+use crate::entities::{BuildTarget, BuiltSite};
 use crate::errors::{
     ConfigError, ConfigErrorKind, ConfigErrors, InputError, InputErrorKind, InputErrors,
     ListenErrorKind, OutputError, OutputErrorKind,
@@ -146,7 +146,6 @@ pub(super) fn world() -> World {
 /// What the fake site writer says of every site it writes.
 pub(super) fn built_site() -> BuiltSite {
     BuiltSite {
-        large_search_documents: None,
         untitled: true,
         ..BuiltSite::default()
     }
@@ -179,7 +178,7 @@ pub(super) fn input_errors() -> InputErrors {
 pub(super) fn output_error() -> OutputError {
     OutputError {
         output: PathBuf::from("site"),
-        version: None,
+        target: BuildTarget::Site,
         kind: OutputErrorKind::NotASite,
     }
 }

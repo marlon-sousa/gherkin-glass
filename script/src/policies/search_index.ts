@@ -87,25 +87,12 @@ export function holdsMatch(runs: readonly Run[]): boolean {
   return runs.some((run) => run.marked);
 }
 
-/** How the addresses of search's links are made, those of pages ghg wrote whole or those of a shell's. */
-export interface SearchAddresses {
-  /** The address of `document`'s entry, percent-encoded. */
-  entry(document: SearchDocument): string;
-  /** The page of search results for `words`, its words encoded as a form encodes them. */
-  results(words: string): string;
+/** The address of `document`'s entry in the shell, from its `#`. */
+export function entryAddress(document: SearchDocument): string {
+  return targetAddress(pageByName(document.page), document.anchor === "" ? null : document.anchor);
 }
 
-/** Relative to the site's root, each document's page a file of its own, named with `.html`. */
-export const WRITTEN_ADDRESSES: SearchAddresses = {
-  entry: (document) => {
-    const page = document.page.split("/").map(encodeURIComponent).join("/");
-    return document.anchor === "" ? page : `${page}#${encodeURIComponent(document.anchor)}`;
-  },
-  results: (words) => `search.html?${new URLSearchParams({ q: words }).toString()}`,
-};
-
-/** A shell's own addresses, from its `#`. */
-export const SHELL_ADDRESSES: SearchAddresses = {
-  entry: (document) => targetAddress(pageByName(document.page), document.anchor === "" ? null : document.anchor),
-  results: (words) => targetAddress({ kind: "search", words }),
-};
+/** The address of the page of search results for `words` in the shell, from its `#`. */
+export function resultsAddress(words: string): string {
+  return targetAddress({ kind: "search", words });
+}

@@ -2,13 +2,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{{ head.title }}</title>
-{%- if let Some(robots) = robots %}
-<meta name="robots" content="{{ robots }}">
+{%- if head.unindexed %}
+<meta name="robots" content="noindex">
+{%- endif %}
+{%- if let Some(description) = head.description %}
+<meta name="description" content="{{ description }}">
 {%- endif %}
 <script>try{var t=localStorage.getItem("gherkin-glass:theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}</script>
 <style>
 {{ head.stylesheet|safe }}</style>
-<link rel="stylesheet" href="{{ head.root }}assets/gherkin-glass.css">
-<link rel="icon" href="{{ head.root }}assets/gherkin-glass.svg" type="image/svg+xml">
-<script type="module" src="{{ head.root }}assets/gherkin-glass.js"></script>
+<link rel="stylesheet" href="{{ head.assets }}/gherkin-glass.css">
+<link rel="icon" href="{{ head.assets }}/gherkin-glass.svg" type="image/svg+xml">
+<script type="module" src="{{ head.assets }}/gherkin-glass.js"></script>
 </head>

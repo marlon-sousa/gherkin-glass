@@ -12,7 +12,7 @@ use last_tree::{Changed, Last, keeps_file};
 
 use crate::entities::{
     EntryKind, FolderEntry, IGNORE_FILE, IgnoreRules, InputEntry, InputTree, InputTreeBuilder,
-    ListedFolder, Revision,
+    ListedFolder,
 };
 use crate::errors::{InputError, InputErrorKind};
 use crate::policies::{FileSelection, ListedSelection};
@@ -27,7 +27,7 @@ pub(super) fn walk_input(
 ) -> InputTree {
     let paths = BTreeSet::new();
     let changed = Changed { paths: &paths };
-    Walk::new(input_folders, input, changed, Revision::default(), listed).tree(None)
+    Walk::new(input_folders, input, changed, listed).tree(None)
 }
 
 /// The input tree made from `last` and the paths `changed` in its input since: a folder is
@@ -45,8 +45,7 @@ pub(super) fn walk_changes(
     if !changed.concerns(input) {
         return last.clone();
     }
-    Walk::new(input_folders, input, changed, last.next_revision(), listed)
-        .tree(Some(last.input_entry()))
+    Walk::new(input_folders, input, changed, listed).tree(Some(last.input_entry()))
 }
 
 struct Walk<'a> {
@@ -54,7 +53,6 @@ struct Walk<'a> {
     input: &'a Path,
     selection: FileSelection,
     changed: Changed<'a>,
-    next_revision: Revision,
 }
 
 /// What listing a folder gave.
@@ -82,7 +80,6 @@ impl<'a> Walk<'a> {
         input_folders: &'a dyn InputFolders,
         input: &'a Path,
         changed: Changed<'a>,
-        next_revision: Revision,
         listed: Option<ListedSelection>,
     ) -> Self {
         Walk {
@@ -90,7 +87,6 @@ impl<'a> Walk<'a> {
             input,
             selection: FileSelection::new(input, listed),
             changed,
-            next_revision,
         }
     }
 
@@ -99,15 +95,9 @@ impl<'a> Walk<'a> {
         let input = self.input;
         let last = Last::of(input, last, false, self.changed);
         match self.open(input, last) {
-            Opened::Unlisted(error) => {
-                InputTree::unlisted_input(input.to_path_buf(), error, self.next_revision)
-            }
+            Opened::Unlisted(error) => InputTree::unlisted_input(input.to_path_buf(), error),
             Opened::Listed(listing) => {
-                let mut builder = InputTreeBuilder::listed(
-                    input.to_path_buf(),
-                    listing.ignore,
-                    self.next_revision,
-                );
+                let mut builder = InputTreeBuilder::listed(input.to_path_buf(), listing.ignore);
                 let root = builder.root();
                 self.add_entries(&mut builder, root, listing.entries, listing.entered, last);
                 builder.build()

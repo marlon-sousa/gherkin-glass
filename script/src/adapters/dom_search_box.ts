@@ -23,7 +23,7 @@ export class DomSearchBox implements SearchBox {
     const link = form?.querySelector<HTMLAnchorElement>("a.ghg-search-all");
     const status = form?.querySelector<HTMLElement>(".ghg-search-status");
     const results = form?.querySelector<HTMLOListElement>("ol.ghg-search-results");
-    if (form && field && link && status && results && form.dataset["root"] !== undefined && form.dataset["shown"] !== undefined) {
+    if (form && field && link && status && results && form.dataset["shown"] !== undefined) {
       return new DomSearchBox(form, field, link, status, results);
     }
     return null;
@@ -152,7 +152,7 @@ export class DomSearchBox implements SearchBox {
       return;
     }
     this.link.replaceChildren(...this.pieces(link.label));
-    this.link.setAttribute("href", this.root() + link.address);
+    this.link.setAttribute("href", link.address);
   }
 
   fieldText(): string {
@@ -164,11 +164,7 @@ export class DomSearchBox implements SearchBox {
   }
 
   go(address: string): void {
-    this.form.ownerDocument.defaultView?.location.assign(this.root() + address);
-  }
-
-  private root(): string {
-    return this.form.dataset["root"] ?? "";
+    this.form.ownerDocument.defaultView?.location.assign(address);
   }
 
   /** Each piece as text, a name isolated in a `bdi` of its own. */

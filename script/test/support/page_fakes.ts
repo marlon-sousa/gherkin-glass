@@ -30,23 +30,16 @@ export class FakeBlock implements Block {
 
 export class FakePage implements Page {
   readonly found: FakeBlock[];
-  readonly opened: string | null;
   toggle: (block: Block) => void = () => {};
   collapseAll: () => void = () => {};
   expandAll: () => void = () => {};
-  follow: (anchor: string) => void = () => {};
 
-  constructor(found: FakeBlock[], opened: string | null = null) {
+  constructor(found: FakeBlock[]) {
     this.found = found;
-    this.opened = opened;
   }
 
   blocks(): readonly Block[] {
     return this.found;
-  }
-
-  target(): string | null {
-    return this.opened;
   }
 
   holder(anchor: string): Block | null {
@@ -63,10 +56,6 @@ export class FakePage implements Page {
 
   onExpandAll(handler: () => void): void {
     this.expandAll = handler;
-  }
-
-  onFollow(handler: (anchor: string) => void): void {
-    this.follow = handler;
   }
 }
 

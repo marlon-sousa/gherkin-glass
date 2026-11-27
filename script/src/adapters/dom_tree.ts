@@ -1,6 +1,5 @@
-// Adapter: the tree view over the page's markup, as src/policies/rendering/page_layout.html writes it, the tree built as the WAI-ARIA Navigation Treeview example builds it.
+// Adapter: the tree view over the shell's markup, as src/policies/rendering/tree_landmark.html writes it, the tree built as the WAI-ARIA Navigation Treeview example builds it.
 
-import { rootFrom } from "../policies/tree_state.ts";
 import type { TreeItem, TreeView } from "../ports/tree.ts";
 
 /** An item of the tree as the page shows it. */
@@ -15,23 +14,14 @@ interface TreeNode {
 export class DomTree implements TreeView {
   private readonly document: Document;
   private readonly landmark: HTMLElement | null;
-  /** What an item's address is relative to: the way back to the site's root, or the root itself. */
-  private readonly root: string | URL;
   private readonly nodes: TreeNode[] = [];
   private readonly byLink = new Map<Element, TreeNode>();
   private handler: (address: string, expanded: boolean) => void = () => {};
 
-  /** `page` is the current page's address below the site's root, `site`, decoded, if it is below it. */
-  constructor(document: Document, site: URL, page: string | null) {
+  /** The tree of a shell, whose items' addresses are the shell's own, from its `#`. */
+  constructor(document: Document) {
     this.document = document;
     this.landmark = document.querySelector<HTMLElement>("nav.ghg-tree");
-    // Relative when the page is in the site, so that the links are those the page would have.
-    this.root = page === null ? site : rootFrom(page);
-  }
-
-  /** The tree of a shell, whose items' addresses are the shell's own, from its `#`. */
-  static inShell(document: Document): DomTree {
-    return new DomTree(document, new URL(document.location.href), "");
   }
 
   build(items: readonly TreeItem[], current: string | null, expanded: (address: string) => boolean): void {
@@ -66,7 +56,7 @@ export class DomTree implements TreeView {
       entry.setAttribute("role", "none");
       const link = this.document.createElement("a");
       link.setAttribute("role", "treeitem");
-      link.href = typeof this.root === "string" ? this.root + item.address : new URL(item.address, this.root).href;
+      link.setAttribute("href", item.address);
       link.tabIndex = -1;
       if (item.address === current) {
         link.setAttribute("aria-current", "page");

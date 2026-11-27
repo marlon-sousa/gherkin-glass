@@ -3,9 +3,9 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { startFolderTree } from "../../src/services/folder_tree.ts";
+import { buildTree, startTreeControls } from "../../src/services/folder_tree.ts";
 import type { Memory } from "../../src/ports/memory.ts";
-import type { FocusPlace, TreeItem, TreeSource, TreeSwitch, TreeView } from "../../src/ports/tree.ts";
+import type { FocusPlace, TreeItem, TreeSwitch, TreeView } from "../../src/ports/tree.ts";
 import type { WindowWidth } from "../../src/ports/width.ts";
 
 const ITEMS: TreeItem[] = [
@@ -102,20 +102,28 @@ class FakeView implements TreeView {
   }
 }
 
-const source = (items: readonly TreeItem[] | null): TreeSource => ({ load: () => Promise.resolve(items) });
+/** The tree as a shell starts it: its controls, then the tree of `items` with `path` expanded, or, with no items, its controls disabled. */
+function startTree(items: readonly TreeItem[] | null, toggle: TreeSwitch, view: TreeView, width: WindowWidth, memory: Memory, sitePath: string, path: readonly string[]): void {
+  const controls = startTreeControls(toggle, width, memory, sitePath);
+  if (items === null) {
+    controls.disable();
+  } else {
+    buildTree(view, memory, sitePath, items, path);
+  }
+}
 
 function memory(kept: Map<string, string>): Memory {
   return { get: (key) => kept.get(key) ?? null, set: (key, value) => void kept.set(key, value) };
 }
 
-test("the path to the current page is expanded, with remembered items, and every choice is kept for the site", async () => {
+test("the path to the current page is expanded, with remembered items, and every choice is kept for the site", () => {
   const kept = new Map([
     ["gherkin-glass:/site/ tree a/index.html", "collapsed"],
     ["gherkin-glass:/site/ tree b/index.html", "expanded"],
   ]);
   const toggle = new FakeSwitch(true);
   const view = new FakeView();
-  await startFolderTree(source(ITEMS), toggle, view, new FakeWidth(false), memory(kept), { sitePath: "/site/", page: "a/f.html" });
+  startTree(ITEMS, toggle, view, new FakeWidth(false), memory(kept), "/site/", ["a/f.html", "a/index.html"]);
   assert.equal(view.current, "a/f.html");
   assert.deepEqual(view.expanded, ["a/index.html", "a/f.html", "b/index.html"]);
   assert.equal(toggle.shown, true);
@@ -126,10 +134,10 @@ test("the path to the current page is expanded, with remembered items, and every
   assert.equal(kept.get("gherkin-glass:/site/ tree"), "hidden");
 });
 
-test("a narrow window starts with the tree hidden, whatever the checkbox says, and its button shows and hides it", async () => {
+test("a narrow window starts with the tree hidden, whatever the checkbox says, and its button shows and hides it", () => {
   const kept = new Map([["gherkin-glass:/ tree", "shown"]]);
   const toggle = new FakeSwitch(true);
-  await startFolderTree(source(ITEMS), toggle, new FakeView(), new FakeWidth(true), memory(kept), { sitePath: "/", page: "index.html" });
+  startTree(ITEMS, toggle, new FakeView(), new FakeWidth(true), memory(kept), "/", ["index.html"]);
   assert.deepEqual([toggle.checked, toggle.open, toggle.shown], [true, false, false]);
   toggle.press();
   assert.deepEqual([toggle.open, toggle.shown], [true, true]);
@@ -139,9 +147,9 @@ test("a narrow window starts with the tree hidden, whatever the checkbox says, a
   assert.deepEqual([...kept], [["gherkin-glass:/ tree", "shown"]]);
 });
 
-test("Escape in the tree on a narrow window hides it and puts the focus on the button", async () => {
+test("Escape in the tree on a narrow window hides it and puts the focus on the button", () => {
   const toggle = new FakeSwitch(true);
-  await startFolderTree(source(ITEMS), toggle, new FakeView(), new FakeWidth(true), memory(new Map()), { sitePath: "/", page: "index.html" });
+  startTree(ITEMS, toggle, new FakeView(), new FakeWidth(true), memory(new Map()), "/", ["index.html"]);
   toggle.escape();
   assert.equal(toggle.focused, null);
   toggle.press();
@@ -149,17 +157,17 @@ test("Escape in the tree on a narrow window hides it and puts the focus on the b
   assert.deepEqual([toggle.open, toggle.shown, toggle.focused], [false, false, "button"]);
 });
 
-test("Escape in the tree on a wide window does nothing", async () => {
+test("Escape in the tree on a wide window does nothing", () => {
   const toggle = new FakeSwitch(true);
-  await startFolderTree(source(ITEMS), toggle, new FakeView(), new FakeWidth(false), memory(new Map()), { sitePath: "/", page: "index.html" });
+  startTree(ITEMS, toggle, new FakeView(), new FakeWidth(false), memory(new Map()), "/", ["index.html"]);
   toggle.escape();
   assert.deepEqual([toggle.shown, toggle.focused], [true, null]);
 });
 
-test("resizing across the narrow width switches between the checkbox and the button, both ways", async () => {
+test("resizing across the narrow width switches between the checkbox and the button, both ways", () => {
   const toggle = new FakeSwitch(true);
   const width = new FakeWidth(false);
-  await startFolderTree(source(ITEMS), toggle, new FakeView(), width, memory(new Map()), { sitePath: "/", page: "index.html" });
+  startTree(ITEMS, toggle, new FakeView(), width, memory(new Map()), "/", ["index.html"]);
   assert.equal(toggle.shown, true);
   width.resize(true);
   assert.deepEqual([toggle.open, toggle.shown], [false, false]);
@@ -175,10 +183,10 @@ test("resizing across the narrow width switches between the checkbox and the but
   assert.equal(toggle.shown, false);
 });
 
-test("a resize that hides the tree with the focus inside it moves the focus to the control it shows", async () => {
+test("a resize that hides the tree with the focus inside it moves the focus to the control it shows", () => {
   const toggle = new FakeSwitch(true);
   const width = new FakeWidth(false);
-  await startFolderTree(source(ITEMS), toggle, new FakeView(), width, memory(new Map()), { sitePath: "/", page: "index.html" });
+  startTree(ITEMS, toggle, new FakeView(), width, memory(new Map()), "/", ["index.html"]);
   toggle.focusAt = "tree";
   width.resize(true);
   assert.equal(toggle.focused, "button");
@@ -189,10 +197,10 @@ test("a resize that hides the tree with the focus inside it moves the focus to t
   assert.equal(toggle.focused, "checkbox");
 });
 
-test("a resize that hides the control with the focus moves the focus to the one it shows in its place", async () => {
+test("a resize that hides the control with the focus moves the focus to the one it shows in its place", () => {
   const toggle = new FakeSwitch(true);
   const width = new FakeWidth(false);
-  await startFolderTree(source(ITEMS), toggle, new FakeView(), width, memory(new Map()), { sitePath: "/", page: "index.html" });
+  startTree(ITEMS, toggle, new FakeView(), width, memory(new Map()), "/", ["index.html"]);
   toggle.focusAt = "checkbox";
   width.resize(true);
   assert.equal(toggle.focused, "button");
@@ -202,10 +210,10 @@ test("a resize that hides the control with the focus moves the focus to the one 
   assert.equal(toggle.focused, "checkbox");
 });
 
-test("a resize that keeps the tree shown, or hides it with the focus elsewhere, leaves the focus where it is", async () => {
+test("a resize that keeps the tree shown, or hides it with the focus elsewhere, leaves the focus where it is", () => {
   const toggle = new FakeSwitch(true);
   const width = new FakeWidth(true);
-  await startFolderTree(source(ITEMS), toggle, new FakeView(), width, memory(new Map()), { sitePath: "/", page: "index.html" });
+  startTree(ITEMS, toggle, new FakeView(), width, memory(new Map()), "/", ["index.html"]);
   toggle.press();
   toggle.focusAt = "tree";
   width.resize(false);
@@ -215,11 +223,11 @@ test("a resize that keeps the tree shown, or hides it with the focus elsewhere, 
   assert.deepEqual([toggle.shown, toggle.focused], [false, null]);
 });
 
-test("data that cannot be loaded disables the checkbox and the button and builds nothing", async () => {
+test("data that cannot be loaded disables the checkbox and the button and builds nothing", () => {
   const toggle = new FakeSwitch(true);
   const view = new FakeView();
   const width = new FakeWidth(false);
-  await startFolderTree(source(null), toggle, view, width, memory(new Map()), { sitePath: "/", page: null });
+  startTree(null, toggle, view, width, memory(new Map()), "/", []);
   assert.equal(toggle.disabled, true);
   assert.deepEqual([toggle.checked, toggle.shown], [false, false]);
   assert.deepEqual(view.expanded, []);

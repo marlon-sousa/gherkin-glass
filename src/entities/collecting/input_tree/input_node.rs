@@ -4,7 +4,7 @@ use std::path::PathBuf;
 use std::slice::from_ref;
 use std::sync::Arc;
 
-use crate::entities::{IgnoreRules, ParsedFeature, Revision};
+use crate::entities::{IgnoreRules, ParsedFeature};
 use crate::errors::InputError;
 
 #[derive(Debug, Clone)]
@@ -36,9 +36,8 @@ pub(super) enum FolderState {
 pub(super) enum FileState {
     NotAllowed,
     NothingParsed,
-    /// What parsing gave, shared with the trees made from this one, and the revision the tree
-    /// gave the file when it took it in.
-    Parsed(Revision, Arc<Result<ParsedFeature, Vec<InputError>>>),
+    /// What parsing gave, shared with the trees made from this one.
+    Parsed(Arc<Result<ParsedFeature, Vec<InputError>>>),
 }
 
 impl InputNode {
@@ -61,7 +60,7 @@ impl NodeKind {
         match self {
             NodeKind::Folder(FolderState::Unlisted(error)) => from_ref(error),
             NodeKind::Folder(FolderState::Listed(ignore)) => &ignore.errors,
-            NodeKind::File(FileState::Parsed(_, parsed)) => {
+            NodeKind::File(FileState::Parsed(parsed)) => {
                 parsed.as_ref().as_ref().err().map_or(&[], Vec::as_slice)
             }
             NodeKind::Folder(FolderState::NotAllowed)

@@ -1,36 +1,34 @@
-// The words a page gives the search box, read from tests/fixtures/pages/expected/stories/read.html,
-// those the page of search results gives its script, read from tests/fixtures/pages/expected/search.html,
-// and the documents of tests/fixtures/search/search.json.
+// The words a shell gives the search box, read from the shell of tests/fixtures/pages, those the page of search
+// results gives its script, read from the one committed in script/test/expected/pages/search.html, and the documents
+// of tests/fixtures/search/search.json.
 
 import { readFileSync } from "node:fs";
+
+import { Window } from "happy-dom";
 
 import type { SearchDocument } from "../../src/ports/documents.ts";
 import type { SearchWords } from "../../src/ports/search_box.ts";
 import type { PageWords } from "../../src/ports/search_page.ts";
 
 const fixtures = new URL("../../../tests/fixtures/", import.meta.url);
+const expected = new URL("../expected/", import.meta.url);
 
-/** The text of each `data-` attribute of the first element of `page` whose tag and class are `element`, such as `form.ghg-search`. */
-function elementData(page: string, element: string): (name: string) => string {
-  const html = readFileSync(new URL(page, fixtures), "utf8");
-  const [name, className] = element.split(".");
-  const tag = new RegExp(`<${name} class="${className}"[^>]*>`).exec(html)?.[0] ?? "";
+/** The text of each `data-` attribute of the first element of `page` that `element` selects, such as `form.ghg-search`. */
+function elementData(page: URL, element: string): (name: string) => string {
+  const window = new Window({ url: "https://example.com/site/" });
+  window.document.write(readFileSync(page, "utf8"));
+  const found = window.document.querySelector(element);
   return (name) => {
-    const value = new RegExp(` data-${name}="([^"]*)"`).exec(tag)?.[1];
-    if (value === undefined) {
-      throw new Error(`${page} has no data-${name}`);
+    const value = found?.getAttribute(`data-${name}`);
+    if (value === null || value === undefined) {
+      throw new Error(`${page.href} has no data-${name}`);
     }
-    return value
-      .replaceAll(/&#(\d+);/g, (_, code: string) => String.fromCodePoint(Number(code)))
-      .replaceAll("&quot;", '"')
-      .replaceAll("&lt;", "<")
-      .replaceAll("&gt;", ">")
-      .replaceAll("&amp;", "&");
+    return value;
   };
 }
 
 export function pageWords(): SearchWords {
-  const data = elementData("pages/expected/stories/read.html", "form.ghg-search");
+  const data = elementData(new URL("pages/expected/index.html", fixtures), "form.ghg-search");
   return {
     shown: Number(data("shown")),
     loading: data("loading"),
@@ -55,7 +53,7 @@ export function pageWords(): SearchWords {
 }
 
 export function searchPageWords(): PageWords {
-  const data = elementData("pages/expected/search.html", "div.ghg-search-groups");
+  const data = elementData(new URL("pages/search.html", expected), "div.ghg-search-groups");
   return {
     heading: data("heading"),
     title: data("title"),

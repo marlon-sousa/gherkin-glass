@@ -60,21 +60,17 @@ test("collapse all and expand all set every block, and are remembered as each bl
   assert.equal(memory.get(key("background")), "expanded");
 });
 
-test("opening the page at an anchor expands its block and the blocks around it", () => {
-  const page = new FakePage(blocks(false), "store-credit");
+test("revealing an anchor expands its block and the blocks around it, remembered", () => {
+  const page = new FakePage(blocks(false));
   const memory = new FakeMemory();
-  startCollapsing(page, memory, PATH, null);
+  const reveal = startCollapsing(page, memory, PATH, null);
+  reveal("store-credit");
   assert.deepEqual(states(page), [false, true, true, true]);
   assert.equal(memory.get(key("refunds-after-thirty-days")), "expanded");
-});
-
-test("following a link on the page expands the block it points to and the blocks around it", () => {
-  const page = new FakePage(blocks());
-  startCollapsing(page, new FakeMemory(), PATH, null);
   page.collapseAll();
-  page.follow("cheap");
+  reveal("cheap");
   assert.deepEqual(states(page), [false, true, true, true]);
-  page.follow("no-such-anchor");
+  reveal("no-such-anchor");
   assert.deepEqual(states(page), [false, true, true, true]);
 });
 

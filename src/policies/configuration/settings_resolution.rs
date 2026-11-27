@@ -3,8 +3,7 @@
 use std::path::{Path, PathBuf};
 
 use crate::entities::{
-    Accents, BuildOptions, Config, Destination, PageOptions, SearchIndexing, Settings, SiteScope,
-    Unnamed,
+    Accents, BuildOptions, Config, Destination, PageOptions, Settings, SiteScope, Unnamed,
 };
 
 /// The input folder when neither the command line nor the file names one,
@@ -40,19 +39,12 @@ pub(crate) fn resolve_settings(
         Some(_) => SiteScope::OnlyListed,
         None => SiteScope::EveryFeature,
     };
-    let version = match options.indexing {
-        SearchIndexing::Allowed => options
-            .version_name
-            .clone()
-            .or_else(|| config.version_name.clone()),
-        SearchIndexing::Refused => None,
-    };
     Settings {
         input,
         output,
         destination,
         unnamed,
-        version,
+        target: options.target.clone(),
         replace: options
             .replace_existing_version
             .or(config.replace_existing_version)
@@ -102,7 +94,6 @@ pub(crate) fn resolve_settings(
                     .unwrap_or(Accents::DEFAULT.dark),
             },
             scope,
-            indexing: options.indexing,
         },
     }
 }

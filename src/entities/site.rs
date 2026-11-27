@@ -1,52 +1,43 @@
-//! Entity: the site stage, the site tree and its nodes: a feature's page, the folders' pages and the folder tree, search, the step sentences, the tags, the output folder and its versions, and the site's store, the object of each feature file and what its descriptor holds, with the site tree and the store as the converter hands them on, with what every need of the stage uses: the tree itself, its files and their addresses, the feature files' paths, the frame every page has and what each page has of its own in its breadcrumb, the settings of every page, the levels of the headings under a page's `h1`, the kinds of block, the front page's template, what a build that succeeded wrote, and how a build that nothing stopped ended.
+//! Entity: the site stage, what a build makes of the features for its site: the site's store, the object of each feature file and what its descriptor holds, the home page a shell holds, what a shell says of itself, the output folder and its versions, the versions page, with what every need of the stage uses: the files and their addresses, the feature files' paths, the frame every page has, the settings of every page, the levels of the headings under a page's `h1`, the kinds of block and of step, the words of a heading, the front page's template, what a build that succeeded wrote, and how a command that nothing stopped ended.
 
 mod block_kind;
-mod breadcrumb;
 mod build_report;
 mod built_site;
-mod converted_site;
-mod feature_pages;
+mod feature_parts;
 mod feature_path;
-mod folders;
 mod front_page_template;
 mod heading_level;
+mod home_page;
 mod link_address;
 mod page_frame;
 mod page_options;
-mod rendered_site;
 mod search;
-mod sentences;
+mod shell_page;
 mod site_address;
 mod site_assets;
 mod site_file;
-mod site_tree;
+mod step_kind;
 mod store;
 mod tags;
 mod versions;
 
 pub(crate) use block_kind::BlockKind;
-pub(crate) use breadcrumb::{BreadcrumbWords, OwnCrumb, Trail};
-pub(crate) use build_report::BuildReport;
+pub(crate) use build_report::{BuildReport, RemoveReport};
 pub(crate) use built_site::BuiltSite;
-pub(crate) use converted_site::ConvertedSite;
-pub(crate) use feature_pages::*;
+pub(crate) use feature_parts::*;
 pub(crate) use feature_path::FeaturePath;
-pub(crate) use folders::*;
 pub(crate) use front_page_template::FrontPageTemplate;
 pub(crate) use heading_level::HeadingLevel;
+pub(crate) use home_page::{FeatureEntry, FolderLink, FolderWords, HomePage};
 pub(crate) use link_address::{LinkAddress, percent_encoded};
 pub(crate) use page_frame::{DiskNoticeWords, FooterWords, PageFrame};
 pub(crate) use page_options::PageOptions;
-pub(crate) use rendered_site::RenderedSite;
 pub(crate) use search::*;
-pub(crate) use sentences::*;
+pub(crate) use shell_page::ShellPage;
 pub(crate) use site_address::SiteAddress;
-pub(crate) use site_assets::{ASSETS, SiteAssets};
-pub(crate) use site_file::{SiteFile, SiteFiles};
-pub(crate) use site_tree::{
-    FolderId, SiteFeaturePage, SiteFolder, SiteFolderPage, SiteNode, SiteTree, SiteTreeBuilder,
-    SiteTreeNode, SiteVersion,
-};
+pub(crate) use site_assets::SiteAssets;
+pub(crate) use site_file::SiteFile;
+pub(crate) use step_kind::StepKind;
 pub(crate) use store::*;
 pub(crate) use tags::*;
 pub(crate) use versions::*;

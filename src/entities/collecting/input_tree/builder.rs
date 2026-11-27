@@ -6,7 +6,7 @@ use ego_tree::{NodeId, NodeRef, Tree};
 
 use super::input_node::{FileState, FolderState, InputNode, NodeKind};
 use super::{InputEntry, InputTree};
-use crate::entities::{IgnoreRules, Revision};
+use crate::entities::IgnoreRules;
 use crate::errors::InputError;
 
 /// A folder of the tree being built that was listed, so that it may have children.
@@ -15,19 +15,17 @@ pub(crate) struct ListedFolder(NodeId);
 
 pub(crate) struct InputTreeBuilder {
     tree: Tree<InputNode>,
-    next_revision: Revision,
 }
 
 impl InputTreeBuilder {
     /// A tree whose root, the input folder `input`, was listed, with the rules of its
-    /// `.ghg-ignore`, which gives revisions from `next_revision` on.
-    pub(crate) fn listed(input: PathBuf, ignore: IgnoreRules, next_revision: Revision) -> Self {
+    /// `.ghg-ignore`.
+    pub(crate) fn listed(input: PathBuf, ignore: IgnoreRules) -> Self {
         InputTreeBuilder {
             tree: Tree::new(InputNode::new(
                 input,
                 NodeKind::Folder(FolderState::Listed(ignore)),
             )),
-            next_revision,
         }
     }
 
@@ -80,7 +78,6 @@ impl InputTreeBuilder {
     pub(crate) fn build(self) -> InputTree {
         InputTree {
             tree: self.tree,
-            next_revision: self.next_revision,
             listed: None,
         }
     }
@@ -138,8 +135,7 @@ mod tests {
     #[test]
     fn a_folder_s_children_are_in_the_order_of_their_paths_whatever_order_they_are_added_in() {
         // Rule 15: `a` comes before `a-b.feature`, folder by folder.
-        let mut builder =
-            InputTreeBuilder::listed("in".into(), IgnoreRules::default(), Revision::default());
+        let mut builder = InputTreeBuilder::listed("in".into(), IgnoreRules::default());
         let root = builder.root();
         builder.add_allowed_file(root, "in/a-b.feature".into());
         builder.add_file_not_allowed(root, "in/README.md".into());

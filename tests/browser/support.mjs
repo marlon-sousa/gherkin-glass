@@ -1,10 +1,16 @@
 // What the browser checks share: Playwright and axe-core from script/'s Node
-// packages, the rules axe-core checks, the ghg binary, and ghg serve.
+// packages, the rules axe-core checks, the ghg binary, ghg serve, sites built
+// and served, and the pages of a site and how to open one.
 
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
+import { mkdtempSync, readFileSync, readdirSync, rmSync } from "node:fs";
 import { createRequire } from "node:module";
-import { resolve } from "node:path";
+import { tmpdir } from "node:os";
+import { join, relative, resolve, sep } from "node:path";
 import { createInterface } from "node:readline";
+
+import { targetAddress } from "../../script/src/policies/address.ts";
+import { shellPages } from "../../script/tools/shell_pages.ts";
 
 // The Node packages are script/'s, installed from its lockfile.
 const require = createRequire(resolve("script/package.json"));
@@ -68,11 +74,80 @@ export function serve(args, cwd) {
   });
 }
 
+// Runs each of `commands`, a fixture's folder below tests/fixtures and the
+// arguments of ghg, such as ["build"], into one new temporary folder, serves
+// it, and resolves with its address and a way to stop serving and remove it.
+export async function serveBuilt(commands) {
+  const output = mkdtempSync(join(tmpdir(), "ghg-built-"));
+  for (const { folder, args } of commands) {
+    const run = spawnSync(ghg, [...args, "--output", output], { cwd: resolve("tests/fixtures", folder), encoding: "utf8" });
+    if (run.status !== 0) throw new Error(`ghg ${args.join(" ")} in tests/fixtures/${folder}: ${run.stderr}`);
+  }
+  const { server, address } = await serve(["--no-build", "--output", output, "--port", "0"], output);
+  return {
+    address,
+    stop: async () => {
+      await stop(server);
+      rmSync(output, { recursive: true, force: true });
+    },
+  };
+}
+
 // Stops a server `serve` started.
 export async function stop(server) {
   if (server.exitCode === null && server.signalCode === null) {
     const exited = new Promise((done) => server.once("exit", done));
     server.kill();
     await exited;
+  }
+}
+
+// Every page of the site in the output folder `folder`, by the path of its
+// HTML from the folder, with the address of the page after it for a page a
+// shell draws, such as `v1.0.0/index.html#billing/refunds`, in order: each
+// page of HTML ghg wrote, and each page a shell draws from its descriptor,
+// its front page, its folders, its features, its tags, its step sentences and
+// its search results. A shell is a page whose `html` names its descriptor.
+export function sitePages(folder) {
+  const pages = [];
+  for (const path of htmlFiles(folder)) {
+    const html = readFileSync(join(folder, path), "utf8");
+    const named = /<html[^>]* data-ghg-descriptor="([^"]+)"/.exec(html)?.[1];
+    if (named === undefined) {
+      pages.push(path);
+      continue;
+    }
+    const descriptor = JSON.parse(readFileSync(join(folder, "data", named), "utf8"));
+    pages.push(...shellPages(descriptor).map((page) => `${path}${targetAddress(page)}`));
+  }
+  return pages;
+}
+
+// The files of HTML below `folder`, with `/` between folders, in order.
+function htmlFiles(folder) {
+  return readdirSync(folder, { recursive: true, withFileTypes: true })
+    .filter((entry) => entry.isFile() && entry.name.endsWith(".html"))
+    .map((entry) => relative(folder, join(entry.parentPath, entry.name)).split(sep).join("/"))
+    .sort();
+}
+
+// The address of `page`, as sitePages gives it, below the site's address,
+// the parts of its path percent-encoded.
+export function pageAddress(site, page) {
+  const split = page.indexOf("#");
+  const path = split < 0 ? page : page.slice(0, split);
+  const hash = split < 0 ? "" : page.slice(split);
+  return `${new URL(path.split("/").map(encodeURIComponent).join("/"), site).href}${hash}`;
+}
+
+// Opens `address` in `page`, a new document each time, and waits until its
+// shell, if it is one, has drawn the page the address names.
+export async function openPage(page, address) {
+  await page.goto("about:blank");
+  await page.goto(address);
+  try {
+    await page.waitForFunction(() => !document.getElementById("ghg_main")?.hasAttribute("aria-busy"));
+  } catch (error) {
+    throw new Error(`${address} was never drawn: ${error.message.split("\n")[0]}`);
   }
 }
