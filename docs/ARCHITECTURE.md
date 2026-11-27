@@ -6,6 +6,8 @@ It was agreed in [#23](https://github.com/marlon-sousa/gherkin-glass/issues/23),
 
 The build this document describes, one `build` that starts from nothing or from the last build and the paths that changed, with the input tree and the site tree as "The two trees" describes them, was agreed in [#73](https://github.com/marlon-sousa/gherkin-glass/issues/73) and [#74](https://github.com/marlon-sousa/gherkin-glass/issues/74) ([design note 0073](design/0073-a-build-starts-from-its-trees.md)), and the code was moved to it in the nine layers the note names, each keeping every page byte for byte.
 
+gherkin-glass 2.0, whose pages the script draws from data the site stores once ([#173](https://github.com/marlon-sousa/gherkin-glass/issues/173)), is built in layers, and [design note 0173](design/0173-data-first.md), "The architecture", describes the shape they work to: a store in place of the site tree, the script drawing every page, and the site writer's plan. This document describes the code as it is, and each of those layers brings it up to date with what it adds or removes.
+
 ## The guiding principle
 
 Ports and adapters. The pure part of gherkin-glass, which decides what the site contains, knows nothing of the disk. It defines the seams it needs from the world as traits, the ports, and the code that touches the world implements them, the adapters. The composition root is the one place that chooses the concrete adapters and hands them in, and the one door into the library. Dependencies point inward only.
