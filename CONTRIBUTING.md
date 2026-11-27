@@ -94,7 +94,7 @@ Every action a workflow uses is pinned to a commit, with its version in a commen
 
 ## Releases
 
-Versions follow [Semantic Versioning](https://semver.org/). The addresses of pages, the anchor rule, the command line, the configuration keys and the names of the release archives are part of what is promised, so changing any of them in a way that breaks an existing site, command or installation is a major version. [docs/BEHAVIOUR.md](docs/BEHAVIOUR.md), "Releases", says what a release holds.
+Versions follow [Semantic Versioning](https://semver.org/). The addresses of pages, the anchor rule, the map of anchors, `assets/anchors.json` ([#168](https://github.com/marlon-sousa/gherkin-glass/issues/168)), the command line, the configuration keys and the names of the release archives are part of what is promised, so changing any of them in a way that breaks an existing site, command or installation is a major version. [docs/BEHAVIOUR.md](docs/BEHAVIOUR.md), "Releases", says what a release holds.
 
 ### Preparing a release
 
