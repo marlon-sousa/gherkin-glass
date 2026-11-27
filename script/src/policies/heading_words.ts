@@ -1,7 +1,7 @@
 // Policy: the words of a block's heading and of the note of its keyword, in gherkin-glass's words around the feature text, from the catalogue.
 
 import type { Block, BlockKind } from "../ports/store.ts";
-import type { Parts, Words } from "../ports/words.ts";
+import type { Argument, Parts, Words } from "../ports/words.ts";
 
 /** The note's words before its button, the button's, with the keyword isolated, and those after it. */
 export interface NoteWords {
@@ -16,6 +16,28 @@ export function isolated(text: string): Parts {
 
 export function plain(text: string): Parts {
   return text === "" ? [] : [{ text, isolated: false }];
+}
+
+/** A piece of a sentence of the catalogue: its own words, or the place of one of its texts, drawn in an element of its own. */
+export type Piece = { readonly words: string } | { readonly slot: string };
+
+/** The words of `id`, each of its texts named in `slots` a piece of its own. */
+export function pieces(words: Words, id: string, args: Readonly<Record<string, Argument>>, slots: readonly string[]): Piece[] {
+  const marks = slots.map((_, place) => String.fromCodePoint(0xe100 + place));
+  const sentence = words.text(id, { ...args, ...Object.fromEntries(slots.map((slot, place) => [slot, marks[place] ?? ""])) });
+  return [...sentence.split(/([\u{e100}-\u{e1ff}])/u)].flatMap((piece): Piece[] => {
+    const place = marks.indexOf(piece);
+    const slot = slots[place];
+    return slot !== undefined ? [{ slot }] : piece === "" ? [] : [{ words: piece }];
+  });
+}
+
+/** The words of `id` before and after its text `slot`, the other texts in `texts` put in, for a slot drawn in an element of its own. */
+export function wordsAround(words: Words, id: string, args: Readonly<Record<string, Argument>>, texts: Readonly<Record<string, Parts>>, slot: string): { readonly before: Parts; readonly after: Parts } {
+  const mark = "\u{e100}";
+  const parts = words.parts(id, args, { ...texts, [slot]: plain(mark) });
+  const at = parts.findIndex((part) => part.text === mark);
+  return at < 0 ? { before: parts, after: [] } : { before: parts.slice(0, at), after: parts.slice(at + 1) };
 }
 
 /** The text of `parts`, as a title or an accessible name reads it. */

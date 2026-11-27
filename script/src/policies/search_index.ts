@@ -2,6 +2,7 @@
 
 import MiniSearch, { type Options, type SearchOptions, type SearchResult } from "minisearch";
 
+import { pageByName, targetAddress } from "./address.ts";
 import type { SearchDocument } from "../ports/documents.ts";
 import type { Run } from "../ports/search_page.ts";
 
@@ -86,13 +87,25 @@ export function holdsMatch(runs: readonly Run[]): boolean {
   return runs.some((run) => run.marked);
 }
 
-/** The address of `document`'s entry, relative to the site's root, percent-encoded. */
-export function address(document: SearchDocument): string {
-  const page = document.page.split("/").map(encodeURIComponent).join("/");
-  return document.anchor === "" ? page : `${page}#${encodeURIComponent(document.anchor)}`;
+/** How the addresses of search's links are made, those of pages ghg wrote whole or those of a shell's. */
+export interface SearchAddresses {
+  /** The address of `document`'s entry, percent-encoded. */
+  entry(document: SearchDocument): string;
+  /** The page of search results for `words`, its words encoded as a form encodes them. */
+  results(words: string): string;
 }
 
-/** The page of search results for `words`, relative to the site's root, its words encoded as a form encodes them. */
-export function resultsPage(words: string): string {
-  return `search.html?${new URLSearchParams({ q: words }).toString()}`;
-}
+/** Relative to the site's root, each document's page a file of its own, named with `.html`. */
+export const WRITTEN_ADDRESSES: SearchAddresses = {
+  entry: (document) => {
+    const page = document.page.split("/").map(encodeURIComponent).join("/");
+    return document.anchor === "" ? page : `${page}#${encodeURIComponent(document.anchor)}`;
+  },
+  results: (words) => `search.html?${new URLSearchParams({ q: words }).toString()}`,
+};
+
+/** A shell's own addresses, from its `#`, as rule 235 makes them. */
+export const SHELL_ADDRESSES: SearchAddresses = {
+  entry: (document) => targetAddress(pageByName(document.page), document.anchor === "" ? null : document.anchor),
+  results: (words) => targetAddress({ kind: "search", words }),
+};

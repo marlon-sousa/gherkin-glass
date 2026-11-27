@@ -72,8 +72,8 @@ class FakeBox implements SearchBox {
   showAllResults(link: Result | null): void {
     this.link = link;
   }
-  clear(): void {
-    this.field = "";
+  fill(text: string): void {
+    this.field = text;
   }
   go(address: string): void {
     this.went = address;
