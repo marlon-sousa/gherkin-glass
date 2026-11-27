@@ -1,6 +1,7 @@
 // docs/BEHAVIOUR.md, "Reloading", rules 71 and 72, checked in Chromium with
 // Playwright: ghg serve --watch serves a copy of tests/fixtures/serve/reload,
-// a feature changes, and the page must reload at the reader's heading.
+// a feature changes, and the shell must reload and draw the page again at the
+// reader's heading.
 //
 // Run from the repository's root, after cargo build and npm ci in script/,
 // with Playwright's Chromium installed:
@@ -49,6 +50,7 @@ try {
       { timeout: 15000 },
     );
     await page.waitForLoadState("load");
+    await page.waitForFunction(() => !document.getElementById("ghg_main")?.hasAttribute("aria-busy"));
     await page.waitForTimeout(200);
   }
 
@@ -68,7 +70,8 @@ try {
     // `+ 0` turns the -0 of a top a fraction of a pixel above the window into 0.
     page.evaluate((id) => Math.round(document.getElementById(id).getBoundingClientRect().top) + 0, id);
 
-  await page.goto(`${address}many-scenarios.html`);
+  await page.goto(`${address}index.html#many-scenarios`);
+  await page.waitForFunction(() => !document.getElementById("ghg_main")?.hasAttribute("aria-busy"));
 
   // Focus in the window wins over the scroll: heading 4's button is focused
   // in the middle of the window, while heading 3's top is above it.

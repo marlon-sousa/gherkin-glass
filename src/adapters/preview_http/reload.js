@@ -1,12 +1,15 @@
 // Adapter: the reload script ghg serve adds to every page under --watch. It
 // reloads the page once the site is built again, back at the heading the reader
-// was in, and says nothing of its own.
+// was in once the shell has drawn the page again, and says nothing of its own.
 
 const POLL_EVERY = 1000;
 const REMEMBERED = "ghg-serve-reload-heading";
 const HEADINGS = "h1[id], h2[id], h3[id], h4[id], h5[id], h6[id]";
 
 const build = new URL(import.meta.url).searchParams.get("build");
+
+// The page shown: a shell's every page has its address, `#` and all.
+const shownPage = () => location.pathname + location.hash;
 
 // Whether any of the element is inside the window.
 function inWindow(element) {
@@ -48,7 +51,7 @@ function remember() {
     if (heading) {
       sessionStorage.setItem(
         REMEMBERED,
-        JSON.stringify({ page: location.pathname, id: heading.id }),
+        JSON.stringify({ page: shownPage(), id: heading.id }),
       );
     } else {
       sessionStorage.removeItem(REMEMBERED);
@@ -66,7 +69,7 @@ function restore() {
   } catch {
     return;
   }
-  if (!remembered || remembered.page !== location.pathname) {
+  if (!remembered || remembered.page !== shownPage()) {
     return;
   }
   const heading = document.getElementById(remembered.id);
@@ -100,11 +103,28 @@ async function poll() {
   setTimeout(poll, POLL_EVERY);
 }
 
-// After the load, so that neither the address's fragment nor the browser
-// moves the page afterwards.
+// Calls `then` once the shell's main is no longer busy, as it is while the
+// shell draws a page; at once on a page that is not a shell's.
+function whenDrawn(then) {
+  const main = document.getElementById("ghg_main");
+  if (!main || !main.hasAttribute("aria-busy")) {
+    then();
+    return;
+  }
+  const watching = new MutationObserver(() => {
+    if (!main.hasAttribute("aria-busy")) {
+      watching.disconnect();
+      then();
+    }
+  });
+  watching.observe(main, { attributes: true, attributeFilter: ["aria-busy"] });
+}
+
+// After the load and the page drawn, so that neither the address's fragment
+// nor the browser moves the page afterwards.
 if (document.readyState === "complete") {
-  restore();
+  whenDrawn(restore);
 } else {
-  addEventListener("load", restore, { once: true });
+  addEventListener("load", () => whenDrawn(restore), { once: true });
 }
 setTimeout(poll, POLL_EVERY);
