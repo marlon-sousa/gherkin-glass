@@ -578,8 +578,9 @@ fn each_release_adds_only_its_own_folder_and_the_versions_page() {
 #[test]
 fn a_release_onto_a_site_of_gherkin_glass_1_adds_its_versions_again() {
     // Rule 180: a gh-pages branch that holds an output folder of gherkin-glass 1 is emptied
-    // but for a new .nojekyll, its versions are named for the release to add again, one
-    // commit each, and nothing is pushed until the release's own version is added.
+    // but for a new .nojekyll, its versions, the folders its marker names, are named for the
+    // release to add again, one commit each, and nothing is pushed until the release's own
+    // version is added.
     let folder = scratch("publish-again");
     let remote = folder.join("remote.git");
     git_ok(&folder, &["init", "--quiet", "--bare", "remote.git"]);
@@ -592,6 +593,8 @@ fn a_release_onto_a_site_of_gherkin_glass_1_adds_its_versions_again() {
     }
     create_dir_all(seed.join("assets")).unwrap();
     write(seed.join("assets/gherkin-glass.css"), "a {}\n").unwrap();
+    create_dir_all(seed.join("notes")).unwrap();
+    write(seed.join("notes/kept.txt"), "not a version\n").unwrap();
     write(seed.join("index.html"), "v1.1.0\nv1.0.0\n").unwrap();
     write(
         seed.join("ghg-versions.json"),

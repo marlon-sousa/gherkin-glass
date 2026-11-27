@@ -7,9 +7,10 @@ name: Site
 # that version with the binary the release has just published, downloaded
 # from it and checked against its SHA256SUMS, with the tag's README as the
 # site's front page, straight into a checkout of the gh-pages branch, keeping
-# its .nojekyll and .git, and adds it to the branch. When the branch holds a site of gherkin-glass 1, it
-# first adds again, with the same binary, every version that site held, each
-# from its own tag, and pushes them with the release's own version.
+# its .nojekyll and .git, and adds it to the branch. When the branch holds a
+# site of gherkin-glass 1, it first adds again, with the same binary, every
+# version that site held, each from its own tag, and pushes them with the
+# release's own version.
 
 on:
   workflow_call:
