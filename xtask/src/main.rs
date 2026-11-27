@@ -21,15 +21,16 @@ Commands:
   build: builds the pages' script from script/ into assets/gherkin-glass.js, writes the fixtures' and the example suite's expected sites again, and the crate's README, README.crate.md, from README.md, then builds the release binary.
   check: runs every check a pull request runs: formatting, lints, the tests on both Rust versions, the documentation, the dependencies with cargo deny, the package, the script check and the browser check.
   check-script: type-checks and tests the script, and checks that assets/gherkin-glass.js is what it compiles to.
-  check-browser: builds ghg, installs the browser, and checks every fixture's site and the example suite's, alone and with the README's front page, in it: accessibility, the keyboard, the width of a narrow window, pages opened from disk, the folder tree on a narrow window, the dialog of a keyword's note, markup in feature files shown as text by the folder tree and search, and the reload of ghg serve --watch.
+  check-browser: builds ghg, installs the browser, and checks every fixture's site and the example suite's, alone and with the README's front page, in it: accessibility, the keyboard, the width of a narrow window, pages opened from disk, the folder tree on a narrow window, the dialog of a keyword's note, markup in feature files shown as text by the folder tree and search, the reload of ghg serve --watch, and the pages a shell draws as it is navigated.
   comment-ratio [path ...]: counts the comment lines and the code lines of the given Rust and TypeScript files, or of every one git tracks, with the total last.";
 
 /// The browser checks, run with Node from the repository's root.
-const BROWSER_CHECKS: [&str; 6] = [
+const BROWSER_CHECKS: [&str; 7] = [
     "tests/browser/accessibility.mjs",
     "tests/browser/from_disk.mjs",
     "tests/browser/hostile.mjs",
     "tests/browser/narrow.mjs",
+    "tests/browser/navigation.mjs",
     "tests/browser/note_dialog.mjs",
     "tests/browser/reload.mjs",
 ];

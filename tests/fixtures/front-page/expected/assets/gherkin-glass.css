@@ -693,3 +693,13 @@ figcaption {
   padding-top: 0.75rem;
   border-top: 1px solid var(--ghg-border);
 }
+
+/* The live region a shell says each page's title in is heard, never seen. */
+#ghg_announcement {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

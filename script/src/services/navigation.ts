@@ -50,7 +50,10 @@ export async function startNavigation(parts: NavigationParts): Promise<void> {
     drawing += 1;
     const mine = drawing;
     timer.cancel();
-    canvas.focusMain();
+    // A shell just opened moves the focus only to the anchor's element, once drawn.
+    if (reached) {
+      canvas.focusMain();
+    }
     canvas.setBusy(true);
     let drawn: () => PageFrame;
     try {
