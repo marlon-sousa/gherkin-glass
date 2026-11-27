@@ -68,3 +68,19 @@ fn what_is_not_there_is_not_removed() {
     assert_eq!(remove(&site_writer, preview("v1")), Ok(false));
     assert_eq!(output.paths(), before);
 }
+
+// Rules 38 and 125: what cannot be removed is reported with its path.
+#[test]
+fn what_cannot_be_removed_is_reported_with_its_path() {
+    let output = Arc::new(MemoryOutput {
+        fails: Some("v1"),
+        ..MemoryOutput::default()
+    });
+    let site_writer = into(&output);
+    add(&site_writer, version("v1"), "a").expect("built");
+    add(&site_writer, version("v2"), "b").expect("built");
+    let Err(BuildError::Output(error)) = remove(&site_writer, version("v1")) else {
+        panic!("removed");
+    };
+    assert_eq!(error.to_string(), "site/v1: cannot be written: disk full");
+}

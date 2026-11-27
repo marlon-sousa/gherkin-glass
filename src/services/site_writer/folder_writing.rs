@@ -2,12 +2,11 @@
 
 use std::collections::BTreeSet;
 use std::io::Error as IoError;
+use std::path::Path;
 use std::sync::Arc;
 
-use super::{SiteWriter, refusal, write_files};
-use crate::entities::{
-    BuildFolder, BuildTarget, FilePath, OutputMarker, SiteAddress, SiteFile, StorePlan,
-};
+use super::{SiteWriter, file_not_written, refusal, write_files};
+use crate::entities::{BuildFolder, BuildTarget, FilePath, OutputMarker, StorePlan};
 use crate::errors::{OutputError, OutputErrorKind};
 use crate::policies::marker_json;
 
@@ -31,9 +30,20 @@ impl SiteWriter {
         write_files(self.folder_files.as_ref(), output, target, &writes)?;
         removes
             .iter()
-            .try_for_each(|path| self.folders.remove(output, path))
-            .map_err(|io| cannot_write(folder, target, &io))?;
+            .try_for_each(|path| self.remove_file(output, target, path))?;
         self.mark(folder, target, &last_marker)
+    }
+
+    /// Removes the file or folder at `path` in `output` for the command on `target`.
+    fn remove_file(
+        &self,
+        output: &Path,
+        target: &BuildTarget,
+        path: &str,
+    ) -> Result<(), OutputError> {
+        self.folders
+            .remove(output, path)
+            .map_err(|io| file_not_written(output, target, path, &io))
     }
 
     /// Writes the marker of `folder`, listing `files`, for the command on `target`.
@@ -43,12 +53,9 @@ impl SiteWriter {
         target: &BuildTarget,
         files: &BTreeSet<FilePath>,
     ) -> Result<(), OutputError> {
-        let marker = SiteFile {
-            address: SiteAddress::at_root(OutputMarker::FILE),
-            contents: Arc::from(marker_json(files)),
-        };
+        let marker = Arc::<[u8]>::from(marker_json(files));
         self.folder_files
-            .write(folder.output(), marker.address.as_str(), &marker.contents)
+            .write(folder.output(), OutputMarker::FILE, &marker)
             .map_err(|io| cannot_write(folder, target, &io))
     }
 }

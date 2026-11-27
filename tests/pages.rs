@@ -416,22 +416,24 @@ fn a_file_in_the_output_folder_s_place_is_left_as_it_is() {
     );
 }
 
-// Rule 38: a folder that cannot be marked is reported as the output folder,
-// and a folder that cannot be made for a file as that file's path.
+// Rules 38 and 125: a folder that cannot be marked is reported as the output
+// folder, and a folder that cannot be made for a file as that file's path.
 #[cfg(unix)]
 #[rstest]
-#[case::the_marker(0o400, ": cannot be written: ")]
-#[case::a_folder_for_a_file(0o600, "/data/")]
+#[case::a_marker_that_cannot_be_written(0o400, ": cannot be written: ")]
+#[case::a_folder_that_cannot_be_made_for_a_file(0o600, "/data/objects/")]
 fn an_output_folder_that_cannot_be_written_stops_the_build(
     #[case] marker_mode: u32,
     #[case] after_output: &str,
 ) {
-    use std::fs::{Permissions, set_permissions};
-    use std::os::unix::fs::PermissionsExt;
-    // Root writes anywhere, so there the build succeeds, and the service's
-    // own tests check a marker and a file that cannot be written.
+    use std::fs::{Permissions, metadata, set_permissions};
+    use std::os::unix::fs::{MetadataExt, PermissionsExt};
     let written = output(&format!("cannot-be-written-{marker_mode:o}"));
     create_dir_all(&written).expect("made");
+    // Root writes anywhere, so the service's own tests check this for root.
+    if metadata(&written).expect("made").uid() == 0 {
+        return;
+    }
     let marker = written.join("ghg-site.json");
     write(
         &marker,
@@ -447,17 +449,13 @@ fn an_output_folder_that_cannot_be_written_stops_the_build(
     let given = written.to_str().expect("UTF-8");
     let result = build(&fixtures().join("pages"), &["--output", given]);
     set_permissions(&written, Permissions::from_mode(0o700)).expect("set");
-    if result.status.code() == Some(0) {
-        return;
-    }
     let report = String::from_utf8_lossy(&result.stderr).into_owned();
-    assert_eq!(result.status.code(), Some(1));
+    assert_eq!(result.status.code(), Some(1), "{report}");
     assert_eq!(report.lines().count(), 1, "{report}");
     assert!(
         report.starts_with(&format!("{given}{after_output}")),
         "{report}"
     );
-    assert!(report.contains(": cannot be written: "), "{report}");
 }
 
 // Rules 79 and 85: every link of the front page is an address within the

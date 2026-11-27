@@ -174,11 +174,22 @@ fn write_files(
     target: &BuildTarget,
     files: &[SiteFile],
 ) -> Result<(), OutputError> {
-    files.iter().try_for_each(|file| {
-        writer
-            .write(output, file.address.as_str(), &file.contents)
-            .map_err(|io| file_not_written(output, target, file, &io))
-    })
+    files
+        .iter()
+        .try_for_each(|file| write_file(writer, output, target, file))
+}
+
+/// Writes `file` into `output` for the command on `target`.
+fn write_file(
+    writer: &dyn FileWriter,
+    output: &Path,
+    target: &BuildTarget,
+    file: &SiteFile,
+) -> Result<(), OutputError> {
+    let path = file.address.as_str();
+    writer
+        .write(output, path, &file.contents)
+        .map_err(|io| file_not_written(output, target, path, &io))
 }
 
 /// What stops a command on `target` in `output`.
@@ -193,14 +204,14 @@ fn refusal(output: &Path, target: &BuildTarget, kind: OutputErrorKind) -> Output
 fn file_not_written(
     output: &Path,
     target: &BuildTarget,
-    file: &SiteFile,
+    file: &str,
     error: &IoError,
 ) -> OutputError {
     refusal(
         output,
         target,
         OutputErrorKind::FileNotWritten {
-            file: file.address.as_str().to_string(),
+            file: file.to_string(),
             reason: error.to_string(),
         },
     )

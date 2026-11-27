@@ -109,6 +109,7 @@ fn a_file_that_cannot_be_written_is_reported_with_its_path() {
     );
 }
 
+// Rules 38 and 125: a marker that cannot be written is reported as the output folder.
 #[test]
 fn a_marker_that_cannot_be_written_is_reported_with_the_output_folder() {
     let output = Arc::new(MemoryOutput {
