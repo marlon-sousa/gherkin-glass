@@ -1,4 +1,4 @@
-// The adapters of src/adapters/, on the page billing/refunds of tests/fixtures/pages, drawn in its shell, with the service behind them.
+// The adapters of src/adapters/, on the pages billing/refunds and billing/ of tests/fixtures/pages as the script drew them, with the service behind them.
 
 import assert from "node:assert/strict";
 import { test } from "node:test";
@@ -10,7 +10,7 @@ import { DomPage } from "../../src/adapters/dom_page.ts";
 import { LocalMemory } from "../../src/adapters/local_memory.ts";
 import { startCollapsing } from "../../src/services/collapsing.ts";
 import type { Memory } from "../../src/ports/memory.ts";
-import { drawnShell } from "../support/drawn_pages.ts";
+import { drawnPage } from "../support/drawn_pages.ts";
 
 /** What expands the block an anchor names on each page opened, as the navigation does once it has drawn it. */
 const reveals = new WeakMap<Window, (anchor: string) => void>();
@@ -18,12 +18,12 @@ const reveal = (window: Window, anchor: string): void => reveals.get(window)!(an
 
 /** The page, its script started with `memory`. */
 function open(memory: Memory = new Map() as unknown as Memory): Window {
-  const window = drawnShell("pages/billing/refunds.html", "https://example.com/site/billing/refunds.html");
+  const window = drawnPage("site/feature/billing/refunds.html", "https://example.com/site/#billing/refunds");
   const kept = new Map<string, string>();
   const store: Memory = memory instanceof Map ? { get: (key) => kept.get(key) ?? null, set: (key, value) => void kept.set(key, value) } : memory;
   const document = window.document as unknown as Document;
   const backgrounds = DomBackgrounds.of(document);
-  reveals.set(window, startCollapsing(new DomPage(document), store, window.location.pathname, backgrounds && { backgrounds, siteRoot: "/site/" }));
+  reveals.set(window, startCollapsing(new DomPage(document), store, "/site/#billing/refunds", backgrounds && { backgrounds, siteRoot: "/site/" }));
   return window;
 }
 
@@ -125,7 +125,7 @@ test("an examples item's state is remembered under its anchor, and wins when the
   const memory: Memory = { get: (key) => kept.get(key) ?? null, set: (key, value) => void kept.set(key, value) };
   const window = open(memory);
   (button(window, "cheap") as unknown as HTMLElement).click();
-  assert.equal(kept.get("gherkin-glass:/site/billing/refunds.html#cheap"), "expanded");
+  assert.equal(kept.get("gherkin-glass:/site/#billing/refunds#cheap"), "expanded");
   assert.equal(expanded(open(memory), "cheap"), true);
 });
 
@@ -162,7 +162,7 @@ test("collapse all and expand all set every block of the page", () => {
 test("revealing an anchor expands it and the blocks around it, whatever was remembered", () => {
   const kept = new Map<string, string>();
   for (const anchor of ["refunds-after-thirty-days", "refund-again-count-times", "again"]) {
-    kept.set(`gherkin-glass:/site/billing/refunds.html#${anchor}`, "collapsed");
+    kept.set(`gherkin-glass:/site/#billing/refunds#${anchor}`, "collapsed");
   }
   const memory: Memory = { get: (key) => kept.get(key) ?? null, set: (key, value) => void kept.set(key, value) };
   const window = open(memory);
@@ -170,7 +170,7 @@ test("revealing an anchor expands it and the blocks around it, whatever was reme
   for (const anchor of ["refunds-after-thirty-days", "refund-again-count-times", "again"]) {
     assert.equal(expanded(window, anchor), true, anchor);
   }
-  assert.equal(kept.get("gherkin-glass:/site/billing/refunds.html#again"), "expanded");
+  assert.equal(kept.get("gherkin-glass:/site/#billing/refunds#again"), "expanded");
 });
 
 test("the browser's storage keeps each state, and a storage that refuses keeps nothing without failing", () => {
@@ -196,9 +196,9 @@ test("the browser's storage keeps each state, and a storage that refuses keeps n
 // A folder page, the page billing/ of tests/fixtures/pages: docs/BEHAVIOUR.md, rule 84.
 
 function openFolder(kept: Map<string, string>): Window {
-  const window = drawnShell("pages/billing/index.html", "https://example.com/site/billing/index.html");
+  const window = drawnPage("site/folder/billing/index.html", "https://example.com/site/#billing/");
   const memory: Memory = { get: (key) => kept.get(key) ?? null, set: (key, value) => void kept.set(key, value) };
-  startCollapsing(new DomPage(window.document as unknown as Document), memory, window.location.pathname, null);
+  startCollapsing(new DomPage(window.document as unknown as Document), memory, "/site/#billing/", null);
   return window;
 }
 
@@ -217,7 +217,7 @@ test("a folder page's feature shows its contents by its button, remembered under
   toggle.click();
   assert.equal(toggle.getAttribute("aria-expanded"), "true");
   assert.equal(contents.hasAttribute("hidden"), false);
-  assert.equal(kept.get("gherkin-glass:/site/billing/index.html##billing/refunds"), "expanded");
+  assert.equal(kept.get("gherkin-glass:/site/#billing/##billing/refunds"), "expanded");
   const again = openFolder(kept);
   assert.equal(again.document.querySelector(".ghg-feature > button")!.getAttribute("aria-expanded"), "true");
 });

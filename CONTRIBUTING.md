@@ -83,7 +83,7 @@ Every pull request runs:
 - a check that fails while the description has an unticked checkbox, so that a manual check, such as the one with a screen reader, is finished before merging;
 - the formatting, the lints with warnings as errors, and the tests, on the pinned toolchain, and the tests again on the minimum supported Rust version;
 - the documentation with warnings as errors, the dependencies with `cargo deny`, and the package with a publish dry run;
-- the script check, `cargo xtask check-script`: the pages' script, in TypeScript under `script/`, is type-checked, tested and compiled again, and the check fails if the compiled script differs from the committed `assets/gherkin-glass.js`;
+- the script check, `cargo xtask check-script`: the pages' script, in TypeScript under `script/`, is type-checked, tested and compiled again, and the check fails if the compiled script differs from the committed `assets/gherkin-glass.js`, its licences from `assets/THIRD-PARTY-LICENSES.txt`, or a page it draws from an expected site from the committed one;
 - the browser check, `cargo xtask check-browser`: each fixture, and the example suite, alone and with the README's front page, is built into a site and served with `ghg serve --no-build`, and every page is opened in a browser, checked with axe-core in the light and the dark colour scheme, driven with the keyboard alone, and measured at a window 320 pixels wide, as [docs/BEHAVIOUR.md](docs/BEHAVIOUR.md), "Accessibility", describes; and pages of `tests/fixtures/pages` are opened from disk, where the dialog of "A page opened from disk" must open and pass the same checks.
 
 AGENTS.md, "Building and testing", gives the command of each, and `cargo xtask check` runs them all.

@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="en" data-ghg-descriptor="versions/main.json"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Feature: Deposit cash, deposit.feature</title>
+<meta name="description" content="The feature files of Suite, main, shown as pages.">
+<script>try{var t=localStorage.getItem("gherkin-glass:theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}</script>
+<style>
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+  --ghg-background: #ffffff;
+  --ghg-surface: #f2f2f2;
+  --ghg-text: #1a1a1a;
+  --ghg-muted: #474747;
+  --ghg-border: #757575;
+  --ghg-accent: #0b4f9c;
+  --ghg-keyword: #6a1b9a;
+  --ghg-parameter: #14521a;
+  --ghg-number: #8a3000;
+  --ghg-placeholder: #00575e;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ghg-background: #141414;
+    --ghg-surface: #222222;
+    --ghg-text: #ececec;
+    --ghg-muted: #c4c4c4;
+    --ghg-border: #8f8f8f;
+    --ghg-accent: #8cc4ff;
+    --ghg-keyword: #e1b3ff;
+    --ghg-parameter: #9fe0a8;
+    --ghg-number: #ffbf8a;
+    --ghg-placeholder: #7fdbe0;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ghg-background: #141414;
+  --ghg-surface: #222222;
+  --ghg-text: #ececec;
+  --ghg-muted: #c4c4c4;
+  --ghg-border: #8f8f8f;
+  --ghg-accent: #8cc4ff;
+  --ghg-keyword: #e1b3ff;
+  --ghg-parameter: #9fe0a8;
+  --ghg-number: #ffbf8a;
+  --ghg-placeholder: #7fdbe0;
+}
+</style>
+<link rel="stylesheet" href="../assets/{version}/gherkin-glass.css">
+<link rel="icon" href="../assets/{version}/gherkin-glass.svg" type="image/svg+xml">
+<script type="module" src="../assets/{version}/gherkin-glass.js"></script>
+</head>
+<body>
+<dialog id="ghg_from_disk" class="ghg-from-disk" tabindex="-1" aria-labelledby="ghg_from_disk_title" aria-describedby="ghg_from_disk_text">
+<p id="ghg_from_disk_title" class="ghg-from-disk-title">Opened from disk</p>
+<p id="ghg_from_disk_text">This site is meant to be served, so its pages cannot be shown when opened from disk, only its front page. Run ghg serve in the folder of your ghg.toml, or serve the site's folder with any web server, then open the address it gives.</p>
+<form method="dialog"><button>I agree</button></form>
+</dialog>
+<script>if(location.protocol==="file:"){let d=document.getElementById("ghg_from_disk");d.showModal();d.focus();addEventListener("DOMContentLoaded",()=>{let m=document.getElementById("ghg_main"),p=document.createElement("p");p.textContent="This page cannot be shown when opened from disk. Serve the site, then open the address the server gives.";m.removeAttribute("aria-busy");m.replaceChildren(p)})}</script>
+<a class="ghg-skip" href="##ghg_main">Skip to content</a>
+<div class="ghg-options">
+<span class="ghg-option ghg-tree-choice"><input type="checkbox" id="ghg_show_tree" class="ghg-show-tree" aria-controls="ghg_tree" checked=""> <label for="ghg_show_tree">Show the folder tree</label></span>
+<button type="button" class="ghg-tree-button" aria-expanded="false" aria-controls="ghg_tree">Folder tree</button>
+<fieldset class="ghg-theme">
+<legend>Theme</legend>
+<label><input type="radio" name="ghg-theme" value="system" checked=""> System</label>
+<label><input type="radio" name="ghg-theme" value="light"> Light</label>
+<label><input type="radio" name="ghg-theme" value="dark"> Dark</label>
+</fieldset>
+</div>
+<div class="ghg-layout">
+<nav id="ghg_tree" class="ghg-tree" aria-label="Folder tree"><ul role="tree" class="ghg-treeview" aria-label="Folder tree"><li role="none"><a role="treeitem" href="#" tabindex="-1">Suite</a></li><li role="none"><a role="treeitem" href="#balance" tabindex="-1" aria-owns="ghg_tree_1" aria-expanded="false"><span class="ghg-marker" aria-hidden="true"></span>Feature: <bdi lang="en">Check the balance</bdi></a><ul role="group" id="ghg_tree_1" aria-label="Feature: Check the balance" hidden=""><li role="none"><a role="treeitem" href="#balance#read-the-balance" tabindex="-1">Scenario: <bdi lang="en">Read the balance</bdi></a></li></ul></li><li role="none"><a role="treeitem" href="#deposit" tabindex="0" aria-current="page" aria-owns="ghg_tree_3" aria-expanded="true"><span class="ghg-marker" aria-hidden="true"></span>Feature: <bdi lang="en">Deposit cash</bdi></a><ul role="group" id="ghg_tree_3" aria-label="Feature: Deposit cash"><li role="none"><a role="treeitem" href="#deposit#deposit-into-savings" tabindex="-1">Scenario: <bdi lang="en">Deposit into savings</bdi></a></li></ul></li><li role="none"><a role="treeitem" href="#withdraw" tabindex="-1" aria-owns="ghg_tree_5" aria-expanded="false"><span class="ghg-marker" aria-hidden="true"></span>Feature: <bdi lang="en">Withdraw cash</bdi></a><ul role="group" id="ghg_tree_5" aria-label="Feature: Withdraw cash" hidden=""><li role="none"><a role="treeitem" href="#withdraw#withdraw-from-savings" tabindex="-1">Scenario: <bdi lang="en">Withdraw from savings</bdi></a></li></ul></li></ul></nav>
+<div class="ghg-page">
+<nav class="ghg-breadcrumb" aria-label="Breadcrumb"><ol><li><a href="#">Suite</a></li><li><a href="#deposit" aria-current="page">Feature: <bdi>Deposit cash</bdi></a></li></ol></nav>
+<form class="ghg-search" role="search" data-shown="50" data-loading="Loading search." data-failed="Search could not be loaded." data-none="No results." data-count="Results: {count}." data-count-limited="Results: {count}. The first 50 are listed." data-no-name="no name" data-feature="{name}, feature" data-rule="{name}, rule in {feature}" data-scenario="{name}, scenario in {feature}" data-scenario-in-rule="{name}, scenario in {rule}, {feature}" data-scenario-outline="{name}, scenario outline in {feature}" data-scenario-outline-in-rule="{name}, scenario outline in {rule}, {feature}" data-background="{name}, background in {feature}" data-background-in-rule="{name}, background in {rule}, {feature}" data-examples="{name}, examples in {outline}, {feature}" data-examples-in-rule="{name}, examples in {outline}, {rule}, {feature}" data-numbered-examples="Examples {place}" data-all-results="All results for &quot;{words}&quot;">
+<label>Search features, rules and scenarios <input type="search" class="ghg-search-field" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="ghg_search_results" autocomplete="off" spellcheck="false" enterkeyhint="search"></label>
+<a class="ghg-search-all" href="#search" hidden=""></a>
+<p class="ghg-search-status" role="status"></p>
+<ol class="ghg-search-results" id="ghg_search_results" role="listbox" aria-label="Search results" hidden=""></ol>
+</form>
+<main id="ghg_main" tabindex="-1"><h1>Feature: <bdi>Deposit cash</bdi></h1><div class="ghg-other-versions"><button type="button" class="ghg-toggle" aria-expanded="false">This page in other versions</button><div class="ghg-content" hidden=""><div class="ghg-version-group"><button type="button" class="ghg-toggle" aria-expanded="false">Not in</button><ul class="ghg-versions ghg-content" hidden=""><li><a href="../v1.0.0/index.html">v1.0.0</a></li></ul></div></div></div><nav class="ghg-contents" aria-label="Contents"><ul><li><a href="#deposit#deposit-into-savings">Scenario: <bdi>Deposit into savings</bdi></a></li></ul></nav><div class="ghg-controls"><button type="button" class="ghg-collapse-all">Collapse all</button><button type="button" class="ghg-expand-all">Expand all</button></div><div class="ghg-block ghg-scenario"><h2 id="deposit-into-savings"><button type="button" class="ghg-toggle" aria-expanded="true">Scenario: <bdi>Deposit into savings</bdi></button></h2><div class="ghg-content"><div class="ghg-other-versions"><button type="button" class="ghg-toggle" aria-expanded="false">In other versions</button><div class="ghg-content" hidden=""><div class="ghg-version-group"><button type="button" class="ghg-toggle" aria-expanded="false">Not in</button><ul class="ghg-versions ghg-content" hidden=""><li><a href="../v1.0.0/index.html">v1.0.0</a></li></ul></div></div></div><ol class="ghg-steps"><li><span class="ghg-keyword">Given </span>an account with <span class="ghg-number">100</span></li><li><span class="ghg-keyword">When </span><span class="ghg-number">50</span> is deposited</li><li><span class="ghg-keyword">Then </span>the balance reads <span class="ghg-number">150</span></li></ol></div></div></main>
+<p id="ghg_announcement" role="status"></p>
+<footer class="ghg-footer">
+<p>Built with <a href="https://github.com/marlon-sousa/gherkin-glass">gherkin-glass</a> {version}</p>
+</footer>
+</div>
+</div>
+<noscript><p>This site needs JavaScript to show its pages. Turn it on, then load this page again.</p></noscript>
+<script type="text/plain" id="ghg_messages">### Every message below is a page's, which each shell carries for the script.
+
+## A feature's page. $heading is the feature's keyword and name, and $path
+## the feature file's path below the input folder, both as written.
+
+page-title = { $heading }, { $path }
+page-contents = Contents
+collapse-all = Collapse all
+expand-all = Expand all
+source-link = Source: { $path }
+
+## The page an address that names no page of its shell draws, its title
+## its $heading, then the $site's title, and the paragraph drawn in place of
+## a page whose site's data cannot be fetched or read.
+
+page-missing = Nothing is at this address
+page-missing-title = { $heading }, { $site }
+page-missing-text = This site has no page at this address.
+page-not-loaded = This page could not be loaded. Load it again, or check that the site is served.
+
+## The control every page has to choose its theme, and its three choices.
+
+theme = Theme
+theme-system = System
+theme-light = Light
+theme-dark = Dark
+## The name of every page's breadcrumb, a navigation landmark.
+
+breadcrumb = Breadcrumb
+
+## A folder's page. $folder is the folder's path below the input folder, and
+## $site the site's title, the configuration's or default-title; and the
+## headings of its folders and its features, which the home page has too.
+
+folder-page-title = { $folder }, { $site }
+folders = Folders
+features = Features
+default-title = Feature files
+
+## Counts, on the home page and beside each feature of a folder page.
+
+folder-count =
+    { $count ->
+        [one] { $count } folder
+       *[other] { $count } folders
+    }
+feature-count =
+    { $count ->
+        [one] { $count } feature
+       *[other] { $count } features
+    }
+rule-count =
+    { $count ->
+        [one] { $count } rule
+       *[other] { $count } rules
+    }
+scenario-count =
+    { $count ->
+        [one] { $count } scenario
+       *[other] { $count } scenarios
+    }
+
+## The accessible name of the button that shows a feature's contents on a
+## folder page. It starts with the words of scenario-count, which the button
+## shows. $feature is the feature's heading, as written.
+
+feature-scenarios =
+    { $count ->
+        [one] { $count } scenario of { $feature }
+       *[other] { $count } scenarios of { $feature }
+    }
+
+## First in every page, the dialog opened only when the page is opened from
+## disk: its name, what it says, and its one button, which closes it.
+
+opened-from-disk-title = Opened from disk
+opened-from-disk = This site is meant to be served, so its pages cannot be shown when opened from disk, only its front page. Run ghg serve in the folder of your ghg.toml, or serve the site's folder with any web server, then open the address it gives.
+opened-from-disk-agree = I agree
+
+## What a shell opened from disk writes in its main, in place of a page it
+## cannot draw, and what it says when JavaScript is turned off.
+
+opened-from-disk-page = This page cannot be shown when opened from disk. Serve the site, then open the address the server gives.
+needs-script = This site needs JavaScript to show its pages. Turn it on, then load this page again.
+
+## Before every page's content: the link past the folder tree, the checkbox
+## that shows or hides it, and the name of its landmark.
+
+skip-to-content = Skip to content
+show-folder-tree = Show the folder tree
+folder-tree = Folder tree
+
+## After every page's content: what built it. $name is gherkin-glass, a link
+## to its repository, and $version the version of ghg, such as 0.1.0-alpha.2.
+
+built-with = Built with { $name } { $version }
+
+## First in every page's main content when the site was built with --only,
+## and, on its home page, in place of its folders and features when none of
+## the files --only lists is read.
+
+only-note = This site shows only the feature files given with --only.
+only-nothing-given = No feature file was given with --only.
+
+## The heading of each background a scenario holds, the heading of the
+## scenario's own steps after them, and the checkbox that chooses whether
+## those or the backgrounds in their own place are expanded.
+
+from-background = From the background
+from-rule-background = From the rule's background
+from-scenario = From the scenario
+inline-backgrounds = Show backgrounds inside each scenario
+## The tag pages. $tag is a tag as written, with its @, $scenario a
+## scenario's heading, and $count a number of scenarios.
+
+tag-index-title = Tags
+tag-index-entry = { $tag }, { $count ->
+    [0] no scenarios
+    [one] one scenario
+   *[other] { $count } scenarios
+}
+tag-index-empty = No feature file has a tag.
+tag-page-title = Tag { $tag }
+tag-no-scenario = None of its scenarios carries the tag.
+tag-through-examples = { $scenario }, through its examples
+tag-through-rule = { $scenario }, through its rule
+tag-through-feature = { $scenario }, through its feature
+## The versions page, at the root of a versioned site. $name is a version's
+## name, as given, and $site the site's title.
+
+versions-title = Versions
+versions-page-title = Versions, { $site }
+versions-development = Development versions
+versions-releases = Releases
+versions-pre-releases = Pre-releases
+versions-development-version = { $name }, a development version
+
+## A block's heading on a feature's page: its kind alone, or its kind and
+## its $name. $kind is one of feature, background, rule, scenario,
+## scenario-outline and examples, never shown; $name is as written in the
+## file.
+
+unnamed-heading =
+    { $kind ->
+        [feature] Feature
+        [background] Background
+        [rule] Rule
+        [scenario-outline] Scenario outline
+        [examples] Examples
+       *[scenario] Scenario
+    }
+named-heading =
+    { $kind ->
+        [feature] Feature: { $name }
+        [background] Background: { $name }
+        [rule] Rule: { $name }
+        [scenario-outline] Scenario outline: { $name }
+        [examples] Examples: { $name }
+       *[scenario] Scenario: { $name }
+    }
+
+## At the top of a block whose file writes its $kind, as unnamed-heading
+## selects it, with another keyword: a note, whose $opener is a button that
+## opens the dialog below, worded by keyword-note-opener with the $keyword as
+## written in the file. The opener ends the sentence, its full stop included,
+## so that nothing is left after the button, which wraps as one box, on a
+## line of its own.
+
+keyword-note =
+    { $kind ->
+        [feature] Note: in the Gherkin feature file, this feature is { $opener }
+        [background] Note: in the Gherkin feature file, this background is { $opener }
+        [rule] Note: in the Gherkin feature file, this rule is { $opener }
+        [scenario-outline] Note: in the Gherkin feature file, this scenario outline is { $opener }
+        [examples] Note: in the Gherkin feature file, these examples are { $opener }
+       *[scenario] Note: in the Gherkin feature file, this scenario is { $opener }
+    }
+keyword-note-opener = defined with the keyword "{ $keyword }".
+
+## The dialog that explains the note above, one on each page with such a
+## note: its heading, its text and its one button.
+
+note-dialog-title = About this note
+note-dialog-text = Gherkin lets authors use different words for the same kind of block. For example, Scenario and Example both define a scenario, and Examples and Scenarios both define examples. This site names every block by its kind, so pages read the same whichever word was used. The note only tells you which word the feature file uses; it changes nothing about the block.
+note-dialog-close = Got it
+
+## An unnamed examples block, by its $place among its outline's blocks, from 1.
+
+numbered-examples = Examples { $place }
+
+## The block of the scenarios outside every rule, in a file with a rule.
+
+outside-rules = Outside any rule
+
+## After an outline's steps, before the list of its examples.
+
+runs-for-each-row = Runs once for each row of these examples:
+
+## An examples block with no row below its header, after its $heading.
+
+nothing-to-run = { $heading } (nothing to run)
+
+## In an examples block, the runs its rows produce, one per row. A
+## produced scenario is named by its outline's $name and its row's $values, each
+## value worded by example-value and separated by example-values-separator.
+## $column and $value are as written.
+
+runs-one-per-row = Runs, one per row
+example-scenario-name = { $name } ({ $values })
+example-value = { $column }: { $value }
+example-values-separator = {", "}
+
+## The lists of a feature's page, and of each of its blocks, in the other
+## versions of a versioned site. $version is a version's name; $count is a
+## number of blocks; $link is the link to a version, and $changes the counts
+## of other-version-changed-blocks, other-version-not-there and
+## other-version-only-there, joined by other-version-changes-separator.
+
+other-versions-page = This page in other versions
+other-versions-block = In other versions
+other-versions-changed = Changed in
+other-versions-missing = Not in
+other-versions-unchanged = Unchanged in
+other-version-newer = { $version }, newer
+other-version-changes = { $link }: { $changes }
+other-version-changed-blocks = { $count ->
+    [one] 1 block changed
+   *[other] { $count } blocks changed
+}
+other-version-not-there = { $count } not there
+other-version-only-there = { $count } only there
+other-version-changes-separator = {", "}
+
+## The page of step sentences. $site is the site's title; $count is how many steps use a sentence;
+## $heading is the heading of a step's block, and $path its feature file's
+## path below the input folder, both as written; $link is the link that
+## reads them, and $values the step's values, as written.
+
+sentences-title = Step sentences
+sentences-page-title = Step sentences, { $site }
+sentences-given = Given
+sentences-when = When
+sentences-then = Then
+sentences-none = No feature has a step.
+sentence-uses = { $count ->
+    [one] Used once.
+   *[other] Used { $count } times.
+}
+sentence-use = { $heading }, { $path }
+sentence-use-values = { $link }, with { $values }
+sentence-values-separator = {", "}
+
+## The search box on every page. The script puts what it found in place of
+## each placeholder that is not $shown: $count is a number of results, $name,
+## $feature, $rule and $outline the names of a block, its feature, its rule and
+## its outline, $place an examples block's place among its outline's, from 1,
+## and $words the words searched for.
+
+search-label = Search features, rules and scenarios
+search-loading = Loading search.
+search-failed = Search could not be loaded.
+search-none = No results.
+search-count = Results: { $count }.
+search-count-limited = Results: { $count }. The first { $shown } are listed.
+# Stands in for the name of a block, a feature or a rule that has none, in
+# the place of $name, $feature or $rule in the messages below.
+search-no-name = no name
+search-result-feature = { $name }, feature
+search-result-rule = { $name }, rule in { $feature }
+search-result-scenario = { $name }, scenario in { $feature }
+search-result-scenario-in-rule = { $name }, scenario in { $rule }, { $feature }
+search-result-scenario-outline = { $name }, scenario outline in { $feature }
+search-result-scenario-outline-in-rule = { $name }, scenario outline in { $rule }, { $feature }
+search-result-background = { $name }, background in { $feature }
+search-result-background-in-rule = { $name }, background in { $rule }, { $feature }
+search-result-examples = { $name }, examples in { $outline }, { $feature }
+search-result-examples-in-rule = { $name }, examples in { $outline }, { $rule }, { $feature }
+search-all-results = All results for "{ $words }"
+
+## The page of search results. $site is the site's title. The script puts
+## what it found in place of the other placeholders: $words are the words
+## searched for, $count a number of results and $features of features,
+## $blocks the headings of the blocks a result is in, each separated by
+## search-page-separator.
+
+search-page-heading = Search results
+search-page-title = Search results, { $site }
+search-page-heading-for = Results for "{ $words }"
+search-page-title-for = Results for "{ $words }", { $site }
+search-page-count = Results: { $count }. Features: { $features }.
+search-page-within = In { $blocks }.
+search-page-separator = {", "}
+search-page-matching-steps = Matching steps:
+search-page-matching-tags = Matching tags:
+search-page-matching-cells = Matching cells:
+</script>
+
+
+</body></html>

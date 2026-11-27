@@ -9,7 +9,8 @@ import { tmpdir } from "node:os";
 import { join, relative, resolve, sep } from "node:path";
 import { createInterface } from "node:readline";
 
-import { pageByName, targetAddress } from "../../script/src/policies/address.ts";
+import { targetAddress } from "../../script/src/policies/address.ts";
+import { shellPages } from "../../script/tools/shell_pages.ts";
 
 // The Node packages are script/'s, installed from its lockfile.
 const require = createRequire(resolve("script/package.json"));
@@ -117,21 +118,9 @@ export function sitePages(folder) {
       continue;
     }
     const descriptor = JSON.parse(readFileSync(join(folder, "data", named), "utf8"));
-    pages.push(...shellPageNames(descriptor).map((name) => `${path}${targetAddress(pageByName(name))}`));
+    pages.push(...shellPages(descriptor).map((page) => `${path}${targetAddress(page)}`));
   }
   return pages;
-}
-
-// The names of the pages a shell of `descriptor` draws, as the store names them.
-function shellPageNames(descriptor) {
-  const features = descriptor.features.map((feature) => feature.page);
-  const folders = new Set([""]);
-  for (const page of features) {
-    const parts = page.split("/").slice(0, -1);
-    parts.forEach((_, index) => folders.add(`${parts.slice(0, index + 1).join("/")}/`));
-  }
-  const tags = descriptor.tags.map((tag) => tag.page);
-  return [...[...folders].sort(), ...features, "tags/", ...tags, "steps", "search"];
 }
 
 // The files of HTML below `folder`, with `/` between folders, in order.

@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test": "node --test \"test/**/*.test.ts\"",
     "licenses": "node tools/third_party_licenses.ts",
-    "bundle": "esbuild src/main.ts --bundle --minify --format=esm --target=es2022 --charset=utf8 --legal-comments=none \"--banner:js=// Compiled from script/ by cargo xtask build. Do not edit: change script/src and build again.\""
+    "bundle": "esbuild src/main.ts --bundle --minify --format=esm --target=es2022 --charset=utf8 --legal-comments=none \"--banner:js=// Compiled from script/ by cargo xtask build. Do not edit: change script/src and build again.\"",
+    "draw": "node tools/drawn_pages.ts"
   },
   "devDependencies": {
     "@types/node": "22.20.5",

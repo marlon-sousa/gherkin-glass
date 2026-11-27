@@ -36,6 +36,13 @@ export function drawnShell(path: string, address: string): Window {
   return window;
 }
 
+/** A window at `address` on the page of tests/fixtures/pages the script drew, committed at `path` below its `drawn/`. */
+export function drawnPage(path: string, address: string): Window {
+  const window = new Window({ url: address });
+  window.document.write(readFileSync(new URL(`../../../tests/fixtures/pages/drawn/${path}`, import.meta.url), "utf8"));
+  return window;
+}
+
 /** The `main` the script is expected to draw, committed at `path` below script/test/expected: ghg 1's, its links written as rule 235 writes them. */
 export function expectedMain(path: string): Element {
   const window = new Window({ url: "https://example.com/site/" });

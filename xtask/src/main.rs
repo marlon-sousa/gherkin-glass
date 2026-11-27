@@ -2,6 +2,7 @@
 
 mod checks;
 mod comment_ratio;
+mod drawn_pages;
 mod expected_sites;
 mod expected_stores;
 
@@ -13,6 +14,7 @@ use std::process::{Command, ExitCode};
 
 use checks::{CARGO_CHECKS, MINIMUM_RUST_TEST};
 use comment_ratio::Lines;
+use drawn_pages::{check_drawn_pages, write_drawn_pages};
 use expected_sites::{put_back_placeholder, replace_folder};
 use expected_stores::{fixture_stores, history_store, versions_site};
 
@@ -20,9 +22,9 @@ const USAGE: &str = "\
 Usage: cargo xtask <command>
 
 Commands:
-  build: builds the pages' script from script/ into assets/gherkin-glass.js, minified, with the licences of the packages it holds in assets/THIRD-PARTY-LICENSES.txt, writes the fixtures' and the example suite's expected sites again, the expected stores of the fixtures that commit no site and of the history of versions, and the crate's README, README.crate.md, from README.md, then builds the release binary.
+  build: builds the pages' script from script/ into assets/gherkin-glass.js, minified, with the licences of the packages it holds in assets/THIRD-PARTY-LICENSES.txt, writes the fixtures' and the example suite's expected sites again, with the pages the script draws from each, the expected stores of the fixtures that commit no site and of the history of versions, and the crate's README, README.crate.md, from README.md, then builds the release binary.
   check: runs every check a pull request runs: formatting, lints, the tests on both Rust versions, the documentation, the dependencies with cargo deny, the package, the script check and the browser check.
-  check-script: type-checks and tests the script, and checks that assets/gherkin-glass.js is what it compiles to and assets/THIRD-PARTY-LICENSES.txt the licences of what it holds.
+  check-script: type-checks and tests the script, and checks that assets/gherkin-glass.js is what it compiles to, assets/THIRD-PARTY-LICENSES.txt the licences of what it holds, and the pages it draws from every expected site those committed beside it.
   check-browser: builds ghg, installs the browser, and checks every fixture's site and the example suite's, alone and with the README's front page, in it: accessibility, the keyboard, the width of a narrow window, pages opened from disk, the folder tree on a narrow window, the dialog of a keyword's note, markup in feature files shown as text by the folder tree and search, the reload of ghg serve --watch, and the pages a shell draws as it is navigated.
   comment-ratio [path ...]: counts the comment lines and the code lines of the given Rust and TypeScript files, or of every one git tracks, with the total last.";
 
@@ -139,6 +141,7 @@ fn build() -> Result<(), String> {
     let version = manifest_value("version")?;
     put_back_placeholder(&root().join("tests/fixtures"), &version)?;
     put_back_placeholder(&root().join("project-site/expected"), &version)?;
+    write_drawn_pages()?;
     // The README crates.io and docs.rs show, through bash, which Windows has with Git Bash.
     run(Command::new("bash")
         .args([
@@ -239,7 +242,7 @@ fn check_script() -> Result<(), String> {
             ));
         }
     }
-    Ok(())
+    check_drawn_pages()
 }
 
 fn check_browser() -> Result<(), String> {
