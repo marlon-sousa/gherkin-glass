@@ -30,6 +30,7 @@ const fixtures = resolve("tests/fixtures");
 // names another, and its arguments, to which the check adds --output. The
 // builds that name `into` add to the site of the build before them.
 const builds = [
+  { folder: "anchor-map", args: ["--input", "features", "--title", "Library"] },
   { folder: "anchors", args: ["--input", "."] },
   { folder: "constructs", args: ["--input", "."] },
   { folder: "doc-strings", args: ["--input", "."] },

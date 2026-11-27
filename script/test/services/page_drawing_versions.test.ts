@@ -1,4 +1,4 @@
-// The service of src/services/page_drawing.ts, drawing a version's feature page with its lists in other versions, with the store in memory and the real adapters in a document.
+// The service of src/services/page_drawing.ts, drawing the pages of a version, with the store in memory and the real adapters in a document.
 
 import assert from "node:assert/strict";
 import { test } from "node:test";
@@ -16,7 +16,7 @@ test("a version's feature page has its lists in other versions, which open and c
   const document = emptyDocument();
   const make = new ElementBuilder(document);
   const canvas = DomCanvas.of(make)!;
-  const versioned = { ...refundsDescriptor, version: "v1.0.0" };
+  const versioned = { ...refundsDescriptor, version: "v1.0.0", version_kind: "release" as const };
   const list = { format: 1, development: ["main"], releases: ["v1.0.0"], pre_releases: [], precedence: [["v1.0.0"]] };
   const index = { format: 1, pages: [{ page: "billing/refunds", objects: [{ object: "refunds", versions: ["main", "v1.0.0"] }] }] };
   const draw = pageDrawing({ store: new MemoryStore(versioned, { refunds: refundsObject }, list, index), words, pages: new DomPages(make, canvas, words), canvas });
@@ -40,8 +40,19 @@ test("a version's feature page whose list of versions cannot be had has no lists
   const document = emptyDocument();
   const make = new ElementBuilder(document);
   const canvas = DomCanvas.of(make)!;
-  const draw = pageDrawing({ store: new MemoryStore({ ...refundsDescriptor, version: "v1.0.0" }, { refunds: refundsObject }), words, pages: new DomPages(make, canvas, words), canvas });
+  const draw = pageDrawing({ store: new MemoryStore({ ...refundsDescriptor, version: "v1.0.0", version_kind: "release" as const }, { refunds: refundsObject }), words, pages: new DomPages(make, canvas, words), canvas });
   (await draw({ kind: "feature", page: "billing/refunds" }))();
   assert.equal(document.querySelector("main h1")!.textContent, "Feature: Refunds & <returns>");
   assert.equal(document.querySelector(".ghg-other-versions"), null);
+});
+
+// Rule 269: the page of search results of a version ends its title with the version once, whatever words are searched for.
+test("a version's page of search results names the version once in its title", async () => {
+  const document = emptyDocument();
+  const make = new ElementBuilder(document);
+  const canvas = DomCanvas.of(make)!;
+  const draw = pageDrawing({ store: new MemoryStore({ ...refundsDescriptor, version: "v1.0.0", version_kind: "release" as const }, { refunds: refundsObject }), words, pages: new DomPages(make, canvas, words), canvas });
+  const titled = async (searched: string): Promise<string> => (await draw({ kind: "search", words: searched }))().title;
+  assert.equal(await titled(""), `Search results, ${refundsDescriptor.title}, v1.0.0`);
+  assert.equal(await titled("cash"), `Results for "cash", ${refundsDescriptor.title}, v1.0.0`);
 });

@@ -181,6 +181,7 @@ fn parsed(input: &Path, file: FileToParse, failing: bool) -> ParsedFile {
             PathBuf::from(name),
             feature,
             "en".into(),
+            Vec::new(),
             BTreeMap::new(),
         ))
     };

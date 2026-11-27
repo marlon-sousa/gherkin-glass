@@ -19,7 +19,13 @@ fn error(path: &str, kind: InputErrorKind) -> InputError {
 fn feature(path: &str) -> ParsedFeature {
     let feature =
         Feature::parse(format!("Feature: {path}\n"), GherkinEnv::default()).expect("a feature");
-    ParsedFeature::new(path.into(), feature, "en".into(), BTreeMap::new())
+    ParsedFeature::new(
+        path.into(),
+        feature,
+        "en".into(),
+        Vec::new(),
+        BTreeMap::new(),
+    )
 }
 
 /// A tree of `in` with `a.feature`, `b.feature` and `sub/c.feature` allowed, `notes.md` not

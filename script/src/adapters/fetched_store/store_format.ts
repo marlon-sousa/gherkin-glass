@@ -100,6 +100,7 @@ export const readDescriptor: Reader<Descriptor> = object<Descriptor>({
   format,
   ghg: text,
   version: nullable(text),
+  version_kind: nullable(oneOf("development", "release", "pre-release")),
   preview: nullable(text),
   title: text,
   only: truth,

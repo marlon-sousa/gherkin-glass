@@ -2,7 +2,7 @@
 <html lang="en" data-ghg-descriptor="versions/v1.0.0.json"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Feature: Transfer money, transfer.feature</title>
+<title>Feature: Transfer money, transfer.feature, v1.0.0</title>
 <meta name="description" content="The feature files of Suite, v1.0.0, shown as pages.">
 <script>try{var t=localStorage.getItem("gherkin-glass:theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}</script>
 <style>
@@ -76,7 +76,7 @@
 <div class="ghg-layout">
 <nav id="ghg_tree" class="ghg-tree" aria-label="Folder tree"><ul role="tree" class="ghg-treeview" aria-label="Folder tree"><li role="none"><a role="treeitem" href="#" tabindex="-1">Suite</a></li><li role="none"><a role="treeitem" href="#balance" tabindex="-1" aria-owns="ghg_tree_1" aria-expanded="false"><span class="ghg-marker" aria-hidden="true"></span>Feature: <bdi lang="en">Check the balance</bdi></a><ul role="group" id="ghg_tree_1" aria-label="Feature: Check the balance" hidden=""><li role="none"><a role="treeitem" href="#balance#read-the-balance" tabindex="-1">Scenario: <bdi lang="en">Read the balance</bdi></a></li></ul></li><li role="none"><a role="treeitem" href="#transfer" tabindex="0" aria-current="page" aria-owns="ghg_tree_3" aria-expanded="true"><span class="ghg-marker" aria-hidden="true"></span>Feature: <bdi lang="en">Transfer money</bdi></a><ul role="group" id="ghg_tree_3" aria-label="Feature: Transfer money"><li role="none"><a role="treeitem" href="#transfer#transfer-to-another-account" tabindex="-1">Scenario: <bdi lang="en">Transfer to another account</bdi></a></li></ul></li><li role="none"><a role="treeitem" href="#withdraw" tabindex="-1" aria-owns="ghg_tree_5" aria-expanded="false"><span class="ghg-marker" aria-hidden="true"></span>Feature: <bdi lang="en">Withdraw cash</bdi></a><ul role="group" id="ghg_tree_5" aria-label="Feature: Withdraw cash" hidden=""><li role="none"><a role="treeitem" href="#withdraw#withdraw-from-savings" tabindex="-1">Scenario: <bdi lang="en">Withdraw from savings</bdi></a></li></ul></li></ul></nav>
 <div class="ghg-page">
-<nav class="ghg-breadcrumb" aria-label="Breadcrumb"><ol><li><a href="#">Suite</a></li><li><a href="#transfer" aria-current="page">Feature: <bdi>Transfer money</bdi></a></li></ol></nav>
+<nav class="ghg-breadcrumb" aria-label="Breadcrumb"><ol><li><a href="../index.html">Versions</a></li><li><a href="#">v1.0.0</a></li><li><a href="#transfer" aria-current="page">Feature: <bdi>Transfer money</bdi></a></li></ol></nav>
 <form class="ghg-search" role="search" data-shown="50" data-loading="Loading search." data-failed="Search could not be loaded." data-none="No results." data-count="Results: {count}." data-count-limited="Results: {count}. The first 50 are listed." data-no-name="no name" data-feature="{name}, feature" data-rule="{name}, rule in {feature}" data-scenario="{name}, scenario in {feature}" data-scenario-in-rule="{name}, scenario in {rule}, {feature}" data-scenario-outline="{name}, scenario outline in {feature}" data-scenario-outline-in-rule="{name}, scenario outline in {rule}, {feature}" data-background="{name}, background in {feature}" data-background-in-rule="{name}, background in {rule}, {feature}" data-examples="{name}, examples in {outline}, {feature}" data-examples-in-rule="{name}, examples in {outline}, {rule}, {feature}" data-numbered-examples="Examples {place}" data-all-results="All results for &quot;{words}&quot;">
 <label>Search features, rules and scenarios <input type="search" class="ghg-search-field" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="ghg_search_results" autocomplete="off" spellcheck="false" enterkeyhint="search"></label>
 <a class="ghg-search-all" href="#search" hidden=""></a>
@@ -218,8 +218,9 @@ tag-no-scenario = None of its scenarios carries the tag.
 tag-through-examples = { $scenario }, through its examples
 tag-through-rule = { $scenario }, through its rule
 tag-through-feature = { $scenario }, through its feature
-## The versions page, at the root of a versioned site. $name is a version's
-## name, as given, and $site the site's title.
+## The versions page, at the root of a versioned site, whose title is the
+## first link of the breadcrumb of every page of a version. $name is a
+## version's name, as given, and $site the site's title.
 
 versions-title = Versions
 versions-page-title = Versions, { $site }
@@ -227,6 +228,12 @@ versions-development = Development versions
 versions-releases = Releases
 versions-pre-releases = Pre-releases
 versions-development-version = { $name }, a development version
+versions-pre-release-version = { $name }, a pre-release
+
+## The end of the title of every page of a version, after the page's own
+## $title: the $version, worded as the two messages above word it.
+
+version-page-title = { $title }, { $version }
 
 ## A block's heading on a feature's page: its kind alone, or its kind and
 ## its $name. $kind is one of feature, background, rule, scenario,

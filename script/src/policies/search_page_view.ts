@@ -1,23 +1,25 @@
 // Policy: the view of the page of search results a shell draws, its words for the script that lists the results, and its title.
 
+import { versionedTitle } from "./page_frame.ts";
 import { searchedHeading } from "./result_groups.ts";
 import type { BlockKind } from "../ports/store.ts";
 import type { KindHeadings, PageWords } from "../ports/search_page.ts";
 import type { Words } from "../ports/words.ts";
 
 export interface SearchPageView {
-  /** The page's title, which names the words searched for when there are any. */
+  /** The page's title, which names the words searched for when there are any, without the version, which the page's frame adds. */
   readonly title: string;
   /** The `h1` and the breadcrumb's words, until the results are listed. */
   readonly heading: string;
   readonly words: PageWords;
 }
 
-/** The page of search results for `searched`, the words of its address, in the site called `site`. */
-export function searchPageView(words: Words, site: string, searched: string): SearchPageView {
+/** The page of search results for `searched`, the words of its address, in the site called `site`, of the version worded `version`, if any. */
+export function searchPageView(words: Words, site: string, searched: string, version: string | null = null): SearchPageView {
+  const titleFor = words.text("search-page-title-for", { words: "{words}", site });
   const pageWords: PageWords = {
     heading: words.text("search-page-heading-for", { words: "{words}" }),
-    title: words.text("search-page-title-for", { words: "{words}", site }),
+    title: versionedTitle(words, version, titleFor),
     loading: words.text("search-loading"),
     failed: words.text("search-failed"),
     none: words.text("search-none"),
@@ -31,7 +33,7 @@ export function searchPageView(words: Words, site: string, searched: string): Se
   };
   const text = searched.trim();
   return {
-    title: text === "" ? words.text("search-page-title", { site }) : searchedHeading(pageWords, text).title,
+    title: text === "" ? words.text("search-page-title", { site }) : searchedHeading({ ...pageWords, title: titleFor }, text).title,
     heading: words.text("search-page-heading"),
     words: pageWords,
   };

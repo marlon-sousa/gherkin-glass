@@ -107,6 +107,7 @@ impl Command {
         let written = (!self.removes).then(|| WrittenTarget {
             store: self.rendered(),
             shell: file(&shell_path(&self.target)),
+            anchor_map: file(&anchor_map_path(&self.target)),
             ghg: GHG_VERSION.to_string(),
         });
         let change = StoreChange {

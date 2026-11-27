@@ -1,15 +1,17 @@
-//! Policy: the files of a build's target, its store, its shell, with the home page in its `main` and its front page from the template, and the shared assets, rendered from the site's store, and the plan by which they are written into the output folder, with the versions page beside a version.
+//! Policy: the files of a build's target, its store, its shell, with the home page in its `main` and its front page from the template, its map of anchors, and the shared assets, rendered from the site's store, and the plan by which they are written into the output folder, with the versions page beside a version.
 
 use std::collections::BTreeSet;
+use std::sync::Arc;
 
 use crate::entities::{
     BuildFolder, BuildTarget, Destination, FilePath, FrontPageTemplate, PageFrame, Settings,
-    SiteFile, SiteStore, StoreFiles, StorePlan, VersionsPageRecord,
+    SiteAddress, SiteFile, SiteStore, StoreFiles, StorePlan, VersionsPageRecord,
 };
 use crate::errors::FrontPageError;
 use crate::policies::rendering::{
-    DescriptorSettings, FolderBefore, GHG_VERSION, StoreChange, WrittenTarget, plan_store,
-    render_shell, render_store, shared_assets, versions_once_changed, versions_page_write,
+    DescriptorSettings, FolderBefore, GHG_VERSION, StoreChange, WrittenTarget, anchor_map_json,
+    anchor_map_path, plan_store, render_shell, render_store, shared_assets, versions_once_changed,
+    versions_page_write,
 };
 use crate::policies::{build_home_page, build_shell_page, page_frame, site_title};
 
@@ -19,6 +21,7 @@ pub(crate) struct TargetFiles {
     target: BuildTarget,
     store: StoreFiles,
     shell: SiteFile,
+    anchor_map: SiteFile,
     assets: Vec<SiteFile>,
     frame: PageFrame,
 }
@@ -48,10 +51,15 @@ impl TargetFiles {
         let home = build_home_page(store, options);
         let shell_page = build_shell_page(&target, options, GHG_VERSION);
         let shell = render_shell(&target, &shell_page, &frame, &home, template)?;
+        let anchor_map = SiteFile {
+            address: SiteAddress::at_root(&anchor_map_path(&target)),
+            contents: Arc::from(anchor_map_json(store)),
+        };
         Ok(TargetFiles {
             target,
             store: store_files,
             shell,
+            anchor_map,
             assets: shared_assets(),
             frame,
         })
@@ -63,13 +71,13 @@ impl TargetFiles {
         self.store.large_site_data
     }
 
-    /// Every file a site in memory is served from: the objects, the descriptor, the shell and the
-    /// assets.
+    /// Every file a site in memory is served from: the objects, the descriptor, the shell, the map
+    /// of anchors and the assets.
     pub(crate) fn in_memory(&self) -> Vec<SiteFile> {
         self.store
             .objects
             .iter()
-            .chain([&self.store.descriptor, &self.shell])
+            .chain([&self.store.descriptor, &self.shell, &self.anchor_map])
             .chain(&self.assets)
             .cloned()
             .collect()
@@ -107,6 +115,7 @@ impl TargetFiles {
             written: Some(WrittenTarget {
                 store: self.store,
                 shell: self.shell,
+                anchor_map: self.anchor_map,
                 ghg: GHG_VERSION.to_string(),
             }),
             versions_page,

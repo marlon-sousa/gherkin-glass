@@ -15,6 +15,9 @@ pub(crate) struct ParsedFeature {
     /// As Gherkin names it, such as `en` or `pt`, given by the file's
     /// `# language:` line, and `en` without one.
     pub(crate) language: String,
+    /// The line of each row of every examples block's table but its header, counted from 1,
+    /// outline by outline in file order.
+    pub(crate) row_lines: Vec<usize>,
     /// Keyed by the byte offset at which the doc string's step starts.
     media_types: BTreeMap<usize, String>,
 }
@@ -24,12 +27,14 @@ impl ParsedFeature {
         path: PathBuf,
         feature: Feature,
         language: String,
+        row_lines: Vec<usize>,
         media_types: BTreeMap<usize, String>,
     ) -> Self {
         ParsedFeature {
             path,
             feature,
             language,
+            row_lines,
             media_types,
         }
     }

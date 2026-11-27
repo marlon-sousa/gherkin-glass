@@ -2,6 +2,7 @@
   "format": 1,
   "ghg": "{version}",
   "version": "main",
+  "version_kind": "development",
   "preview": null,
   "title": "Suite",
   "only": false,
@@ -20,6 +21,7 @@
         1,
         2
       ],
+      "row_lines": [],
       "source": null
     },
     {
@@ -30,6 +32,7 @@
         1,
         2
       ],
+      "row_lines": [],
       "source": null
     },
     {
@@ -40,6 +43,7 @@
         1,
         2
       ],
+      "row_lines": [],
       "source": null
     }
   ],

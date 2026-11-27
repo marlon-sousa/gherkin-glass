@@ -12,7 +12,8 @@ use crate::entities::{
     SiteAddress, SiteFile, StorePlan, VersionName, VersionsPageRecord,
 };
 use crate::policies::rendering::{
-    PAGES_INDEX, ROOT_PAGE, VERSIONS_LIST, asset_paths, descriptor_path, object_path, shell_path,
+    PAGES_INDEX, ROOT_PAGE, VERSIONS_LIST, anchor_map_path, asset_paths, descriptor_path,
+    object_path, shell_path,
 };
 use index_data::{pages_json, versions_json};
 use removals::removals;
@@ -21,8 +22,8 @@ pub(crate) use store_change::{
 };
 
 /// How to make `change` to the folder `before` describes. A build writes the objects the store
-/// does not hold yet, this ghg's assets when the folder lacks them, the shell and the
-/// descriptor, then, with the versions page, the list of versions and the index of pages, from
+/// does not hold yet, this ghg's assets when the folder lacks them, the shell, the map of
+/// anchors and the descriptor, then, with the versions page, the list of versions and the index of pages, from
 /// every descriptor once the change is made. Whatever the marker lists that no descriptor, the
 /// list of versions and the files made from them account for once the change is made is
 /// removed after them, each descriptor first, then the folders of the versions and previews
@@ -48,7 +49,7 @@ pub(crate) fn plan_store(before: &FolderBefore<'_>, change: StoreChange) -> Stor
                     features: written.store.features,
                 },
             );
-            target_files = vec![written.shell, written.store.descriptor];
+            target_files = vec![written.shell, written.anchor_map, written.store.descriptor];
         }
         None => {
             descriptors.remove(&change.target);
@@ -137,17 +138,22 @@ fn accounted(
         .collect()
 }
 
-/// The descriptor of `target`, its shell, the objects it names and its ghg's assets.
+/// The descriptor of `target`, its shell, its map of anchors, the objects it names and its ghg's
+/// assets.
 fn files_of_descriptor(target: &BuildTarget, descriptor: &PublishedDescriptor) -> Vec<FilePath> {
     let objects = descriptor
         .features
         .iter()
         .map(|feature| object_path(&feature.object));
-    [descriptor_path(target), shell_path(target)]
-        .into_iter()
-        .chain(objects)
-        .chain(asset_paths(&descriptor.ghg))
-        .collect()
+    [
+        descriptor_path(target),
+        shell_path(target),
+        anchor_map_path(target),
+    ]
+    .into_iter()
+    .chain(objects)
+    .chain(asset_paths(&descriptor.ghg))
+    .collect()
 }
 
 /// The list of versions, the index of pages, the versions page and the assets of the ghg that

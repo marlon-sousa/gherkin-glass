@@ -1,4 +1,4 @@
-//! Policy: the collecting stage, reading the input: which files are read, those `--only` lists among them, in what language, what is corrected in what the parser gives, what stops a build, and which changes under `--watch` call for a rebuild.
+//! Policy: the collecting stage, reading the input: which files are read, those `--only` lists among them, in what language, what is corrected in what the parser gives, the lines of examples rows it does not give, what stops a build, and which changes under `--watch` call for a rebuild.
 
 mod doc_string_correction;
 mod file_language;
@@ -6,6 +6,7 @@ mod file_selection;
 mod listed_selection;
 mod page_collisions;
 mod rebuild_choice;
+mod row_lines;
 mod step_keyword_correction;
 mod unnamed_blocks;
 
@@ -15,5 +16,6 @@ pub(crate) use file_selection::{FileSelection, InvalidRule, parse_rules};
 pub(crate) use listed_selection::ListedSelection;
 pub(crate) use page_collisions::page_collisions;
 pub(crate) use rebuild_choice::Read;
+pub(crate) use row_lines::examples_row_lines;
 pub(crate) use step_keyword_correction::correct_step_keywords;
 pub(crate) use unnamed_blocks::unnamed_blocks;

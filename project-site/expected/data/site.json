@@ -2,6 +2,7 @@
   "format": 1,
   "ghg": "{version}",
   "version": null,
+  "version_kind": null,
   "preview": null,
   "title": "gherkin-glass examples",
   "only": false,
@@ -22,6 +23,7 @@
         17,
         28
       ],
+      "row_lines": [],
       "source": null
     },
     {
@@ -35,6 +37,7 @@
         18,
         24
       ],
+      "row_lines": [],
       "source": null
     },
     {
@@ -47,6 +50,10 @@
         9,
         14,
         19
+      ],
+      "row_lines": [
+        21,
+        22
       ],
       "source": null
     },
@@ -69,6 +76,11 @@
         64,
         67
       ],
+      "row_lines": [
+        37,
+        38,
+        43
+      ],
       "source": null
     },
     {
@@ -81,6 +93,10 @@
         11,
         23,
         28
+      ],
+      "row_lines": [
+        30,
+        31
       ],
       "source": null
     },
@@ -96,6 +112,11 @@
         21,
         26,
         31
+      ],
+      "row_lines": [
+        28,
+        29,
+        33
       ],
       "source": null
     }

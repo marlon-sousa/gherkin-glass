@@ -8,7 +8,7 @@ import { searchPageView } from "../policies/search_page_view.ts";
 import { sentencesView } from "../policies/sentences_view.ts";
 import { tagIndexView, tagPageView } from "../policies/tag_views.ts";
 import { plain } from "../policies/heading_words.ts";
-import { type Crumb, folderCrumbs, frameOf, homeCrumb, missingFrame, type PageFrame } from "../policies/page_frame.ts";
+import { type Crumb, folderCrumbs, frameOf, homeCrumb, missingFrame, type PageFrame, versionedFrame, versionWords } from "../policies/page_frame.ts";
 import type { Canvas } from "../ports/canvas.ts";
 import type { Pages } from "../ports/pages.ts";
 import type { Descriptor, Store, StoreObject } from "../ports/store.ts";
@@ -36,7 +36,7 @@ export function pageDrawing(parts: DrawingParts): PageDrawing {
       if (descriptor.only) {
         parts.pages.onlyNote(parts.words.text("only-note"));
       }
-      return frame;
+      return versionedFrame(parts.words, versionWords(parts.words, descriptor), frame);
     };
   };
 }
@@ -143,7 +143,7 @@ async function sentences(parts: DrawingParts, descriptor: Descriptor): Promise<(
 }
 
 function search(parts: DrawingParts, descriptor: Descriptor, words: string): () => PageFrame {
-  const view = searchPageView(parts.words, descriptor.title, words);
+  const view = searchPageView(parts.words, descriptor.title, words, versionWords(parts.words, descriptor));
   return () => {
     parts.pages.search(view);
     // The breadcrumb's own link reads the same whatever the words searched for.

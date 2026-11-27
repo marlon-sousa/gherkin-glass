@@ -2,8 +2,8 @@
 
 use super::*;
 
-// Rules 38, 39 and 252: into an empty folder, the objects, the assets, the shell and the
-// descriptor, in that order, the marker listing them before and after.
+// Rules 38, 39, 252 and 263: into an empty folder, the objects, the assets, the shell, the map of
+// anchors and the descriptor, in that order, the marker listing them before and after.
 #[test]
 fn a_site_into_an_empty_folder_writes_its_store_its_assets_and_its_shell() {
     let change = StoreChange {
@@ -22,6 +22,7 @@ fn a_site_into_an_empty_folder_writes_its_store_its_assets_and_its_shell() {
             "assets/2.0.0/gherkin-glass.svg",
             "assets/2.0.0/THIRD-PARTY-LICENSES.txt",
             "index.html",
+            "assets/anchors.json",
             "data/site.json",
         ]
     );
@@ -47,6 +48,7 @@ fn a_version_writes_only_what_the_store_lacks_then_the_files_of_the_versions() {
         [
             "data/objects/new.json",
             "v2.0.0/index.html",
+            "v2.0.0/assets/anchors.json",
             "data/versions/v2.0.0.json",
             "data/versions.json",
             "data/pages.json",

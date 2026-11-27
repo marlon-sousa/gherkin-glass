@@ -8,13 +8,14 @@ use crate::entities::{
     SiteStore, TagLink, VersionName,
 };
 use crate::policies::rendering::{GHG_VERSION, STORE_FORMAT, json_bytes};
-use crate::policies::site_title;
+use crate::policies::{site_title, version_kind};
 
 #[derive(Serialize)]
 struct DescriptorData<'a> {
     format: u32,
     ghg: &'static str,
     version: Option<&'a str>,
+    version_kind: Option<&'static str>,
     preview: Option<&'a str>,
     title: String,
     only: bool,
@@ -40,6 +41,7 @@ struct FeatureData<'a> {
     page: &'a str,
     object: &'a str,
     lines: &'a [usize],
+    row_lines: &'a [usize],
     source: Option<&'a str>,
 }
 
@@ -109,6 +111,10 @@ pub(super) fn descriptor_json(
         format: STORE_FORMAT,
         ghg: GHG_VERSION,
         version: settings.target.version().map(VersionName::as_str),
+        version_kind: settings
+            .target
+            .version()
+            .map(|name| version_kind(name).as_str()),
         preview: settings.target.preview().map(VersionName::as_str),
         title: site_title(options),
         only: options.scope == SiteScope::OnlyListed,
@@ -136,6 +142,7 @@ fn feature_data<'a>(feature: &'a DescriptorFeature, object: &'a str) -> FeatureD
         page: &feature.page,
         object,
         lines: &feature.lines,
+        row_lines: &feature.row_lines,
         source: feature.source.as_deref(),
     }
 }

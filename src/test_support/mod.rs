@@ -22,6 +22,7 @@ use regex_automata::meta::Regex;
 use crate::adapters::{GherkinCrate, InputFolderReader};
 use crate::entities::{EntryKind, FolderEntry, InputTree, ParsedFeature, TagLink, Unnamed};
 use crate::errors::InputErrors;
+use crate::policies::examples_row_lines;
 use crate::ports::{FeatureParser, InputFolders};
 use crate::services::{GherkinParser, GherkinParserApi, InputCollectorApi};
 
@@ -43,10 +44,12 @@ pub(crate) fn tag_link(pattern: &str, address: &str, text: &str) -> TagLink {
 /// The feature of `text`, at `path` below the input folder, written in English.
 pub(crate) fn parsed_at(path: &str, text: &str) -> ParsedFeature {
     let feature = Feature::parse(text, GherkinEnv::default()).expect("parses");
+    let row_lines = examples_row_lines(&feature, text);
     ParsedFeature::new(
         PathBuf::from(path),
         feature,
         "en".to_string(),
+        row_lines,
         BTreeMap::new(),
     )
 }

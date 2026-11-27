@@ -169,6 +169,8 @@ One site can hold several versions of the same suite, so that readers read the v
 
 Each version is written into a folder of its own in the output folder, such as `site/v1.2.0/`, and the output folder's `index.html` lists every version: development versions, releases newest first, and pre-releases, listed collapsed. The versions share the site's data, in `site/data/`, so that a feature file the same in several versions is stored once, and each feature's page, and each of its rules, scenarios and backgrounds, lists the other versions in which it changed, is missing or is the same. Adding a version again replaces it, unless `replace_existing_version` is `false`. `ghg version remove v1.2.0` removes a version, and the data only it used. A site without versions, built with `ghg build`, and versions cannot share an output folder.
 
+Every page of a version names it, in its title and in its breadcrumb, whose first link leads to the versions page, and says when it is a development version, such as `main, a development version`, or a pre-release, such as `v2.0.0-rc.1, a pre-release`.
+
 ghg does not read git. To build several versions, check each one out into a folder of its own and run `ghg version add` once for each, into the same output folder. To rebuild a site of versions that gherkin-glass 1 built, which gherkin-glass 2 does not add to, do that for every tag, into a new output folder. With git, from the root of the repository:
 
 ```sh
@@ -182,6 +184,10 @@ ghg version add main --output "$site"
 ```
 
 Each version is built from its own `ghg.toml`, as it was at that tag. gherkin-glass 2 no longer has the key `version_name`, so a `ghg.toml` that sets it stops the run: give that tag's settings on the command line instead, with `--config` naming a file without the key.
+
+### Linking to a scenario from another program
+
+Every site, every version of one and every preview has a map of its anchors, `assets/anchors.json` in its own folder, such as `site/v1.2.0/assets/anchors.json`, so that another program, such as one that writes a report of which scenarios passed, links to a scenario without making its anchor itself. It is a list with an entry for each feature, rule, background, scenario, scenario outline and examples block, each with its file's path, its kind, its name, the line of its keyword, its page and its anchor, and, for an examples block, each row's line and anchor. No two entries of one file share a line, so a program finds a scenario by its file and its line alone, and links to it at `v1.2.0/#<page>#<anchor>`, with the page and the anchor percent-encoded, since a page's name may hold a space, `#`, `?` or `%`. Its form is promised, as the anchors are: a member is removed or changed only in a new major version.
 
 ### A site of only some feature files
 

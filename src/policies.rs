@@ -22,4 +22,4 @@ pub(crate) use rendering::*;
 pub(crate) use serving::*;
 pub(crate) use site::*;
 pub(crate) use site_title::site_title;
-pub(crate) use version_order::{order_versions, precedence_groups};
+pub(crate) use version_order::{order_versions, precedence_groups, version_kind};

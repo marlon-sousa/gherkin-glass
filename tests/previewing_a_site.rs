@@ -364,6 +364,11 @@ fn the_output_folder_is_checked_as_ghg_build_checks_it_unless_the_site_is_in_mem
     assert_eq!(status, Some(1));
     let serving = serve(&folder, &["--port", "0", "--watch"]);
     assert!(served_object(&serving.address, "withdraw").is_some());
+    // Rule 263: the map of anchors is served from memory too.
+    let map = get(&serving.address, "/assets/anchors.json");
+    assert_eq!(map.status, 200);
+    assert!(map.text().starts_with('['), "{}", map.text());
+    assert!(!folder.join("site/assets/anchors.json").exists());
     drop(serving);
     assert_eq!(
         read_to_string(folder.join("site/notes.txt")).expect("kept"),

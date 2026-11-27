@@ -66,25 +66,25 @@ fn an_object_is_named_by_its_bytes_and_shared() {
     );
 }
 
-// Rule 252: a site's and a preview's descriptor hold their front page and no version; a
-// version's the reverse.
+// Rules 252 and 268: a site's and a preview's descriptor hold their front page and no version; a
+// version's the reverse, with its kind.
 #[rstest]
 #[case::a_site(
     BuildTarget::Site,
     "data/site.json",
-    r#""version":null,"preview":null"#,
+    r#""version":null,"version_kind":null,"preview":null"#,
     r##""front_page":"# Home""##
 )]
 #[case::a_version(
     BuildTarget::Version(name("v1.0")),
     "data/versions/v1.0.json",
-    r#""version":"v1.0","preview":null"#,
+    r#""version":"v1.0","version_kind":"development","preview":null"#,
     r#""front_page":null"#
 )]
 #[case::a_preview(
     BuildTarget::Preview(name("pr-1")),
     "data/previews/pr-1.json",
-    r#""version":null,"preview":"pr-1""#,
+    r#""version":null,"version_kind":null,"preview":"pr-1""#,
     r##""front_page":"# Home""##
 )]
 fn a_descriptor_names_its_target_and_its_front_page(
@@ -116,7 +116,7 @@ fn a_descriptor_holds_the_build_s_settings() {
     assert_eq!(
         text(&files.descriptor),
         format!(
-            r##"{{"format":1,"ghg":"{GHG_VERSION}","version":null,"preview":null,"title":"Feature files","only":false,"start":{{"collapse_rules":false,"collapse_scenarios":false,"show_tree":true,"inline_backgrounds":true}},"features":[{{"path":"a.feature","page":"a","object":"{object}","lines":[2,3],"source":null}}],"tags":[{{"tag":"@t","page":"tags/t","link":null}}],"sentences":{{"given":["a"],"when":[],"then":[]}},"front_page":"# Home","settings":{{"title":null,"source_link":null,"tag_links":[],"accent_light":"#0b4f9c","accent_dark":"#8cc4ff","collapse_rules":false,"collapse_scenarios":false,"show_tree":true,"inline_backgrounds":true}}}}"##
+            r##"{{"format":1,"ghg":"{GHG_VERSION}","version":null,"version_kind":null,"preview":null,"title":"Feature files","only":false,"start":{{"collapse_rules":false,"collapse_scenarios":false,"show_tree":true,"inline_backgrounds":true}},"features":[{{"path":"a.feature","page":"a","object":"{object}","lines":[2,3],"row_lines":[],"source":null}}],"tags":[{{"tag":"@t","page":"tags/t","link":null}}],"sentences":{{"given":["a"],"when":[],"then":[]}},"front_page":"# Home","settings":{{"title":null,"source_link":null,"tag_links":[],"accent_light":"#0b4f9c","accent_dark":"#8cc4ff","collapse_rules":false,"collapse_scenarios":false,"show_tree":true,"inline_backgrounds":true}}}}"##
         )
     );
 }

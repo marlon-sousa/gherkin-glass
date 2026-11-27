@@ -2,6 +2,7 @@
   "format": 1,
   "ghg": "{version}",
   "version": null,
+  "version_kind": null,
   "preview": null,
   "title": "Feature files",
   "only": false,
@@ -27,6 +28,7 @@
         49,
         50
       ],
+      "row_lines": [],
       "source": null
     }
   ],
