@@ -110,6 +110,18 @@ fn a_file_that_cannot_be_written_is_reported_with_its_path() {
 }
 
 #[test]
+fn a_marker_that_cannot_be_written_is_reported_with_the_output_folder() {
+    let output = Arc::new(MemoryOutput {
+        fails: Some("ghg-site.json"),
+        ..MemoryOutput::default()
+    });
+    let Err(BuildError::Output(error)) = add(&into(&output), BuildTarget::Site, "a") else {
+        panic!("written");
+    };
+    assert_eq!(error.to_string(), "site: cannot be written: disk full");
+}
+
+#[test]
 fn an_output_folder_that_cannot_be_looked_into_is_reported_as_such() {
     let output = Arc::new(MemoryOutput {
         unreadable: true,

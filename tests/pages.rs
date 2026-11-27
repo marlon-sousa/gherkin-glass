@@ -13,6 +13,7 @@ use std::fs::{create_dir_all, read_to_string, remove_dir_all, write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 
+use rstest::rstest;
 use serde_json::Value;
 
 #[path = "support/site_files.rs"]
@@ -415,18 +416,25 @@ fn a_file_in_the_output_folder_s_place_is_left_as_it_is() {
     );
 }
 
+// Rule 38: a folder that cannot be marked is reported as the output folder,
+// and a folder that cannot be made for a file as that file's path.
 #[cfg(unix)]
-#[test]
-fn an_output_folder_that_cannot_be_written_stops_the_build() {
+#[rstest]
+#[case::the_marker(0o400, ": cannot be written: ")]
+#[case::a_folder_for_a_file(0o600, "/data/")]
+fn an_output_folder_that_cannot_be_written_stops_the_build(
+    #[case] marker_mode: u32,
+    #[case] after_output: &str,
+) {
     use std::fs::{Permissions, set_permissions};
     use std::os::unix::fs::PermissionsExt;
-    // An earlier build in a folder that cannot be written into cannot be
-    // emptied. Root writes anywhere, so there the build succeeds, and the
-    // service's own tests check a file that cannot be written.
-    let written = output("cannot-be-written");
+    // Root writes anywhere, so there the build succeeds, and the service's
+    // own tests check a marker and a file that cannot be written.
+    let written = output(&format!("cannot-be-written-{marker_mode:o}"));
     create_dir_all(&written).expect("made");
+    let marker = written.join("ghg-site.json");
     write(
-        written.join("ghg-site.json"),
+        &marker,
         format!(
             "{{\"format\": 1, \"ghg\": \"{}\", \"files\": [\"index.html\"]}}\n",
             env!("CARGO_PKG_VERSION")
@@ -434,6 +442,7 @@ fn an_output_folder_that_cannot_be_written_stops_the_build() {
     )
     .expect("written");
     write(written.join("index.html"), "an earlier page").expect("written");
+    set_permissions(&marker, Permissions::from_mode(marker_mode)).expect("set");
     set_permissions(&written, Permissions::from_mode(0o500)).expect("set");
     let given = written.to_str().expect("UTF-8");
     let result = build(&fixtures().join("pages"), &["--output", given]);
@@ -445,9 +454,10 @@ fn an_output_folder_that_cannot_be_written_stops_the_build() {
     assert_eq!(result.status.code(), Some(1));
     assert_eq!(report.lines().count(), 1, "{report}");
     assert!(
-        report.starts_with(&format!("{given}: cannot be written: ")),
+        report.starts_with(&format!("{given}{after_output}")),
         "{report}"
     );
+    assert!(report.contains(": cannot be written: "), "{report}");
 }
 
 // Rules 79 and 85: every link of the front page is an address within the

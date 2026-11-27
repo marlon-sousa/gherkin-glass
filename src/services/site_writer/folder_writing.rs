@@ -4,7 +4,7 @@ use std::collections::BTreeSet;
 use std::io::Error as IoError;
 use std::sync::Arc;
 
-use super::{SiteWriter, refusal, write_file, write_files};
+use super::{SiteWriter, refusal, write_files};
 use crate::entities::{
     BuildFolder, BuildTarget, FilePath, OutputMarker, SiteAddress, SiteFile, StorePlan,
 };
@@ -47,7 +47,9 @@ impl SiteWriter {
             address: SiteAddress::at_root(OutputMarker::FILE),
             contents: Arc::from(marker_json(files)),
         };
-        write_file(self.folder_files.as_ref(), folder.output(), target, &marker)
+        self.folder_files
+            .write(folder.output(), marker.address.as_str(), &marker.contents)
+            .map_err(|io| cannot_write(folder, target, &io))
     }
 }
 

@@ -174,21 +174,11 @@ fn write_files(
     target: &BuildTarget,
     files: &[SiteFile],
 ) -> Result<(), OutputError> {
-    files
-        .iter()
-        .try_for_each(|file| write_file(writer, output, target, file))
-}
-
-/// Writes `file` into `output` for the command on `target`.
-fn write_file(
-    writer: &dyn FileWriter,
-    output: &Path,
-    target: &BuildTarget,
-    file: &SiteFile,
-) -> Result<(), OutputError> {
-    writer
-        .write(output, file.address.as_str(), &file.contents)
-        .map_err(|io| file_not_written(output, target, file, &io))
+    files.iter().try_for_each(|file| {
+        writer
+            .write(output, file.address.as_str(), &file.contents)
+            .map_err(|io| file_not_written(output, target, file, &io))
+    })
 }
 
 /// What stops a command on `target` in `output`.
