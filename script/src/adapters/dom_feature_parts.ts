@@ -46,7 +46,7 @@ export function tableOf(make: ElementBuilder, table: TableView): HTMLTableElemen
   return make.make("table", { class: "ghg-table" }, head, body);
 }
 
-export function docStringOf(make: ElementBuilder, doc: DocString): HTMLElement {
+function docStringOf(make: ElementBuilder, doc: DocString): HTMLElement {
   if (doc.media_type === null) {
     return make.make("pre", { class: "ghg-doc-string" }, doc.content);
   }

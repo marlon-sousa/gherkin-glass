@@ -69,8 +69,6 @@ export interface PageContext {
   readonly words: Words;
   readonly start: StartStates;
   readonly tags: ReadonlyMap<string, TagEntry>;
-  /** Whether the page has the backgrounds' checkbox, which heads a scenario's own steps after its backgrounds. */
-  readonly hasBackgroundsOption: boolean;
 }
 
 /** A background a scenario starts with: its steps, and the words of its heading there. */
@@ -149,7 +147,7 @@ export function scenarioView(context: PageContext, scenario: Block, level: numbe
     tags: tagViews(context, scenario.tags),
     description: descriptionLines(scenario.description),
     backgrounds: inScenario,
-    stepsHeading: context.hasBackgroundsOption && inScenario.length > 0 && steps.length > 0 ? { level: level + 1, text: context.words.text("from-scenario") } : null,
+    stepsHeading: inScenario.length > 0 && steps.length > 0 ? { level: level + 1, text: context.words.text("from-scenario") } : null,
     steps,
     examples: examples(scenario, level + 1),
   };

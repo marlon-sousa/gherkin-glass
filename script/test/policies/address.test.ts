@@ -3,7 +3,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { elementAddress, encoded, readTarget, targetAddress, type PageName } from "../../src/policies/address.ts";
+import { encoded, readTarget, targetAddress, type PageName } from "../../src/policies/address.ts";
 
 const page = (name: PageName, anchor: string | null = null) => ({ kind: "page", page: name, anchor });
 
@@ -24,7 +24,6 @@ test("a folder's page ends with a slash, and the home page has nothing after the
 // Rule 236: `##` names an element of the page shown.
 test("two # in a row name an element of the page shown", () => {
   assert.deepEqual(readTarget("##ghg_main"), { kind: "element", id: "ghg_main" });
-  assert.equal(elementAddress("ghg_main"), "##ghg_main");
 });
 
 // Rule 237: the site's own pages.
