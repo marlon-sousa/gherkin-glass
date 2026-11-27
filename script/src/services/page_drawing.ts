@@ -3,6 +3,7 @@
 import { type PageName, targetAddress } from "../policies/address.ts";
 import { featureView } from "../policies/feature_view.ts";
 import { folderView } from "../policies/folder_view.ts";
+import { type PageInVersions, otherObjects, pageInVersions } from "../policies/other_versions.ts";
 import { searchPageView } from "../policies/search_page_view.ts";
 import { sentencesView } from "../policies/sentences_view.ts";
 import { tagIndexView, tagPageView } from "../policies/tag_views.ts";
@@ -10,7 +11,7 @@ import { plain } from "../policies/heading_words.ts";
 import { type Crumb, folderCrumbs, frameOf, homeCrumb, missingFrame, type PageFrame } from "../policies/page_frame.ts";
 import type { Canvas } from "../ports/canvas.ts";
 import type { Pages } from "../ports/pages.ts";
-import type { Descriptor, Store } from "../ports/store.ts";
+import type { Descriptor, Store, StoreObject } from "../ports/store.ts";
 import type { Words } from "../ports/words.ts";
 import { loadedFeatures } from "./loaded_features.ts";
 import type { PageDrawing } from "./navigation.ts";
@@ -84,11 +85,29 @@ async function feature(parts: DrawingParts, descriptor: Descriptor, page: string
   if (entry === undefined) {
     return missing(parts, descriptor);
   }
-  const view = featureView(parts.words, descriptor, entry, await parts.store.object(entry.object));
+  const object = await parts.store.object(entry.object);
+  const view = featureView(parts.words, descriptor, entry, object);
+  const versions = await inVersions(parts, descriptor, entry.page, { name: entry.object, object });
   return () => {
-    parts.pages.feature(view);
+    parts.pages.feature(view, versions);
     return frameOf(descriptor.title, view.title, view.lang, folderCrumbs(entry.page), { kind: "feature", page }, view.heading);
   };
+}
+
+/** The page's lists in other versions; null on a site without versions, or when what they need cannot be had. */
+async function inVersions(parts: DrawingParts, descriptor: Descriptor, page: string, shown: { readonly name: string; readonly object: StoreObject }): Promise<PageInVersions | null> {
+  // Only a version and a preview are drawn on a site that may have versions.
+  if (descriptor.version === null && descriptor.preview === null) {
+    return null;
+  }
+  try {
+    const [list, index] = await Promise.all([parts.store.versions(), parts.store.pages()]);
+    const names = otherObjects(index, page, shown.name);
+    const others = new Map(await Promise.all(names.map(async (name) => [name, await parts.store.object(name)] as const)));
+    return pageInVersions(parts.words, descriptor, list, index, page, shown, others);
+  } catch {
+    return null;
+  }
 }
 
 /** The crumb of the index of tags, under the home page's. */
