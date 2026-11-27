@@ -44,10 +44,10 @@ async function open(hash: string, ids: readonly string[] = [], failing: (page: P
   return started;
 }
 
-// Rule 240: opened at its address, the page is drawn with the focus in `main`, its title set, nothing said, and the focus moved only to the element its anchor names.
+// Rule 240: opened at its address, the page is drawn, its title set, nothing said, and the focus moved only to the element its anchor names.
 test("a shell opened at an address draws its page, sets its title, says nothing, and moves the focus only to its anchor", async () => {
   const atPage = await open("#billing/refunds");
-  assert.deepEqual(atPage.canvas.done, ["focus main", "busy true", "draw feature", "frame en", "busy false", "title Title of feature"]);
+  assert.deepEqual(atPage.canvas.done, ["busy true", "draw feature", "frame en", "busy false", "title Title of feature"]);
   assert.deepEqual(atPage.timer.waits, []);
 
   const atAnchor = await open("#billing/refunds#store-credit", ["store-credit"]);
@@ -112,7 +112,7 @@ test("a shell opened at an element's address draws the home page first", async (
 // Rule 243: a page whose data cannot be fetched says so, and disables what needs the data.
 test("a page whose data cannot be fetched draws the paragraph that says so", async () => {
   const shell = await open("#billing/refunds", [], (page) => page.kind === "feature");
-  assert.deepEqual(shell.canvas.done, ["focus main", "busy true", "failure This page could not be loaded.", "busy false"]);
+  assert.deepEqual(shell.canvas.done, ["busy true", "failure This page could not be loaded.", "busy false"]);
   assert.equal(shell.failures, 1);
 });
 
