@@ -1,6 +1,6 @@
 // Adapter: the store port over the site's `data/` folder, fetched over HTTP, each object kept for the rest of the visit by its name.
 
-import { readDescriptor, readObject, readPages, readVersions } from "../policies/store_format.ts";
+import { readDescriptor, readObject, readPages, readVersions } from "./fetched_store/store_format.ts";
 import type { Descriptor, PageIndex, Store, StoreObject, VersionList } from "../ports/store.ts";
 
 export class FetchedStore implements Store {

@@ -1,9 +1,9 @@
-// Policy: what the script reads from each file of the site's data, checked member by member, in the store's format.
+// Adapter: the part of the fetched store that reads each file of the site's data, checked member by member, in the store's format.
 
-import type { Block, Descriptor, DocString, FeatureEntry, PageEntry, PageIndex, PageObject, Part, Run, Sentences, StartStates, Step, StoreObject, TagEntry, TagLink, VersionList } from "../ports/store.ts";
+import type { Block, Descriptor, DocString, FeatureEntry, PageEntry, PageIndex, PageObject, Part, Run, Sentences, StartStates, Step, StoreObject, TagEntry, TagLink, VersionList } from "../../ports/store.ts";
 
 /** The format of the store this script reads. */
-export const STORE_FORMAT = 1;
+const STORE_FORMAT = 1;
 
 /** Returns what `data` holds, or throws a `TypeError` when it is not that. */
 type Reader<T> = (data: unknown) => T;
