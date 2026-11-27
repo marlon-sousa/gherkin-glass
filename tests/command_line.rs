@@ -307,6 +307,15 @@ fn allow_unnamed_must_be_true_or_false() {
     );
 }
 
+#[test]
+fn version_name_a_key_of_gherkin_glass_1_is_unknown() {
+    let output = ghg(&fixture("version-name"), &["build"]);
+    assert_eq!(
+        report(output, 1),
+        "ghg.toml:1: ghg has no setting named version_name.\n"
+    );
+}
+
 // Anchors: rule 35.
 
 #[test]

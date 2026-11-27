@@ -86,6 +86,7 @@ const noSite = [
   "configuration/not-colour",
   "configuration/not-toml",
   "configuration/unnamed",
+  "configuration/version-name",
   "pages/expected",
   "pages/expected-collapsed",
   "backgrounds/expected",
