@@ -2,6 +2,39 @@
 
 Every release of gherkin-glass: the `ghg` command, the `cargo ghg` plugin and the sites they build. Each section is written before its release, from the changelog entries its commits carry, as [CONTRIBUTING.md](CONTRIBUTING.md), "Releases", describes, and becomes the notes of its [GitHub release](https://github.com/marlon-sousa/gherkin-glass/releases). Versions follow [Semantic Versioning](https://semver.org/).
 
+## [2.0.0-alpha.1]
+
+The first pre-release of gherkin-glass 2.0, a major version, released on GitHub only: a site now stores each feature file's content once, shared by every version and preview that has it, and the pages' script draws every page from that data, at addresses after a `#`, so that a page can say what changed in the site's other versions ([#173](https://github.com/marlon-sousa/gherkin-glass/issues/173)). The addresses of pages change, their anchors do not, and an output folder that gherkin-glass 1 built is left as it is: a versioned site is rebuilt by adding each of its versions again into a new output folder, as README.md, "Versions", shows.
+
+### Added
+
+- ghg version add <name> and ghg version remove <name> add and remove a version of a site, and ghg preview add <name> and ghg preview remove <name> a preview, which asks search engines not to index it; removing one that is not there says so and exits with status 0.
+- each feature's page of a version, and each of its rules, scenarios, scenario outlines and backgrounds, lists the site's other versions in which it changed, is missing or is the same, each newer one marked newer, with links to the same page or block there.
+- every page of a version names the version in its title and its breadcrumb, which starts with a link to the versions page, and says when it is a development version or a pre-release.
+- every site, version and preview has a map of its anchors, assets/anchors.json, whose form is promised, with the path, line, page and anchor of every block and the line and anchor of every examples row, so that other programs link to a scenario without making its anchor.
+- every site holds its data, data/: the content of each feature file stored once, as an object named by its SHA-256, and a descriptor for the site, each version and each preview, with the list of versions and the index of pages across versions beside them.
+- ghg build and ghg serve take --source-link, --allow-unnamed, --collapse-rules, --collapse-scenarios, --show-tree, --inline-backgrounds, --replace-existing-version, --accent-light, --accent-dark and --tag-link, each winning over its key in ghg.toml.
+
+### Changed
+
+- every page but the front page is drawn in the browser from the site's data, at an address after a #, such as v1.0.0/#billing/refunds#store-credit, the anchor unchanged after a second #; a site, each version and each preview is one index.html, and a page opened from disk shows only the front page.
+- a page is a name, not a file, so index.feature, names that differ only in their capitals and the tag @index no longer clash with another page; two files whose pages get the same name still stop the build.
+- the stylesheet, the script and the icon are shared by every site, version and preview in assets/<ghg>/ of the output folder, beside THIRD-PARTY-LICENSES.txt, the licences of the packages the script holds.
+- the output folder has one marker, ghg-site.json, which lists every file ghg wrote, for a site, versions and previews alike; an output folder that gherkin-glass 1 wrote is left as it is, and a new one must be built.
+- data cannot be the name of a version or a preview, since the site's data is there.
+- the versions page's title is "Versions", a comma and the site's title, such as "Versions, Itinera conformance", where it was "Versions".
+- --message-format json reports the preview's name, and the outcomes removed and nothing-to-remove; the note of a large site's data is large-site-data.
+
+### Fixed
+
+- ghg serve answers every request, where it sometimes left one unanswered, so that a page could wait for it for ever.
+- an anchor is in NFC when its name has a combining mark right after an apostrophe.
+
+### Removed
+
+- --version-name, the version_name key of ghg.toml and --preview, which the commands of versions and previews replace; ghg build always builds a site without versions.
+- assets/search.json and assets/tree.json, whose content the site's data, data/, now holds.
+
 ## [1.1.0]
 
 ### Added
