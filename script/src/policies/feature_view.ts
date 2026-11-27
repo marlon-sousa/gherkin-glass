@@ -43,7 +43,6 @@ export function featureView(words: Words, descriptor: Descriptor, entry: Feature
     words,
     start: descriptor.start,
     tags: new Map(descriptor.tags.map((tag) => [tag.tag, tag])),
-    hasBackgroundsOption: hasBackground,
   };
   const featureBackground: StartingBackground | null = background && { block: background, heading: words.text("from-background") };
   const startsScenarios = scenarios.length > 0 || rules.some((rule) => rule.blocks.some(isScenario));

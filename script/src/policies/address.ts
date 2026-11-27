@@ -43,11 +43,6 @@ export function targetAddress(page: PageName, anchor: string | null = null): str
   return anchor === null ? named : `${named}#${encoded(anchor)}`;
 }
 
-/** The address, from `#`, of an element of the page shown, such as `##ghg_main`. */
-export function elementAddress(id: string): string {
-  return `##${encoded(id)}`;
-}
-
 /** The page name `raw`, as the address holds it, encoded. */
 function pageNamed(raw: string): PageName {
   if (raw === SEARCH || raw.startsWith(`${SEARCH}?`)) {
