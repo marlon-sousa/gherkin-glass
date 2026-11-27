@@ -3,13 +3,6 @@
 import type { ListedResult, PageWords, Part, ResultGroup, Run, SearchPage } from "../ports/search_page.ts";
 
 export class DomSearchPage implements SearchPage {
-  private readonly document: Document;
-  private readonly heading: HTMLElement;
-  private readonly field: HTMLInputElement;
-  private readonly status: HTMLElement;
-  private readonly groups: HTMLElement;
-  private readonly searchedWords: string;
-
   /** Null when the page is not the page of search results, or not the whole of one; `searched` is the words of the shell's address. */
   static find(document: Document, searched: string): DomSearchPage | null {
     const heading = document.querySelector<HTMLElement>("h1.ghg-search-heading");
@@ -22,14 +15,14 @@ export class DomSearchPage implements SearchPage {
     return null;
   }
 
-  private constructor(document: Document, heading: HTMLElement, field: HTMLInputElement, status: HTMLElement, groups: HTMLElement, searched: string) {
-    this.searchedWords = searched;
-    this.document = document;
-    this.heading = heading;
-    this.field = field;
-    this.status = status;
-    this.groups = groups;
-  }
+  private constructor(
+    private readonly document: Document,
+    private readonly heading: HTMLElement,
+    private readonly field: HTMLInputElement,
+    private readonly status: HTMLElement,
+    private readonly groups: HTMLElement,
+    private readonly searchedWords: string,
+  ) {}
 
   words(): PageWords {
     const data = this.groups.dataset;

@@ -3,11 +3,7 @@
 import type { WindowWidth } from "../ports/width.ts";
 
 export class MediaWidth implements WindowWidth {
-  private readonly query: MediaQueryList;
-
-  constructor(query: MediaQueryList) {
-    this.query = query;
-  }
+  constructor(private readonly query: MediaQueryList) {}
 
   narrow(): boolean {
     return this.query.matches;

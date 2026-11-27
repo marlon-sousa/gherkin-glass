@@ -9,11 +9,6 @@ const REANNOUNCE_MILLISECONDS = 50;
 const OPTION_ID = "ghg_search_result_";
 
 export class DomSearchBox implements SearchBox {
-  private readonly form: HTMLFormElement;
-  private readonly field: HTMLInputElement;
-  private readonly link: HTMLAnchorElement;
-  private readonly status: HTMLElement;
-  private readonly results: HTMLOListElement;
   private pendingStatus: number | null = null;
 
   /** Null when the page has no search form, or not the whole of one. */
@@ -29,12 +24,13 @@ export class DomSearchBox implements SearchBox {
     return null;
   }
 
-  private constructor(form: HTMLFormElement, field: HTMLInputElement, link: HTMLAnchorElement, status: HTMLElement, results: HTMLOListElement) {
-    this.form = form;
-    this.field = field;
-    this.link = link;
-    this.status = status;
-    this.results = results;
+  private constructor(
+    private readonly form: HTMLFormElement,
+    private readonly field: HTMLInputElement,
+    private readonly link: HTMLAnchorElement,
+    private readonly status: HTMLElement,
+    private readonly results: HTMLOListElement,
+  ) {
     form.addEventListener("submit", (event) => event.preventDefault());
     // Choosing an option with the pointer keeps the focus in the field.
     results.addEventListener("mousedown", (event) => event.preventDefault());

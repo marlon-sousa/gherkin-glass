@@ -3,13 +3,10 @@
 import type { NoteDialog, Opener } from "../ports/note_dialog.ts";
 
 export class DomNoteDialog implements NoteDialog {
-  private readonly dialog: HTMLDialogElement;
-  private readonly openers: HTMLButtonElement[];
-
-  private constructor(dialog: HTMLDialogElement, openers: HTMLButtonElement[]) {
-    this.dialog = dialog;
-    this.openers = openers;
-  }
+  private constructor(
+    private readonly dialog: HTMLDialogElement,
+    private readonly openers: HTMLButtonElement[],
+  ) {}
 
   /** Null on a page without the dialog, where no block's file writes another keyword. */
   static of(document: Document): DomNoteDialog | null {

@@ -33,11 +33,8 @@ class FakeTheme implements Theme {
 
 class FakeMemory implements Memory {
   readonly kept = new Map<string, string>();
-  readonly works: boolean;
 
-  constructor(works = true) {
-    this.works = works;
-  }
+  constructor(readonly works = true) {}
 
   get(key: string): string | null {
     return this.kept.get(key) ?? null;

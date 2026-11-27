@@ -9,16 +9,13 @@ import type { PageWords, Part, ResultGroup, SearchPage } from "../../src/ports/s
 import { documents, searchPageWords } from "../support/search_fixtures.ts";
 
 class FakePage implements SearchPage {
-  readonly address: string;
   statuses: string[] = [];
   field = "";
   heading: readonly Part[] = [];
   title = "";
   groups: readonly ResultGroup[] | null = null;
 
-  constructor(address: string) {
-    this.address = address;
-  }
+  constructor(readonly address: string) {}
 
   words(): PageWords {
     return searchPageWords();

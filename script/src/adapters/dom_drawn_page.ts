@@ -12,13 +12,10 @@ import type { Page } from "../ports/page.ts";
 import type { SearchPage } from "../ports/search_page.ts";
 
 export class DomDrawnPage implements DrawnPage {
-  private readonly document: Document;
-  private readonly canvas: DomCanvas;
-
-  constructor(document: Document, canvas: DomCanvas) {
-    this.document = document;
-    this.canvas = canvas;
-  }
+  constructor(
+    private readonly document: Document,
+    private readonly canvas: DomCanvas,
+  ) {}
 
   blocks(): Page {
     return new DomPage(this.document, this.canvas.main);

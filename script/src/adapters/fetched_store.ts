@@ -4,17 +4,14 @@ import { readDescriptor, readObject, readPages, readVersions } from "./fetched_s
 import type { Descriptor, PageIndex, Store, StoreObject, VersionList } from "../ports/store.ts";
 
 export class FetchedStore implements Store {
-  private readonly root: URL;
-  private readonly descriptorPath: string;
-  private readonly fetcher: typeof fetch;
   private readonly kept = new Map<string, Promise<unknown>>();
 
   /** `root` is the address of `data/`, and `descriptorPath` the descriptor's below it. Chromium, through Playwright 1.63.0, refuses `fetch` called as a method of another object, so it is called on its own. */
-  constructor(root: URL, descriptorPath: string, fetcher: typeof fetch = (input, init) => fetch(input, init)) {
-    this.root = root;
-    this.descriptorPath = descriptorPath;
-    this.fetcher = fetcher;
-  }
+  constructor(
+    private readonly root: URL,
+    private readonly descriptorPath: string,
+    private readonly fetcher: typeof fetch = (input, init) => fetch(input, init),
+  ) {}
 
   descriptor(): Promise<Descriptor> {
     return this.file(this.descriptorPath, readDescriptor);

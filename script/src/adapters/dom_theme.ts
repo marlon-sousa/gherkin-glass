@@ -4,11 +4,7 @@ import type { ThemeChoice } from "../policies/theme_choice.ts";
 import type { Theme } from "../ports/theme.ts";
 
 export class DomTheme implements Theme {
-  private readonly document: Document;
-
-  constructor(document: Document) {
-    this.document = document;
-  }
+  constructor(private readonly document: Document) {}
 
   show(choice: ThemeChoice): void {
     for (const radio of this.radios()) {

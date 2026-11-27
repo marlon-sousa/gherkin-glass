@@ -56,13 +56,10 @@ export class FakeCanvas implements Canvas {
 }
 
 export class FakeAddress implements Address {
-  current: string;
   readonly replaced: string[] = [];
   private handler: (hash: string) => void = () => {};
 
-  constructor(current: string) {
-    this.current = current;
-  }
+  constructor(public current: string) {}
 
   hash(): string {
     return this.current;

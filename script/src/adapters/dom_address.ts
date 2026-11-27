@@ -4,11 +4,7 @@ import { followedLink } from "./followed_link.ts";
 import type { Address } from "../ports/canvas.ts";
 
 export class DomAddress implements Address {
-  private readonly window: Window;
-
-  constructor(window: Window) {
-    this.window = window;
-  }
+  constructor(private readonly window: Window) {}
 
   hash(): string {
     return this.window.location.hash;

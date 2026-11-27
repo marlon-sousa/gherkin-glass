@@ -3,18 +3,16 @@
 import type { Block, Page } from "../ports/page.ts";
 
 class DomBlock implements Block {
-  readonly anchor: string;
-  readonly parent: Block | null;
   readonly expandedWhenUnchecked: boolean | null;
   readonly inScenario: boolean;
-  readonly button: HTMLButtonElement;
-  private readonly content: HTMLElement;
 
-  constructor(anchor: string, button: HTMLButtonElement, content: HTMLElement, parent: Block | null, element: Element | null) {
-    this.anchor = anchor;
-    this.button = button;
-    this.content = content;
-    this.parent = parent;
+  constructor(
+    readonly anchor: string,
+    readonly button: HTMLButtonElement,
+    private readonly content: HTMLElement,
+    readonly parent: Block | null,
+    element: Element | null,
+  ) {
     this.expandedWhenUnchecked = element === null ? null : expandedWhenUnchecked(element);
     this.inScenario = element?.classList.contains("ghg-background-in-scenario") ?? false;
   }

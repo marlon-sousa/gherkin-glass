@@ -5,19 +5,13 @@ import type { Memory } from "../../src/ports/memory.ts";
 import type { Block, Page } from "../../src/ports/page.ts";
 
 export class FakeBlock implements Block {
-  readonly anchor: string;
-  readonly parent: Block | null;
-  readonly expandedWhenUnchecked: boolean | null;
-  readonly inScenario: boolean;
-  private expanded: boolean;
-
-  constructor(anchor: string, parent: Block | null, expanded = true, expandedWhenUnchecked: boolean | null = null, inScenario = false) {
-    this.anchor = anchor;
-    this.parent = parent;
-    this.expanded = expanded;
-    this.expandedWhenUnchecked = expandedWhenUnchecked;
-    this.inScenario = inScenario;
-  }
+  constructor(
+    readonly anchor: string,
+    readonly parent: Block | null,
+    private expanded = true,
+    readonly expandedWhenUnchecked: boolean | null = null,
+    readonly inScenario = false,
+  ) {}
 
   isExpanded(): boolean {
     return this.expanded;
@@ -29,14 +23,11 @@ export class FakeBlock implements Block {
 }
 
 export class FakePage implements Page {
-  readonly found: FakeBlock[];
   toggle: (block: Block) => void = () => {};
   collapseAll: () => void = () => {};
   expandAll: () => void = () => {};
 
-  constructor(found: FakeBlock[]) {
-    this.found = found;
-  }
+  constructor(readonly found: FakeBlock[]) {}
 
   blocks(): readonly Block[] {
     return this.found;
@@ -60,13 +51,11 @@ export class FakePage implements Page {
 }
 
 export class FakeBackgrounds implements Backgrounds {
-  readonly written: boolean;
   inline: boolean;
   switched: (inline: boolean) => void = () => {};
   returned: () => void = () => {};
 
-  constructor(written: boolean) {
-    this.written = written;
+  constructor(readonly written: boolean) {
     this.inline = written;
   }
 

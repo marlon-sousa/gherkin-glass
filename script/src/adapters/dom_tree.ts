@@ -12,15 +12,13 @@ interface TreeNode {
 }
 
 export class DomTree implements TreeView {
-  private readonly document: Document;
   private readonly landmark: HTMLElement | null;
   private readonly nodes: TreeNode[] = [];
   private readonly byLink = new Map<Element, TreeNode>();
   private handler: (address: string, expanded: boolean) => void = () => {};
 
   /** The tree of a shell, whose items' addresses are the shell's own, from its `#`. */
-  constructor(document: Document) {
-    this.document = document;
+  constructor(private readonly document: Document) {
     this.landmark = document.querySelector<HTMLElement>("nav.ghg-tree");
   }
 
