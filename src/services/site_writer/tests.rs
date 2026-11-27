@@ -90,9 +90,7 @@ fn a_version_already_built_is_kept_unless_replaced() {
     add(&site_writer, version("v1"), "a").expect("built");
     let mut settings = settings(Destination::Folder, version("v1"));
     settings.replace = false;
-    let refused = site_writer
-        .check(&settings, Change::Add)
-        .map_err(|error| error.kind);
+    let refused = site_writer.check(&settings).map_err(|error| error.kind);
     assert_eq!(refused, Err(OutputErrorKind::AlreadyBuilt));
 }
 
@@ -157,7 +155,7 @@ fn a_site_in_memory_checks_no_folder(#[case] target: BuildTarget) {
     let memory = Arc::new(MemoryFiles::default());
     let site_writer = site_writer(&output, memory, FakeTemplate::default());
     let settings = settings(Destination::Memory, target);
-    site_writer.check(&settings, Change::Add).expect("no check");
+    site_writer.check(&settings).expect("no check");
     let (served, _) = site_writer.write(&settings, &store("a")).expect("written");
     let ServedSite::Memory(files) = served else {
         panic!("a site in memory");

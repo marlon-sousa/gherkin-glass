@@ -165,13 +165,12 @@ pub(super) fn add(
     step: &str,
 ) -> Result<(), BuildError> {
     let settings = settings(Destination::Folder, target);
-    site_writer.check(&settings, Change::Add)?;
+    site_writer.check(&settings)?;
     site_writer.write(&settings, &store(step)).map(drop)
 }
 
 /// Removes `target` from the output of `site_writer`.
 pub(super) fn remove(site_writer: &SiteWriter, target: BuildTarget) -> Result<bool, BuildError> {
     let settings = settings(Destination::Folder, target);
-    site_writer.check(&settings, Change::Remove)?;
     site_writer.remove(&settings)
 }

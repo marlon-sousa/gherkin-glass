@@ -10,6 +10,8 @@ use std::fs::{read_dir, read_to_string, remove_dir_all, write};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
+use rstest::rstest;
+
 #[path = "support/history_builds.rs"]
 mod history_builds;
 #[path = "support/site_files.rs"]
@@ -118,22 +120,26 @@ fn the_last_version_removed_takes_the_versions_page_with_it() {
 }
 
 // Rule 121.
-#[test]
-fn a_name_that_cannot_be_a_version_s_is_a_mistake_on_the_command_line() {
-    for name in ["release/1.0", "Previews", "data"] {
-        let (report, status) = ghg(
-            &["version", "add", name],
-            "suite",
-            &output_folder("bad-name"),
-        );
-        assert_eq!(status, 2, "{name}");
-        assert!(
-            report.starts_with(&format!(
-                "{name} cannot be the name of a version or a preview. "
-            )),
-            "{report}"
-        );
-    }
+#[rstest]
+#[case::with_a_slash("release/1.0", "with-a-slash")]
+#[case::previews_in_capitals("Previews", "previews-in-capitals")]
+#[case::the_store_s_folder("data", "the-store-s-folder")]
+fn a_name_that_cannot_be_a_version_s_is_a_mistake_on_the_command_line(
+    #[case] name: &str,
+    #[case] folder: &str,
+) {
+    let (report, status) = ghg(
+        &["version", "add", name],
+        "suite",
+        &output_folder(&format!("bad-name-{folder}")),
+    );
+    assert_eq!(status, 2, "{name}");
+    assert!(
+        report.starts_with(&format!(
+            "{name} cannot be the name of a version or a preview. "
+        )),
+        "{report}"
+    );
 }
 
 // Rule 128: a version is listed among the others by its precedence.

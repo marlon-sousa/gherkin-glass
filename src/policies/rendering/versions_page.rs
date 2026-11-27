@@ -7,11 +7,12 @@ use super::node_rendering::{Render, page, rendered};
 use super::page_frame::{DiskNotice, PageFooter, SkipLink, ThemeControl};
 use super::page_head::PageHead;
 use crate::entities::{
-    FrontPageTemplate, HeadingLevel, PageFrame, SiteAddress, SiteFile, VersionEntry,
-    VersionsPageContent,
+    FrontPageTemplate, HeadingLevel, PageFrame, SiteAddress, SiteFile, VersionEntry, VersionName,
+    VersionsPageContent, VersionsPageRecord,
 };
 use crate::errors::FrontPageError;
-use crate::policies::rendering::{ROOT_PAGE, assets_folder};
+use crate::policies::build_versions_page;
+use crate::policies::rendering::{ROOT_PAGE, VersionsPageWrite, assets_folder};
 
 #[derive(Template)]
 #[template(path = "versions_page.html")]
@@ -49,6 +50,19 @@ struct VersionsListTemplate<'a> {
 #[template(path = "version_entry.html")]
 struct VersionEntryTemplate<'a> {
     entry: &'a VersionEntry,
+}
+
+/// The versions page listing `names`, written with `record`, in the frame `frame`, from
+/// `template`, or from ghg's own without one.
+pub(crate) fn versions_page_write(
+    record: VersionsPageRecord,
+    names: Vec<VersionName>,
+    frame: &PageFrame,
+    template: Option<&FrontPageTemplate>,
+) -> Result<VersionsPageWrite, FrontPageError> {
+    let content = build_versions_page(names, &record.title);
+    let page = render_versions_page(&content, frame, &record.ghg, template)?;
+    Ok(VersionsPageWrite { record, page })
 }
 
 /// The versions page of `content`, in the frame `frame`, linking the assets of the ghg `ghg`,

@@ -16,24 +16,28 @@ mod shell;
 mod store_files;
 mod store_format;
 mod store_plan;
+mod target_files;
+mod target_removal;
 mod theme_stylesheet;
 mod versions_page;
 
 pub(crate) use output_marker::marker_json;
 pub(crate) use output_safety::{Change, Moment, output_safety};
 pub(crate) use published_store::StoreListing;
-pub(crate) use shared_assets::shared_assets;
-pub(crate) use shell::render_shell;
-pub(crate) use store_files::{DescriptorSettings, render_store};
-pub(crate) use store_format::GHG_VERSION;
-pub(crate) use store_plan::{
+pub(crate) use target_files::TargetFiles;
+pub(crate) use target_removal::removal_plan;
+
+use shared_assets::shared_assets;
+use shell::render_shell;
+use store_files::{DescriptorSettings, render_store};
+use store_plan::{
     FolderBefore, StoreChange, VersionsPageWrite, WrittenTarget, plan_store, versions_once_changed,
 };
-pub(crate) use versions_page::render_versions_page;
+use versions_page::versions_page_write;
 
 use output_marker::{folder_by_folder, read_marker};
 use store_format::{
-    ASSET_FILES, ASSETS, DATA, JSON, OBJECTS, PAGES_INDEX, PREVIEWS, ROOT_PAGE, SITE_DESCRIPTOR,
-    STORE_FORMAT, VERSIONS, VERSIONS_LIST, asset_paths, assets_folder, descriptor_path, json_bytes,
-    object_path, sha256_hex, shell_path,
+    ASSET_FILES, ASSETS, DATA, GHG_VERSION, JSON, OBJECTS, PAGES_INDEX, PREVIEWS, ROOT_PAGE,
+    SITE_DESCRIPTOR, STORE_FORMAT, VERSIONS, VERSIONS_LIST, asset_paths, assets_folder,
+    descriptor_path, json_bytes, object_path, sha256_hex, shell_path,
 };

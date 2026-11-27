@@ -2,7 +2,6 @@
 
 mod folder_writing;
 mod published;
-mod target_files;
 
 use std::io::Error as IoError;
 use std::path::Path;
@@ -15,18 +14,17 @@ use crate::entities::{
     Settings, SiteFile, SiteStore,
 };
 use crate::errors::{BuildError, FrontPageError, FrontPageErrorKind, OutputError, OutputErrorKind};
-use crate::policies::{Change, Moment, output_safety};
+use crate::policies::{Change, Moment, TargetFiles, describe_site, output_safety, removal_plan};
 use crate::ports::{FileReader, FileWriter, OutputFolders};
 
 use published::published_store;
-use target_files::TargetFiles;
 
 /// What the controller asks of the site writer.
 pub(crate) trait SiteWriterApi: Send + Sync {
     /// Checks, before the input is read, that the target of `settings` may be written into the
-    /// output folder, or removed from it when `change` says so; a site built in memory needs no
-    /// check.
-    fn check(&self, settings: &Settings, change: Change) -> Result<(), OutputError>;
+    /// output folder; a site built in memory needs no check, and `remove` checks the folder
+    /// itself.
+    fn check(&self, settings: &Settings) -> Result<(), OutputError>;
 
     /// Reads the front page's template the settings name, if any, renders the store of `store`,
     /// the shell of the settings' target and, for a version, the versions page, and writes them
@@ -96,7 +94,7 @@ impl SiteWriter {
 }
 
 impl SiteWriterApi for SiteWriter {
-    fn check(&self, settings: &Settings, change: Change) -> Result<(), OutputError> {
+    fn check(&self, settings: &Settings) -> Result<(), OutputError> {
         if settings.destination == Destination::Memory {
             return Ok(());
         }
@@ -106,7 +104,7 @@ impl SiteWriterApi for SiteWriter {
         self.check_folder(
             &settings.output,
             &settings.target,
-            change,
+            Change::Add,
             moment,
             &settings.keep_in_output,
         )
@@ -120,12 +118,20 @@ impl SiteWriterApi for SiteWriter {
     ) -> Result<(ServedSite, BuiltSite), BuildError> {
         let template = self.front_page(settings)?;
         let files = TargetFiles::render(settings, store, template.as_ref())?;
-        let built = files.built_site(store, &settings.pages);
+        let built = BuiltSite {
+            large_site_data: files.large_site_data(),
+            ..describe_site(store, &settings.pages)
+        };
         let output = &settings.output;
         if settings.destination == Destination::Memory {
             // A site that was not taken, if any, is dropped, so that nothing of it is served.
             self.memory_files.site(output);
-            write_files(self.memory_files.as_ref(), output, &files.in_memory())?;
+            write_files(
+                self.memory_files.as_ref(),
+                output,
+                &BuildTarget::Site,
+                &files.in_memory(),
+            )?;
             return Ok((self.memory_files.site(output), built));
         }
         let written = files.paths();
@@ -138,7 +144,7 @@ impl SiteWriterApi for SiteWriter {
             &settings.keep_in_output,
         )?;
         let plan = files.plan(&folder, settings, template.as_ref())?;
-        self.follow(&folder, plan)?;
+        self.follow(&folder, &settings.target, plan)?;
         Ok((self.folder_files.site(output), built))
     }
 
@@ -155,8 +161,8 @@ impl SiteWriterApi for SiteWriter {
         if !folder.published().descriptors.contains_key(target) {
             return Ok(false);
         }
-        let plan = target_files::removal_plan(&folder, settings)?;
-        self.follow(&folder, plan)?;
+        let plan = removal_plan(&folder, settings)?;
+        self.follow(&folder, &settings.target, plan)?;
         Ok(true)
     }
 }
@@ -165,17 +171,24 @@ impl SiteWriterApi for SiteWriter {
 fn write_files(
     writer: &dyn FileWriter,
     output: &Path,
+    target: &BuildTarget,
     files: &[SiteFile],
 ) -> Result<(), OutputError> {
     files
         .iter()
-        .try_for_each(|file| write_file(writer, output, file))
+        .try_for_each(|file| write_file(writer, output, target, file))
 }
 
-fn write_file(writer: &dyn FileWriter, output: &Path, file: &SiteFile) -> Result<(), OutputError> {
+/// Writes `file` into `output` for the command on `target`.
+fn write_file(
+    writer: &dyn FileWriter,
+    output: &Path,
+    target: &BuildTarget,
+    file: &SiteFile,
+) -> Result<(), OutputError> {
     writer
         .write(output, file.address.as_str(), &file.contents)
-        .map_err(|io| file_not_written(output, file, &io))
+        .map_err(|io| file_not_written(output, target, file, &io))
 }
 
 /// What stops a command on `target` in `output`.
@@ -187,10 +200,15 @@ fn refusal(output: &Path, target: &BuildTarget, kind: OutputErrorKind) -> Output
     }
 }
 
-fn file_not_written(output: &Path, file: &SiteFile, error: &IoError) -> OutputError {
+fn file_not_written(
+    output: &Path,
+    target: &BuildTarget,
+    file: &SiteFile,
+    error: &IoError,
+) -> OutputError {
     refusal(
         output,
-        &BuildTarget::Site,
+        target,
         OutputErrorKind::FileNotWritten {
             file: file.address.as_str().to_string(),
             reason: error.to_string(),

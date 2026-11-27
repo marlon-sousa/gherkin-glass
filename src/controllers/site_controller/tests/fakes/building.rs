@@ -12,7 +12,6 @@ use crate::entities::{
     BuildTarget, CollectedChanges, FileToParse, IgnoreRules, InputTree, InputTreeBuilder,
     KeptInOutput, PageOptions, ParsedFeature, ParsedFile, PathList, Settings, SiteStore, Unnamed,
 };
-use crate::policies::Change;
 
 /// Gives the settings of a build from the input the configuration names, once a test sets it, or
 /// else from the one `options` name, or `features`, into `site`, or, while `failing`, the errors
@@ -218,7 +217,7 @@ pub(crate) struct FakeSiteWriter {
 }
 
 impl SiteWriterApi for FakeSiteWriter {
-    fn check(&self, settings: &Settings, _: Change) -> Result<(), OutputError> {
+    fn check(&self, settings: &Settings) -> Result<(), OutputError> {
         self.calls
             .note(format!("site_writer.check {:?}", settings.destination));
         if self.check_failing.load(Ordering::SeqCst) {

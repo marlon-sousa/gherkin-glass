@@ -4,69 +4,21 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::sync::Arc;
 
 mod index_data;
+mod removals;
+mod store_change;
 
 use crate::entities::{
     BuildTarget, FilePath, OutputMarker, PublishedDescriptor, PublishedFeature, PublishedStore,
-    SiteAddress, SiteFile, StoreFiles, StorePlan, VersionName, VersionsPageRecord,
+    SiteAddress, SiteFile, StorePlan, VersionName, VersionsPageRecord,
 };
 use crate::policies::rendering::{
-    ASSETS, DATA, PAGES_INDEX, PREVIEWS, ROOT_PAGE, SITE_DESCRIPTOR, VERSIONS, VERSIONS_LIST,
-    asset_paths, assets_folder, descriptor_path, object_path, shell_path,
+    PAGES_INDEX, ROOT_PAGE, VERSIONS_LIST, asset_paths, descriptor_path, object_path, shell_path,
 };
 use index_data::{pages_json, versions_json};
-
-/// What a command does to the output folder's store.
-pub(crate) struct StoreChange {
-    pub(crate) target: BuildTarget,
-    /// `None` when the target is removed.
-    pub(crate) written: Option<WrittenTarget>,
-    /// The versions page, written again when a version is added or removed and another stays.
-    pub(crate) versions_page: Option<VersionsPageWrite>,
-    /// The files of this ghg's assets.
-    pub(crate) assets: Vec<SiteFile>,
-}
-
-/// The files of a target a build writes.
-pub(crate) struct WrittenTarget {
-    pub(crate) store: StoreFiles,
-    pub(crate) shell: SiteFile,
-    /// The version of the ghg that writes it.
-    pub(crate) ghg: String,
-}
-
-/// The versions page, rendered, and what it is written with.
-pub(crate) struct VersionsPageWrite {
-    pub(crate) record: VersionsPageRecord,
-    pub(crate) page: SiteFile,
-}
-
-/// What the folder holds before the command writes anything.
-pub(crate) struct FolderBefore<'a> {
-    /// Every file its marker lists.
-    pub(crate) listed: &'a BTreeSet<FilePath>,
-    /// Every file in it, but what is kept.
-    pub(crate) found: &'a BTreeSet<FilePath>,
-    pub(crate) published: &'a PublishedStore,
-}
-
-/// The versions the store holds once `target` is written, or removed when `removed`.
-pub(crate) fn versions_once_changed(
-    published: &PublishedStore,
-    target: &BuildTarget,
-    removed: bool,
-) -> Vec<VersionName> {
-    let mut targets: BTreeSet<&BuildTarget> = published.descriptors.keys().collect();
-    if removed {
-        targets.remove(target);
-    } else {
-        targets.insert(target);
-    }
-    targets
-        .into_iter()
-        .filter_map(BuildTarget::version)
-        .cloned()
-        .collect()
-}
+use removals::removals;
+pub(crate) use store_change::{
+    FolderBefore, StoreChange, VersionsPageWrite, WrittenTarget, versions_once_changed,
+};
 
 /// How to make `change` to the folder `before` describes. A build writes the objects the store
 /// does not hold yet, this ghg's assets when the folder lacks them, the shell and the
@@ -82,11 +34,12 @@ pub(crate) fn plan_store(before: &FolderBefore<'_>, change: StoreChange) -> Stor
     let mut target_files = Vec::new();
     match change.written {
         Some(written) => {
+            let held = held_objects(published);
             new_objects = written
                 .store
                 .objects
                 .into_iter()
-                .filter(|object| is_new(object, &published.objects))
+                .filter(|object| !is_in(object, &held))
                 .collect();
             descriptors.insert(
                 change.target.clone(),
@@ -120,10 +73,11 @@ pub(crate) fn plan_store(before: &FolderBefore<'_>, change: StoreChange) -> Stor
         .into_iter()
         .filter(|asset| accounted.contains(asset.address.as_str()))
         .collect();
-    let lacks_assets = assets
-        .iter()
-        .any(|asset| !before.found.contains(asset.address.as_str()));
-    let assets = assets.into_iter().filter(|_| lacks_assets);
+    let assets = if assets.iter().all(|asset| is_in(asset, before.found)) {
+        Vec::new()
+    } else {
+        assets
+    };
     let leftover: BTreeSet<FilePath> = before
         .listed
         .difference(&accounted)
@@ -143,11 +97,18 @@ pub(crate) fn plan_store(before: &FolderBefore<'_>, change: StoreChange) -> Stor
     }
 }
 
-/// Whether the store does not hold `object` yet, among `held`, the names of its objects.
-fn is_new(object: &SiteFile, held: &BTreeSet<String>) -> bool {
-    !held
+/// Whether `file` is among `files`.
+fn is_in(file: &SiteFile, files: &BTreeSet<FilePath>) -> bool {
+    files.contains(file.address.as_str())
+}
+
+/// The paths of the objects the store of `published` holds.
+fn held_objects(published: &PublishedStore) -> BTreeSet<FilePath> {
+    published
+        .objects
         .iter()
-        .any(|name| object_path(name) == object.address.as_str())
+        .map(|name| object_path(name))
+        .collect()
 }
 
 /// Each version's features, by its name, among `descriptors`.
@@ -169,75 +130,34 @@ fn accounted(
     descriptors: &BTreeMap<BuildTarget, PublishedDescriptor>,
     page: Option<&VersionsPageRecord>,
 ) -> BTreeSet<FilePath> {
-    let of_descriptors = descriptors.iter().flat_map(|(target, descriptor)| {
-        [descriptor_path(target), shell_path(target)]
-            .into_iter()
-            .chain(
-                descriptor
-                    .features
-                    .iter()
-                    .map(|feature| object_path(&feature.object)),
-            )
-            .chain(asset_paths(&descriptor.ghg).collect::<Vec<_>>())
-    });
-    let of_page = page.into_iter().flat_map(|record| {
-        [
-            VERSIONS_LIST.to_string(),
-            PAGES_INDEX.to_string(),
-            ROOT_PAGE.to_string(),
-        ]
-        .into_iter()
-        .chain(asset_paths(&record.ghg).collect::<Vec<_>>())
-    });
-    of_descriptors.chain(of_page).collect()
-}
-
-/// What removing `leftover` removes, in order: each descriptor first, then every other file,
-/// each within the folder of a version, a preview or a ghg's assets that nothing accounts for
-/// any more removed with that folder.
-fn removals(
-    leftover: &BTreeSet<FilePath>,
-    descriptors: &BTreeMap<BuildTarget, PublishedDescriptor>,
-    page: Option<&VersionsPageRecord>,
-) -> Vec<FilePath> {
-    let still_there: BTreeSet<FilePath> = descriptors
+    descriptors
         .iter()
-        .flat_map(|(target, descriptor)| {
-            target
-                .folder()
-                .into_iter()
-                .chain([assets_folder(&descriptor.ghg)])
-        })
-        .chain(page.map(|record| assets_folder(&record.ghg)))
-        .collect();
-    let (descriptors, others): (Vec<&FilePath>, Vec<&FilePath>) =
-        leftover.iter().partition(|file| is_descriptor(file));
-    let others: BTreeSet<FilePath> = others
+        .flat_map(|(target, descriptor)| files_of_descriptor(target, descriptor))
+        .chain(page.into_iter().flat_map(files_of_versions_page))
+        .collect()
+}
+
+/// The descriptor of `target`, its shell, the objects it names and its ghg's assets.
+fn files_of_descriptor(target: &BuildTarget, descriptor: &PublishedDescriptor) -> Vec<FilePath> {
+    let objects = descriptor
+        .features
+        .iter()
+        .map(|feature| object_path(&feature.object));
+    [descriptor_path(target), shell_path(target)]
         .into_iter()
-        .map(|file| {
-            removed_folder(file)
-                .filter(|folder| !still_there.contains(folder))
-                .unwrap_or_else(|| file.clone())
-        })
-        .collect();
-    descriptors.into_iter().cloned().chain(others).collect()
+        .chain(objects)
+        .chain(asset_paths(&descriptor.ghg))
+        .collect()
 }
 
-fn is_descriptor(file: &str) -> bool {
-    file == SITE_DESCRIPTOR || file.starts_with(VERSIONS) || file.starts_with(PREVIEWS)
-}
-
-/// The folder of a version, a preview or a ghg's assets that `file` is in, if any:
-/// `<version>/`, `previews/<name>/` or `assets/<ghg>/`.
-fn removed_folder(file: &str) -> Option<FilePath> {
-    let (top, rest) = file.split_once('/')?;
-    match top {
-        DATA => None,
-        ASSETS | VersionName::PREVIEWS => rest
-            .split_once('/')
-            .map(|(inner, _)| format!("{top}/{inner}")),
-        _ => Some(top.to_string()),
-    }
+/// The list of versions, the index of pages, the versions page and the assets of the ghg that
+/// wrote it, as `record` says.
+fn files_of_versions_page(record: &VersionsPageRecord) -> Vec<FilePath> {
+    [VERSIONS_LIST, PAGES_INDEX, ROOT_PAGE]
+        .into_iter()
+        .map(str::to_string)
+        .chain(asset_paths(&record.ghg))
+        .collect()
 }
 
 fn json_file(path: &str, bytes: Vec<u8>) -> SiteFile {

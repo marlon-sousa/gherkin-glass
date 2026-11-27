@@ -10,7 +10,6 @@ use crate::entities::{
     ServedSite, Settings,
 };
 use crate::errors::BuildError;
-use crate::policies::Change;
 
 /// What a build leaves for the next one, with what it has to say.
 #[derive(Debug)]
@@ -97,12 +96,10 @@ impl SiteController {
     /// Checks the output folder, then collects the input from nothing, as `settings` say, into
     /// the snapshot a build from nothing starts from.
     fn check_and_collect(&self, settings: Arc<Settings>) -> Result<BuildSnapshot, Box<Stopped>> {
-        self.site_writer
-            .check(&settings, Change::Add)
-            .map_err(|error| Stopped {
-                left: None,
-                error: BuildError::Output(error),
-            })?;
+        self.site_writer.check(&settings).map_err(|error| Stopped {
+            left: None,
+            error: BuildError::Output(error),
+        })?;
         let input_tree = self
             .input_collector
             .collect(&settings.input, settings.only.as_ref())

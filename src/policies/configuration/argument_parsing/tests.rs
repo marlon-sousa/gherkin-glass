@@ -1,6 +1,8 @@
 mod key_option_mistakes;
 mod key_options;
 mod mistakes;
+mod removing;
+mod serving;
 
 use std::collections::BTreeSet;
 use std::path::PathBuf;
@@ -155,59 +157,6 @@ fn build_takes_its_options_in_either_spelling_and_order(
     assert_eq!(parse(arguments), build(options));
 }
 
-// Rules 257 and 258.
-#[rstest]
-#[case::a_version(
-    &["version", "remove", "main", "--output", "site", "--message-format=json"],
-    BuildTarget::Version(name("main")),
-    MessageFormat::Json
-)]
-#[case::a_preview(
-    &["preview", "remove", "--output=site", "pr-1"],
-    BuildTarget::Preview(name("pr-1")),
-    MessageFormat::Human
-)]
-fn remove_takes_a_name_and_the_output_folder(
-    #[case] arguments: &[&str],
-    #[case] target: BuildTarget,
-    #[case] message_format: MessageFormat,
-) {
-    assert_eq!(
-        parse(arguments),
-        Ok(Invocation::Remove {
-            options: RemoveOptions {
-                output: Some(PathBuf::from("site")),
-                ..RemoveOptions::default()
-            },
-            target,
-            message_format,
-        })
-    );
-}
-
-#[test]
-fn remove_takes_the_configuration_and_what_to_keep() {
-    let arguments = [
-        "version",
-        "remove",
-        "v1",
-        "--config",
-        "ghg.toml",
-        "--keep-in-output",
-        "CNAME",
-    ];
-    let Ok(Invocation::Remove { options, .. }) = parse(&arguments) else {
-        panic!("a removal");
-    };
-    assert_eq!(options.config, Some(PathBuf::from("ghg.toml")));
-    assert_eq!(
-        options.keep_in_output,
-        Some(KeptInOutput::new(vec![
-            KeptPattern::new("CNAME").expect("valid")
-        ]))
-    );
-}
-
 #[rstest]
 // Rule 231.
 #[case::by_default(&["build"], MessageFormat::Human)]
@@ -218,31 +167,6 @@ fn build_takes_its_message_format(#[case] arguments: &[&str], #[case] format: Me
         panic!("{arguments:?} is not a build");
     };
     assert_eq!(message_format, format);
-}
-
-#[rstest]
-#[case::building_first(&["serve"], ServeMode::Build)]
-#[case::without_building(&["serve", "--no-build"], ServeMode::Folder)]
-#[case::watching(&["serve", "--watch"], ServeMode::Watch)]
-fn serve_s_flags_say_its_mode(#[case] arguments: &[&str], #[case] mode: ServeMode) {
-    let Ok(Invocation::Serve(options)) = parse(arguments) else {
-        panic!("{arguments:?} is not a serve");
-    };
-    assert_eq!(options.mode, mode);
-}
-
-#[test]
-fn serve_takes_the_options_of_build_and_its_own() {
-    let arguments = ["serve", "--input=specs", "--host", "0.0.0.0", "--port", "0"];
-    assert_eq!(
-        parse(&arguments),
-        Ok(Invocation::Serve(ServeOptions {
-            build: paths(None, Some("specs")),
-            host: Some("0.0.0.0".into()),
-            port: Some(0),
-            mode: ServeMode::Build,
-        }))
-    );
 }
 
 // Rule 18.
