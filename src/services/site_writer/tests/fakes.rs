@@ -11,8 +11,9 @@ use crate::policies::build_store;
 use crate::test_support::{name, parsed_at};
 
 /// An output folder held in memory, missing until a file is written into it. A path in `fails`
-/// cannot be written or removed, and the folder cannot be looked into while `unreadable`. Once `changes` is
-/// set, the next look after the first finds that file there too, as though written meanwhile.
+/// cannot be written or removed, and the folder cannot be looked into while `unreadable`. Once
+/// `changes` is set, the next look after the first finds that file there too, as though written
+/// meanwhile.
 #[derive(Default)]
 pub(super) struct MemoryOutput {
     pub(super) files: Mutex<BTreeMap<String, Arc<[u8]>>>,

@@ -30,12 +30,12 @@ impl SiteWriter {
         write_files(self.folder_files.as_ref(), output, target, &writes)?;
         removes
             .iter()
-            .try_for_each(|path| self.remove_file(output, target, path))?;
+            .try_for_each(|path| self.remove_path(output, target, path))?;
         self.mark(folder, target, &last_marker)
     }
 
     /// Removes the file or folder at `path` in `output` for the command on `target`.
-    fn remove_file(
+    fn remove_path(
         &self,
         output: &Path,
         target: &BuildTarget,

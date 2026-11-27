@@ -416,8 +416,8 @@ fn a_file_in_the_output_folder_s_place_is_left_as_it_is() {
     );
 }
 
-// Rules 38 and 125: a folder that cannot be marked is reported as the output
-// folder, and a folder that cannot be made for a file as that file's path.
+// Rule 38: a folder that cannot be marked is reported as the output folder,
+// and a folder that cannot be made for a file as that file's path.
 #[cfg(unix)]
 #[rstest]
 #[case::a_marker_that_cannot_be_written(0o400, ": cannot be written: ")]
