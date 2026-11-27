@@ -1,6 +1,6 @@
 [package]
 name = "gherkin-glass"
-version = "1.1.0"
+version = "2.0.0"
 edition = "2024"
 # The oldest Rust that builds gherkin-glass, checked by its own CI job. The
 # toolchain contributors and CI build with is pinned in rust-toolchain.toml.
