@@ -59,6 +59,7 @@ fn descriptor_feature(parsed: &ParsedFeature, options: &PageOptions) -> Descript
         page: page_name(&parsed.path),
         object: Arc::new(object),
         lines,
+        row_lines: parsed.row_lines.clone(),
         source: options
             .source_link
             .as_deref()

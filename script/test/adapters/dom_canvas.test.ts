@@ -43,12 +43,15 @@ test("the frame sets the document's language and the breadcrumb, its last crumb 
   );
 });
 
-// Rule 240: the focus moves to the h1 or to an element, which takes it without being a stop of the Tab key.
+// Rule 240: the focus moves to the h1, with the window at the top of the page, or to an element, which takes it without being a stop of the Tab key.
 test("the focus moves to the h1, or to the element an id names, which then holds tabindex -1", () => {
   const { window, canvas } = shell();
   window.document.querySelector("main")!.innerHTML = '<h1>Title</h1><h2 id="store-credit">Store credit</h2>';
+  const scrolledTo: [number, number][] = [];
+  window.scrollTo = ((x: number, y: number) => scrolledTo.push([x, y])) as typeof window.scrollTo;
   canvas.focusHeading();
   assert.equal(window.document.activeElement!.tagName, "H1");
+  assert.deepEqual(scrolledTo, [[0, 0]]);
   assert.equal(canvas.focusElement("store-credit"), true);
   assert.equal(window.document.activeElement!.id, "store-credit");
   assert.equal(window.document.activeElement!.getAttribute("tabindex"), "-1");

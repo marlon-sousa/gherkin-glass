@@ -8,9 +8,11 @@
 )]
 
 use std::collections::BTreeSet;
-use std::fs::{create_dir_all, read_dir, read_to_string, remove_dir_all, write};
+use std::env::{join_paths, split_paths, var_os};
+use std::fs::{copy, create_dir_all, read_dir, read_to_string, remove_dir_all, write};
+use std::io::Write;
 use std::path::{Path, PathBuf};
-use std::process::{Command, Output};
+use std::process::{Command, Output, Stdio};
 
 use gherkin::{Feature, GherkinEnv, Scenario, Step};
 use rstest::rstest;
@@ -478,8 +480,8 @@ fn each_release_adds_only_its_own_folder_and_the_versions_page() {
     create_dir_all(site.join("v0.1.0")).unwrap();
     write(site.join("v0.1.0/index.html"), "0.1.0\n").unwrap();
     write(site.join("index.html"), "v0.1.0\n").unwrap();
-    create_dir_all(site.join("assets")).unwrap();
-    write(site.join("assets/versions.css"), "a {}\n").unwrap();
+    create_dir_all(site.join("assets/0.1.0")).unwrap();
+    write(site.join("assets/0.1.0/versions.css"), "a {}\n").unwrap();
     publish_ok(&first, &["publish", path(&site), "v0.1.0"]);
     let after_first = published(&remote);
     let files: Vec<_> = after_first
@@ -490,7 +492,7 @@ fn each_release_adds_only_its_own_folder_and_the_versions_page() {
         files,
         [
             ".nojekyll",
-            "assets/versions.css",
+            "assets/0.1.0/versions.css",
             "index.html",
             "v0.1.0/index.html"
         ]
@@ -509,15 +511,24 @@ fn each_release_adds_only_its_own_folder_and_the_versions_page() {
     create_dir_all(site.join("v0.2.0")).unwrap();
     write(site.join("v0.2.0/index.html"), "0.2.0\n").unwrap();
     write(site.join("index.html"), "v0.2.0\nv0.1.0\n").unwrap();
-    write(site.join("assets/versions.css"), "b {}\n").unwrap();
+    create_dir_all(site.join("assets/0.2.0")).unwrap();
+    write(site.join("assets/0.2.0/versions.css"), "b {}\n").unwrap();
     write(site.join("v0.1.0/index.html"), "changed\n").unwrap();
     let output = publish(&second, &["publish", path(&site), "v0.2.0"]);
     assert_eq!(output.status.code(), Some(1));
     assert!(text(&output.stderr).contains("v0.1.0/index.html"));
     assert_eq!(published(&remote), after_first);
 
-    // Without that change, it adds its folder and the versions page alone.
+    // Nor does one that changed the folder of assets of an earlier ghg.
     write(site.join("v0.1.0/index.html"), "0.1.0\n").unwrap();
+    write(site.join("assets/0.1.0/versions.css"), "changed {}\n").unwrap();
+    let output = publish(&second, &["publish", path(&site), "v0.2.0"]);
+    assert_eq!(output.status.code(), Some(1));
+    assert!(text(&output.stderr).contains("assets/0.1.0/versions.css"));
+    assert_eq!(published(&remote), after_first);
+
+    // Without those changes, it adds its folder, its assets and the versions page alone.
+    write(site.join("assets/0.1.0/versions.css"), "a {}\n").unwrap();
     publish_ok(&second, &["publish", path(&site), "v0.2.0"]);
     let after_second = published(&remote);
     assert_eq!(commits(&remote), 2);
@@ -561,6 +572,203 @@ fn each_release_adds_only_its_own_folder_and_the_versions_page() {
         let output = publish(&second, &["publish", path(&site), version]);
         assert_eq!(output.status.code(), Some(1), "{version:?}");
     }
+}
+
+#[cfg(unix)]
+#[test]
+fn a_release_onto_a_site_of_gherkin_glass_1_adds_its_versions_again() {
+    // Rule 180: a gh-pages branch that holds an output folder of gherkin-glass 1 is emptied
+    // but for a new .nojekyll, its versions, the folders its marker names, are named for the
+    // release to add again, one commit each, and nothing is pushed until the release's own
+    // version is added.
+    let folder = scratch("publish-again");
+    let remote = folder.join("remote.git");
+    git_ok(&folder, &["init", "--quiet", "--bare", "remote.git"]);
+    let seed = folder.join("seed");
+    checkout(&remote, &seed);
+    git_ok(&seed, &["checkout", "--quiet", "--orphan", "gh-pages"]);
+    for version in ["v1.0.0", "v1.1.0"] {
+        create_dir_all(seed.join(version)).unwrap();
+        write(seed.join(format!("{version}/index.html")), "1.x\n").unwrap();
+    }
+    create_dir_all(seed.join("assets")).unwrap();
+    write(seed.join("assets/gherkin-glass.css"), "a {}\n").unwrap();
+    create_dir_all(seed.join("notes")).unwrap();
+    write(seed.join("notes/kept.txt"), "not a version\n").unwrap();
+    write(seed.join("index.html"), "v1.1.0\nv1.0.0\n").unwrap();
+    write(
+        seed.join("ghg-versions.json"),
+        "{\"versions\":{\"v1.0.0\":[],\"v1.1.0\":[]}}\n",
+    )
+    .unwrap();
+    write(seed.join(".nojekyll"), "").unwrap();
+    git_ok(&seed, &["add", "--all"]);
+    git_ok(&seed, &["commit", "--quiet", "-m", "site: v1.1.0"]);
+    git_ok(&seed, &["push", "--quiet", "origin", "gh-pages"]);
+    let published_by_1 = published(&remote);
+
+    let release = folder.join("release");
+    checkout(&remote, &release);
+    let site = folder.join("pages");
+    let opened = publish(&release, &["open", path(&site)]);
+    assert!(opened.status.success(), "{}", text(&opened.stderr));
+    assert_eq!(text(&opened.stdout), "v1.0.0\nv1.1.0\n");
+    let mut names: Vec<_> = read_dir(&site)
+        .unwrap()
+        .map(|entry| entry.unwrap().file_name().into_string().unwrap())
+        .collect();
+    names.sort();
+    assert_eq!(names, [".git", ".nojekyll"]);
+
+    // Each version added again is committed, and nothing is pushed yet.
+    for version in ["v1.0.0", "v1.1.0"] {
+        create_dir_all(site.join(version)).unwrap();
+        write(site.join(format!("{version}/index.html")), "2\n").unwrap();
+        write(site.join("index.html"), format!("{version}\n")).unwrap();
+        write(site.join("ghg-site.json"), "{\"format\":1}\n").unwrap();
+        publish_ok(&release, &["commit", path(&site), version]);
+    }
+    assert_eq!(published(&remote), published_by_1);
+    assert_eq!(commits(&remote), 1);
+
+    // The release's own version pushes them all, each a commit of its own.
+    create_dir_all(site.join("v2.0.0")).unwrap();
+    write(site.join("v2.0.0/index.html"), "2\n").unwrap();
+    write(site.join("index.html"), "v2.0.0\n").unwrap();
+    publish_ok(&release, &["publish", path(&site), "v2.0.0"]);
+    assert_eq!(commits(&remote), 4);
+    let files: Vec<_> = published(&remote)
+        .iter()
+        .map(|line| line.split('\t').nth(1).unwrap().to_string())
+        .collect();
+    assert_eq!(
+        files,
+        [
+            ".nojekyll",
+            "ghg-site.json",
+            "index.html",
+            "v1.0.0/index.html",
+            "v1.1.0/index.html",
+            "v2.0.0/index.html"
+        ]
+    );
+    let subjects = git_ok(&remote, &["log", "--format=%s", "gh-pages"]);
+    assert_eq!(
+        subjects,
+        "site: v2.0.0\nsite: v1.1.0\nsite: v1.0.0\nsite: v1.1.0\n"
+    );
+
+    // A site of gherkin-glass 2 is kept as it is, and names no version to add again.
+    let next = folder.join("next");
+    checkout(&remote, &next);
+    let site = folder.join("next-pages");
+    let opened = publish(&next, &["open", path(&site)]);
+    assert!(opened.status.success(), "{}", text(&opened.stderr));
+    assert_eq!(text(&opened.stdout), "");
+    assert_eq!(
+        read_to_string(site.join("v2.0.0/index.html")).unwrap(),
+        "2\n"
+    );
+}
+
+/// `project-site/publish.sh rebuild <pages> <front page>`, run in the checkout `folder` with
+/// ghg on the path and `versions` on standard input.
+fn rebuild(folder: &Path, pages: &Path, front_page: &Path, versions: &str) -> Output {
+    let ghg = Path::new(env!("CARGO_BIN_EXE_ghg")).parent().unwrap();
+    let mut search = vec![ghg.to_path_buf()];
+    search.extend(split_paths(&var_os("PATH").unwrap()));
+    let mut child = Command::new(repository().join("project-site/publish.sh"))
+        .args(["rebuild", path(pages), path(front_page)])
+        .current_dir(folder)
+        .env("PATH", join_paths(search).unwrap())
+        .env("GIT_CONFIG_GLOBAL", "/dev/null")
+        .env("GIT_CONFIG_NOSYSTEM", "1")
+        .env_remove("GIT_DIR")
+        .env_remove("GIT_WORK_TREE")
+        .env_remove("GIT_INDEX_FILE")
+        .env_remove("GIT_COMMON_DIR")
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .expect("the script runs");
+    child
+        .stdin
+        .take()
+        .unwrap()
+        .write_all(versions.as_bytes())
+        .unwrap();
+    child.wait_with_output().unwrap()
+}
+
+#[cfg(unix)]
+#[test]
+fn a_version_of_gherkin_glass_1_is_built_again_from_its_own_tag() {
+    // Rule 180: each version named is built with ghg from the example suite and the
+    // fixtures of its own tag, gathered by that tag's assemble-input.sh, and committed on
+    // its own; a version with no tag stops the rebuild, naming it, and commits nothing more.
+    let folder = scratch("rebuild");
+    let remote = folder.join("remote.git");
+    git_ok(&folder, &["init", "--quiet", "--bare", "remote.git"]);
+    let seed = folder.join("seed");
+    checkout(&remote, &seed);
+    create_dir_all(seed.join("project-site/features")).unwrap();
+    create_dir_all(seed.join("tests/fixtures/only")).unwrap();
+    copy(
+        repository().join("project-site/assemble-input.sh"),
+        seed.join("project-site/assemble-input.sh"),
+    )
+    .unwrap();
+    write(seed.join("project-site/fixtures-left-out"), "").unwrap();
+    write(
+        seed.join("project-site/features/lending.feature"),
+        "Feature: Lending\n  Scenario: Borrowing\n    Given a book\n",
+    )
+    .unwrap();
+    write(
+        seed.join("tests/fixtures/only/kept.feature"),
+        "Feature: Kept\n  Scenario: Kept\n    Given a fixture\n",
+    )
+    .unwrap();
+    git_ok(&seed, &["add", "--all"]);
+    git_ok(&seed, &["commit", "--quiet", "-m", "v1.0.0"]);
+    git_ok(&seed, &["tag", "v1.0.0"]);
+    git_ok(&seed, &["push", "--quiet", "--tags", "origin", "HEAD"]);
+
+    let release = folder.join("release");
+    checkout(&remote, &release);
+    let site = folder.join("pages");
+    publish_ok(&release, &["open", path(&site)]);
+    let front_page = folder.join("front-page.md");
+    write(&front_page, "# Examples\n\n<!-- ghg:contents -->\n").unwrap();
+
+    let built = rebuild(&release, &site, &front_page, "v1.0.0\n");
+    assert!(built.status.success(), "{}", text(&built.stderr));
+    let descriptor: Value =
+        serde_json::from_str(&read_to_string(site.join("data/versions/v1.0.0.json")).unwrap())
+            .unwrap();
+    let pages: Vec<_> = descriptor["features"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|feature| feature["page"].as_str().unwrap().to_string())
+        .collect();
+    assert_eq!(pages, ["fixtures/only/kept", "lending"]);
+    assert_eq!(
+        git_ok(&site, &["log", "--format=%s"]),
+        "site: v1.0.0\n",
+        "committed on its own"
+    );
+    assert_eq!(
+        git_ok(&remote, &["branch", "--list", "gh-pages"]),
+        "",
+        "nothing pushed"
+    );
+
+    let missing = rebuild(&release, &site, &front_page, "v0.9.0\nv1.0.0\n");
+    assert_eq!(missing.status.code(), Some(1));
+    assert!(text(&missing.stderr).starts_with("v0.9.0: "));
+    assert_eq!(git_ok(&site, &["log", "--format=%s"]), "site: v1.0.0\n");
 }
 
 /// `ghg version add` of the site's input as `version`, into `site`, a
@@ -674,8 +882,16 @@ fn every_release_s_site_opens_on_the_readme_of_its_tag() {
         "{workflow}"
     );
     assert!(
-        workflow.contains("\n          front-page: ${{ runner.temp }}/front-page.md\n"),
+        workflow.contains(
+            "project-site/publish.sh build \"$RUNNER_TEMP/pages\" \"$VERSION\" \"$RUNNER_TEMP/input\" \"$RUNNER_TEMP/front-page.md\"\n"
+        ),
         "{workflow}"
+    );
+    let script = read_to_string(repository().join("project-site/publish.sh"))
+        .expect("the publishing script is read");
+    assert!(
+        script.contains("\n    --front-page \"$front_page\" \\\n"),
+        "{script}"
     );
 }
 

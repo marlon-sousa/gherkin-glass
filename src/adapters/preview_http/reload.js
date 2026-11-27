@@ -18,8 +18,9 @@ function inWindow(element) {
 }
 
 // The last heading with an id at or before the focused element, when it is
-// in the window, or else the last whose top is at or above the window's top;
-// a heading inside a collapsed block is not drawn, and never counts.
+// in the window, or else the last whose top is at or above the window's top,
+// below which a heading scrolled to the top keeps its scroll margin; a heading
+// inside a collapsed block is not drawn, and never counts.
 function headingTheReaderIsIn() {
   const headings = [...document.querySelectorAll(HEADINGS)].filter(
     (heading) => heading.getClientRects().length > 0,
@@ -41,7 +42,11 @@ function headingTheReaderIsIn() {
       return before[before.length - 1];
     }
   }
-  const above = headings.filter((heading) => heading.getBoundingClientRect().top <= 1);
+  const above = headings.filter(
+    (heading) =>
+      heading.getBoundingClientRect().top <=
+      parseFloat(getComputedStyle(heading).scrollMarginTop) + 1,
+  );
   return above.length > 0 ? above[above.length - 1] : null;
 }
 

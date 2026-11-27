@@ -22,6 +22,7 @@ pub(crate) struct StoreChange {
 pub(crate) struct WrittenTarget {
     pub(crate) store: StoreFiles,
     pub(crate) shell: SiteFile,
+    pub(crate) anchor_map: SiteFile,
     /// The version of the ghg that writes it.
     pub(crate) ghg: String,
 }

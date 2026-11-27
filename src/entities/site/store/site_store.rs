@@ -22,6 +22,9 @@ pub(crate) struct DescriptorFeature {
     /// The line of each block's keyword: the feature's, then every block inside it, depth
     /// first in file order, each block followed by its blocks, then its examples.
     pub(crate) lines: Vec<usize>,
+    /// The line of each row of every examples block's table but its header, outline by outline
+    /// in file order.
+    pub(crate) row_lines: Vec<usize>,
     /// The link to its source; `None` without `source_link`.
     pub(crate) source: Option<String>,
 }

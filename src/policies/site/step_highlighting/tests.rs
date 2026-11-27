@@ -1,6 +1,7 @@
 mod against_fixtures;
 
-use gherkin::{Feature, GherkinEnv};
+use gherkin::{Feature, GherkinEnv, Step, StepType};
+use proptest::proptest;
 
 use super::*;
 use StepPart::{Number, Parameter, Placeholder, Plain};
@@ -190,4 +191,23 @@ fn an_empty_name_is_no_placeholder() {
         highlight("<> and <x>", &["", "x"]),
         [plain("<> and "), Placeholder("<x>".into())]
     );
+}
+
+proptest! {
+    // Rule 110: any step text, of any characters, is highlighted without losing or
+    // adding any of it, in a scenario and in an outline whose columns are `a` and `b c`.
+    #[test]
+    fn any_step_keeps_its_text_whole_once_highlighted(value in "(?s).{0,40}|[ab <>\"'0-9.,\\-]{0,40}") {
+        let outline = "Feature: F\n  Scenario Outline: O\n    Given x\n    Examples:\n      | a | b c |\n      | 1 | 2 |\n";
+        let feature = Feature::parse(outline, GherkinEnv::default()).expect("parses");
+        let step = Step::builder()
+            .keyword("Given ".to_string())
+            .ty(StepType::Given)
+            .value(value.clone())
+            .build();
+        for scenario in [None, feature.scenarios.first()] {
+            let highlighted = highlight_step(&step, scenario);
+            assert_eq!(text(&highlighted), value);
+        }
+    }
 }

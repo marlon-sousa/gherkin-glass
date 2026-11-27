@@ -2,6 +2,7 @@
   "format": 1,
   "ghg": "{version}",
   "version": null,
+  "version_kind": null,
   "preview": null,
   "title": "Tagged suite",
   "only": false,
@@ -27,6 +28,9 @@
         26,
         30
       ],
+      "row_lines": [
+        15
+      ],
       "source": null
     },
     {
@@ -36,6 +40,7 @@
       "lines": [
         2
       ],
+      "row_lines": [],
       "source": null
     },
     {
@@ -46,6 +51,7 @@
         3,
         6
       ],
+      "row_lines": [],
       "source": null
     }
   ],

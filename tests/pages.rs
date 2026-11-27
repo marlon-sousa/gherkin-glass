@@ -382,6 +382,32 @@ fn an_output_folder_with_other_files_is_left_as_it_is() {
     assert_eq!(files(&written).keys().collect::<Vec<_>>(), ["kept.txt"]);
 }
 
+/// Rule 38: a descriptor that is not JSON, or not in its marker's format, makes the output
+/// folder no site ghg built, and nothing is written or removed.
+#[rstest]
+#[case::not_json("descriptor-not-json", "not JSON")]
+#[case::in_another_format("descriptor-format-2", "{\"format\":2}")]
+fn an_output_folder_whose_descriptor_cannot_be_read_is_left_as_it_is(
+    #[case] name: &str,
+    #[case] descriptor: &str,
+) {
+    let written = output(name);
+    let given = written.to_str().expect("UTF-8");
+    let first = build(&fixtures().join("pages"), &["--output", given]);
+    assert_eq!(first.status.code(), Some(0));
+    write(written.join("data/site.json"), descriptor).expect("written");
+    let before = files(&written);
+    let result = build(&fixtures().join("pages"), &["--output", given]);
+    assert_eq!(
+        String::from_utf8_lossy(&result.stderr),
+        format!(
+            "{given}: this is not a site ghg built, so it is left as it is. Build into an empty or new folder.\n"
+        )
+    );
+    assert_eq!(result.status.code(), Some(1));
+    assert_eq!(files(&written), before);
+}
+
 #[test]
 fn an_output_folder_holding_versions_is_left_as_it_is() {
     let written = output("holding-versions");

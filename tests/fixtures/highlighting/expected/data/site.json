@@ -2,6 +2,7 @@
   "format": 1,
   "ghg": "{version}",
   "version": null,
+  "version_kind": null,
   "preview": null,
   "title": "Highlighting",
   "only": false,
@@ -20,6 +21,7 @@
         2,
         3
       ],
+      "row_lines": [],
       "source": null
     },
     {
@@ -36,6 +38,9 @@
         25,
         29,
         31
+      ],
+      "row_lines": [
+        27
       ],
       "source": null
     }

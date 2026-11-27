@@ -1,4 +1,4 @@
-//! Policy: the store's format, which every need of the store shares: its number, where each file of the store, each shell and the shared assets go below the output folder, and how a file is written, as compact JSON, and named, by its SHA-256.
+//! Policy: the store's format, which every need of the store shares: its number, where each file of the store, each shell, each map of anchors and the shared assets go below the output folder, and how a file is written, as compact JSON, and named, by its SHA-256.
 
 use serde::Serialize;
 use sha2::{Digest, Sha256};
@@ -31,6 +31,9 @@ pub(crate) const DATA: &str = "data";
 /// The folder of every ghg's assets.
 pub(crate) const ASSETS: &str = "assets";
 
+/// The map of anchors, below the folder of its shell.
+const ANCHOR_MAP: &str = "assets/anchors.json";
+
 /// The files of a ghg's assets, which the output folder has in `assets/<ghg>/`.
 pub(crate) const ASSET_FILES: [&str; 4] = [
     "gherkin-glass.css",
@@ -53,6 +56,14 @@ pub(crate) fn shell_path(target: &BuildTarget) -> FilePath {
     match target.folder() {
         Some(folder) => format!("{folder}/{ROOT_PAGE}"),
         None => ROOT_PAGE.to_string(),
+    }
+}
+
+/// The path of the map of anchors of `target`, in the folder of its shell.
+pub(crate) fn anchor_map_path(target: &BuildTarget) -> FilePath {
+    match target.folder() {
+        Some(folder) => format!("{folder}/{ANCHOR_MAP}"),
+        None => ANCHOR_MAP.to_string(),
     }
 }
 

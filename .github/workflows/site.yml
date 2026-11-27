@@ -4,9 +4,13 @@ name: Site
 # release workflow calls this once a release is published, with the release's
 # tag as version, from a job that grants contents: write, since a called
 # workflow cannot have more permissions than its caller. It builds the site of
-# that version with gherkin-glass-action and the released binary, with the
-# tag's README as the site's front page, straight into a checkout of the
-# gh-pages branch, keeping its .nojekyll and .git, and adds it to the branch.
+# that version with the binary the release has just published, downloaded
+# from it and checked against its SHA256SUMS, with the tag's README as the
+# site's front page, straight into a checkout of the gh-pages branch, keeping
+# its .nojekyll and .git, and adds it to the branch. When the branch holds a
+# site of gherkin-glass 1, it first adds again, with the same binary, every
+# version that site held, each from its own tag, and pushes them with the
+# release's own version.
 
 on:
   workflow_call:
@@ -35,25 +39,34 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ inputs.version }}
+          # Every tag, so that the versions of a site of gherkin-glass 1 are
+          # built again from their own.
+          fetch-depth: 0
       - name: Open the gh-pages branch
-        run: project-site/publish.sh open "$RUNNER_TEMP/pages"
+        run: project-site/publish.sh open "$RUNNER_TEMP/pages" > "$RUNNER_TEMP/earlier-versions"
       - name: Gather the example suite and the fixtures
         run: project-site/assemble-input.sh "$RUNNER_TEMP/input"
       - name: Write the front page from the README
         run: project-site/front-page.sh README.md "$RUNNER_TEMP/front-page.md"
-      - name: Build the site with gherkin-glass-action
-        uses: marlon-sousa/gherkin-glass-action@d58974eeb97773597626e53c7f2322eec2971a91 # v1.0.0
-        with:
-          ghg-version: ${{ inputs.version }}
-          build: true
-          title: gherkin-glass examples
-          input: ${{ runner.temp }}/input
-          output: ${{ runner.temp }}/pages
-          version-name: ${{ inputs.version }}
-          front-page: ${{ runner.temp }}/front-page.md
-          keep-in-output: |
-            .nojekyll
-            .git
+      - name: Download the released ghg
+        run: |
+          archive="ghg-$VERSION-x86_64-unknown-linux-musl.tar.gz"
+          mkdir "$RUNNER_TEMP/ghg"
+          gh release download "$VERSION" --repo "$GITHUB_REPOSITORY" \
+            --pattern "$archive" --pattern SHA256SUMS --dir "$RUNNER_TEMP/ghg"
+          cd "$RUNNER_TEMP/ghg"
+          grep -F "  $archive" SHA256SUMS | sha256sum --check --strict
+          tar -xzf "$archive"
+          echo "$RUNNER_TEMP/ghg" >> "$GITHUB_PATH"
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ inputs.version }}
+      - name: Build again with the released ghg the versions of gherkin-glass 1
+        run: project-site/publish.sh rebuild "$RUNNER_TEMP/pages" "$RUNNER_TEMP/front-page.md" < "$RUNNER_TEMP/earlier-versions"
+      - name: Build the site with the released ghg
+        run: project-site/publish.sh build "$RUNNER_TEMP/pages" "$VERSION" "$RUNNER_TEMP/input" "$RUNNER_TEMP/front-page.md"
+        env:
+          VERSION: ${{ inputs.version }}
       - name: Publish the version's folder and the versions page
         run: project-site/publish.sh publish "$RUNNER_TEMP/pages" "$VERSION"
         env:

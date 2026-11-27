@@ -1,0 +1,115 @@
+[
+  {
+    "path": "lending/borrowing.feature",
+    "kind": "feature",
+    "name": "Borrowing books",
+    "line": 1,
+    "page": "lending/borrowing",
+    "anchor": "",
+    "rows": null
+  },
+  {
+    "path": "lending/borrowing.feature",
+    "kind": "background",
+    "name": "",
+    "line": 3,
+    "page": "lending/borrowing",
+    "anchor": "background",
+    "rows": null
+  },
+  {
+    "path": "lending/borrowing.feature",
+    "kind": "scenario",
+    "name": "Borrow a book",
+    "line": 6,
+    "page": "lending/borrowing",
+    "anchor": "borrow-a-book",
+    "rows": null
+  },
+  {
+    "path": "lending/borrowing.feature",
+    "kind": "scenario",
+    "name": "Borrow a book",
+    "line": 11,
+    "page": "lending/borrowing",
+    "anchor": "borrow-a-book-2",
+    "rows": null
+  },
+  {
+    "path": "lending/borrowing.feature",
+    "kind": "rule",
+    "name": "",
+    "line": 16,
+    "page": "lending/borrowing",
+    "anchor": "rule",
+    "rows": null
+  },
+  {
+    "path": "lending/borrowing.feature",
+    "kind": "background",
+    "name": "",
+    "line": 18,
+    "page": "lending/borrowing",
+    "anchor": "background-2",
+    "rows": null
+  },
+  {
+    "path": "lending/borrowing.feature",
+    "kind": "scenario-outline",
+    "name": "Borrow up to a limit",
+    "line": 21,
+    "page": "lending/borrowing",
+    "anchor": "borrow-up-to-a-limit",
+    "rows": null
+  },
+  {
+    "path": "lending/borrowing.feature",
+    "kind": "examples",
+    "name": "Under the limit",
+    "line": 26,
+    "page": "lending/borrowing",
+    "anchor": "under-the-limit",
+    "rows": [
+      {
+        "line": 28,
+        "anchor": "borrow-up-to-a-limit-row-1"
+      },
+      {
+        "line": 31,
+        "anchor": "borrow-up-to-a-limit-row-2"
+      }
+    ]
+  },
+  {
+    "path": "lending/borrowing.feature",
+    "kind": "examples",
+    "name": "",
+    "line": 33,
+    "page": "lending/borrowing",
+    "anchor": "examples",
+    "rows": [
+      {
+        "line": 35,
+        "anchor": "borrow-up-to-a-limit-row-3"
+      }
+    ]
+  },
+  {
+    "path": "returning.feature",
+    "kind": "feature",
+    "name": "Returning books",
+    "line": 1,
+    "page": "returning",
+    "anchor": "",
+    "rows": null
+  },
+  {
+    "path": "returning.feature",
+    "kind": "scenario",
+    "name": "",
+    "line": 3,
+    "page": "returning",
+    "anchor": "scenario",
+    "rows": null
+  }
+]

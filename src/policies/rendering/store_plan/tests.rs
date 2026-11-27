@@ -22,7 +22,7 @@ fn version(text: &str) -> BuildTarget {
 }
 
 /// What a build of `target` renders: an object for each of `objects`, each the page `a`, its
-/// descriptor and its shell, by the ghg `ghg`.
+/// descriptor, its shell and its map of anchors, by the ghg `ghg`.
 fn written(target: &BuildTarget, objects: &[&str], ghg: &str) -> WrittenTarget {
     WrittenTarget {
         store: StoreFiles {
@@ -35,6 +35,7 @@ fn written(target: &BuildTarget, objects: &[&str], ghg: &str) -> WrittenTarget {
             large_site_data: None,
         },
         shell: file(&shell_path(target)),
+        anchor_map: file(&anchor_map_path(target)),
         ghg: ghg.to_string(),
     }
 }
@@ -93,7 +94,9 @@ fn two_versions_files() -> BTreeSet<FilePath> {
     set(&[
         "index.html",
         "main/index.html",
+        "main/assets/anchors.json",
         "v1.0.0/index.html",
+        "v1.0.0/assets/anchors.json",
         "data/versions/main.json",
         "data/versions/v1.0.0.json",
         "data/objects/shared.json",

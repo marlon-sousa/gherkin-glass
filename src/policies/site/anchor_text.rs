@@ -21,17 +21,17 @@ pub(super) fn unique(anchor: String, taken: &mut HashSet<String>) -> String {
 /// digits kept with the marks and joiners inside its words, and one hyphen between words;
 /// empty when nothing is left.
 pub(super) fn anchor_of(text: &str) -> String {
-    // Lower-casing can leave text that is no longer in NFC, so it is normalised again.
+    // Apostrophes go first, so that a mark after one joins the letter before it as NFC does;
+    // lower-casing can leave text that is no longer in NFC, so it is normalised again.
     let lower: String = text
+        .chars()
+        .filter(|c| !matches!(c, '\'' | '\u{2019}'))
         .nfc()
         .collect::<String>()
         .to_lowercase()
         .nfc()
         .collect();
-    let characters: Vec<char> = lower
-        .chars()
-        .filter(|c| !matches!(c, '\'' | '\u{2019}'))
-        .collect();
+    let characters: Vec<char> = lower.chars().collect();
     let mut anchor = String::with_capacity(lower.len());
     // Whether the last character looked at was kept, so that a mark or a joiner may follow it.
     let mut joined = false;
@@ -66,7 +66,23 @@ fn is_joiner(character: char) -> bool {
 
 #[cfg(test)]
 mod tests {
+    use proptest::prelude::proptest;
+    use unicode_normalization::is_nfc;
+
     use super::*;
+
+    proptest! {
+        // Rules 27 to 29: any text, of any characters, makes an anchor in NFC, with no
+        // apostrophe, no hyphen at either end and never two together.
+        #[test]
+        fn any_text_makes_an_anchor_of_words_joined_by_one_hyphen(text in "(?s).{0,40}|[Aa'’ 0-9-\u{301}\u{200c}\u{200d}\u{fe0f}çÉİ]{0,40}") {
+            let anchor = anchor_of(&text);
+            assert!(is_nfc(&anchor), "{text:?}: {anchor:?}");
+            assert!(!anchor.contains(['\'', '\u{2019}']), "{text:?}: {anchor:?}");
+            assert!(!anchor.starts_with('-') && !anchor.ends_with('-'), "{text:?}: {anchor:?}");
+            assert!(!anchor.contains("--"), "{text:?}: {anchor:?}");
+        }
+    }
 
     #[test]
     fn a_name_is_lower_cased_and_its_gaps_become_one_hyphen() {
@@ -82,6 +98,12 @@ mod tests {
     fn apostrophes_are_removed_not_turned_into_hyphens() {
         assert_eq!(anchor_of("The customer's card"), "the-customers-card");
         assert_eq!(anchor_of("The customer’s card"), "the-customers-card");
+    }
+
+    // Rules 27 and 28: a mark after an apostrophe joins the letter before it, in NFC.
+    #[test]
+    fn a_mark_after_an_apostrophe_joins_the_letter_before_it_in_nfc() {
+        assert_eq!(anchor_of("c'\u{301}"), "\u{107}");
     }
 
     #[test]

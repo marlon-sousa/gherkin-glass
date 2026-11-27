@@ -1,10 +1,10 @@
-//! Policy: the order of the versions page, development versions, then releases, then pre-releases, and every version number grouped by its precedence, newest first, which the store's list of versions holds.
+//! Policy: the kind of version a name makes, the order of the versions page, development versions, then releases, then pre-releases, and every version number grouped by its precedence, newest first, which the store's list of versions holds.
 
 use std::cmp::Ordering;
 
 use semver::Version;
 
-use crate::entities::{VersionList, VersionName};
+use crate::entities::{VersionKind, VersionList, VersionName};
 
 /// Sorts `names` into development versions, by name, and releases and pre-releases,
 /// newest first by Semantic Versioning's precedence, then by name. Names compare by
@@ -25,6 +25,15 @@ pub(crate) fn order_versions(names: impl IntoIterator<Item = VersionName>) -> Ve
     list.releases = newest_first(releases);
     list.pre_releases = newest_first(pre_releases);
     list
+}
+
+/// What `name` makes a version, as the versions page groups it.
+pub(crate) fn version_kind(name: &VersionName) -> VersionKind {
+    match version_number(name) {
+        None => VersionKind::Development,
+        Some(number) if number.pre.is_empty() => VersionKind::Release,
+        Some(_) => VersionKind::PreRelease,
+    }
 }
 
 /// The Semantic Versioning 2.0.0 version a name is, alone or after a `v`.
@@ -71,6 +80,8 @@ fn newest_first(mut versions: Vec<(Version, VersionName)>) -> Vec<VersionName> {
 
 #[cfg(test)]
 mod tests {
+    use rstest::rstest;
+
     use super::*;
 
     fn order(names: &[&str]) -> (Vec<String>, Vec<String>, Vec<String>) {
@@ -135,6 +146,19 @@ mod tests {
     fn names_of_the_same_precedence_are_sorted_by_name() {
         let (_, releases, _) = order(&["v1.0.0", "1.0.0+b", "1.0.0+a", "1.0.0", "0.9.0"]);
         assert_eq!(releases, ["1.0.0", "1.0.0+a", "1.0.0+b", "v1.0.0", "0.9.0"]);
+    }
+
+    // Rule 268: a version's kind is told from its name alone, as the versions page groups it.
+    #[rstest]
+    #[case::a_name_that_is_not_a_version_number("main", VersionKind::Development)]
+    #[case::a_version_number_after_a_v("v1.0.0", VersionKind::Release)]
+    #[case::a_version_number_with_build_metadata("1.0.0+b", VersionKind::Release)]
+    #[case::a_version_number_with_a_pre_release_part("v2.0.0-rc.1", VersionKind::PreRelease)]
+    fn a_version_s_kind_is_told_from_its_name(#[case] name: &str, #[case] kind: VersionKind) {
+        assert_eq!(
+            version_kind(&VersionName::new(name).expect("a version name")),
+            kind
+        );
     }
 
     // Rule 253: `precedence` holds every version number, newest first, those of the same

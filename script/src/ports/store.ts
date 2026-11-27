@@ -96,11 +96,15 @@ export interface Sentences {
   readonly then: readonly string[];
 }
 
+export type VersionKind = "development" | "release" | "pre-release";
+
 /** A site's, a version's or a preview's; the members the script never reads are left out. */
 export interface Descriptor {
   readonly format: number;
   readonly ghg: string;
   readonly version: string | null;
+  /** What its name makes the version; null for a site without versions and a preview. */
+  readonly version_kind: VersionKind | null;
   readonly preview: string | null;
   readonly title: string;
   readonly only: boolean;

@@ -94,7 +94,7 @@ Every action a workflow uses is pinned to a commit, with its version in a commen
 
 ## Releases
 
-Versions follow [Semantic Versioning](https://semver.org/). The addresses of pages, the anchor rule, the command line, the configuration keys and the names of the release archives are part of what is promised, so changing any of them in a way that breaks an existing site, command or installation is a major version. [docs/BEHAVIOUR.md](docs/BEHAVIOUR.md), "Releases", says what a release holds.
+Versions follow [Semantic Versioning](https://semver.org/). The addresses of pages, the anchor rule, the map of anchors, `assets/anchors.json` ([#168](https://github.com/marlon-sousa/gherkin-glass/issues/168)), the command line, the configuration keys and the names of the release archives are part of what is promised, so changing any of them in a way that breaks an existing site, command or installation is a major version. [docs/BEHAVIOUR.md](docs/BEHAVIOUR.md), "Releases", says what a release holds.
 
 ### Preparing a release
 
@@ -128,7 +128,7 @@ A pull request that changes how releases are made runs the same builds, archives
 
 crates.io trusts only `release.yml` in this repository, running in the `crates-io` environment, so no token is stored anywhere. Since crates.io checks only the workflow's file name and the environment, and a pull request runs its own copy of the workflow, the `crates-io` environment must accept deployments only from tags `v*`: a maintainer sets this once, in the repository's settings, under Environments, as a deployment tag rule. crates.io sets up trusted publishing only for a crate that already exists, so the first version that goes to crates.io, a release candidate or a version without a pre-release part, never an alpha or a beta, may have to be published by hand: a maintainer logged in with `cargo login` runs `cargo publish --locked` at the commit to be tagged, before pushing its tag, then sets up the trusted publisher. The workflow's publish job then finds that version on crates.io and leaves it as it is. If a release stops after publishing, a maintainer re-runs the workflow's failed jobs.
 
-The repository's own GitHub Pages site shows an example suite and the fixtures as each release renders them, one folder per version, so anyone can see what gherkin-glass produces before downloading it. Each release adds its own version's folder to the `gh-pages` branch and leaves the earlier ones as they were ([docs/BEHAVIOUR.md](docs/BEHAVIOUR.md), "The project's own site"). Pages is set once, under the repository's Settings, Pages: source "Deploy from a branch", branch `gh-pages`, folder root.
+The repository's own GitHub Pages site shows an example suite and the fixtures as each release renders them, one folder per version, so anyone can see what gherkin-glass produces before downloading it. Each release adds its own version's folder to the `gh-pages` branch and leaves the earlier ones as they were, but for the first release of gherkin-glass 2, which finds the site gherkin-glass 1 built and builds each of its versions again, from its own tag ([docs/BEHAVIOUR.md](docs/BEHAVIOUR.md), "The project's own site"). Pages is set once, under the repository's Settings, Pages: source "Deploy from a branch", branch `gh-pages`, folder root.
 
 ## Writing style
 

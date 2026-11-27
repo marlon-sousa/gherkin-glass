@@ -87,6 +87,7 @@ mod tests {
             PathBuf::from("a.feature"),
             feature,
             "en".into(),
+            Vec::new(),
             BTreeMap::new(),
         )
     }

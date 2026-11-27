@@ -72,6 +72,7 @@ fn a_preview_removed_takes_its_folder_and_the_assets_nothing_links() {
         .into_iter()
         .chain(set(&[
             "previews/pr-1/index.html",
+            "previews/pr-1/assets/anchors.json",
             "data/previews/pr-1.json",
             "assets/2.1.0/gherkin-glass.css",
             "assets/2.1.0/gherkin-glass.js",

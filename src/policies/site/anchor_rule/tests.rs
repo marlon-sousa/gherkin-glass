@@ -12,6 +12,7 @@ fn feature(source: &str) -> ParsedFeature {
         PathBuf::from("f.feature"),
         Feature::parse(source, GherkinEnv::default()).expect("parsed"),
         "en".to_string(),
+        Vec::new(),
         BTreeMap::new(),
     )
 }

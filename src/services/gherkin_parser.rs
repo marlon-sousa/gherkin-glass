@@ -7,7 +7,9 @@ use rayon::prelude::{IntoParallelIterator, ParallelIterator};
 
 use crate::entities::{FileToParse, ParsedFeature, ParsedFile, Unnamed};
 use crate::errors::{InputError, InputErrorKind};
-use crate::policies::{correct_doc_strings, correct_step_keywords, file_language, unnamed_blocks};
+use crate::policies::{
+    correct_doc_strings, correct_step_keywords, examples_row_lines, file_language, unnamed_blocks,
+};
 use crate::ports::FeatureParser;
 
 /// What the controller asks of the gherkin parser.
@@ -53,10 +55,12 @@ impl GherkinParser {
         let relative = path.strip_prefix(input).unwrap_or(path).to_path_buf();
         correct_step_keywords(&mut raw.feature, &raw.source);
         let language = file_language(&raw.source);
+        let row_lines = examples_row_lines(&raw.feature, &raw.source);
         Ok(ParsedFeature::new(
             relative,
             raw.feature,
             language,
+            row_lines,
             media_types,
         ))
     }

@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Suite, main</title>
-<meta name="description" content="The feature files of Suite, main, shown as pages.">
+<title>Suite, main, a development version</title>
+<meta name="description" content="The feature files of Suite, main, a development version, shown as pages.">
 <script>try{var t=localStorage.getItem("gherkin-glass:theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}</script>
 <style>
 :root,
@@ -220,8 +220,9 @@ tag-no-scenario = None of its scenarios carries the tag.
 tag-through-examples = { $scenario }, through its examples
 tag-through-rule = { $scenario }, through its rule
 tag-through-feature = { $scenario }, through its feature
-## The versions page, at the root of a versioned site. $name is a version's
-## name, as given, and $site the site's title.
+## The versions page, at the root of a versioned site, whose title is the
+## first link of the breadcrumb of every page of a version. $name is a
+## version's name, as given, and $site the site's title.
 
 versions-title = Versions
 versions-page-title = Versions, { $site }
@@ -229,6 +230,12 @@ versions-development = Development versions
 versions-releases = Releases
 versions-pre-releases = Pre-releases
 versions-development-version = { $name }, a development version
+versions-pre-release-version = { $name }, a pre-release
+
+## The end of the title of every page of a version, after the page's own
+## $title: the $version, worded as the two messages above word it.
+
+version-page-title = { $title }, { $version }
 
 ## A block's heading on a feature's page: its kind alone, or its kind and
 ## its $name. $kind is one of feature, background, rule, scenario,

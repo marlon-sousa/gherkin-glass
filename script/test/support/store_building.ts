@@ -70,6 +70,7 @@ export function descriptor(title: string, features: readonly FeatureEntry[], ext
     format: 1,
     ghg: "{version}",
     version: null,
+    version_kind: null,
     preview: null,
     title,
     only: false,

@@ -2,6 +2,7 @@
   "format": 1,
   "ghg": "{version}",
   "version": null,
+  "version_kind": null,
   "preview": null,
   "title": "Banking & <more>",
   "only": false,
@@ -20,6 +21,7 @@
         1,
         2
       ],
+      "row_lines": [],
       "source": "https://example.com/repo/blob/main/features/billing/archive/closed%20%231.feature#L1"
     },
     {
@@ -41,6 +43,10 @@
         58,
         59
       ],
+      "row_lines": [
+        36,
+        56
+      ],
       "source": "https://example.com/repo/blob/main/features/billing/refunds.feature#L2"
     },
     {
@@ -51,6 +57,7 @@
         2,
         4
       ],
+      "row_lines": [],
       "source": "https://example.com/repo/blob/main/features/emoji.feature#L2"
     },
     {
@@ -71,6 +78,10 @@
         34,
         35
       ],
+      "row_lines": [
+        16,
+        23
+      ],
       "source": "https://example.com/repo/blob/main/features/kinds.feature#L1"
     },
     {
@@ -89,6 +100,12 @@
         37,
         40
       ],
+      "row_lines": [
+        17,
+        18,
+        22,
+        32
+      ],
       "source": "https://example.com/repo/blob/main/features/outlines.feature#L1"
     },
     {
@@ -99,6 +116,7 @@
         1,
         2
       ],
+      "row_lines": [],
       "source": "https://example.com/repo/blob/main/features/reports/monthly/totals.feature#L1"
     },
     {
@@ -109,6 +127,7 @@
         2,
         4
       ],
+      "row_lines": [],
       "source": "https://example.com/repo/blob/main/features/saque%20em%20conta%20poupan%C3%A7a.feature#L2"
     },
     {
@@ -118,6 +137,7 @@
       "lines": [
         1
       ],
+      "row_lines": [],
       "source": "https://example.com/repo/blob/main/features/stories/read.story#L1"
     }
   ],

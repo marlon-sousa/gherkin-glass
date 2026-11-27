@@ -2,6 +2,7 @@
   "format": 1,
   "ghg": "{version}",
   "version": null,
+  "version_kind": null,
   "preview": null,
   "title": "Feature files",
   "only": false,
@@ -20,6 +21,7 @@
         1,
         2
       ],
+      "row_lines": [],
       "source": null
     },
     {
@@ -41,6 +43,10 @@
         58,
         59
       ],
+      "row_lines": [
+        36,
+        56
+      ],
       "source": null
     },
     {
@@ -51,6 +57,7 @@
         2,
         4
       ],
+      "row_lines": [],
       "source": null
     },
     {
@@ -71,6 +78,10 @@
         34,
         35
       ],
+      "row_lines": [
+        16,
+        23
+      ],
       "source": null
     },
     {
@@ -89,6 +100,12 @@
         37,
         40
       ],
+      "row_lines": [
+        17,
+        18,
+        22,
+        32
+      ],
       "source": null
     },
     {
@@ -99,6 +116,7 @@
         1,
         2
       ],
+      "row_lines": [],
       "source": null
     },
     {
@@ -109,6 +127,7 @@
         2,
         4
       ],
+      "row_lines": [],
       "source": null
     },
     {
@@ -118,6 +137,7 @@
       "lines": [
         1
       ],
+      "row_lines": [],
       "source": null
     }
   ],

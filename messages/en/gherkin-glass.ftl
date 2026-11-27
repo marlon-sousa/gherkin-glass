@@ -244,8 +244,9 @@ serve-not-found = Nothing is at this address in the site.
 serve-wrong-method = ghg serve answers only GET and HEAD requests.
 
 ## A shell's title and description, before the script draws a page in it.
-## $site is the site's title, $version a version's name, as given, and
-## $title the shell's title.
+## $site is the site's title, $version a version, worded as
+## versions-development-version and versions-pre-release-version below word
+## it, and $title the shell's title.
 
 version-shell-title = { $site }, { $version }
 shell-description = The feature files of { $title }, shown as pages.
@@ -378,8 +379,9 @@ tag-no-scenario = None of its scenarios carries the tag.
 tag-through-examples = { $scenario }, through its examples
 tag-through-rule = { $scenario }, through its rule
 tag-through-feature = { $scenario }, through its feature
-## The versions page, at the root of a versioned site. $name is a version's
-## name, as given, and $site the site's title.
+## The versions page, at the root of a versioned site, whose title is the
+## first link of the breadcrumb of every page of a version. $name is a
+## version's name, as given, and $site the site's title.
 
 versions-title = Versions
 versions-page-title = Versions, { $site }
@@ -387,6 +389,12 @@ versions-development = Development versions
 versions-releases = Releases
 versions-pre-releases = Pre-releases
 versions-development-version = { $name }, a development version
+versions-pre-release-version = { $name }, a pre-release
+
+## The end of the title of every page of a version, after the page's own
+## $title: the $version, worded as the two messages above word it.
+
+version-page-title = { $title }, { $version }
 
 ## A block's heading on a feature's page: its kind alone, or its kind and
 ## its $name. $kind is one of feature, background, rule, scenario,

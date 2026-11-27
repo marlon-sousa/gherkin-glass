@@ -156,6 +156,7 @@ fn a_keyword_without_a_space_keeps_none() {
         "a.feature".into(),
         feature,
         "zh-CN".to_string(),
+        Vec::new(),
         Default::default(),
     );
     let (object, _) = feature_object(&parsed);
