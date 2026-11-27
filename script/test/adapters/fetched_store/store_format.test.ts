@@ -1,10 +1,10 @@
-// The policy of src/policies/store_format.ts.
+// The adapter of src/adapters/fetched_store/store_format.ts.
 
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { readDescriptor, readObject, readPages, readVersions } from "../../src/policies/store_format.ts";
-import { outlinesDescriptor, outlinesObject } from "../support/outlines_store.ts";
+import { readDescriptor, readObject, readPages, readVersions } from "../../../src/adapters/fetched_store/store_format.ts";
+import { outlinesDescriptor, outlinesObject } from "../../support/outlines_store.ts";
 
 /** `value` as it comes back from JSON. */
 const parsed = (value: unknown): unknown => JSON.parse(JSON.stringify(value));
