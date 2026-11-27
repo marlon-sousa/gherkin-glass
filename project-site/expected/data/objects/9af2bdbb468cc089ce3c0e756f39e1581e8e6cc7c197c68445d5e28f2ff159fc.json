@@ -1,0 +1,873 @@
+{
+  "format": 1,
+  "language": "en",
+  "lang": "en",
+  "feature": {
+    "kind": "feature",
+    "keyword": "Feature",
+    "note": false,
+    "name": "Returning books",
+    "description": "Books come back to the desk or to the book drop, and go back on the shelf.",
+    "tags": [
+      "@lending"
+    ],
+    "anchor": "",
+    "hash": "7e10362cdceaafb518135fed50ce93fdcc8765c3e210b70313c94ec5dd02eb7d",
+    "blocks": [
+      {
+        "kind": "scenario",
+        "keyword": "Scenario",
+        "note": false,
+        "name": "Returning a book on time",
+        "description": "",
+        "tags": [],
+        "anchor": "returning-a-book-on-time",
+        "hash": "797ad9430bc8b25b6c252ec81b0dbcbad8ee1672fc9d0e0fb73718a99382cb4d",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "\"Ana\" borrowed \"The Hobbit\" 10 days ago",
+            "kind": "given",
+            "sentence": "\"…\" borrowed \"…\" 10 days ago",
+            "slots": [
+              "\"Ana\"",
+              "\"The Hobbit\""
+            ],
+            "parts": [
+              {
+                "kind": "parameter",
+                "text": "\"Ana\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"Ana\"",
+                    "parts": []
+                  }
+                ]
+              },
+              {
+                "kind": "text",
+                "text": " borrowed ",
+                "parts": []
+              },
+              {
+                "kind": "parameter",
+                "text": "\"The Hobbit\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"The Hobbit\"",
+                    "parts": []
+                  }
+                ]
+              },
+              {
+                "kind": "text",
+                "text": " ",
+                "parts": []
+              },
+              {
+                "kind": "number",
+                "text": "10",
+                "parts": []
+              },
+              {
+                "kind": "text",
+                "text": " days ago",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "When ",
+            "text": "\"Ana\" returns \"The Hobbit\"",
+            "kind": "when",
+            "sentence": "\"…\" returns \"…\"",
+            "slots": [
+              "\"Ana\"",
+              "\"The Hobbit\""
+            ],
+            "parts": [
+              {
+                "kind": "parameter",
+                "text": "\"Ana\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"Ana\"",
+                    "parts": []
+                  }
+                ]
+              },
+              {
+                "kind": "text",
+                "text": " returns ",
+                "parts": []
+              },
+              {
+                "kind": "parameter",
+                "text": "\"The Hobbit\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"The Hobbit\"",
+                    "parts": []
+                  }
+                ]
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "Then ",
+            "text": "\"The Hobbit\" is on the shelf",
+            "kind": "then",
+            "sentence": "\"…\" is on the shelf",
+            "slots": [
+              "\"The Hobbit\""
+            ],
+            "parts": [
+              {
+                "kind": "parameter",
+                "text": "\"The Hobbit\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"The Hobbit\"",
+                    "parts": []
+                  }
+                ]
+              },
+              {
+                "kind": "text",
+                "text": " is on the shelf",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "And ",
+            "text": "\"Ana\" owes nothing",
+            "kind": "then",
+            "sentence": "\"…\" owes nothing",
+            "slots": [
+              "\"Ana\""
+            ],
+            "parts": [
+              {
+                "kind": "parameter",
+                "text": "\"Ana\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"Ana\"",
+                    "parts": []
+                  }
+                ]
+              },
+              {
+                "kind": "text",
+                "text": " owes nothing",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "scenario",
+        "keyword": "Scenario",
+        "note": false,
+        "name": "Returning a book late",
+        "description": "",
+        "tags": [],
+        "anchor": "returning-a-book-late",
+        "hash": "fa8690d5823af6cfa06faaf2a0e239a594f65889ff98160e911cbec552ec8978",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "\"Ana\" borrowed \"The Hobbit\" 30 days ago",
+            "kind": "given",
+            "sentence": "\"…\" borrowed \"…\" 30 days ago",
+            "slots": [
+              "\"Ana\"",
+              "\"The Hobbit\""
+            ],
+            "parts": [
+              {
+                "kind": "parameter",
+                "text": "\"Ana\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"Ana\"",
+                    "parts": []
+                  }
+                ]
+              },
+              {
+                "kind": "text",
+                "text": " borrowed ",
+                "parts": []
+              },
+              {
+                "kind": "parameter",
+                "text": "\"The Hobbit\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"The Hobbit\"",
+                    "parts": []
+                  }
+                ]
+              },
+              {
+                "kind": "text",
+                "text": " ",
+                "parts": []
+              },
+              {
+                "kind": "number",
+                "text": "30",
+                "parts": []
+              },
+              {
+                "kind": "text",
+                "text": " days ago",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "When ",
+            "text": "\"Ana\" returns \"The Hobbit\"",
+            "kind": "when",
+            "sentence": "\"…\" returns \"…\"",
+            "slots": [
+              "\"Ana\"",
+              "\"The Hobbit\""
+            ],
+            "parts": [
+              {
+                "kind": "parameter",
+                "text": "\"Ana\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"Ana\"",
+                    "parts": []
+                  }
+                ]
+              },
+              {
+                "kind": "text",
+                "text": " returns ",
+                "parts": []
+              },
+              {
+                "kind": "parameter",
+                "text": "\"The Hobbit\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"The Hobbit\"",
+                    "parts": []
+                  }
+                ]
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "Then ",
+            "text": "\"Ana\" owes 0.90 in fines",
+            "kind": "then",
+            "sentence": "\"…\" owes 0.90 in fines",
+            "slots": [
+              "\"Ana\""
+            ],
+            "parts": [
+              {
+                "kind": "parameter",
+                "text": "\"Ana\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"Ana\"",
+                    "parts": []
+                  }
+                ]
+              },
+              {
+                "kind": "text",
+                "text": " owes ",
+                "parts": []
+              },
+              {
+                "kind": "number",
+                "text": "0.90",
+                "parts": []
+              },
+              {
+                "kind": "text",
+                "text": " in fines",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "And ",
+            "text": "the receipt reads:",
+            "kind": "then",
+            "sentence": "the receipt reads:",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "the receipt reads:",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": {
+              "media_type": null,
+              "content": "Ana, card 1024\nThe Hobbit: 9 days late, 0.90\nTotal: 0.90\nThree quotes, as they are printed: \"\"\""
+            }
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "scenario-outline",
+        "keyword": "Scenario Outline",
+        "note": false,
+        "name": "Fines for each kind of item",
+        "description": "",
+        "tags": [],
+        "anchor": "fines-for-each-kind-of-item",
+        "hash": "3aaf882e8920b56e9bda811264dc276c4b7139f8c1d1524656fde229b5247cd3",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "\"Ana\" borrowed the <kind> \"<title>\" <days> days ago",
+            "kind": "given",
+            "sentence": "\"…\" borrowed the \"…\" \"…\" \"…\" days ago",
+            "slots": [
+              "\"Ana\"",
+              "<kind>",
+              "\"<title>\"",
+              "<days>"
+            ],
+            "parts": [
+              {
+                "kind": "parameter",
+                "text": "\"Ana\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"Ana\"",
+                    "parts": []
+                  }
+                ]
+              },
+              {
+                "kind": "text",
+                "text": " borrowed the ",
+                "parts": []
+              },
+              {
+                "kind": "placeholder",
+                "text": "<kind>",
+                "parts": []
+              },
+              {
+                "kind": "text",
+                "text": " ",
+                "parts": []
+              },
+              {
+                "kind": "parameter",
+                "text": "\"<title>\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"",
+                    "parts": []
+                  },
+                  {
+                    "kind": "placeholder",
+                    "text": "<title>",
+                    "parts": []
+                  },
+                  {
+                    "kind": "text",
+                    "text": "\"",
+                    "parts": []
+                  }
+                ]
+              },
+              {
+                "kind": "text",
+                "text": " ",
+                "parts": []
+              },
+              {
+                "kind": "placeholder",
+                "text": "<days>",
+                "parts": []
+              },
+              {
+                "kind": "text",
+                "text": " days ago",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "When ",
+            "text": "\"Ana\" returns \"<title>\"",
+            "kind": "when",
+            "sentence": "\"…\" returns \"…\"",
+            "slots": [
+              "\"Ana\"",
+              "\"<title>\""
+            ],
+            "parts": [
+              {
+                "kind": "parameter",
+                "text": "\"Ana\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"Ana\"",
+                    "parts": []
+                  }
+                ]
+              },
+              {
+                "kind": "text",
+                "text": " returns ",
+                "parts": []
+              },
+              {
+                "kind": "parameter",
+                "text": "\"<title>\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"",
+                    "parts": []
+                  },
+                  {
+                    "kind": "placeholder",
+                    "text": "<title>",
+                    "parts": []
+                  },
+                  {
+                    "kind": "text",
+                    "text": "\"",
+                    "parts": []
+                  }
+                ]
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "Then ",
+            "text": "\"Ana\" owes <fine> in fines",
+            "kind": "then",
+            "sentence": "\"…\" owes \"…\" in fines",
+            "slots": [
+              "\"Ana\"",
+              "<fine>"
+            ],
+            "parts": [
+              {
+                "kind": "parameter",
+                "text": "\"Ana\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"Ana\"",
+                    "parts": []
+                  }
+                ]
+              },
+              {
+                "kind": "text",
+                "text": " owes ",
+                "parts": []
+              },
+              {
+                "kind": "placeholder",
+                "text": "<fine>",
+                "parts": []
+              },
+              {
+                "kind": "text",
+                "text": " in fines",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [
+          {
+            "kind": "examples",
+            "keyword": "Examples",
+            "note": false,
+            "name": "",
+            "description": "",
+            "tags": [],
+            "anchor": "examples",
+            "hash": "c9238db1bc92b9d701391f6571a0be38d154fd40d79c3ffe668b8218e2edb824",
+            "blocks": [],
+            "steps": [],
+            "examples": [],
+            "place": 1,
+            "table": [
+              [
+                "kind",
+                "title",
+                "days",
+                "fine"
+              ],
+              [
+                "book",
+                "Emma",
+                "22",
+                "0.10"
+              ],
+              [
+                "film",
+                "Metropolis",
+                "9",
+                "1.00"
+              ]
+            ],
+            "runs": [
+              {
+                "anchor": "fines-for-each-kind-of-item-row-1",
+                "steps": [
+                  {
+                    "keyword": "Given ",
+                    "text": "\"Ana\" borrowed the book \"Emma\" 22 days ago",
+                    "kind": "given",
+                    "sentence": "\"…\" borrowed the book \"…\" 22 days ago",
+                    "slots": [
+                      "\"Ana\"",
+                      "\"Emma\""
+                    ],
+                    "parts": [
+                      {
+                        "kind": "parameter",
+                        "text": "\"Ana\"",
+                        "parts": [
+                          {
+                            "kind": "text",
+                            "text": "\"Ana\"",
+                            "parts": []
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "text",
+                        "text": " borrowed the book ",
+                        "parts": []
+                      },
+                      {
+                        "kind": "parameter",
+                        "text": "\"Emma\"",
+                        "parts": [
+                          {
+                            "kind": "text",
+                            "text": "\"Emma\"",
+                            "parts": []
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "text",
+                        "text": " ",
+                        "parts": []
+                      },
+                      {
+                        "kind": "number",
+                        "text": "22",
+                        "parts": []
+                      },
+                      {
+                        "kind": "text",
+                        "text": " days ago",
+                        "parts": []
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": null
+                  },
+                  {
+                    "keyword": "When ",
+                    "text": "\"Ana\" returns \"Emma\"",
+                    "kind": "when",
+                    "sentence": "\"…\" returns \"…\"",
+                    "slots": [
+                      "\"Ana\"",
+                      "\"Emma\""
+                    ],
+                    "parts": [
+                      {
+                        "kind": "parameter",
+                        "text": "\"Ana\"",
+                        "parts": [
+                          {
+                            "kind": "text",
+                            "text": "\"Ana\"",
+                            "parts": []
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "text",
+                        "text": " returns ",
+                        "parts": []
+                      },
+                      {
+                        "kind": "parameter",
+                        "text": "\"Emma\"",
+                        "parts": [
+                          {
+                            "kind": "text",
+                            "text": "\"Emma\"",
+                            "parts": []
+                          }
+                        ]
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": null
+                  },
+                  {
+                    "keyword": "Then ",
+                    "text": "\"Ana\" owes 0.10 in fines",
+                    "kind": "then",
+                    "sentence": "\"…\" owes 0.10 in fines",
+                    "slots": [
+                      "\"Ana\""
+                    ],
+                    "parts": [
+                      {
+                        "kind": "parameter",
+                        "text": "\"Ana\"",
+                        "parts": [
+                          {
+                            "kind": "text",
+                            "text": "\"Ana\"",
+                            "parts": []
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "text",
+                        "text": " owes ",
+                        "parts": []
+                      },
+                      {
+                        "kind": "number",
+                        "text": "0.10",
+                        "parts": []
+                      },
+                      {
+                        "kind": "text",
+                        "text": " in fines",
+                        "parts": []
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": null
+                  }
+                ]
+              },
+              {
+                "anchor": "fines-for-each-kind-of-item-row-2",
+                "steps": [
+                  {
+                    "keyword": "Given ",
+                    "text": "\"Ana\" borrowed the film \"Metropolis\" 9 days ago",
+                    "kind": "given",
+                    "sentence": "\"…\" borrowed the film \"…\" 9 days ago",
+                    "slots": [
+                      "\"Ana\"",
+                      "\"Metropolis\""
+                    ],
+                    "parts": [
+                      {
+                        "kind": "parameter",
+                        "text": "\"Ana\"",
+                        "parts": [
+                          {
+                            "kind": "text",
+                            "text": "\"Ana\"",
+                            "parts": []
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "text",
+                        "text": " borrowed the film ",
+                        "parts": []
+                      },
+                      {
+                        "kind": "parameter",
+                        "text": "\"Metropolis\"",
+                        "parts": [
+                          {
+                            "kind": "text",
+                            "text": "\"Metropolis\"",
+                            "parts": []
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "text",
+                        "text": " ",
+                        "parts": []
+                      },
+                      {
+                        "kind": "number",
+                        "text": "9",
+                        "parts": []
+                      },
+                      {
+                        "kind": "text",
+                        "text": " days ago",
+                        "parts": []
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": null
+                  },
+                  {
+                    "keyword": "When ",
+                    "text": "\"Ana\" returns \"Metropolis\"",
+                    "kind": "when",
+                    "sentence": "\"…\" returns \"…\"",
+                    "slots": [
+                      "\"Ana\"",
+                      "\"Metropolis\""
+                    ],
+                    "parts": [
+                      {
+                        "kind": "parameter",
+                        "text": "\"Ana\"",
+                        "parts": [
+                          {
+                            "kind": "text",
+                            "text": "\"Ana\"",
+                            "parts": []
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "text",
+                        "text": " returns ",
+                        "parts": []
+                      },
+                      {
+                        "kind": "parameter",
+                        "text": "\"Metropolis\"",
+                        "parts": [
+                          {
+                            "kind": "text",
+                            "text": "\"Metropolis\"",
+                            "parts": []
+                          }
+                        ]
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": null
+                  },
+                  {
+                    "keyword": "Then ",
+                    "text": "\"Ana\" owes 1.00 in fines",
+                    "kind": "then",
+                    "sentence": "\"…\" owes 1.00 in fines",
+                    "slots": [
+                      "\"Ana\""
+                    ],
+                    "parts": [
+                      {
+                        "kind": "parameter",
+                        "text": "\"Ana\"",
+                        "parts": [
+                          {
+                            "kind": "text",
+                            "text": "\"Ana\"",
+                            "parts": []
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "text",
+                        "text": " owes ",
+                        "parts": []
+                      },
+                      {
+                        "kind": "number",
+                        "text": "1.00",
+                        "parts": []
+                      },
+                      {
+                        "kind": "text",
+                        "text": " in fines",
+                        "parts": []
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": null
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "place": null,
+        "table": null,
+        "runs": []
+      }
+    ],
+    "steps": [],
+    "examples": [],
+    "place": null,
+    "table": null,
+    "runs": []
+  }
+}

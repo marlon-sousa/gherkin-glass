@@ -2,9 +2,10 @@
 
 use derive_more::Display;
 
-/// Names the versions page, the output folder's marker and the previews use, compared ignoring capitals.
-const RESERVED: [&str; 4] = [
+/// Names the versions page, the site's data, the output folder's marker and the previews use, compared ignoring capitals.
+const RESERVED: [&str; 5] = [
     "assets",
+    "data",
     "index.html",
     "ghg-versions.json",
     VersionName::PREVIEWS,
@@ -75,6 +76,8 @@ mod tests {
             "v1:2",
             "assets",
             "ASSETS",
+            "data",
+            "Data",
             "index.html",
             "Index.HTML",
             "ghg-versions.json",

@@ -101,9 +101,14 @@ fn marked(
 fn lists_only_inside(record: &Record) -> bool {
     match record {
         Record::Site(files) => files.iter().all(is_inside),
-        Record::Versions { page, versions } => page
+        Record::Versions {
+            page,
+            versions,
+            data,
+        } => page
             .iter()
             .chain(versions.values().flatten())
+            .chain(data)
             .all(is_inside),
     }
 }
@@ -123,9 +128,14 @@ fn is_plain_name(name: &str) -> bool {
 /// separator.
 fn found_only(record: Record, files: &BTreeSet<FilePath>, tops: &BTreeSet<&str>) -> Record {
     match record {
-        Record::Versions { page, versions } => Record::Versions {
+        Record::Versions {
+            page,
+            versions,
+            data,
+        } => Record::Versions {
             page: page.intersection(files).cloned().collect(),
             versions,
+            data: data.intersection(files).cloned().collect(),
         },
         Record::Site(listed) => Record::Site(
             listed
@@ -163,8 +173,13 @@ fn written(record: &Record) -> BTreeSet<FilePath> {
             .cloned()
             .chain([Record::SITE_MARKER.to_string()])
             .collect(),
-        Record::Versions { page, versions } => page
+        Record::Versions {
+            page,
+            versions,
+            data,
+        } => page
             .iter()
+            .chain(data)
             .cloned()
             .chain([Record::VERSIONS_MARKER.to_string()])
             .chain(

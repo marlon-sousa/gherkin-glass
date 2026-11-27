@@ -7,13 +7,16 @@ use std::fs::{
     create_dir_all, read_dir, read_to_string, remove_dir, remove_dir_all, remove_file,
     symlink_metadata, write,
 };
-use std::io::{ErrorKind, Result as IoResult};
+use std::io::{Error as IoError, ErrorKind, Result as IoResult};
 use std::path::Path;
 
 use marker_file::{marker_text, site_record, versions_record};
 
 use crate::entities::{EntryKind, FilePath, KeptInOutput, LetterCase, OutputContents, Record};
 use crate::ports::OutputFolders;
+
+/// What a reason reads for a path of the store that is a folder or a link, which is not read.
+const NOT_A_FILE: &str = "not a file";
 
 #[derive(Debug, Default, Clone, Copy)]
 pub(crate) struct OutputFolderStore;
@@ -56,6 +59,15 @@ impl OutputFolders for OutputFolderStore {
             kept: found.kept,
             record,
         })
+    }
+
+    fn read(&self, output: &Path, file: &str) -> IoResult<String> {
+        let path = output.join(file);
+        if symlink_metadata(&path)?.is_file() {
+            read_to_string(path)
+        } else {
+            Err(IoError::new(ErrorKind::InvalidInput, NOT_A_FILE))
+        }
     }
 
     fn remove(&self, path: &Path) -> IoResult<()> {

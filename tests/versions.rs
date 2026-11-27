@@ -9,9 +9,18 @@ use std::fs::{copy, create_dir_all, read, read_dir, read_to_string, remove_dir_a
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
+#[path = "support/site_files.rs"]
+#[expect(
+    dead_code,
+    reason = "this file compares only the store of a site with an expected one"
+)]
+mod site_files;
+#[path = "support/store_json.rs"]
+mod store_json;
 #[path = "support/version_placeholder.rs"]
 mod version_placeholder;
 
+use site_files::assert_same_store;
 use version_placeholder::with_version_placeholder;
 
 fn fixture() -> PathBuf {
@@ -53,7 +62,7 @@ fn a_version_name_that_cannot_be_one_is_a_mistake_on_the_command_line() {
     assert_eq!(output.status.code(), Some(2));
     assert_eq!(
         String::from_utf8(output.stderr).expect("UTF-8"),
-        "release/1.0 cannot be a version name. A version name is made of letters, digits, dots, hyphens, underscores and plus signs, starts with a letter or a digit, does not end with a dot, and is not assets, index.html, ghg-versions.json, previews, or a name Windows keeps for a device, such as con or nul.\n"
+        "release/1.0 cannot be a version name. A version name is made of letters, digits, dots, hyphens, underscores and plus signs, starts with a letter or a digit, does not end with a dot, and is not assets, data, index.html, ghg-versions.json, previews, or a name Windows keeps for a device, such as con or nul.\n"
     );
 }
 
@@ -67,7 +76,7 @@ fn a_version_name_that_cannot_be_one_is_a_problem_of_the_configuration() {
     assert_eq!(output.status.code(), Some(1));
     assert_eq!(
         String::from_utf8(output.stderr).expect("UTF-8"),
-        "ghg.toml:2: release/1.0 cannot be a version name. A version name is made of letters, digits, dots, hyphens, underscores and plus signs, starts with a letter or a digit, does not end with a dot, and is not assets, index.html, ghg-versions.json, previews, or a name Windows keeps for a device, such as con or nul.\n"
+        "ghg.toml:2: release/1.0 cannot be a version name. A version name is made of letters, digits, dots, hyphens, underscores and plus signs, starts with a letter or a digit, does not end with a dot, and is not assets, data, index.html, ghg-versions.json, previews, or a name Windows keeps for a device, such as con or nul.\n"
     );
 }
 
@@ -125,6 +134,7 @@ fn a_versioned_build_replaces_its_version_and_writes_the_versions_page() {
         listing(&output),
         [
             "assets",
+            "data",
             "ghg-versions.json",
             "index.html",
             "main",
@@ -323,6 +333,7 @@ fn a_folder_holding_only_previews_is_marked_by_a_versioned_build() {
         listing(&output),
         [
             "assets",
+            "data",
             "ghg-versions.json",
             "index.html",
             "main",
@@ -359,4 +370,39 @@ fn previews_cannot_be_a_version_name() {
         report.starts_with("Previews cannot be a version name."),
         "{report}"
     );
+}
+
+// The store of a history of versions: rules 247, 251, 253, 254 and 255.
+
+/// The history's builds, in order: each suite, and the version it is built as, as `cargo xtask
+/// build` makes them.
+const HISTORY_BUILDS: [(&str, &str); 5] = [
+    ("first", "v1.0.0"),
+    ("moved", "v1.1.0"),
+    ("changed", "v2.0.0"),
+    ("draft", "main"),
+    ("first", "main"),
+];
+
+// Rules 247 and 251: `moved` differs from `first` only by comments, blank lines and moved
+// blocks, so they share their objects; `changed` and `draft` differ from it by one step each.
+// Rule 255: `main` built again from `first` leaves `draft`'s object, which is removed.
+#[test]
+fn a_history_of_versions_shares_its_objects_and_removes_what_nothing_references() {
+    let output = Path::new(env!("CARGO_TARGET_TMPDIR")).join("versions/history");
+    let _ = remove_dir_all(&output);
+    let objects: Vec<usize> = HISTORY_BUILDS
+        .iter()
+        .map(|(suite, version)| {
+            let built = ghg(
+                &format!("history/{suite}"),
+                &output,
+                &["--version-name", version],
+            );
+            assert_eq!(built, (String::new(), 0), "{suite} as {version}");
+            listing(&output.join("data/objects")).len()
+        })
+        .collect();
+    assert_eq!(objects, [2, 2, 3, 4, 3]);
+    assert_same_store(&output, &fixture().join("history/expected"));
 }

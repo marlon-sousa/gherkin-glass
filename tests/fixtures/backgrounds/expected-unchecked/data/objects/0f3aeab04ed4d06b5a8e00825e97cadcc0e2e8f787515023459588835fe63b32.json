@@ -1,0 +1,55 @@
+{
+  "format": 1,
+  "language": "en",
+  "lang": "en",
+  "feature": {
+    "kind": "feature",
+    "keyword": "Feature",
+    "note": false,
+    "name": "No background",
+    "description": "",
+    "tags": [],
+    "anchor": "",
+    "hash": "22e6b4d9c6368f3c3317bdadcd92ebc2b8de7a0edad5adac9f74c92a1c410fe3",
+    "blocks": [
+      {
+        "kind": "scenario",
+        "keyword": "Scenario",
+        "note": false,
+        "name": "Alone",
+        "description": "",
+        "tags": [],
+        "anchor": "alone",
+        "hash": "8e4b8a831b7d34cffcd43b8dfdc95659d6adb8aef2f1d898d1981f4c9d809d77",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Then ",
+            "text": "it reads on its own",
+            "kind": "then",
+            "sentence": "it reads on its own",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "it reads on its own",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      }
+    ],
+    "steps": [],
+    "examples": [],
+    "place": null,
+    "table": null,
+    "runs": []
+  }
+}

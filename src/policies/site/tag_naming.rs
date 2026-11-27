@@ -14,7 +14,15 @@ const FALLBACK: &str = "tag";
 
 /// Every tag written in `features`, in tag order, each named.
 pub(crate) fn name_tags<'a>(features: impl IntoIterator<Item = &'a ParsedFeature>) -> TagNames {
-    name_each(&tags_of(features))
+    name_each(&tags_of(features), &[TAG_INDEX_NAME])
+}
+
+/// Every tag written in `features`, in tag order, each named as the store names it, where the
+/// index of tags takes no name.
+pub(crate) fn name_stored_tags<'a>(
+    features: impl IntoIterator<Item = &'a ParsedFeature>,
+) -> TagNames {
+    name_each(&tags_of(features), &[])
 }
 
 /// Whether every tag written in `parsed` has the same name in `last` as in `names`, so that its
@@ -51,9 +59,9 @@ fn tags_of<'a>(features: impl IntoIterator<Item = &'a ParsedFeature>) -> Vec<Str
     tags
 }
 
-/// `tags` in tag order, each with its `@`.
-fn name_each(tags: &[String]) -> TagNames {
-    let mut taken = HashSet::from([TAG_INDEX_NAME.to_string()]);
+/// `tags` in tag order, each with its `@`, none of them named as one of `reserved`.
+fn name_each(tags: &[String], reserved: &[&str]) -> TagNames {
+    let mut taken: HashSet<String> = reserved.iter().map(ToString::to_string).collect();
     let mut names = TagNames::default();
     for tag in tags {
         let mut name = anchor_of(tag.strip_prefix('@').unwrap_or(tag));
@@ -123,7 +131,7 @@ mod tests {
         let tags: Vec<String> = ["@index", "@needs:db", "@Slow", "@slow", "@🚀", "@???"]
             .map(String::from)
             .to_vec();
-        let names = name_each(&tags);
+        let names = name_each(&tags, &[TAG_INDEX_NAME]);
         let addresses: Vec<_> = tags
             .iter()
             .map(|tag| names.address(tag).to_string())
@@ -139,5 +147,12 @@ mod tests {
                 "tags/tag-2.html",
             ]
         );
+    }
+
+    // Rule 100: in the store, `@index` is `index`, since the index of tags is `#tags/`.
+    #[test]
+    fn the_store_names_index_as_it_is() {
+        let features = [parsed("@index\nFeature: F\n")];
+        assert_eq!(name_stored_tags(&features).name("@index"), "index");
     }
 }

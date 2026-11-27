@@ -11,16 +11,17 @@
 #     .git, the worktree's own file, with --keep-in-output.
 #   project-site/publish.sh publish <pages> <version>
 #     After ghg has built <version> into <pages>, commits <version>/, the
-#     versions page, its assets/ and the marker, and pushes gh-pages to
-#     origin. It fails, committing nothing, when anything else has changed.
+#     versions page, its assets/, the site's data/ and the marker, and pushes
+#     gh-pages to origin. It fails, committing nothing, when anything else has changed.
 
 set -euo pipefail
 
 # What a versioned build writes at the root of its output, besides the
-# version's own folder: the versions page, the assets it links, and the marker
-# that lists what ghg wrote.
+# version's own folder: the versions page, the assets it links, the site's
+# data, and the marker that lists what ghg wrote.
 versions_page=index.html
 versions_assets=assets
+store=data
 marker=ghg-versions.json
 
 usage() {
@@ -53,8 +54,8 @@ publish() {
       echo "$version: a version is one folder name, not empty and not starting with a dot." >&2
       exit 1
       ;;
-    "$versions_page" | "$versions_assets" | "$marker")
-      echo "$version: a version may not be named as the versions page, its assets or the marker." >&2
+    "$versions_page" | "$versions_assets" | "$store" | "$marker")
+      echo "$version: a version may not be named as the versions page, its assets, the site's data or the marker." >&2
       exit 1
       ;;
   esac
@@ -72,7 +73,7 @@ publish() {
   cd "$folder"
   git add --all -- "$version" "$versions_page"
   local path
-  for path in "$versions_assets" "$marker"; do
+  for path in "$versions_assets" "$store" "$marker"; do
     if [ -e "$path" ] || git ls-files --error-unmatch -- "$path" >/dev/null 2>&1; then
       git add --all -- "$path"
     fi
@@ -84,7 +85,7 @@ publish() {
   others=$(git status --porcelain --untracked-files=all)
   others=$(grep -v '^[MADR] ' <<<"$others" || true)
   if [ -n "$others" ]; then
-    echo "The build changed more than $version/, $versions_page, $versions_assets/ and $marker, so nothing is published:" >&2
+    echo "The build changed more than $version/, $versions_page, $versions_assets/, $store/ and $marker, so nothing is published:" >&2
     echo "$others" >&2
     exit 1
   fi

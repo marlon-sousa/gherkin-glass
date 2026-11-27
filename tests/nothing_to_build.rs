@@ -19,6 +19,8 @@ use rstest::rstest;
     reason = "this file lists what a folder holds, and compares no site with an expected one"
 )]
 mod site_files;
+#[path = "support/store_json.rs"]
+mod store_json;
 #[path = "support/version_placeholder.rs"]
 mod version_placeholder;
 

@@ -1,0 +1,86 @@
+{
+  "format": 1,
+  "language": "pt",
+  "lang": "pt",
+  "feature": {
+    "kind": "feature",
+    "keyword": "Funcionalidade",
+    "note": true,
+    "name": "Destaque",
+    "description": "",
+    "tags": [],
+    "anchor": "",
+    "hash": "ef92e110d9609c2323140586c673bff9b4835f418d6f7fee23e7bc82a0fd2293",
+    "blocks": [
+      {
+        "kind": "scenario",
+        "keyword": "Cenário",
+        "note": true,
+        "name": "Saque",
+        "description": "",
+        "tags": [],
+        "anchor": "saque",
+        "hash": "19f0d7e051a1727c0d232e2079fe3129839bbcc92c3f3af2bb7d9a099bb52933",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Dado ",
+            "text": "uma conta com 100 reais",
+            "kind": "given",
+            "sentence": "uma conta com 100 reais",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "uma conta com ",
+                "parts": []
+              },
+              {
+                "kind": "number",
+                "text": "100",
+                "parts": []
+              },
+              {
+                "kind": "text",
+                "text": " reais",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "Quando ",
+            "text": "o cliente saca 20",
+            "kind": "when",
+            "sentence": "o cliente saca 20",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "o cliente saca ",
+                "parts": []
+              },
+              {
+                "kind": "number",
+                "text": "20",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      }
+    ],
+    "steps": [],
+    "examples": [],
+    "place": null,
+    "table": null,
+    "runs": []
+  }
+}

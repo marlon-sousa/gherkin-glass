@@ -1,0 +1,1162 @@
+{
+  "format": 1,
+  "language": "en",
+  "lang": "en",
+  "feature": {
+    "kind": "feature",
+    "keyword": "Feature",
+    "note": false,
+    "name": "Booking a study room",
+    "description": "Gherkin accepts other words for some of its keywords. This file uses\nthem: \"Example\" for a scenario, \"Scenario Template\" for a scenario\noutline and \"Scenarios\" for an outline's examples. They mean exactly\nwhat \"Scenario\", \"Scenario Outline\" and \"Examples\" mean.",
+    "tags": [
+      "@rooms"
+    ],
+    "anchor": "",
+    "hash": "38bfe1b0f3c07a3fc3cf506f9e82ff56bb75fc278e5ec1c5dcadb3235ad4ec1e",
+    "blocks": [
+      {
+        "kind": "background",
+        "keyword": "Background",
+        "note": false,
+        "name": "A member at the desk",
+        "description": "",
+        "tags": [],
+        "anchor": "a-member-at-the-desk",
+        "hash": "396c58b70ef92b2ef1b0c59fffb505acf50efa2ee7fdbea767f916a6cd272dc0",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "a member named \"Ana\" with card number 1024",
+            "kind": "given",
+            "sentence": "a member named \"…\" with card number 1024",
+            "slots": [
+              "\"Ana\""
+            ],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "a member named ",
+                "parts": []
+              },
+              {
+                "kind": "parameter",
+                "text": "\"Ana\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"Ana\"",
+                    "parts": []
+                  }
+                ]
+              },
+              {
+                "kind": "text",
+                "text": " with card number ",
+                "parts": []
+              },
+              {
+                "kind": "number",
+                "text": "1024",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "scenario",
+        "keyword": "Example",
+        "note": true,
+        "name": "Booking a free room",
+        "description": "",
+        "tags": [],
+        "anchor": "booking-a-free-room",
+        "hash": "9a47cdccb2db7679cfae06a71d6a887c7e89dad322eeec5608ef3f741d21fec0",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "the study room \"Garden\" is free at 10:00",
+            "kind": "given",
+            "sentence": "the study room \"…\" is free at 10:00",
+            "slots": [
+              "\"Garden\""
+            ],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "the study room ",
+                "parts": []
+              },
+              {
+                "kind": "parameter",
+                "text": "\"Garden\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"Garden\"",
+                    "parts": []
+                  }
+                ]
+              },
+              {
+                "kind": "text",
+                "text": " is free at ",
+                "parts": []
+              },
+              {
+                "kind": "number",
+                "text": "10",
+                "parts": []
+              },
+              {
+                "kind": "text",
+                "text": ":",
+                "parts": []
+              },
+              {
+                "kind": "number",
+                "text": "00",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "When ",
+            "text": "\"Ana\" books \"Garden\" at 10:00",
+            "kind": "when",
+            "sentence": "\"…\" books \"…\" at 10:00",
+            "slots": [
+              "\"Ana\"",
+              "\"Garden\""
+            ],
+            "parts": [
+              {
+                "kind": "parameter",
+                "text": "\"Ana\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"Ana\"",
+                    "parts": []
+                  }
+                ]
+              },
+              {
+                "kind": "text",
+                "text": " books ",
+                "parts": []
+              },
+              {
+                "kind": "parameter",
+                "text": "\"Garden\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"Garden\"",
+                    "parts": []
+                  }
+                ]
+              },
+              {
+                "kind": "text",
+                "text": " at ",
+                "parts": []
+              },
+              {
+                "kind": "number",
+                "text": "10",
+                "parts": []
+              },
+              {
+                "kind": "text",
+                "text": ":",
+                "parts": []
+              },
+              {
+                "kind": "number",
+                "text": "00",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "Then ",
+            "text": "\"Garden\" is booked for \"Ana\" at 10:00",
+            "kind": "then",
+            "sentence": "\"…\" is booked for \"…\" at 10:00",
+            "slots": [
+              "\"Garden\"",
+              "\"Ana\""
+            ],
+            "parts": [
+              {
+                "kind": "parameter",
+                "text": "\"Garden\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"Garden\"",
+                    "parts": []
+                  }
+                ]
+              },
+              {
+                "kind": "text",
+                "text": " is booked for ",
+                "parts": []
+              },
+              {
+                "kind": "parameter",
+                "text": "\"Ana\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"Ana\"",
+                    "parts": []
+                  }
+                ]
+              },
+              {
+                "kind": "text",
+                "text": " at ",
+                "parts": []
+              },
+              {
+                "kind": "number",
+                "text": "10",
+                "parts": []
+              },
+              {
+                "kind": "text",
+                "text": ":",
+                "parts": []
+              },
+              {
+                "kind": "number",
+                "text": "00",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "scenario",
+        "keyword": "Example",
+        "note": true,
+        "name": "Booking a room someone else holds",
+        "description": "",
+        "tags": [],
+        "anchor": "booking-a-room-someone-else-holds",
+        "hash": "4f0c72291ad801c0081025006e12b89d044881db282873eec38bd3c7cfcae18a",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "\"Bea\" booked the study room \"Garden\" at 10:00",
+            "kind": "given",
+            "sentence": "\"…\" booked the study room \"…\" at 10:00",
+            "slots": [
+              "\"Bea\"",
+              "\"Garden\""
+            ],
+            "parts": [
+              {
+                "kind": "parameter",
+                "text": "\"Bea\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"Bea\"",
+                    "parts": []
+                  }
+                ]
+              },
+              {
+                "kind": "text",
+                "text": " booked the study room ",
+                "parts": []
+              },
+              {
+                "kind": "parameter",
+                "text": "\"Garden\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"Garden\"",
+                    "parts": []
+                  }
+                ]
+              },
+              {
+                "kind": "text",
+                "text": " at ",
+                "parts": []
+              },
+              {
+                "kind": "number",
+                "text": "10",
+                "parts": []
+              },
+              {
+                "kind": "text",
+                "text": ":",
+                "parts": []
+              },
+              {
+                "kind": "number",
+                "text": "00",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "When ",
+            "text": "\"Ana\" books \"Garden\" at 10:00",
+            "kind": "when",
+            "sentence": "\"…\" books \"…\" at 10:00",
+            "slots": [
+              "\"Ana\"",
+              "\"Garden\""
+            ],
+            "parts": [
+              {
+                "kind": "parameter",
+                "text": "\"Ana\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"Ana\"",
+                    "parts": []
+                  }
+                ]
+              },
+              {
+                "kind": "text",
+                "text": " books ",
+                "parts": []
+              },
+              {
+                "kind": "parameter",
+                "text": "\"Garden\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"Garden\"",
+                    "parts": []
+                  }
+                ]
+              },
+              {
+                "kind": "text",
+                "text": " at ",
+                "parts": []
+              },
+              {
+                "kind": "number",
+                "text": "10",
+                "parts": []
+              },
+              {
+                "kind": "text",
+                "text": ":",
+                "parts": []
+              },
+              {
+                "kind": "number",
+                "text": "00",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "Then ",
+            "text": "the booking is refused with \"Garden is booked at 10:00.\"",
+            "kind": "then",
+            "sentence": "the booking is refused with \"…\"",
+            "slots": [
+              "\"Garden is booked at 10:00.\""
+            ],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "the booking is refused with ",
+                "parts": []
+              },
+              {
+                "kind": "parameter",
+                "text": "\"Garden is booked at 10:00.\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"Garden is booked at 10:00.\"",
+                    "parts": []
+                  }
+                ]
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "scenario-outline",
+        "keyword": "Scenario Template",
+        "note": true,
+        "name": "How long a booking lasts",
+        "description": "",
+        "tags": [],
+        "anchor": "how-long-a-booking-lasts",
+        "hash": "d62fc7ebb867156ea03f92f0abfcbdc46c5f4a1d4bc22d4b55f4d6697c001ffd",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "the study room \"<room>\" is free at 10:00",
+            "kind": "given",
+            "sentence": "the study room \"…\" is free at 10:00",
+            "slots": [
+              "\"<room>\""
+            ],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "the study room ",
+                "parts": []
+              },
+              {
+                "kind": "parameter",
+                "text": "\"<room>\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"",
+                    "parts": []
+                  },
+                  {
+                    "kind": "placeholder",
+                    "text": "<room>",
+                    "parts": []
+                  },
+                  {
+                    "kind": "text",
+                    "text": "\"",
+                    "parts": []
+                  }
+                ]
+              },
+              {
+                "kind": "text",
+                "text": " is free at ",
+                "parts": []
+              },
+              {
+                "kind": "number",
+                "text": "10",
+                "parts": []
+              },
+              {
+                "kind": "text",
+                "text": ":",
+                "parts": []
+              },
+              {
+                "kind": "number",
+                "text": "00",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "When ",
+            "text": "\"Ana\" books \"<room>\" at 10:00",
+            "kind": "when",
+            "sentence": "\"…\" books \"…\" at 10:00",
+            "slots": [
+              "\"Ana\"",
+              "\"<room>\""
+            ],
+            "parts": [
+              {
+                "kind": "parameter",
+                "text": "\"Ana\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"Ana\"",
+                    "parts": []
+                  }
+                ]
+              },
+              {
+                "kind": "text",
+                "text": " books ",
+                "parts": []
+              },
+              {
+                "kind": "parameter",
+                "text": "\"<room>\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"",
+                    "parts": []
+                  },
+                  {
+                    "kind": "placeholder",
+                    "text": "<room>",
+                    "parts": []
+                  },
+                  {
+                    "kind": "text",
+                    "text": "\"",
+                    "parts": []
+                  }
+                ]
+              },
+              {
+                "kind": "text",
+                "text": " at ",
+                "parts": []
+              },
+              {
+                "kind": "number",
+                "text": "10",
+                "parts": []
+              },
+              {
+                "kind": "text",
+                "text": ":",
+                "parts": []
+              },
+              {
+                "kind": "number",
+                "text": "00",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "Then ",
+            "text": "\"<room>\" is booked until <until>",
+            "kind": "then",
+            "sentence": "\"…\" is booked until \"…\"",
+            "slots": [
+              "\"<room>\"",
+              "<until>"
+            ],
+            "parts": [
+              {
+                "kind": "parameter",
+                "text": "\"<room>\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"",
+                    "parts": []
+                  },
+                  {
+                    "kind": "placeholder",
+                    "text": "<room>",
+                    "parts": []
+                  },
+                  {
+                    "kind": "text",
+                    "text": "\"",
+                    "parts": []
+                  }
+                ]
+              },
+              {
+                "kind": "text",
+                "text": " is booked until ",
+                "parts": []
+              },
+              {
+                "kind": "placeholder",
+                "text": "<until>",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [
+          {
+            "kind": "examples",
+            "keyword": "Scenarios",
+            "note": true,
+            "name": "Small rooms",
+            "description": "",
+            "tags": [],
+            "anchor": "small-rooms",
+            "hash": "687ba596f303f4c8011c03683d876d28015c9a6966e9759e57b50237479226d0",
+            "blocks": [],
+            "steps": [],
+            "examples": [],
+            "place": 1,
+            "table": [
+              [
+                "room",
+                "until"
+              ],
+              [
+                "Garden",
+                "11:00"
+              ],
+              [
+                "Attic",
+                "11:00"
+              ]
+            ],
+            "runs": [
+              {
+                "anchor": "how-long-a-booking-lasts-row-1",
+                "steps": [
+                  {
+                    "keyword": "Given ",
+                    "text": "the study room \"Garden\" is free at 10:00",
+                    "kind": "given",
+                    "sentence": "the study room \"…\" is free at 10:00",
+                    "slots": [
+                      "\"Garden\""
+                    ],
+                    "parts": [
+                      {
+                        "kind": "text",
+                        "text": "the study room ",
+                        "parts": []
+                      },
+                      {
+                        "kind": "parameter",
+                        "text": "\"Garden\"",
+                        "parts": [
+                          {
+                            "kind": "text",
+                            "text": "\"Garden\"",
+                            "parts": []
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "text",
+                        "text": " is free at ",
+                        "parts": []
+                      },
+                      {
+                        "kind": "number",
+                        "text": "10",
+                        "parts": []
+                      },
+                      {
+                        "kind": "text",
+                        "text": ":",
+                        "parts": []
+                      },
+                      {
+                        "kind": "number",
+                        "text": "00",
+                        "parts": []
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": null
+                  },
+                  {
+                    "keyword": "When ",
+                    "text": "\"Ana\" books \"Garden\" at 10:00",
+                    "kind": "when",
+                    "sentence": "\"…\" books \"…\" at 10:00",
+                    "slots": [
+                      "\"Ana\"",
+                      "\"Garden\""
+                    ],
+                    "parts": [
+                      {
+                        "kind": "parameter",
+                        "text": "\"Ana\"",
+                        "parts": [
+                          {
+                            "kind": "text",
+                            "text": "\"Ana\"",
+                            "parts": []
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "text",
+                        "text": " books ",
+                        "parts": []
+                      },
+                      {
+                        "kind": "parameter",
+                        "text": "\"Garden\"",
+                        "parts": [
+                          {
+                            "kind": "text",
+                            "text": "\"Garden\"",
+                            "parts": []
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "text",
+                        "text": " at ",
+                        "parts": []
+                      },
+                      {
+                        "kind": "number",
+                        "text": "10",
+                        "parts": []
+                      },
+                      {
+                        "kind": "text",
+                        "text": ":",
+                        "parts": []
+                      },
+                      {
+                        "kind": "number",
+                        "text": "00",
+                        "parts": []
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": null
+                  },
+                  {
+                    "keyword": "Then ",
+                    "text": "\"Garden\" is booked until 11:00",
+                    "kind": "then",
+                    "sentence": "\"…\" is booked until 11:00",
+                    "slots": [
+                      "\"Garden\""
+                    ],
+                    "parts": [
+                      {
+                        "kind": "parameter",
+                        "text": "\"Garden\"",
+                        "parts": [
+                          {
+                            "kind": "text",
+                            "text": "\"Garden\"",
+                            "parts": []
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "text",
+                        "text": " is booked until ",
+                        "parts": []
+                      },
+                      {
+                        "kind": "number",
+                        "text": "11",
+                        "parts": []
+                      },
+                      {
+                        "kind": "text",
+                        "text": ":",
+                        "parts": []
+                      },
+                      {
+                        "kind": "number",
+                        "text": "00",
+                        "parts": []
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": null
+                  }
+                ]
+              },
+              {
+                "anchor": "how-long-a-booking-lasts-row-2",
+                "steps": [
+                  {
+                    "keyword": "Given ",
+                    "text": "the study room \"Attic\" is free at 10:00",
+                    "kind": "given",
+                    "sentence": "the study room \"…\" is free at 10:00",
+                    "slots": [
+                      "\"Attic\""
+                    ],
+                    "parts": [
+                      {
+                        "kind": "text",
+                        "text": "the study room ",
+                        "parts": []
+                      },
+                      {
+                        "kind": "parameter",
+                        "text": "\"Attic\"",
+                        "parts": [
+                          {
+                            "kind": "text",
+                            "text": "\"Attic\"",
+                            "parts": []
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "text",
+                        "text": " is free at ",
+                        "parts": []
+                      },
+                      {
+                        "kind": "number",
+                        "text": "10",
+                        "parts": []
+                      },
+                      {
+                        "kind": "text",
+                        "text": ":",
+                        "parts": []
+                      },
+                      {
+                        "kind": "number",
+                        "text": "00",
+                        "parts": []
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": null
+                  },
+                  {
+                    "keyword": "When ",
+                    "text": "\"Ana\" books \"Attic\" at 10:00",
+                    "kind": "when",
+                    "sentence": "\"…\" books \"…\" at 10:00",
+                    "slots": [
+                      "\"Ana\"",
+                      "\"Attic\""
+                    ],
+                    "parts": [
+                      {
+                        "kind": "parameter",
+                        "text": "\"Ana\"",
+                        "parts": [
+                          {
+                            "kind": "text",
+                            "text": "\"Ana\"",
+                            "parts": []
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "text",
+                        "text": " books ",
+                        "parts": []
+                      },
+                      {
+                        "kind": "parameter",
+                        "text": "\"Attic\"",
+                        "parts": [
+                          {
+                            "kind": "text",
+                            "text": "\"Attic\"",
+                            "parts": []
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "text",
+                        "text": " at ",
+                        "parts": []
+                      },
+                      {
+                        "kind": "number",
+                        "text": "10",
+                        "parts": []
+                      },
+                      {
+                        "kind": "text",
+                        "text": ":",
+                        "parts": []
+                      },
+                      {
+                        "kind": "number",
+                        "text": "00",
+                        "parts": []
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": null
+                  },
+                  {
+                    "keyword": "Then ",
+                    "text": "\"Attic\" is booked until 11:00",
+                    "kind": "then",
+                    "sentence": "\"…\" is booked until 11:00",
+                    "slots": [
+                      "\"Attic\""
+                    ],
+                    "parts": [
+                      {
+                        "kind": "parameter",
+                        "text": "\"Attic\"",
+                        "parts": [
+                          {
+                            "kind": "text",
+                            "text": "\"Attic\"",
+                            "parts": []
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "text",
+                        "text": " is booked until ",
+                        "parts": []
+                      },
+                      {
+                        "kind": "number",
+                        "text": "11",
+                        "parts": []
+                      },
+                      {
+                        "kind": "text",
+                        "text": ":",
+                        "parts": []
+                      },
+                      {
+                        "kind": "number",
+                        "text": "00",
+                        "parts": []
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": null
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "examples",
+            "keyword": "Scenarios",
+            "note": true,
+            "name": "Large rooms",
+            "description": "",
+            "tags": [],
+            "anchor": "large-rooms",
+            "hash": "d402f3b2724a5d624ea9352f77e8c42348a7391e8c91cfde9a76e27f9b1e3617",
+            "blocks": [],
+            "steps": [],
+            "examples": [],
+            "place": 2,
+            "table": [
+              [
+                "room",
+                "until"
+              ],
+              [
+                "Hall",
+                "12:00"
+              ]
+            ],
+            "runs": [
+              {
+                "anchor": "how-long-a-booking-lasts-row-3",
+                "steps": [
+                  {
+                    "keyword": "Given ",
+                    "text": "the study room \"Hall\" is free at 10:00",
+                    "kind": "given",
+                    "sentence": "the study room \"…\" is free at 10:00",
+                    "slots": [
+                      "\"Hall\""
+                    ],
+                    "parts": [
+                      {
+                        "kind": "text",
+                        "text": "the study room ",
+                        "parts": []
+                      },
+                      {
+                        "kind": "parameter",
+                        "text": "\"Hall\"",
+                        "parts": [
+                          {
+                            "kind": "text",
+                            "text": "\"Hall\"",
+                            "parts": []
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "text",
+                        "text": " is free at ",
+                        "parts": []
+                      },
+                      {
+                        "kind": "number",
+                        "text": "10",
+                        "parts": []
+                      },
+                      {
+                        "kind": "text",
+                        "text": ":",
+                        "parts": []
+                      },
+                      {
+                        "kind": "number",
+                        "text": "00",
+                        "parts": []
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": null
+                  },
+                  {
+                    "keyword": "When ",
+                    "text": "\"Ana\" books \"Hall\" at 10:00",
+                    "kind": "when",
+                    "sentence": "\"…\" books \"…\" at 10:00",
+                    "slots": [
+                      "\"Ana\"",
+                      "\"Hall\""
+                    ],
+                    "parts": [
+                      {
+                        "kind": "parameter",
+                        "text": "\"Ana\"",
+                        "parts": [
+                          {
+                            "kind": "text",
+                            "text": "\"Ana\"",
+                            "parts": []
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "text",
+                        "text": " books ",
+                        "parts": []
+                      },
+                      {
+                        "kind": "parameter",
+                        "text": "\"Hall\"",
+                        "parts": [
+                          {
+                            "kind": "text",
+                            "text": "\"Hall\"",
+                            "parts": []
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "text",
+                        "text": " at ",
+                        "parts": []
+                      },
+                      {
+                        "kind": "number",
+                        "text": "10",
+                        "parts": []
+                      },
+                      {
+                        "kind": "text",
+                        "text": ":",
+                        "parts": []
+                      },
+                      {
+                        "kind": "number",
+                        "text": "00",
+                        "parts": []
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": null
+                  },
+                  {
+                    "keyword": "Then ",
+                    "text": "\"Hall\" is booked until 12:00",
+                    "kind": "then",
+                    "sentence": "\"…\" is booked until 12:00",
+                    "slots": [
+                      "\"Hall\""
+                    ],
+                    "parts": [
+                      {
+                        "kind": "parameter",
+                        "text": "\"Hall\"",
+                        "parts": [
+                          {
+                            "kind": "text",
+                            "text": "\"Hall\"",
+                            "parts": []
+                          }
+                        ]
+                      },
+                      {
+                        "kind": "text",
+                        "text": " is booked until ",
+                        "parts": []
+                      },
+                      {
+                        "kind": "number",
+                        "text": "12",
+                        "parts": []
+                      },
+                      {
+                        "kind": "text",
+                        "text": ":",
+                        "parts": []
+                      },
+                      {
+                        "kind": "number",
+                        "text": "00",
+                        "parts": []
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": null
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "place": null,
+        "table": null,
+        "runs": []
+      }
+    ],
+    "steps": [],
+    "examples": [],
+    "place": null,
+    "table": null,
+    "runs": []
+  }
+}

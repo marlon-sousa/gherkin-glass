@@ -16,10 +16,12 @@ pub(super) use crate::test_support::{MemoryFolders, folder, name, set, two_versi
 
 /// An output folder held in memory. Each look into it takes the next of
 /// `looks`, and the last one again once they run out; `None` cannot be read.
-/// Each operation named in `fails` fails, and every other is recorded.
+/// Each operation named in `fails` fails, and every other is recorded. A file
+/// read is the text `texts` gives its path, and cannot be read when it gives none.
 #[derive(Default)]
 pub(super) struct FakeFolders {
     pub(super) looks: Mutex<Vec<Option<OutputContents>>>,
+    pub(super) texts: Vec<(&'static str, String)>,
     pub(super) done: Mutex<Vec<String>>,
     pub(super) recorded: Mutex<Option<Record>>,
     pub(super) fails: Vec<&'static str>,
@@ -67,6 +69,14 @@ impl OutputFolders for FakeFolders {
             looks.first().cloned().flatten()
         };
         look.ok_or_else(|| IoError::new(ErrorKind::PermissionDenied, "denied"))
+    }
+
+    fn read(&self, _output: &Path, file: &str) -> IoResult<String> {
+        self.texts
+            .iter()
+            .find(|(path, _)| *path == file)
+            .map(|(_, text)| text.clone())
+            .ok_or_else(|| IoError::new(ErrorKind::NotFound, "not found"))
     }
 
     fn remove(&self, path: &Path) -> IoResult<()> {

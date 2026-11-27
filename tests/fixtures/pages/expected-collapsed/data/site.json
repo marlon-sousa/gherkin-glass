@@ -1,0 +1,197 @@
+{
+  "format": 1,
+  "ghg": "{version}",
+  "version": null,
+  "preview": null,
+  "title": "Feature files",
+  "only": false,
+  "start": {
+    "collapse_rules": true,
+    "collapse_scenarios": true,
+    "show_tree": false,
+    "inline_backgrounds": true
+  },
+  "features": [
+    {
+      "path": "billing/archive/closed #1.feature",
+      "page": "billing/archive/closed #1",
+      "object": "26b15d087ab54673c4232eea5bbd7d341feb15bdcc1c5866ef278161477569a1",
+      "lines": [
+        1,
+        2
+      ],
+      "source": null
+    },
+    {
+      "path": "billing/refunds.feature",
+      "page": "billing/refunds",
+      "object": "7417ab945fe6931a79f37716b94e60e6601b9bd7d25d3d8895f5536a23815738",
+      "lines": [
+        2,
+        6,
+        9,
+        29,
+        34,
+        38,
+        41,
+        44,
+        48,
+        51,
+        54,
+        58,
+        59
+      ],
+      "source": null
+    },
+    {
+      "path": "emoji.feature",
+      "page": "emoji",
+      "object": "96a030010e29dee9485fd2952dee757eab289ade52f295c0b62df4e8b9b77e12",
+      "lines": [
+        2,
+        4
+      ],
+      "source": null
+    },
+    {
+      "path": "kinds.feature",
+      "page": "kinds",
+      "object": "9ed12fcf4ba18fe0cee4f24103e65655774f35e1465f7dfe0fe8f91dffd9671e",
+      "lines": [
+        1,
+        5,
+        8,
+        11,
+        14,
+        18,
+        21,
+        25,
+        28,
+        31,
+        34,
+        35
+      ],
+      "source": null
+    },
+    {
+      "path": "outlines.feature",
+      "page": "outlines",
+      "object": "5190f99dab1a026a8c5b80b4b40c13d71a1f349f122417d2863725efe9b4f74b",
+      "lines": [
+        1,
+        4,
+        15,
+        20,
+        24,
+        27,
+        30,
+        34,
+        37,
+        40
+      ],
+      "source": null
+    },
+    {
+      "path": "reports/monthly/totals.feature",
+      "page": "reports/monthly/totals",
+      "object": "aad253799a43f14efd236eee35ec43c086507abde3c980b892a20d232321839f",
+      "lines": [
+        1,
+        2
+      ],
+      "source": null
+    },
+    {
+      "path": "saque em conta poupança.feature",
+      "page": "saque em conta poupança",
+      "object": "94f2eff9c55ac821b632c81128a8f0fea52b3137582bb89fd803b3d74d3f3bc1",
+      "lines": [
+        2,
+        4
+      ],
+      "source": null
+    },
+    {
+      "path": "stories/read.story",
+      "page": "stories/read",
+      "object": "1a00618218bb5c0d8d56908f5102596a2ecb67248d8393c6f22437676bb44b83",
+      "lines": [
+        1
+      ],
+      "source": null
+    }
+  ],
+  "tags": [
+    {
+      "tag": "@billing",
+      "page": "tags/billing",
+      "link": null
+    },
+    {
+      "tag": "@cheap",
+      "page": "tags/cheap",
+      "link": null
+    },
+    {
+      "tag": "@in-rule",
+      "page": "tags/in-rule",
+      "link": null
+    },
+    {
+      "tag": "@outline",
+      "page": "tags/outline",
+      "link": null
+    },
+    {
+      "tag": "@slow",
+      "page": "tags/slow",
+      "link": null
+    }
+  ],
+  "sentences": {
+    "given": [
+      "\"…\"",
+      "\"…\" and \"…\"",
+      "\"…\" books",
+      "\"…\" items",
+      "\"…\" refunds",
+      "a balance of \"…\"",
+      "a book",
+      "a customer named \"…\"",
+      "a scenario named as the group",
+      "a shelf",
+      "an order from forty days ago",
+      "an order with these lines:",
+      "nothing named",
+      "something",
+      "uma conta com saldo"
+    ],
+    "when": [
+      "\"…\" is withdrawn by <who>",
+      "the order is refunded"
+    ],
+    "then": [
+      "a note is kept",
+      "it is refused",
+      "o saque é feito",
+      "store credit is given",
+      "the account shows",
+      "the card gets",
+      "the receipt reads",
+      "the total is \"…\"",
+      "the totals add up"
+    ]
+  },
+  "front_page": null,
+  "settings": {
+    "title": null,
+    "source_link": null,
+    "tag_links": [],
+    "accent_light": "#0b4f9c",
+    "accent_dark": "#8cc4ff",
+    "collapse_rules": true,
+    "collapse_scenarios": true,
+    "show_tree": false,
+    "inline_backgrounds": true
+  }
+}

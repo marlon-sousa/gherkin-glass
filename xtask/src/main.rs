@@ -12,13 +12,13 @@ use std::process::{Command, ExitCode};
 
 use checks::{CARGO_CHECKS, MINIMUM_RUST_TEST};
 use comment_ratio::Lines;
-use expected_sites::put_back_placeholder;
+use expected_sites::{put_back_placeholder, replace_folder};
 
 const USAGE: &str = "\
 Usage: cargo xtask <command>
 
 Commands:
-  build: builds the pages' script from script/ into assets/gherkin-glass.js, writes the fixtures' and the example suite's expected sites again, and the crate's README, README.crate.md, from README.md, then builds the release binary.
+  build: builds the pages' script from script/ into assets/gherkin-glass.js, writes the fixtures' and the example suite's expected sites again, the expected stores of the fixtures that commit no site and of the history of versions, and the crate's README, README.crate.md, from README.md, then builds the release binary.
   check: runs every check a pull request runs: formatting, lints, the tests on both Rust versions, the documentation, the dependencies with cargo deny, the package, the script check and the browser check.
   check-script: type-checks and tests the script, and checks that assets/gherkin-glass.js is what it compiles to.
   check-browser: builds ghg, installs the browser, and checks every fixture's site and the example suite's, alone and with the README's front page, in it: accessibility, the keyboard, the width of a narrow window, pages opened from disk, the folder tree on a narrow window, the dialog of a keyword's note, markup in feature files shown as text by the folder tree and search, and the reload of ghg serve --watch.
@@ -102,6 +102,8 @@ fn build() -> Result<(), String> {
         "--config",
         "project-site/ghg.toml",
     ])?;
+    fixture_stores()?;
+    history_store()?;
     let version = manifest_value("version")?;
     put_back_placeholder(&root().join("tests/fixtures"), &version)?;
     put_back_placeholder(&root().join("project-site/expected"), &version)?;
@@ -254,6 +256,85 @@ fn npm(arguments: &[&str]) -> Result<(), String> {
 
 fn cargo(arguments: &[&str]) -> Result<(), String> {
     run(&mut cargo_command(arguments))
+}
+
+/// The fixtures whose expected store is committed without their site, each with the arguments
+/// of its `ghg build`, run in its folder.
+const STORE_BUILDS: [(&str, &[&str]); 5] = [
+    ("constructs", &["--input", "."]),
+    ("anchors", &["--input", "."]),
+    ("doc-strings", &["--input", "."]),
+    ("step-sentences", &["--input", "."]),
+    ("configuration/configured", &[]),
+];
+
+/// Builds each fixture of `STORE_BUILDS` into a folder of the target's, and writes its store as
+/// the fixture's expected store, `expected-store/data`.
+fn fixture_stores() -> Result<(), String> {
+    for (fixture, arguments) in STORE_BUILDS {
+        let folder = root().join("tests/fixtures").join(fixture);
+        let output = target().join("tmp/stores").join(fixture);
+        replace_folder(&output, None)?;
+        let given = output.to_string_lossy().into_owned();
+        let mut build = vec![
+            "run",
+            "--quiet",
+            "--locked",
+            "--package",
+            "gherkin-glass",
+            "--",
+            "build",
+            "--output",
+            &given,
+        ];
+        build.extend(arguments);
+        cargo_in(&folder, &build)?;
+        replace_folder(
+            &folder.join("expected-store/data"),
+            Some(&output.join("data")),
+        )?;
+    }
+    Ok(())
+}
+
+/// The fixture of a history of versions, which builds each of its suites in turn.
+const HISTORY: &str = "tests/fixtures/versions/history";
+
+/// The history's builds, in order: each suite, and the version it is built as.
+const HISTORY_BUILDS: [(&str, &str); 5] = [
+    ("first", "v1.0.0"),
+    ("moved", "v1.1.0"),
+    ("changed", "v2.0.0"),
+    ("draft", "main"),
+    ("first", "main"),
+];
+
+/// Builds the history's versions in turn into a folder of the target's, and writes its store
+/// as the history's expected store.
+fn history_store() -> Result<(), String> {
+    let history = root().join(HISTORY);
+    let output = target().join("tmp/history");
+    replace_folder(&output, None)?;
+    let given = output.to_string_lossy().into_owned();
+    for (suite, version) in HISTORY_BUILDS {
+        cargo_in(
+            &history.join(suite),
+            &[
+                "run",
+                "--quiet",
+                "--locked",
+                "--package",
+                "gherkin-glass",
+                "--",
+                "build",
+                "--output",
+                &given,
+                "--version-name",
+                version,
+            ],
+        )?;
+    }
+    replace_folder(&history.join("expected/data"), Some(&output.join("data")))
 }
 
 /// The arguments that give `ghg build` the list `list` with `--only`.

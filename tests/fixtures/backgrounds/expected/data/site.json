@@ -1,0 +1,112 @@
+{
+  "format": 1,
+  "ghg": "{version}",
+  "version": null,
+  "preview": null,
+  "title": "Backgrounds",
+  "only": false,
+  "start": {
+    "collapse_rules": false,
+    "collapse_scenarios": false,
+    "show_tree": true,
+    "inline_backgrounds": true
+  },
+  "features": [
+    {
+      "path": "both.feature",
+      "page": "both",
+      "object": "bc7112f52247a24611a7a35aaaa507aaa9a3e073048e947e5608a3aca818974a",
+      "lines": [
+        1,
+        2,
+        11,
+        15,
+        16,
+        19,
+        22,
+        26,
+        27,
+        30
+      ],
+      "source": null
+    },
+    {
+      "path": "no-scenarios.feature",
+      "page": "no-scenarios",
+      "object": "4d4c38609991b01e84051e3e2c9902b0d9c6a07c556b3892ec1d35f623d1e82a",
+      "lines": [
+        1,
+        2
+      ],
+      "source": null
+    },
+    {
+      "path": "no-steps.feature",
+      "page": "no-steps",
+      "object": "fe7e36badbfc221d01ec4218981794651014e000c2cefc67bda980c605030b06",
+      "lines": [
+        1,
+        2,
+        5
+      ],
+      "source": null
+    },
+    {
+      "path": "none.feature",
+      "page": "none",
+      "object": "0f3aeab04ed4d06b5a8e00825e97cadcc0e2e8f787515023459588835fe63b32",
+      "lines": [
+        1,
+        2
+      ],
+      "source": null
+    },
+    {
+      "path": "regra.feature",
+      "page": "regra",
+      "object": "f8a4963152cbf1f33f22d0ce706b06fde03602174b108459dbad5c10489969aa",
+      "lines": [
+        2,
+        3,
+        6,
+        7,
+        10
+      ],
+      "source": null
+    }
+  ],
+  "tags": [],
+  "sentences": {
+    "given": [
+      "a limit of 50",
+      "a note",
+      "a step no scenario starts with",
+      "an account with these balances:",
+      "um cliente"
+    ],
+    "when": [
+      "\"…\" is moved",
+      "10 is moved"
+    ],
+    "then": [
+      "algo muda",
+      "it reads on its own",
+      "nada muda",
+      "nothing changes",
+      "nothing comes before this step",
+      "the balance is 90"
+    ]
+  },
+  "front_page": null,
+  "settings": {
+    "title": "Backgrounds",
+    "source_link": null,
+    "tag_links": [],
+    "accent_light": "#0b4f9c",
+    "accent_dark": "#8cc4ff",
+    "collapse_rules": false,
+    "collapse_scenarios": false,
+    "show_tree": true,
+    "inline_backgrounds": true
+  }
+}

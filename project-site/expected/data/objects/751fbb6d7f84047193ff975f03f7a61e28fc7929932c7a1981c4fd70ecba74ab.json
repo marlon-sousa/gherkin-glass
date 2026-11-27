@@ -1,0 +1,307 @@
+{
+  "format": 1,
+  "language": "en",
+  "lang": "en",
+  "feature": {
+    "kind": "feature",
+    "keyword": "Feature",
+    "note": false,
+    "name": "Searching the catalogue",
+    "description": "Anyone can search the catalogue, members or not.",
+    "tags": [
+      "@catalogue"
+    ],
+    "anchor": "",
+    "hash": "1b12c6f2af11dfc60f96502f93d1c48b28e048a186d88eb0da556cce22a66f8d",
+    "blocks": [
+      {
+        "kind": "background",
+        "keyword": "Background",
+        "note": false,
+        "name": "",
+        "description": "",
+        "tags": [],
+        "anchor": "background",
+        "hash": "ddc975fef8650ed6cb724b1f08e5423918be3e819e3d53388360899a99460121",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "the catalogue holds these books:",
+            "kind": "given",
+            "sentence": "the catalogue holds these books:",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "the catalogue holds these books:",
+                "parts": []
+              }
+            ],
+            "table": [
+              [
+                "title",
+                "author",
+                "year"
+              ],
+              [
+                "The Hobbit",
+                "J. R. R. Tolkien",
+                "1937"
+              ],
+              [
+                "Middlemarch",
+                "George Eliot",
+                "1871"
+              ],
+              [
+                "Dom Casmurro",
+                "Machado de Assis",
+                "1899"
+              ]
+            ],
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "scenario",
+        "keyword": "Scenario",
+        "note": false,
+        "name": "Searching by title",
+        "description": "",
+        "tags": [],
+        "anchor": "searching-by-title",
+        "hash": "016b362a2a8b45ad1da329d578bb9e37ed097d0846679ba6cda640b5d60342d5",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "When ",
+            "text": "someone searches for \"hobbit\"",
+            "kind": "when",
+            "sentence": "someone searches for \"…\"",
+            "slots": [
+              "\"hobbit\""
+            ],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "someone searches for ",
+                "parts": []
+              },
+              {
+                "kind": "parameter",
+                "text": "\"hobbit\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"hobbit\"",
+                    "parts": []
+                  }
+                ]
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "Then ",
+            "text": "the results are:",
+            "kind": "then",
+            "sentence": "the results are:",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "the results are:",
+                "parts": []
+              }
+            ],
+            "table": [
+              [
+                "title"
+              ],
+              [
+                "The Hobbit"
+              ]
+            ],
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "scenario",
+        "keyword": "Scenario",
+        "note": false,
+        "name": "Searching by author",
+        "description": "",
+        "tags": [],
+        "anchor": "searching-by-author",
+        "hash": "977e9c923270f08a124ed2844074e1552cc62ed53a48d44a0664e46b2f6600c8",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "When ",
+            "text": "someone searches for \"Eliot\"",
+            "kind": "when",
+            "sentence": "someone searches for \"…\"",
+            "slots": [
+              "\"Eliot\""
+            ],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "someone searches for ",
+                "parts": []
+              },
+              {
+                "kind": "parameter",
+                "text": "\"Eliot\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"Eliot\"",
+                    "parts": []
+                  }
+                ]
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "Then ",
+            "text": "the results are:",
+            "kind": "then",
+            "sentence": "the results are:",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "the results are:",
+                "parts": []
+              }
+            ],
+            "table": [
+              [
+                "title"
+              ],
+              [
+                "Middlemarch"
+              ]
+            ],
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "scenario",
+        "keyword": "Scenario",
+        "note": false,
+        "name": "A search that finds nothing",
+        "description": "",
+        "tags": [],
+        "anchor": "a-search-that-finds-nothing",
+        "hash": "206c55d3c468dfe3fcc36b651760ccc0e412465b0ffb61af6722f11facae39cc",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "When ",
+            "text": "someone searches for \"dragons\"",
+            "kind": "when",
+            "sentence": "someone searches for \"…\"",
+            "slots": [
+              "\"dragons\""
+            ],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "someone searches for ",
+                "parts": []
+              },
+              {
+                "kind": "parameter",
+                "text": "\"dragons\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"dragons\"",
+                    "parts": []
+                  }
+                ]
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "Then ",
+            "text": "the results are empty",
+            "kind": "then",
+            "sentence": "the results are empty",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "the results are empty",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "And ",
+            "text": "the page says \"Nothing matches dragons.\"",
+            "kind": "then",
+            "sentence": "the page says \"…\"",
+            "slots": [
+              "\"Nothing matches dragons.\""
+            ],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "the page says ",
+                "parts": []
+              },
+              {
+                "kind": "parameter",
+                "text": "\"Nothing matches dragons.\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"Nothing matches dragons.\"",
+                    "parts": []
+                  }
+                ]
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      }
+    ],
+    "steps": [],
+    "examples": [],
+    "place": null,
+    "table": null,
+    "runs": []
+  }
+}

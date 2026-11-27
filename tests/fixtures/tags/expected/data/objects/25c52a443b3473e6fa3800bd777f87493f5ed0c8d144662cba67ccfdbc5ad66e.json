@@ -1,0 +1,280 @@
+{
+  "format": 1,
+  "language": "en",
+  "lang": "en",
+  "feature": {
+    "kind": "feature",
+    "keyword": "Feature",
+    "note": false,
+    "name": "Accounts",
+    "description": "Tags that share their name once lower-cased, and one named as the index.",
+    "tags": [
+      "@Slow",
+      "@slow",
+      "@index"
+    ],
+    "anchor": "",
+    "hash": "9d157671c615f1ff0e12148543aa903b8b006a79e50f0f9b62f9a8fe692911a3",
+    "blocks": [
+      {
+        "kind": "scenario",
+        "keyword": "Scenario",
+        "note": false,
+        "name": "Open an account",
+        "description": "",
+        "tags": [
+          "@issue-12",
+          "@needs:db"
+        ],
+        "anchor": "open-an-account",
+        "hash": "fb28f631e910b5b2c25b1e79ab154023399536358d7d047593152cc2aeccadaa",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "a customer",
+            "kind": "given",
+            "sentence": "a customer",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "a customer",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "scenario-outline",
+        "keyword": "Scenario Outline",
+        "note": false,
+        "name": "Close <count> accounts",
+        "description": "",
+        "tags": [],
+        "anchor": "close-count-accounts",
+        "hash": "bfc86f0f0553641205f1f41d7ed5fadf19a36a5ddf487b66b780e7d3c0da7ca9",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "<count> accounts",
+            "kind": "given",
+            "sentence": "\"…\" accounts",
+            "slots": [
+              "<count>"
+            ],
+            "parts": [
+              {
+                "kind": "placeholder",
+                "text": "<count>",
+                "parts": []
+              },
+              {
+                "kind": "text",
+                "text": " accounts",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [
+          {
+            "kind": "examples",
+            "keyword": "Examples",
+            "note": false,
+            "name": "Many",
+            "description": "",
+            "tags": [
+              "@ticket:ç/1#2"
+            ],
+            "anchor": "many",
+            "hash": "71325e84601e393479b6a95305cadd06300d9d745e4ac8c7a6566914f6d72d1d",
+            "blocks": [],
+            "steps": [],
+            "examples": [],
+            "place": 1,
+            "table": [
+              [
+                "count"
+              ],
+              [
+                "2"
+              ]
+            ],
+            "runs": [
+              {
+                "anchor": "close-count-accounts-row-1",
+                "steps": [
+                  {
+                    "keyword": "Given ",
+                    "text": "2 accounts",
+                    "kind": "given",
+                    "sentence": "2 accounts",
+                    "slots": [],
+                    "parts": [
+                      {
+                        "kind": "number",
+                        "text": "2",
+                        "parts": []
+                      },
+                      {
+                        "kind": "text",
+                        "text": " accounts",
+                        "parts": []
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": null
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "examples",
+            "keyword": "Examples",
+            "note": false,
+            "name": "None",
+            "description": "",
+            "tags": [],
+            "anchor": "none",
+            "hash": "c90cced153652b8a14b881bb387ba64602fca84114ab67a5c2589f3facbed0d7",
+            "blocks": [],
+            "steps": [],
+            "examples": [],
+            "place": 2,
+            "table": [
+              [
+                "count"
+              ]
+            ],
+            "runs": []
+          }
+        ],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "rule",
+        "keyword": "Rule",
+        "note": false,
+        "name": "Joint accounts",
+        "description": "",
+        "tags": [
+          "@issue-7"
+        ],
+        "anchor": "joint-accounts",
+        "hash": "f1c4b0c8c68849aaf632f78a59fb53c5a5a803272838dd2b9255b9559581358b",
+        "blocks": [
+          {
+            "kind": "scenario",
+            "keyword": "Scenario",
+            "note": false,
+            "name": "Open a joint account",
+            "description": "",
+            "tags": [
+              "@issue-12"
+            ],
+            "anchor": "open-a-joint-account",
+            "hash": "c3444ca9c4fd2e629b8c1443bf5cde5dee7f114566b58800475675815c9818e1",
+            "blocks": [],
+            "steps": [
+              {
+                "keyword": "Given ",
+                "text": "two customers",
+                "kind": "given",
+                "sentence": "two customers",
+                "slots": [],
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "two customers",
+                    "parts": []
+                  }
+                ],
+                "table": null,
+                "doc_string": null
+              }
+            ],
+            "examples": [],
+            "place": null,
+            "table": null,
+            "runs": []
+          },
+          {
+            "kind": "scenario",
+            "keyword": "Scenario",
+            "note": false,
+            "name": "Close a joint account",
+            "description": "",
+            "tags": [],
+            "anchor": "close-a-joint-account",
+            "hash": "282eddc47b48e7187e158dab44bc58115c3659ddf7d3613a00897ac17351f5c5",
+            "blocks": [],
+            "steps": [
+              {
+                "keyword": "Given ",
+                "text": "two customers",
+                "kind": "given",
+                "sentence": "two customers",
+                "slots": [],
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "two customers",
+                    "parts": []
+                  }
+                ],
+                "table": null,
+                "doc_string": null
+              }
+            ],
+            "examples": [],
+            "place": null,
+            "table": null,
+            "runs": []
+          }
+        ],
+        "steps": [],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "rule",
+        "keyword": "Rule",
+        "note": false,
+        "name": "Nothing yet",
+        "description": "",
+        "tags": [
+          "@needs:db"
+        ],
+        "anchor": "nothing-yet",
+        "hash": "139b8d92eeed4ca2cb472bff905b914cf7ac9955cc29ce6bbe3a686fbd5a3679",
+        "blocks": [],
+        "steps": [],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      }
+    ],
+    "steps": [],
+    "examples": [],
+    "place": null,
+    "table": null,
+    "runs": []
+  }
+}

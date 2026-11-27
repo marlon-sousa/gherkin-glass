@@ -1,0 +1,21 @@
+{
+  "format": 1,
+  "language": "en",
+  "lang": "en",
+  "feature": {
+    "kind": "feature",
+    "keyword": "Feature",
+    "note": false,
+    "name": "A story without scenarios",
+    "description": "",
+    "tags": [],
+    "anchor": "",
+    "hash": "fbb82eac4a1d4790156a499267b2acf75f6292dbbdc86d9acaec2f03a044217b",
+    "blocks": [],
+    "steps": [],
+    "examples": [],
+    "place": null,
+    "table": null,
+    "runs": []
+  }
+}

@@ -1,0 +1,138 @@
+{
+  "format": 1,
+  "language": "pt",
+  "lang": "pt",
+  "feature": {
+    "kind": "feature",
+    "keyword": "Funcionalidade",
+    "note": true,
+    "name": "Só a regra tem contexto",
+    "description": "",
+    "tags": [],
+    "anchor": "",
+    "hash": "1b43b3bd37f481a70182da3fbfa05f9c48be06a8622188d29e38ebe8f57dea37",
+    "blocks": [
+      {
+        "kind": "scenario",
+        "keyword": "Cenário",
+        "note": true,
+        "name": "Fora da regra",
+        "description": "",
+        "tags": [],
+        "anchor": "fora-da-regra",
+        "hash": "d9f9aef3c88073fff15b159d7659f5d5c7c0dbf8ae9381da2abe3ff945bcd365",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Então ",
+            "text": "nada muda",
+            "kind": "then",
+            "sentence": "nada muda",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "nada muda",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "rule",
+        "keyword": "Regra",
+        "note": true,
+        "name": "Com contexto",
+        "description": "",
+        "tags": [],
+        "anchor": "com-contexto",
+        "hash": "b24cf54382c31083c45e85f8ae23e6e974fba46dafe4b2bc0d8b0ec7526e9f38",
+        "blocks": [
+          {
+            "kind": "background",
+            "keyword": "Contexto",
+            "note": true,
+            "name": "",
+            "description": "",
+            "tags": [],
+            "anchor": "contexto",
+            "hash": "b1d3dae791b6a86d4485064ee19c72e3346a66dfb513229ad105c35bad0384bc",
+            "blocks": [],
+            "steps": [
+              {
+                "keyword": "Dado ",
+                "text": "um cliente",
+                "kind": "given",
+                "sentence": "um cliente",
+                "slots": [],
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "um cliente",
+                    "parts": []
+                  }
+                ],
+                "table": null,
+                "doc_string": null
+              }
+            ],
+            "examples": [],
+            "place": null,
+            "table": null,
+            "runs": []
+          },
+          {
+            "kind": "scenario",
+            "keyword": "Cenário",
+            "note": true,
+            "name": "Dentro da regra",
+            "description": "",
+            "tags": [],
+            "anchor": "dentro-da-regra",
+            "hash": "6249608d8a3311dab89c8c44f27cb06ef10abb7d06cfc7e27c1af61d38a8298c",
+            "blocks": [],
+            "steps": [
+              {
+                "keyword": "Então ",
+                "text": "algo muda",
+                "kind": "then",
+                "sentence": "algo muda",
+                "slots": [],
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "algo muda",
+                    "parts": []
+                  }
+                ],
+                "table": null,
+                "doc_string": null
+              }
+            ],
+            "examples": [],
+            "place": null,
+            "table": null,
+            "runs": []
+          }
+        ],
+        "steps": [],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      }
+    ],
+    "steps": [],
+    "examples": [],
+    "place": null,
+    "table": null,
+    "runs": []
+  }
+}

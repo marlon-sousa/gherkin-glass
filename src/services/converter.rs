@@ -1,9 +1,9 @@
-//! Service: the converter, making the site tree anew from the features of the input tree and the last site tree.
+//! Service: the converter, making the site tree anew from the features of the input tree and the last site tree, and the site's store beside it.
 
 use std::collections::BTreeSet;
 
-use crate::entities::{Destination, InputTree, Settings, SiteTree, VersionName};
-use crate::policies::site_tree;
+use crate::entities::{ConvertedSite, Destination, InputTree, Settings, SiteTree, VersionName};
+use crate::policies::{build_store, site_tree};
 
 /// What the controller asks of the converter.
 pub(crate) trait ConverterApi: Send + Sync {
@@ -11,14 +11,15 @@ pub(crate) trait ConverterApi: Send + Sync {
     /// feature's page in its folder, copied from `last`, the last site tree, when its file is
     /// unchanged and it links to the same tag pages, with the version the settings name when the
     /// site is built into a folder, beside `built_versions`, those the output folder already
-    /// holds.
+    /// holds; and the site's store, the object of each of those features with what their
+    /// descriptor holds.
     fn convert(
         &self,
         input_tree: &InputTree,
         last: Option<&SiteTree>,
         settings: &Settings,
         built_versions: &BTreeSet<VersionName>,
-    ) -> SiteTree;
+    ) -> ConvertedSite;
 }
 
 #[derive(Debug, Default, Clone, Copy)]
@@ -31,15 +32,19 @@ impl ConverterApi for Converter {
         last: Option<&SiteTree>,
         settings: &Settings,
         built_versions: &BTreeSet<VersionName>,
-    ) -> SiteTree {
+    ) -> ConvertedSite {
         let features: Vec<_> = input_tree.features().collect();
-        site_tree(
-            &features,
-            last,
-            &settings.pages,
-            built_version(settings),
-            built_versions,
-        )
+        let parsed: Vec<_> = features.iter().map(|revised| revised.feature).collect();
+        ConvertedSite {
+            site_tree: site_tree(
+                &features,
+                last,
+                &settings.pages,
+                built_version(settings),
+                built_versions,
+            ),
+            store: build_store(&parsed, &settings.pages),
+        }
     }
 }
 

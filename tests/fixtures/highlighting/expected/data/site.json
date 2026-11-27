@@ -1,0 +1,78 @@
+{
+  "format": 1,
+  "ghg": "{version}",
+  "version": null,
+  "preview": null,
+  "title": "Highlighting",
+  "only": false,
+  "start": {
+    "collapse_rules": false,
+    "collapse_scenarios": false,
+    "show_tree": true,
+    "inline_backgrounds": true
+  },
+  "features": [
+    {
+      "path": "destaque.feature",
+      "page": "destaque",
+      "object": "3841ab192c6aa00a603805e294831babc4f45ef9e52bf25d6e6a75e27bc4dcc5",
+      "lines": [
+        2,
+        3
+      ],
+      "source": null
+    },
+    {
+      "path": "highlighting.feature",
+      "page": "highlighting",
+      "object": "3df9770d20eed52dc4e993c6a006761de2c59aadb0dfdbc61db480bd2f4b39f0",
+      "lines": [
+        1,
+        4,
+        7,
+        13,
+        18,
+        21,
+        25,
+        29,
+        31
+      ],
+      "source": null
+    }
+  ],
+  "tags": [],
+  "sentences": {
+    "given": [
+      "\"…\" in \"…\" and <unknown>",
+      "2 \"…\"",
+      "<amount> is plain here",
+      "an account with 100 and a \"…\" note",
+      "the customer's 'name' is plain",
+      "uma conta com 100 reais"
+    ],
+    "when": [
+      "a \"lone quote stays plain",
+      "o cliente saca 20",
+      "the customer asks for < 5 >",
+      "the customer types \"…\"",
+      "the customer types \"…\" and \"…\""
+    ],
+    "then": [
+      "R2D2 is 3rd in v1.2, 2.x, x_1 and item-4",
+      "the balance is -3.5, then 1.000,50 or $7 on 2026-11-10.",
+      "the quote in \"…\" closes after b"
+    ]
+  },
+  "front_page": null,
+  "settings": {
+    "title": "Highlighting",
+    "source_link": null,
+    "tag_links": [],
+    "accent_light": "#5a1e8c",
+    "accent_dark": "#ffcc88",
+    "collapse_rules": false,
+    "collapse_scenarios": false,
+    "show_tree": true,
+    "inline_backgrounds": true
+  }
+}

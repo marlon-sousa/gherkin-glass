@@ -1,4 +1,4 @@
-//! Policy: the order of the versions page, development versions, then releases, then pre-releases.
+//! Policy: the order of the versions page, development versions, then releases, then pre-releases, and every version number grouped by its precedence, newest first, which the store's list of versions holds.
 
 use std::cmp::Ordering;
 
@@ -34,11 +34,38 @@ fn version_number(name: &VersionName) -> Option<Version> {
     Version::parse(number).ok()
 }
 
+/// The version numbers among `names`, releases and pre-releases together, newest first by
+/// Semantic Versioning's precedence, those of the same precedence in one group, by name.
+pub(crate) fn precedence_groups(
+    names: impl IntoIterator<Item = VersionName>,
+) -> Vec<Vec<VersionName>> {
+    let mut numbered: Vec<(Version, VersionName)> =
+        names.into_iter().filter_map(numbered).collect();
+    numbered.sort_by(newer_then_by_name);
+    numbered.chunk_by(same_precedence).map(names_of).collect()
+}
+
+fn numbered(name: VersionName) -> Option<(Version, VersionName)> {
+    Some((version_number(&name)?, name))
+}
+
+fn same_precedence((a, _): &(Version, VersionName), (b, _): &(Version, VersionName)) -> bool {
+    a.cmp_precedence(b) == Ordering::Equal
+}
+
+fn names_of(group: &[(Version, VersionName)]) -> Vec<VersionName> {
+    group.iter().map(|(_, name)| name.clone()).collect()
+}
+
+fn newer_then_by_name(
+    (a, a_name): &(Version, VersionName),
+    (b, b_name): &(Version, VersionName),
+) -> Ordering {
+    b.cmp_precedence(a).then_with(|| a_name.cmp(b_name))
+}
+
 fn newest_first(mut versions: Vec<(Version, VersionName)>) -> Vec<VersionName> {
-    versions.sort_by(|(a, a_name), (b, b_name)| match b.cmp_precedence(a) {
-        Ordering::Equal => a_name.cmp(b_name),
-        newer_first => newer_first,
-    });
+    versions.sort_by(newer_then_by_name);
     versions.into_iter().map(|(_, name)| name).collect()
 }
 
@@ -108,5 +135,26 @@ mod tests {
     fn names_of_the_same_precedence_are_sorted_by_name() {
         let (_, releases, _) = order(&["v1.0.0", "1.0.0+b", "1.0.0+a", "1.0.0", "0.9.0"]);
         assert_eq!(releases, ["1.0.0", "1.0.0+a", "1.0.0+b", "v1.0.0", "0.9.0"]);
+    }
+
+    // Rule 253: `precedence` holds every version number, newest first, those of the same
+    // precedence together.
+    #[test]
+    fn version_numbers_are_grouped_by_precedence_newest_first() {
+        let names = ["main", "v1.2.0", "2.0.0-rc.1", "1.2.0", "2.0.0", "1.2.0+b"]
+            .iter()
+            .map(|name| VersionName::new(name).expect("a version name"));
+        let groups: Vec<Vec<String>> = precedence_groups(names)
+            .iter()
+            .map(|group| group.iter().map(ToString::to_string).collect())
+            .collect();
+        assert_eq!(
+            groups,
+            [
+                vec!["2.0.0"],
+                vec!["2.0.0-rc.1"],
+                vec!["1.2.0", "1.2.0+b", "v1.2.0"]
+            ]
+        );
     }
 }

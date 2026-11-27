@@ -1,0 +1,278 @@
+{
+  "format": 1,
+  "language": "en",
+  "lang": "en",
+  "feature": {
+    "kind": "feature",
+    "keyword": "Feature",
+    "note": false,
+    "name": "Adding a book to the catalogue",
+    "description": "Staff add each new book to the catalogue, from its record.",
+    "tags": [
+      "@catalogue",
+      "@staff"
+    ],
+    "anchor": "",
+    "hash": "d4d216aa74599389582e220861e44a8e6d13d2d10711cfbed62c4bf81df7bebd",
+    "blocks": [
+      {
+        "kind": "scenario",
+        "keyword": "Scenario",
+        "note": false,
+        "name": "Adding a book from its record",
+        "description": "",
+        "tags": [],
+        "anchor": "adding-a-book-from-its-record",
+        "hash": "1f118459ed459212070b42888c26f5a58beb609e508577e6f2efdc92ecc84fb4",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "a member of staff is signed in",
+            "kind": "given",
+            "sentence": "a member of staff is signed in",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "a member of staff is signed in",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "When ",
+            "text": "they add a book with this record:",
+            "kind": "when",
+            "sentence": "they add a book with this record:",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "they add a book with this record:",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": {
+              "media_type": "json",
+              "content": "{\n  \"title\": \"Emma\",\n  \"author\": \"Jane Austen\",\n  \"year\": 1815\n}"
+            }
+          },
+          {
+            "keyword": "Then ",
+            "text": "the book \"Emma\" is on the shelf",
+            "kind": "then",
+            "sentence": "the book \"…\" is on the shelf",
+            "slots": [
+              "\"Emma\""
+            ],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "the book ",
+                "parts": []
+              },
+              {
+                "kind": "parameter",
+                "text": "\"Emma\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"Emma\"",
+                    "parts": []
+                  }
+                ]
+              },
+              {
+                "kind": "text",
+                "text": " is on the shelf",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "scenario",
+        "keyword": "Scenario",
+        "note": false,
+        "name": "A record in the library's own format",
+        "description": "",
+        "tags": [],
+        "anchor": "a-record-in-the-librarys-own-format",
+        "hash": "0b0f1281c32a4d1a3a643508518f3132b074460b0ed511c72173ed91729bcf7f",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "a member of staff is signed in",
+            "kind": "given",
+            "sentence": "a member of staff is signed in",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "a member of staff is signed in",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "When ",
+            "text": "they add a book with this record:",
+            "kind": "when",
+            "sentence": "they add a book with this record:",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "they add a book with this record:",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": {
+              "media_type": "text",
+              "content": "Title:  The Hobbit\nAuthor: J. R. R. Tolkien\n  Note: the record keeps its own indentation.\nA line with three backticks: ```"
+            }
+          },
+          {
+            "keyword": "Then ",
+            "text": "the book \"The Hobbit\" is on the shelf",
+            "kind": "then",
+            "sentence": "the book \"…\" is on the shelf",
+            "slots": [
+              "\"The Hobbit\""
+            ],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "the book ",
+                "parts": []
+              },
+              {
+                "kind": "parameter",
+                "text": "\"The Hobbit\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"The Hobbit\"",
+                    "parts": []
+                  }
+                ]
+              },
+              {
+                "kind": "text",
+                "text": " is on the shelf",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "scenario",
+        "keyword": "Scenario",
+        "note": false,
+        "name": "A record with a mistake is refused",
+        "description": "",
+        "tags": [],
+        "anchor": "a-record-with-a-mistake-is-refused",
+        "hash": "847f2aa9b850bd7c03e34fcd42a4fa93b38f8dbe6704b37c6dd3709774a51c43",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "a member of staff is signed in",
+            "kind": "given",
+            "sentence": "a member of staff is signed in",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "a member of staff is signed in",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "When ",
+            "text": "they add a book with this record:",
+            "kind": "when",
+            "sentence": "they add a book with this record:",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "they add a book with this record:",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": {
+              "media_type": "json",
+              "content": "{ \"title\": \"\" }"
+            }
+          },
+          {
+            "keyword": "Then ",
+            "text": "the record is refused with \"A book needs a title.\"",
+            "kind": "then",
+            "sentence": "the record is refused with \"…\"",
+            "slots": [
+              "\"A book needs a title.\""
+            ],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "the record is refused with ",
+                "parts": []
+              },
+              {
+                "kind": "parameter",
+                "text": "\"A book needs a title.\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"A book needs a title.\"",
+                    "parts": []
+                  }
+                ]
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      }
+    ],
+    "steps": [],
+    "examples": [],
+    "place": null,
+    "table": null,
+    "runs": []
+  }
+}

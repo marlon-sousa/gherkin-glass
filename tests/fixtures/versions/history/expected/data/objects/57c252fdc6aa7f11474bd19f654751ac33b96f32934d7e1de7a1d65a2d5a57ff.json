@@ -1,0 +1,97 @@
+{
+  "format": 1,
+  "language": "en",
+  "lang": "en",
+  "feature": {
+    "kind": "feature",
+    "keyword": "Feature",
+    "note": false,
+    "name": "Cards",
+    "description": "",
+    "tags": [],
+    "anchor": "",
+    "hash": "bbbb961b0afca330dfa07defbf10eaaeb142c33c16cec94d8b7e43d9dbf4e099",
+    "blocks": [
+      {
+        "kind": "scenario",
+        "keyword": "Scenario",
+        "note": false,
+        "name": "Pay",
+        "description": "",
+        "tags": [],
+        "anchor": "pay",
+        "hash": "4a6a3d44d8142fd642d54b3e7a5be45d46140fb74bce865456be1ab7be422999",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "a card",
+            "kind": "given",
+            "sentence": "a card",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "a card",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "When ",
+            "text": "I pay 5",
+            "kind": "when",
+            "sentence": "I pay 5",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "I pay ",
+                "parts": []
+              },
+              {
+                "kind": "number",
+                "text": "5",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "Then ",
+            "text": "5 is charged",
+            "kind": "then",
+            "sentence": "5 is charged",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "number",
+                "text": "5",
+                "parts": []
+              },
+              {
+                "kind": "text",
+                "text": " is charged",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      }
+    ],
+    "steps": [],
+    "examples": [],
+    "place": null,
+    "table": null,
+    "runs": []
+  }
+}

@@ -17,6 +17,9 @@ struct SiteMarker {
 struct VersionsMarker {
     page: BTreeSet<FilePath>,
     versions: BTreeMap<String, BTreeSet<FilePath>>,
+    /// Missing from a marker written before the store was.
+    #[serde(default)]
+    data: BTreeSet<FilePath>,
 }
 
 /// The marker's file name and its text, for `record`.
@@ -28,10 +31,15 @@ pub(super) fn marker_text(record: &Record) -> serde_json::Result<(&'static str, 
             };
             Ok((Record::SITE_MARKER, serde_json::to_string_pretty(&marker)?))
         }
-        Record::Versions { page, versions } => {
+        Record::Versions {
+            page,
+            versions,
+            data,
+        } => {
             let marker = VersionsMarker {
                 page: page.clone(),
                 versions: versions.iter().map(written_version).collect(),
+                data: data.clone(),
             };
             Ok((
                 Record::VERSIONS_MARKER,
@@ -59,6 +67,7 @@ pub(super) fn versions_record(text: &str) -> Option<Record> {
     Some(Record::Versions {
         page: marker.page,
         versions,
+        data: marker.data,
     })
 }
 
@@ -90,6 +99,7 @@ mod tests {
         Record::Versions {
             page: set(&["index.html", "assets/a.css"]),
             versions: BTreeMap::from([(main, set(&["index.html", "sub/b.html"]))]),
+            data: set(&["data/versions/main.json"]),
         }
     }
 
@@ -112,6 +122,18 @@ mod tests {
     #[case::a_versions_marker("{\"page\": [], \"versions\": {}}")]
     fn a_site_marker_that_is_not_one_reads_as_none(#[case] text: &str) {
         assert_eq!(site_record(text), None);
+    }
+
+    #[test]
+    fn a_versions_marker_without_the_store_s_files_lists_none() {
+        assert_eq!(
+            versions_record("{\"page\": [], \"versions\": {}}"),
+            Some(Record::Versions {
+                page: BTreeSet::new(),
+                versions: BTreeMap::new(),
+                data: BTreeSet::new(),
+            })
+        );
     }
 
     #[rstest]

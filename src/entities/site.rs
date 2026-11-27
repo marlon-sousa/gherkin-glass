@@ -4,6 +4,7 @@ mod block_kind;
 mod breadcrumb;
 mod build_report;
 mod built_site;
+mod converted_site;
 mod feature_pages;
 mod feature_path;
 mod folders;
@@ -19,6 +20,7 @@ mod site_address;
 mod site_assets;
 mod site_file;
 mod site_tree;
+mod store;
 mod tags;
 mod versions;
 
@@ -26,6 +28,7 @@ pub(crate) use block_kind::BlockKind;
 pub(crate) use breadcrumb::{BreadcrumbWords, OwnCrumb, Trail};
 pub(crate) use build_report::BuildReport;
 pub(crate) use built_site::BuiltSite;
+pub(crate) use converted_site::ConvertedSite;
 pub(crate) use feature_pages::*;
 pub(crate) use feature_path::FeaturePath;
 pub(crate) use folders::*;
@@ -44,5 +47,6 @@ pub(crate) use site_tree::{
     FolderId, SiteFeaturePage, SiteFolder, SiteFolderPage, SiteNode, SiteTree, SiteTreeBuilder,
     SiteTreeNode, SiteVersion,
 };
+pub(crate) use store::*;
 pub(crate) use tags::*;
 pub(crate) use versions::*;

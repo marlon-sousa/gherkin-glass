@@ -15,9 +15,12 @@ use gherkin::{Feature, GherkinEnv, Scenario, Step};
 use rstest::rstest;
 use serde_json::Value;
 
+#[path = "support/store_json.rs"]
+mod store_json;
 #[path = "support/version_placeholder.rs"]
 mod version_placeholder;
 
+use store_json::indented;
 use version_placeholder::with_version_placeholder;
 
 fn repository() -> &'static Path {
@@ -72,7 +75,8 @@ fn feature_files(folder: &Path) -> BTreeSet<PathBuf> {
     found
 }
 
-/// Every file below `folder`, by its `/`-joined path in it.
+/// Every file below `folder`, by its `/`-joined path in it, the version it names put back as
+/// the placeholder, and each file of the store indented.
 fn files(folder: &Path) -> BTreeMap<String, Vec<u8>> {
     let mut found = BTreeMap::new();
     let mut folders = vec![(folder.to_path_buf(), String::new())];
@@ -84,10 +88,13 @@ fn files(folder: &Path) -> BTreeMap<String, Vec<u8>> {
                 folders.push((entry.path(), format!("{name}/")));
             } else {
                 let file = read(entry.path()).expect("the file is read");
-                found.insert(
-                    name,
-                    with_version_placeholder(file, env!("CARGO_PKG_VERSION")),
-                );
+                let file = with_version_placeholder(file, env!("CARGO_PKG_VERSION"));
+                let file = if name.starts_with("data/") && name.ends_with(".json") {
+                    indented(&String::from_utf8(file).expect("UTF-8")).into_bytes()
+                } else {
+                    file
+                };
+                found.insert(name, file);
             }
         }
     }

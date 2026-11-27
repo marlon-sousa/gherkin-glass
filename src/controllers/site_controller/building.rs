@@ -173,7 +173,7 @@ impl SiteController {
                 error: BuildError::Input(errors),
             }));
         }
-        let site_tree = self.converter.convert(
+        let converted = self.converter.convert(
             &snapshot.input_tree,
             snapshot.site_tree(),
             &snapshot.settings,
@@ -181,7 +181,7 @@ impl SiteController {
         );
         let written =
             self.site_writer
-                .write(&snapshot.settings, site_tree, snapshot.site.as_deref());
+                .write(&snapshot.settings, converted, snapshot.site.as_deref());
         match written {
             Ok((site, rendered)) => Ok(Built {
                 built: rendered.files.built,

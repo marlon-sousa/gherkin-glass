@@ -1,0 +1,97 @@
+{
+  "format": 1,
+  "language": "en",
+  "lang": "en",
+  "feature": {
+    "kind": "feature",
+    "keyword": "Feature",
+    "note": false,
+    "name": "Refunds",
+    "description": "",
+    "tags": [],
+    "anchor": "",
+    "hash": "a2757d7665a3bc9891637d99971dcd23a3a4da7ca72792f1d0c6c80b71b6639e",
+    "blocks": [
+      {
+        "kind": "scenario",
+        "keyword": "Scenario",
+        "note": false,
+        "name": "A customer is refunded",
+        "description": "",
+        "tags": [],
+        "anchor": "a-customer-is-refunded",
+        "hash": "db84016c177291d3bfe1926b24b4b987aad9163b47a933f271458e773e7a832c",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "a customer paid 50",
+            "kind": "given",
+            "sentence": "a customer paid 50",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "a customer paid ",
+                "parts": []
+              },
+              {
+                "kind": "number",
+                "text": "50",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "When ",
+            "text": "the payment is refunded",
+            "kind": "when",
+            "sentence": "the payment is refunded",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "the payment is refunded",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "Then ",
+            "text": "the customer's balance grows by 50",
+            "kind": "then",
+            "sentence": "the customer's balance grows by 50",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "the customer's balance grows by ",
+                "parts": []
+              },
+              {
+                "kind": "number",
+                "text": "50",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      }
+    ],
+    "steps": [],
+    "examples": [],
+    "place": null,
+    "table": null,
+    "runs": []
+  }
+}

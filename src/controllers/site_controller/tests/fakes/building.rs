@@ -9,10 +9,10 @@ use gherkin::{Feature, GherkinEnv};
 
 use super::*;
 use crate::entities::{
-    CollectedChanges, FileToParse, IgnoreRules, InputTree, InputTreeBuilder, KeptInOutput,
-    PageOptions, ParsedFeature, ParsedFile, PathList, RenderedSite, RevisedFeature, Revision,
-    Settings, SiteFiles, SiteNode, SiteTree, SiteTreeBuilder, SiteVersion, TagNames, Unnamed,
-    VersionName,
+    CollectedChanges, ConvertedSite, FileToParse, IgnoreRules, InputTree, InputTreeBuilder,
+    KeptInOutput, PageOptions, ParsedFeature, ParsedFile, PathList, RenderedSite, RevisedFeature,
+    Revision, Settings, SiteFiles, SiteNode, SiteStore, SiteTree, SiteTreeBuilder, SiteVersion,
+    TagNames, Unnamed, VersionName,
 };
 use crate::policies::page_frame;
 use crate::test_support::name;
@@ -216,7 +216,7 @@ impl ConverterApi for FakeConverter {
         last: Option<&SiteTree>,
         settings: &Settings,
         built_versions: &BTreeSet<VersionName>,
-    ) -> SiteTree {
+    ) -> ConvertedSite {
         let version = SiteVersion {
             name: None,
             tag_names: TagNames::default(),
@@ -231,7 +231,10 @@ impl ConverterApi for FakeConverter {
             asset_names(&tree),
             versions.join(" ")
         ));
-        tree
+        ConvertedSite {
+            site_tree: tree,
+            store: SiteStore::default(),
+        }
     }
 }
 
@@ -261,9 +264,10 @@ impl SiteWriterApi for FakeSiteWriter {
     fn write(
         &self,
         settings: &Settings,
-        tree: SiteTree,
+        converted: ConvertedSite,
         last: Option<&RenderedSite>,
     ) -> Result<(ServedSite, RenderedSite), BuildError> {
+        let tree = converted.site_tree;
         let after = last.map_or_else(String::new, |last| {
             format!(" after {}", asset_names(&last.tree))
         });

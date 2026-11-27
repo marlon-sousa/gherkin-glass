@@ -11,11 +11,11 @@ use i18n_embed_fl::fl;
 
 use crate::entities::{
     BackgroundsOption, BlockKind, FeaturePath, HeadingLevel, NoteDialog, OwnCrumb, Page,
-    PageContent, PageOptions, PageWords, RevisedFeature, SourceLink, TagNames, Trail,
-    percent_encoded, plain_parts, text_of,
+    PageContent, PageOptions, PageWords, RevisedFeature, SourceLink, TagNames, Trail, plain_parts,
+    text_of,
 };
 use crate::policies::site::anchor_feature;
-use crate::policies::site::page_language;
+use crate::policies::site::{page_language, source_address};
 use crate::policies::{CATALOGUE, page_address};
 
 /// Stands for the file's path in the words of the source link, to find where
@@ -144,9 +144,7 @@ fn note_dialog() -> NoteDialog {
 }
 
 fn source_link(template: &str, path: &FeaturePath, line: usize) -> SourceLink {
-    let address = template
-        .replace("{path}", &percent_encoded(path.as_str()))
-        .replace("{line}", &line.to_string());
+    let address = source_address(template, path, line);
     let words = fl!(CATALOGUE, "source-link", path = PATH_MARK);
     let (before, after) = words.split_once(PATH_MARK).unwrap_or((&words, ""));
     SourceLink {

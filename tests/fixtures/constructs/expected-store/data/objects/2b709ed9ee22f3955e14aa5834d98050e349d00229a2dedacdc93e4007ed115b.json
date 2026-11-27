@@ -1,0 +1,499 @@
+{
+  "format": 1,
+  "language": "en",
+  "lang": "en",
+  "feature": {
+    "kind": "feature",
+    "keyword": "Feature",
+    "note": false,
+    "name": "Every construct",
+    "description": "A description of the feature,\nover two lines.",
+    "tags": [
+      "@billing",
+      "@slow"
+    ],
+    "anchor": "",
+    "hash": "8d661a78f5be8b660eabd94683ddbfbcab1f5269070c30fe6128dfafa6aab7a1",
+    "blocks": [
+      {
+        "kind": "background",
+        "keyword": "Background",
+        "note": false,
+        "name": "A logged in customer",
+        "description": "",
+        "tags": [],
+        "anchor": "a-logged-in-customer",
+        "hash": "f3b5bd5d5be8aa6066736c56bc2423cdb78c8071981d1400bad62f7cbab8e3c6",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "a customer named \"Ana\"",
+            "kind": "given",
+            "sentence": "a customer named \"…\"",
+            "slots": [
+              "\"Ana\""
+            ],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "a customer named ",
+                "parts": []
+              },
+              {
+                "kind": "parameter",
+                "text": "\"Ana\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"Ana\"",
+                    "parts": []
+                  }
+                ]
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "scenario",
+        "keyword": "Scenario",
+        "note": false,
+        "name": "A plain scenario",
+        "description": "A description of the scenario.",
+        "tags": [],
+        "anchor": "a-plain-scenario",
+        "hash": "9b0fd664cde9817294fc50be088c4e8aa949465cc444c14b0da0147d7c40f3e2",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "an order with these lines:",
+            "kind": "given",
+            "sentence": "an order with these lines:",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "an order with these lines:",
+                "parts": []
+              }
+            ],
+            "table": [
+              [
+                "item",
+                "price"
+              ],
+              [
+                "pen",
+                "1.50"
+              ],
+              [
+                "a | b",
+                "2"
+              ]
+            ],
+            "doc_string": null
+          },
+          {
+            "keyword": "When ",
+            "text": "the order is placed",
+            "kind": "when",
+            "sentence": "the order is placed",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "the order is placed",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "Then ",
+            "text": "a receipt is sent",
+            "kind": "then",
+            "sentence": "a receipt is sent",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "a receipt is sent",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "And ",
+            "text": "no error is shown",
+            "kind": "then",
+            "sentence": "no error is shown",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "no error is shown",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "But ",
+            "text": "nothing is charged twice",
+            "kind": "then",
+            "sentence": "nothing is charged twice",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "nothing is charged twice",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "* ",
+            "text": "the order is saved",
+            "kind": "given",
+            "sentence": "the order is saved",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "the order is saved",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "scenario-outline",
+        "keyword": "Scenario Outline",
+        "note": false,
+        "name": "An outline with two named examples",
+        "description": "",
+        "tags": [
+          "@outline"
+        ],
+        "anchor": "an-outline-with-two-named-examples",
+        "hash": "ca67583d57b6d92021f42d6eebe0ffa58abb8e6d30bf2e69b8e4e9310e3d4efc",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "<count> items",
+            "kind": "given",
+            "sentence": "\"…\" items",
+            "slots": [
+              "<count>"
+            ],
+            "parts": [
+              {
+                "kind": "placeholder",
+                "text": "<count>",
+                "parts": []
+              },
+              {
+                "kind": "text",
+                "text": " items",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "Then ",
+            "text": "the total is <total>",
+            "kind": "then",
+            "sentence": "the total is \"…\"",
+            "slots": [
+              "<total>"
+            ],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "the total is ",
+                "parts": []
+              },
+              {
+                "kind": "placeholder",
+                "text": "<total>",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [
+          {
+            "kind": "examples",
+            "keyword": "Examples",
+            "note": false,
+            "name": "Cheap",
+            "description": "",
+            "tags": [
+              "@cheap"
+            ],
+            "anchor": "cheap",
+            "hash": "0f0138470e59932167fc33c419dd1df3ebd0574878d5006bb7ae5b1b61042f1e",
+            "blocks": [],
+            "steps": [],
+            "examples": [],
+            "place": 1,
+            "table": [
+              [
+                "count",
+                "total"
+              ],
+              [
+                "1",
+                "2"
+              ]
+            ],
+            "runs": [
+              {
+                "anchor": "an-outline-with-two-named-examples-row-1",
+                "steps": [
+                  {
+                    "keyword": "Given ",
+                    "text": "1 items",
+                    "kind": "given",
+                    "sentence": "1 items",
+                    "slots": [],
+                    "parts": [
+                      {
+                        "kind": "number",
+                        "text": "1",
+                        "parts": []
+                      },
+                      {
+                        "kind": "text",
+                        "text": " items",
+                        "parts": []
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": null
+                  },
+                  {
+                    "keyword": "Then ",
+                    "text": "the total is 2",
+                    "kind": "then",
+                    "sentence": "the total is 2",
+                    "slots": [],
+                    "parts": [
+                      {
+                        "kind": "text",
+                        "text": "the total is ",
+                        "parts": []
+                      },
+                      {
+                        "kind": "number",
+                        "text": "2",
+                        "parts": []
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": null
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "examples",
+            "keyword": "Examples",
+            "note": false,
+            "name": "Expensive",
+            "description": "",
+            "tags": [],
+            "anchor": "expensive",
+            "hash": "e186bedd1029985b5f045f59c4f991ce7434a1c6f58bfe86e4aaa3cee8cf4809",
+            "blocks": [],
+            "steps": [],
+            "examples": [],
+            "place": 2,
+            "table": [
+              [
+                "count",
+                "total"
+              ],
+              [
+                "9",
+                "90"
+              ]
+            ],
+            "runs": [
+              {
+                "anchor": "an-outline-with-two-named-examples-row-2",
+                "steps": [
+                  {
+                    "keyword": "Given ",
+                    "text": "9 items",
+                    "kind": "given",
+                    "sentence": "9 items",
+                    "slots": [],
+                    "parts": [
+                      {
+                        "kind": "number",
+                        "text": "9",
+                        "parts": []
+                      },
+                      {
+                        "kind": "text",
+                        "text": " items",
+                        "parts": []
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": null
+                  },
+                  {
+                    "keyword": "Then ",
+                    "text": "the total is 90",
+                    "kind": "then",
+                    "sentence": "the total is 90",
+                    "slots": [],
+                    "parts": [
+                      {
+                        "kind": "text",
+                        "text": "the total is ",
+                        "parts": []
+                      },
+                      {
+                        "kind": "number",
+                        "text": "90",
+                        "parts": []
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": null
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "rule",
+        "keyword": "Rule",
+        "note": false,
+        "name": "A rule with its own background",
+        "description": "The rule's description.",
+        "tags": [],
+        "anchor": "a-rule-with-its-own-background",
+        "hash": "52aa2d8995944a9d9913ecf3e471fe486c1942e09d4afc7ba2a6333f7b53a697",
+        "blocks": [
+          {
+            "kind": "background",
+            "keyword": "Background",
+            "note": false,
+            "name": "Inside the rule",
+            "description": "",
+            "tags": [],
+            "anchor": "inside-the-rule",
+            "hash": "b116e4fa865a564feec425475939232378c62300f02bcc964c2adab0207d5425",
+            "blocks": [],
+            "steps": [
+              {
+                "keyword": "Given ",
+                "text": "the rule applies",
+                "kind": "given",
+                "sentence": "the rule applies",
+                "slots": [],
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "the rule applies",
+                    "parts": []
+                  }
+                ],
+                "table": null,
+                "doc_string": null
+              }
+            ],
+            "examples": [],
+            "place": null,
+            "table": null,
+            "runs": []
+          },
+          {
+            "kind": "scenario",
+            "keyword": "Example",
+            "note": true,
+            "name": "A scenario inside the rule",
+            "description": "",
+            "tags": [
+              "@in-rule"
+            ],
+            "anchor": "a-scenario-inside-the-rule",
+            "hash": "0873c581c76beb0c168461f5ed5a9c30eab0021df34640882fcd9cc79601ca33",
+            "blocks": [],
+            "steps": [
+              {
+                "keyword": "Given ",
+                "text": "a step with a doc string",
+                "kind": "given",
+                "sentence": "a step with a doc string",
+                "slots": [],
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "a step with a doc string",
+                    "parts": []
+                  }
+                ],
+                "table": null,
+                "doc_string": {
+                  "media_type": null,
+                  "content": "Some text."
+                }
+              }
+            ],
+            "examples": [],
+            "place": null,
+            "table": null,
+            "runs": []
+          }
+        ],
+        "steps": [],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      }
+    ],
+    "steps": [],
+    "examples": [],
+    "place": null,
+    "table": null,
+    "runs": []
+  }
+}

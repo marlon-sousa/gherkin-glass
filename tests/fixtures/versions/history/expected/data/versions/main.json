@@ -1,0 +1,66 @@
+{
+  "format": 1,
+  "ghg": "{version}",
+  "version": "main",
+  "preview": null,
+  "title": "History",
+  "only": false,
+  "start": {
+    "collapse_rules": false,
+    "collapse_scenarios": false,
+    "show_tree": true,
+    "inline_backgrounds": true
+  },
+  "features": [
+    {
+      "path": "cards.feature",
+      "page": "cards",
+      "object": "57c252fdc6aa7f11474bd19f654751ac33b96f32934d7e1de7a1d65a2d5a57ff",
+      "lines": [
+        1,
+        2
+      ],
+      "source": null
+    },
+    {
+      "path": "refunds.feature",
+      "page": "refunds",
+      "object": "91c9220795c50ddae9a55b9e9543b979f4d8015b011860fe433ccccc3a42a4be",
+      "lines": [
+        1,
+        4,
+        9
+      ],
+      "source": null
+    }
+  ],
+  "tags": [],
+  "sentences": {
+    "given": [
+      "a card",
+      "a paid order"
+    ],
+    "when": [
+      "I pay 5",
+      "I refund it",
+      "I refund it in cash"
+    ],
+    "then": [
+      "5 is charged",
+      "the card is credited",
+      "the till is short"
+    ]
+  },
+  "front_page": null,
+  "settings": {
+    "title": "History",
+    "source_link": null,
+    "tag_links": [],
+    "accent_light": "#0b4f9c",
+    "accent_dark": "#8cc4ff",
+    "collapse_rules": false,
+    "collapse_scenarios": false,
+    "show_tree": true,
+    "inline_backgrounds": true
+  }
+}

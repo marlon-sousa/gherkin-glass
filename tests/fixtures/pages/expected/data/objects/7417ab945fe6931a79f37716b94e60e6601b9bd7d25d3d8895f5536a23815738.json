@@ -1,0 +1,559 @@
+{
+  "format": 1,
+  "language": "en",
+  "lang": "en",
+  "feature": {
+    "kind": "feature",
+    "keyword": "Feature",
+    "note": false,
+    "name": "Refunds & <returns>",
+    "description": "A refund gives the money back,\nin the way it was paid.",
+    "tags": [
+      "@billing",
+      "@slow"
+    ],
+    "anchor": "",
+    "hash": "e1b60de5f43d7ae086d55159bf4f6df960b675029dc71e20bffd6bbc9f47ef16",
+    "blocks": [
+      {
+        "kind": "background",
+        "keyword": "Background",
+        "note": false,
+        "name": "",
+        "description": "",
+        "tags": [],
+        "anchor": "background",
+        "hash": "e31a9247ed2e97317e3a1d723981e755b86dd138bcbea2edadc98d19d5afa4af",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "a customer named \"Ana\"",
+            "kind": "given",
+            "sentence": "a customer named \"…\"",
+            "slots": [
+              "\"Ana\""
+            ],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "a customer named ",
+                "parts": []
+              },
+              {
+                "kind": "parameter",
+                "text": "\"Ana\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"Ana\"",
+                    "parts": []
+                  }
+                ]
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "scenario",
+        "keyword": "Scenario",
+        "note": false,
+        "name": "Refund a card payment",
+        "description": "The plain case.",
+        "tags": [],
+        "anchor": "refund-a-card-payment",
+        "hash": "fe22bb78aeaab6f345155e784d94f0548f45ee5395651bd09f93e980a1622328",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "an order with these lines:",
+            "kind": "given",
+            "sentence": "an order with these lines:",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "an order with these lines:",
+                "parts": []
+              }
+            ],
+            "table": [
+              [
+                "item",
+                "price"
+              ],
+              [
+                "pen",
+                "1.50"
+              ],
+              [
+                "a | b",
+                "2"
+              ]
+            ],
+            "doc_string": null
+          },
+          {
+            "keyword": "When ",
+            "text": "the order is refunded",
+            "kind": "when",
+            "sentence": "the order is refunded",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "the order is refunded",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "Then ",
+            "text": "the card gets",
+            "kind": "then",
+            "sentence": "the card gets",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "the card gets",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": {
+              "media_type": "json",
+              "content": "{\"amount\": 3.50}"
+            }
+          },
+          {
+            "keyword": "And ",
+            "text": "a note is kept",
+            "kind": "then",
+            "sentence": "a note is kept",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "a note is kept",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": {
+              "media_type": null,
+              "content": "\nRefunded in full.\n  Indented."
+            }
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "scenario-outline",
+        "keyword": "Scenario Outline",
+        "note": false,
+        "name": "Refund <count> items",
+        "description": "",
+        "tags": [
+          "@outline"
+        ],
+        "anchor": "refund-count-items",
+        "hash": "5045825573a60734966b991439d6c65ec237c9ee861338c4d947318c32006838",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "<count> items",
+            "kind": "given",
+            "sentence": "\"…\" items",
+            "slots": [
+              "<count>"
+            ],
+            "parts": [
+              {
+                "kind": "placeholder",
+                "text": "<count>",
+                "parts": []
+              },
+              {
+                "kind": "text",
+                "text": " items",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "Then ",
+            "text": "the total is <total>",
+            "kind": "then",
+            "sentence": "the total is \"…\"",
+            "slots": [
+              "<total>"
+            ],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "the total is ",
+                "parts": []
+              },
+              {
+                "kind": "placeholder",
+                "text": "<total>",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [
+          {
+            "kind": "examples",
+            "keyword": "Examples",
+            "note": false,
+            "name": "Cheap",
+            "description": "",
+            "tags": [
+              "@cheap"
+            ],
+            "anchor": "cheap",
+            "hash": "0f0138470e59932167fc33c419dd1df3ebd0574878d5006bb7ae5b1b61042f1e",
+            "blocks": [],
+            "steps": [],
+            "examples": [],
+            "place": 1,
+            "table": [
+              [
+                "count",
+                "total"
+              ],
+              [
+                "1",
+                "2"
+              ]
+            ],
+            "runs": [
+              {
+                "anchor": "refund-count-items-row-1",
+                "steps": [
+                  {
+                    "keyword": "Given ",
+                    "text": "1 items",
+                    "kind": "given",
+                    "sentence": "1 items",
+                    "slots": [],
+                    "parts": [
+                      {
+                        "kind": "number",
+                        "text": "1",
+                        "parts": []
+                      },
+                      {
+                        "kind": "text",
+                        "text": " items",
+                        "parts": []
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": null
+                  },
+                  {
+                    "keyword": "Then ",
+                    "text": "the total is 2",
+                    "kind": "then",
+                    "sentence": "the total is 2",
+                    "slots": [],
+                    "parts": [
+                      {
+                        "kind": "text",
+                        "text": "the total is ",
+                        "parts": []
+                      },
+                      {
+                        "kind": "number",
+                        "text": "2",
+                        "parts": []
+                      }
+                    ],
+                    "table": null,
+                    "doc_string": null
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "examples",
+            "keyword": "Examples",
+            "note": false,
+            "name": "",
+            "description": "",
+            "tags": [],
+            "anchor": "examples",
+            "hash": "173512fc4d83816b2a6403e00224acc0a1b953609ff0bffca1c2be21fc488294",
+            "blocks": [],
+            "steps": [],
+            "examples": [],
+            "place": 2,
+            "table": [
+              [
+                "count",
+                "total"
+              ]
+            ],
+            "runs": []
+          }
+        ],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "rule",
+        "keyword": "Rule",
+        "note": false,
+        "name": "Refunds after thirty days",
+        "description": "Only store credit.",
+        "tags": [],
+        "anchor": "refunds-after-thirty-days",
+        "hash": "36119f5cc10e8a7cb1a683b8483d327237ed8c5d40fb6a299a7dbf479a945409",
+        "blocks": [
+          {
+            "kind": "background",
+            "keyword": "Background",
+            "note": false,
+            "name": "An old order",
+            "description": "",
+            "tags": [],
+            "anchor": "an-old-order",
+            "hash": "2052245abb4cccdef76958d662c272d60ed05dd2fc4d3bf416bbea279b08f701",
+            "blocks": [],
+            "steps": [
+              {
+                "keyword": "Given ",
+                "text": "an order from forty days ago",
+                "kind": "given",
+                "sentence": "an order from forty days ago",
+                "slots": [],
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "an order from forty days ago",
+                    "parts": []
+                  }
+                ],
+                "table": null,
+                "doc_string": null
+              }
+            ],
+            "examples": [],
+            "place": null,
+            "table": null,
+            "runs": []
+          },
+          {
+            "kind": "scenario",
+            "keyword": "Example",
+            "note": true,
+            "name": "Store credit",
+            "description": "",
+            "tags": [
+              "@in-rule"
+            ],
+            "anchor": "store-credit",
+            "hash": "66772b3ff820470b6c8c8cf3176ab4db25960e4646e4a136ae9eca6487d74026",
+            "blocks": [],
+            "steps": [
+              {
+                "keyword": "Then ",
+                "text": "store credit is given",
+                "kind": "then",
+                "sentence": "store credit is given",
+                "slots": [],
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "store credit is given",
+                    "parts": []
+                  }
+                ],
+                "table": null,
+                "doc_string": null
+              }
+            ],
+            "examples": [],
+            "place": null,
+            "table": null,
+            "runs": []
+          },
+          {
+            "kind": "scenario-outline",
+            "keyword": "Scenario Outline",
+            "note": false,
+            "name": "Refund again <count> times",
+            "description": "",
+            "tags": [],
+            "anchor": "refund-again-count-times",
+            "hash": "4b8c6504ad50199611ea4b312c282f3ebac8f736bbe90709055781d424b23ae8",
+            "blocks": [],
+            "steps": [
+              {
+                "keyword": "Given ",
+                "text": "<count> refunds",
+                "kind": "given",
+                "sentence": "\"…\" refunds",
+                "slots": [
+                  "<count>"
+                ],
+                "parts": [
+                  {
+                    "kind": "placeholder",
+                    "text": "<count>",
+                    "parts": []
+                  },
+                  {
+                    "kind": "text",
+                    "text": " refunds",
+                    "parts": []
+                  }
+                ],
+                "table": null,
+                "doc_string": null
+              }
+            ],
+            "examples": [
+              {
+                "kind": "examples",
+                "keyword": "Examples",
+                "note": false,
+                "name": "Again",
+                "description": "",
+                "tags": [],
+                "anchor": "again",
+                "hash": "5565b1ac4fae3ca13362ea5f9e14c63bbf426b75c811cdb78c9a21f63c57842f",
+                "blocks": [],
+                "steps": [],
+                "examples": [],
+                "place": 1,
+                "table": [
+                  [
+                    "count"
+                  ],
+                  [
+                    "2"
+                  ]
+                ],
+                "runs": [
+                  {
+                    "anchor": "refund-again-count-times-row-1",
+                    "steps": [
+                      {
+                        "keyword": "Given ",
+                        "text": "2 refunds",
+                        "kind": "given",
+                        "sentence": "2 refunds",
+                        "slots": [],
+                        "parts": [
+                          {
+                            "kind": "number",
+                            "text": "2",
+                            "parts": []
+                          },
+                          {
+                            "kind": "text",
+                            "text": " refunds",
+                            "parts": []
+                          }
+                        ],
+                        "table": null,
+                        "doc_string": null
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "place": null,
+            "table": null,
+            "runs": []
+          }
+        ],
+        "steps": [],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "rule",
+        "keyword": "Rule",
+        "note": false,
+        "name": "",
+        "description": "",
+        "tags": [],
+        "anchor": "rule",
+        "hash": "3eab55e977c740794bd2ec694090645f8c24b75bd50f8817f154d32de4a06520",
+        "blocks": [
+          {
+            "kind": "scenario",
+            "keyword": "Scenario",
+            "note": false,
+            "name": "Refund a refund",
+            "description": "",
+            "tags": [],
+            "anchor": "refund-a-refund",
+            "hash": "64f9fb464ddbe96a0ef0feafc9a75e830cc0ef5d442fb9357433e164c07ca43e",
+            "blocks": [],
+            "steps": [
+              {
+                "keyword": "Then ",
+                "text": "it is refused",
+                "kind": "then",
+                "sentence": "it is refused",
+                "slots": [],
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "it is refused",
+                    "parts": []
+                  }
+                ],
+                "table": null,
+                "doc_string": null
+              }
+            ],
+            "examples": [],
+            "place": null,
+            "table": null,
+            "runs": []
+          }
+        ],
+        "steps": [],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      }
+    ],
+    "steps": [],
+    "examples": [],
+    "place": null,
+    "table": null,
+    "runs": []
+  }
+}

@@ -1,0 +1,291 @@
+{
+  "format": 1,
+  "language": "en",
+  "lang": "en",
+  "feature": {
+    "kind": "feature",
+    "keyword": "Feature",
+    "note": false,
+    "name": "Doc strings",
+    "description": "",
+    "tags": [],
+    "anchor": "",
+    "hash": "95ab3bdb31c10b9abb6d608400fb55d4d4d12963d4dfd94e4af3b9e8d360a343",
+    "blocks": [
+      {
+        "kind": "background",
+        "keyword": "Background",
+        "note": false,
+        "name": "",
+        "description": "",
+        "tags": [],
+        "anchor": "background",
+        "hash": "29bcd706af97a67db5458ff77941781ac43683ec30f834a12124b9398fc67558",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "a background step with a doc string",
+            "kind": "given",
+            "sentence": "a background step with a doc string",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "a background step with a doc string",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": {
+              "media_type": null,
+              "content": "From the background."
+            }
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "scenario",
+        "keyword": "Scenario",
+        "note": false,
+        "name": "A media type, nested indentation and an escaped delimiter",
+        "description": "",
+        "tags": [],
+        "anchor": "a-media-type-nested-indentation-and-an-escaped-delimiter",
+        "hash": "b74311e6cf71c329fa41442c8ba3d42fd695d74ea31630a6f0c261174e6e43b6",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "a request body",
+            "kind": "given",
+            "sentence": "a request body",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "a request body",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": {
+              "media_type": "json",
+              "content": "{\n  \"quote\": \"\"\"\"\"\n}"
+            }
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "scenario",
+        "keyword": "Scenario",
+        "note": false,
+        "name": "Backticks, with their own escape",
+        "description": "",
+        "tags": [],
+        "anchor": "backticks-with-their-own-escape",
+        "hash": "cd98a899c32859ef8bd0ccb0a0135b4e6de2486459a2783e1df5bfa479efa502",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "a snippet",
+            "kind": "given",
+            "sentence": "a snippet",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "a snippet",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": {
+              "media_type": "markdown",
+              "content": "Code fences look like ``` in Markdown."
+            }
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "scenario",
+        "keyword": "Scenario",
+        "note": false,
+        "name": "A line indented less than the delimiter",
+        "description": "",
+        "tags": [],
+        "anchor": "a-line-indented-less-than-the-delimiter",
+        "hash": "2e0c5fc2e7179cb60c803bdb31c2f8d2417975f3349ba779b846abc67e428b01",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "uneven text",
+            "kind": "given",
+            "sentence": "uneven text",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "uneven text",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": {
+              "media_type": null,
+              "content": "indented as the delimiter\nindented less\n    indented more"
+            }
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "scenario",
+        "keyword": "Scenario",
+        "note": false,
+        "name": "Blank lines, and a comment between the step and its doc string",
+        "description": "",
+        "tags": [],
+        "anchor": "blank-lines-and-a-comment-between-the-step-and-its-doc-string",
+        "hash": "79948bacbdfc0e732ad59e7425a449ad146236a45bf9e2919acc68a9df21db67",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "text with blank lines",
+            "kind": "given",
+            "sentence": "text with blank lines",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "text with blank lines",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": {
+              "media_type": null,
+              "content": "\nbetween blank lines\n"
+            }
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "scenario",
+        "keyword": "Scenario",
+        "note": false,
+        "name": "Tabs, and a delimiter after a hash inside the content",
+        "description": "",
+        "tags": [],
+        "anchor": "tabs-and-a-delimiter-after-a-hash-inside-the-content",
+        "hash": "c83819b9a319d843d0042a6ad6d65076e97325e0611e65fff8ab62167f258753",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "text with a tab and a hash",
+            "kind": "given",
+            "sentence": "text with a tab and a hash",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "text with a tab and a hash",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": {
+              "media_type": null,
+              "content": "one tab, as indentation\n\ta tab after the indentation\n# A line like a comment, with \"\"\" in it, is content.\nx = 1 # and from a hash on any line, \"\"\" does not close it either"
+            }
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "rule",
+        "keyword": "Rule",
+        "note": false,
+        "name": "Doc strings inside a rule",
+        "description": "",
+        "tags": [],
+        "anchor": "doc-strings-inside-a-rule",
+        "hash": "6a616029cc9de5de3e9732788eb5a45c316cb248f581f6b63b0b9c7f99ceaa91",
+        "blocks": [
+          {
+            "kind": "scenario",
+            "keyword": "Example",
+            "note": true,
+            "name": "A doc string inside a rule",
+            "description": "",
+            "tags": [],
+            "anchor": "a-doc-string-inside-a-rule",
+            "hash": "9e74237e398a9ac3d8279deba45b3aecbe19bef25a7dba46d21ddc9c62d071da",
+            "blocks": [],
+            "steps": [
+              {
+                "keyword": "Given ",
+                "text": "a step in a rule",
+                "kind": "given",
+                "sentence": "a step in a rule",
+                "slots": [],
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "a step in a rule",
+                    "parts": []
+                  }
+                ],
+                "table": null,
+                "doc_string": {
+                  "media_type": "text",
+                  "content": "Inside the rule."
+                }
+              }
+            ],
+            "examples": [],
+            "place": null,
+            "table": null,
+            "runs": []
+          }
+        ],
+        "steps": [],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      }
+    ],
+    "steps": [],
+    "examples": [],
+    "place": null,
+    "table": null,
+    "runs": []
+  }
+}

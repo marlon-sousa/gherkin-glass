@@ -1,0 +1,55 @@
+{
+  "format": 1,
+  "language": "em",
+  "lang": "und",
+  "feature": {
+    "kind": "feature",
+    "keyword": "📚",
+    "note": true,
+    "name": "Emoji keywords",
+    "description": "",
+    "tags": [],
+    "anchor": "",
+    "hash": "4a820ff5b7c6f0021d1ecf24f7b13da94cff421ee19965a0584146479f78132e",
+    "blocks": [
+      {
+        "kind": "scenario",
+        "keyword": "📕",
+        "note": true,
+        "name": "A scenario",
+        "description": "",
+        "tags": [],
+        "anchor": "a-scenario",
+        "hash": "8757f16f09d031b35fbe1a3bb9d79b490f51ebdfdca31833beac7bb74466e666",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "😐 ",
+            "text": "something",
+            "kind": "given",
+            "sentence": "something",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "something",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      }
+    ],
+    "steps": [],
+    "examples": [],
+    "place": null,
+    "table": null,
+    "runs": []
+  }
+}
