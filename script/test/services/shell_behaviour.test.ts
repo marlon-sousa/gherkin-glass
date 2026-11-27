@@ -7,7 +7,7 @@ import type { PageName } from "../../src/policies/address.ts";
 import type { DrawnPage } from "../../src/ports/drawn_page.ts";
 import type { SearchPage } from "../../src/ports/search_page.ts";
 import { shellBehaviour } from "../../src/services/shell_behaviour.ts";
-import { FakeBlock, FakeMemory, FakePage } from "../support/page_fakes.ts";
+import { FakeBackgrounds, FakeBlock, FakeMemory, FakePage } from "../support/page_fakes.ts";
 
 interface Behaved {
   readonly shown: PageName[];
@@ -17,11 +17,11 @@ interface Behaved {
   readonly page: FakePage;
 }
 
-function behaved(page: PageName): Behaved {
+function behaved(page: PageName, backgrounds: FakeBackgrounds | null = null): Behaved {
   const behaving: Behaved = { shown: [], filled: [], searched: [], memory: new FakeMemory(), page: new FakePage([new FakeBlock("store-credit", null)]) };
   const drawn: DrawnPage = {
     blocks: () => behaving.page,
-    backgrounds: () => null,
+    backgrounds: () => backgrounds,
     noteDialog: () => null,
     searchPage: (searched): SearchPage | null => {
       behaving.searched.push(searched);
@@ -35,7 +35,6 @@ function behaved(page: PageName): Behaved {
     documents: { load: async () => [] },
     memory: behaving.memory,
     shellPath: "/site/v1/",
-    siteRoot: "/site/",
   })(page);
   return behaving;
 }
@@ -48,6 +47,14 @@ test("a drawn page is marked in the tree, and the state of its blocks kept under
   assert.deepEqual([...drawn.memory.kept.keys()], ["gherkin-glass:/site/v1/#billing/refunds#store-credit"]);
   assert.deepEqual(drawn.filled, []);
   assert.deepEqual(drawn.searched, []);
+});
+
+// Rule 99: the choice of the backgrounds' form is kept for the shell's site, as a written page keeps it for its own.
+test("the choice of the backgrounds' form is kept under the shell's folder", () => {
+  const backgrounds = new FakeBackgrounds(false);
+  const drawn = behaved({ kind: "feature", page: "billing/refunds" }, backgrounds);
+  backgrounds.switched(true);
+  assert.equal(drawn.memory.kept.get("gherkin-glass:/site/v1/:backgrounds"), "inline");
 });
 
 // Rules 216 and 217: the page of search results fills the search box with its words and lists what they find.

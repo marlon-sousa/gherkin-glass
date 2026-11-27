@@ -114,7 +114,7 @@ function startShell(descriptorPath: string): void {
     address: new DomAddress(window),
     timer: new WindowTimer(),
     draw: pageDrawing({ store, words, pages: new DomPages(make, canvas, words), canvas }),
-    behave: shellBehaviour({ drawn: new DomDrawnPage(document, canvas), tree, fillSearch, documents, memory, shellPath, siteRoot: root.pathname }),
+    behave: shellBehaviour({ drawn: new DomDrawnPage(document, canvas), tree, fillSearch, documents, memory, shellPath }),
     failure: words.text("page-not-loaded"),
     onFailure: () => tree.disable(),
   });
