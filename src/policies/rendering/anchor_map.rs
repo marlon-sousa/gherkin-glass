@@ -1,5 +1,7 @@
 //! Policy: the map of anchors of a site, a version or a preview, `assets/anchors.json`, whose form is promised to other programs, written from its store: an entry for each block of each feature file, with its file's path, its line, its page and its anchor.
 
+use std::slice::Iter;
+
 use serde::Serialize;
 
 use crate::entities::{
@@ -35,8 +37,8 @@ pub(crate) fn anchor_map_json(store: &SiteStore) -> Vec<u8> {
 /// The entries of one feature file, which take its lines and its rows' lines in turn.
 struct FeatureWalk<'a> {
     feature: &'a DescriptorFeature,
-    lines: std::slice::Iter<'a, usize>,
-    row_lines: std::slice::Iter<'a, usize>,
+    lines: Iter<'a, usize>,
+    row_lines: Iter<'a, usize>,
     entries: Vec<EntryData<'a>>,
 }
 

@@ -56,8 +56,13 @@ impl GherkinParser {
         correct_step_keywords(&mut raw.feature, &raw.source);
         let language = file_language(&raw.source);
         let row_lines = examples_row_lines(&raw.feature, &raw.source);
-        let parsed = ParsedFeature::new(relative, raw.feature, language, row_lines, media_types);
-        Ok(parsed)
+        Ok(ParsedFeature::new(
+            relative,
+            raw.feature,
+            language,
+            row_lines,
+            media_types,
+        ))
     }
 
     fn parsed_file(&self, input: &Path, file: FileToParse, unnamed: Unnamed) -> ParsedFile {
