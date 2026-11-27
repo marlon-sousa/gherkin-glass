@@ -136,7 +136,12 @@ fn assert_store_after(folder: &Folder, last: &Build) {
         .map(|file| folder.get(&file.path()))
         .collect();
     assert!(objects_alone.iter().all(Option::is_some));
-    // Rule 254: the index of pages is what the descriptors give.
+    // Rules 253 and 254: the list of versions and the index of pages are what the descriptors
+    // give.
+    assert_eq!(
+        folder.get(VERSIONS_LIST).map(Vec::as_slice),
+        Some(index_data::versions_json(&store.versions, &last.options(), None).as_slice())
+    );
     assert_eq!(
         folder.get(PAGES_INDEX).map(Vec::as_slice),
         Some(index_data::pages_json(&store.versions).as_slice())
@@ -144,7 +149,7 @@ fn assert_store_after(folder: &Folder, last: &Build) {
 }
 
 proptest! {
-    // Rules 247, 251, 254 and 255, over any history of versions added and replaced.
+    // Rules 247 and 253 to 255, over any history of versions added and replaced.
     #[test]
     fn every_history_leaves_the_store_its_descriptors_give(builds in vec(build(), 1..8)) {
         let mut folder = Folder::new();

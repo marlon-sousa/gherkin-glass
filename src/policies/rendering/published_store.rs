@@ -43,8 +43,12 @@ impl StoreListing {
     }
 
     /// What the store holds, from `texts`, the text of each descriptor in the order of
-    /// `descriptors`; `None` when one of them is not a descriptor of the store's format.
+    /// `descriptors`; `None` when one of them is not a descriptor of the store's format, or
+    /// when there are not as many texts as descriptors.
     pub(crate) fn published(self, texts: &[String]) -> Option<PublishedStore> {
+        if texts.len() != self.descriptors.len() {
+            return None;
+        }
         let versions = self
             .descriptors
             .into_iter()

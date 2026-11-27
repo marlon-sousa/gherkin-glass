@@ -50,7 +50,7 @@ fn the_store_holds_what_each_descriptor_names() {
 }
 
 #[test]
-fn a_descriptor_of_another_format_or_not_json_is_none() {
+fn a_descriptor_of_another_format_not_json_or_missing_is_none() {
     assert_eq!(
         listing().published(&[descriptor(1, "a"), descriptor(2, "b")]),
         None
@@ -59,4 +59,5 @@ fn a_descriptor_of_another_format_or_not_json_is_none() {
         listing().published(&[descriptor(1, "a"), "{".to_string()]),
         None
     );
+    assert_eq!(listing().published(&[descriptor(1, "a")]), None);
 }

@@ -1,3 +1,4 @@
+use gherkin::{Feature, GherkinEnv};
 use rstest::rstest;
 
 use super::*;
@@ -150,7 +151,7 @@ fn a_step_holds_what_ghg_works_out_of_it() {
 #[test]
 fn a_keyword_without_a_space_keeps_none() {
     let source = "# language: zh-CN\n功能: 退款\n  场景: 刷卡\n    假如有一张卡\n";
-    let feature = gherkin::Feature::parse(source, gherkin::GherkinEnv::default()).expect("parses");
+    let feature = Feature::parse(source, GherkinEnv::default()).expect("parses");
     let parsed = ParsedFeature::new(
         "a.feature".into(),
         feature,
