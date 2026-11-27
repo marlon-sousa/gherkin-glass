@@ -7,6 +7,7 @@ import { ElementBuilder } from "./adapters/element_builder.ts";
 import { FetchedStore } from "./adapters/fetched_store.ts";
 import { FluentWords } from "./adapters/fluent_words.ts";
 import { DomBackgrounds } from "./adapters/dom_backgrounds.ts";
+import { DomDrawnPage } from "./adapters/dom_drawn_page.ts";
 import { DomNoteDialog } from "./adapters/dom_note_dialog.ts";
 import { DomPage } from "./adapters/dom_page.ts";
 import { DomSearchBox } from "./adapters/dom_search_box.ts";
@@ -19,7 +20,6 @@ import { FetchedTree } from "./adapters/fetched_tree.ts";
 import { LocalMemory } from "./adapters/local_memory.ts";
 import { MediaWidth } from "./adapters/media_width.ts";
 import { WindowTimer } from "./adapters/window_timer.ts";
-import { targetAddress } from "./policies/address.ts";
 import { siteRoot } from "./policies/background_form.ts";
 import { SHELL_ADDRESSES } from "./policies/search_index.ts";
 import { NARROW, pageAddress } from "./policies/tree_state.ts";
@@ -31,6 +31,7 @@ import { startNoteExplaining } from "./services/note_explaining.ts";
 import { startNavigation } from "./services/navigation.ts";
 import { startListing } from "./services/results_listing.ts";
 import { startSearching } from "./services/searching.ts";
+import { shellBehaviour } from "./services/shell_behaviour.ts";
 import { startShellTree } from "./services/shell_tree.ts";
 import { startThemeSwitching } from "./services/theme_switching.ts";
 
@@ -113,23 +114,7 @@ function startShell(descriptorPath: string): void {
     address: new DomAddress(window),
     timer: new WindowTimer(),
     draw: pageDrawing({ store, words, pages: new DomPages(make, canvas, words), canvas }),
-    behave: (page) => {
-      tree.show(page);
-      if (page.kind === "search") {
-        fillSearch?.(page.words);
-        const searchPage = DomSearchPage.find(document, page.words);
-        if (searchPage !== null) {
-          void startListing(searchPage, documents, SHELL_ADDRESSES);
-        }
-      }
-      const backgrounds = DomBackgrounds.of(document);
-      const reveal = startCollapsing(new DomPage(document, canvas.main, false), memory, `${shellPath}${targetAddress(page)}`, backgrounds && { backgrounds, siteRoot: root.pathname });
-      const noteDialog = DomNoteDialog.of(document);
-      if (noteDialog !== null) {
-        startNoteExplaining(noteDialog);
-      }
-      return reveal;
-    },
+    behave: shellBehaviour({ drawn: new DomDrawnPage(document, canvas), tree, fillSearch, documents, memory, shellPath, siteRoot: root.pathname }),
     failure: words.text("page-not-loaded"),
     onFailure: () => tree.disable(),
   });
