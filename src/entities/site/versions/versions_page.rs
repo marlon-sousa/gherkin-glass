@@ -1,4 +1,4 @@
-//! Entity: the versions page, above every version's site, as its template shows it, every text in it as written or worded: its nodes and its content as the site stage builds it, with what is below each node.
+//! Entity: the versions page, above every version's site, every text in it as written or worded, with the entries of its lists as the site stage builds them.
 
 use crate::entities::VersionName;
 
@@ -7,15 +7,11 @@ use crate::entities::VersionName;
 pub(crate) struct VersionsPage {
     /// The `lang` of the page, that of gherkin-glass's own text.
     pub(crate) language: String,
+    /// Its `h1` without a template.
+    pub(crate) heading: String,
+    /// Its title without a template: the heading and the site's title.
     pub(crate) title: String,
     pub(crate) words: VersionsWords,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(crate) enum VersionsList {
-    Development,
-    Releases,
-    PreReleases,
 }
 
 /// A version in a list: its name, which is its folder's, and the words of its link.

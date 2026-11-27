@@ -2,10 +2,8 @@
 
 use i18n_embed_fl::fl;
 
-use crate::entities::{
-    BreadcrumbWords, DiskNoticeWords, FooterWords, PageFrame, PageOptions, SiteScope,
-};
-use crate::policies::{CATALOGUE, site_title};
+use crate::entities::{DiskNoticeWords, FooterWords, PageFrame, PageOptions, SiteScope};
+use crate::policies::CATALOGUE;
 
 mod search_wording;
 
@@ -20,6 +18,7 @@ pub(crate) fn page_frame(options: &PageOptions) -> PageFrame {
             title: fl!(CATALOGUE, "opened-from-disk-title"),
             text: fl!(CATALOGUE, "opened-from-disk"),
             agree: fl!(CATALOGUE, "opened-from-disk-agree"),
+            cannot_be_shown: fl!(CATALOGUE, "opened-from-disk-page"),
         },
         skip_link: fl!(CATALOGUE, "skip-to-content"),
         show_tree: fl!(CATALOGUE, "show-folder-tree"),
@@ -31,16 +30,13 @@ pub(crate) fn page_frame(options: &PageOptions) -> PageFrame {
         theme_dark: fl!(CATALOGUE, "theme-dark"),
         accents: options.accents,
         search: search_words(),
-        breadcrumb: BreadcrumbWords {
-            label: fl!(CATALOGUE, "breadcrumb"),
-            home: site_title(options),
-        },
+        breadcrumb: fl!(CATALOGUE, "breadcrumb"),
         footer: footer_words(),
         only_note: match options.scope {
             SiteScope::OnlyListed => Some(fl!(CATALOGUE, "only-note")),
             SiteScope::EveryFeature => None,
         },
-        indexing: options.indexing,
+        needs_script: fl!(CATALOGUE, "needs-script"),
     }
 }
 
@@ -103,6 +99,11 @@ mod tests {
             words.text.starts_with("This site is meant to be served,"),
             "{}",
             words.text
+        );
+        assert!(
+            words
+                .cannot_be_shown
+                .starts_with("This page cannot be shown")
         );
         assert_eq!(words.agree, "I agree");
     }

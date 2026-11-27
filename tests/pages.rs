@@ -1,10 +1,7 @@
-//! The pages, checked by building the fixtures and comparing every file written with the site
-//! committed beside them.
+//! The sites the fixtures build, compared file by file with the sites committed beside them,
+//! and the shell and the store a build writes, read as a browser and the script read them.
 //!
-//! `cargo run -- build --config tests/fixtures/pages/ghg.toml`, and again with
-//! `collapsed.toml`, writes the expected sites again after a change, and so
-//! do `tests/fixtures/backgrounds/ghg.toml` and `unchecked.toml` for
-//! "Backgrounds".
+//! `cargo xtask build` writes the expected sites again after a change.
 
 #![expect(
     clippy::expect_used,
@@ -12,13 +9,11 @@
     reason = "a test file's helpers are test code, which clippy.toml lets panic"
 )]
 
-use std::collections::BTreeMap;
-use std::fs::{create_dir_all, read, read_to_string, remove_dir_all, write};
+use std::fs::{create_dir_all, read_to_string, remove_dir_all, write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
-use std::str::from_utf8;
 
-use rstest::rstest;
+use serde_json::Value;
 
 #[path = "support/site_files.rs"]
 mod site_files;
@@ -49,6 +44,34 @@ fn output(name: &str) -> PathBuf {
     folder
 }
 
+fn json(file: &Path) -> Value {
+    serde_json::from_str(&read_to_string(file).expect("the file is read")).expect("JSON")
+}
+
+/// The descriptor of the site in `site`.
+fn site_json(site: &Path) -> Value {
+    json(&site.join("data/site.json"))
+}
+
+/// The object of the page `page` of the site in `site`.
+fn object_of(site: &Path, page: &str) -> Value {
+    let features = site_json(site)["features"].clone();
+    let feature = features
+        .as_array()
+        .expect("a list")
+        .iter()
+        .find(|feature| feature["page"] == page)
+        .expect("the page is listed")
+        .clone();
+    let name = feature["object"].as_str().expect("an object");
+    json(&site.join(format!("data/objects/{name}.json")))
+}
+
+/// The front page of the committed site `site` of the fixture `pages`.
+fn front_page(site: &str) -> String {
+    read_to_string(fixtures().join("pages").join(site).join("index.html")).expect("read")
+}
+
 fn assert_same_site(config: &str, expected: &str) {
     assert_same_site_of("pages", config, expected);
 }
@@ -76,11 +99,11 @@ fn assert_same_site_of(fixture: &str, config: &str, expected: &str) {
     assert_same_files(&written, &fixtures().join(fixture).join(expected));
 }
 
-// Rules 36, 38 to 51, 77 to 85 and 129 to 132: every page of the fixture,
-// its folder pages, and the assets beside them.
+// Rules 36 to 39, 81 to 83 and 241 to 252: the shell, its front page, the
+// store and the assets of every fixture, as configured.
 
 #[test]
-fn every_feature_file_has_its_page_as_the_expected_site_shows() {
+fn every_feature_file_is_in_the_store_as_the_expected_site_shows() {
     assert_same_site("ghg.toml", "expected");
 }
 
@@ -89,9 +112,8 @@ fn the_settings_start_rules_scenarios_and_backgrounds_collapsed() {
     assert_same_site("collapsed.toml", "expected-collapsed");
 }
 
-// "Backgrounds", rules 94 to 99: each scenario with a block of each background
-// it starts with, and the checkbox on every page with a background, disabled
-// where no scenario starts with one's steps.
+// "Backgrounds", rules 94 to 99: the descriptor's starting state of the
+// checkbox, checked or not.
 
 #[test]
 fn scenarios_hold_their_backgrounds_expanded_by_default() {
@@ -103,196 +125,40 @@ fn scenarios_hold_their_backgrounds_collapsed_when_inline_backgrounds_is_false()
     assert_same_site_of("backgrounds", "unchecked.toml", "expected-unchecked");
 }
 
-#[test]
-fn every_page_with_a_background_has_the_checkbox() {
-    let site = fixtures().join("backgrounds/expected");
-    let has = |page: &str| {
-        let html = String::from_utf8(read(site.join(page)).expect("read")).expect("UTF-8");
-        html.contains("class=\"ghg-inline-backgrounds\"")
-    };
-    assert!(has("both.html"));
-    assert!(has("regra.html"));
-    assert!(has("no-steps.html"));
-    assert!(has("no-scenarios.html"));
-    assert!(!has("none.html"));
-}
-
-// Rule 51: a background whose steps a scenario starts with starts collapsed in
-// its own place while the checkbox is checked, and as `collapse_scenarios` says
-// while it is unchecked, which the page keeps for the script; any other
-// background is as `collapse_scenarios` says either way.
-
-#[rstest]
-#[case::checked_held_inside("expected", "both.html", Some(true), false)]
-#[case::unchecked_held_inside("expected-unchecked", "both.html", Some(true), true)]
-#[case::checked_without_steps("expected", "no-steps.html", None, true)]
-#[case::unchecked_without_steps("expected-unchecked", "no-steps.html", None, true)]
-#[case::checked_without_scenarios("expected", "no-scenarios.html", None, true)]
-#[case::unchecked_without_scenarios("expected-unchecked", "no-scenarios.html", None, true)]
-fn the_checked_box_starts_collapsed_the_backgrounds_whose_steps_scenarios_hold(
-    #[case] site: &str,
-    #[case] page: &str,
-    #[case] expanded_when_unchecked: Option<bool>,
-    #[case] expanded: bool,
-) {
-    let html = backgrounds_page(site, page);
-    let start = html
-        .find("<div class=\"ghg-block ghg-background")
-        .expect("one");
-    let block = html[start..].lines().take(2).collect::<Vec<_>>().join("\n");
-    let attribute = match expanded_when_unchecked {
-        Some(state) => format!(" data-expanded-when-unchecked=\"{state}\""),
-        None => String::new(),
-    };
-    assert_eq!(
-        block,
-        format!(
-            "<div class=\"ghg-block ghg-background\"{attribute}>\n\
-             <h2 id=\"background\"><button type=\"button\" class=\"ghg-toggle\" aria-expanded=\"{expanded}\">Background</button></h2>"
-        )
-    );
-}
-
-// Rules 51 and 95: each background inside a scenario is a block one level below
-// it, expanded while the checkbox is checked and collapsed while it is not.
-
-#[rstest]
-#[case::checked_feature_s_background(
-    "expected",
-    true,
-    "outside-any-rule_background_1",
-    4,
-    "From the background"
-)]
-#[case::checked_rule_s_background(
-    "expected",
-    true,
-    "move-amount_background_2",
-    4,
-    "From the rule&#39;s background"
-)]
-#[case::unchecked_feature_s_background(
-    "expected-unchecked",
-    false,
-    "outside-any-rule_background_1",
-    4,
-    "From the background"
-)]
-#[case::unchecked_rule_s_background(
-    "expected-unchecked",
-    false,
-    "move-amount_background_2",
-    4,
-    "From the rule&#39;s background"
-)]
-fn the_backgrounds_inside_a_scenario_follow_the_box(
-    #[case] site: &str,
-    #[case] expanded: bool,
-    #[case] id: &str,
-    #[case] level: u8,
-    #[case] heading: &str,
-) {
-    let html = backgrounds_page(site, "both.html");
-    let hidden = if expanded { "" } else { " hidden" };
-    let block = format!(
-        "<div class=\"ghg-block ghg-background-in-scenario\" data-expanded-when-unchecked=\"false\">\n\
-         <h{level} id=\"{id}\"><button type=\"button\" class=\"ghg-toggle\" aria-expanded=\"{expanded}\">{heading}</button></h{level}>\n\
-         <div class=\"ghg-content\"{hidden}>"
-    );
-    assert!(html.contains(&block), "{block}");
-}
-
-// Rule 95: after the backgrounds a scenario holds, its own steps are headed
-// "From the scenario", at the level of those backgrounds, in English whatever
-// the file's language.
-
-#[rstest]
-#[case::outside_any_rule(
-    "both.html",
-    4,
-    "When </span><span class=\"ghg-number\">10</span> is moved"
-)]
-#[case::in_an_outline_under_a_rule("both.html", 4, "When </span><span class=\"ghg-placeholder\">")]
-#[case::under_a_rule("both.html", 4, "Then </span>nothing changes")]
-#[case::in_portuguese("regra.html", 4, "Então </span>")]
-fn a_scenario_s_own_steps_are_headed_after_its_backgrounds(
-    #[case] page: &str,
-    #[case] level: u8,
-    #[case] step: &str,
-) {
-    let headed = format!(
-        "<h{level} class=\"ghg-steps-heading\">From the scenario</h{level}>\n\
-         <ol class=\"ghg-steps\">\n\
-         <li><span class=\"ghg-keyword\">{step}"
-    );
-    assert!(
-        backgrounds_page("expected", page).contains(&headed),
-        "{headed}"
-    );
-}
-
-// Rule 95: a scenario with no steps of its own has no heading for them.
-
-#[test]
-fn a_scenario_without_steps_of_its_own_has_no_heading_for_them() {
-    let html = backgrounds_page("expected", "both.html");
-    let start = html
-        .find("<h3 id=\"nothing-of-its-own\">")
-        .expect("the scenario");
-    assert!(!html[start..].contains("ghg-steps-heading"));
-}
-
-/// The page `page` of the backgrounds fixture's expected site `site`.
-fn backgrounds_page(site: &str, page: &str) -> String {
-    let html = read(fixtures().join("backgrounds").join(site).join(page)).expect("read");
-    String::from_utf8(html).expect("UTF-8")
-}
+// Rule 39: the assets are those built into ghg, in the folder of its version.
 
 #[test]
 fn the_assets_are_the_ones_built_into_ghg() {
-    let expected = fixtures().join("pages/expected/assets");
+    let expected = files(&fixtures().join("pages/expected/assets/{version}"));
     let repository = Path::new(env!("CARGO_MANIFEST_DIR")).join("assets");
-    let mut built = files(&expected);
-    // Rule 39: the folder tree's data is the site's own.
-    assert!(built.remove("tree.json").is_some());
-    // Rule 147: so are the search documents.
-    assert!(built.remove("search.json").is_some());
-    assert_eq!(built, files(&repository));
+    assert_eq!(expected, files(&repository));
 }
 
-// Rules 39 and 194: every page links the icon, by a relative address, and ends
-// with the footer, right after its `main`.
+// Rules 39 and 194: the shell links the icon and the assets of its version,
+// by relative addresses, and ends with the footer.
 
 #[test]
-fn every_page_links_the_icon_and_ends_with_the_footer() {
-    for (name, page) in files(&fixtures().join("pages/expected")) {
-        if !name.ends_with(".html") {
-            continue;
-        }
-        let page = String::from_utf8(page).expect("UTF-8");
-        let root = "../".repeat(name.matches('/').count());
-        assert!(
-            page.contains(&format!(
-                "<link rel=\"icon\" href=\"{root}assets/gherkin-glass.svg\" type=\"image/svg+xml\">"
-            )),
-            "{name}"
-        );
-        assert!(
-            page.contains(
-                "</main>\n<footer class=\"ghg-footer\">\n<p>Built with \
-                 <a href=\"https://github.com/marlon-sousa/gherkin-glass\">gherkin-glass</a> {version}</p>\n\
-                 </footer>\n</div>\n</div>\n</body>"
-            ),
-            "{name}"
-        );
+fn the_shell_links_its_assets_and_ends_with_the_footer() {
+    let page = front_page("expected");
+    for link in [
+        "<link rel=\"stylesheet\" href=\"assets/{version}/gherkin-glass.css\">",
+        "<link rel=\"icon\" href=\"assets/{version}/gherkin-glass.svg\" type=\"image/svg+xml\">",
+        "<script type=\"module\" src=\"assets/{version}/gherkin-glass.js\"></script>",
+    ] {
+        assert!(page.contains(link), "{link}");
     }
+    assert!(page.contains(
+        "</main>\n<p id=\"ghg_announcement\" role=\"status\"></p>\n<footer class=\"ghg-footer\">\n<p>Built with \
+         <a href=\"https://github.com/marlon-sousa/gherkin-glass\">gherkin-glass</a> {version}</p>\n\
+         </footer>\n</div>\n</div>\n"
+    ));
 }
 
-// Rule 195: the footer of a page ghg builds names the crate's own version,
-// which the committed pages hold as the placeholder.
+// Rule 195: the footer and the assets' folder name the crate's own version,
+// which the committed sites hold as the placeholder.
 
 #[test]
-fn the_footer_names_the_version_of_the_ghg_that_wrote_the_page() {
+fn the_footer_names_the_version_of_the_ghg_that_wrote_the_shell() {
     let written = output("footer-version");
     let result = build(
         &fixtures().join("pages"),
@@ -305,109 +171,48 @@ fn the_footer_names_the_version_of_the_ghg_that_wrote_the_page() {
         page.contains(&format!("gherkin-glass</a> {version}</p>\n</footer>")),
         "{page}"
     );
+    assert!(page.contains(&format!("href=\"assets/{version}/gherkin-glass.css\"")));
     assert!(!page.contains("{version}"), "{page}");
 }
 
+// Rules 32 and 81: the shell's one h1, its lang, and the ids it gives its own
+// parts, which contain `_`.
+
 #[test]
-fn every_page_has_one_h1_and_a_lang_and_its_content_in_its_html() {
-    for (name, page) in files(&fixtures().join("pages/expected")) {
-        if !name.ends_with(".html") {
-            continue;
-        }
-        let page = String::from_utf8(page).expect("UTF-8");
-        assert_eq!(page.matches("<h1").count(), 1, "{name}");
-        assert!(page.contains("<html lang=\""), "{name}");
-        // Rule 32: the ids the page gives its own parts contain `_`, and
-        // are exactly these; every other id is a block's, without one.
-        let own = [
+fn the_shell_has_one_h1_a_lang_and_only_its_own_ids() {
+    let page = front_page("expected");
+    assert_eq!(page.matches("<h1").count(), 1);
+    assert!(page.contains("<html lang=\"en\""));
+    let ids: Vec<&str> = page
+        .split(" id=\"")
+        .skip(1)
+        .map(|id| &id[..id.find('"').expect("closed")])
+        .collect();
+    assert_eq!(
+        ids,
+        [
             "ghg_from_disk",
             "ghg_from_disk_title",
             "ghg_from_disk_text",
             "ghg_show_tree",
             "ghg_tree",
-        ];
-        // Rule 151: the search box's list of results, before the page's
-        // `main`, but in it, under its heading, on the page of search
-        // results (rule 217).
-        let in_main = name == "search.html";
-        let search_box = (!in_main).then_some("ghg_search_results");
-        let search_box_in_main = in_main.then_some("ghg_search_results");
-        // Rule 45: the block of the scenarios outside every rule, in a file
-        // with a rule; rule 197: the dialog of a page with a keyword's note.
-        let dialog = [
-            "ghg_note_dialog",
-            "ghg_note_dialog_title",
-            "ghg_note_dialog_text",
-        ];
-        let own: Vec<&str> = own
-            .into_iter()
-            .chain(search_box)
-            .chain(["ghg_main"])
-            .chain(search_box_in_main)
-            .chain(
-                page.contains("ghg-outside-rules")
-                    .then_some("outside_rules"),
-            )
-            .chain(
-                page.contains("class=\"ghg-note-opener\"")
-                    .then_some(dialog)
-                    .into_iter()
-                    .flatten(),
-            )
-            .collect();
-        let ids: Vec<&str> = page
-            .split(" id=\"")
-            .skip(1)
-            .map(|id| &id[..id.find('"').expect("closed")])
-            .collect();
-        let background_ids: Vec<&&str> = ids
-            .iter()
-            .filter(|id| id.contains("_background_"))
-            .collect();
-        // "Backgrounds", rule 96: each named after its scenario's anchor.
-        for id in &background_ids {
-            let (anchor, place) = id.split_once("_background_").expect("found");
-            assert!(ids.contains(&anchor), "{name}: {id}");
-            assert!(place.parse::<usize>().is_ok(), "{name}: {id}");
-        }
-        // Rule 129: the line before an outline's examples, after the
-        // outline's anchor, and an examples block's runs, after the block's.
-        for id in ids
-            .iter()
-            .filter(|id| id.ends_with("_scenarios") || id.ends_with("_runs"))
-        {
-            let (anchor, _) = id.rsplit_once('_').expect("found");
-            assert!(ids.contains(&anchor), "{name}: {id}");
-        }
-        assert_eq!(
-            ids.iter()
-                .filter(|id| {
-                    id.contains('_')
-                        && !id.contains("_background_")
-                        && !id.ends_with("_scenarios")
-                        && !id.ends_with("_runs")
-                })
-                .collect::<Vec<_>>(),
-            own.iter().collect::<Vec<_>>(),
-            "{name}"
-        );
-    }
+            "ghg_search_results",
+            "ghg_main",
+            "ghg_announcement",
+            "ghg_messages",
+        ]
+    );
 }
+
+// Rule 42: each feature's object holds its file's language as a tag.
 
 #[test]
 fn the_page_s_lang_is_its_file_s_language_as_a_tag() {
     let site = fixtures().join("pages/expected");
-    let lang = |page: &str| {
-        let html = String::from_utf8(read(site.join(page)).expect("read")).expect("UTF-8");
-        html.split("<html lang=\"").nth(1).expect("a lang")[..]
-            .split('"')
-            .next()
-            .expect("closed")
-            .to_string()
-    };
-    assert_eq!(lang("billing/refunds.html"), "en");
-    assert_eq!(lang("saque em conta poupança.html"), "pt");
-    assert_eq!(lang("emoji.html"), "und");
+    let lang = |page: &str| object_of(&site, page)["lang"].clone();
+    assert_eq!(lang("billing/refunds"), "en");
+    assert_eq!(lang("saque em conta poupança"), "pt");
+    assert_eq!(lang("emoji"), "und");
 }
 
 // Rules 37, 78, 142 and 215.
@@ -423,12 +228,10 @@ fn two_files_with_the_same_page_stop_the_build_with_the_files_that_cannot_be_rea
     // every system, so the service's own tests check them.
     assert_eq!(
         String::from_utf8_lossy(&result.stderr),
-        "a.story: has the same page, a.html, as a.feature.\n\
+        "a.story: has the same page, a, as a.feature.\n\
          broken.feature:1: Unknown keyword: 'not a feature'.\n\
-         index.feature: has the same page, index.html, as the home page.\n\
-         search.feature: has the same page, search.html, as the search results.\n\
-         steps.feature: has the same page, steps.html, as the step sentences.\n\
-         sub/Index.story: has the same page, sub/Index.html, as the page of the folder sub.\n"
+         search.feature: has the same page, search, as the search results.\n\
+         steps.feature: has the same page, steps, as the step sentences.\n"
     );
     assert_eq!(result.status.code(), Some(1));
     assert!(!written.exists(), "nothing is written");
@@ -462,7 +265,7 @@ fn a_file_ghg_did_not_write_stops_the_build() {
         build(&fixtures().join("pages"), &arguments).status.code(),
         Some(0)
     );
-    let stray = written.join("billing/old.html");
+    let stray = written.join("old.html");
     write(&stray, "old").expect("written");
     let result = build(&fixtures().join("pages"), &arguments);
     assert_eq!(
@@ -474,7 +277,7 @@ fn a_file_ghg_did_not_write_stops_the_build() {
     );
     assert_eq!(result.status.code(), Some(1));
     let mut expected = files(&fixtures().join("pages/expected"));
-    expected.insert("billing/old.html".into(), b"old".to_vec());
+    expected.insert("old.html".into(), b"old".to_vec());
     assert_eq!(files(&written), expected);
 }
 
@@ -500,8 +303,13 @@ fn a_site_whose_pages_have_any_name_the_system_allows_is_built_again() {
         assert_eq!(String::from_utf8_lossy(&result.stderr), "");
         assert_eq!(result.status.code(), Some(0));
     }
-    assert!(written.join("time 10:30.html").is_file());
-    assert!(written.join("back\\slash.html").is_file());
+    let pages: Vec<String> = site_json(&written)["features"]
+        .as_array()
+        .expect("a list")
+        .iter()
+        .map(|feature| feature["page"].as_str().expect("a page").to_string())
+        .collect();
+    assert_eq!(pages, ["back\\slash", "time 10:30"]);
 }
 
 #[test]
@@ -587,7 +395,7 @@ fn an_output_folder_holding_versions_is_left_as_it_is() {
     assert_eq!(
         String::from_utf8_lossy(&result.stderr),
         format!(
-            "{given}: the output folder holds versions of a site, so build with a version name, or into another folder.\n"
+            "{given}: a site of gherkin-glass 1 is built here, which gherkin-glass 2 cannot add to, so it is left as it is. Build into an empty or new folder.\n"
         )
     );
     assert_eq!(result.status.code(), Some(1));
@@ -619,7 +427,10 @@ fn an_output_folder_that_cannot_be_written_stops_the_build() {
     create_dir_all(&written).expect("made");
     write(
         written.join("ghg-site.json"),
-        "{\"files\": [\"index.html\"]}\n",
+        format!(
+            "{{\"format\": 1, \"ghg\": \"{}\", \"files\": [\"index.html\"]}}\n",
+            env!("CARGO_PKG_VERSION")
+        ),
     )
     .expect("written");
     write(written.join("index.html"), "an earlier page").expect("written");
@@ -639,58 +450,45 @@ fn an_output_folder_that_cannot_be_written_stops_the_build() {
     );
 }
 
-// Rules 39, 79 and 85: every link within the site is relative, and reaches a
-// page, and an anchor on it when it names one.
+// Rules 79 and 85: every link of the front page is an address within the
+// site, and names a page the descriptor lists, and an anchor its object has.
 
 #[test]
-fn every_link_in_the_site_reaches_a_page_and_its_anchor() {
-    for site in ["expected", "expected-collapsed"] {
-        let site = fixtures().join("pages").join(site);
-        let pages = files(&site);
-        for (name, page) in &pages {
-            if !name.ends_with(".html") {
-                continue;
-            }
-            let page = String::from_utf8(page.clone()).expect("UTF-8");
-            for address in page.split(" href=\"").skip(1) {
-                let address = &address[..address.find('"').expect("closed")];
-                if address.starts_with("https://") {
-                    continue;
-                }
-                assert!(!address.starts_with('/'), "{name}: {address}");
-                let (file, anchor) = address.split_once('#').unwrap_or((address, ""));
-                let target = if file.is_empty() {
-                    name.clone()
-                } else {
-                    resolve(name, &percent_decoded(file))
-                };
-                let found = pages.get(&target);
-                assert!(found.is_some(), "{name}: {address} reaches nothing");
-                if !anchor.is_empty() {
-                    let found = String::from_utf8_lossy(found.expect("found"));
-                    assert!(
-                        found.contains(&format!(" id=\"{anchor}\"")),
-                        "{name}: {address} reaches no anchor"
-                    );
-                }
-            }
+fn every_link_of_the_front_page_reaches_a_page_and_its_anchor() {
+    let site = fixtures().join("pages/expected");
+    let descriptor = site_json(&site);
+    let features = descriptor["features"].as_array().expect("a list");
+    let pages: Vec<&str> = features
+        .iter()
+        .map(|feature| feature["page"].as_str().expect("a page"))
+        .collect();
+    let page = front_page("expected");
+    for address in page.split(" href=\"").skip(1) {
+        let address = &address[..address.find('"').expect("closed")];
+        if address.starts_with("https://") || address.starts_with("assets/") {
+            continue;
+        }
+        let named = address.strip_prefix('#').expect("a hash address");
+        let named = percent_decoded(named);
+        // Rule 236: an address of two `#` names a part of the shell itself.
+        if named.starts_with('#') {
+            continue;
+        }
+        let (target, anchor) = named.split_once('#').unwrap_or((&named, ""));
+        let reached = target.is_empty()
+            || ["steps", "search", "tags/"].contains(&target)
+            || pages.contains(&target)
+            || (target.ends_with('/') && pages.iter().any(|page| page.starts_with(target)));
+        assert!(reached, "{address} reaches nothing");
+        // Rule 45: the block of the scenarios outside every rule.
+        if !anchor.is_empty() && anchor != "outside_rules" {
+            let object = object_of(&site, target).to_string();
+            assert!(
+                object.contains(&format!("\"anchor\":\"{anchor}\"")),
+                "{address} reaches no anchor"
+            );
         }
     }
-}
-
-/// `address`, relative to the page `from`, as a path from the site's root.
-fn resolve(from: &str, address: &str) -> String {
-    let mut parts: Vec<&str> = from.split('/').collect();
-    parts.pop();
-    for part in address.split('/') {
-        match part {
-            ".." => {
-                parts.pop().expect("inside the site");
-            }
-            _ => parts.push(part),
-        }
-    }
-    parts.join("/")
 }
 
 fn percent_decoded(address: &str) -> String {
@@ -699,7 +497,7 @@ fn percent_decoded(address: &str) -> String {
     let mut index = 0;
     while index < bytes.len() {
         if bytes[index] == b'%' {
-            let hex = from_utf8(&bytes[index + 1..index + 3]).expect("ASCII");
+            let hex = std::str::from_utf8(&bytes[index + 1..index + 3]).expect("ASCII");
             decoded.push(u8::from_str_radix(hex, 16).expect("hexadecimal"));
             index += 3;
         } else {
@@ -725,23 +523,17 @@ fn the_title_option_wins_over_the_configuration_s() {
         ],
     );
     assert_eq!(String::from_utf8_lossy(&result.stderr), "");
-    let home = String::from_utf8(read(written.join("index.html")).expect("read")).expect("UTF-8");
+    let home = read_to_string(written.join("index.html")).expect("read");
+    assert!(home.contains("<title>Given</title>"), "{home}");
     assert!(home.contains("<h1>Given</h1>"), "{home}");
-    let page = String::from_utf8(read(written.join("billing/refunds.html")).expect("read"))
-        .expect("UTF-8");
-    assert!(page.contains("<li><a href=\"../index.html\">Given</a></li>"));
+    assert_eq!(site_json(&written)["title"], "Given");
 }
 
 // Rules 81 and 82.
 
 #[test]
 fn the_home_page_has_the_site_s_title_and_totals() {
-    let home = |site: &str| {
-        String::from_utf8(
-            read(fixtures().join("pages").join(site).join("index.html")).expect("read"),
-        )
-        .expect("UTF-8")
-    };
+    let home = front_page;
     let titled = home("expected");
     assert!(titled.contains("<title>Banking &#38; &#60;more&#62;</title>"));
     assert!(titled.contains("<h1>Banking &amp; &lt;more&gt;</h1>"));
@@ -754,94 +546,54 @@ fn the_home_page_has_the_site_s_title_and_totals() {
 }
 
 // Rules 86 to 88, 114 and 182: the dialog for a page opened from disk, closed,
-// then the skip link, the checkbox and the button, the Theme control and the tree's landmark
-// come before the breadcrumb and the content, the tree shown as configured.
+// then the skip link, the checkbox and the button, the Theme control and the
+// tree's landmark come before the breadcrumb and the content, the tree shown
+// as configured.
 
 #[test]
-fn every_page_starts_with_the_dialog_skip_link_tree_controls_tree_and_breadcrumb() {
+fn the_shell_starts_with_the_dialog_skip_link_tree_controls_tree_and_breadcrumb() {
     for (site, shown) in [("expected", true), ("expected-collapsed", false)] {
-        for (name, page) in files(&fixtures().join("pages").join(site)) {
-            if !name.ends_with(".html") {
-                continue;
-            }
-            let page = String::from_utf8(page).expect("UTF-8");
-            let body = page.split_once("<body>\n").expect("a body").1;
-            let checked = if shown { " checked" } else { "" };
-            let hidden = if shown { "" } else { " hidden" };
-            let start = format!(
-                "<dialog id=\"ghg_from_disk\" class=\"ghg-from-disk\" tabindex=\"-1\" \
-                 aria-labelledby=\"ghg_from_disk_title\" aria-describedby=\"ghg_from_disk_text\">\n\
-                 <p id=\"ghg_from_disk_title\" class=\"ghg-from-disk-title\">Opened from disk</p>\n\
-                 <p id=\"ghg_from_disk_text\">This site is meant to be served, \
-                 so its folder tree and search do not work when a page is opened from disk. \
-                 Run ghg serve in the folder of your ghg.toml, or serve the site&#39;s folder with any web server, \
-                 then open the address it gives.</p>\n\
-                 <form method=\"dialog\"><button>I agree</button></form>\n\
-                 </dialog>\n\
-                 <script>if(location.protocol===\"file:\"){{let d=document.getElementById(\"ghg_from_disk\");d.showModal();d.focus()}}</script>\n\
-                 <a class=\"ghg-skip\" href=\"#ghg_main\">Skip to content</a>\n\
-                 <div class=\"ghg-options\">\n\
-                 <span class=\"ghg-option ghg-tree-choice\">\
-                 <input type=\"checkbox\" id=\"ghg_show_tree\" class=\"ghg-show-tree\" aria-controls=\"ghg_tree\"{checked}> \
-                 <label for=\"ghg_show_tree\">Show the folder tree</label></span>\n\
-                 <button type=\"button\" class=\"ghg-tree-button\" aria-expanded=\"false\" aria-controls=\"ghg_tree\">Folder tree</button>\n\
-                 <fieldset class=\"ghg-theme\">\n\
-                 <legend>Theme</legend>\n\
-                 <label><input type=\"radio\" name=\"ghg-theme\" value=\"system\" checked> System</label>\n\
-                 <label><input type=\"radio\" name=\"ghg-theme\" value=\"light\"> Light</label>\n\
-                 <label><input type=\"radio\" name=\"ghg-theme\" value=\"dark\"> Dark</label>\n\
-                 </fieldset>\n\
-                 </div>\n\
-                 <div class=\"ghg-layout\">\n\
-                 <nav id=\"ghg_tree\" class=\"ghg-tree\" aria-label=\"Folder tree\"{hidden}></nav>\n\
-                 <div class=\"ghg-page\">\n\
-                 <nav class=\"ghg-breadcrumb\""
-            );
-            assert!(body.starts_with(&start), "{site}/{name}:\n{body}");
-            assert_eq!(page.matches("<main id=\"ghg_main\">").count(), 1, "{name}");
-        }
-    }
-}
-
-// Rule 89: the tree's data, whose every address reaches a page of the site,
-// and the anchor it names.
-
-#[test]
-fn every_item_of_the_tree_reaches_a_page_and_its_anchor() {
-    for site in ["expected", "expected-collapsed"] {
-        let pages = files(&fixtures().join("pages").join(site));
-        let tree = String::from_utf8(pages["assets/tree.json"].clone()).expect("UTF-8");
-        let mut reached = BTreeMap::new();
-        for address in tree.split("\"address\":\"").skip(1) {
-            let address = &address[..address.find('"').expect("closed")];
-            let (file, anchor) = address.split_once('#').unwrap_or((address, ""));
-            let found = pages.get(&percent_decoded(file));
-            assert!(found.is_some(), "{site}: {address} reaches nothing");
-            if !anchor.is_empty() {
-                let found = String::from_utf8_lossy(found.expect("found"));
-                assert!(
-                    found.contains(&format!(" id=\"{anchor}\"")),
-                    "{site}: {address} reaches no anchor"
-                );
-            }
-            reached.insert(percent_decoded(file), ());
-        }
-        // Every page of the site has its item, but the tag pages and the page
-        // of step sentences, which the home page links, and the page of
-        // search results, which the search box links (rule 216).
-        let html: Vec<_> = pages
-            .keys()
-            .filter(|name| {
-                name.ends_with(".html")
-                    && !name.starts_with("tags/")
-                    && !["steps.html", "search.html"].contains(&name.as_str())
-            })
-            .collect();
-        assert_eq!(reached.keys().collect::<Vec<_>>(), html, "{site}");
-        assert!(
-            tree.starts_with("[{\"text\":\""),
-            "{site}: the home page first"
+        let page = front_page(site);
+        let body = page.split_once("<body>\n").expect("a body").1;
+        let checked = if shown { " checked" } else { "" };
+        let hidden = if shown { "" } else { " hidden" };
+        let start = "<dialog id=\"ghg_from_disk\" class=\"ghg-from-disk\" tabindex=\"-1\" \
+             aria-labelledby=\"ghg_from_disk_title\" aria-describedby=\"ghg_from_disk_text\">\n\
+             <p id=\"ghg_from_disk_title\" class=\"ghg-from-disk-title\">Opened from disk</p>\n\
+             <p id=\"ghg_from_disk_text\">This site is meant to be served, \
+             so its pages cannot be shown when opened from disk, only its front page. \
+             Run ghg serve in the folder of your ghg.toml, or serve the site&#39;s folder with any web server, \
+             then open the address it gives.</p>\n\
+             <form method=\"dialog\"><button>I agree</button></form>\n\
+             </dialog>\n";
+        assert!(body.starts_with(start), "{site}:\n{body}");
+        let controls = format!(
+            "<a class=\"ghg-skip\" href=\"##ghg_main\">Skip to content</a>\n\
+             <div class=\"ghg-options\">\n\
+             <span class=\"ghg-option ghg-tree-choice\">\
+             <input type=\"checkbox\" id=\"ghg_show_tree\" class=\"ghg-show-tree\" aria-controls=\"ghg_tree\"{checked}> \
+             <label for=\"ghg_show_tree\">Show the folder tree</label></span>\n\
+             <button type=\"button\" class=\"ghg-tree-button\" aria-expanded=\"false\" aria-controls=\"ghg_tree\">Folder tree</button>\n\
+             <fieldset class=\"ghg-theme\">\n\
+             <legend>Theme</legend>\n\
+             <label><input type=\"radio\" name=\"ghg-theme\" value=\"system\" checked> System</label>\n\
+             <label><input type=\"radio\" name=\"ghg-theme\" value=\"light\"> Light</label>\n\
+             <label><input type=\"radio\" name=\"ghg-theme\" value=\"dark\"> Dark</label>\n\
+             </fieldset>\n\
+             </div>\n\
+             <div class=\"ghg-layout\">\n\
+             <nav id=\"ghg_tree\" class=\"ghg-tree\" aria-label=\"Folder tree\"{hidden}></nav>\n\
+             <div class=\"ghg-page\">\n\
+             <nav class=\"ghg-breadcrumb\""
         );
-        assert!(tree.ends_with("]\n"));
+        let after_script = body
+            .split_once("</script>\n")
+            .expect("the dialog's script")
+            .1;
+        assert!(
+            after_script.starts_with(&controls),
+            "{site}:\n{after_script}"
+        );
+        assert_eq!(page.matches("<main id=\"ghg_main\"").count(), 1, "{site}");
     }
 }

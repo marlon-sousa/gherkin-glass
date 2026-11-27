@@ -1,10 +1,10 @@
-// Port: the folder tree, its checkbox and its button, and where its data comes from.
+// Port: the folder tree, its checkbox and its button.
 
-/** One item of the tree, as `assets/tree.json` holds it. */
+/** One item of the tree. */
 export interface TreeItem {
   /** Its words, or their runs, those at odd places feature text that is isolated, the first plain. */
   readonly text: string | readonly string[];
-  /** Relative to the site's root, percent-encoded, with an anchor after `#` for a rule or scenario. */
+  /** The address of its page, as rule 235 writes it, with its anchor for a rule or a scenario. */
   readonly address: string;
   /** Only a feature's, for its feature text and that of the items inside it. */
   readonly lang?: string;
@@ -13,11 +13,6 @@ export interface TreeItem {
 
 /** Inside the tree's landmark, on the checkbox, on the button, or elsewhere. */
 export type FocusPlace = "tree" | "checkbox" | "button" | null;
-
-export interface TreeSource {
-  /** Null when the data cannot be fetched, or is not a tree. */
-  load(): Promise<readonly TreeItem[] | null>;
-}
 
 /**
  * The checkbox a wide window shows, the button a narrow one shows in its

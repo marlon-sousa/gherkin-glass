@@ -1,0 +1,81 @@
+{
+  "format": 1,
+  "language": "en",
+  "lang": "en",
+  "feature": {
+    "kind": "feature",
+    "keyword": "Feature",
+    "note": false,
+    "name": "Check the balance",
+    "description": "",
+    "tags": [],
+    "anchor": "",
+    "hash": "cb4a3e7d87a2866b9a3fdda77be3e89948217e654babfdc295cae1dc32856629",
+    "blocks": [
+      {
+        "kind": "scenario",
+        "keyword": "Scenario",
+        "note": false,
+        "name": "Read the balance",
+        "description": "",
+        "tags": [],
+        "anchor": "read-the-balance",
+        "hash": "dc57460528695c7d423989cf93c9323fdfc216aea480fbbbd9fce4d4e2eb0d44",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "an account with 100",
+            "kind": "given",
+            "sentence": "an account with 100",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "an account with ",
+                "parts": []
+              },
+              {
+                "kind": "number",
+                "text": "100",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "Then ",
+            "text": "the balance reads 100",
+            "kind": "then",
+            "sentence": "the balance reads 100",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "the balance reads ",
+                "parts": []
+              },
+              {
+                "kind": "number",
+                "text": "100",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      }
+    ],
+    "steps": [],
+    "examples": [],
+    "place": null,
+    "table": null,
+    "runs": []
+  }
+}

@@ -1,18 +1,1 @@
-{
-  "files": [
-    "assets/gherkin-glass.css",
-    "assets/gherkin-glass.js",
-    "assets/gherkin-glass.svg",
-    "assets/search.json",
-    "assets/tree.json",
-    "data/objects/3841ab192c6aa00a603805e294831babc4f45ef9e52bf25d6e6a75e27bc4dcc5.json",
-    "data/objects/3df9770d20eed52dc4e993c6a006761de2c59aadb0dfdbc61db480bd2f4b39f0.json",
-    "data/site.json",
-    "destaque.html",
-    "highlighting.html",
-    "index.html",
-    "search.html",
-    "steps.html",
-    "tags/index.html"
-  ]
-}
+{"format":1,"ghg":"{version}","files":["assets/{version}/THIRD-PARTY-LICENSES.txt","assets/{version}/gherkin-glass.css","assets/{version}/gherkin-glass.js","assets/{version}/gherkin-glass.svg","data/objects/3841ab192c6aa00a603805e294831babc4f45ef9e52bf25d6e6a75e27bc4dcc5.json","data/objects/3df9770d20eed52dc4e993c6a006761de2c59aadb0dfdbc61db480bd2f4b39f0.json","data/site.json","index.html"]}

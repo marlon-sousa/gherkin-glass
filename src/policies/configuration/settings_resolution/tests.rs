@@ -1,8 +1,9 @@
 use rstest::rstest;
 
 use super::*;
+use crate::entities::BuildTarget;
 use crate::entities::Colour;
-use crate::entities::VersionName;
+use crate::test_support::name;
 
 fn input(options: (Option<&str>, Option<&str>), file: &str, set: Option<&str>) -> PathBuf {
     let options = BuildOptions {
@@ -168,50 +169,39 @@ fn each_accent_the_file_does_not_set_takes_its_default() {
 }
 
 #[test]
-fn the_version_name_option_wins_and_builds_are_replaced_by_default() {
-    let name = |text: &str| VersionName::new(text).expect("a version name");
-    let settings = |option: Option<&str>, set: Option<&str>, replace| {
+fn the_replace_option_wins_and_builds_are_replaced_by_default() {
+    let replace = |option: Option<bool>, set: Option<bool>| {
         let options = BuildOptions {
-            version_name: option.map(name),
+            replace_existing_version: option,
             ..BuildOptions::default()
         };
         let config = Config {
-            version_name: set.map(name),
-            replace_existing_version: replace,
+            replace_existing_version: set,
             ..Config::default()
         };
-        let settings = resolve_settings(&options, Path::new(""), &config, Destination::Folder);
-        (settings.version, settings.replace)
+        resolve_settings(&options, Path::new(""), &config, Destination::Folder).replace
     };
-    assert_eq!(settings(None, None, Some(false)), (None, false));
-    assert_eq!(settings(None, None, None), (None, true));
-    assert_eq!(
-        settings(None, Some("main"), None),
-        (Some(name("main")), true)
-    );
-    assert_eq!(
-        settings(Some("v2"), Some("main"), Some(false)),
-        (Some(name("v2")), false)
-    );
+    assert!(!replace(None, Some(false)));
+    assert!(replace(None, None));
+    assert!(replace(Some(true), Some(false)));
 }
 
-// Rule 211: a preview is built without versions, whatever the configuration names, and its
-// pages ask not to be indexed, built in memory too.
 #[rstest]
-#[case::into_a_folder(Destination::Folder)]
-#[case::in_memory(Destination::Memory)]
-fn a_preview_is_a_site_without_versions(#[case] destination: Destination) {
+#[case::a_site(BuildTarget::Site)]
+#[case::a_version(BuildTarget::Version(name("main")))]
+#[case::a_preview(BuildTarget::Preview(name("pr-1")))]
+fn the_target_is_the_command_s(#[case] target: BuildTarget) {
     let options = BuildOptions {
-        indexing: SearchIndexing::Refused,
+        target: target.clone(),
         ..BuildOptions::default()
     };
-    let config = Config {
-        version_name: VersionName::new("main"),
-        ..Config::default()
-    };
-    let settings = resolve_settings(&options, Path::new(""), &config, destination);
-    assert_eq!(settings.version, None);
-    assert_eq!(settings.pages.indexing, SearchIndexing::Refused);
+    let settings = resolve_settings(
+        &options,
+        Path::new(""),
+        &Config::default(),
+        Destination::Folder,
+    );
+    assert_eq!(settings.target, target);
 }
 
 mod key_options;

@@ -1,58 +1,21 @@
-//! Service: the converter, making the site tree anew from the features of the input tree and the last site tree, and the site's store beside it.
+//! Service: the converter, making the site's store from the features of the input tree.
 
-use std::collections::BTreeSet;
-
-use crate::entities::{ConvertedSite, Destination, InputTree, Settings, SiteTree, VersionName};
-use crate::policies::{build_store, site_tree};
+use crate::entities::{InputTree, Settings, SiteStore};
+use crate::policies::build_store;
 
 /// What the controller asks of the converter.
 pub(crate) trait ConverterApi: Send + Sync {
-    /// The tree of the site, from the features of `input_tree` parsed without an error, each
-    /// feature's page in its folder, copied from `last`, the last site tree, when its file is
-    /// unchanged and it links to the same tag pages, with the version the settings name when the
-    /// site is built into a folder, beside `built_versions`, those the output folder already
-    /// holds; and the site's store, the object of each of those features with what their
-    /// descriptor holds.
-    fn convert(
-        &self,
-        input_tree: &InputTree,
-        last: Option<&SiteTree>,
-        settings: &Settings,
-        built_versions: &BTreeSet<VersionName>,
-    ) -> ConvertedSite;
+    /// The site's store, the object of each feature of `input_tree` parsed without an error,
+    /// with what its descriptor holds, built with the settings of every page.
+    fn convert(&self, input_tree: &InputTree, settings: &Settings) -> SiteStore;
 }
 
 #[derive(Debug, Default, Clone, Copy)]
 pub(crate) struct Converter;
 
 impl ConverterApi for Converter {
-    fn convert(
-        &self,
-        input_tree: &InputTree,
-        last: Option<&SiteTree>,
-        settings: &Settings,
-        built_versions: &BTreeSet<VersionName>,
-    ) -> ConvertedSite {
-        let features: Vec<_> = input_tree.features().collect();
-        let parsed: Vec<_> = features.iter().map(|revised| revised.feature).collect();
-        ConvertedSite {
-            site_tree: site_tree(
-                &features,
-                last,
-                &settings.pages,
-                built_version(settings),
-                built_versions,
-            ),
-            store: build_store(&parsed, &settings.pages),
-        }
-    }
-}
-
-/// The version the build makes: the one the settings name, unless the site
-/// is built in memory, which has no versions.
-fn built_version(settings: &Settings) -> Option<&VersionName> {
-    match settings.destination {
-        Destination::Folder => settings.version.as_ref(),
-        Destination::Memory => None,
+    fn convert(&self, input_tree: &InputTree, settings: &Settings) -> SiteStore {
+        let parsed: Vec<_> = input_tree.features().collect();
+        build_store(&parsed, &settings.pages)
     }
 }

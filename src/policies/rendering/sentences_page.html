@@ -1,7 +1,0 @@
-<h1>{{ page.heading }}</h1>
-{%- if groups.is_empty() %}
-<p>{{ page.no_steps }}</p>
-{%- endif %}
-{%- for group in groups %}
-{{ group|safe }}
-{%- endfor %}

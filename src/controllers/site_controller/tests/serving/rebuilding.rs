@@ -128,15 +128,15 @@ fn paths_rebuild_only_when_the_input_collector_says_they_call_for_it() {
             ["listening at 127.0.0.1:8000", "rebuilt"]
         );
         // Built from the last build: the output is not checked again, the input is not walked
-        // again from nothing, and the converter is given the last site tree.
+        // again from nothing.
         assert_eq!(
             calls_after(&world, UNTIL_WATCHING + 1, 5),
             [
                 "input_collector.collect_changes features features/a.feature",
                 "settings.load Memory",
                 "gherkin_parser.parse a.feature Refused",
-                "converter.convert a.feature beside v1.0.0 after a.feature",
-                "site_writer.write a.feature after a.feature",
+                "converter.convert a.feature",
+                "site_writer.write",
             ]
         );
     });

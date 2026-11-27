@@ -1,4 +1,4 @@
-//! Policy: the tags of the input, their order, and the name of each tag's page, which the feature pages link to and the tag pages are written at.
+//! Policy: the tags of the input, their order, and the name of each tag's page, as the store names them.
 
 use std::cmp::Ordering;
 use std::collections::{BTreeSet, HashSet};
@@ -6,37 +6,16 @@ use std::collections::{BTreeSet, HashSet};
 use gherkin::Feature;
 
 use crate::entities::{ParsedFeature, TagNames};
-use crate::policies::TAG_INDEX_NAME;
 use crate::policies::site::{anchor_of, unique};
 
 /// The name of a tag that leaves nothing after the anchor rule.
 const FALLBACK: &str = "tag";
 
-/// Every tag written in `features`, in tag order, each named.
-pub(crate) fn name_tags<'a>(features: impl IntoIterator<Item = &'a ParsedFeature>) -> TagNames {
-    name_each(&tags_of(features), &[TAG_INDEX_NAME])
-}
-
-/// Every tag written in `features`, in tag order, each named as the store names it, where the
-/// index of tags takes no name.
+/// Every tag written in `features`, in tag order, each named as the store names it.
 pub(crate) fn name_stored_tags<'a>(
     features: impl IntoIterator<Item = &'a ParsedFeature>,
 ) -> TagNames {
-    name_each(&tags_of(features), &[])
-}
-
-/// Whether every tag written in `parsed` has the same name in `last` as in `names`, so that its
-/// page links to the same tag pages.
-pub(crate) fn same_tag_names(parsed: &ParsedFeature, last: &TagNames, names: &TagNames) -> bool {
-    feature_tags(&parsed.feature)
-        .into_iter()
-        .all(|tag| keeps_its_name(tag, last, names))
-}
-
-/// Whether `tag`, written without its `@`, has the same name in `last` as in `names`.
-fn keeps_its_name(tag: &str, last: &TagNames, names: &TagNames) -> bool {
-    let tag = format!("@{tag}");
-    last.name(&tag) == names.name(&tag)
+    name_each(&tags_of(features))
 }
 
 /// Tag order: by the text lower-cased, then as written, each by character codes.
@@ -59,9 +38,9 @@ fn tags_of<'a>(features: impl IntoIterator<Item = &'a ParsedFeature>) -> Vec<Str
     tags
 }
 
-/// `tags` in tag order, each with its `@`, none of them named as one of `reserved`.
-fn name_each(tags: &[String], reserved: &[&str]) -> TagNames {
-    let mut taken: HashSet<String> = reserved.iter().map(ToString::to_string).collect();
+/// `tags` in tag order, each with its `@`, each named once.
+fn name_each(tags: &[String]) -> TagNames {
+    let mut taken: HashSet<String> = HashSet::new();
     let mut names = TagNames::default();
     for tag in tags {
         let mut name = anchor_of(tag.strip_prefix('@').unwrap_or(tag));
@@ -127,26 +106,13 @@ mod tests {
     }
 
     #[test]
-    fn names_follow_the_anchor_rule_with_index_taken_and_repeats_numbered() {
-        let tags: Vec<String> = ["@index", "@needs:db", "@Slow", "@slow", "@🚀", "@???"]
+    fn names_follow_the_anchor_rule_with_repeats_numbered() {
+        let tags: Vec<String> = ["@needs:db", "@Slow", "@slow", "@🚀", "@???"]
             .map(String::from)
             .to_vec();
-        let names = name_each(&tags, &[TAG_INDEX_NAME]);
-        let addresses: Vec<_> = tags
-            .iter()
-            .map(|tag| names.address(tag).to_string())
-            .collect();
-        assert_eq!(
-            addresses,
-            [
-                "tags/index-2.html",
-                "tags/needs-db.html",
-                "tags/slow.html",
-                "tags/slow-2.html",
-                "tags/tag.html",
-                "tags/tag-2.html",
-            ]
-        );
+        let names = name_each(&tags);
+        let named: Vec<&str> = tags.iter().map(|tag| names.name(tag)).collect();
+        assert_eq!(named, ["needs-db", "slow", "slow-2", "tag", "tag-2"]);
     }
 
     // Rule 100: in the store, `@index` is `index`, since the index of tags is `#tags/`.

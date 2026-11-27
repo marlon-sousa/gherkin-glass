@@ -31,28 +31,16 @@ pub(crate) enum InputErrorKind {
     /// Only while `allow_unnamed` is `false`.
     #[error(fmt = Self::unnamed)]
     Unnamed { block: UnnamedBlock },
-    /// `page` is the address both files would have, and `first` the path,
+    /// `page` is the name of the page both files would have, and `first` the path,
     /// shown as an error's is, of the file that has it.
     #[error(fmt = Self::same_page)]
     SamePage { page: String, first: String },
-    /// A folder whose page's address differs from an earlier folder's only
-    /// in case; `page` is its own, and `first` that folder's path.
-    #[error(fmt = Self::same_folder_page)]
-    SameFolderPage { page: String, first: String },
-    /// `page` is the address of the page of step sentences.
+    /// `page` is the name of the page of step sentences.
     #[error(fmt = Self::reserved_page)]
     ReservedPage { page: String },
-    /// `page` is the address of the page of search results.
+    /// `page` is the name of the page of search results.
     #[error(fmt = Self::search_page_clash)]
     SearchPageClash { page: String },
-    /// `page` is the file's own page, at the path of a folder's, and `folder`
-    /// that folder's path below the input folder, `None` for the input
-    /// folder's, the home page.
-    #[error(fmt = Self::same_as_folder_page)]
-    SameAsFolderPage {
-        page: String,
-        folder: Option<String>,
-    },
     /// `page` is the file's page, in the folder that holds the tag pages.
     #[error(fmt = Self::in_tags_folder)]
     InTagsFolder { page: String },
@@ -102,37 +90,12 @@ impl InputErrorKind {
         f.write_str(&fl!(CATALOGUE, "same-page", page = page, first = first))
     }
 
-    fn same_folder_page(page: &str, first: &str, f: &mut Formatter<'_>) -> FmtResult {
-        f.write_str(&fl!(
-            CATALOGUE,
-            "same-folder-page",
-            page = page,
-            first = first
-        ))
-    }
-
     fn reserved_page(page: &str, f: &mut Formatter<'_>) -> FmtResult {
         f.write_str(&fl!(CATALOGUE, "reserved-page", page = page))
     }
 
     fn search_page_clash(page: &str, f: &mut Formatter<'_>) -> FmtResult {
         f.write_str(&fl!(CATALOGUE, "search-page-clash", page = page))
-    }
-
-    fn same_as_folder_page(
-        page: &str,
-        folder: &Option<String>,
-        f: &mut Formatter<'_>,
-    ) -> FmtResult {
-        f.write_str(&match folder {
-            Some(folder) => fl!(
-                CATALOGUE,
-                "same-as-folder-page",
-                page = page,
-                folder = folder.as_str()
-            ),
-            None => fl!(CATALOGUE, "same-as-home-page", page = page),
-        })
     }
 
     fn in_tags_folder(page: &str, f: &mut Formatter<'_>) -> FmtResult {

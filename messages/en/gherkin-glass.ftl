@@ -9,18 +9,20 @@ help =
     Usage: ghg <command> [options]
 
     Commands:
-      build: reads the feature files and writes the site, or reports every file that cannot be read.
+      build: reads the feature files and writes a site without versions, or reports every file that cannot be read.
       serve: builds the site and serves it on this machine, to preview it.
+      version add <name>: reads the feature files and adds them to the output folder as the version of that name.
+      version remove <name>: removes the version of that name from the output folder.
+      preview add <name>: reads the feature files and adds them to the output folder as the preview of that name, whose pages ask search engines not to index them.
+      preview remove <name>: removes the preview of that name from the output folder.
 
-    Options of ghg build and ghg serve:
+    Options of ghg build, ghg serve, ghg version add and ghg preview add:
       --config <file>: the configuration file to read, instead of ghg.toml in the current folder.
       --input <folder>: the folder of feature files to read, instead of the configuration's input.
       --output <folder>: the folder to write the site into, instead of the configuration's output.
       --title <text>: the site's title, instead of the configuration's title.
-      --version-name <name>: builds the site as the version of that name, instead of the configuration's version_name.
       --front-page <file>: the Markdown template of the site's front page, instead of the configuration's front_page.
       --only <file>: builds the site from the feature files the file lists, one path on each line, alone. --only - reads the list from standard input.
-      --preview: builds a preview, a site without versions whose every page asks search engines not to index it.
       --keep-in-output <pattern>: leaves alone what the pattern matches in the output folder, in the gitignore syntax, instead of the configuration's keep_in_output. Give it once for each pattern.
       --source-link <address>: the address of each feature file's source, with {"{"}path{"}"} and {"{"}line{"}"}, instead of the configuration's source_link.
       --allow-unnamed <true or false>: whether features, rules and scenarios may have no name, instead of the configuration's allow_unnamed.
@@ -28,13 +30,18 @@ help =
       --collapse-scenarios <true or false>: whether scenarios and backgrounds start collapsed, instead of the configuration's collapse_scenarios.
       --show-tree <true or false>: whether the folder tree is shown when a reader first opens the site, instead of the configuration's show_tree.
       --inline-backgrounds <true or false>: whether pages start with the backgrounds inside each scenario expanded, instead of the configuration's inline_backgrounds.
-      --replace-existing-version <true or false>: whether a build replaces the site or the version an earlier build wrote, instead of the configuration's replace_existing_version.
       --accent-light <colour>: the light theme's accent colour, such as "#0b4f9c", instead of the configuration's accent_light.
       --accent-dark <colour>: the dark theme's accent colour, such as "#8cc4ff", instead of the configuration's accent_dark.
       --tag-link <pattern> <address> <text>: links the tags the pattern matches to that address, with that text. Give it once for each link; the links given replace the configuration's tag_links.
 
-    Options of ghg build only:
-      --message-format <format>: human, the default, or json, which also prints one JSON object to standard output saying how the build ended, for a program to read.
+    Options of ghg build, ghg serve and ghg version add only:
+      --replace-existing-version <true or false>: whether a build replaces the site or the version an earlier build wrote, instead of the configuration's replace_existing_version.
+
+    Options of ghg version remove and ghg preview remove:
+      --config <file>, --output <folder> and --keep-in-output <pattern>, as for ghg build.
+
+    Options of every command but ghg serve:
+      --message-format <format>: human, the default, or json, which also prints one JSON object to standard output saying how the command ended, for a program to read.
 
     Options of ghg serve only:
       --host <address>: the address to listen on, instead of 127.0.0.1.
@@ -48,7 +55,8 @@ help =
 
 version = ghg { $version }
 
-## A mistake on the command line. $command is "ghg", "ghg build" or "ghg serve".
+## A mistake on the command line. $command is "ghg" or the command, such as
+## "ghg build", "ghg version" or "ghg preview add".
 
 missing-command = ghg needs a command, such as ghg build. ghg --help lists the commands.
 unknown-command = ghg has no command named { $name }. ghg --help lists the commands.
@@ -61,7 +69,9 @@ not-a-port = The option --port needs a whole number from 0 to 65535, not { $valu
 not-a-message-format = The option --message-format takes human or json, not { $value }.
 watch-without-build = The options --watch and --no-build cannot be used together.
 only-without-build = The options --only and --no-build cannot be used together.
-preview-with-version-name = The option --preview builds a site without versions, so it cannot be given with --version-name.
+missing-subcommand = { $command } needs a subcommand, add or remove. ghg --help lists the commands.
+unknown-subcommand = { $command } has no subcommand named { $name }, only add and remove. ghg --help lists the commands.
+missing-name = { $command } needs a name, such as { $command } v1.0.0.
 
 ## One line of the report of what stops a build: the path, the line when
 ## there is one, and what is wrong.
@@ -86,33 +96,23 @@ unnamed-rule = The rule has no name, and allow_unnamed is false.
 unnamed-scenario = The scenario has no name, and allow_unnamed is false.
 unnamed-scenario-outline = The scenario outline has no name, and allow_unnamed is false.
 
-## Two feature files whose pages would have the same path. $page is that
-## path in the site, and $first the input path of the file that has it.
+## Two feature files whose pages would have the same name. $page is that
+## name, and $first the input path of the file that has it.
 
 same-page = has the same page, { $page }, as { $first }.
 
-## A feature file whose page would be a folder's. $page is that path in the
-## site, and $folder the folder's path below the input folder.
-
-same-as-folder-page = has the same page, { $page }, as the page of the folder { $folder }.
-same-as-home-page = has the same page, { $page }, as the home page.
-
-## A folder whose page differs from an earlier folder's only in case. $page
-## is its own page, and $first the earlier folder's path below the input folder.
-
-same-folder-page = has the same page, { $page }, as the folder { $first }.
 ## A feature file whose page would be in the folder of the tag pages. $page
-## is that page's path in the site; tags is the folder's name, never translated.
+## is that page's name; tags is the folder's name, never translated.
 
 in-tags-folder = has its page, { $page }, in the folder tags, which holds the tag pages.
 
 ## A feature file whose page would be the page of step sentences. $page is
-## that page's path in the site.
+## that page's name, steps.
 
 reserved-page = has the same page, { $page }, as the step sentences.
 
 ## A feature file whose page would be the page of search results. $page is
-## that page's address, search.html.
+## that page's name, search.
 
 search-page-clash = has the same page, { $page }, as the search results.
 
@@ -121,10 +121,10 @@ search-page-clash = has the same page, { $page }, as the search results.
 
 cannot-be-written = cannot be written: { $reason }
 
-## A warning after a build that succeeded. $size is the size of the search
-## documents in millions of bytes, with one decimal, such as 6.3.
+## A warning after a build that succeeded. $size is the size of the site's
+## data in millions of bytes, with one decimal, such as 6.3.
 
-search-documents-large = The search documents are { $size } MB, larger than the 5 MB above which search can be slow to start, mostly on phones.
+site-data-large = The site's data is { $size } MB, larger than the 5 MB above which its pages and search can be slow to start, mostly on phones.
 
 ## What is wrong with the configuration file. $reason is the operating
 ## system's words, and $key a key as the file writes it.
@@ -149,18 +149,17 @@ config-not-regex = { $key } is not a regular expression: { $reason }
 config-regex-too-large = { $key } is too large a regular expression.
 config-unknown-group = { $key } names the group { $group }, which the pattern does not have.
 
-## A version name that cannot be one, given with --version-name or
-## version_name. assets, data, index.html, ghg-versions.json, previews, con and nul are names,
-## never translated.
+## The name of a version or a preview that cannot be one. assets, data,
+## index.html, ghg-site.json, previews, con and nul are names, never translated.
 
 invalid-kept-pattern = { $pattern } is not a pattern in the gitignore syntax: { $reason }
-invalid-version-name = { $name } cannot be a version name. A version name is made of letters, digits, dots, hyphens, underscores and plus signs, starts with a letter or a digit, does not end with a dot, and is not assets, data, index.html, ghg-versions.json, previews, or a name Windows keeps for a device, such as con or nul.
+invalid-version-name = { $name } cannot be the name of a version or a preview. Such a name is made of letters, digits, dots, hyphens, underscores and plus signs, starts with a letter or a digit, does not end with a dot, and is not assets, data, index.html, ghg-site.json, previews, or a name Windows keeps for a device, such as con or nul.
 
 ## What stops a build without a version, said of the output folder.
 ## replace_existing_version is a key, never translated.
 
 site-already-built = a site is already built here, and replace_existing_version is false.
-site-holds-versions = the output folder holds versions of a site, so build with a version name, or into another folder.
+site-holds-versions = the output folder holds versions of a site, so add a version with ghg version add, or build into another folder.
 site-not-a-site = this is not a site ghg built, so it is left as it is. Build into an empty or new folder.
 
 ## What stops writing a build, said of its output folder or of a version's
@@ -170,6 +169,12 @@ output-cannot-be-read = cannot be read: { $reason }
 output-cannot-be-written = cannot be written: { $reason }
 output-not-safe = ghg did not write this, so the output folder is left as it is.
 output-kept-clash = the pattern { $pattern } keeps this, but ghg writes it or the folder it is in, so the output folder is left as it is.
+output-gherkin-glass-one = a site of gherkin-glass 1 is built here, which gherkin-glass 2 cannot add to, so it is left as it is. Build into an empty or new folder.
+
+## A store in a format newer than this ghg's. $ghg is the version of ghg
+## the marker names, such as 3.0.0.
+
+output-newer-store = the site's data was written by ghg { $ghg }, in a newer format than this ghg reads, so it is left as it is. Use ghg { $ghg } or later.
 
 ## What stops a build writing its front page, said of the front page's
 ## template. $reason is the operating system's words.
@@ -183,13 +188,70 @@ front-page-marker-not-alone = the marker <!-- ghg:contents --> must be on a line
 front-page-marker-too-deep = the marker <!-- ghg:contents --> follows a level 5 or level 6 heading, so ghg's own headings would have no level below it.
 front-page-raw-html = raw HTML cannot be written in a front page; only the marker <!-- ghg:contents --> and other comments can.
 
-## What stops a versioned build, said of the version's folder, or of the
+## What stops adding a version or a preview, said of its folder, or of the
 ## output folder. replace_existing_version is a key, never translated.
 
 version-already-built = the version { $name } is already built, and replace_existing_version is false.
-version-missing = the marker lists this version, but its folder is missing, so the output folder is left as it is.
-version-holds-site = a site without versions is built here, so build without a version name, or into another folder.
+version-missing = the site's data holds this version, but its folder is missing, so the output folder is left as it is.
+version-holds-site = a site without versions is built here, so build it with ghg build, or add versions into another folder.
 version-other-capitals = the output folder holds a version whose name differs from this one only in its capitals, which some systems would put in the same folder, so it is left as it is.
+preview-other-capitals = the output folder holds a preview whose name differs from this one only in its capitals, which some systems would put in the same folder, so it is left as it is.
+
+## What ghg version remove and ghg preview remove print when the output
+## folder holds none of that name. $output is the output folder, and $name
+## the name, as given.
+
+version-nothing-to-remove = { $output }: holds no version { $name }, so nothing was removed.
+preview-nothing-to-remove = { $output }: holds no preview { $name }, so nothing was removed.
+
+## What ghg build adds, once the site is written, when neither the command
+## line nor ghg.toml gives the site a title. title is a key, never translated.
+
+no-title = The site has no title, so its home page is called Feature files. Set title in ghg.toml, or give --title.
+
+## What ghg build and ghg serve say when they read no feature file, so that
+## they write nothing:
+## $input is the input folder, and $list the list of --only, - for standard
+## input.
+
+nothing-to-build = { $input }: the input folder holds no feature file, so no site was built.
+nothing-to-build-only = { $list }: names no feature file of the input, so no site was built.
+nothing-to-build-no-path = { $list }: names no path, so there is nothing to build.
+
+## What ghg serve --watch says when the site it serves was built from no
+## feature file, $input and $list as above.
+
+empty-site = { $input }: the input folder holds no feature file, so the site served shows none.
+empty-site-only = { $list }: names no feature file of the input, so the site served shows none.
+empty-site-no-path = { $list }: names no path, so the site served shows none.
+
+## ghg serve. $address is the address to open in a browser, $host an
+## address to listen on as it was given, $port a port number, $path a
+## path, and $reason the operating system's or a library's words.
+
+serve-listening = The site is served at { $address }. Press Control+C to stop.
+serve-rebuilt = The site was rebuilt.
+serve-not-rebuilt = The site was not rebuilt, so the last site that built is still served.
+serve-port-taken = Port { $port } is already in use. Choose another with --port.
+serve-cannot-listen = ghg serve cannot listen at { $host }, port { $port }: { $reason }
+serve-cannot-watch = ghg serve cannot watch { $path } for changes: { $reason }
+serve-cannot-handle-signals = ghg serve cannot handle Control+C and the signals that stop it: { $reason }
+serve-stopped = The site is no longer served.
+
+## What ghg serve answers a browser with, as plain text.
+
+serve-not-found = Nothing is at this address in the site.
+serve-wrong-method = ghg serve answers only GET and HEAD requests.
+
+## A shell's title and description, before the script draws a page in it.
+## $site is the site's title, $version a version's name, as given, and
+## $title the shell's title.
+
+version-shell-title = { $site }, { $version }
+shell-description = The feature files of { $title }, shown as pages.
+
+### ghg:page-messages
+### Every message below is a page's, which each shell carries for the script.
 
 ## A feature's page. $heading is the feature's keyword and name, and $path
 ## the feature file's path below the input folder, both as written.
@@ -220,34 +282,13 @@ theme-dark = Dark
 breadcrumb = Breadcrumb
 
 ## A folder's page. $folder is the folder's path below the input folder, and
-## $site the site's title, the configuration's or default-title.
-
-default-title = Feature files
-
-## What ghg build adds, once the site is written, when neither the command
-## line nor ghg.toml gives the site a title. title is a key, never translated.
-
-no-title = The site has no title, so its home page is called Feature files. Set title in ghg.toml, or give --title.
-
-## What ghg build and ghg serve say when they read no feature file, so that
-## they write nothing:
-## $input is the input folder, and $list the list of --only, - for standard
-## input.
-
-nothing-to-build = { $input }: the input folder holds no feature file, so no site was built.
-nothing-to-build-only = { $list }: names no feature file of the input, so no site was built.
-nothing-to-build-no-path = { $list }: names no path, so there is nothing to build.
-
-## What ghg serve --watch says when the site it serves was built from no
-## feature file, $input and $list as above.
-
-empty-site = { $input }: the input folder holds no feature file, so the site served shows none.
-empty-site-only = { $list }: names no feature file of the input, so the site served shows none.
-empty-site-no-path = { $list }: names no path, so the site served shows none.
+## $site the site's title, the configuration's or default-title; and the
+## headings of its folders and its features, which the home page has too.
 
 folder-page-title = { $folder }, { $site }
 folders = Folders
 features = Features
+default-title = Feature files
 
 ## Counts, on the home page and beside each feature of a folder page.
 
@@ -282,30 +323,18 @@ feature-scenarios =
        *[other] { $count } scenarios of { $feature }
     }
 
-## ghg serve. $address is the address to open in a browser, $host an
-## address to listen on as it was given, $port a port number, $path a
-## path, and $reason the operating system's or a library's words.
-
-serve-listening = The site is served at { $address }. Press Control+C to stop.
-serve-rebuilt = The site was rebuilt.
-serve-not-rebuilt = The site was not rebuilt, so the last site that built is still served.
-serve-port-taken = Port { $port } is already in use. Choose another with --port.
-serve-cannot-listen = ghg serve cannot listen at { $host }, port { $port }: { $reason }
-serve-cannot-watch = ghg serve cannot watch { $path } for changes: { $reason }
-serve-cannot-handle-signals = ghg serve cannot handle Control+C and the signals that stop it: { $reason }
-serve-stopped = The site is no longer served.
-
-## What ghg serve answers a browser with, as plain text.
-
-serve-not-found = Nothing is at this address in the site.
-serve-wrong-method = ghg serve answers only GET and HEAD requests.
-
 ## First in every page, the dialog opened only when the page is opened from
 ## disk: its name, what it says, and its one button, which closes it.
 
 opened-from-disk-title = Opened from disk
-opened-from-disk = This site is meant to be served, so its folder tree and search do not work when a page is opened from disk. Run ghg serve in the folder of your ghg.toml, or serve the site's folder with any web server, then open the address it gives.
+opened-from-disk = This site is meant to be served, so its pages cannot be shown when opened from disk, only its front page. Run ghg serve in the folder of your ghg.toml, or serve the site's folder with any web server, then open the address it gives.
 opened-from-disk-agree = I agree
+
+## What a shell opened from disk writes in its main, in place of a page it
+## cannot draw, and what it says when JavaScript is turned off.
+
+opened-from-disk-page = This page cannot be shown when opened from disk. Serve the site, then open the address it gives.
+needs-script = This site needs JavaScript to show its pages. Turn it on, then load this page again.
 
 ## Before every page's content: the link past the folder tree, the checkbox
 ## that shows or hides it, and the name of its landmark.
@@ -350,9 +379,10 @@ tag-through-examples = { $scenario }, through its examples
 tag-through-rule = { $scenario }, through its rule
 tag-through-feature = { $scenario }, through its feature
 ## The versions page, at the root of a versioned site. $name is a version's
-## name, as given.
+## name, as given, and $site the site's title.
 
 versions-title = Versions
+versions-page-title = Versions, { $site }
 versions-development = Development versions
 versions-releases = Releases
 versions-pre-releases = Pre-releases

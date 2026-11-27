@@ -1,36 +1,30 @@
-//! Policy: a page's head, with its title, the themes' stylesheet and the links back to the shared assets: the stylesheet, the icon and the script.
+//! Policy: the head of a shell and of the versions page, with its title, its description, what it asks of search engines, the themes' stylesheet, the links to the shared assets, the stylesheet, the icon and the script, and the words the script draws pages with.
 
 use askama::Template;
 
 use super::node_rendering::{Render, rendered};
-use crate::entities::SearchIndexing;
 
 /// The head of one page.
 pub(super) struct PageHead<'a> {
     pub(super) title: &'a str,
-    pub(super) root: &'a str,
+    /// A shell's; `None` for the versions page.
+    pub(super) description: Option<&'a str>,
+    /// Whether it asks search engines not to index the page.
+    pub(super) unindexed: bool,
+    /// The folder of the shared assets, relative to the page, such as `../assets/2.0.0`.
+    pub(super) assets: &'a str,
     /// Already rendered from the site's accents.
     pub(super) stylesheet: &'a str,
-    /// Whether the page lets search engines index it.
-    pub(super) indexing: SearchIndexing,
 }
 
 #[derive(Template)]
 #[template(path = "page_head.html")]
 struct HeadTemplate<'a> {
     head: &'a PageHead<'a>,
-    /// What the page asks of search engines, `None` for nothing.
-    robots: Option<&'static str>,
 }
 
 impl Render for PageHead<'_> {
     fn render(&self) -> String {
-        rendered(&HeadTemplate {
-            head: self,
-            robots: match self.indexing {
-                SearchIndexing::Refused => Some("noindex"),
-                SearchIndexing::Allowed => None,
-            },
-        })
+        rendered(&HeadTemplate { head: self })
     }
 }

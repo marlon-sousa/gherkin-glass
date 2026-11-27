@@ -10,9 +10,10 @@ use rstest::rstest;
 
 use super::*;
 use crate::entities::{
-    BuildOptions, KeptInOutput, KeptPattern, MessageFormat, PathList, SearchIndexing, ServeMode,
-    ServeOptions, VersionName,
+    BuildOptions, BuildTarget, KeptInOutput, KeptPattern, MessageFormat, PathList, RemoveOptions,
+    ServeMode, ServeOptions,
 };
+use crate::test_support::name;
 
 fn parse(arguments: &[&str]) -> Result<Invocation, ArgumentError> {
     parse_arguments(arguments.iter().map(OsString::from))
@@ -113,14 +114,6 @@ fn serve_takes_every_option_of_build_that_sets_how_a_site_is_built() {
     title: Some("Banking & more".into()),
     ..BuildOptions::default()
 })]
-#[case::a_version_name(&["build", "--version-name", "v1.2.0"], BuildOptions {
-    version_name: VersionName::new("v1.2.0"),
-    ..BuildOptions::default()
-})]
-#[case::a_joined_version_name(&["build", "--version-name=main"], BuildOptions {
-    version_name: VersionName::new("main"),
-    ..BuildOptions::default()
-})]
 // Rule 204.
 #[case::a_list_of_files(&["build", "--only", "changed.txt"], BuildOptions {
     only: Some(PathList::File(PathBuf::from("changed.txt"))),
@@ -130,10 +123,21 @@ fn serve_takes_every_option_of_build_that_sets_how_a_site_is_built() {
     only: Some(PathList::StandardInput),
     ..BuildOptions::default()
 })]
-// Rule 211.
-#[case::a_preview(&["build", "--preview", "--output", "previews/pr-131"], BuildOptions {
-    output: Some(PathBuf::from("previews/pr-131")),
-    indexing: SearchIndexing::Refused,
+// Rule 257.
+#[case::a_version(&["version", "add", "v1.2.0", "--input=specs"], BuildOptions {
+    input: Some(PathBuf::from("specs")),
+    target: BuildTarget::Version(name("v1.2.0")),
+    ..BuildOptions::default()
+})]
+#[case::a_version_not_replaced(&["version", "add", "--replace-existing-version", "false", "main"], BuildOptions {
+    target: BuildTarget::Version(name("main")),
+    replace_existing_version: Some(false),
+    ..BuildOptions::default()
+})]
+// Rule 258.
+#[case::a_preview(&["preview", "add", "pr-131", "--output", "site"], BuildOptions {
+    output: Some(PathBuf::from("site")),
+    target: BuildTarget::Preview(name("pr-131")),
     ..BuildOptions::default()
 })]
 // Rule 224.
@@ -149,6 +153,59 @@ fn build_takes_its_options_in_either_spelling_and_order(
     #[case] options: BuildOptions,
 ) {
     assert_eq!(parse(arguments), build(options));
+}
+
+// Rules 257 and 258.
+#[rstest]
+#[case::a_version(
+    &["version", "remove", "main", "--output", "site", "--message-format=json"],
+    BuildTarget::Version(name("main")),
+    MessageFormat::Json
+)]
+#[case::a_preview(
+    &["preview", "remove", "--output=site", "pr-1"],
+    BuildTarget::Preview(name("pr-1")),
+    MessageFormat::Human
+)]
+fn remove_takes_a_name_and_the_output_folder(
+    #[case] arguments: &[&str],
+    #[case] target: BuildTarget,
+    #[case] message_format: MessageFormat,
+) {
+    assert_eq!(
+        parse(arguments),
+        Ok(Invocation::Remove {
+            options: RemoveOptions {
+                output: Some(PathBuf::from("site")),
+                ..RemoveOptions::default()
+            },
+            target,
+            message_format,
+        })
+    );
+}
+
+#[test]
+fn remove_takes_the_configuration_and_what_to_keep() {
+    let arguments = [
+        "version",
+        "remove",
+        "v1",
+        "--config",
+        "ghg.toml",
+        "--keep-in-output",
+        "CNAME",
+    ];
+    let Ok(Invocation::Remove { options, .. }) = parse(&arguments) else {
+        panic!("a removal");
+    };
+    assert_eq!(options.config, Some(PathBuf::from("ghg.toml")));
+    assert_eq!(
+        options.keep_in_output,
+        Some(KeptInOutput::new(vec![
+            KeptPattern::new("CNAME").expect("valid")
+        ]))
+    );
 }
 
 #[rstest]

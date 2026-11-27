@@ -17,7 +17,6 @@ pub(super) enum ConfigKey {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(super) enum SettingKey {
     Text(TextKey),
-    VersionName,
     Flag(FlagKey),
     Accent(Theme),
 }
@@ -54,7 +53,6 @@ impl ConfigKey {
             "source_link" => SettingKey::Text(TextKey::SourceLink),
             "title" => SettingKey::Text(TextKey::Title),
             "front_page" => SettingKey::Text(TextKey::FrontPage),
-            "version_name" => SettingKey::VersionName,
             "allow_unnamed" => SettingKey::Flag(FlagKey::AllowUnnamed),
             "collapse_rules" => SettingKey::Flag(FlagKey::CollapseRules),
             "collapse_scenarios" => SettingKey::Flag(FlagKey::CollapseScenarios),

@@ -1,0 +1,102 @@
+{
+  "format": 1,
+  "language": "en",
+  "lang": "en",
+  "feature": {
+    "kind": "feature",
+    "keyword": "Feature",
+    "note": false,
+    "name": "Transfer money",
+    "description": "",
+    "tags": [],
+    "anchor": "",
+    "hash": "d911cab37c54ba0dec5c007b327c5e7de6822dc08c30c5fda8b1fab2c94db666",
+    "blocks": [
+      {
+        "kind": "scenario",
+        "keyword": "Scenario",
+        "note": false,
+        "name": "Transfer to another account",
+        "description": "",
+        "tags": [],
+        "anchor": "transfer-to-another-account",
+        "hash": "1e08be4ba88fcfa6e670993bfcd3520b6ea56c73710bfef61df8a4a4e7813b98",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "an account with 100",
+            "kind": "given",
+            "sentence": "an account with 100",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "an account with ",
+                "parts": []
+              },
+              {
+                "kind": "number",
+                "text": "100",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "When ",
+            "text": "30 is transferred",
+            "kind": "when",
+            "sentence": "30 is transferred",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "number",
+                "text": "30",
+                "parts": []
+              },
+              {
+                "kind": "text",
+                "text": " is transferred",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "Then ",
+            "text": "the balance reads 70",
+            "kind": "then",
+            "sentence": "the balance reads 70",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "the balance reads ",
+                "parts": []
+              },
+              {
+                "kind": "number",
+                "text": "70",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      }
+    ],
+    "steps": [],
+    "examples": [],
+    "place": null,
+    "table": null,
+    "runs": []
+  }
+}

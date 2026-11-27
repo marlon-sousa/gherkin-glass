@@ -1,4 +1,5 @@
 use super::*;
+use crate::entities::Accents;
 use crate::test_support::name;
 
 fn feature(page: &str, object: &str) -> PublishedFeature {
@@ -28,13 +29,16 @@ fn versions() -> BTreeMap<VersionName, Vec<PublishedFeature>> {
 // the versions page is written with.
 #[test]
 fn the_list_of_versions_holds_its_groups_and_their_precedence() {
-    let list = String::from_utf8(versions_json(&versions(), &PageOptions::default(), None))
-        .expect("UTF-8");
+    let page = VersionsPageRecord {
+        ghg: "2.0.0".to_string(),
+        title: "Feature files".to_string(),
+        accents: Accents::DEFAULT,
+        front_page: None,
+    };
+    let list = String::from_utf8(versions_json(&versions(), &page)).expect("UTF-8");
     assert_eq!(
         list,
-        format!(
-            r##"{{"format":1,"development":["main"],"releases":["1.0.0","v1.0.0"],"pre_releases":["v2.0.0-rc.1"],"precedence":[["v2.0.0-rc.1"],["1.0.0","v1.0.0"]],"versions_page":{{"ghg":"{GHG_VERSION}","title":"Feature files","accent_light":"#0b4f9c","accent_dark":"#8cc4ff","front_page":null}}}}"##
-        )
+        r##"{"format":1,"development":["main"],"releases":["1.0.0","v1.0.0"],"pre_releases":["v2.0.0-rc.1"],"precedence":[["v2.0.0-rc.1"],["1.0.0","v1.0.0"]],"versions_page":{"ghg":"2.0.0","title":"Feature files","accent_light":"#0b4f9c","accent_dark":"#8cc4ff","front_page":null}}"##
     );
 }
 

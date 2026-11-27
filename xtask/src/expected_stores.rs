@@ -1,9 +1,11 @@
-//! Adapter: the expected stores `cargo xtask build` writes, of the fixtures that commit their store without their site, and of the history of versions.
+//! Adapter: the expected stores `cargo xtask build` writes, of the fixtures that commit their store without their site, and the versions of `tests/fixtures/versions`: its output folder and its history's store.
+
+use std::path::Path;
 
 #[path = "../../tests/support/history_builds.rs"]
 mod history_builds;
 
-use history_builds::HISTORY_BUILDS;
+use history_builds::{HISTORY_BUILDS, VERSION_BUILDS};
 
 use crate::expected_sites::replace_folder;
 use crate::{cargo_in, root, target};
@@ -47,19 +49,52 @@ pub(crate) fn fixture_stores() -> Result<(), String> {
     Ok(())
 }
 
-/// The fixture of a history of versions, which builds each of its suites in turn.
-const HISTORY: &str = "tests/fixtures/versions/history";
+/// The fixture of versions, which adds each of its suites in turn.
+const VERSIONS: &str = "tests/fixtures/versions";
 
-/// Builds the history's versions in turn into a folder of the target's, and writes its store
+/// Adds the fixture's versions in turn into its output folder, `expected`, emptied first, and
+/// removes the version `v2.0.0-rc.1` from a copy of it, `expected-removed`.
+pub(crate) fn versions_site() -> Result<(), String> {
+    let versions = root().join(VERSIONS);
+    let output = versions.join("expected");
+    replace_folder(&output, None)?;
+    add_versions(&versions, &VERSION_BUILDS, &output)?;
+    let removed = versions.join("expected-removed");
+    replace_folder(&removed, Some(&output))?;
+    cargo_in(
+        &versions,
+        &[
+            "run",
+            "--quiet",
+            "--locked",
+            "--package",
+            "gherkin-glass",
+            "--",
+            "version",
+            "remove",
+            "v2.0.0-rc.1",
+            "--output",
+            "expected-removed",
+        ],
+    )
+}
+
+/// Adds the history's versions in turn into a folder of the target's, and writes its store
 /// as the history's expected store.
 pub(crate) fn history_store() -> Result<(), String> {
-    let history = root().join(HISTORY);
+    let history = root().join(VERSIONS).join("history");
     let output = target().join("tmp/history");
     replace_folder(&output, None)?;
+    add_versions(&history, &HISTORY_BUILDS, &output)?;
+    replace_folder(&history.join("expected/data"), Some(&output.join("data")))
+}
+
+/// Adds each suite of `builds`, a folder of `fixture`, as its version into `output`.
+fn add_versions(fixture: &Path, builds: &[(&str, &str)], output: &Path) -> Result<(), String> {
     let given = output.to_string_lossy().into_owned();
-    for (suite, version) in HISTORY_BUILDS {
+    builds.iter().try_for_each(|(suite, version)| {
         cargo_in(
-            &history.join(suite),
+            &fixture.join(suite),
             &[
                 "run",
                 "--quiet",
@@ -67,13 +102,12 @@ pub(crate) fn history_store() -> Result<(), String> {
                 "--package",
                 "gherkin-glass",
                 "--",
-                "build",
+                "version",
+                "add",
+                version,
                 "--output",
                 &given,
-                "--version-name",
-                version,
             ],
-        )?;
-    }
-    replace_folder(&history.join("expected/data"), Some(&output.join("data")))
+        )
+    })
 }

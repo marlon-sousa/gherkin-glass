@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en" data-ghg-descriptor="{{ descriptor }}">
+{{ head|safe }}
+<body>
+{{ disk_notice|safe }}
+{{ skip_link|safe }}
+{{ options|safe }}
+<div class="ghg-layout">
+{{ tree|safe }}
+<div class="ghg-page">
+<nav class="ghg-breadcrumb" aria-label="{{ breadcrumb }}"></nav>
+{{ search|safe }}
+<main id="ghg_main" tabindex="-1"{% if busy %} aria-busy="true"{% endif %}>
+{%- if let Some(only_note) = only_note %}
+<p class="ghg-only-note" role="note">{{ only_note }}</p>
+{%- endif %}
+{%- if !main.is_empty() %}
+{{ main|safe }}
+{%- endif %}
+</main>
+<p id="ghg_announcement" role="status"></p>
+{{ footer|safe }}
+</div>
+</div>
+<noscript><p>{{ needs_script }}</p></noscript>
+<script type="text/plain" id="ghg_messages">{{ messages|safe }}</script>
+</body>
+</html>

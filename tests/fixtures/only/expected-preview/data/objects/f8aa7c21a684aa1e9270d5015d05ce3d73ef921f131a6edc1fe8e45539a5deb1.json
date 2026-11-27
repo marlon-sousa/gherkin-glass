@@ -1,0 +1,115 @@
+{
+  "format": 1,
+  "language": "en",
+  "lang": "en",
+  "feature": {
+    "kind": "feature",
+    "keyword": "Feature",
+    "note": false,
+    "name": "Welcome",
+    "description": "",
+    "tags": [
+      "@onboarding"
+    ],
+    "anchor": "",
+    "hash": "87132aaeda19216cc35ca58fffc6b6a7b9cb85fd886614c887a5213bb76f7943",
+    "blocks": [
+      {
+        "kind": "scenario",
+        "keyword": "Scenario",
+        "note": false,
+        "name": "A new customer is greeted",
+        "description": "",
+        "tags": [],
+        "anchor": "a-new-customer-is-greeted",
+        "hash": "ebd5cea856222ee84a08d0bd9f5b67adb09a708525712de8702ef318a3d4b269",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "a new customer named \"Ana\"",
+            "kind": "given",
+            "sentence": "a new customer named \"…\"",
+            "slots": [
+              "\"Ana\""
+            ],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "a new customer named ",
+                "parts": []
+              },
+              {
+                "kind": "parameter",
+                "text": "\"Ana\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"Ana\"",
+                    "parts": []
+                  }
+                ]
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "When ",
+            "text": "she opens the bank's app",
+            "kind": "when",
+            "sentence": "she opens the bank's app",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "she opens the bank's app",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "Then ",
+            "text": "she reads \"Welcome, Ana\"",
+            "kind": "then",
+            "sentence": "she reads \"…\"",
+            "slots": [
+              "\"Welcome, Ana\""
+            ],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "she reads ",
+                "parts": []
+              },
+              {
+                "kind": "parameter",
+                "text": "\"Welcome, Ana\"",
+                "parts": [
+                  {
+                    "kind": "text",
+                    "text": "\"Welcome, Ana\"",
+                    "parts": []
+                  }
+                ]
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      }
+    ],
+    "steps": [],
+    "examples": [],
+    "place": null,
+    "table": null,
+    "runs": []
+  }
+}

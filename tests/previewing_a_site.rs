@@ -16,6 +16,7 @@ use std::thread::sleep;
 use std::time::{Duration, Instant};
 
 use rstest::rstest;
+use serde_json::Value;
 
 fn fixture(name: &str) -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -144,6 +145,26 @@ fn request(address: &str, method: &str, target: &str) -> Answer {
 
 fn get(address: &str, target: &str) -> Answer {
     request(address, "GET", target)
+}
+
+/// The descriptor of the site served at `address`.
+fn served_descriptor(address: &str) -> Value {
+    serde_json::from_str(&get(address, "/data/site.json").text()).expect("JSON")
+}
+
+/// The object of the page `page`, as the site served at `address` serves it, when its
+/// descriptor lists the page.
+fn served_object(address: &str, page: &str) -> Option<String> {
+    let descriptor = served_descriptor(address);
+    let features = descriptor["features"].as_array()?;
+    let feature = features.iter().find(|feature| feature["page"] == page)?;
+    let object = feature["object"].as_str()?;
+    Some(get(address, &format!("/data/objects/{object}.json")).text())
+}
+
+/// The folder of the assets of this ghg, from the root of a site.
+fn assets() -> String {
+    format!("/assets/{}", env!("CARGO_PKG_VERSION"))
 }
 
 fn scratch(name: &str) -> PathBuf {
@@ -304,18 +325,23 @@ fn a_build_that_stops_serves_nothing() {
 fn it_builds_into_the_output_folder_and_serves_it() {
     let folder = built_copy("serve-build");
     let serving = serve(&folder, &["--port", "0"]);
-    let page = get(&serving.address, "/withdraw.html");
-    assert_eq!(page.status, 200);
+    let shell = get(&serving.address, "/");
+    assert_eq!(shell.status, 200);
     assert_eq!(
-        page.header("Content-Type"),
+        shell.header("Content-Type"),
         Some("text/html; charset=utf-8")
     );
     assert_eq!(
-        page.body,
-        read(folder.join("site/withdraw.html")).expect("written")
+        shell.body,
+        read(folder.join("site/index.html")).expect("written")
     );
-    assert!(!page.text().contains("__ghg"));
-    let script = get(&serving.address, "/assets/gherkin-glass.js");
+    assert!(!shell.text().contains("__ghg"));
+    assert_eq!(
+        get(&serving.address, "/data/site.json").header("Content-Type"),
+        Some("application/json")
+    );
+    assert!(served_object(&serving.address, "withdraw").is_some());
+    let script = get(&serving.address, &format!("{}/gherkin-glass.js", assets()));
     assert_eq!(
         script.header("Content-Type"),
         Some("text/javascript; charset=utf-8")
@@ -337,7 +363,7 @@ fn the_output_folder_is_checked_as_ghg_build_checks_it_unless_the_site_is_in_mem
     );
     assert_eq!(status, Some(1));
     let serving = serve(&folder, &["--port", "0", "--watch"]);
-    assert_eq!(get(&serving.address, "/withdraw.html").status, 200);
+    assert!(served_object(&serving.address, "withdraw").is_some());
     drop(serving);
     assert_eq!(
         read_to_string(folder.join("site/notes.txt")).expect("kept"),
@@ -345,23 +371,17 @@ fn the_output_folder_is_checked_as_ghg_build_checks_it_unless_the_site_is_in_mem
     );
 }
 
+// Rules 56 and 57: versions are added with ghg version add, then served as they are.
 #[test]
-fn a_version_name_changes_nothing_under_watch() {
-    let folder = built_copy("serve-watch-versioned");
-    let serving = serve(
-        &folder,
-        &["--port", "0", "--watch", "--version-name", "main"],
-    );
-    assert_eq!(get(&serving.address, "/withdraw.html").status, 200);
-    assert_eq!(get(&serving.address, "/main/withdraw.html").status, 404);
-    drop(serving);
-    assert!(!folder.join("site").exists());
-}
-
-#[test]
-fn a_versioned_build_serves_the_output_folder_with_its_versions_page() {
+fn versions_added_are_served_with_their_versions_page() {
     let folder = built_copy("serve-versioned");
-    let serving = serve(&folder, &["--port", "0", "--version-name", "main"]);
+    let added = Command::new(env!("CARGO_BIN_EXE_ghg"))
+        .args(["version", "add", "main", "--output", "site"])
+        .current_dir(&folder)
+        .output()
+        .expect("the command runs");
+    assert_eq!(added.status.code(), Some(0));
+    let serving = serve(&folder, &["--port", "0", "--no-build", "--output", "site"]);
     let page = get(&serving.address, "/");
     assert_eq!(page.status, 200);
     assert!(
@@ -369,8 +389,11 @@ fn a_versioned_build_serves_the_output_folder_with_its_versions_page() {
         "{}",
         page.text()
     );
-    assert_eq!(get(&serving.address, "/main/withdraw.html").status, 200);
-    assert!(folder.join("site/ghg-versions.json").is_file());
+    assert_eq!(get(&serving.address, "/main/").status, 200);
+    assert_eq!(
+        get(&serving.address, "/data/versions/main.json").status,
+        200
+    );
 }
 
 // Stopping: rules 199 to 202; the controller's tests check 200 and 201.
@@ -597,7 +620,7 @@ fn watching_rebuilds_on_a_change_and_keeps_the_last_site_that_built() {
     let address = serving.address.clone();
     let build = || get(&address, "/__ghg/build").text();
     assert_eq!(build(), "1");
-    let page = get(&address, "/withdraw.html").text();
+    let page = get(&address, "/").text();
     assert!(
         page.ends_with(
             "<script type=\"module\" src=\"/__ghg/reload.js?build=1\"></script></body>\n</html>\n"
@@ -617,11 +640,9 @@ fn watching_rebuilds_on_a_change_and_keeps_the_last_site_that_built() {
     let source = read_to_string(&feature).expect("read");
     write(&feature, source.replace("20", "30")).expect("written");
     eventually("a rebuild after a feature changed", || build() == "2");
-    let page = get(&address, "/withdraw.html").text();
-    assert!(
-        page.contains("withdraws <span class=\"ghg-number\">30</span>"),
-        "{page}"
-    );
+    let object = served_object(&address, "withdraw").expect("served");
+    assert!(object.contains("the holder withdraws 30"), "{object}");
+    let page = get(&address, "/").text();
     assert!(page.contains("/__ghg/reload.js?build=2"), "{page}");
     let mut line = String::new();
     serving.stdout.read_line(&mut line).expect("a line");
@@ -641,7 +662,7 @@ fn watching_rebuilds_on_a_change_and_keeps_the_last_site_that_built() {
     eventually("a rebuild after a .ghg-ignore file changed", || {
         build() == "4"
     });
-    assert_eq!(get(&address, "/withdraw.html").status, 404);
+    assert_eq!(served_object(&address, "withdraw"), None);
     // Rule 230: the site, now of no feature file, is served all the same, and said to be empty.
     let mut stderr = BufReader::new(serving.child.stderr.take().expect("piped"));
     let mut report = String::new();
@@ -682,7 +703,10 @@ fn watching_rebuilds_on_a_change_and_keeps_the_last_site_that_built() {
         "The site was not rebuilt, so the last site that built is still served.\n"
     );
     assert_eq!(build(), "5");
-    assert_eq!(get(&address, "/assets/gherkin-glass.css").status, 200);
+    assert_eq!(
+        get(&address, &format!("{}/gherkin-glass.css", assets())).status,
+        200
+    );
 }
 
 #[test]
@@ -726,9 +750,9 @@ fn watching_rebuilds_with_the_new_list_of_only_when_it_changes() {
     let address = serving.address.clone();
     let build = || get(&address, "/__ghg/build").text();
     assert_eq!(build(), "1");
-    let page = get(&address, "/withdraw.html").text();
-    assert!(page.contains("given with --only"), "{page}");
-    assert_eq!(get(&address, "/deposit.html").status, 404);
+    assert_eq!(served_descriptor(&address)["only"], true);
+    assert!(served_object(&address, "withdraw").is_some());
+    assert_eq!(served_object(&address, "deposit"), None);
     write(&other, "Feature: Deposit cash\n").expect("written");
     still_built(build, "1");
     write(
@@ -737,7 +761,7 @@ fn watching_rebuilds_with_the_new_list_of_only_when_it_changes() {
     )
     .expect("written");
     eventually("a rebuild after the list changed", || build() == "2");
-    assert_eq!(get(&address, "/deposit.html").status, 200);
+    assert!(served_object(&address, "deposit").is_some());
 }
 
 #[test]
@@ -761,9 +785,10 @@ fn watching_keeps_the_list_of_only_read_from_standard_input() {
     eventually("a rebuild after the configuration changed", || {
         build() == "2"
     });
-    let page = get(&address, "/withdraw.html").text();
-    assert!(page.contains("given with --only"), "{page}");
-    assert!(page.contains("Changed"), "{page}");
+    let descriptor = served_descriptor(&address);
+    assert_eq!(descriptor["only"], true);
+    assert_eq!(descriptor["title"], "Changed");
+    assert!(served_object(&address, "withdraw").is_some());
 }
 
 #[test]
@@ -785,7 +810,7 @@ fn watching_rebuilds_only_for_changes_a_build_reads() {
         "a rebuild after a folder with a feature was moved in",
         || build() == "2",
     );
-    assert_eq!(get(&serving.address, "/more/more.html").status, 200);
+    assert!(served_object(&serving.address, "more/more").is_some());
 }
 
 #[test]
@@ -793,7 +818,7 @@ fn watching_never_writes_the_output_folder() {
     let folder = built_copy("serve-watch-writes-nothing");
     let serving = serve(&folder, &["--watch", "--port", "0"]);
     assert_eq!(get(&serving.address, "/__ghg/build").text(), "1");
-    assert_eq!(get(&serving.address, "/withdraw.html").status, 200);
+    assert!(served_object(&serving.address, "withdraw").is_some());
     assert!(!folder.join("site").exists());
 }
 
@@ -838,8 +863,8 @@ fn watching_follows_the_input_the_configuration_file_names() {
     eventually("a rebuild after ghg.toml named another input", || {
         build() == "2"
     });
-    assert_eq!(get(&address, "/deposit.html").status, 200);
-    assert_eq!(get(&address, "/withdraw.html").status, 404);
+    assert!(served_object(&address, "deposit").is_some());
+    assert_eq!(served_object(&address, "withdraw"), None);
     let mut line = String::new();
     serving.stdout.read_line(&mut line).expect("a line");
     assert_eq!(line, "The site was rebuilt.\n");
@@ -856,11 +881,8 @@ fn watching_follows_the_input_the_configuration_file_names() {
     eventually("a rebuild after a feature of the new input changed", || {
         build() == "3"
     });
-    let page = get(&address, "/deposit.html").text();
-    assert!(
-        page.contains("deposits <span class=\"ghg-number\">30</span>"),
-        "{page}"
-    );
+    let object = served_object(&address, "deposit").expect("served");
+    assert!(object.contains("deposits 30"), "{object}");
 }
 
 #[test]
@@ -880,7 +902,7 @@ fn a_watch_that_cannot_start_again_keeps_the_last_site_served_and_the_configurat
         "{report}"
     );
     assert_eq!(build(), "1");
-    assert_eq!(get(&address, "/withdraw.html").status, 200);
+    assert!(served_object(&address, "withdraw").is_some());
 
     // Nor is the input it watched before watched now.
     let withdraw = folder.join("features/withdraw.feature");
@@ -890,11 +912,8 @@ fn a_watch_that_cannot_start_again_keeps_the_last_site_served_and_the_configurat
 
     write(folder.join("ghg.toml"), "input = \"features\"\n").expect("written");
     eventually("a rebuild after ghg.toml was mended", || build() == "2");
-    let page = get(&address, "/withdraw.html").text();
-    assert!(
-        page.contains("withdraws <span class=\"ghg-number\">30</span>"),
-        "{page}"
-    );
+    let object = served_object(&address, "withdraw").expect("served");
+    assert!(object.contains("the holder withdraws 30"), "{object}");
     let mut line = String::new();
     serving.stdout.read_line(&mut line).expect("a line");
     assert_eq!(line, "The site was rebuilt.\n");

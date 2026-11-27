@@ -1,5 +1,4 @@
-// The adapters of src/adapters/dom_tree.ts and src/adapters/fetched_tree.ts, on a page gherkin-glass wrote,
-// tests/fixtures/pages/expected/billing/refunds.html, with its site's tree.json: docs/BEHAVIOUR.md, rules 89 to 93.
+// The adapter of src/adapters/dom_tree.ts, on the shell of tests/fixtures/pages, with ghg 1's tree of that site, script/test/expected/pages/tree.json: docs/BEHAVIOUR.md, rules 89 to 93.
 
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -9,25 +8,21 @@ import { Window } from "happy-dom";
 
 import { DomTree } from "../../src/adapters/dom_tree.ts";
 import { DomTreeSwitch } from "../../src/adapters/dom_tree_switch.ts";
-import { FetchedTree } from "../../src/adapters/fetched_tree.ts";
-import { readTree } from "../../src/policies/tree_state.ts";
-import { startFolderTree } from "../../src/services/folder_tree.ts";
+import { buildTree, startTreeControls } from "../../src/services/folder_tree.ts";
 import type { Memory } from "../../src/ports/memory.ts";
+import type { TreeItem } from "../../src/ports/tree.ts";
+import { SHELL } from "../support/drawn_pages.ts";
 
-const SITE = new URL("../../../tests/fixtures/pages/expected/", import.meta.url);
-const DATA = readFileSync(new URL("assets/tree.json", SITE), "utf8");
+const ITEMS = JSON.parse(readFileSync(new URL("../expected/pages/tree.json", import.meta.url), "utf8")) as TreeItem[];
 
-async function open(kept = new Map<string, string>()): Promise<Window> {
-  const window = new Window({ url: "https://example.com/site/billing/refunds.html" });
-  window.document.write(readFileSync(new URL("billing/refunds.html", SITE), "utf8"));
+function open(kept = new Map<string, string>()): Window {
+  const window = new Window({ url: "https://example.com/site/#billing/refunds" });
+  window.document.write(SHELL);
   const document = window.document as unknown as Document;
   const memory: Memory = { get: (key) => kept.get(key) ?? null, set: (key, value) => void kept.set(key, value) };
-  const source = { load: () => Promise.resolve(readTree(JSON.parse(DATA))) };
   const wide = { narrow: () => false, onChange: () => {} };
-  await startFolderTree(source, new DomTreeSwitch(document), new DomTree(document, new URL("https://example.com/site/"), "billing/refunds.html"), wide, memory, {
-    sitePath: "/site/",
-    page: "billing/refunds.html",
-  });
+  startTreeControls(new DomTreeSwitch(document), wide, memory, "/site/");
+  buildTree(new DomTree(document), memory, "/site/", ITEMS, ["#billing/refunds", "#billing/"]);
   return window;
 }
 
@@ -38,18 +33,18 @@ const focused = (window: Window) => window.document.activeElement?.textContent;
 const press = (window: Window, key: string) =>
   window.document.activeElement!.dispatchEvent(new window.KeyboardEvent("keydown", { key, bubbles: true, cancelable: true }));
 
-test("the tree is built in its landmark, named as it, with every item a link relative to the page", async () => {
-  const window = await open();
+test("the tree is built in its landmark, named as it, with every item a link to its page in the shell", () => {
+  const window = open();
   const tree = window.document.querySelector('nav.ghg-tree > ul[role="tree"]')!;
   assert.equal(tree.getAttribute("aria-label"), "Folder tree");
   const home = items(window)[0]!;
   assert.equal(home.textContent, "Banking & <more>");
-  assert.equal(home.getAttribute("href"), "../index.html");
-  assert.equal(item(window, "Scenario: Store credit").getAttribute("href"), "../billing/refunds.html#store-credit");
+  assert.equal(home.getAttribute("href"), "#");
+  assert.equal(item(window, "Scenario: Store credit").getAttribute("href"), "#billing/refunds#store-credit");
   // Feature text inside gherkin-glass's words is isolated in a bdi.
   const isolated = [...item(window, "Scenario: Store credit").querySelectorAll("bdi")].map((bdi) => bdi.textContent);
   assert.deepEqual(isolated, ["Store credit"]);
-  assert.equal(item(window, "Feature: Closed accounts").getAttribute("href"), "../billing/archive/closed%20%231.html");
+  assert.equal(item(window, "Feature: Closed accounts").getAttribute("href"), "#billing/archive/closed%20%231");
   // A feature's feature text, and that of the items inside it, has its page's lang; the tree's own words have none.
   const languages = (text: string) => [...item(window, text).querySelectorAll("bdi")].map((bdi) => bdi.getAttribute("lang"));
   assert.deepEqual(languages("Feature: Saque em conta poupança"), ["pt"]);
@@ -58,8 +53,8 @@ test("the tree is built in its landmark, named as it, with every item a link rel
   assert.ok(home.closest("nav [lang]") === null);
 });
 
-test("the current page is marked, and it and the items it is inside are expanded, everything else collapsed", async () => {
-  const window = await open();
+test("the current page is marked, and it and the items it is inside are expanded, everything else collapsed", () => {
+  const window = open();
   const current = items(window).filter((link) => link.getAttribute("aria-current") === "page");
   assert.deepEqual(current.map((link) => link.textContent), ["Feature: Refunds & <returns>"]);
   assert.equal(item(window, "billing").getAttribute("aria-expanded"), "true");
@@ -75,15 +70,15 @@ test("the current page is marked, and it and the items it is inside are expanded
   assert.match(owned, /_/);
 });
 
-test("the tree is one Tab stop, on the current page's item", async () => {
-  const window = await open();
+test("the tree is one Tab stop, on the current page's item", () => {
+  const window = open();
   const stops = items(window).filter((link) => link.tabIndex === 0);
   assert.deepEqual(stops.map((link) => link.textContent), ["Feature: Refunds & <returns>"]);
 });
 
-test("the arrow keys, Home and End move through the visible items and expand and collapse them", async () => {
+test("the arrow keys, Home and End move through the visible items and expand and collapse them", () => {
   const kept = new Map<string, string>();
-  const window = await open(kept);
+  const window = open(kept);
   const billing = item(window, "billing");
   billing.focus();
   press(window, "ArrowUp");
@@ -95,7 +90,7 @@ test("the arrow keys, Home and End move through the visible items and expand and
   assert.equal(focused(window), "archive");
   press(window, "ArrowRight");
   assert.equal(item(window, "archive").getAttribute("aria-expanded"), "true");
-  assert.equal(kept.get("gherkin-glass:/site/ tree billing/archive/index.html"), "expanded");
+  assert.equal(kept.get("gherkin-glass:/site/ tree #billing/archive/"), "expanded");
   assert.equal(focused(window), "archive");
   press(window, "ArrowRight");
   assert.equal(focused(window), "Feature: Closed accounts");
@@ -103,7 +98,7 @@ test("the arrow keys, Home and End move through the visible items and expand and
   assert.equal(focused(window), "archive");
   press(window, "ArrowLeft");
   assert.equal(item(window, "archive").getAttribute("aria-expanded"), "false");
-  assert.equal(kept.get("gherkin-glass:/site/ tree billing/archive/index.html"), "collapsed");
+  assert.equal(kept.get("gherkin-glass:/site/ tree #billing/archive/"), "collapsed");
   press(window, "ArrowLeft");
   assert.equal(focused(window), "billing");
   press(window, "End");
@@ -114,8 +109,8 @@ test("the arrow keys, Home and End move through the visible items and expand and
   assert.deepEqual(items(window).filter((link) => link.tabIndex === 0).map((link) => link.textContent), ["Banking & <more>"]);
 });
 
-test("a letter moves to the next visible item starting with it, and * expands the items beside", async () => {
-  const window = await open();
+test("a letter moves to the next visible item starting with it, and * expands the items beside", () => {
+  const window = open();
   items(window)[0]!.focus();
   press(window, "R");
   assert.equal(focused(window), "Rule: Refunds after thirty days");
@@ -135,8 +130,8 @@ test("a letter moves to the next visible item starting with it, and * expands th
   assert.equal(item(window, "archive").getAttribute("aria-expanded"), "false");
 });
 
-test("pressing a marker expands or collapses its item, and Space follows the link", async () => {
-  const window = await open();
+test("pressing a marker expands or collapses its item, and Space follows the link", () => {
+  const window = open();
   const reports = item(window, "reports");
   const followed: string[] = [];
   window.document.addEventListener("click", (event) => {
@@ -153,22 +148,9 @@ test("pressing a marker expands or collapses its item, and Space follows the lin
   assert.deepEqual(followed, ["reports"]);
 });
 
-test("data that cannot be fetched, or is no tree, gives nothing to build", async () => {
-  const answer = (status: number, body: string) => () => Promise.resolve(new Response(body, { status }));
-  const at = new URL("https://example.com/site/assets/tree.json");
-  assert.equal(await new FetchedTree(at, answer(404, "") as typeof fetch).load(), null);
-  assert.equal(await new FetchedTree(at, answer(200, "{}") as typeof fetch).load(), null);
-  assert.equal(await new FetchedTree(at, answer(200, "not json") as typeof fetch).load(), null);
-  assert.equal(await new FetchedTree(at, (() => Promise.reject(new Error("offline"))) as typeof fetch).load(), null);
-  assert.equal((await new FetchedTree(at, answer(200, DATA) as typeof fetch).load())?.length, 8);
-});
-
-test("a page that is not below the site's root links the items from the root itself", async () => {
-  const window = new Window({ url: "https://example.com/elsewhere/deep/page.html" });
-  window.document.write(readFileSync(new URL("billing/refunds.html", SITE), "utf8"));
-  const tree = new DomTree(window.document as unknown as Document, new URL("https://example.com/site/"), null);
-  tree.build(readTree(JSON.parse(DATA))!, null, () => false);
-  assert.equal(items(window)[1]!.getAttribute("href"), "https://example.com/site/billing/index.html");
-  // Without a current page, the first item is the Tab stop.
+test("without a current page, the first item is the Tab stop", () => {
+  const window = new Window({ url: "https://example.com/site/#tags/" });
+  window.document.write(SHELL);
+  new DomTree(window.document as unknown as Document).build(ITEMS, null, () => false);
   assert.equal(items(window)[0]!.tabIndex, 0);
 });

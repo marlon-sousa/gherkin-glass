@@ -89,11 +89,6 @@ fn every_unknown_key_and_wrong_type_is_reported_on_its_line_in_order() {
 )]
 #[case::an_empty_input("input = \"\"\n", 1, empty("input"))]
 #[case::a_table_of_unknown_name("input = \"a\"\n\n[site]\ntitle = \"x\"\n", 3, unknown("site"))]
-#[case::a_version_name_of_more_than_one_folder(
-    "version_name = \"../v1\"\n",
-    1,
-    ConfigErrorKind::InvalidVersionName { name: "../v1".into() }
-)]
 fn a_wrong_value_is_reported_on_its_line(
     #[case] source: &str,
     #[case] line: usize,
@@ -192,31 +187,23 @@ fn a_key_given_twice_is_not_toml() {
 
 #[test]
 fn the_version_settings_are_read() {
-    let config = parse_config("version_name = \"v1.2.0\"\nreplace_existing_version = false\n")
-        .expect("valid");
-    assert_eq!(config.version_name, VersionName::new("v1.2.0"));
+    let config = parse_config("replace_existing_version = false\n").expect("valid");
     assert_eq!(config.replace_existing_version, Some(false));
     assert_eq!(config.allow_unnamed, None);
 }
 
+// The version's name is given by `ghg version add`, never by a key.
 #[test]
 fn every_error_of_the_version_settings_is_reported() {
     assert_eq!(
-        errors("version_name = \"\"\nversion_name2 = 1\n\n[x]\n"),
+        errors("version_name = \"v1\"\nreplace_existing_version = \"yes\"\n\n[x]\n"),
         [
-            (Some(1), empty("version_name")),
-            (Some(2), unknown("version_name2")),
-            (Some(4), unknown("x")),
-        ]
-    );
-    assert_eq!(
-        errors("version_name = 1.0\nreplace_existing_version = \"yes\"\n"),
-        [
-            (Some(1), wrong_type("version_name", ValueType::Text)),
+            (Some(1), unknown("version_name")),
             (
                 Some(2),
                 wrong_type("replace_existing_version", ValueType::Boolean)
             ),
+            (Some(4), unknown("x")),
         ]
     );
 }

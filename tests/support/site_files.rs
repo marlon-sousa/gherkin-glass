@@ -7,10 +7,10 @@ use std::path::Path;
 use sha2::{Digest, Sha256};
 
 use super::store_json::indented;
-use super::version_placeholder::with_version_placeholder;
+use super::version_placeholder::{with_folder_placeholder, with_version_placeholder};
 
-/// Every file below `folder`, by its `/`-joined path in it, the version it
-/// names put back as the placeholder, and each file of the store indented.
+/// Every file below `folder`, by its `/`-joined path in it, the version it and its path name
+/// put back as the placeholder, and each file of the store indented.
 pub(crate) fn files(folder: &Path) -> BTreeMap<String, Vec<u8>> {
     let mut found = BTreeMap::new();
     let mut folders = vec![(folder.to_path_buf(), String::new())];
@@ -23,6 +23,7 @@ pub(crate) fn files(folder: &Path) -> BTreeMap<String, Vec<u8>> {
             } else {
                 let file = read(entry.path()).expect("the file is read");
                 let file = with_version_placeholder(file, env!("CARGO_PKG_VERSION"));
+                let name = with_folder_placeholder(&name, env!("CARGO_PKG_VERSION"));
                 let file = if is_store_file(&name) {
                     indented(&String::from_utf8(file).expect("UTF-8")).into_bytes()
                 } else {

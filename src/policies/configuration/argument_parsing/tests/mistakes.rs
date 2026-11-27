@@ -62,9 +62,7 @@ fn unknown_command(name: &str) -> ArgumentError {
 #[case::a_joined_empty_path(&["build", "--input="], missing_value("--input"))]
 #[case::an_empty_path(&["build", "--config", ""], missing_value("--config"))]
 #[case::an_empty_title(&["build", "--title="], missing_value("--title"))]
-#[case::an_empty_version_name(&["build", "--version-name="], missing_value("--version-name"))]
 #[case::an_empty_list(&["build", "--only="], missing_value("--only"))]
-#[case::no_version_name(&["build", "--version-name"], missing_value("--version-name"))]
 #[case::an_empty_host(&["serve", "--host", ""], missing_value("--host"))]
 #[case::an_empty_port(&["serve", "--port="], missing_value("--port"))]
 #[case::a_value_for_help(&["build", "--help=yes"], unexpected_value("--help"))]
@@ -72,18 +70,30 @@ fn unknown_command(name: &str) -> ArgumentError {
 #[case::a_value_for_a_flag(&["serve", "--watch=1"], unexpected_value("--watch"))]
 #[case::a_repeated_path(&["build", "--input", "a", "--input", "b"], repeated("--input"))]
 #[case::a_repeated_output(&["build", "--output", "a", "--output", "b"], repeated("--output"))]
-#[case::a_repeated_version_name(&["build", "--version-name", "a", "--version-name", "b"], repeated("--version-name"))]
 #[case::a_repeated_flag(&["serve", "--no-build", "--no-build"], repeated("--no-build"))]
 #[case::a_port_with_a_sign(&["serve", "--port", "+80"], ArgumentError::NotAPort { value: "+80".into() })]
 #[case::a_port_too_large(&["serve", "--port=65536"], ArgumentError::NotAPort { value: "65536".into() })]
 #[case::watching_without_building(&["serve", "--no-build", "--watch"], ArgumentError::WatchWithoutBuild)]
 // Rule 204.
 #[case::a_list_without_building(&["serve", "--no-build", "--only", "-"], ArgumentError::OnlyWithoutBuild)]
-// Rule 212.
-#[case::a_preview_with_a_version_name(
-    &["build", "--preview", "--version-name", "pr-131"],
-    ArgumentError::PreviewWithVersionName
+// Rules 257 and 258: a version or a preview is named by its command, never by an option.
+#[case::a_version_name_given_to_build(&["build", "--version-name", "v1"], unknown_option("ghg build", "--version-name"))]
+#[case::a_preview_given_to_build(&["build", "--preview"], unknown_option("ghg build", "--preview"))]
+#[case::no_subcommand_of_version(&["version"], ArgumentError::MissingSubcommand { command: "ghg version".into() })]
+#[case::no_subcommand_of_preview(&["preview"], ArgumentError::MissingSubcommand { command: "ghg preview".into() })]
+#[case::an_unknown_subcommand(
+    &["version", "list"],
+    ArgumentError::UnknownSubcommand { command: "ghg version".into(), name: "list".into() }
 )]
+#[case::no_version_named(&["version", "add"], ArgumentError::MissingName { command: "ghg version add".into() })]
+#[case::no_preview_named(&["preview", "remove", "--output", "site"], ArgumentError::MissingName { command: "ghg preview remove".into() })]
+#[case::a_second_name(&["version", "add", "a", "b"], unexpected_argument("ghg version add", "b"))]
+#[case::a_preview_replaced(
+    &["preview", "add", "pr-1", "--replace-existing-version", "true"],
+    unknown_option("ghg preview add", "--replace-existing-version")
+)]
+#[case::an_input_to_remove(&["version", "remove", "v1", "--input", "x"], unknown_option("ghg version remove", "--input"))]
+#[case::an_argument_after_a_removal(&["preview", "remove", "pr-1", "--", "x"], unexpected_argument("ghg preview remove", "x"))]
 // Rule 226.
 #[case::an_empty_pattern(&["build", "--keep-in-output="], missing_value("--keep-in-output"))]
 #[case::a_pattern_that_is_not_valid(
@@ -104,8 +114,12 @@ fn unknown_command(name: &str) -> ArgumentError {
     ArgumentError::UnknownOption { command: "ghg serve".into(), option: "--message-format".into() }
 )]
 #[case::a_path_as_version_name(
-    &["build", "--version-name", "../v1"],
+    &["version", "add", "../v1"],
     ArgumentError::InvalidVersionName { name: "../v1".into() }
+)]
+#[case::a_path_as_preview_name(
+    &["preview", "remove", "a/b"],
+    ArgumentError::InvalidVersionName { name: "a/b".into() }
 )]
 fn each_mistake_is_named(#[case] arguments: &[&str], #[case] error: ArgumentError) {
     assert_eq!(parse(arguments), Err(error));

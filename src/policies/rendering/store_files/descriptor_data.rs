@@ -2,6 +2,7 @@
 
 use serde::Serialize;
 
+use crate::entities::BuildTarget;
 use crate::entities::{
     DescriptorFeature, DescriptorSentences, DescriptorTag, OutsideLink, PageOptions, SiteScope,
     SiteStore, TagLink, VersionName,
@@ -82,10 +83,10 @@ struct TagLinkData<'a> {
     text: &'a str,
 }
 
-/// What a descriptor is written from besides the store: the build's version, if any, the
-/// settings of every page, and the front page's template as it was read, if any.
+/// What a descriptor is written from besides the store: what the build writes, the settings of
+/// every page, and the front page's template as it was read, if any.
 pub(crate) struct DescriptorSettings<'a> {
-    pub(crate) version: Option<&'a VersionName>,
+    pub(crate) target: &'a BuildTarget,
     pub(crate) options: &'a PageOptions,
     pub(crate) front_page: Option<&'a str>,
 }
@@ -107,8 +108,8 @@ pub(super) fn descriptor_json(
     json_bytes(&DescriptorData {
         format: STORE_FORMAT,
         ghg: GHG_VERSION,
-        version: settings.version.map(VersionName::as_str),
-        preview: None,
+        version: settings.target.version().map(VersionName::as_str),
+        preview: settings.target.preview().map(VersionName::as_str),
         title: site_title(options),
         only: options.scope == SiteScope::OnlyListed,
         start: StartData {
@@ -121,9 +122,9 @@ pub(super) fn descriptor_json(
         tags: store.tags.iter().map(tag_data).collect(),
         sentences: sentences_data(&store.sentences),
         // A version's front page is the versions page's.
-        front_page: match settings.version {
-            Some(_) => None,
-            None => settings.front_page,
+        front_page: match settings.target {
+            BuildTarget::Version(_) => None,
+            BuildTarget::Site | BuildTarget::Preview(_) => settings.front_page,
         },
         settings: settings_data(options),
     })

@@ -21,18 +21,28 @@ fn fixture(name: &str) -> PathBuf {
 /// `ghg build --message-format json` run in `folder`, with `arguments`, writing into a fresh
 /// folder of its own named `name`, which it gives back with the run's output.
 fn build(folder: &Path, arguments: &[&str], name: &str) -> (PathBuf, Output) {
-    let output = Path::new(env!("CARGO_TARGET_TMPDIR"))
-        .join("message-format")
-        .join(name);
+    let output = output_folder(name);
     let _ = remove_dir_all(&output);
-    let run = Command::new(env!("CARGO_BIN_EXE_ghg"))
-        .args(["build", "--message-format", "json", "--output"])
-        .arg(&output)
+    (output.clone(), run(&["build"], folder, &output, arguments))
+}
+
+fn output_folder(name: &str) -> PathBuf {
+    Path::new(env!("CARGO_TARGET_TMPDIR"))
+        .join("message-format")
+        .join(name)
+}
+
+/// `ghg`, `command` and `--message-format json` run in `folder`, writing into `output`, with
+/// `arguments`.
+fn run(command: &[&str], folder: &Path, output: &Path, arguments: &[&str]) -> Output {
+    Command::new(env!("CARGO_BIN_EXE_ghg"))
+        .args(command)
+        .args(["--message-format", "json", "--output"])
+        .arg(output)
         .args(arguments)
         .current_dir(folder)
         .output()
-        .expect("the command runs");
-    (output, run)
+        .expect("the command runs")
 }
 
 /// The one JSON object of standard output, which is one line.
@@ -58,6 +68,7 @@ fn a_site_written_is_reported_with_its_counts_and_notes() {
     assert_eq!(reported["outcome"], "built");
     assert_eq!(reported["output"], output.to_string_lossy().as_ref());
     assert_eq!(reported["version"], Value::Null);
+    assert_eq!(reported["preview"], Value::Null);
     assert_eq!(reported["features"], 2);
     assert_eq!(reported["scenarios"], 4);
     assert_eq!(
@@ -79,6 +90,7 @@ fn nothing_to_build_is_reported_with_why() {
             "outcome": "nothing-to-build",
             "output": null,
             "version": null,
+            "preview": null,
             "features": null,
             "scenarios": null,
             "notes": [{ "kind": "nothing-to-build", "message": why }],
@@ -115,18 +127,78 @@ fn a_format_ghg_does_not_have_is_a_mistake() {
     assert_eq!(text(&run.stdout), "");
 }
 
-// Rules 120 and 231: a version's name is reported with the site written as that version.
+// Rules 120, 211 and 231: a version's name, or a preview's, is reported with
+// what was written as it.
 #[test]
-fn a_version_written_is_reported_with_its_name() {
-    let (_, run) = build(
+fn a_version_or_a_preview_added_is_reported_with_its_name() {
+    let output = output_folder("added");
+    let _ = remove_dir_all(&output);
+    let input = ["--input", "."];
+    let added = run(
+        &["version", "add", "v1"],
         &fixture("constructs"),
-        &["--input", ".", "--version-name", "v1"],
-        "version",
+        &output,
+        &input,
     );
-    assert_eq!(run.status.code(), Some(0));
-    let reported = report(&run);
+    assert_eq!(added.status.code(), Some(0));
+    let reported = report(&added);
     assert_eq!(reported["outcome"], "built");
     assert_eq!(reported["version"], "v1");
+    assert_eq!(reported["preview"], Value::Null);
+    assert_eq!(reported["features"], 2);
+    let added = run(
+        &["preview", "add", "pr-1"],
+        &fixture("constructs"),
+        &output,
+        &input,
+    );
+    assert_eq!(added.status.code(), Some(0));
+    let reported = report(&added);
+    assert_eq!(reported["outcome"], "built");
+    assert_eq!(reported["version"], Value::Null);
+    assert_eq!(reported["preview"], "pr-1");
+}
+
+// Rules 231, 257 and 258: a version or a preview removed, and one there was
+// none of.
+#[test]
+fn a_removal_is_reported_and_so_is_nothing_to_remove() {
+    let output = output_folder("removed");
+    let _ = remove_dir_all(&output);
+    let constructs = fixture("constructs");
+    let added = run(
+        &["version", "add", "v1"],
+        &constructs,
+        &output,
+        &["--input", "."],
+    );
+    assert_eq!(added.status.code(), Some(0));
+    let removed = run(&["version", "remove", "v1"], &constructs, &output, &[]);
+    assert_eq!(removed.status.code(), Some(0));
+    let reported = report(&removed);
+    assert_eq!(reported["outcome"], "removed");
+    assert_eq!(reported["version"], "v1");
+    assert_eq!(reported["features"], Value::Null);
+    let none = run(&["preview", "remove", "pr-1"], &constructs, &output, &[]);
+    assert_eq!(none.status.code(), Some(0));
+    let why = format!(
+        "{}: holds no preview pr-1, so nothing was removed.",
+        output.display()
+    );
+    assert_eq!(text(&none.stderr), format!("{why}\n"));
+    assert_eq!(
+        report(&none),
+        json!({
+            "outcome": "nothing-to-remove",
+            "output": null,
+            "version": null,
+            "preview": null,
+            "features": null,
+            "scenarios": null,
+            "notes": [{ "kind": "nothing-to-remove", "message": why }],
+            "errors": [],
+        })
+    );
 }
 
 // Rules 16 and 231: a problem with no line, such as a configuration file that cannot be read,

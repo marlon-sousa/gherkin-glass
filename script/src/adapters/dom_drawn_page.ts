@@ -21,7 +21,7 @@ export class DomDrawnPage implements DrawnPage {
   }
 
   blocks(): Page {
-    return new DomPage(this.document, this.canvas.main, false);
+    return new DomPage(this.document, this.canvas.main);
   }
 
   backgrounds(): Backgrounds | null {

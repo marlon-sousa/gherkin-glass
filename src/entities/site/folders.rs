@@ -1,9 +1,5 @@
-//! Entity: the folders of the site, each folder's page and the folder tree's items.
+//! Entity: the home page of a site without versions or of a preview.
 
 mod folder_page;
-mod tree_item;
 
-pub(crate) use folder_page::{
-    FeatureEntry, FolderLink, FolderPage, FolderPageContent, FolderWords,
-};
-pub(crate) use tree_item::TreeItem;
+pub(crate) use folder_page::{FeatureEntry, FolderLink, FolderWords, HomePage};

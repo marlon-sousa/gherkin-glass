@@ -27,12 +27,17 @@ fn fixture() -> PathBuf {
 /// `ghg build` run in `folder` with `arguments`, writing into a fresh folder named `name`,
 /// which it returns with the run's output.
 fn build(folder: &Path, arguments: &[&str], name: &str) -> (PathBuf, Output) {
+    run(folder, &[&["build"], arguments].concat(), name)
+}
+
+/// `ghg` run in `folder` with `arguments`, writing into a fresh folder named `name`, which it
+/// returns with the run's output.
+fn run(folder: &Path, arguments: &[&str], name: &str) -> (PathBuf, Output) {
     let output = Path::new(env!("CARGO_TARGET_TMPDIR"))
         .join("front-page")
         .join(name);
     let _ = remove_dir_all(&output);
     let run = Command::new(env!("CARGO_BIN_EXE_ghg"))
-        .arg("build")
         .args(arguments)
         .arg("--output")
         .arg(&output)
@@ -58,9 +63,13 @@ fn the_home_page_of_a_site_without_versions_is_written_from_the_template() {
 
 #[test]
 fn the_versions_page_of_a_versioned_build_is_written_from_the_template() {
-    // Rule 183: the versions page takes the template, and the version's own home
-    // page does not.
-    let (written, run) = build(&fixture(), &["--config", "versioned.toml"], "versions");
+    // Rule 183: the versions page takes the template, and the version's own
+    // shell does not.
+    let (written, run) = run(
+        &fixture(),
+        &["version", "add", "v1.0.0", "--config", "versioned.toml"],
+        "versions",
+    );
     assert_eq!(text(&run.stderr), "");
     assert_eq!(run.status.code(), Some(0));
     let page = |path: &Path| read_to_string(path).expect("the page is read");
@@ -73,7 +82,7 @@ fn the_versions_page_of_a_versioned_build_is_written_from_the_template() {
         Ok(page(&fixture().join("expected-versions.html")))
     );
     let home = page(&written.join("v1.0.0/index.html"));
-    assert!(home.contains("<h1>Banking</h1>"), "{home}");
+    assert!(home.contains("<title>Banking, v1.0.0</title>"), "{home}");
     assert!(!home.contains("The Banking suite"), "{home}");
 }
 

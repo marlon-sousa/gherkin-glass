@@ -7,7 +7,7 @@ const RESERVED: [&str; 5] = [
     "assets",
     "data",
     "index.html",
-    "ghg-versions.json",
+    "ghg-site.json",
     VersionName::PREVIEWS,
 ];
 
@@ -19,7 +19,7 @@ const NUMBERED_DEVICES: [&str; 2] = ["com", "lpt"];
 pub(crate) struct VersionName(String);
 
 impl VersionName {
-    /// The folder at the top of a versioned output folder that ghg leaves alone, for the previews.
+    /// The folder at the top of an output folder that holds the previews' folders.
     pub(crate) const PREVIEWS: &str = "previews";
 
     /// `None` when `name` cannot be a version name.
@@ -80,8 +80,8 @@ mod tests {
             "Data",
             "index.html",
             "Index.HTML",
-            "ghg-versions.json",
-            "GHG-Versions.JSON",
+            "ghg-site.json",
+            "GHG-Site.JSON",
             "previews",
             "Previews",
             "con",
@@ -96,6 +96,7 @@ mod tests {
         }
         for name in [
             "assets2",
+            "ghg-versions.json",
             "console",
             "com0",
             "com10",

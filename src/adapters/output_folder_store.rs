@@ -1,30 +1,22 @@
 //! Adapter: the output folders port over the file system.
 
-mod marker_file;
-
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs::{
-    create_dir_all, read_dir, read_to_string, remove_dir, remove_dir_all, remove_file,
-    symlink_metadata, write,
+    read_dir, read_to_string, remove_dir, remove_dir_all, remove_file, symlink_metadata,
 };
 use std::io::{ErrorKind, Result as IoResult};
 use std::path::Path;
 
-use marker_file::{marker_text, site_record, versions_record};
-
-use crate::entities::{EntryKind, FilePath, KeptInOutput, LetterCase, OutputContents, Record};
+use crate::entities::{
+    EntryKind, FilePath, KeptInOutput, LetterCase, OutputContents, OutputMarker,
+};
 use crate::ports::OutputFolders;
 
 #[derive(Debug, Default, Clone, Copy)]
 pub(crate) struct OutputFolderStore;
 
 impl OutputFolders for OutputFolderStore {
-    fn contents(
-        &self,
-        output: &Path,
-        left_alone: Option<&str>,
-        kept: &KeptInOutput,
-    ) -> IoResult<OutputContents> {
+    fn contents(&self, output: &Path, kept: &KeptInOutput) -> IoResult<OutputContents> {
         let metadata = match symlink_metadata(output) {
             Ok(metadata) => metadata,
             Err(error) if error.kind() == ErrorKind::NotFound => {
@@ -37,24 +29,17 @@ impl OutputFolders for OutputFolderStore {
             return Ok(OutputContents::NotAFolder);
         }
         let mut found = Found {
-            left_alone,
             kept_in_output: kept,
             files: BTreeSet::new(),
             folders: BTreeSet::new(),
             kept: BTreeMap::new(),
         };
         found.walk(output, "")?;
-        let record = match marker(output, Record::VERSIONS_MARKER)? {
-            Some(text) => versions_record(&text),
-            None => marker(output, Record::SITE_MARKER)?
-                .as_deref()
-                .and_then(site_record),
-        };
         Ok(OutputContents::Folder {
             files: found.files,
             folders: found.folders,
             kept: found.kept,
-            record,
+            marker: marker(output)?,
         })
     }
 
@@ -67,35 +52,45 @@ impl OutputFolders for OutputFolderStore {
         }
     }
 
-    fn remove(&self, path: &Path) -> IoResult<()> {
-        let kind = match symlink_metadata(path) {
-            Ok(metadata) => metadata.file_type(),
-            Err(error) if error.kind() == ErrorKind::NotFound => return Ok(()),
-            Err(error) => return Err(error),
-        };
-        if kind.is_symlink() {
-            // The link goes, never what it points to. Windows removes a link
-            // to a folder as a folder.
-            remove_file(path).or_else(|_| remove_dir(path))
-        } else if kind.is_dir() {
-            // `remove_dir_all` does not follow the links inside.
-            remove_dir_all(path)
-        } else {
-            remove_file(path)
+    fn remove(&self, output: &Path, path: &str) -> IoResult<()> {
+        remove_entry(&output.join(path))?;
+        let parents = path
+            .rmatch_indices('/')
+            .filter_map(|(end, _)| path.get(..end));
+        for parent in parents {
+            // A folder that still holds something stays, with the folders that hold it.
+            match remove_dir(output.join(parent)) {
+                Ok(()) => {}
+                Err(error) if error.kind() == ErrorKind::NotFound => {}
+                Err(_) => return Ok(()),
+            }
         }
-    }
-
-    fn record(&self, output: &Path, record: &Record) -> IoResult<()> {
-        let (name, text) = marker_text(record)?;
-        create_dir_all(output)?;
-        write(output.join(name), text)
+        Ok(())
     }
 }
 
-/// Every file and folder met while walking a folder, but the folder at its
-/// top named `left_alone`, and what `kept_in_output` keeps, which is in `kept`.
+/// Removes what is at `path`, never following a link; nothing when there is nothing there.
+fn remove_entry(path: &Path) -> IoResult<()> {
+    let kind = match symlink_metadata(path) {
+        Ok(metadata) => metadata.file_type(),
+        Err(error) if error.kind() == ErrorKind::NotFound => return Ok(()),
+        Err(error) => return Err(error),
+    };
+    if kind.is_symlink() {
+        // The link goes, never what it points to. Windows removes a link
+        // to a folder as a folder.
+        remove_file(path).or_else(|_| remove_dir(path))
+    } else if kind.is_dir() {
+        // `remove_dir_all` does not follow the links inside.
+        remove_dir_all(path)
+    } else {
+        remove_file(path)
+    }
+}
+
+/// Every file and folder met while walking a folder, but what `kept_in_output` keeps, which is
+/// in `kept`.
 struct Found<'a> {
-    left_alone: Option<&'a str>,
     kept_in_output: &'a KeptInOutput,
     files: BTreeSet<FilePath>,
     folders: BTreeSet<FilePath>,
@@ -116,9 +111,6 @@ impl Found<'_> {
                 format!("{below}/{name}")
             };
             let is_folder = entry.file_type()?.is_dir();
-            if is_folder && self.left_alone == Some(path.as_str()) {
-                continue;
-            }
             let kind = if is_folder {
                 EntryKind::Folder
             } else {
@@ -143,9 +135,9 @@ impl Found<'_> {
     }
 }
 
-/// The text of the marker `name` in `output`, when it is a file there.
-fn marker(output: &Path, name: &str) -> IoResult<Option<String>> {
-    let path = output.join(name);
+/// The text of the marker in `output`, when it is a file there.
+fn marker(output: &Path) -> IoResult<Option<String>> {
+    let path = output.join(OutputMarker::FILE);
     match symlink_metadata(&path) {
         Ok(metadata) if metadata.is_file() => read_to_string(path).map(Some),
         Ok(_) => Ok(None),
@@ -156,7 +148,7 @@ fn marker(output: &Path, name: &str) -> IoResult<Option<String>> {
 
 #[cfg(test)]
 mod tests {
-    use std::fs::create_dir_all;
+    use std::fs::{create_dir_all, write};
 
     use super::*;
     use crate::test_support::scratch;
@@ -181,5 +173,26 @@ mod tests {
                 .expect("a link");
             assert_eq!(store.read(&output, "link.json").ok(), Some(None));
         }
+    }
+
+    #[test]
+    fn removing_a_file_removes_the_folders_it_leaves_empty() {
+        let output = scratch("output-folder-store-remove");
+        create_dir_all(output.join("previews/pr-1")).expect("a folder");
+        create_dir_all(output.join("data/previews")).expect("a folder");
+        write(output.join("previews/pr-1/index.html"), "").expect("written");
+        write(output.join("data/previews/pr-1.json"), "").expect("written");
+        write(output.join("data/site.json"), "").expect("written");
+        let store = OutputFolderStore;
+        store
+            .remove(&output, "previews/pr-1/index.html")
+            .expect("removed");
+        store
+            .remove(&output, "data/previews/pr-1.json")
+            .expect("removed");
+        assert!(!output.join("previews").exists());
+        assert!(!output.join("data/previews").exists());
+        assert!(output.join("data/site.json").exists());
+        assert!(output.exists());
     }
 }

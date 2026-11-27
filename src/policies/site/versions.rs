@@ -2,4 +2,4 @@
 
 mod versions_page;
 
-pub(super) use versions_page::build_versions_page;
+pub(crate) use versions_page::build_versions_page;

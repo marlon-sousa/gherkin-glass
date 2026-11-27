@@ -1,7 +1,7 @@
 use rstest::rstest;
 
 use super::*;
-use crate::entities::{PageOptions, VersionName};
+use crate::entities::{BuildTarget, PageOptions};
 use crate::policies::build_store;
 use crate::policies::rendering::{GHG_VERSION, sha256_hex};
 use crate::test_support::{name, parsed_at};
@@ -15,9 +15,9 @@ fn store_of(files: &[(&str, &str)]) -> SiteStore {
     build_store(&features, &PageOptions::default())
 }
 
-fn rendered(files: &[(&str, &str)], version: Option<&VersionName>) -> StoreFiles {
+fn rendered(files: &[(&str, &str)], target: &BuildTarget) -> StoreFiles {
     let settings = DescriptorSettings {
-        version,
+        target,
         options: &PageOptions::default(),
         front_page: Some("# Home"),
     };
@@ -32,7 +32,7 @@ fn text(file: &SiteFile) -> String {
 // rule 251.
 #[test]
 fn an_object_is_its_feature_as_compact_json() {
-    let files = rendered(&[("a.feature", "Feature: F\n")], None);
+    let files = rendered(&[("a.feature", "Feature: F\n")], &BuildTarget::Site);
     let object = files.objects.first().expect("an object");
     let hash = sha256_hex(br#"["feature","Feature","F","",[],[],"en"]"#);
     assert_eq!(
@@ -52,7 +52,7 @@ fn an_object_is_named_by_its_bytes_and_shared() {
             ("a.feature", "Feature: F\n"),
             ("b/c.feature", "Feature: F\n"),
         ],
-        None,
+        &BuildTarget::Site,
     );
     let [object] = files.objects.as_slice() else {
         panic!("{:?}", files.objects.len());
@@ -65,28 +65,35 @@ fn an_object_is_named_by_its_bytes_and_shared() {
         [sha256_hex(&object.contents), sha256_hex(&object.contents)]
     );
 }
-// Rule 252: a site's descriptor holds its front page and no version; a version's the reverse.
+
+// Rule 252: a site's and a preview's descriptor hold their front page and no version; a
+// version's the reverse.
 #[rstest]
 #[case::a_site(
-    None,
+    BuildTarget::Site,
     "data/site.json",
-    r#""version":null"#,
+    r#""version":null,"preview":null"#,
     r##""front_page":"# Home""##
 )]
 #[case::a_version(
-    Some("v1.0"),
+    BuildTarget::Version(name("v1.0")),
     "data/versions/v1.0.json",
-    r#""version":"v1.0""#,
+    r#""version":"v1.0","preview":null"#,
     r#""front_page":null"#
 )]
-fn a_descriptor_names_its_version_and_its_front_page(
-    #[case] version: Option<&str>,
+#[case::a_preview(
+    BuildTarget::Preview(name("pr-1")),
+    "data/previews/pr-1.json",
+    r#""version":null,"preview":"pr-1""#,
+    r##""front_page":"# Home""##
+)]
+fn a_descriptor_names_its_target_and_its_front_page(
+    #[case] target: BuildTarget,
     #[case] path: &str,
     #[case] named: &str,
     #[case] front_page: &str,
 ) {
-    let version = version.map(name);
-    let files = rendered(&[("a.feature", "Feature: F\n")], version.as_ref());
+    let files = rendered(&[("a.feature", "Feature: F\n")], &target);
     assert_eq!(files.descriptor.address, SiteAddress::at_root(path));
     let descriptor = text(&files.descriptor);
     assert!(descriptor.contains(named), "{descriptor}");
@@ -99,7 +106,7 @@ fn a_descriptor_names_its_version_and_its_front_page(
 fn a_descriptor_holds_the_build_s_settings() {
     let files = rendered(
         &[("a.feature", "@t\nFeature: F\n  Scenario: S\n    Given a\n")],
-        None,
+        &BuildTarget::Site,
     );
     let object = files
         .features
@@ -112,4 +119,24 @@ fn a_descriptor_holds_the_build_s_settings() {
             r##"{{"format":1,"ghg":"{GHG_VERSION}","version":null,"preview":null,"title":"Feature files","only":false,"start":{{"collapse_rules":false,"collapse_scenarios":false,"show_tree":true,"inline_backgrounds":true}},"features":[{{"path":"a.feature","page":"a","object":"{object}","lines":[2,3],"source":null}}],"tags":[{{"tag":"@t","page":"tags/t","link":null}}],"sentences":{{"given":["a"],"when":[],"then":[]}},"front_page":"# Home","settings":{{"title":null,"source_link":null,"tag_links":[],"accent_light":"#0b4f9c","accent_dark":"#8cc4ff","collapse_rules":false,"collapse_scenarios":false,"show_tree":true,"inline_backgrounds":true}}}}"##
         )
     );
+}
+
+// Rule 150: the objects' size is said only above 5,000,000 bytes.
+#[test]
+fn a_small_store_is_not_large() {
+    let files = rendered(&[("a.feature", "Feature: F\n")], &BuildTarget::Site);
+    assert_eq!(files.large_site_data, None);
+}
+
+#[test]
+fn a_store_above_five_million_bytes_is_large() {
+    let name = "x".repeat(5_000_001);
+    let text = format!("Feature: {name}\n");
+    let files = rendered(&[("a.feature", &text)], &BuildTarget::Site);
+    let size = files
+        .objects
+        .iter()
+        .map(|object| object.contents.len())
+        .sum();
+    assert_eq!(files.large_site_data, Some(size));
 }

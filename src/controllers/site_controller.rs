@@ -10,8 +10,8 @@ use building::{Built, IntoFolder};
 use watching::Watching;
 
 use crate::entities::{
-    BuildOptions, BuildReport, Destination, NothingToBuild, ServeEnd, ServeMode, ServeOptions,
-    Served, ServedSite, Settings,
+    BuildOptions, BuildReport, BuildTarget, Destination, NothingToBuild, RemoveOptions,
+    RemoveReport, ServeEnd, ServeMode, ServeOptions, Served, ServedSite, Settings,
 };
 use crate::errors::{BuildError, RebuildError, ServeError, WatchError};
 use crate::services::{
@@ -21,6 +21,14 @@ use crate::services::{
 /// What the handlers ask of gherkin-glass.
 pub(crate) trait SiteApi {
     fn build(&self, options: &BuildOptions) -> Result<BuildReport, BuildError>;
+
+    /// Removes `target`, a version or a preview, from the output folder `options` name, reading
+    /// nothing of the input.
+    fn remove(
+        &self,
+        options: &RemoveOptions,
+        target: &BuildTarget,
+    ) -> Result<RemoveReport, BuildError>;
 
     /// Serves until ghg serve is asked to stop, or, under `--watch`, until the watching ends,
     /// then returns `Ok` once it no longer serves; or, building into the output folder, returns
@@ -143,9 +151,27 @@ impl SiteApi for SiteController {
             IntoFolder::Built(built) => BuildReport::Written {
                 site: built.built,
                 output: settings.output.clone(),
-                version: settings.version.clone(),
+                target: settings.target.clone(),
             },
             IntoFolder::NothingToBuild(nothing) => BuildReport::NothingToBuild(nothing),
+        })
+    }
+
+    fn remove(
+        &self,
+        options: &RemoveOptions,
+        target: &BuildTarget,
+    ) -> Result<RemoveReport, BuildError> {
+        let settings = self
+            .settings
+            .load(&options.as_build(target), Destination::Folder)
+            .map_err(BuildError::Config)?;
+        let output = settings.output.clone();
+        let target = target.clone();
+        Ok(if self.site_writer.remove(&settings)? {
+            RemoveReport::Removed { output, target }
+        } else {
+            RemoveReport::NothingToRemove { output, target }
         })
     }
 

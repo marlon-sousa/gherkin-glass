@@ -18,14 +18,4 @@ impl HeadingLevel {
             HeadingLevel::Five => 5,
         }
     }
-
-    /// The level of the blocks under one at this level. Nothing is under an `h5`'s block, so
-    /// the level below it is `h5` again.
-    pub(crate) fn below(self) -> HeadingLevel {
-        match self {
-            HeadingLevel::Two => HeadingLevel::Three,
-            HeadingLevel::Three => HeadingLevel::Four,
-            HeadingLevel::Four | HeadingLevel::Five => HeadingLevel::Five,
-        }
-    }
 }

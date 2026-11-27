@@ -1,0 +1,27 @@
+{
+  "format": 1,
+  "development": [
+    "main"
+  ],
+  "releases": [
+    "v1.0.0"
+  ],
+  "pre_releases": [
+    "v2.0.0-rc.1"
+  ],
+  "precedence": [
+    [
+      "v2.0.0-rc.1"
+    ],
+    [
+      "v1.0.0"
+    ]
+  ],
+  "versions_page": {
+    "ghg": "{version}",
+    "title": "Suite",
+    "accent_light": "#0b4f9c",
+    "accent_dark": "#8cc4ff",
+    "front_page": null
+  }
+}

@@ -4,9 +4,9 @@ use std::collections::BTreeMap;
 
 use serde::Serialize;
 
-use crate::entities::{PageOptions, PublishedFeature, VersionList, VersionName};
-use crate::policies::rendering::{GHG_VERSION, STORE_FORMAT, json_bytes};
-use crate::policies::{order_versions, precedence_groups, site_title};
+use crate::entities::{PublishedFeature, VersionList, VersionName, VersionsPageRecord};
+use crate::policies::rendering::{STORE_FORMAT, json_bytes};
+use crate::policies::{order_versions, precedence_groups};
 
 #[derive(Serialize)]
 struct VersionsData<'a> {
@@ -20,8 +20,8 @@ struct VersionsData<'a> {
 
 #[derive(Serialize)]
 struct VersionsPageData<'a> {
-    ghg: &'static str,
-    title: String,
+    ghg: &'a str,
+    title: &'a str,
     accent_light: String,
     accent_dark: String,
     front_page: Option<&'a str>,
@@ -45,12 +45,10 @@ struct ObjectVersions<'a> {
     versions: Vec<&'a str>,
 }
 
-/// The compact JSON of `data/versions.json` of `versions`, the versions page written with the
-/// settings of every page `options` and the front page's template as it was read, if any.
+/// The compact JSON of `data/versions.json` of `versions`, the versions page written with `page`.
 pub(super) fn versions_json(
     versions: &BTreeMap<VersionName, Vec<PublishedFeature>>,
-    options: &PageOptions,
-    front_page: Option<&str>,
+    page: &VersionsPageRecord,
 ) -> Vec<u8> {
     let list = order_versions(versions.keys().cloned());
     let precedence = precedence_groups(versions.keys().cloned());
@@ -61,11 +59,11 @@ pub(super) fn versions_json(
         pre_releases: names(&list.pre_releases),
         precedence: precedence.iter().map(Vec::as_slice).map(names).collect(),
         versions_page: VersionsPageData {
-            ghg: GHG_VERSION,
-            title: site_title(options),
-            accent_light: options.accents.light.to_string(),
-            accent_dark: options.accents.dark.to_string(),
-            front_page,
+            ghg: &page.ghg,
+            title: &page.title,
+            accent_light: page.accents.light.to_string(),
+            accent_dark: page.accents.dark.to_string(),
+            front_page: page.front_page.as_deref(),
         },
     })
 }

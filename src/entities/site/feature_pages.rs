@@ -1,22 +1,11 @@
-//! Entity: a feature's page, its content nodes and its content as the site stage builds it, with its anchors and its highlighted steps.
+//! Entity: what ghg works out of a feature for its object and its entry on the front page: its anchors, its highlighted steps, the words of its blocks' headings and its contents.
 
 mod anchored_feature;
-mod feature_blocks;
+mod contents_entry;
+mod heading_part;
 mod highlighted_step;
-mod page;
-mod page_content;
 
 pub(crate) use anchored_feature::{Anchored, AnchoredFeature, AnchoredRule, AnchoredScenario};
-pub(crate) use feature_blocks::{
-    BackgroundBlock, BlockHeading, ExamplesBlock, HeadingPart, KeywordNote, RuleBlock,
-    ScenarioBlock, plain_parts, text_of,
-};
+pub(crate) use contents_entry::{ContentsEntry, OutsideLink};
+pub(crate) use heading_part::{HeadingPart, plain_parts, text_of};
 pub(crate) use highlighted_step::{HighlightedStep, StepPart};
-pub(crate) use page::{
-    BackgroundsOption, ContentsEntry, DocStringView, NoteDialog, OutsideLink, Page, PageWords,
-    Paragraph, SourceLink, StepView, TableView, TagView,
-};
-pub(crate) use page_content::{
-    BackgroundContent, ExampleScenario, ExamplesContent, ExamplesRuns, PageContent, RuleContent,
-    ScenarioContent, StepContent,
-};

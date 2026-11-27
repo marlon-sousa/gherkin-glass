@@ -4,14 +4,16 @@ use std::sync::Mutex;
 use rstest::rstest;
 
 use super::*;
-use crate::entities::{BuildReport, BuiltSite};
+use crate::entities::{BuildReport, BuildTarget, BuiltSite, RemoveOptions, RemoveReport};
 use crate::errors::{
     BuildError, InputError, InputErrorKind, InputErrors, ListenErrorKind, ServeError, WatchError,
 };
+use crate::test_support::name;
 
 /// Answers every build and serve as it was made to, and counts how often it was asked.
 struct FakeSite {
     build: Result<BuildReport, BuildError>,
+    remove: Result<RemoveReport, BuildError>,
     serve: Result<ServeEnd, ServeError>,
     asked: Mutex<usize>,
 }
@@ -20,6 +22,10 @@ impl Default for FakeSite {
     fn default() -> Self {
         FakeSite {
             build: Ok(written(BuiltSite::default())),
+            remove: Ok(RemoveReport::Removed {
+                output: "site".into(),
+                target: BuildTarget::Version(name("v1")),
+            }),
             serve: Ok(ServeEnd::NoLongerServed),
             asked: Mutex::new(0),
         }
@@ -30,6 +36,11 @@ impl SiteApi for FakeSite {
     fn build(&self, _: &BuildOptions) -> Result<BuildReport, BuildError> {
         *self.asked.lock().expect("lock") += 1;
         self.build.clone()
+    }
+
+    fn remove(&self, _: &RemoveOptions, _: &BuildTarget) -> Result<RemoveReport, BuildError> {
+        *self.asked.lock().expect("lock") += 1;
+        self.remove.clone()
     }
 
     fn serve(&self, _: &ServeOptions, _: &dyn SiteListener) -> Result<ServeEnd, ServeError> {
@@ -60,7 +71,7 @@ fn written(built: BuiltSite) -> BuildReport {
     BuildReport::Written {
         site: built,
         output: "site".into(),
-        version: None,
+        target: BuildTarget::Site,
     }
 }
 
@@ -131,11 +142,11 @@ fn a_build_that_stops_prints_its_report_and_exits_with_1() {
 }
 
 #[test]
-fn a_site_with_no_title_is_hinted_at_before_large_search_documents() {
+fn a_site_with_no_title_is_hinted_at_before_large_site_data() {
     // Rule 17.
     let site = FakeSite {
         build: Ok(written(BuiltSite {
-            large_search_documents: Some(5_200_001),
+            large_site_data: Some(5_200_001),
             untitled: true,
             ..BuiltSite::default()
         })),
@@ -145,7 +156,7 @@ fn a_site_with_no_title_is_hinted_at_before_large_search_documents() {
     assert_eq!(
         reply.stderr,
         "The site has no title, so its home page is called Feature files. Set title in ghg.toml, or give --title.\n\
-         The search documents are 5.3 MB, larger than the 5 MB above which search can be slow to start, mostly on phones.\n"
+         The site's data is 5.3 MB, larger than the 5 MB above which its pages and search can be slow to start, mostly on phones.\n"
     );
     assert_eq!(reply.status, ExitStatus::Done);
 }
@@ -163,6 +174,39 @@ fn a_build_with_nothing_to_build_says_why_and_is_done() {
         "specs: the input folder holds no feature file, so no site was built.\n"
     );
     assert_eq!(reply.stdout, "");
+    assert_eq!(reply.status, ExitStatus::Done);
+}
+
+// Rules 257 and 258.
+#[test]
+fn a_removal_is_done_quietly_and_nothing_to_remove_is_said() {
+    let (reply, asked) = run(FakeSite::default(), &["version", "remove", "v1"]);
+    assert_eq!(
+        (reply.stderr.as_str(), reply.status, asked),
+        ("", ExitStatus::Done, 1)
+    );
+    let site = FakeSite {
+        remove: Ok(RemoveReport::NothingToRemove {
+            output: "site".into(),
+            target: BuildTarget::Preview(name("pr-1")),
+        }),
+        ..FakeSite::default()
+    };
+    let (reply, _) = run(
+        site,
+        &["preview", "remove", "pr-1", "--message-format=json"],
+    );
+    assert_eq!(
+        reply.stderr,
+        "site: holds no preview pr-1, so nothing was removed.\n"
+    );
+    assert!(
+        reply
+            .stdout
+            .starts_with("{\"outcome\":\"nothing-to-remove\","),
+        "{}",
+        reply.stdout
+    );
     assert_eq!(reply.status, ExitStatus::Done);
 }
 

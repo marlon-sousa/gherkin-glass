@@ -1,4 +1,4 @@
-// The site's data of tests/fixtures/pages's billing/refunds.feature, built with ghg.toml, as docs/BEHAVIOUR.md, "The site's data", says ghg writes it, so that the page the script draws from it can be compared with the page ghg 1 wrote, tests/fixtures/pages/expected/billing/refunds.html.
+// The site's data of tests/fixtures/pages's billing/refunds.feature, built with ghg.toml, as docs/BEHAVIOUR.md, "The site's data", says ghg writes it, so that the page the script draws from it can be compared with the page ghg 1 wrote, committed in script/test/expected/pages/billing/refunds.html.
 
 import { block, descriptor, entry, number, object, parameter, placeholder, run, step, tag, text } from "./store_building.ts";
 

@@ -7,7 +7,7 @@ import { folderPage } from "../../src/adapters/dom_folder_page.ts";
 import { ElementBuilder } from "../../src/adapters/element_builder.ts";
 import { folderView } from "../../src/policies/folder_view.ts";
 import { billingDescriptor, billingFeatures } from "../support/billing_store.ts";
-import { emptyDocument, markupOf, words, writtenMain } from "../support/drawn_pages.ts";
+import { emptyDocument, markupOf, words, expectedMain } from "../support/drawn_pages.ts";
 import { block, descriptor, entry, object } from "../support/store_building.ts";
 
 // Rules 81, 83 and 84: the folder's name, its subfolders and its features, each with its count and its contents.
@@ -16,7 +16,7 @@ test("a folder's page is drawn as ghg 1 wrote it, but for its links' addresses",
   const main = document.querySelector("main")!;
   const view = folderView(words, billingDescriptor, billingFeatures, "billing/")!;
   main.append(...folderPage(new ElementBuilder(document), view));
-  assert.equal(markupOf(main), markupOf(writtenMain("pages/expected/billing/index.html", "billing/index.html")));
+  assert.equal(markupOf(main), markupOf(expectedMain("pages/billing/index.html")));
   assert.equal(view.title, "billing, Banking & <more>");
 });
 
@@ -26,7 +26,7 @@ test("a feature with no rule and no scenario has its count as text", () => {
   const main = document.querySelector("main")!;
   const view = folderView(words, billingDescriptor, billingFeatures, "billing/archive/")!;
   main.append(...folderPage(new ElementBuilder(document), view));
-  assert.equal(markupOf(main), markupOf(writtenMain("pages/expected/billing/archive/index.html", "billing/archive/index.html")));
+  assert.equal(markupOf(main), markupOf(expectedMain("pages/billing/archive/index.html")));
   assert.equal(view.title, "billing/archive, Banking & <more>");
 });
 

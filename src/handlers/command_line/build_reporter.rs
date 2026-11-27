@@ -1,7 +1,7 @@
-//! Handler: the trait of a way to report how `ghg build` ended, which `--message-format` picks.
+//! Handler: the trait of a way to report how a build or a removal ended, which `--message-format` picks.
 
 use super::Reply;
-use crate::entities::BuildReport;
+use crate::entities::{BuildReport, RemoveReport};
 use crate::errors::BuildError;
 
 /// Words how a build ended, as `ended` says, into what the run prints and the status it exits
@@ -9,4 +9,6 @@ use crate::errors::BuildError;
 /// which it is, so that another format is another reporter, not a change to the build.
 pub(super) trait BuildReporter {
     fn report(&self, ended: &Result<BuildReport, BuildError>) -> Reply;
+
+    fn report_removal(&self, ended: &Result<RemoveReport, BuildError>) -> Reply;
 }

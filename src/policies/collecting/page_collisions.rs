@@ -1,60 +1,42 @@
-//! Policy: the input files whose pages would collide, with each other, with a folder's page, or with a page of the site's own.
+//! Policy: the input files whose pages would collide, with each other or with a page of the site's own, their names compared exactly.
 
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
-use crate::entities::{PageClash, SiteAddress, TAGS_FOLDER};
+use crate::entities::{PageClash, TAGS_FOLDER};
 use crate::errors::{InputError, InputErrorKind};
-use crate::policies::{FOLDER_PAGE, SEARCH_PAGE, SENTENCES_PAGE, page_address};
+use crate::policies::page_name;
 
-/// Every clash of the pages of `paths`, files under `input` in path order: those of
-/// [`same_folder_pages`], of [`same_file_pages`], then of [`pages_in_tags_folder`].
+/// The page of step sentences.
+const SENTENCES_PAGE: &str = "steps";
+
+/// The page of search results.
+const SEARCH_PAGE: &str = "search";
+
+/// Every clash of the pages of `paths`, files under `input` in path order: of a page with a
+/// page of the site's own or one an earlier file has, then of a page in the folder of the tag
+/// pages.
 pub(crate) fn page_collisions(input: &Path, paths: &[PathBuf]) -> Vec<PageClash> {
     let pages: Vec<_> = paths.iter().map(|path| Page::of(input, path)).collect();
     [
-        same_folder_pages(input, &pages),
         same_file_pages(input, &pages),
         pages_in_tags_folder(input, &pages),
     ]
     .concat()
 }
 
-/// An input file and the address of its page.
+/// An input file and the name of its page.
 struct Page<'a> {
     path: &'a Path,
-    address: SiteAddress,
+    name: String,
 }
 
 impl<'a> Page<'a> {
     fn of(input: &Path, path: &'a Path) -> Self {
         Page {
             path,
-            address: page_address(path.strip_prefix(input).unwrap_or(path)),
+            name: page_name(path.strip_prefix(input).unwrap_or(path)),
         }
-    }
-
-    /// Its address without regard to case, since some file systems do not regard it, and its file.
-    fn keyed(&self) -> (String, &'a Path) {
-        (self.address.to_string().to_lowercase(), self.path)
-    }
-
-    /// The folders it is in below the input folder, outermost first, each as its path from the
-    /// input folder in the site, with `/` between folders, and as its path in the input.
-    fn enclosing_folders(&self) -> Vec<(String, PathBuf)> {
-        let folders = self.address.folders();
-        let mut paths: Vec<_> = self
-            .path
-            .ancestors()
-            .skip(1)
-            .take(folders.len())
-            .map(Path::to_path_buf)
-            .collect();
-        paths.reverse();
-        (1..=folders.len())
-            .filter_map(|depth| folders.get(..depth))
-            .map(|outer| outer.join("/"))
-            .zip(paths)
-            .collect()
     }
 
     fn clash(&self, input: &Path, kind: InputErrorKind) -> PageClash {
@@ -65,52 +47,14 @@ impl<'a> Page<'a> {
     }
 }
 
-/// Every folder whose page an earlier folder in path order has, compared without regard to case.
-fn same_folder_pages(input: &Path, pages: &[Page<'_>]) -> Vec<PageClash> {
-    let mut folders: Vec<(String, PathBuf)> =
-        pages.iter().flat_map(Page::enclosing_folders).collect();
-    let mut seen = BTreeSet::new();
-    folders.retain(|(folder, _)| seen.insert(folder.clone()));
-    let first: BTreeMap<String, &str> = folders.iter().rev().map(without_case).collect();
-    folders
-        .iter()
-        .filter_map(|folder| folder_clash(input, folder, &first))
-        .collect()
-}
-
-fn without_case((folder, _): &(String, PathBuf)) -> (String, &str) {
-    (folder.to_lowercase(), folder)
-}
-
-/// The clash of `folder` when `first`, keyed without regard to case, holds another spelling of it.
-fn folder_clash(
-    input: &Path,
-    (folder, path): &(String, PathBuf),
-    first: &BTreeMap<String, &str>,
-) -> Option<PageClash> {
-    let earlier = *first.get(&folder.to_lowercase())?;
-    (earlier != folder).then(|| PageClash {
-        path: path.clone(),
-        error: InputError::new(
-            input,
-            path,
-            None,
-            InputErrorKind::SameFolderPage {
-                page: format!("{folder}/{FOLDER_PAGE}"),
-                first: earlier.to_string(),
-            },
-        ),
-    })
-}
-
-/// Every file whose page, compared without regard to case, is a folder's page, the page of
-/// step sentences or the page of search results, or one an earlier file in path order already has.
+/// Every file whose page is the page of step sentences or the page of search results, or one
+/// an earlier file in path order already has.
 fn same_file_pages(input: &Path, pages: &[Page<'_>]) -> Vec<PageClash> {
-    let first: BTreeMap<String, &Path> = pages
+    let first: BTreeMap<&str, &Path> = pages
         .iter()
         .rev()
-        .filter(is_a_feature_s_own)
-        .map(Page::keyed)
+        .filter(|page| reserved(&page.name).is_none())
+        .map(|page| (page.name.as_str(), page.path))
         .collect();
     pages
         .iter()
@@ -118,67 +62,51 @@ fn same_file_pages(input: &Path, pages: &[Page<'_>]) -> Vec<PageClash> {
         .collect()
 }
 
-fn is_a_feature_s_own(page: &&Page<'_>) -> bool {
-    reserved(&page.address).is_none()
-}
-
-fn file_clash(input: &Path, page: &Page<'_>, first: &BTreeMap<String, &Path>) -> Option<PageClash> {
-    reserved(&page.address)
+fn file_clash(input: &Path, page: &Page<'_>, first: &BTreeMap<&str, &Path>) -> Option<PageClash> {
+    reserved(&page.name)
         .or_else(|| same_as_earlier(input, page, first))
         .map(|kind| page.clash(input, kind))
 }
 
-/// What is wrong with a page at the place of the page of step sentences, of the page of search
-/// results or of a folder's page,
-/// compared without regard to case.
-fn reserved(page: &SiteAddress) -> Option<InputErrorKind> {
-    let lowercase = page.to_string().to_lowercase();
-    if lowercase == SENTENCES_PAGE {
-        return Some(InputErrorKind::ReservedPage {
+/// What is wrong with a page named as the page of step sentences or of search results.
+fn reserved(name: &str) -> Option<InputErrorKind> {
+    match name {
+        SENTENCES_PAGE => Some(InputErrorKind::ReservedPage {
             page: SENTENCES_PAGE.to_string(),
-        });
-    }
-    if lowercase == SEARCH_PAGE {
-        return Some(InputErrorKind::SearchPageClash {
+        }),
+        SEARCH_PAGE => Some(InputErrorKind::SearchPageClash {
             page: SEARCH_PAGE.to_string(),
-        });
+        }),
+        _ => None,
     }
-    let folders = page.folders();
-    (page.file().to_lowercase() == FOLDER_PAGE).then(|| InputErrorKind::SameAsFolderPage {
-        page: page.to_string(),
-        folder: (!folders.is_empty()).then(|| folders.join("/")),
-    })
 }
 
-/// What is wrong with a page when `first`, keyed without regard to case, holds another file for it.
+/// What is wrong with a page when `first` holds another file for it.
 fn same_as_earlier(
     input: &Path,
     page: &Page<'_>,
-    first: &BTreeMap<String, &Path>,
+    first: &BTreeMap<&str, &Path>,
 ) -> Option<InputErrorKind> {
-    let (key, path) = page.keyed();
-    let earlier = *first.get(&key)?;
-    (earlier != path).then(|| InputErrorKind::SamePage {
-        page: page.address.to_string(),
+    let earlier = *first.get(page.name.as_str())?;
+    (earlier != page.path).then(|| InputErrorKind::SamePage {
+        page: page.name.clone(),
         first: InputError::shown_path(input, earlier),
     })
 }
 
-/// Every file whose page would be in the folder of the tag pages, its name compared without
-/// regard to case, as the other pages are.
+/// Every file whose page would be in the folder of the tag pages.
 fn pages_in_tags_folder(input: &Path, pages: &[Page<'_>]) -> Vec<PageClash> {
     pages
         .iter()
-        .filter_map(|page| in_tags_folder(input, page))
+        .filter(|page| page.name.split('/').count() > 1)
+        .filter(|page| page.name.split('/').next() == Some(TAGS_FOLDER))
+        .map(|page| {
+            let kind = InputErrorKind::InTagsFolder {
+                page: page.name.clone(),
+            };
+            page.clash(input, kind)
+        })
         .collect()
-}
-
-fn in_tags_folder(input: &Path, page: &Page<'_>) -> Option<PageClash> {
-    let folder = *page.address.folders().first()?;
-    (folder.to_lowercase() == TAGS_FOLDER).then(|| {
-        let page_address = page.address.to_string();
-        page.clash(input, InputErrorKind::InTagsFolder { page: page_address })
-    })
 }
 
 #[cfg(test)]
@@ -213,39 +141,35 @@ mod tests {
     }
 
     fn reserved(path: &str) -> (String, InputErrorKind) {
-        let page = "steps.html".into();
+        let page = "steps".into();
         (path.into(), InputErrorKind::ReservedPage { page })
     }
 
     fn search_page(path: &str) -> (String, InputErrorKind) {
-        let page = "search.html".into();
+        let page = "search".into();
         (path.into(), InputErrorKind::SearchPageClash { page })
     }
 
     #[rstest]
+    // Rule 37: names compared exactly, so `A` is a page of its own.
     #[case::with_each_other(
         &["a.feature", "a.story", "A"],
-        vec![same_page("A", "A.html", "a.feature"), same_page("a.story", "a.html", "a.feature")]
+        vec![same_page("a.story", "a", "a.feature")]
     )]
+    // Rule 142.
     #[case::with_the_step_sentences(
         &["Steps.feature", "a.feature", "steps.feature", "sub/steps.feature"],
-        vec![reserved("Steps.feature"), reserved("steps.feature")]
+        vec![reserved("steps.feature")]
     )]
-    // Rule 215: a page at the place of the page of search results, in any case.
+    // Rule 215.
     #[case::with_the_search_results(
         &["Search.feature", "a.feature", "search.story", "sub/search.feature"],
-        vec![search_page("Search.feature"), search_page("search.story")]
+        vec![search_page("search.story")]
     )]
+    // Rule 101.
     #[case::in_the_folder_of_the_tag_pages(
-        &["Tags/a.feature", "tags.feature", "b/tags/c.feature"],
-        vec![("Tags/a.feature".into(), InputErrorKind::InTagsFolder { page: "Tags/a.html".into() })]
-    )]
-    #[case::folders_differing_only_in_case_once(
-        &["A/x.feature", "a/y.feature", "a/z.feature", "a/b/w.feature"],
-        vec![(
-            "a".into(),
-            InputErrorKind::SameFolderPage { page: "a/index.html".into(), first: "A".into() }
-        )]
+        &["Tags/a.feature", "tags.feature", "tags/c.feature", "b/tags/c.feature"],
+        vec![("tags/c.feature".into(), InputErrorKind::InTagsFolder { page: "tags/c".into() })]
     )]
     fn pages_that_collide_are_reported(
         #[case] paths: &[&str],
@@ -257,47 +181,15 @@ mod tests {
     #[test]
     fn pages_that_do_not_collide_bring_no_error() {
         assert_eq!(
-            collisions(&["a.feature", "sub/a.feature", "b/c.feature"]),
+            collisions(&[
+                "a.feature",
+                "sub/a.feature",
+                "b/c.feature",
+                "index.feature",
+                "A/x.feature",
+                "a/y.feature"
+            ]),
             []
         );
-    }
-
-    #[test]
-    fn a_feature_whose_page_is_a_folder_s_is_reported_in_any_case() {
-        let input = Path::new("in");
-        let paths = [input.join("INDEX.feature"), input.join("a/b/index.story")];
-        let kinds: Vec<_> = page_collisions(input, &paths)
-            .into_iter()
-            .map(|clash| clash.error.kind)
-            .collect();
-        assert_eq!(
-            kinds,
-            [
-                InputErrorKind::SameAsFolderPage {
-                    page: "INDEX.html".into(),
-                    folder: None
-                },
-                InputErrorKind::SameAsFolderPage {
-                    page: "a/b/index.html".into(),
-                    folder: Some("a/b".into())
-                },
-            ]
-        );
-    }
-
-    #[test]
-    fn each_clash_names_the_path_of_its_file_or_folder_in_the_input() {
-        let input = Path::new("in");
-        let paths = [
-            input.join("A/b/x.feature"),
-            input.join("a/y.feature"),
-            input.join("tags.feature"),
-            input.join("Tags/c.feature"),
-        ];
-        let found: Vec<_> = page_collisions(input, &paths)
-            .into_iter()
-            .map(|clash| clash.path)
-            .collect();
-        assert_eq!(found, [input.join("a"), input.join("Tags/c.feature")]);
     }
 }

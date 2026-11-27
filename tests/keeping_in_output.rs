@@ -33,8 +33,14 @@ fn host_folder(test: &str) -> PathBuf {
 /// `ghg build` in `folder` of the fixture, writing into `output`, with
 /// `arguments`: what it says on standard error, and its status.
 fn ghg(folder: &str, output: &Path, arguments: &[&str]) -> (String, i32) {
+    ghg_command(&["build"], folder, output, arguments)
+}
+
+/// `ghg` and `command` in `folder` of the fixture, writing into `output`,
+/// with `arguments`: what it says on standard error, and its status.
+fn ghg_command(command: &[&str], folder: &str, output: &Path, arguments: &[&str]) -> (String, i32) {
     let result = Command::new(env!("CARGO_BIN_EXE_ghg"))
-        .arg("build")
+        .args(command)
         .arg("--output")
         .arg(output)
         .args(arguments)
@@ -95,7 +101,7 @@ fn a_folder_holding_only_what_is_kept_is_built_into_and_keeps_it() {
     let output = host_folder("site");
     assert_eq!(ghg(".", &output, &[]), (String::new(), 0));
     assert_kept(&output);
-    assert!(output.join("billing/pay.html").is_file());
+    assert!(output.join("data/site.json").is_file());
     let marker = marker(&output, "ghg-site.json");
     assert!(!marker.contains("CNAME") && !marker.contains(".nojekyll") && !marker.contains(".git"));
     // Rule 227: an earlier site is replaced, and what is kept stays.
@@ -103,22 +109,25 @@ fn a_folder_holding_only_what_is_kept_is_built_into_and_keeps_it() {
     assert_kept(&output);
 }
 
-// Rules 224 and 227: the same for versions.
+// Rules 224 and 227: the same for versions and previews, added and removed.
 #[test]
-fn a_versioned_build_keeps_what_is_kept_beside_its_versions() {
+fn versions_and_previews_keep_what_is_kept_beside_them() {
     let output = host_folder("versions");
-    assert_eq!(
-        ghg(".", &output, &["--version-name", "v1.0"]),
-        (String::new(), 0)
-    );
-    assert_eq!(
-        ghg(".", &output, &["--version-name", "main"]),
-        (String::new(), 0)
-    );
-    assert_eq!(
-        ghg(".", &output, &["--version-name", "v1.0"]),
-        (String::new(), 0)
-    );
+    for command in [
+        ["version", "add", "v1.0"],
+        ["version", "add", "main"],
+        ["version", "add", "v1.0"],
+        ["preview", "add", "pr-1"],
+        ["preview", "remove", "pr-1"],
+        ["version", "add", "old"],
+        ["version", "remove", "old"],
+    ] {
+        assert_eq!(
+            ghg_command(&command, ".", &output, &[]),
+            (String::new(), 0),
+            "{command:?}"
+        );
+    }
     assert_kept(&output);
     assert_eq!(
         listing(&output),
@@ -128,7 +137,7 @@ fn a_versioned_build_keeps_what_is_kept_beside_its_versions() {
             "CNAME",
             "assets",
             "data",
-            "ghg-versions.json",
+            "ghg-site.json",
             "index.html",
             "main",
             "v1.0"
@@ -158,23 +167,19 @@ fn patterns_on_the_command_line_replace_the_configuration_s() {
 
 // Rule 228.
 #[rstest]
-#[case::a_folder_of_every_site(&[], "assets", "assets")]
-#[case::every_page(&[], "billing/index.html", "*.html")]
-#[case::a_folder_of_the_input(&[], "billing", "billing/")]
-#[case::the_version_built(&["--version-name", "v1.0"], "v1.0", "v1.0")]
+#[case::the_assets_of_every_site(&["build"], "assets", "assets")]
+#[case::the_data_of_every_site(&["build"], "data", "Data/")]
+#[case::the_shell(&["build"], "index.html", "*.html")]
+#[case::the_version_added(&["version", "add", "v1.0"], "v1.0", "v1.0")]
 fn a_pattern_that_keeps_what_ghg_writes_stops_the_build_before_anything_is_written(
-    #[case] arguments: &[&str],
+    #[case] command: &[&str],
     #[case] found: &str,
     #[case] pattern: &str,
 ) {
     let output = host_folder(&format!("clash-{pattern}").replace(['*', '/'], "_"));
-    let mut arguments: Vec<String> = arguments
-        .iter()
-        .map(|argument| argument.to_string())
-        .collect();
-    arguments.extend(host_patterns_and(&[pattern]));
+    let arguments = host_patterns_and(&[pattern]);
     let arguments: Vec<&str> = arguments.iter().map(String::as_str).collect();
-    let (report, status) = ghg(".", &output, &arguments);
+    let (report, status) = ghg_command(command, ".", &output, &arguments);
     assert_eq!(status, 1);
     assert_eq!(
         report,

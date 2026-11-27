@@ -1,4 +1,4 @@
-//! Test support: site trees of features written in the test, the fixtures under `tests/fixtures`, read as the command reads them, scratch
+//! Test support: features written in the test, the fixtures under `tests/fixtures`, read as the command reads them, scratch
 //! folders for tests that touch the disk, an input held in memory, output folders as ghg finds
 //! them, and a server and a watcher for ghg serve.
 
@@ -20,17 +20,13 @@ use gherkin::{Feature, GherkinEnv};
 use regex_automata::meta::Regex;
 
 use crate::adapters::{GherkinCrate, InputFolderReader};
-use crate::entities::{
-    EntryKind, FolderEntry, InputTree, PageOptions, ParsedFeature, RevisedFeature, Revision,
-    SiteFeaturePage, SiteTree, TagLink, Unnamed,
-};
+use crate::entities::{EntryKind, FolderEntry, InputTree, ParsedFeature, TagLink, Unnamed};
 use crate::errors::InputErrors;
-use crate::policies::site_tree;
 use crate::ports::{FeatureParser, InputFolders};
 use crate::services::{GherkinParser, GherkinParserApi, InputCollectorApi};
 
 pub(crate) use list::{input_collector, listing_collector};
-pub(crate) use output::{folder, kept_in_output, name, set, two_versions};
+pub(crate) use output::{folder, kept_in_output, marker, name, set};
 pub(crate) use serving::{Counted, FakeServer, FakeSignals, FakeWaiter, FakeWatcher, changed};
 
 /// A link from the tags that `pattern` matches whole, as the configuration gives it, for a
@@ -53,49 +49,6 @@ pub(crate) fn parsed_at(path: &str, text: &str) -> ParsedFeature {
         "en".to_string(),
         BTreeMap::new(),
     )
-}
-
-/// `feature`, as an input tree holds it with the first revision.
-pub(crate) fn revised(feature: &ParsedFeature) -> RevisedFeature<'_> {
-    RevisedFeature {
-        feature,
-        revision: Revision::default(),
-    }
-}
-
-/// Each of `features`, as [`revised`] gives it, for a build from nothing, which compares no
-/// revision.
-pub(crate) fn every_revised(features: &[ParsedFeature]) -> Vec<RevisedFeature<'_>> {
-    features.iter().map(revised).collect()
-}
-
-/// The site tree of `features`, built from nothing, for a site without versions, with the
-/// settings of every page `options`.
-pub(crate) fn site_from_nothing(features: &[ParsedFeature], options: &PageOptions) -> SiteTree {
-    site_tree(
-        &every_revised(features),
-        None,
-        options,
-        None,
-        &BTreeSet::new(),
-    )
-}
-
-/// The site tree of `features`, each a path below the input folder and its text, for a site
-/// without versions, with the settings of every page `options`.
-pub(crate) fn site_of(features: &[(&str, &str)], options: &PageOptions) -> SiteTree {
-    let parsed: Vec<_> = features
-        .iter()
-        .map(|(path, text)| parsed_at(path, text))
-        .collect();
-    site_from_nothing(&parsed, options)
-}
-
-/// Every feature page of `site`, folder by folder from the input folder in.
-pub(crate) fn feature_pages(site: &SiteTree) -> Vec<SiteFeaturePage<'_>> {
-    site.files()
-        .filter_map(|file| file.feature_page())
-        .collect()
 }
 
 /// The fixture folder `name`, under `tests/fixtures`.
@@ -125,10 +78,7 @@ pub(crate) fn parsed_input(
 pub(crate) fn features_of(input_tree: &InputTree) -> Result<Vec<ParsedFeature>, InputErrors> {
     match input_tree.input_errors() {
         Some(errors) => Err(errors),
-        None => Ok(input_tree
-            .features()
-            .map(|revised| revised.feature.clone())
-            .collect()),
+        None => Ok(input_tree.features().cloned().collect()),
     }
 }
 
@@ -210,11 +160,6 @@ impl MemoryFolders {
             files: paths.into_iter().map(empty_file).collect(),
             unlistable: BTreeSet::new(),
         }
-    }
-
-    /// The files at `paths` in the folder `input`, each with no text.
-    pub(crate) fn with_files_in(input: &Path, paths: &[&str]) -> Self {
-        MemoryFolders::with_files(paths.iter().map(|path| input.join(path)))
     }
 }
 

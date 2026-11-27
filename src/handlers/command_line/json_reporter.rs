@@ -1,22 +1,23 @@
-//! Handler: how `ghg build` ended, worded for a program: what a person reads, and the one JSON object that `--message-format json` prints on standard output.
+//! Handler: how a build or a removal ended, worded for a program: what a person reads, and the one JSON object that `--message-format json` prints on standard output.
 
 use serde::Serialize;
 
-use super::build_notes::{BuildNote, notes_of};
+use super::build_notes::{BuildNote, notes_of, removal_notes};
 use super::build_reporter::BuildReporter;
 use super::human_reporter::HumanReporter;
 use super::{Reply, lines};
-use crate::entities::{BuildReport, VersionName};
+use crate::entities::{BuildReport, BuildTarget, RemoveReport, VersionName};
 use crate::errors::{BuildError, LocatedError};
 
 /// Every key is always there, `null` when it does not apply, so that a program reads one shape.
 #[derive(Debug, Serialize)]
 struct JsonObject {
     outcome: Outcome,
-    /// The output folder, from the current folder, as the report's paths are, when a site was
-    /// written.
+    /// The output folder, from the current folder, as the report's paths are, when a target was
+    /// written or removed.
     output: Option<String>,
     version: Option<String>,
+    preview: Option<String>,
     features: Option<usize>,
     scenarios: Option<usize>,
     notes: Vec<BuildNote>,
@@ -28,6 +29,8 @@ struct JsonObject {
 enum Outcome {
     Built,
     NothingToBuild,
+    Removed,
+    NothingToRemove,
     Stopped,
 }
 
@@ -61,6 +64,27 @@ impl BuildReporter for JsonReporter {
             ..HumanReporter.report(ended)
         }
     }
+
+    fn report_removal(&self, ended: &Result<RemoveReport, BuildError>) -> Reply {
+        Reply {
+            stdout: lines(json_removal(ended)),
+            ..HumanReporter.report_removal(ended)
+        }
+    }
+}
+
+/// The report of a removal that ended as `ended` says, on one line.
+fn json_removal(ended: &Result<RemoveReport, BuildError>) -> String {
+    let notes = ended.as_ref().map(removal_notes).unwrap_or_default();
+    let report = match ended {
+        Ok(RemoveReport::Removed { output, target }) => JsonObject {
+            output: Some(output.to_string_lossy().into_owned()),
+            ..JsonObject::of(Outcome::Removed, notes).naming(target)
+        },
+        Ok(RemoveReport::NothingToRemove { .. }) => JsonObject::of(Outcome::NothingToRemove, notes),
+        Err(error) => JsonObject::stopped(error, notes),
+    };
+    json(&report)
 }
 
 /// The report of a build that ended as `ended` says, on one line.
@@ -70,22 +94,15 @@ fn json_report(ended: &Result<BuildReport, BuildError>) -> String {
         Ok(BuildReport::Written {
             site,
             output,
-            version,
+            target,
         }) => JsonObject {
             output: Some(output.to_string_lossy().into_owned()),
-            version: version
-                .as_ref()
-                .map(VersionName::as_str)
-                .map(str::to_string),
             features: Some(site.features),
             scenarios: Some(site.scenarios),
-            ..JsonObject::of(Outcome::Built, notes)
+            ..JsonObject::of(Outcome::Built, notes).naming(target)
         },
         Ok(BuildReport::NothingToBuild { .. }) => JsonObject::of(Outcome::NothingToBuild, notes),
-        Err(error) => JsonObject {
-            errors: error.problems().into_iter().map(JsonError::from).collect(),
-            ..JsonObject::of(Outcome::Stopped, notes)
-        },
+        Err(error) => JsonObject::stopped(error, notes),
     };
     json(&report)
 }
@@ -106,10 +123,29 @@ impl JsonObject {
             outcome,
             output: None,
             version: None,
+            preview: None,
             features: None,
             scenarios: None,
             notes,
             errors: Vec::new(),
+        }
+    }
+
+    /// The report of a command `error` stopped, with `notes`.
+    fn stopped(error: &BuildError, notes: Vec<BuildNote>) -> Self {
+        JsonObject {
+            errors: error.problems().into_iter().map(JsonError::from).collect(),
+            ..JsonObject::of(Outcome::Stopped, notes)
+        }
+    }
+
+    /// This report, naming the version or the preview `target` is.
+    fn naming(self, target: &BuildTarget) -> Self {
+        let name = |name: Option<&VersionName>| name.map(VersionName::as_str).map(str::to_string);
+        JsonObject {
+            version: name(target.version()),
+            preview: name(target.preview()),
+            ..self
         }
     }
 }

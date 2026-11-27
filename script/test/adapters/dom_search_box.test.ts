@@ -1,28 +1,26 @@
-// The search box adapter of src/adapters/dom_search_box.ts, on a page gherkin-glass wrote:
-// tests/fixtures/pages/expected/billing/refunds.html, and the page of search results, search.html, with the
-// service and that site's search.json behind it. docs/BEHAVIOUR.md, rules 151 to 156, 214 and 217.
+// The search box adapter of src/adapters/dom_search_box.ts, on the shell of tests/fixtures/pages with its page billing/refunds,
+// and with its page of search results, with the service and that site's documents, script/test/expected/pages/search.json,
+// behind it. docs/BEHAVIOUR.md, rules 151 to 156, 214 and 217.
 
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
 
-import { Window } from "happy-dom";
-
 import { DomSearchBox } from "../../src/adapters/dom_search_box.ts";
 import { startSearching } from "../../src/services/searching.ts";
 import type { Documents, SearchDocument } from "../../src/ports/documents.ts";
 import type { Timer } from "../../src/ports/timer.ts";
+import { drawnShell } from "../support/drawn_pages.ts";
 
-const SITE = new URL("../../../tests/fixtures/pages/expected/", import.meta.url);
+const FOUND = JSON.parse(readFileSync(new URL("../expected/pages/search.json", import.meta.url), "utf8")) as SearchDocument[];
 
 /** Runs at once, as if the reader had paused. */
 const noPause: Timer = { after: (_milliseconds, handler) => handler(), cancel: () => {} };
 
-/** The page at `path` in the site, opened with `query` in its address. */
-function open(path = "billing/refunds.html", query = "") {
-  const window = new Window({ url: `https://example.com/site/${path}${query}` });
-  window.document.write(readFileSync(new URL(path, SITE), "utf8"));
-  const found = JSON.parse(readFileSync(new URL("assets/search.json", SITE), "utf8")) as SearchDocument[];
+/** The shell at `address`, its page the one committed at `path` below script/test/expected/pages. */
+function open(path = "billing/refunds.html", address = "#billing/refunds") {
+  const window = drawnShell(`pages/${path}`, `https://example.com/site/${address}`);
+  const found = FOUND;
   let loads = 0;
   const documents: Documents = {
     load: () => {
@@ -91,19 +89,19 @@ test("the arrows choose an option while the focus stays in the field, and are no
   assert.equal(first?.getAttribute("aria-selected"), "false");
 });
 
-test("Enter opens the chosen option relative to the page, and is not a submission", async () => {
+test("Enter opens the chosen option in the shell, and is not a submission", async () => {
   const page = open();
   await page.type("saque");
   await page.press("ArrowDown");
   assert.equal(await page.press("Enter"), true);
-  assert.deepEqual(page.went, ["../saque%20em%20conta%20poupan%C3%A7a.html#saque-com-saldo"]);
+  assert.deepEqual(page.went, ["#saque%20em%20conta%20poupan%C3%A7a#saque-com-saldo"]);
 });
 
 test("Enter with no option chosen opens the page of every result", async () => {
   const page = open();
   await page.type("saque com");
   await page.press("Enter");
-  assert.deepEqual(page.went, ["../search.html?q=saque+com"]);
+  assert.deepEqual(page.went, ["#search?q=saque+com"]);
 });
 
 test("the pointer opens the option it picks", async () => {
@@ -111,7 +109,7 @@ test("the pointer opens the option it picks", async () => {
   await page.type("saque");
   const name = page.results.querySelector("bdi") as HTMLElement;
   name.dispatchEvent(new page.window.MouseEvent("click", { bubbles: true }) as unknown as Event);
-  assert.deepEqual(page.went, ["../saque%20em%20conta%20poupan%C3%A7a.html#saque-com-saldo"]);
+  assert.deepEqual(page.went, ["#saque%20em%20conta%20poupan%C3%A7a#saque-com-saldo"]);
 });
 
 test("the link to every result follows the words, and is hidden without them", async () => {
@@ -121,7 +119,7 @@ test("the link to every result follows the words, and is hidden without them", a
   assert.equal(page.link.hidden, false);
   assert.equal(page.link.textContent, 'All results for "saque com"');
   assert.equal(page.link.querySelector("bdi")?.textContent, "saque com");
-  assert.equal(page.link.getAttribute("href"), "../search.html?q=saque+com");
+  assert.equal(page.link.getAttribute("href"), "#search?q=saque+com");
   await page.type(" ");
   assert.equal(page.link.hidden, true);
 });
@@ -162,7 +160,7 @@ test("Escape closes the list and keeps the words, and a second empties the field
 });
 
 test("the page of search results has the same combobox under its heading, searching as the reader types", async () => {
-  const page = open("search.html", "?q=refund");
+  const page = open("search.html", "#search?q=refund");
   const heading = page.document.querySelector("main h1");
   const form = page.document.querySelector("main form.ghg-search");
   assert.ok(heading && form && heading.compareDocumentPosition(form as unknown as Node) & 4);
@@ -175,5 +173,5 @@ test("the page of search results has the same combobox under its heading, search
   await page.press("ArrowUp");
   assert.equal(page.field.hasAttribute("aria-activedescendant"), false);
   assert.equal(await page.press("Enter"), true);
-  assert.deepEqual(page.went, ["search.html?q=refunds"]);
+  assert.deepEqual(page.went, ["#search?q=refunds"]);
 });

@@ -2,9 +2,9 @@
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub(crate) struct BuiltSite {
-    /// The size in bytes of the search documents, only when it is above the
-    /// size at which search can be slow to start.
-    pub(crate) large_search_documents: Option<usize>,
+    /// The size in bytes of the objects its descriptor names, only when it is above the size at
+    /// which its pages and search can be slow to start.
+    pub(crate) large_site_data: Option<usize>,
     /// Whether no title was given, so that the default stands.
     pub(crate) untitled: bool,
     /// How many feature pages the site has.

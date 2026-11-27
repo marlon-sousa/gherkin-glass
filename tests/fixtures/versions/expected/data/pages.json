@@ -1,0 +1,59 @@
+{
+  "format": 1,
+  "pages": [
+    {
+      "page": "balance",
+      "objects": [
+        {
+          "object": "c1e77421c191dd208f634d13417ac966e978a9b2d57d74cf97d256a2a9379d66",
+          "versions": [
+            "main",
+            "v1.0.0",
+            "v2.0.0-rc.1"
+          ]
+        }
+      ]
+    },
+    {
+      "page": "deposit",
+      "objects": [
+        {
+          "object": "6dc86ef228437bfe892ea088f15a9ee0e2f4926e76cb94025e3c622a48d1d73c",
+          "versions": [
+            "main",
+            "v2.0.0-rc.1"
+          ]
+        }
+      ]
+    },
+    {
+      "page": "transfer",
+      "objects": [
+        {
+          "object": "4148f424e2494493a7f6c553668710ea831b2445d4c1bdad0987ad48579fac35",
+          "versions": [
+            "v1.0.0"
+          ]
+        }
+      ]
+    },
+    {
+      "page": "withdraw",
+      "objects": [
+        {
+          "object": "3def0951908150d3400008c5523761f41db751170c8bad7c2407ad8527bbd6aa",
+          "versions": [
+            "main",
+            "v2.0.0-rc.1"
+          ]
+        },
+        {
+          "object": "bf53f1a9196a90e85d3ae95697e9e34a852220507aa3745d425f6829dd450867",
+          "versions": [
+            "v1.0.0"
+          ]
+        }
+      ]
+    }
+  ]
+}

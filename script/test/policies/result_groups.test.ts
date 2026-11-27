@@ -30,7 +30,7 @@ test("the results are grouped by feature, in the order of each group's best resu
   const groups = grouped("withdraw");
   assert.deepEqual(
     groups.map((group) => [spoken(group.heading), group.address]),
-    [["Feature: [Withdraw cash]", "banking/withdraw.html"]],
+    [["Feature: [Withdraw cash]", "#banking/withdraw"]],
   );
   const mixed = grouped("amount");
   assert.deepEqual(
@@ -43,13 +43,13 @@ test("each result reads its block's heading and the blocks it is in, as on its p
   const [group] = grouped("emma");
   const [result] = group?.results ?? [];
   assert.equal(spoken(result?.heading ?? []), "Examples 2");
-  assert.equal(result?.address, "unnamed.html#examples-2");
+  assert.equal(result?.address, "#unnamed#examples-2");
   assert.equal(spoken(result?.within ?? null), "In Rule, Scenario outline: [Pay <amount>].");
   const [limits] = grouped("limits in force")[0]?.results ?? [];
   assert.equal(spoken(limits?.heading ?? []), "Background: [*Limits* *in* *force*]");
   assert.equal(spoken(limits?.within ?? null), "In Rule: [The daily limit applies].");
   const [feature] = grouped("@cash")[0]?.results ?? [];
-  assert.equal(feature?.address, "banking/withdraw.html");
+  assert.equal(feature?.address, "#banking/withdraw");
   assert.equal(feature?.within, null);
 });
 

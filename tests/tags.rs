@@ -1,15 +1,14 @@
 //! Tags, checked by building the fixtures and comparing every file written with the site
 //! committed beside them.
 //!
-//! `cargo run -- build --config tests/fixtures/tags/ghg.toml` writes the
-//! expected site again after a change.
+//! `cargo xtask build` writes the expected site again after a change.
 
 #![expect(
     clippy::expect_used,
     reason = "a test file's helpers are test code, which clippy.toml lets panic"
 )]
 
-use std::fs::{read, remove_dir_all};
+use std::fs::{read_to_string, remove_dir_all};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 
@@ -20,7 +19,8 @@ mod store_json;
 #[path = "support/version_placeholder.rs"]
 mod version_placeholder;
 
-use site_files::{assert_same_site, files};
+use serde_json::{Value, json};
+use site_files::assert_same_site;
 
 fn fixtures() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures")
@@ -42,11 +42,7 @@ fn output(name: &str) -> PathBuf {
     folder
 }
 
-fn text(file: &Path) -> String {
-    String::from_utf8(read(file).expect("read")).expect("UTF-8")
-}
-
-// Rules 100 and 102 to 107: every page of the fixture, the tag pages among them.
+// Rules 100 and 102 to 107: the tags the descriptor lists, and their links.
 
 #[test]
 fn every_tag_has_its_page_and_every_page_links_its_tags_as_the_expected_site_shows() {
@@ -58,19 +54,11 @@ fn every_tag_has_its_page_and_every_page_links_its_tags_as_the_expected_site_sho
     assert_same_site(&written, &fixtures().join("tags/expected"));
 }
 
-#[test]
-fn the_tag_pages_are_in_english_with_one_h1() {
-    for (name, page) in files(&fixtures().join("tags/expected/tags")) {
-        let page = String::from_utf8(page).expect("UTF-8");
-        assert_eq!(page.matches("<h1").count(), 1, "{name}");
-        assert!(page.contains("<html lang=\"en\">"), "{name}");
-    }
-}
-
-// Rule 102, with no tag at all.
+// Rule 102, with no tag at all: the descriptor lists none, and the script's
+// page of tags says so.
 
 #[test]
-fn a_site_without_tags_has_an_index_that_says_so() {
+fn a_site_without_tags_lists_none() {
     let written = output("no-tags");
     let given = written.to_str().expect("UTF-8");
     let result = build(
@@ -78,13 +66,10 @@ fn a_site_without_tags_has_an_index_that_says_so() {
         &["--output", given],
     );
     assert_eq!(result.status.code(), Some(0));
-    let index = text(&written.join("tags/index.html"));
-    assert!(
-        index.contains("<h1>Tags</h1>\n<p>No feature file has a tag.</p>\n"),
-        "{index}"
-    );
-    let tags: Vec<_> = files(&written.join("tags")).into_keys().collect();
-    assert_eq!(tags, ["index.html"]);
+    let descriptor: Value =
+        serde_json::from_str(&read_to_string(written.join("data/site.json")).expect("read"))
+            .expect("JSON");
+    assert_eq!(descriptor["tags"], json!([]));
 }
 
 // Rule 101.
@@ -98,7 +83,7 @@ fn a_feature_whose_page_would_be_in_the_tags_folder_stops_the_build() {
     );
     assert_eq!(
         String::from_utf8_lossy(&result.stderr),
-        "tags/tagging.feature: has its page, tags/tagging.html, in the folder tags, \
+        "tags/tagging.feature: has its page, tags/tagging, in the folder tags, \
          which holds the tag pages.\n"
     );
     assert_eq!(result.status.code(), Some(1));

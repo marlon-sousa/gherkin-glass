@@ -1,20 +1,16 @@
-// The adapter of src/adapters/dom_note_dialog.ts, on pages gherkin-glass wrote: tests/fixtures/pages/expected, with the service behind it: docs/BEHAVIOUR.md, rules 196 to 198.
+// The adapter of src/adapters/dom_note_dialog.ts, on pages of tests/fixtures/pages drawn in their shell, with the service behind it: docs/BEHAVIOUR.md, rules 196 to 198.
 
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
 import { test } from "node:test";
 
 import { Window } from "happy-dom";
 
 import { DomNoteDialog } from "../../src/adapters/dom_note_dialog.ts";
 import { startNoteExplaining } from "../../src/services/note_explaining.ts";
-
-const SITE = new URL("../../../tests/fixtures/pages/expected/", import.meta.url);
+import { drawnShell } from "../support/drawn_pages.ts";
 
 function open(page: string): Window {
-  const window = new Window({ url: `https://example.com/site/${page}` });
-  window.document.write(readFileSync(new URL(page, SITE), "utf8"));
-  return window;
+  return drawnShell(`pages/${page}`, `https://example.com/site/${page}`);
 }
 
 test("a page whose files write only their kinds' words has no dialog", () => {

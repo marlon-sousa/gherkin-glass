@@ -22,7 +22,7 @@ set -euo pipefail
 versions_page=index.html
 versions_assets=assets
 store=data
-marker=ghg-versions.json
+marker=ghg-site.json
 
 usage() {
   echo "Usage: project-site/publish.sh open <pages> | project-site/publish.sh publish <pages> <version>" >&2

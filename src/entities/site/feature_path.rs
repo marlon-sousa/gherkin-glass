@@ -31,11 +31,6 @@ impl FeaturePath {
     pub(crate) fn names(&self) -> Split<'_, char> {
         self.path.split('/')
     }
-
-    /// The file's own name.
-    pub(crate) fn file(&self) -> &str {
-        self.names().next_back().unwrap_or_default()
-    }
 }
 
 fn normal_name(part: Component<'_>) -> Option<String> {
@@ -54,28 +49,24 @@ mod tests {
     use super::*;
 
     #[rstest]
-    #[case::at_the_input_s_root(&["a.feature"], "a.feature", &["a.feature"], "a.feature")]
+    #[case::at_the_input_s_root(&["a.feature"], "a.feature", &["a.feature"])]
     #[case::two_folders_down(
         &["billing", "refunds", "a b.feature"],
         "billing/refunds/a b.feature",
-        &["billing", "refunds", "a b.feature"],
-        "a b.feature"
+        &["billing", "refunds", "a b.feature"]
     )]
     #[case::after_the_current_folder(
         &[".", "sub", "a.feature"],
         "sub/a.feature",
-        &["sub", "a.feature"],
-        "a.feature"
+        &["sub", "a.feature"]
     )]
     fn a_feature_path_is_its_folders_then_its_file_joined_by_slashes(
         #[case] parts: &[&str],
         #[case] written: &str,
         #[case] names: &[&str],
-        #[case] file: &str,
     ) {
         let path = FeaturePath::below_input(&parts.iter().collect::<PathBuf>());
         assert_eq!(path.as_str(), written);
         assert_eq!(path.names().collect::<Vec<_>>(), names);
-        assert_eq!(path.file(), file);
     }
 }

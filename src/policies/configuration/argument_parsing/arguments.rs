@@ -7,8 +7,8 @@ use clap::builder::{BoolValueParser, OsStringValueParser, TypedValueParser};
 use clap::{ArgAction, Args, Parser, Subcommand};
 
 use crate::entities::{
-    BuildOptions, Colour, Invocation, KeptInOutput, KeptPattern, MessageFormat, PathList,
-    SearchIndexing, ServeMode, ServeOptions, VersionName,
+    BuildOptions, BuildTarget, Colour, Invocation, KeptInOutput, KeptPattern, MessageFormat,
+    PathList, RemoveOptions, ServeMode, ServeOptions, VersionName,
 };
 use crate::errors::ArgumentError;
 
@@ -41,6 +41,102 @@ pub(super) struct Arguments {
 enum Command {
     Build(BuildCommandArguments),
     Serve(ServeArguments),
+    Version(VersionArguments),
+    Preview(PreviewArguments),
+}
+
+/// `ghg version`, whose subcommand is missing when it is `None`.
+#[derive(Debug, Args)]
+struct VersionArguments {
+    #[command(subcommand)]
+    action: Option<VersionAction>,
+}
+
+#[derive(Debug, Subcommand)]
+enum VersionAction {
+    Add(VersionAddArguments),
+    Remove(RemoveArguments),
+}
+
+/// `ghg preview`, whose subcommand is missing when it is `None`.
+#[derive(Debug, Args)]
+struct PreviewArguments {
+    #[command(subcommand)]
+    action: Option<PreviewAction>,
+}
+
+#[derive(Debug, Subcommand)]
+enum PreviewAction {
+    Add(PreviewAddArguments),
+    Remove(RemoveArguments),
+}
+
+/// The name of a version or a preview, missing when it is `None`.
+#[derive(Debug, Args)]
+struct NameArgument {
+    #[arg(value_parser = OsStringValueParser::new().try_map(version_name))]
+    name: Option<VersionName>,
+}
+
+impl NameArgument {
+    fn name(self, command: &str) -> Result<VersionName, ArgumentError> {
+        self.name.ok_or_else(|| ArgumentError::MissingName {
+            command: command.to_string(),
+        })
+    }
+}
+
+/// `ghg version add`: a name, the options of `ghg build`, and how it says how it ended.
+#[derive(Debug, Args)]
+struct VersionAddArguments {
+    #[command(flatten)]
+    name: NameArgument,
+    #[command(flatten)]
+    build: BuildCommandArguments,
+}
+
+/// `ghg preview add`: a name, the options of `ghg build` but `--replace-existing-version`, and
+/// how it says how it ended.
+#[derive(Debug, Args)]
+struct PreviewAddArguments {
+    #[command(flatten)]
+    name: NameArgument,
+    #[command(flatten)]
+    build: BuildArguments,
+    #[command(flatten)]
+    report: ReportArgument,
+}
+
+/// `ghg version remove` and `ghg preview remove`: a name, the output folder, how it is found and
+/// what it keeps, and how it says how it ended.
+#[derive(Debug, Args)]
+struct RemoveArguments {
+    #[command(flatten)]
+    name: NameArgument,
+    #[arg(long, allow_hyphen_values = true)]
+    config: Option<PathBuf>,
+    #[arg(long, allow_hyphen_values = true)]
+    output: Option<PathBuf>,
+    #[arg(long, allow_hyphen_values = true, action = ArgAction::Append, value_parser = OsStringValueParser::new().try_map(kept_pattern))]
+    keep_in_output: Vec<KeptPattern>,
+    #[command(flatten)]
+    report: ReportArgument,
+    /// What follows `--`, which no command takes.
+    #[arg(last = true)]
+    after_the_options: Vec<OsString>,
+}
+
+#[derive(Debug, Args)]
+struct ReportArgument {
+    #[arg(long, allow_hyphen_values = true, value_parser = OsStringValueParser::new().try_map(message_format))]
+    message_format: Option<MessageFormat>,
+}
+
+/// Whether a build replaces what an earlier one wrote, which `ghg preview add` always does.
+#[derive(Debug, Args)]
+struct ReplaceArgument {
+    #[arg(long, value_parser = BoolValueParser::new())]
+    replace_existing_version: Option<bool>,
 }
 
 /// A value may start with a dash, as in `--title -x`, and is never taken for an option.
@@ -54,14 +150,10 @@ struct BuildArguments {
     output: Option<PathBuf>,
     #[arg(long, allow_hyphen_values = true, value_parser = OsStringValueParser::new().try_map(text))]
     title: Option<String>,
-    #[arg(long, allow_hyphen_values = true, value_parser = OsStringValueParser::new().try_map(version_name))]
-    version_name: Option<VersionName>,
     #[arg(long, allow_hyphen_values = true)]
     front_page: Option<PathBuf>,
     #[arg(long, allow_hyphen_values = true, value_parser = OsStringValueParser::new().try_map(path_list))]
     only: Option<PathList>,
-    #[arg(long)]
-    preview: bool,
     /// One of the two options that may be given more than once.
     #[arg(long, allow_hyphen_values = true, action = ArgAction::Append, value_parser = OsStringValueParser::new().try_map(kept_pattern))]
     keep_in_output: Vec<KeptPattern>,
@@ -77,8 +169,6 @@ struct BuildArguments {
     show_tree: Option<bool>,
     #[arg(long, value_parser = BoolValueParser::new())]
     inline_backgrounds: Option<bool>,
-    #[arg(long, value_parser = BoolValueParser::new())]
-    replace_existing_version: Option<bool>,
     #[arg(long, allow_hyphen_values = true, value_parser = OsStringValueParser::new().try_map(light_accent))]
     accent_light: Option<Colour>,
     #[arg(long, allow_hyphen_values = true, value_parser = OsStringValueParser::new().try_map(dark_accent))]
@@ -104,14 +194,18 @@ struct BuildArguments {
 struct BuildCommandArguments {
     #[command(flatten)]
     build: BuildArguments,
-    #[arg(long, allow_hyphen_values = true, value_parser = OsStringValueParser::new().try_map(message_format))]
-    message_format: Option<MessageFormat>,
+    #[command(flatten)]
+    replace: ReplaceArgument,
+    #[command(flatten)]
+    report: ReportArgument,
 }
 
 #[derive(Debug, Args)]
 struct ServeArguments {
     #[command(flatten)]
     build: BuildArguments,
+    #[command(flatten)]
+    replace: ReplaceArgument,
     #[arg(long, allow_hyphen_values = true, value_parser = OsStringValueParser::new().try_map(text))]
     host: Option<String>,
     #[arg(long, allow_hyphen_values = true, value_parser = OsStringValueParser::new().try_map(port))]
@@ -128,29 +222,98 @@ impl TryFrom<Arguments> for Invocation {
     fn try_from(arguments: Arguments) -> Result<Self, Self::Error> {
         match arguments.command {
             None => Err(ArgumentError::MissingCommand),
-            Some(Command::Build(build)) => Ok(Invocation::Build {
-                options: build.build.options("ghg build")?,
-                message_format: build.message_format.unwrap_or_default(),
-            }),
+            Some(Command::Build(build)) => build.invocation("ghg build", BuildTarget::Site),
             Some(Command::Serve(serve)) => Ok(Invocation::Serve(serve.try_into()?)),
+            Some(Command::Version(version)) => match version.action {
+                None => Err(missing_subcommand("ghg version")),
+                Some(VersionAction::Add(add)) => {
+                    let command = "ghg version add";
+                    let name = add.name.name(command)?;
+                    add.build.invocation(command, BuildTarget::Version(name))
+                }
+                Some(VersionAction::Remove(remove)) => {
+                    remove.invocation("ghg version remove", BuildTarget::Version)
+                }
+            },
+            Some(Command::Preview(preview)) => match preview.action {
+                None => Err(missing_subcommand("ghg preview")),
+                Some(PreviewAction::Add(add)) => {
+                    let command = "ghg preview add";
+                    let target = BuildTarget::Preview(add.name.name(command)?);
+                    Ok(Invocation::Build {
+                        options: add.build.options(command, target, None)?,
+                        message_format: add.report.message_format.unwrap_or_default(),
+                    })
+                }
+                Some(PreviewAction::Remove(remove)) => {
+                    remove.invocation("ghg preview remove", BuildTarget::Preview)
+                }
+            },
         }
     }
 }
 
+fn missing_subcommand(command: &str) -> ArgumentError {
+    ArgumentError::MissingSubcommand {
+        command: command.to_string(),
+    }
+}
+
+impl BuildCommandArguments {
+    /// The build of `target` that `command` asks for.
+    fn invocation(self, command: &str, target: BuildTarget) -> Result<Invocation, ArgumentError> {
+        Ok(Invocation::Build {
+            options: self
+                .build
+                .options(command, target, self.replace.replace_existing_version)?,
+            message_format: self.report.message_format.unwrap_or_default(),
+        })
+    }
+}
+
+impl RemoveArguments {
+    /// The removal `command` asks for, of the target `named` names.
+    fn invocation(
+        self,
+        command: &str,
+        named: fn(VersionName) -> BuildTarget,
+    ) -> Result<Invocation, ArgumentError> {
+        let name = self.name.name(command)?;
+        unexpected(command, &self.after_the_options)?;
+        Ok(Invocation::Remove {
+            options: RemoveOptions {
+                config: self.config,
+                output: self.output,
+                keep_in_output: (!self.keep_in_output.is_empty())
+                    .then(|| KeptInOutput::new(self.keep_in_output)),
+            },
+            target: named(name),
+            message_format: self.report.message_format.unwrap_or_default(),
+        })
+    }
+}
+
+/// Nothing, unless an argument follows `--` in `command`.
+fn unexpected(command: &str, after_the_options: &[OsString]) -> Result<(), ArgumentError> {
+    match after_the_options.first() {
+        Some(argument) => Err(ArgumentError::UnexpectedArgument {
+            command: command.to_string(),
+            argument: argument.to_string_lossy().into_owned(),
+        }),
+        None => Ok(()),
+    }
+}
+
 impl BuildArguments {
-    /// The options, unless an argument follows `--` in `command`.
-    fn options(self, command: &str) -> Result<BuildOptions, ArgumentError> {
-        if let Some(argument) = self.after_the_options.first() {
-            return Err(ArgumentError::UnexpectedArgument {
-                command: command.to_string(),
-                argument: argument.to_string_lossy().into_owned(),
-            });
-        }
-        let indexing = match (self.preview, &self.version_name) {
-            (true, Some(_)) => return Err(ArgumentError::PreviewWithVersionName),
-            (true, None) => SearchIndexing::Refused,
-            (false, _) => SearchIndexing::Allowed,
-        };
+    /// The options of a build of `target`, which `replace_existing_version` replaces or not,
+    /// unless an argument follows `--` in `command`.
+    fn options(
+        self,
+        command: &str,
+        target: BuildTarget,
+        replace_existing_version: Option<bool>,
+    ) -> Result<BuildOptions, ArgumentError> {
+        unexpected(command, &self.after_the_options)?;
         let tag_links = if self.tag_link.is_empty() {
             None
         } else {
@@ -164,12 +327,11 @@ impl BuildArguments {
         Ok(BuildOptions {
             config: self.config,
             input: self.input,
-            version_name: self.version_name,
+            target,
             output: self.output,
             title: self.title,
             front_page: self.front_page,
             only: self.only,
-            indexing,
             keep_in_output: (!self.keep_in_output.is_empty())
                 .then(|| KeptInOutput::new(self.keep_in_output)),
             source_link: self.source_link,
@@ -178,7 +340,7 @@ impl BuildArguments {
             collapse_scenarios: self.collapse_scenarios,
             show_tree: self.show_tree,
             inline_backgrounds: self.inline_backgrounds,
-            replace_existing_version: self.replace_existing_version,
+            replace_existing_version,
             accent_light: self.accent_light,
             accent_dark: self.accent_dark,
             tag_links,
@@ -190,7 +352,11 @@ impl TryFrom<ServeArguments> for ServeOptions {
     type Error = ArgumentError;
 
     fn try_from(arguments: ServeArguments) -> Result<Self, Self::Error> {
-        let build = arguments.build.options("ghg serve")?;
+        let build = arguments.build.options(
+            "ghg serve",
+            BuildTarget::Site,
+            arguments.replace.replace_existing_version,
+        )?;
         let mode = match (arguments.no_build, arguments.watch) {
             (true, true) => return Err(ArgumentError::WatchWithoutBuild),
             (true, false) if build.only.is_some() => return Err(ArgumentError::OnlyWithoutBuild),

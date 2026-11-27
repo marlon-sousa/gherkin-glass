@@ -47,15 +47,10 @@ export function startCollapsing(page: Page, memory: Memory, pagePath: string, op
 
   showForm(option?.backgrounds.writtenInline() ?? false);
   blocks.forEach(settle);
-  const target = page.target();
-  if (target !== null) {
-    reveal(target);
-  }
 
   page.onToggle((block) => set(block, !block.isExpanded()));
   page.onCollapseAll(() => blocks.forEach((block) => set(block, false)));
   page.onExpandAll(() => blocks.forEach((block) => set(block, true)));
-  page.onFollow(reveal);
   if (option !== null) {
     option.backgrounds.onSwitch((switched) => {
       inline = switched;

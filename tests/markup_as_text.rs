@@ -1,6 +1,6 @@
 //! Rule 203: markup in a feature file reaches every page as text, checked by
-//! building `tests/fixtures/hostile` and parsing each page it writes as a
-//! browser does, with `scraper`.
+//! building `tests/fixtures/hostile`, parsing each file of HTML it writes as
+//! a browser does, with `scraper`, and reading the JSON of the site's data.
 
 #![expect(
     clippy::expect_used,
@@ -14,62 +14,21 @@ use std::sync::OnceLock;
 
 use rstest::rstest;
 use scraper::{ElementRef, Html, Selector};
+use serde_json::Value;
 
-/// Every element the pages' templates and renderers write.
-const ELEMENTS: [&str; 41] = [
-    "a",
-    "bdi",
-    "body",
-    "br",
-    "button",
-    "dialog",
-    "div",
-    "fieldset",
-    "figcaption",
-    "figure",
-    "footer",
-    "form",
-    "h1",
-    "h2",
-    "h3",
-    "h4",
-    "h5",
-    "head",
-    "html",
-    "input",
-    "label",
-    "legend",
-    "li",
-    "link",
-    "main",
-    "meta",
-    "nav",
-    "ol",
-    "p",
-    "pre",
-    "script",
-    "span",
-    "style",
-    "table",
-    "tbody",
-    "td",
-    "th",
-    "thead",
-    "title",
-    "tr",
-    "ul",
+/// Every element the shell and its front page hold.
+const ELEMENTS: [&str; 29] = [
+    "a", "bdi", "body", "button", "dialog", "div", "fieldset", "footer", "form", "h1", "h2",
+    "head", "html", "input", "label", "legend", "li", "link", "main", "meta", "nav", "noscript",
+    "ol", "p", "script", "span", "style", "title", "ul",
 ];
 
-/// Every attribute the pages' templates and renderers write.
-const ATTRIBUTES: [&str; 65] = [
-    "action",
+/// Every attribute the shell and its front page hold.
+const ATTRIBUTES: [&str; 47] = [
     "aria-autocomplete",
     "aria-controls",
-    "aria-current",
     "aria-describedby",
-    "aria-disabled",
     "aria-expanded",
-    "aria-haspopup",
     "aria-label",
     "aria-labelledby",
     "autocomplete",
@@ -84,33 +43,19 @@ const ATTRIBUTES: [&str; 65] = [
     "data-count-limited",
     "data-examples",
     "data-examples-in-rule",
-    "data-expanded-when-unchecked",
     "data-failed",
     "data-feature",
-    "data-heading",
+    "data-ghg-descriptor",
     "data-loading",
-    "data-matching-cells",
-    "data-matching-steps",
-    "data-matching-tags",
     "data-no-name",
     "data-none",
     "data-numbered-examples",
-    "data-root",
     "data-rule",
     "data-scenario",
     "data-scenario-in-rule",
     "data-scenario-outline",
     "data-scenario-outline-in-rule",
-    "data-separator",
     "data-shown",
-    "data-title",
-    "data-unnamed-background",
-    "data-unnamed-feature",
-    "data-unnamed-rule",
-    "data-unnamed-scenario",
-    "data-unnamed-scenario-outline",
-    "data-within",
-    "disabled",
     "enterkeyhint",
     "for",
     "hidden",
@@ -121,20 +66,20 @@ const ATTRIBUTES: [&str; 65] = [
     "name",
     "rel",
     "role",
-    "scope",
     "spellcheck",
     "src",
     "tabindex",
     "type",
     "value",
+    "aria-busy",
 ];
 
 /// The elements ghg writes only in a page's head.
 const HEAD_ONLY: [&str; 4] = ["link", "meta", "style", "title"];
 
-/// The scripts every page has: the theme's line, the line that opens the
-/// dialog for a page opened from disk, and the pages' script.
-const SCRIPTS_OF_A_PAGE: usize = 3;
+/// The scripts a shell runs: the theme's line, the line that opens the dialog
+/// for a page opened from disk, and the pages' script.
+const SCRIPTS_RUN: usize = 3;
 
 /// The site `tests/fixtures/hostile` builds into, built once for every test.
 fn site() -> &'static Path {
@@ -157,8 +102,9 @@ fn site() -> &'static Path {
     })
 }
 
-/// Every page of the site, by its `/`-joined path in it.
-fn pages() -> Vec<String> {
+/// Every file of the site, by its `/`-joined path in it, whose name ends
+/// with `ending`.
+fn files_ending_with(ending: &str) -> Vec<String> {
     let mut found = Vec::new();
     let mut folders = vec![(site().to_path_buf(), String::new())];
     while let Some((folder, prefix)) = folders.pop() {
@@ -167,13 +113,17 @@ fn pages() -> Vec<String> {
             let name = format!("{prefix}{}", entry.file_name().to_string_lossy());
             if entry.path().is_dir() {
                 folders.push((entry.path(), format!("{name}/")));
-            } else if name.ends_with(".html") {
+            } else if name.ends_with(ending) {
                 found.push(name);
             }
         }
     }
     found.sort();
     found
+}
+
+fn pages() -> Vec<String> {
+    files_ending_with(".html")
 }
 
 fn parsed(page: &str) -> Html {
@@ -211,25 +161,29 @@ fn is_outside_head(element: &ElementRef<'_>) -> bool {
         .any(is_head)
 }
 
+fn strings_in(value: &Value, found: &mut Vec<String>) {
+    match value {
+        Value::String(text) => found.push(text.clone()),
+        Value::Array(values) => values.iter().for_each(|value| strings_in(value, found)),
+        Value::Object(members) => members.values().for_each(|value| strings_in(value, found)),
+        Value::Null | Value::Bool(_) | Value::Number(_) => {}
+    }
+}
+
+/// Every string the site's data holds, in all its files.
+fn data_strings() -> Vec<String> {
+    let mut found = Vec::new();
+    for file in files_ending_with(".json") {
+        let text = read_to_string(site().join(&file)).expect("the file is read");
+        let value: Value = serde_json::from_str(&text).expect("the file is JSON");
+        strings_in(&value, &mut found);
+    }
+    found
+}
+
 #[test]
-fn the_hostile_fixture_builds_a_page_for_every_feature_folder_and_tag() {
-    assert_eq!(
-        pages(),
-        [
-            "Q&A's notes/answers.html",
-            "Q&A's notes/index.html",
-            "hostile.html",
-            "index.html",
-            "search.html",
-            "steps.html",
-            "tags/b-feature-tag-b.html",
-            "tags/em-outline-tag-em.html",
-            "tags/i-scenario-tag-i.html",
-            "tags/index.html",
-            "tags/s-examples-tag-s.html",
-            "tags/ticket-script-alert-ticket-script.html",
-        ]
-    );
+fn the_hostile_fixture_writes_its_shell_alone_as_html() {
+    assert_eq!(pages(), ["index.html"]);
 }
 
 // Rule 203: no element or attribute but those ghg writes.
@@ -269,119 +223,95 @@ fn every_page_holds_its_title_style_links_and_metadata_only_in_its_head() {
     }
 }
 
-// Rule 203: the only scripts are ghg's own.
+// Rule 203: the only scripts run are ghg's own; the page messages are text.
 #[test]
 fn every_page_runs_only_ghg_s_own_scripts() {
-    let script = Selector::parse("script").expect("the selector is valid");
+    let run = Selector::parse("script:not([type=\"text/plain\"])").expect("the selector is valid");
+    let text = Selector::parse("script[type=\"text/plain\"]").expect("the selector is valid");
     for page in pages() {
-        let scripts = parsed(&page).select(&script).count();
-        assert_eq!(scripts, SCRIPTS_OF_A_PAGE, "{page}");
+        let html = parsed(&page);
+        assert_eq!(html.select(&run).count(), SCRIPTS_RUN, "{page}");
+        assert_eq!(html.select(&text).count(), 1, "{page}");
     }
 }
 
 // Rule 203: the HTML writes the text with character references, and the
 // addresses made from it percent-encoded.
 #[rstest]
-#[case::the_feature_s_heading(
-    "hostile.html",
-    "<h1>Feature: <bdi>Hostile &#60;script&#62;alert(&#34;feature&#34;)&#60;/script&#62; &#38; &#39;friends&#39;</bdi></h1>"
+#[case::the_feature_s_name(
+    "Feature: <bdi lang=\"en\">Hostile &#60;script&#62;alert(&#34;feature&#34;)&#60;/script&#62; &#38; &#39;friends&#39;</bdi>"
 )]
-#[case::a_tag_s_link_to_another_site(
-    "hostile.html",
-    "href=\"https://example.com/tickets/%22%3E%3Cscript%3Ealert%28%27ticket%27%29%3C/script%3E\""
+#[case::a_folder_with_an_ampersand_and_an_apostrophe(
+    "<a href=\"#Q%26A%27s%20notes/\">Q&#38;A&#39;s notes</a>"
 )]
-#[case::the_source_link_of_a_file_in_a_folder_with_an_ampersand_and_an_apostrophe(
-    "Q&A's notes/answers.html",
-    "href=\"https://example.com/repo/blob/main/features/Q%26A%27s%20notes/answers.feature#L1\""
-)]
-fn the_html_writes_the_text_escaped(#[case] page: &str, #[case] written: &str) {
-    let html = read_to_string(site().join(page)).expect("the page is read");
-    assert!(html.contains(written), "{page} does not hold {written}");
+fn the_front_page_writes_the_text_escaped(#[case] written: &str) {
+    let html = read_to_string(site().join("index.html")).expect("the page is read");
+    assert!(
+        html.contains(written),
+        "the front page does not hold {written}"
+    );
 }
 
-// Rule 203: the text reads as written in the feature files.
-#[rstest]
-#[case::the_feature_page(
-    "hostile.html",
-    &[
+// Rule 203: the front page reads the text as written in the feature files.
+#[test]
+fn the_front_page_reads_the_text_as_written() {
+    let text = page_text(&parsed("index.html"));
+    for written in [
         "Feature: Hostile <script>alert(\"feature\")</script> & 'friends'",
-        "@<b>feature-tag</b>",
-        "@ticket:\"><script>alert('ticket')</script>",
-        "Ticket \"><script>alert('ticket')</script>",
-        "A description with <img src=x onerror=\"alert('description')\"> & <b>bold</b> &amp; &#60;i&#62;",
-        "Feature: Hostile <script>alert(\"feature\")</script> & 'friends', hostile.feature",
-        "Background: Setup <iframe src=\"javascript:alert('background')\"></iframe>",
-        "A background's <video src=x onerror=\"alert('background description')\"></video>",
-        "Given a user named \"<script>alert('parameter')</script>\"",
-        "Scenario: Scenario <img src=x onerror=alert('scenario')> & \"quoted\"",
-        "@<i>scenario-tag</i>",
-        "Line one of <a href=\"javascript:alert('scenario description')\">a link</a> Line two with <!-- a comment --> and ]]>",
-        "When the text is <i>italic</i> & \"<b>bold</b>\" with 'apostrophes' and 3 <u>numbers</u>",
-        "<th>head</th>",
-        "name & 'more'",
-        "<script>alert('cell')</script>",
-        "a | b <br> \"c\"",
-        "<i>media</i> <script>alert('doc string')</script> </pre><b>outside the pre</b>",
+        "Q&A's notes",
         "Rule: Rule <svg onload=\"alert('rule')\"></svg>",
-        "<a href=\"javascript:alert('rule description')\">A rule's link</a>",
-        "Background: Rule's <style>body { display: none }</style>",
-        "Given the style is \"<style>body { display: none }</style>\"",
         "Scenario outline: Outline <object data=\"x\"></object> for <who>",
-        "@<em>outline-tag</em>",
-        "An outline's <embed src=\"javascript:alert('outline description')\">",
-        "These examples' <details open ontoggle=\"alert('examples description')\">",
-        "Given \"<who>\" signs in as <who>",
-        "Examples: Examples <textarea>written</textarea>",
-        "@<s>examples-tag</s>",
-        "Given \"<script>alert('row')</script>\" signs in as <script>alert('row')</script>",
-        "Given \"<img src=x onerror=\"alert('row')\">\" signs in as <img src=x onerror=\"alert('row')\">",
-    ]
-)]
-#[case::a_feature_in_a_folder_with_an_ampersand_and_an_apostrophe(
-    "Q&A's notes/answers.html",
-    &[
-        "Feature: Answers & <b>questions</b> </title><script>alert('title')</script>, Q&A's notes/answers.feature",
-        "Q&A's notes",
-        "Feature: Answers & <b>questions</b> </title><script>alert('title')</script>",
-        "Scenario: <marquee>Moving</marquee> & 'still'",
-        "Given nothing <blink>blinks</blink>",
-    ]
-)]
-#[case::the_folder_page(
-    "Q&A's notes/index.html",
-    &["Q&A's notes", "Feature: Answers & <b>questions</b> </title><script>alert('title')</script>"]
-)]
-#[case::the_home_page(
-    "index.html",
-    &[
-        "Feature: Hostile <script>alert(\"feature\")</script> & 'friends'",
-        "Q&A's notes",
-    ]
-)]
-#[case::a_tag_page(
-    "tags/ticket-script-alert-ticket-script.html",
-    &[
-        "@ticket:\"><script>alert('ticket')</script>",
-        "Feature: Hostile <script>alert(\"feature\")</script> & 'friends'",
-    ]
-)]
-#[case::the_tags_index("tags/index.html", &["@<b>feature-tag</b>", "@<s>examples-tag</s>"])]
-#[case::the_step_sentences(
-    "steps.html",
-    &[
-        "Background: Setup <iframe src=\"javascript:alert('background')\"></iframe>, hostile.feature, with \"<script>alert('parameter')</script>\"",
-        "When the text is <i>italic</i> & \"…\" with 'apostrophes' and 3 <u>numbers</u>",
-        "with \"<b>bold</b>\"",
-        "Scenario: <marquee>Moving</marquee> & 'still', Q&A's notes/answers.feature",
-        "nothing <blink>blinks</blink>",
-    ]
-)]
-fn the_text_reads_as_written(#[case] page: &str, #[case] texts: &[&str]) {
-    let text = page_text(&parsed(page));
-    for written in texts {
+    ] {
         assert!(
             text.contains(written),
-            "{page} does not read {written:?}:\n{text}"
+            "the front page does not read {written:?}:\n{text}"
         );
     }
+}
+
+// Rule 203: the site's data holds the text as written in the feature files,
+// and the addresses made from it percent-encoded.
+#[rstest]
+#[case::a_feature_s_name("Hostile <script>alert(\"feature\")</script> & 'friends'")]
+#[case::a_description(
+    "A description with <img src=x onerror=\"alert('description')\"> & <b>bold</b> &amp; &#60;i&#62;"
+)]
+#[case::a_tag("@ticket:\"><script>alert('ticket')</script>")]
+#[case::a_tag_s_link_text("Ticket \"><script>alert('ticket')</script>")]
+#[case::a_tag_s_link(
+    "https://example.com/tickets/%22%3E%3Cscript%3Ealert%28%27ticket%27%29%3C/script%3E"
+)]
+#[case::a_background_s_name("Setup <iframe src=\"javascript:alert('background')\"></iframe>")]
+#[case::a_parameter("\"<script>alert('parameter')</script>\"")]
+#[case::a_scenario_s_name("Scenario <img src=x onerror=alert('scenario')> & \"quoted\"")]
+#[case::a_description_of_two_lines(
+    "Line one of <a href=\"javascript:alert('scenario description')\">a link</a>\nLine two with <!-- a comment --> and ]]>"
+)]
+#[case::a_step(
+    "the text is <i>italic</i> & \"<b>bold</b>\" with 'apostrophes' and 3 <u>numbers</u>"
+)]
+#[case::a_header_cell("<th>head</th>")]
+#[case::a_cell("<script>alert('cell')</script>")]
+#[case::a_cell_with_a_pipe("a | b <br> \"c\"")]
+#[case::a_media_type("<i>media</i>")]
+#[case::a_doc_string("<script>alert('doc string')</script>\n</pre><b>outside the pre</b>")]
+#[case::a_rule_s_description("<a href=\"javascript:alert('rule description')\">A rule's link</a>")]
+#[case::an_examples_block_s_name("Examples <textarea>written</textarea>")]
+#[case::an_examples_tag("@<s>examples-tag</s>")]
+#[case::a_row_s_step(
+    "\"<img src=x onerror=\"alert('row')\">\" signs in as <img src=x onerror=\"alert('row')\">"
+)]
+#[case::a_feature_s_name_with_a_title(
+    "Answers & <b>questions</b> </title><script>alert('title')</script>"
+)]
+#[case::a_file_in_a_folder_with_an_ampersand_and_an_apostrophe("Q&A's notes/answers.feature")]
+#[case::its_source_link(
+    "https://example.com/repo/blob/main/features/Q%26A%27s%20notes/answers.feature#L1"
+)]
+#[case::a_step_sentence("nothing <blink>blinks</blink>")]
+fn the_data_holds_the_text_as_written(#[case] written: &str) {
+    assert!(
+        data_strings().iter().any(|text| text == written),
+        "the site's data does not hold {written:?}"
+    );
 }

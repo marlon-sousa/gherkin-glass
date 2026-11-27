@@ -34,3 +34,6 @@ keep-in-output
 
 # Its input holds no feature file that is read, so its build writes nothing.
 no-features
+
+# It holds output folders no command may write, and no input.
+store

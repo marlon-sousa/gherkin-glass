@@ -1,4 +1,4 @@
-// The folder tree's items of src/policies/tree_items.ts, against the tree ghg 1 wrote.
+// The folder tree's items of src/policies/tree_items.ts, against the tree ghg 1 wrote, committed in script/test/expected/pages/tree.json with its addresses as rule 235 writes them.
 
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -7,13 +7,10 @@ import { test } from "node:test";
 import { pathToPage, treeItems } from "../../src/policies/tree_items.ts";
 import type { TreeItem } from "../../src/ports/tree.ts";
 import { billingDescriptor, billingFeatures } from "../support/billing_store.ts";
-import { newAddress, words } from "../support/drawn_pages.ts";
+import { words } from "../support/drawn_pages.ts";
 
-/** ghg 1's tree of tests/fixtures/pages, each address written as rule 235 writes it. */
 function writtenTree(): TreeItem[] {
-  const renamed = (item: TreeItem): TreeItem => ({ ...item, address: newAddress(item.address, "index.html"), ...(item.items && { items: item.items.map(renamed) }) });
-  const items = JSON.parse(readFileSync(new URL("../../../tests/fixtures/pages/expected/assets/tree.json", import.meta.url), "utf8")) as TreeItem[];
-  return items.map(renamed);
+  return JSON.parse(readFileSync(new URL("../expected/pages/tree.json", import.meta.url), "utf8")) as TreeItem[];
 }
 
 /** Without the empty lists of items that hold nothing, which ghg 1 left out. */

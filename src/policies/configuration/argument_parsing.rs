@@ -45,11 +45,19 @@ fn ended_after_the_command(mut arguments: Vec<OsString>) -> Vec<OsString> {
 }
 
 /// The command a mistake is made in. ghg's own options take no value, so
-/// the first argument names the command, when it is one.
+/// the first argument names the command, when it is one, and the second its subcommand, when
+/// the command has them and it is one.
 fn command_named_by(arguments: &[OsString]) -> &'static str {
-    match arguments.first().and_then(|first| first.to_str()) {
-        Some("build") => "ghg build",
-        Some("serve") => "ghg serve",
+    let mut named = arguments.iter().map(|argument| argument.to_str());
+    match (named.next().flatten(), named.next().flatten()) {
+        (Some("build"), _) => "ghg build",
+        (Some("serve"), _) => "ghg serve",
+        (Some("version"), Some("add")) => "ghg version add",
+        (Some("version"), Some("remove")) => "ghg version remove",
+        (Some("version"), _) => "ghg version",
+        (Some("preview"), Some("add")) => "ghg preview add",
+        (Some("preview"), Some("remove")) => "ghg preview remove",
+        (Some("preview"), _) => "ghg preview",
         _ => "ghg",
     }
 }

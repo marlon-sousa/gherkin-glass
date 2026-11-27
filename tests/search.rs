@@ -1,142 +1,114 @@
-//! Search, checked by running `ghg` and against the fixtures' pages.
+//! Search, checked in the shells of the fixtures' sites, and the warning a
+//! build of large data prints, by running `ghg`.
+
+#![expect(
+    clippy::expect_used,
+    reason = "a test file's helpers are test code, which clippy.toml lets panic"
+)]
 
 use std::fs;
 use std::path::Path;
 use std::process::Command;
 
-use serde_json::Value;
-
-fn fixture() -> &'static Path {
-    Path::new(concat!(
-        env!("CARGO_MANIFEST_DIR"),
-        "/tests/fixtures/search"
-    ))
+fn fixtures() -> &'static Path {
+    Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures"))
 }
 
+/// The part of `html` from `start` on.
+fn from<'a>(html: &'a str, start: &str) -> &'a str {
+    &html[html.find(start).expect(start)..]
+}
+
+// Rules 86, 151, 156 and 214: the shell's search box, between its
+// breadcrumb and its main: a combobox over the list box, then the link to
+// every result, the status and the list.
 #[test]
-fn every_page_has_the_search_box_before_its_main() {
-    // Rules 86 and 151.
-    let pages = fixture().parent().unwrap().join("pages");
-    for page in [
-        "expected/billing/refunds.html",
-        "expected/emoji.html",
-        "expected/stories/read.html",
-        "expected/saque em conta poupança.html",
-        "expected-collapsed/billing/refunds.html",
-    ] {
-        let html = fs::read_to_string(pages.join(page)).expect(page);
+fn the_shell_has_the_search_box_before_its_main() {
+    for site in ["pages/expected", "pages/expected-collapsed"] {
+        let html = fs::read_to_string(fixtures().join(site).join("index.html")).expect(site);
         let form = html
             .find("<form class=\"ghg-search\" role=\"search\"")
-            .expect(page);
-        let main = html.find("<main id=\"ghg_main\">").expect(page);
-        let breadcrumb = html.find("<nav class=\"ghg-breadcrumb\"").expect(page);
-        assert!(breadcrumb < form && form < main, "{page}");
+            .expect(site);
+        let main = html.find("<main id=\"ghg_main\"").expect(site);
+        let breadcrumb = html.find("<nav class=\"ghg-breadcrumb\"").expect(site);
+        assert!(breadcrumb < form && form < main, "{site}");
+        assert_eq!(html.matches("role=\"search\"").count(), 1, "{site}");
         let search = &html[form..main];
-        assert_eq!(html.matches("role=\"search\"").count(), 1, "{page}");
-        assert!(
-            search.contains("<label>Search features, rules and scenarios <input type=\"search\"")
+        let field = from(
+            search,
+            "<label>Search features, rules and scenarios <input type=\"search\" class=\"ghg-search-field\" \
+             role=\"combobox\" aria-autocomplete=\"list\" aria-expanded=\"false\" aria-controls=\"ghg_search_results\"",
         );
-        // Rules 156 and 214: a combobox over the list box, then the link to every result.
-        assert!(search.contains(
-            "role=\"combobox\" aria-autocomplete=\"list\" aria-expanded=\"false\" aria-controls=\"ghg_search_results\""
-        ));
-        let link = search.find("<a class=\"ghg-search-all\"").expect(page);
-        let status = search
-            .find("<p class=\"ghg-search-status\" role=\"status\"></p>")
-            .expect(page);
-        let results = search
-            .find("<ol class=\"ghg-search-results\" id=\"ghg_search_results\" role=\"listbox\" aria-label=\"Search results\" hidden></ol>")
-            .expect(page);
-        assert!(link < status && status < results, "{page}");
-        assert!(
-            search[link..].starts_with("<a class=\"ghg-search-all\" href=\""),
-            "{page}"
+        let link = from(
+            field,
+            "<a class=\"ghg-search-all\" href=\"#search\" hidden></a>\n",
         );
-        assert!(
-            search[link..status].contains("search.html\" hidden></a>"),
-            "{page}"
+        let status = from(
+            link,
+            "<p class=\"ghg-search-status\" role=\"status\"></p>\n",
+        );
+        from(
+            status,
+            "<ol class=\"ghg-search-results\" id=\"ghg_search_results\" role=\"listbox\" \
+             aria-label=\"Search results\" hidden></ol>\n</form>",
         );
     }
 }
 
-#[test]
-fn the_page_of_search_results_is_at_the_root_with_the_search_box_under_its_heading() {
-    // Rules 215 to 217.
-    let pages = fixture().parent().unwrap().join("pages/expected");
-    let html = fs::read_to_string(pages.join("search.html")).unwrap();
-    assert!(html.contains("<html lang=\"en\">"));
-    assert!(html.contains("<title>Search results, Banking &#38; &#60;more&#62;</title>"));
-    assert!(
-        html.contains("<li><a href=\"search.html\" aria-current=\"page\">Search results</a></li>")
-    );
-    assert_eq!(html.matches("role=\"search\"").count(), 1);
-    let main = html.find("<main id=\"ghg_main\">").unwrap();
-    let heading = html
-        .find("<h1 class=\"ghg-search-heading\">Search results</h1>\n<form class=\"ghg-search\" role=\"search\"")
-        .unwrap();
-    let field = html
-        .find("role=\"combobox\" aria-autocomplete=\"list\" aria-expanded=\"false\" aria-controls=\"ghg_search_results\"")
-        .unwrap();
-    let link = html
-        .find("<a class=\"ghg-search-all\" href=\"search.html\" hidden></a>")
-        .unwrap();
-    let status = html
-        .find("</form>\n<p class=\"ghg-results-status\" role=\"status\"></p>\n<div class=\"ghg-search-groups\" data-heading=")
-        .unwrap();
-    assert!(main < heading && heading < field && field < link && link < status);
-    // The page links to nothing but its breadcrumb's pages and its footer's.
-    let home = fs::read_to_string(pages.join("index.html")).unwrap();
-    assert!(!home.contains("<a href=\"search.html\""));
+/// `ghg build` run in `folder` with `arguments` after it.
+fn build(folder: &Path, arguments: &[&str]) -> std::process::Output {
+    Command::new(env!("CARGO_BIN_EXE_ghg"))
+        .arg("build")
+        .args(arguments)
+        .current_dir(folder)
+        .output()
+        .expect("the command runs")
 }
 
+// Rule 150, after the hint of rule 17.
 #[test]
-fn documents_above_5_mb_are_written_with_a_warning() {
-    // Rule 150, after the hint of rule 17.
-    let folder = Path::new(env!("CARGO_TARGET_TMPDIR")).join("large-search");
+fn data_above_5_mb_is_written_with_a_warning() {
+    let folder = Path::new(env!("CARGO_TARGET_TMPDIR")).join("large-data");
     let _ = fs::remove_dir_all(&folder);
-    fs::create_dir_all(folder.join("features")).unwrap();
-    let step = "a".repeat(5_050_000);
+    fs::create_dir_all(folder.join("features")).expect("made");
+    // Its object holds the step three times: its text, its sentence and its one part.
+    let step = "a".repeat(1_690_000);
     fs::write(
         folder.join("features/large.feature"),
         format!("Feature: Large\n  Scenario: Long\n    Given {step}\n"),
     )
-    .unwrap();
-    let output = Command::new(env!("CARGO_BIN_EXE_ghg"))
-        .arg("build")
-        .current_dir(&folder)
-        .output()
-        .unwrap();
+    .expect("written");
+    let output = build(&folder, &[]);
     assert_eq!(output.status.code(), Some(0));
-    assert_eq!(String::from_utf8(output.stdout).unwrap(), "");
+    assert_eq!(String::from_utf8_lossy(&output.stdout), "");
     assert_eq!(
-        String::from_utf8(output.stderr).unwrap(),
+        String::from_utf8_lossy(&output.stderr),
         "The site has no title, so its home page is called Feature files. Set title in ghg.toml, or give --title.\n\
-         The search documents are 5.1 MB, larger than the 5 MB above which search can be slow to start, mostly on phones.\n"
+         The site's data is 5.1 MB, larger than the 5 MB above which its pages and search can be slow to start, mostly on phones.\n"
     );
-    let written = fs::metadata(folder.join("site/assets/search.json")).unwrap();
-    assert!(written.len() > 5_000_000);
+    let objects: u64 = fs::read_dir(folder.join("site/data/objects"))
+        .expect("listed")
+        .map(|entry| entry.expect("listed").metadata().expect("read").len())
+        .sum();
+    assert!(objects > 5_000_000);
 }
 
+// Rule 150, and rule 17: a build that succeeds prints nothing else.
 #[test]
-fn documents_of_5_mb_or_less_bring_no_warning() {
-    // Rule 150, and rule 17: a build that succeeds prints nothing else.
-    let folder = Path::new(env!("CARGO_TARGET_TMPDIR")).join("small-search");
+fn data_of_5_mb_or_less_brings_no_warning() {
+    let folder = Path::new(env!("CARGO_TARGET_TMPDIR")).join("small-data");
     let _ = fs::remove_dir_all(&folder);
-    fs::create_dir_all(&folder).unwrap();
-    let output = Command::new(env!("CARGO_BIN_EXE_ghg"))
-        .args(["build", "--title", "Search", "--input"])
-        .arg(fixture().join("features"))
-        .current_dir(&folder)
-        .output()
-        .unwrap();
+    fs::create_dir_all(&folder).expect("made");
+    let input = fixtures().join("search/features");
+    let output = build(
+        &folder,
+        &[
+            "--title",
+            "Search",
+            "--input",
+            input.to_str().expect("UTF-8"),
+        ],
+    );
     assert_eq!(output.status.code(), Some(0));
-    assert_eq!(String::from_utf8(output.stderr).unwrap(), "");
-    let written = fs::read_to_string(folder.join("site/assets/search.json")).unwrap();
-    // Rule 149: the file is compact and keeps letters outside ASCII as they are.
-    assert!(!written.contains('\n'));
-    assert!(!written.contains("\": ") && !written.contains("\", "));
-    assert!(written.contains("poupança") && !written.contains("\\u"));
-    let expected = fs::read_to_string(fixture().join("search.json")).unwrap();
-    let written: Value = serde_json::from_str(&written).unwrap();
-    assert_eq!(written, serde_json::from_str::<Value>(&expected).unwrap());
+    assert_eq!(String::from_utf8_lossy(&output.stderr), "");
 }

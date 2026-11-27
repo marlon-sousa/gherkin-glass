@@ -54,7 +54,7 @@ fn only_the_files_the_paths_name_are_parsed_again() {
     let shared = changes
         .input_tree
         .features()
-        .filter(|new| last.features().any(|last| eq(last.feature, new.feature)))
+        .filter(|new| last.features().any(|last| eq(last, *new)))
         .count();
     assert_eq!(shared, 2);
 }

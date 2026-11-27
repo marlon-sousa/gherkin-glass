@@ -3,11 +3,12 @@
 #![expect(
     clippy::expect_used,
     clippy::unwrap_used,
+    clippy::indexing_slicing,
     reason = "a test file's helpers are test code, which clippy.toml lets panic"
 )]
 
-use std::collections::{BTreeMap, BTreeSet};
-use std::fs::{create_dir_all, read, read_dir, read_to_string, remove_dir_all, write};
+use std::collections::BTreeSet;
+use std::fs::{create_dir_all, read_dir, read_to_string, remove_dir_all, write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 
@@ -16,27 +17,21 @@ use rstest::rstest;
 use serde_json::Value;
 
 #[path = "support/site_files.rs"]
-#[expect(
-    dead_code,
-    reason = "this file compares the example suite's site with its own helper, and its store with this one's"
-)]
 mod site_files;
 #[path = "support/store_json.rs"]
 mod store_json;
 #[path = "support/version_placeholder.rs"]
 mod version_placeholder;
 
-use site_files::assert_same_store;
-use store_json::indented;
-use version_placeholder::with_version_placeholder;
+use site_files::assert_same_site;
 
 fn repository() -> &'static Path {
     Path::new(env!("CARGO_MANIFEST_DIR"))
 }
 
 /// Builds `input` with `ghg`, which fails if any of its files cannot be read, and gives the
-/// address of every feature's page, as the site's search documents list them, so of every
-/// feature ghg read.
+/// name of every feature's page, as the site's descriptor lists them, so of every feature ghg
+/// read.
 fn builds(input: &Path, name: &str) -> BTreeSet<String> {
     let site = scratch(name).join("site");
     let output = Command::new(env!("CARGO_BIN_EXE_ghg"))
@@ -52,12 +47,13 @@ fn builds(input: &Path, name: &str) -> BTreeSet<String> {
         input.display(),
         text(&output.stderr)
     );
-    let documents = read_to_string(site.join("assets/search.json")).expect("search.json is read");
-    let documents: Vec<Value> = serde_json::from_str(&documents).expect("search.json is JSON");
-    documents
+    let descriptor = read_to_string(site.join("data/site.json")).expect("the descriptor is read");
+    let descriptor: Value = serde_json::from_str(&descriptor).expect("the descriptor is JSON");
+    descriptor["features"]
+        .as_array()
+        .expect("a list")
         .iter()
-        .filter(|document| document["kind"] == "feature")
-        .map(|document| document["page"].as_str().expect("a page").to_string())
+        .map(|feature| feature["page"].as_str().expect("a page").to_string())
         .collect()
 }
 
@@ -76,32 +72,6 @@ fn feature_files(folder: &Path) -> BTreeSet<PathBuf> {
                 .is_some_and(|extension| extension == "feature")
             {
                 found.insert(path);
-            }
-        }
-    }
-    found
-}
-
-/// Every file below `folder`, by its `/`-joined path in it, the version it names put back as
-/// the placeholder, and each file of the store indented.
-fn files(folder: &Path) -> BTreeMap<String, Vec<u8>> {
-    let mut found = BTreeMap::new();
-    let mut folders = vec![(folder.to_path_buf(), String::new())];
-    while let Some((path, prefix)) = folders.pop() {
-        for entry in read_dir(&path).expect("the folder is listed") {
-            let entry = entry.expect("the folder is listed");
-            let name = format!("{prefix}{}", entry.file_name().to_string_lossy());
-            if entry.path().is_dir() {
-                folders.push((entry.path(), format!("{name}/")));
-            } else {
-                let file = read(entry.path()).expect("the file is read");
-                let file = with_version_placeholder(file, env!("CARGO_PKG_VERSION"));
-                let file = if name.starts_with("data/") && name.ends_with(".json") {
-                    indented(&String::from_utf8(file).expect("UTF-8")).into_bytes()
-                } else {
-                    file
-                };
-                found.insert(name, file);
             }
         }
     }
@@ -247,20 +217,7 @@ fn the_example_suite_s_site_is_its_committed_copy() {
         .expect("ghg runs");
     assert_eq!(text(&result.stderr), "");
     assert_eq!(result.status.code(), Some(0));
-    assert_same_store(&written, &repository().join("project-site/expected"));
-    let expected = files(&repository().join("project-site/expected"));
-    let written = files(&written);
-    assert_eq!(
-        written.keys().collect::<Vec<_>>(),
-        expected.keys().collect::<Vec<_>>(),
-        "the files written"
-    );
-    for (name, contents) in &expected {
-        assert!(
-            written[name] == *contents,
-            "{name} differs from project-site/expected; cargo xtask build writes it again"
-        );
-    }
+    assert_same_site(&written, &repository().join("project-site/expected"));
 }
 
 #[test]
@@ -599,22 +556,22 @@ fn each_release_adds_only_its_own_folder_and_the_versions_page() {
         "a/b",
         "index.html",
         "assets",
-        "ghg-versions.json",
+        "ghg-site.json",
     ] {
         let output = publish(&second, &["publish", path(&site), version]);
         assert_eq!(output.status.code(), Some(1), "{version:?}");
     }
 }
 
-/// `ghg build` of the site's input, versioned as `version`, into `site`, a
+/// `ghg version add` of the site's input as `version`, into `site`, a
 /// checkout of gh-pages, keeping `.nojekyll` and `.git` as the release does.
 fn build_site(input: &Path, site: &Path, version: &str) {
     let output = Command::new(env!("CARGO_BIN_EXE_ghg"))
-        .args(["build", "--title", "gherkin-glass examples", "--input"])
+        .args(["version", "add", version])
+        .args(["--title", "gherkin-glass examples", "--input"])
         .arg(input)
         .arg("--output")
         .arg(site)
-        .args(["--version-name", version])
         .args(["--keep-in-output", ".nojekyll", "--keep-in-output", ".git"])
         .current_dir(input)
         .output()
@@ -655,8 +612,10 @@ fn a_release_publishes_what_ghg_builds_and_keeps_the_earlier_ones() {
     assert_eq!(commits(&remote), 2);
     for page in [
         "index.html",
+        "ghg-site.json",
         "v0.1.0/index.html",
-        "v0.2.0/fixtures/index.html",
+        "v0.2.0/index.html",
+        "data/versions/v0.2.0.json",
     ] {
         assert!(
             before
@@ -680,11 +639,12 @@ fn every_release_s_site_opens_on_the_readme_of_its_tag() {
     assert!(made.status.success());
     let site = scratch.join("site");
     let output = Command::new(env!("CARGO_BIN_EXE_ghg"))
-        .args(["build", "--title", "gherkin-glass examples", "--input"])
+        .args(["version", "add", "v0.1.0"])
+        .args(["--title", "gherkin-glass examples", "--input"])
         .arg(repository().join("project-site/features"))
         .arg("--front-page")
         .arg(&front_page)
-        .args(["--version-name", "v0.1.0", "--output"])
+        .arg("--output")
         .arg(&site)
         .output()
         .expect("ghg runs");

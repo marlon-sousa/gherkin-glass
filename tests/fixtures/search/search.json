@@ -9,7 +9,7 @@
     "steps": [],
     "tags": ["@banking", "@cash"],
     "cells": [],
-    "page": "banking/withdraw.html",
+    "page": "banking/withdraw",
     "anchor": ""
   },
   {
@@ -22,7 +22,7 @@
     "steps": ["the customer has an account"],
     "tags": [],
     "cells": [],
-    "page": "banking/withdraw.html",
+    "page": "banking/withdraw",
     "anchor": "background"
   },
   {
@@ -35,7 +35,7 @@
     "steps": ["the balance is 100", "the customer withdraws 40", "the receipt says"],
     "tags": ["@smoke"],
     "cells": [],
-    "page": "banking/withdraw.html",
+    "page": "banking/withdraw",
     "anchor": "withdraw-within-the-balance"
   },
   {
@@ -48,7 +48,7 @@
     "steps": ["the customer withdraws <amount>", "the balance is <balance>"],
     "tags": ["@regression", "@slow"],
     "cells": [],
-    "page": "banking/withdraw.html",
+    "page": "banking/withdraw",
     "anchor": "withdraw-an-amount"
   },
   {
@@ -61,7 +61,7 @@
     "steps": [],
     "tags": ["@regression"],
     "cells": ["amount", "balance", "10", "90"],
-    "page": "banking/withdraw.html",
+    "page": "banking/withdraw",
     "anchor": "small-amounts"
   },
   {
@@ -74,7 +74,7 @@
     "steps": [],
     "tags": ["@regression", "@slow"],
     "cells": ["amount", "balance", "90", "10"],
-    "page": "banking/withdraw.html",
+    "page": "banking/withdraw",
     "anchor": "large-amounts"
   },
   {
@@ -87,7 +87,7 @@
     "steps": [],
     "tags": ["@limits"],
     "cells": [],
-    "page": "banking/withdraw.html",
+    "page": "banking/withdraw",
     "anchor": "the-daily-limit-applies"
   },
   {
@@ -100,7 +100,7 @@
     "steps": ["the daily limit is 500"],
     "tags": [],
     "cells": [],
-    "page": "banking/withdraw.html",
+    "page": "banking/withdraw",
     "anchor": "limits-in-force"
   },
   {
@@ -113,7 +113,7 @@
     "steps": ["the customer withdraws 600", "the withdrawal is refused"],
     "tags": [],
     "cells": [],
-    "page": "banking/withdraw.html",
+    "page": "banking/withdraw",
     "anchor": "withdraw-over-the-limit"
   },
   {
@@ -126,7 +126,7 @@
     "steps": ["the customer withdraws 500", "the withdrawal is accepted"],
     "tags": [],
     "cells": [],
-    "page": "banking/withdraw.html",
+    "page": "banking/withdraw",
     "anchor": "scenario"
   },
   {
@@ -139,7 +139,7 @@
     "steps": [],
     "tags": [],
     "cells": [],
-    "page": "saque.html",
+    "page": "saque",
     "anchor": ""
   },
   {
@@ -152,7 +152,7 @@
     "steps": ["que o saldo é 100", "o cliente saca 40", "o saldo é 60"],
     "tags": [],
     "cells": [],
-    "page": "saque.html",
+    "page": "saque",
     "anchor": "saque-com-saldo"
   },
   {
@@ -165,7 +165,7 @@
     "steps": [],
     "tags": [],
     "cells": [],
-    "page": "unnamed.html",
+    "page": "unnamed",
     "anchor": ""
   },
   {
@@ -178,7 +178,7 @@
     "steps": [],
     "tags": [],
     "cells": [],
-    "page": "unnamed.html",
+    "page": "unnamed",
     "anchor": "rule"
   },
   {
@@ -191,7 +191,7 @@
     "steps": ["the customer pays <amount>"],
     "tags": ["@tagged", "@paid"],
     "cells": [],
-    "page": "unnamed.html",
+    "page": "unnamed",
     "anchor": "pay-amount"
   },
   {
@@ -204,7 +204,7 @@
     "steps": [],
     "tags": ["@tagged", "@paid"],
     "cells": ["amount", "10"],
-    "page": "unnamed.html",
+    "page": "unnamed",
     "anchor": "examples"
   },
   {
@@ -217,7 +217,7 @@
     "steps": [],
     "tags": [],
     "cells": ["amount", "payer", "20", "Emma"],
-    "page": "unnamed.html",
+    "page": "unnamed",
     "anchor": "examples-2"
   },
   {
@@ -230,7 +230,7 @@
     "steps": [],
     "tags": [],
     "cells": [],
-    "page": "unnamed.html",
+    "page": "unnamed",
     "anchor": "nothing-yet"
   }
 ]

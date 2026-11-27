@@ -1,0 +1,102 @@
+{
+  "format": 1,
+  "language": "en",
+  "lang": "en",
+  "feature": {
+    "kind": "feature",
+    "keyword": "Feature",
+    "note": false,
+    "name": "Deposit cash",
+    "description": "",
+    "tags": [],
+    "anchor": "",
+    "hash": "b29e7f28343aa51bb801b10659309e38093647aab53ee8076542b9a420976604",
+    "blocks": [
+      {
+        "kind": "scenario",
+        "keyword": "Scenario",
+        "note": false,
+        "name": "Deposit into savings",
+        "description": "",
+        "tags": [],
+        "anchor": "deposit-into-savings",
+        "hash": "a1c28d28887eb55c21f58d1d07ef66a8840b3b886fdf96418d9d3d14196dd78b",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "an account with 100",
+            "kind": "given",
+            "sentence": "an account with 100",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "an account with ",
+                "parts": []
+              },
+              {
+                "kind": "number",
+                "text": "100",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "When ",
+            "text": "50 is deposited",
+            "kind": "when",
+            "sentence": "50 is deposited",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "number",
+                "text": "50",
+                "parts": []
+              },
+              {
+                "kind": "text",
+                "text": " is deposited",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "Then ",
+            "text": "the balance reads 150",
+            "kind": "then",
+            "sentence": "the balance reads 150",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "the balance reads ",
+                "parts": []
+              },
+              {
+                "kind": "number",
+                "text": "150",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      }
+    ],
+    "steps": [],
+    "examples": [],
+    "place": null,
+    "table": null,
+    "runs": []
+  }
+}

@@ -1,0 +1,154 @@
+{
+  "format": 1,
+  "language": "en",
+  "lang": "en",
+  "feature": {
+    "kind": "feature",
+    "keyword": "Feature",
+    "note": false,
+    "name": "Refunds",
+    "description": "",
+    "tags": [
+      "@billing"
+    ],
+    "anchor": "",
+    "hash": "a78feceaf10cb7467993ac48ac860794c9befd6d17de0fd71482d658883600f6",
+    "blocks": [
+      {
+        "kind": "scenario",
+        "keyword": "Scenario",
+        "note": false,
+        "name": "Refund a card payment",
+        "description": "",
+        "tags": [],
+        "anchor": "refund-a-card-payment",
+        "hash": "611ec90871acba6c993aec555d03ac75d99bd02ebc60ddc58b0b5768efd92ac7",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "an order paid by card",
+            "kind": "given",
+            "sentence": "an order paid by card",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "an order paid by card",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "When ",
+            "text": "the order is refunded",
+            "kind": "when",
+            "sentence": "the order is refunded",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "the order is refunded",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "Then ",
+            "text": "the card gets the money back",
+            "kind": "then",
+            "sentence": "the card gets the money back",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "the card gets the money back",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      },
+      {
+        "kind": "scenario",
+        "keyword": "Scenario",
+        "note": false,
+        "name": "Refund in store credit",
+        "description": "",
+        "tags": [],
+        "anchor": "refund-in-store-credit",
+        "hash": "053ab931d81ef52919cf591beac5db637aa125fb2c185b270105742d4a8fbd04",
+        "blocks": [],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "text": "an order paid by card",
+            "kind": "given",
+            "sentence": "an order paid by card",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "an order paid by card",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "When ",
+            "text": "the customer asks for store credit",
+            "kind": "when",
+            "sentence": "the customer asks for store credit",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "the customer asks for store credit",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          },
+          {
+            "keyword": "Then ",
+            "text": "the customer gets store credit",
+            "kind": "then",
+            "sentence": "the customer gets store credit",
+            "slots": [],
+            "parts": [
+              {
+                "kind": "text",
+                "text": "the customer gets store credit",
+                "parts": []
+              }
+            ],
+            "table": null,
+            "doc_string": null
+          }
+        ],
+        "examples": [],
+        "place": null,
+        "table": null,
+        "runs": []
+      }
+    ],
+    "steps": [],
+    "examples": [],
+    "place": null,
+    "table": null,
+    "runs": []
+  }
+}
