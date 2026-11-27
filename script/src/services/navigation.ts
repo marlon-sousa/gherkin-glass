@@ -1,11 +1,11 @@
-// Service: the page an address names, drawn in the shell, the focus kept in the `main` while it is drawn and moved, with the title said, once a page reached from another is drawn, as docs/BEHAVIOUR.md, rule 240, describes.
+// Service: the page an address names, drawn in the shell, the focus kept in the `main` while it is drawn and moved, with the title said, once a page reached from another is drawn.
 
 import { type PageName, type Target, readTarget, targetAddress } from "../policies/address.ts";
 import type { PageFrame } from "../policies/page_frame.ts";
 import type { Address, Canvas } from "../ports/canvas.ts";
 import type { Timer } from "../ports/timer.ts";
 
-/** The wait between a page reached from another being drawn and the focus moving, measured with one screen reader and one browser, as design note 0173 records. */
+/** The wait between a page reached from another being drawn and the focus moving: a screen reader can lose its place when the focus moves as soon as the page is drawn. */
 export const SETTLE_MILLISECONDS = 150;
 
 /** Fetches what the page `page` names needs, and resolves with what draws it in the canvas's `main` and returns its frame; rejects when the site's data it needs cannot be fetched or read. */

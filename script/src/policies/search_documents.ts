@@ -1,4 +1,4 @@
-// Policy: the documents search reads, made from a descriptor's features and their objects, as docs/BEHAVIOUR.md, rules 147 and 148, list them.
+// Policy: the documents search reads, made from a descriptor's features and their objects.
 
 import type { LoadedFeature } from "./site_folders.ts";
 import type { SearchDocument } from "../ports/documents.ts";

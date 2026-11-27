@@ -1,4 +1,4 @@
-// Policy: the site's folders, each with its subfolders and its features in the descriptor's order, and the counts of a feature's blocks, as docs/BEHAVIOUR.md, rules 77, 82 and 83, give them.
+// Policy: the site's folders, each with its subfolders and its features in the descriptor's order, and the counts of a feature's blocks.
 
 import { isScenario } from "./block_views.ts";
 import type { Block, FeatureEntry, StoreObject } from "../ports/store.ts";

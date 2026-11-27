@@ -1,4 +1,4 @@
-// Policy: the folder tree's items, worked out from a descriptor and its features' objects, as docs/BEHAVIOUR.md, rule 89, lists them, and the items the current page is inside.
+// Policy: the folder tree's items, worked out from a descriptor and its features' objects, and the items the current page is inside.
 
 import { type PageName, targetAddress } from "./address.ts";
 import { type ContentsEntry, contentsOf } from "./feature_view.ts";

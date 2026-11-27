@@ -1,4 +1,4 @@
-// Policy: the view of each block of a feature's page, its heading's level and words, the state it starts in, its steps and the backgrounds a scenario starts with, as docs/BEHAVIOUR.md, rules 43 to 51 and 94 to 98, places them.
+// Policy: the view of each block of a feature's page, its heading's level and words, the state it starts in, its steps and the backgrounds a scenario starts with.
 
 import { pageByName, targetAddress } from "./address.ts";
 import { type NoteWords, blockHeading, heading, keywordNote, plain } from "./heading_words.ts";

@@ -7,7 +7,7 @@ export class FetchedTree implements TreeSource {
   private readonly address: URL;
   private readonly fetcher: typeof fetch;
 
-  /** Chromium, through Playwright, refuses `fetch` called as a method of another object, so it is called on its own. */
+  /** Chromium, through Playwright 1.63.0, refuses `fetch` called as a method of another object, so it is called on its own. */
   constructor(address: URL, fetcher: typeof fetch = (input, init) => fetch(input, init)) {
     this.address = address;
     this.fetcher = fetcher;
