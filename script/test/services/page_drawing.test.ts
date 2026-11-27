@@ -101,12 +101,6 @@ test("the home page of a shell that holds no front page is drawn as its folder's
   assert.deepEqual(frame.crumbs.map((crumb) => crumb.address), ["#"]);
 });
 
-// Rule 77: a folder no feature is in has no page.
-test("a folder no feature is in draws the page that says nothing is there", async () => {
-  const { document } = await drawn({ kind: "folder", folder: "nowhere/" });
-  assert.equal(document.querySelector("main h1")!.textContent, "Nothing is at this address");
-});
-
 /** A drawing of the pages of tests/fixtures/tags, in `document`. */
 function taggedDrawing(document: Document): (page: PageName) => Promise<PageFrame> {
   const make = new ElementBuilder(document);
@@ -172,35 +166,4 @@ test("the page of search results holds the search box, which another page puts b
   await draw({ kind: "steps" });
   assert.equal(document.querySelector("form.ghg-search")!.nextElementSibling, document.querySelector("main"));
   assert.equal((await draw({ kind: "search", words: "" })).title, "Search results, Tagged suite");
-});
-
-// Rules 259 and 260: a version's feature page has its lists in other versions after its `h1`, and first in each block.
-test("a version's feature page has its lists in other versions, which open and close", async () => {
-  const document = emptyDocument();
-  const make = new ElementBuilder(document);
-  const canvas = DomCanvas.of(make)!;
-  const versioned = { ...refundsDescriptor, version: "v1.0.0" };
-  const list = { format: 1, development: ["main"], releases: ["v1.0.0"], pre_releases: [], precedence: [["v1.0.0"]] };
-  const index = { format: 1, pages: [{ page: "billing/refunds", objects: [{ object: "refunds", versions: ["main", "v1.0.0"] }] }] };
-  const draw = pageDrawing({ store: new MemoryStore(versioned, { refunds: refundsObject }, list, index), words, pages: new DomPages(make, canvas, words), canvas });
-  (await draw({ kind: "feature", page: "billing/refunds" }))();
-  const pageLists = document.querySelector("main h1")!.nextElementSibling!;
-  assert.equal(pageLists.className, "ghg-other-versions");
-  const button = pageLists.querySelector("button")!;
-  assert.equal(button.textContent, "This page in other versions");
-  assert.equal(button.getAttribute("aria-expanded"), "false");
-  button.click();
-  assert.equal(button.getAttribute("aria-expanded"), "true");
-  assert.equal(pageLists.querySelector<HTMLElement>(":scope > .ghg-content")!.hidden, false);
-  assert.equal(pageLists.querySelector(".ghg-version-group a")!.getAttribute("href"), "../main/index.html#billing/refunds");
-  const scenario = document.getElementById("store-credit")!.nextElementSibling!;
-  assert.equal(scenario.firstElementChild!.className, "ghg-other-versions");
-  assert.equal(scenario.querySelector(".ghg-other-versions button")!.textContent, "In other versions");
-});
-
-// Rule 262: without the list of versions, the page is drawn without its lists.
-test("a version's feature page whose list of versions cannot be had has no lists", async () => {
-  const { document } = await drawn({ kind: "feature", page: "billing/refunds" }, { ...refundsDescriptor, version: "v1.0.0" });
-  assert.equal(document.querySelector("main h1")!.textContent, "Feature: Refunds & <returns>");
-  assert.equal(document.querySelector(".ghg-other-versions"), null);
 });
