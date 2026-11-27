@@ -29,6 +29,7 @@ import { startNoteExplaining } from "./services/note_explaining.ts";
 import { startNavigation } from "./services/navigation.ts";
 import { startListing } from "./services/results_listing.ts";
 import { startSearching } from "./services/searching.ts";
+import { startShellTree } from "./services/shell_tree.ts";
 import { startThemeSwitching } from "./services/theme_switching.ts";
 
 const descriptorPath = document.documentElement.getAttribute("data-ghg-descriptor");
@@ -93,12 +94,22 @@ function startShell(descriptorPath: string): void {
   const words = new FluentWords(document.getElementById("ghg_messages")?.textContent ?? "");
   const store = new FetchedStore(new URL("data/", root), descriptorPath);
   const shellPath = document.location.pathname.replace(/index\.html$/, "");
+  const tree = startShellTree({
+    store,
+    words,
+    toggle: new DomTreeSwitch(document),
+    view: DomTree.inShell(document),
+    width: new MediaWidth(window.matchMedia(NARROW)),
+    memory,
+    sitePath: shellPath,
+  });
   void startNavigation({
     canvas,
     address: new DomAddress(window),
     timer: new WindowTimer(),
     draw: pageDrawing({ store, words, pages: new DomPages(make, canvas, words), canvas }),
     behave: (page) => {
+      tree.show(page);
       const backgrounds = DomBackgrounds.of(document);
       const reveal = startCollapsing(new DomPage(document, canvas.main, false), memory, `${shellPath}${targetAddress(page)}`, backgrounds && { backgrounds, siteRoot: root.pathname });
       const noteDialog = DomNoteDialog.of(document);
@@ -108,6 +119,6 @@ function startShell(descriptorPath: string): void {
       return reveal;
     },
     failure: words.text("page-not-loaded"),
-    onFailure: () => {},
+    onFailure: () => tree.disable(),
   });
 }

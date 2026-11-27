@@ -34,7 +34,7 @@ export function writtenMain(path: string, page: string): Element {
 }
 
 /** A link of ghg 1, relative to the page `page`, as ghg 2 writes it: `#`, the page's name and its anchor. */
-function newAddress(href: string, page: string): string {
+export function newAddress(href: string, page: string): string {
   if (/^[a-z]+:/.test(href)) {
     return href;
   }

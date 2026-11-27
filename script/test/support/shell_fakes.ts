@@ -42,6 +42,10 @@ export class FakeCanvas implements Canvas {
     return true;
   }
 
+  holdsFrontPage(): boolean {
+    return this.frontPage !== null;
+  }
+
   restoreFrontPage(): string | null {
     return this.frontPage;
   }
