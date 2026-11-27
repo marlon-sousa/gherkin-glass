@@ -12,7 +12,7 @@ use std::io::{BufRead, BufReader, Read, Write};
 use std::net::{TcpListener, TcpStream};
 use std::path::{Path, PathBuf};
 use std::process::{Child, ChildStdout, Command, Stdio};
-use std::thread::sleep;
+use std::thread::{JoinHandle, sleep, spawn};
 use std::time::{Duration, Instant};
 
 use rstest::rstest;
@@ -442,8 +442,8 @@ fn ended(serving: &mut Serving) -> Option<i32> {
     status.and_then(|status| status.code())
 }
 
-/// A request whose body never comes, which tiny_http 0.12.0, having answered it, waits to
-/// read before it takes another on the same thread, so that ghg serve is still answering it.
+/// A request whose body never comes, which ghg serve, having answered it, waits for before
+/// it closes the connection, so that it is still answering it.
 #[cfg(unix)]
 fn a_request_still_answered(address: &str) -> TcpStream {
     let mut stream = TcpStream::connect(address).expect("connects");
@@ -490,6 +490,23 @@ fn another_signal_while_it_waits_ends_it_at_once_with_130(
     assert_eq!(rest, "");
 }
 
+#[cfg(unix)]
+#[test]
+fn a_stop_does_not_wait_for_a_connection_that_sent_no_request() {
+    // Rule 199: a browser opens connections ahead of need, which hold no request.
+    let mut serving = serve_site();
+    let _idle = TcpStream::connect(&serving.address).expect("connects");
+    sleep(Duration::from_millis(200));
+    let asked = Instant::now();
+    send("TERM", &serving);
+    assert_eq!(ended(&mut serving), Some(0));
+    assert!(
+        asked.elapsed() < Duration::from_secs(2),
+        "{:?}",
+        asked.elapsed()
+    );
+}
+
 /// Checks that `ghg serve` has not ended once a stop that waited for nothing would have.
 #[cfg(unix)]
 fn still_running(serving: &mut Serving) {
@@ -498,6 +515,33 @@ fn still_running(serving: &mut Serving) {
 }
 
 // What it answers: rules 61 to 64.
+
+#[test]
+fn every_request_of_many_at_once_is_answered() {
+    // Rule 61, as a page asks for its site's data all at once.
+    let serving = serve_site();
+    let asking: Vec<_> = (0..50).map(|_| ask_on_a_thread(&serving)).collect();
+    for request in asking {
+        assert_eq!(request.join().expect("answered"), 200);
+    }
+}
+
+/// The status of the answer to a request for the front page, asked on a thread of its own.
+fn ask_on_a_thread(serving: &Serving) -> JoinHandle<u16> {
+    let address = serving.address.clone();
+    spawn(move || get(&address, "/index.html").status)
+}
+
+#[test]
+fn a_connection_that_sends_nothing_is_closed() {
+    let serving = serve_site();
+    let mut idle = TcpStream::connect(&serving.address).expect("connects");
+    idle.set_read_timeout(Some(Duration::from_secs(20)))
+        .expect("timeout set");
+    let mut rest = Vec::new();
+    let closed = idle.read_to_end(&mut rest);
+    assert!(closed.is_ok() && rest.is_empty(), "{closed:?}");
+}
 
 #[test]
 fn a_file_is_served_exactly_with_its_type() {

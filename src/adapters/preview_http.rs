@@ -1,6 +1,7 @@
-//! Adapter: the preview server port over HTTP, with tiny_http.
+//! Adapter: the preview server port over HTTP, with mio, httparse and http.
 
 mod answering;
+mod connection;
 mod content_type;
 mod reload_injection;
 mod request_route;
@@ -11,7 +12,7 @@ use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, TcpListener, TcpStream};
 use std::sync::Arc;
 use std::time::Duration;
 
-use tiny_http::{Header, Method, Request, Response, Server, StatusCode};
+use http::{Method, StatusCode};
 
 use crate::entities::{Listening, Preview, ServedSite, ServerWords, Version};
 use crate::errors::ListenErrorKind;
@@ -59,14 +60,14 @@ impl PreviewServer for HttpPreviewServer {
             .map_err(|error| ListenErrorKind::Other {
                 reason: error.to_string(),
             })?;
-        let server = Arc::new(Server::from_listener(listener, None).map_err(|error| {
+        let answering = Answering::start(listener, preview, Arc::new(words)).map_err(|error| {
             ListenErrorKind::Other {
                 reason: error.to_string(),
             }
-        })?);
+        })?;
         Ok(Listening {
             address,
-            answering: Box::new(Answering::start(server, preview, Arc::new(words))),
+            answering: Box::new(answering),
         })
     }
 }
@@ -86,19 +87,9 @@ fn someone_listens(mut address: SocketAddr) -> bool {
     TcpStream::connect_timeout(&address, Duration::from_millis(250)).is_ok()
 }
 
-/// The HTTP status of an answer.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[repr(u16)]
-enum Status {
-    Ok = 200,
-    MovedPermanently = 301,
-    NotFound = 404,
-    MethodNotAllowed = 405,
-}
-
 /// What a request is answered with, before it is sent.
 struct Answer {
-    status: Status,
+    status: StatusCode,
     content_type: String,
     body: Vec<u8>,
     location: Option<String>,
@@ -107,14 +98,14 @@ struct Answer {
 impl Answer {
     fn ok(content_type: String, body: Vec<u8>) -> Self {
         Answer {
-            status: Status::Ok,
+            status: StatusCode::OK,
             content_type,
             body,
             location: None,
         }
     }
 
-    fn text(status: Status, sentence: &str) -> Self {
+    fn text(status: StatusCode, sentence: &str) -> Self {
         Answer {
             status,
             content_type: "text/plain; charset=utf-8".into(),
@@ -125,7 +116,7 @@ impl Answer {
 
     fn redirect(location: String) -> Self {
         Answer {
-            status: Status::MovedPermanently,
+            status: StatusCode::MOVED_PERMANENTLY,
             content_type: "text/plain; charset=utf-8".into(),
             body: Vec::new(),
             location: Some(location),
@@ -133,27 +124,17 @@ impl Answer {
     }
 }
 
-fn answer(request: Request, preview: &Preview, words: &ServerWords) {
-    let answer = match request.method() {
-        Method::Get | Method::Head => choose(request.url(), preview, words),
-        _ => Answer::text(Status::MethodNotAllowed, &words.wrong_method),
-    };
-    let mut response = Response::from_data(answer.body)
-        .with_status_code(StatusCode(answer.status as u16))
-        .with_header(header("Content-Type", &answer.content_type))
-        .with_header(header("Cache-Control", "no-cache"));
-    if answer.status == Status::MethodNotAllowed {
-        response = response.with_header(header("Allow", "GET, HEAD"));
+/// `target` is the request's, as the browser sent it.
+fn answer(method: &Method, target: &str, preview: &Preview, words: &ServerWords) -> Answer {
+    if *method == Method::GET || *method == Method::HEAD {
+        choose(target, preview, words)
+    } else {
+        Answer::text(StatusCode::METHOD_NOT_ALLOWED, &words.wrong_method)
     }
-    if let Some(location) = answer.location {
-        response = response.with_header(header("Location", &location));
-    }
-    // A browser that went away needs no answer.
-    let _ = request.respond(response);
 }
 
 fn choose(url: &str, preview: &Preview, words: &ServerWords) -> Answer {
-    let not_found = || Answer::text(Status::NotFound, &words.not_found);
+    let not_found = || Answer::text(StatusCode::NOT_FOUND, &words.not_found);
     match route(url, preview.mode) {
         Route::NotFound => not_found(),
         Route::BuildNumber => Answer::ok(
@@ -220,20 +201,10 @@ fn find(version: &Version, address: &str) -> Found {
     }
 }
 
-#[expect(
-    clippy::expect_used,
-    reason = "every header the server sends is ASCII without line breaks"
-)]
-fn header(name: &str, value: &str) -> Header {
-    Header::from_bytes(name.as_bytes(), value.as_bytes())
-        .expect("a header's name and value are ASCII without line breaks")
-}
-
 #[cfg(test)]
 mod tests {
     use std::collections::BTreeMap;
     use std::io::{Read, Write};
-    use std::thread::sleep;
 
     use super::*;
     use crate::entities::ServeMode;
@@ -259,7 +230,7 @@ mod tests {
     fn under_watch_a_page_has_the_script_of_its_version_and_nothing_else_does() {
         let preview = memory(ServeMode::Watch);
         let page = choose("/a/", &preview, &words());
-        assert_eq!(page.status, Status::Ok);
+        assert_eq!(page.status, StatusCode::OK);
         assert_eq!(
             page.body,
             br#"<p>a</p><script type="module" src="/__ghg/reload.js?build=2"></script></body>"#
@@ -277,7 +248,7 @@ mod tests {
         assert_eq!(choose("/a/", &preview, &words()).body, b"<p>a</p></body>");
         assert_eq!(
             choose("/__ghg/build", &preview, &words()).status,
-            Status::NotFound
+            StatusCode::NOT_FOUND
         );
     }
 
@@ -285,15 +256,21 @@ mod tests {
     fn a_folder_in_memory_is_redirected_and_a_missing_file_is_not_found() {
         let preview = memory(ServeMode::Watch);
         let folder = choose("/a?x", &preview, &words());
-        assert_eq!(folder.status, Status::MovedPermanently);
+        assert_eq!(folder.status, StatusCode::MOVED_PERMANENTLY);
         assert_eq!(folder.location.as_deref(), Some("/a/?x"));
         let missing = choose("/a/b.html", &preview, &words());
         assert_eq!(
             (missing.status, missing.body),
-            (Status::NotFound, b"not found\n".to_vec())
+            (StatusCode::NOT_FOUND, b"not found\n".to_vec())
         );
-        assert_eq!(choose("/b/", &preview, &words()).status, Status::NotFound);
-        assert_eq!(choose("/a/s", &preview, &words()).status, Status::NotFound);
+        assert_eq!(
+            choose("/b/", &preview, &words()).status,
+            StatusCode::NOT_FOUND
+        );
+        assert_eq!(
+            choose("/a/s", &preview, &words()).status,
+            StatusCode::NOT_FOUND
+        );
     }
 
     #[test]
@@ -310,12 +287,8 @@ mod tests {
         let mut answer = String::new();
         stream.read_to_string(&mut answer).expect("answered");
         assert!(answer.starts_with("HTTP/1.1 200"), "{answer}");
+        drop(stream);
         drop(listening);
-        // tiny_http 0.12.0 closes its listening socket on a thread of its own, soon after.
-        let closed = (0..100).any(|_| {
-            sleep(Duration::from_millis(20));
-            TcpStream::connect(address).is_err()
-        });
-        assert!(closed);
+        assert!(TcpStream::connect(address).is_err());
     }
 }

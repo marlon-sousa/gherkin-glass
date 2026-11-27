@@ -57,10 +57,13 @@ clap = { version = "4.6.7", default-features = false, features = ["std", "derive
 crossbeam-channel = "0.5.17"
 ctrlc = { version = "3.5.2", features = ["termination"] }
 gherkin = "0.16.0"
+http = "1.5.0"
+httparse = "1.10.1"
 i18n-embed = { version = "0.16.0", features = ["fluent-system"] }
 i18n-embed-fl = "0.10.1"
 ignore = "0.4.34"
 mime_guess = { version = "2.0.5", default-features = false }
+mio = { version = "1.2.4", features = ["os-poll", "net"] }
 notify-debouncer-full = "0.7.0"
 rayon = "1.12.0"
 regex-automata = "0.4.18"
@@ -72,7 +75,6 @@ semver = "1.0.28"
 sha2 = { version = "0.11.1", default-features = false }
 snapfit = "0.2.0"
 thiserror = "2"
-tiny_http = "0.12.0"
 toml = { version = "1.2.1", default-features = false, features = ["std", "parse"] }
 unicode-normalization = "0.1.26"
 derive_more = { version = "2.1.1", default-features = false, features = ["constructor", "display"] }
