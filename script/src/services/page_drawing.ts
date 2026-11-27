@@ -1,10 +1,13 @@
 // Service: the page an address names, its view worked out from the descriptor and the objects it needs, drawn by the pages port, with the frame the shell shows around it.
 
-import type { PageName } from "../policies/address.ts";
+import { type PageName, targetAddress } from "../policies/address.ts";
 import { featureView } from "../policies/feature_view.ts";
 import { folderView } from "../policies/folder_view.ts";
+import { searchPageView } from "../policies/search_page_view.ts";
+import { sentencesView } from "../policies/sentences_view.ts";
+import { tagIndexView, tagPageView } from "../policies/tag_views.ts";
 import { plain } from "../policies/heading_words.ts";
-import { folderCrumbs, frameOf, homeCrumb, missingFrame, type PageFrame } from "../policies/page_frame.ts";
+import { type Crumb, folderCrumbs, frameOf, homeCrumb, missingFrame, type PageFrame } from "../policies/page_frame.ts";
 import type { Canvas } from "../ports/canvas.ts";
 import type { Pages } from "../ports/pages.ts";
 import type { Descriptor, Store } from "../ports/store.ts";
@@ -48,8 +51,14 @@ function drawingOf(parts: DrawingParts, descriptor: Descriptor, page: PageName):
       return folder(parts, descriptor, page.folder);
     case "feature":
       return feature(parts, descriptor, page.page);
-    default:
-      return missing(parts, descriptor);
+    case "tags":
+      return tagIndex(parts, descriptor);
+    case "tag":
+      return tag(parts, descriptor, page.tag);
+    case "steps":
+      return sentences(parts, descriptor);
+    case "search":
+      return search(parts, descriptor, page.words);
   }
 }
 
@@ -79,6 +88,47 @@ async function feature(parts: DrawingParts, descriptor: Descriptor, page: string
   return () => {
     parts.pages.feature(view);
     return frameOf(descriptor.title, view.title, view.lang, folderCrumbs(entry.page), { kind: "feature", page }, view.heading);
+  };
+}
+
+/** The crumb of the index of tags, under the home page's. */
+function tagIndexCrumb(parts: DrawingParts): Crumb {
+  return { address: targetAddress({ kind: "tags" }), words: plain(parts.words.text("tag-index-title")), lang: null };
+}
+
+async function tagIndex(parts: DrawingParts, descriptor: Descriptor): Promise<() => PageFrame> {
+  const view = tagIndexView(parts.words, descriptor, await loadedFeatures(parts.store, descriptor));
+  return () => {
+    parts.pages.tagIndex(view);
+    return { title: view.title, lang: "en", crumbs: [homeCrumb(descriptor.title), tagIndexCrumb(parts)] };
+  };
+}
+
+async function tag(parts: DrawingParts, descriptor: Descriptor, name: string): Promise<() => PageFrame> {
+  const view = tagPageView(parts.words, descriptor, await loadedFeatures(parts.store, descriptor), name);
+  if (view === null) {
+    return missing(parts, descriptor);
+  }
+  return () => {
+    parts.pages.tag(view);
+    return frameOf(descriptor.title, view.title, "en", [tagIndexCrumb(parts)], { kind: "tag", tag: name }, view.heading);
+  };
+}
+
+async function sentences(parts: DrawingParts, descriptor: Descriptor): Promise<() => PageFrame> {
+  const view = sentencesView(parts.words, descriptor, await loadedFeatures(parts.store, descriptor));
+  return () => {
+    parts.pages.sentences(view);
+    return frameOf(descriptor.title, view.title, "en", [], { kind: "steps" }, plain(view.heading));
+  };
+}
+
+function search(parts: DrawingParts, descriptor: Descriptor, words: string): () => PageFrame {
+  const view = searchPageView(parts.words, descriptor.title, words);
+  return () => {
+    parts.pages.search(view);
+    // The breadcrumb's own link reads the same whatever the words searched for.
+    return frameOf(descriptor.title, view.title, "en", [], { kind: "search", words: "" }, plain(view.heading));
   };
 }
 

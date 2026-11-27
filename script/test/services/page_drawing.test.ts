@@ -14,6 +14,7 @@ import { billingDescriptor, closedObject } from "../support/billing_store.ts";
 import { emptyDocument, words } from "../support/drawn_pages.ts";
 import { MemoryStore } from "../support/memory_store.ts";
 import { refundsDescriptor, refundsObject } from "../support/refunds_store.ts";
+import { tagsDescriptor, tagsFeatures } from "../support/tags_store.ts";
 
 /** Draws `page` of the site `descriptor` describes, in a document whose `main` holds `frontPage`. */
 async function drawn(page: PageName, descriptor: Descriptor = refundsDescriptor, frontPage = ""): Promise<{ readonly document: Document; readonly frame: PageFrame }> {
@@ -104,4 +105,71 @@ test("the home page of a shell that holds no front page is drawn as its folder's
 test("a folder no feature is in draws the page that says nothing is there", async () => {
   const { document } = await drawn({ kind: "folder", folder: "nowhere/" });
   assert.equal(document.querySelector("main h1")!.textContent, "Nothing is at this address");
+});
+
+/** A drawing of the pages of tests/fixtures/tags, in `document`. */
+function taggedDrawing(document: Document): (page: PageName) => Promise<PageFrame> {
+  const make = new ElementBuilder(document);
+  const canvas = DomCanvas.of(make)!;
+  const objects = Object.fromEntries(tagsFeatures.map((feature) => [feature.entry.object, feature.object]));
+  const draw = pageDrawing({ store: new MemoryStore(tagsDescriptor, objects), words, pages: new DomPages(make, canvas, words), canvas });
+  return async (page) => (await draw(page))();
+}
+
+async function drawnTagged(page: PageName): Promise<{ readonly document: Document; readonly frame: PageFrame }> {
+  const document = emptyDocument();
+  return { document, frame: await taggedDrawing(document)(page) };
+}
+
+const crumbsOf = (frame: PageFrame): string[][] => frame.crumbs.map((crumb) => [crumb.address, crumb.words.map((part) => part.text).join("")]);
+
+// Rule 105: the index of tags and a tag's page, in English, below the home page and the index.
+test("the index of tags and a tag's page are drawn with their titles and breadcrumbs", async () => {
+  const index = await drawnTagged({ kind: "tags" });
+  assert.equal(index.frame.title, "Tags");
+  assert.equal(index.frame.lang, "en");
+  assert.deepEqual(crumbsOf(index.frame), [
+    ["#", "Tagged suite"],
+    ["#tags/", "Tags"],
+  ]);
+  const tagged = await drawnTagged({ kind: "tag", tag: "needs-db" });
+  assert.equal(tagged.document.querySelector("main h1")!.textContent, "Tag @needs:db");
+  assert.equal(tagged.frame.title, "Tag @needs:db");
+  assert.deepEqual(crumbsOf(tagged.frame), [
+    ["#", "Tagged suite"],
+    ["#tags/", "Tags"],
+    ["#tags/needs-db", "Tag @needs:db"],
+  ]);
+  const missing = await drawnTagged({ kind: "tag", tag: "nowhere" });
+  assert.equal(missing.document.querySelector("main h1")!.textContent, "Nothing is at this address");
+});
+
+// Rule 143: the page of step sentences, below the home page.
+test("the page of step sentences is drawn with its title and breadcrumb", async () => {
+  const { frame } = await drawnTagged({ kind: "steps" });
+  assert.equal(frame.title, "Step sentences, Tagged suite");
+  assert.deepEqual(crumbsOf(frame), [
+    ["#", "Tagged suite"],
+    ["#steps", "Step sentences"],
+  ]);
+});
+
+// Rules 216 and 217: the page of search results holds the shell's search box under its `h1`, until another page is drawn.
+test("the page of search results holds the search box, which another page puts back", async () => {
+  const document = emptyDocument();
+  document.querySelector("main")!.before(Object.assign(document.createElement("form"), { className: "ghg-search" }));
+  const draw = taggedDrawing(document);
+  const frame = await draw({ kind: "search", words: "open  " });
+  assert.equal(frame.title, 'Results for "open", Tagged suite');
+  assert.deepEqual(crumbsOf(frame), [
+    ["#", "Tagged suite"],
+    ["#search", "Search results"],
+  ]);
+  assert.deepEqual(
+    [...document.querySelector("main")!.children].map((element) => element.className),
+    ["ghg-search-heading", "ghg-search", "ghg-results-status", "ghg-search-groups"],
+  );
+  await draw({ kind: "steps" });
+  assert.equal(document.querySelector("form.ghg-search")!.nextElementSibling, document.querySelector("main"));
+  assert.equal((await draw({ kind: "search", words: "" })).title, "Search results, Tagged suite");
 });

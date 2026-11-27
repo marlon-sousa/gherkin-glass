@@ -2,7 +2,7 @@
 
 import type { SearchDocument } from "../ports/documents.ts";
 import type { Piece, Result, SearchWords } from "../ports/search_box.ts";
-import { address, resultsPage } from "./search_index.ts";
+import { type SearchAddresses, WRITTEN_ADDRESSES } from "./search_index.ts";
 
 export const PAUSE_MILLISECONDS = 300;
 
@@ -14,17 +14,17 @@ export function status(words: SearchWords, count: number): string {
   return template.replaceAll("{count}", String(count));
 }
 
-export function result(words: SearchWords, document: SearchDocument): Result {
-  return { label: label(words, document), address: address(document) };
+export function result(words: SearchWords, document: SearchDocument, addresses: SearchAddresses = WRITTEN_ADDRESSES): Result {
+  return { label: label(words, document), address: addresses.entry(document) };
 }
 
 /** The link to the page of search results for `text`, or null when it holds only spaces. */
-export function allResults(words: SearchWords, text: string): Result | null {
+export function allResults(words: SearchWords, text: string, addresses: SearchAddresses = WRITTEN_ADDRESSES): Result | null {
   const searched = text.trim();
   if (searched === "") {
     return null;
   }
-  return { label: filled(words.allResults, { "{words}": { text: searched, isName: true } }), address: resultsPage(searched) };
+  return { label: filled(words.allResults, { "{words}": { text: searched, isName: true } }), address: addresses.results(searched) };
 }
 
 /**

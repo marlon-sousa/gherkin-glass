@@ -12,6 +12,7 @@ import { DomSearchBox } from "../../src/adapters/dom_search_box.ts";
 import { DomSearchPage } from "../../src/adapters/dom_search_page.ts";
 import { startSearching } from "../../src/services/searching.ts";
 import { startListing } from "../../src/services/results_listing.ts";
+import { SHELL_ADDRESSES } from "../../src/policies/search_index.ts";
 import type { SearchDocument } from "../../src/ports/documents.ts";
 
 const SITE = new URL("../../../tests/fixtures/pages/expected/", import.meta.url);
@@ -88,4 +89,15 @@ test("the search box, started after the page fills its field, links to and goes 
   assert.equal(page.field.getAttribute("aria-expanded"), "false");
   page.field.dispatchEvent(new page.window.KeyboardEvent("keydown", { key: "Enter", cancelable: true }) as unknown as Event);
   assert.deepEqual(went, ["search.html?q=refund"]);
+});
+
+// Rule 237: in a shell, the words are those after `#search?q=`, which the script reads and gives the page.
+test("a shell's page of search results lists the words it is given, at the shell's addresses", async () => {
+  const window = new Window({ url: "https://example.com/site/index.html#search?q=ignored" });
+  window.document.write(readFileSync(new URL("search.html", SITE), "utf8"));
+  const document = window.document as unknown as Document;
+  const found = (JSON.parse(readFileSync(new URL("assets/search.json", SITE), "utf8")) as SearchDocument[]).map((entry) => ({ ...entry, page: entry.page.replace(/\.html$/, "") }));
+  await startListing(DomSearchPage.find(document, "refund")!, { load: () => Promise.resolve(found) }, SHELL_ADDRESSES);
+  assert.equal((document.querySelector(".ghg-search-field") as HTMLInputElement).value, "refund");
+  assert.equal(document.querySelector(".ghg-search-groups h2 a")?.getAttribute("href"), "#billing/refunds");
 });

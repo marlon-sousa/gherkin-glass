@@ -8,20 +8,22 @@ export class DomSearchPage implements SearchPage {
   private readonly field: HTMLInputElement;
   private readonly status: HTMLElement;
   private readonly groups: HTMLElement;
+  private readonly searchedWords: string | null;
 
-  /** Null when the page is not the page of search results, or not the whole of one. */
-  static find(document: Document): DomSearchPage | null {
+  /** Null when the page is not the page of search results, or not the whole of one; `searched`, when given, is the words of a shell's address. */
+  static find(document: Document, searched: string | null = null): DomSearchPage | null {
     const heading = document.querySelector<HTMLElement>("h1.ghg-search-heading");
     const field = document.querySelector<HTMLInputElement>("form.ghg-search input.ghg-search-field");
     const status = document.querySelector<HTMLElement>(".ghg-results-status");
     const groups = document.querySelector<HTMLElement>(".ghg-search-groups");
     if (heading && field && status && groups) {
-      return new DomSearchPage(document, heading, field, status, groups);
+      return new DomSearchPage(document, heading, field, status, groups, searched);
     }
     return null;
   }
 
-  private constructor(document: Document, heading: HTMLElement, field: HTMLInputElement, status: HTMLElement, groups: HTMLElement) {
+  private constructor(document: Document, heading: HTMLElement, field: HTMLInputElement, status: HTMLElement, groups: HTMLElement, searched: string | null) {
+    this.searchedWords = searched;
     this.document = document;
     this.heading = heading;
     this.field = field;
@@ -62,6 +64,9 @@ export class DomSearchPage implements SearchPage {
   }
 
   searched(): string {
+    if (this.searchedWords !== null) {
+      return this.searchedWords;
+    }
     const address = this.document.defaultView?.location.href ?? "";
     return new URL(address, "https://example.invalid/").searchParams.get("q") ?? "";
   }

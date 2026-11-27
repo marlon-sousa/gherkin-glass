@@ -55,8 +55,8 @@ export interface SearchBox {
   choose(place: number | null): void;
   /** Shows the link to the page of search results, or hides it for null. */
   showAllResults(link: Result | null): void;
-  /** Empties the field. */
-  clear(): void;
+  /** Puts `text` in the field, as the reader would have typed it. */
+  fill(text: string): void;
   /** Opens `address`, relative to the site's root. */
   go(address: string): void;
 }

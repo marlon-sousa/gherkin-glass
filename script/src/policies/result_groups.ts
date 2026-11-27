@@ -2,7 +2,7 @@
 
 import type { SearchDocument } from "../ports/documents.ts";
 import type { KindHeadings, ListedResult, PageWords, Part, ResultGroup, Run } from "../ports/search_page.ts";
-import { type Field, type Found, address, holdsMatch, marked } from "./search_index.ts";
+import { type Field, type Found, type SearchAddresses, WRITTEN_ADDRESSES, holdsMatch, marked } from "./search_index.ts";
 
 /** The page's heading and title for `text`, the words of its address without the spaces at either end. */
 export function searchedHeading(words: PageWords, text: string): { heading: Part[]; title: string } {
@@ -21,22 +21,22 @@ export function pageStatus(words: PageWords, groups: readonly ResultGroup[]): st
 }
 
 /** `found`, best match first, grouped by feature, the groups in the order of their best result. */
-export function groupedResults(words: PageWords, found: readonly Found[]): ResultGroup[] {
+export function groupedResults(words: PageWords, found: readonly Found[], addresses: SearchAddresses = WRITTEN_ADDRESSES): ResultGroup[] {
   const groups = new Map<string, { heading: Part[]; address: string; results: ListedResult[] }>();
   for (const one of found) {
     const page = one.document.page;
-    const group = groups.get(page) ?? { heading: featureHeading(words.headings, one.document), address: address({ ...one.document, anchor: "" }), results: [] };
-    group.results.push(listed(words, one));
+    const group = groups.get(page) ?? { heading: featureHeading(words.headings, one.document), address: addresses.entry({ ...one.document, anchor: "" }), results: [] };
+    group.results.push(listed(words, one, addresses));
     groups.set(page, group);
   }
   return [...groups.values()];
 }
 
-function listed(words: PageWords, { document, matched }: Found): ListedResult {
+function listed(words: PageWords, { document, matched }: Found, addresses: SearchAddresses): ListedResult {
   const marks = (field: Field) => (text: string) => marked(text, matched.get(field));
   return {
     heading: blockHeading(words.headings, document, marks("name")(document.name)),
-    address: address(document),
+    address: addresses.entry(document),
     within: within(words, document),
     steps: document.steps.map(marks("steps")).filter(holdsMatch),
     tags: document.tags.map(marks("tags")).filter(holdsMatch),

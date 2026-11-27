@@ -21,9 +21,11 @@ import { MediaWidth } from "./adapters/media_width.ts";
 import { WindowTimer } from "./adapters/window_timer.ts";
 import { targetAddress } from "./policies/address.ts";
 import { siteRoot } from "./policies/background_form.ts";
+import { SHELL_ADDRESSES } from "./policies/search_index.ts";
 import { NARROW, pageAddress } from "./policies/tree_state.ts";
 import { startCollapsing } from "./services/collapsing.ts";
 import { startFolderTree } from "./services/folder_tree.ts";
+import { storeDocuments } from "./services/loaded_features.ts";
 import { pageDrawing } from "./services/page_drawing.ts";
 import { startNoteExplaining } from "./services/note_explaining.ts";
 import { startNavigation } from "./services/navigation.ts";
@@ -103,6 +105,9 @@ function startShell(descriptorPath: string): void {
     memory,
     sitePath: shellPath,
   });
+  const documents = storeDocuments(store);
+  const searchBox = DomSearchBox.find(document);
+  const fillSearch = searchBox === null ? null : startSearching(searchBox, documents, new WindowTimer(), SHELL_ADDRESSES);
   void startNavigation({
     canvas,
     address: new DomAddress(window),
@@ -110,6 +115,13 @@ function startShell(descriptorPath: string): void {
     draw: pageDrawing({ store, words, pages: new DomPages(make, canvas, words), canvas }),
     behave: (page) => {
       tree.show(page);
+      if (page.kind === "search") {
+        fillSearch?.(page.words);
+        const searchPage = DomSearchPage.find(document, page.words);
+        if (searchPage !== null) {
+          void startListing(searchPage, documents, SHELL_ADDRESSES);
+        }
+      }
       const backgrounds = DomBackgrounds.of(document);
       const reveal = startCollapsing(new DomPage(document, canvas.main, false), memory, `${shellPath}${targetAddress(page)}`, backgrounds && { backgrounds, siteRoot: root.pathname });
       const noteDialog = DomNoteDialog.of(document);
