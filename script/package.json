@@ -3,14 +3,17 @@
   "private": true,
   "description": "The script of the pages gherkin-glass writes, compiled into assets/gherkin-glass.js.",
   "type": "module",
+  "imports": {
+    "#jsx/jsx-runtime": "./src/adapters/jsx/jsx_runtime.ts"
+  },
   "engines": {
     "node": "22.23.4"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "node --import tsx --test \"test/**/*.test.ts\"",
+    "test": "node --import tsx --test \"test/**/*.test.{ts,tsx}\"",
     "licenses": "node --import tsx tools/third_party_licenses.ts",
-    "bundle": "esbuild src/main.ts --bundle --minify --format=esm --target=es2022 --charset=utf8 --legal-comments=none \"--banner:js=// Compiled from script/ by cargo xtask build. Do not edit: change script/src and build again.\"",
+    "bundle": "esbuild src/main.ts --bundle --minify --format=esm --target=es2022 --jsx=automatic --jsx-import-source=#jsx --charset=utf8 --legal-comments=none \"--banner:js=// Compiled from script/ by cargo xtask build. Do not edit: change script/src and build again.\"",
     "draw": "node --import tsx tools/drawn_pages.ts"
   },
   "devDependencies": {

@@ -8,6 +8,8 @@
     "strict": true,
     "skipLibCheck": true,
     "noEmit": true,
+    "jsx": "react-jsx",
+    "jsxImportSource": "#jsx",
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
     "noUnusedLocals": true,
