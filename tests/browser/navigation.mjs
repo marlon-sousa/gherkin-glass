@@ -6,7 +6,9 @@
 // anchor of another page and one of the page shown, and the skip link, each
 // leave the focus, the title, the live region, the address and the scroll as
 // the rule says. Every page drawn is held to the rules of "Accessibility" in
-// the light and the dark colour scheme.
+// the light and the dark colour scheme. A shell holding a front page puts it
+// back, and the search box with it, after other pages; a version's shell
+// opens its lists in other versions, held to the same rules.
 //
 // Run from the repository's root, after npm ci in script/ and cargo xtask
 // build, with Playwright's Chromium installed:
@@ -48,6 +50,8 @@ const seen = (page) =>
   });
 
 const site = await serveShellSite();
+const frontPageSite = await serveShellSite({ frontPage: "<h1>Banking</h1><p>The features of the bank.</p>" });
+const versionSite = await serveShellSite({ versioned: true });
 const browser = await chromium.launch();
 try {
   for (const scheme of ["light", "dark"]) {
@@ -150,11 +154,39 @@ try {
     await page.waitForTimeout(SETTLED);
     const back = await page.evaluate(() => document.querySelector("form.ghg-search")?.nextElementSibling?.id);
     if (back !== "ghg_main") problems.push(`${scheme}: the search box is not put back before the main`);
+
+    // A version's feature page: its lists in other versions open, and are held to the rules.
+    await page.goto(`${versionSite.address}#billing/refunds`);
+    await page.waitForTimeout(SETTLED);
+    const opener = page.locator("main h1 + .ghg-other-versions > button");
+    await opener.click();
+    const expanded = await opener.getAttribute("aria-expanded");
+    if (expanded !== "true") problems.push(`${scheme}: the page's list in other versions is not expanded once its button is pressed`);
+    await page.locator(".ghg-block .ghg-other-versions > button:visible").first().click();
+    await check("a version's feature page, its lists open");
     await context.close();
+  }
+
+  // A shell holding a front page puts it back after other pages, as it arrived, the search box back in its place.
+  const page = await browser.newPage();
+  page.on("pageerror", (error) => problems.push(`the front page's shell: the script threw: ${error.message}`));
+  await page.goto(`${frontPageSite.address}#`);
+  await page.waitForTimeout(SETTLED);
+  expect("the front page, opened", await seen(page), { heading: "Banking", title: "Banking & <more>" });
+  for (const hash of ["#search?q=refund", "#billing/", "#search?q=refund"]) {
+    await page.evaluate((to) => (location.hash = to), hash);
+    await page.waitForTimeout(SETTLED);
+    await page.evaluate(() => (location.hash = "#"));
+    await page.waitForTimeout(SETTLED);
+    expect(`the front page, after ${hash}`, await seen(page), { heading: "Banking", title: "Banking & <more>", focus: "h1", said: "Banking & <more>" });
+    const shape = await page.evaluate(() => ({ headings: document.querySelectorAll("main h1").length, box: document.querySelector("form.ghg-search")?.nextElementSibling?.id ?? null }));
+    expect(`the front page, after ${hash}`, shape, { headings: 1, box: "ghg_main" });
   }
 } finally {
   await browser.close();
   await site.stop();
+  await frontPageSite.stop();
+  await versionSite.stop();
 }
 assert.deepEqual(problems, [], `navigation in a shell:\n${problems.join("\n")}`);
 console.log("Navigation in a shell: the focus, the title, the live region and the scroll are as rule 240 says.");
