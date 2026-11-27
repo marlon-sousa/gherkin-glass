@@ -69,6 +69,8 @@ try {
   const topOf = (id) =>
     // `+ 0` turns the -0 of a top a fraction of a pixel above the window into 0.
     page.evaluate((id) => Math.round(document.getElementById(id).getBoundingClientRect().top) + 0, id);
+  // The room rule 240 keeps above a heading scrolled to the top, for the ring of the focus.
+  const room = (id) => page.evaluate((id) => Math.round(parseFloat(getComputedStyle(document.getElementById(id)).scrollMarginTop)), id);
 
   await page.goto(`${address}index.html#many-scenarios`);
   await page.waitForFunction(() => !document.getElementById("ghg_main")?.hasAttribute("aria-busy"));
@@ -83,7 +85,8 @@ try {
   assert.ok((await topOf(heading(3))) < 0, "focus case, heading 3 above the window");
   await rebuild();
   assert.equal((await where()).focused, heading(4), "focus case");
-  assert.equal(await topOf(heading(4)), 0, "focus case, scrolled to the heading");
+  assert.ok((await room(heading(4))) > 0, "focus case, room above the heading");
+  assert.equal(await topOf(heading(4)), await room(heading(4)), "focus case, scrolled to the heading");
 
   // Scrolled on with the mouse, the focused heading out of the window: the scroll counts.
   await page.evaluate((id) => {
@@ -92,7 +95,7 @@ try {
   }, heading(7));
   await rebuild();
   assert.equal((await where()).focused, heading(7), "scroll case");
-  assert.equal(await topOf(heading(7)), 0, "scroll case, scrolled to the heading");
+  assert.equal(await topOf(heading(7)), await room(heading(7)), "scroll case, scrolled to the heading");
 
   // At the top, with nothing focused: the page opens as any page does.
   await page.evaluate(() => {

@@ -75,7 +75,8 @@ export class DomCanvas implements Canvas {
   focusHeading(): void {
     const heading = this.main.querySelector<HTMLElement>("h1");
     if (heading !== null) {
-      focusAndShow(heading);
+      takeFocus(heading);
+      this.document.defaultView?.scrollTo(0, 0);
     }
   }
 
@@ -120,10 +121,14 @@ export class DomCanvas implements Canvas {
 }
 
 /** An element that is not a link, a button or a field takes the focus from a script only with `tabindex`. */
-function focusAndShow(element: HTMLElement): void {
+function takeFocus(element: HTMLElement): void {
   if (!element.hasAttribute("tabindex") && !element.matches("a[href], button, input, select, textarea, summary")) {
     element.setAttribute("tabindex", "-1");
   }
   element.focus({ preventScroll: true });
+}
+
+function focusAndShow(element: HTMLElement): void {
+  takeFocus(element);
   element.scrollIntoView({ block: "start" });
 }

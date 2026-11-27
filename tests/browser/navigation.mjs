@@ -44,6 +44,9 @@ const seen = (page) =>
       said: document.getElementById("ghg_announcement")?.textContent ?? null,
       focus: focused === document.body ? "body" : focused?.id ? `#${focused.id}` : focused?.tagName.toLowerCase(),
       inView: box !== undefined && box.top > -1 && box.top < window.innerHeight,
+      atTop: scrollY === 0,
+      ringInView: box !== undefined && box.top >= 5,
+      ringsInside: [...(focused?.querySelectorAll(".ghg-toggle") ?? [])].map((toggle) => getComputedStyle(toggle).outlineStyle),
       hash: location.hash,
       busy: document.querySelector("main")?.getAttribute("aria-busy") ?? null,
       lang: document.documentElement.lang,
@@ -88,7 +91,7 @@ try {
     await page.goto(`${site.address}index.html#billing/refunds#store-credit`);
     await page.reload();
     await page.waitForTimeout(SETTLED);
-    expect(`${scheme}, opened at an anchor`, await seen(page), { focus: "#store-credit", inView: true, said: "" });
+    expect(`${scheme}, opened at an anchor`, await seen(page), { focus: "#store-credit", inView: true, ringInView: true, ringsInside: ["none"], said: "" });
 
     // A link of the breadcrumb, outside the main: the title is said and the focus is on the h1.
     await page.click('nav.ghg-breadcrumb a[href="#billing/"]');
@@ -99,6 +102,7 @@ try {
       said: "billing, Banking & <more>",
       focus: "h1",
       inView: true,
+      atTop: true,
       hash: "#billing/",
     });
     await check("a folder's page");
