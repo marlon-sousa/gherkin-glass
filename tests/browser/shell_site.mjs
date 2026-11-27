@@ -3,7 +3,8 @@
 // a page ghg wrote, tests/fixtures/pages/expected/billing/refunds.html, the
 // script and the stylesheet of assets/, and a store holding the data of the
 // script's own tests, script/test/support/, served over HTTP from a
-// temporary folder.
+// temporary folder. The shell may hold a front page, and may be a version's,
+// with an older version of the refunds' page in the store.
 
 import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { createServer } from "node:http";
@@ -21,8 +22,8 @@ const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", "
 /** The features of the shell, each with its object. */
 export const FEATURES = [...billingFeatures, { entry: outlinesEntry, object: outlinesObject }];
 
-/** The shell's layout, its `main`, breadcrumb and tree emptied, its links to the shared assets and its words for the script. */
-function shell() {
+/** The shell's layout, its `main` holding `frontPage`, its breadcrumb and tree emptied, its links to the shared assets and its words for the script. */
+function shell(frontPage) {
   const layout = readFileSync(resolve("tests/fixtures/pages/expected/billing/refunds.html"), "utf8");
   const messages = readFileSync(resolve("messages/en/gherkin-glass.ftl"), "utf8");
   return layout
@@ -34,23 +35,42 @@ function shell() {
     .replace('href="#ghg_main"', 'href="##ghg_main"')
     .replace('data-root="../"', 'data-root=""')
     .replace('href="../search.html"', 'href="#search"')
-    .replace(/<main id="ghg_main">[\s\S]*<\/main>/, `<main id="ghg_main" tabindex="-1" aria-busy="true"></main>\n<p id="ghg_announcement" role="status"></p>\n<script type="text/plain" id="ghg_messages">${messages}</script>`);
+    .replace(/<main id="ghg_main">[\s\S]*<\/main>/, `<main id="ghg_main" tabindex="-1" aria-busy="true">${frontPage}</main>\n<p id="ghg_announcement" role="status"></p>\n<script type="text/plain" id="ghg_messages">${messages}</script>`);
+}
+
+/** The store of a version, v1.0.0, whose refunds' page in `main` has another feature's hash and its first scenario changed. */
+function versionFiles(folder) {
+  const refunds = FEATURES.find((feature) => feature.entry.page === "billing/refunds");
+  const older = structuredClone(refunds.object);
+  older.feature.hash = "changed";
+  const changed = older.feature.blocks.find((block) => block.kind === "scenario");
+  if (changed !== undefined) changed.hash = "changed";
+  writeFileSync(join(folder, "data/objects/refunds-main.json"), JSON.stringify(older));
+  writeFileSync(join(folder, "data/versions.json"), JSON.stringify({ format: 1, development: ["main"], releases: ["v1.0.0"], pre_releases: [], precedence: [["v1.0.0"]] }));
+  const objects = [
+    { object: refunds.entry.object, versions: ["v1.0.0"] },
+    { object: "refunds-main", versions: ["main"] },
+  ];
+  writeFileSync(join(folder, "data/pages.json"), JSON.stringify({ format: 1, pages: [{ page: "billing/refunds", objects }] }));
 }
 
 /** Writes the site into a new temporary folder, serves it, and resolves with its address and a way to stop. */
-export async function serveShellSite() {
+export async function serveShellSite({ frontPage = "", versioned = false } = {}) {
   const folder = mkdtempSync(join(tmpdir(), "ghg-shell-"));
   mkdirSync(join(folder, ASSETS), { recursive: true });
   mkdirSync(join(folder, "data/objects"), { recursive: true });
   for (const file of ["gherkin-glass.js", "gherkin-glass.css", "gherkin-glass.svg"]) {
     copyFileSync(resolve("assets", file), join(folder, ASSETS, file));
   }
-  writeFileSync(join(folder, "index.html"), shell());
+  writeFileSync(join(folder, "index.html"), shell(frontPage));
   const site = descriptor(
     "Banking & <more>",
     FEATURES.map((feature) => feature.entry),
-    { tags: refundsTags },
+    { tags: refundsTags, version: versioned ? "v1.0.0" : null },
   );
+  if (versioned) {
+    versionFiles(folder);
+  }
   writeFileSync(join(folder, "data/site.json"), JSON.stringify(site));
   for (const { entry, object } of FEATURES) {
     writeFileSync(join(folder, "data/objects", `${entry.object}.json`), JSON.stringify(object));
