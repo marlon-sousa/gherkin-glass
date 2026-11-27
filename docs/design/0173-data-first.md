@@ -1,6 +1,6 @@
 # 0173: Data first
 
-Decided by the maintainer between 2026-11-25 and 2026-11-26, recorded in issue [#173](https://github.com/marlon-sousa/gherkin-glass/issues/173), whose body holds every point under "Agreed", and in its comments "Decided so far". It is gherkin-glass 2.0. [#167](https://github.com/marlon-sousa/gherkin-glass/issues/167), [#168](https://github.com/marlon-sousa/gherkin-glass/issues/168) and [#169](https://github.com/marlon-sousa/gherkin-glass/issues/169) move into it.
+Decided by the maintainer between 2026-11-25 and 2026-11-27, recorded in issue [#173](https://github.com/marlon-sousa/gherkin-glass/issues/173), whose body holds every point under "Agreed", and in its comments "Decided so far". It is gherkin-glass 2.0. [#167](https://github.com/marlon-sousa/gherkin-glass/issues/167), [#168](https://github.com/marlon-sousa/gherkin-glass/issues/168) and [#169](https://github.com/marlon-sousa/gherkin-glass/issues/169) move into it.
 
 ## Decision
 
@@ -10,7 +10,7 @@ A site stores each feature file's content once, shared by every version and prev
 - **One shell for each version, preview and site without versions**, its `index.html`, from which the script draws every page but the front page. The versions page stays a whole page of HTML, and the front page of a site without versions arrives in its shell's `main`.
 - **One store**, `data/`, at the output folder's root: an object for each feature file's content, named by the SHA-256 of its bytes; a descriptor for each version, preview or site; the list of versions; and the index of pages across versions. Each build removes what no descriptor references.
 - **One format number for the whole store**, converted forward as ghg builds, never read by an older ghg.
-- **One marker**, `ghg-site.json`, for every output folder; what it holds follows from its descriptors. An output folder of gherkin-glass 1 is refused, and the project site's `gh-pages` starts again at 2.0.0.
+- **One marker**, `ghg-site.json`, for every output folder; what it holds follows from its descriptors. An output folder of gherkin-glass 1 is refused, and the first release of 2.0 rebuilds the project site's `gh-pages`, adding again every version it held, each from its own tag, with ghg 2.
 - **Commands for versions and previews**: `ghg version add` and `remove`, and `ghg preview add` and `remove`. `ghg build` always builds a site without versions. `version_name`, `--version-name` and `--preview` go away.
 - **Only real clashes stop a build.** A page is a name, not a file, so the clashes that came from files, `index.feature` against a folder's page and names that differ only in case, go away.
 
@@ -70,7 +70,7 @@ No framework, since a page is drawn and replaced whole, the focus must stay the 
 - **A small file at every old address**, for compatibility with 1.x. Set aside: no one publishes with ghg 1 but the project site.
 - **Step sentences as objects of their own.** On itinera's `main`, 2,686 step uses have 310 sentences, a step's text is 35 bytes at the median, shorter than a hash, and one file per sentence would cost the step sentences page 310 requests. So each step carries its sentence.
 - **A store folder named `_data`.** A host that runs Jekyll leaves out folders starting with `_` unless the site has `.nojekyll`.
-- **Rebuilding every 1.x release of the project site with ghg 2.** Those pages would show what 2.0 draws, not what each release drew, and every old address breaks either way.
+- **Starting the project site afresh at 2.0, holding only its new version.** Set aside for rebuilding every 1.x release with ghg 2, so that the site still shows every release, though each as 2.0 draws its suite, not as its own ghg drew it; every old address breaks either way.
 - **Keeping a 1.x folder's versions as frozen versions** beside the 2.0 ones, listed on the versions page but never converted. Set aside: 2.0 breaks compatibility, and its README shows how to rebuild a versioned site instead, by adding each tag again with `ghg version add`.
 
 ## Measured
