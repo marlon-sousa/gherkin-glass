@@ -18,8 +18,9 @@ pub(crate) trait OutputFolders: Send + Sync {
     ) -> IoResult<OutputContents>;
 
     /// The text of the file at `file`, a `/`-joined path below `output`, which is
-    /// read only when it is a file, never through a link.
-    fn read(&self, output: &Path, file: &str) -> IoResult<String>;
+    /// read only when it is a file, never through a link; `None` when it is a folder or a
+    /// link.
+    fn read(&self, output: &Path, file: &str) -> IoResult<Option<String>>;
 
     /// Removes what is at `path`, a file, a link or a folder with all in it,
     /// never following a link; nothing when there is nothing there.

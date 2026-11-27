@@ -143,12 +143,17 @@ fn a_replaced_version_removes_the_object_nothing_references_between_two_markers(
     assert!(data.contains("data/versions/main.json"));
 }
 
-// Rule 252: a descriptor that cannot be read is no site ghg built.
+// Until the store's formats are converted, a descriptor that is not one of the store's format is
+// no site ghg built, since it could name objects that would otherwise be removed.
 #[test]
 fn a_descriptor_that_cannot_be_parsed_stops_the_build() {
     let folders = two_stored_versions();
+    let mut texts = folders.texts.clone();
+    if let Some((_, text)) = texts.first_mut() {
+        *text = "{".to_string();
+    }
     let unparsed = Arc::new(FakeFolders {
-        texts: vec![("data/versions/main.json", "{".to_string())],
+        texts,
         looks: Mutex::new(folders.looks.lock().expect("lock").clone()),
         ..FakeFolders::default()
     });

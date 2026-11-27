@@ -9,6 +9,8 @@ use std::fs::{copy, create_dir_all, read, read_dir, read_to_string, remove_dir_a
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
+#[path = "support/history_builds.rs"]
+mod history_builds;
 #[path = "support/site_files.rs"]
 #[expect(
     dead_code,
@@ -20,6 +22,7 @@ mod store_json;
 #[path = "support/version_placeholder.rs"]
 mod version_placeholder;
 
+use history_builds::HISTORY_BUILDS;
 use site_files::assert_same_store;
 use version_placeholder::with_version_placeholder;
 
@@ -373,16 +376,6 @@ fn previews_cannot_be_a_version_name() {
 }
 
 // The store of a history of versions: rules 247, 251, 253, 254 and 255.
-
-/// The history's builds, in order: each suite, and the version it is built as, as `cargo xtask
-/// build` makes them.
-const HISTORY_BUILDS: [(&str, &str); 5] = [
-    ("first", "v1.0.0"),
-    ("moved", "v1.1.0"),
-    ("changed", "v2.0.0"),
-    ("draft", "main"),
-    ("first", "main"),
-];
 
 // Rules 247 and 251: `moved` differs from `first` only by comments, blank lines and moved
 // blocks, so they share their objects; `changed` and `draft` differ from it by one step each.

@@ -1,13 +1,13 @@
 use rstest::rstest;
 
 use super::*;
-use crate::entities::{StepKind, StepPart};
+use crate::entities::{ObjectStep, StepKind, StepPart};
 use crate::test_support::parsed_at;
 
 const SUITE: &str = "\
 @shop
 Feature: Refunds
-  A refund gives the money back,
+  A refund gives the money back,   
 
   in the way it was paid.
 
@@ -42,27 +42,40 @@ fn object() -> (FeatureObject, Vec<usize>) {
 }
 
 fn kinds(blocks: &[ObjectBlock]) -> Vec<BlockKind> {
-    blocks.iter().map(|block| block.kind).collect()
+    blocks.iter().map(ObjectBlock::kind).collect()
 }
 
-// Rule 249: a feature's blocks are its background, scenarios and rules, in file order.
+/// The suite's outline, inside its rule: its steps and its examples blocks.
+fn outline() -> (Vec<ObjectStep>, Vec<ObjectExamples>) {
+    let (object, _) = object();
+    let Some(BlockContent::Rule { blocks }) = object.blocks.get(2).map(|rule| &rule.content) else {
+        panic!("the rule");
+    };
+    let Some(BlockContent::Outline { steps, examples }) =
+        blocks.get(1).map(|outline| outline.content.clone())
+    else {
+        panic!("the outline");
+    };
+    (steps, examples)
+}
+
+// Rule 249: a feature's blocks are its background, scenarios and rules, in file order, and a
+// rule's its background and scenarios.
 #[test]
 fn the_feature_holds_its_blocks_in_file_order() {
     let (object, _) = object();
-    let feature = &object.feature;
-    assert_eq!(feature.kind, BlockKind::Feature);
-    assert_eq!(feature.anchor, "");
-    assert_eq!(feature.tags, ["@shop"]);
+    assert_eq!(object.text.tags, ["@shop"]);
     assert_eq!(
-        kinds(&feature.blocks),
+        kinds(&object.blocks),
         [BlockKind::Background, BlockKind::Scenario, BlockKind::Rule]
     );
-    let rule = feature.blocks.get(2).expect("the rule");
+    let Some(BlockContent::Rule { blocks }) = object.blocks.get(2).map(|rule| &rule.content) else {
+        panic!("the rule");
+    };
     assert_eq!(
-        kinds(&rule.blocks),
+        kinds(blocks),
         [BlockKind::Background, BlockKind::ScenarioOutline]
     );
-    assert!(rule.steps.is_empty() && rule.examples.is_empty());
 }
 
 // Rule 252: the lines are the feature's, then every block's, depth first, each followed by
@@ -76,7 +89,7 @@ fn the_lines_run_depth_first_each_block_before_its_examples() {
 #[test]
 fn the_description_drops_trailing_spaces_and_blank_lines() {
     assert_eq!(
-        object().0.feature.description,
+        object().0.text.description,
         "A refund gives the money back,\nin the way it was paid."
     );
 }
@@ -85,24 +98,17 @@ fn the_description_drops_trailing_spaces_and_blank_lines() {
 // whose anchors are numbered across the outline's examples blocks.
 #[test]
 fn an_outline_s_examples_hold_their_place_table_and_runs() {
-    let (object, _) = object();
-    let outline = object
-        .feature
-        .blocks
-        .get(2)
-        .and_then(|rule| rule.blocks.get(1))
-        .expect("the outline");
-    let places: Vec<_> = outline.examples.iter().map(|block| block.place).collect();
-    assert_eq!(places, [Some(1), Some(2)]);
-    let second = outline.examples.get(1).expect("the second examples");
-    assert_eq!(second.tags, ["@big"]);
-    assert_eq!(second.name, "");
+    let (_, examples) = outline();
+    let places: Vec<_> = examples.iter().map(|block| block.place).collect();
+    assert_eq!(places, [1, 2]);
+    let second = examples.get(1).expect("the second examples");
+    assert_eq!(second.text.tags, ["@big"]);
+    assert_eq!(second.text.name, "");
     assert_eq!(
         second.table,
         Some(vec![vec!["value".to_string()], vec!["50".to_string()]])
     );
-    let anchors: Vec<_> = outline
-        .examples
+    let anchors: Vec<_> = examples
         .iter()
         .flat_map(|block| &block.runs)
         .map(|run| run.anchor.as_str())
@@ -113,13 +119,9 @@ fn an_outline_s_examples_hold_their_place_table_and_runs() {
 // Rule 249: a run's steps have the row's values in their text and their tables.
 #[test]
 fn a_run_s_steps_are_filled_with_its_row() {
-    let (object, _) = object();
-    let run = object
-        .feature
-        .blocks
-        .get(2)
-        .and_then(|rule| rule.blocks.get(1))
-        .and_then(|outline| outline.examples.get(1))
+    let (_, examples) = outline();
+    let run = examples
+        .get(1)
         .and_then(|examples| examples.runs.first())
         .expect("the run");
     let step = run.steps.first().expect("its step");
@@ -133,14 +135,8 @@ fn a_run_s_steps_are_filled_with_its_row() {
 // Rule 250: a step holds its keyword with its space, its kind, its sentence and its slots.
 #[test]
 fn a_step_holds_what_ghg_works_out_of_it() {
-    let (object, _) = object();
-    let outline = object
-        .feature
-        .blocks
-        .get(2)
-        .and_then(|rule| rule.blocks.get(1))
-        .expect("the outline");
-    let step = outline.steps.first().expect("its step");
+    let (steps, _) = outline();
+    let step = steps.first().expect("its step");
     assert_eq!(step.keyword, "When ");
     assert_eq!(step.text, "I pay <value> in \"coins\"");
     assert_eq!(step.kind, StepKind::When);
@@ -150,6 +146,28 @@ fn a_step_holds_what_ghg_works_out_of_it() {
     assert_eq!(joined, step.text);
 }
 
+// Rule 250: a keyword the language writes with no space after it keeps none.
+#[test]
+fn a_keyword_without_a_space_keeps_none() {
+    let source = "# language: zh-CN\n功能: 退款\n  场景: 刷卡\n    假如有一张卡\n";
+    let feature = gherkin::Feature::parse(source, gherkin::GherkinEnv::default()).expect("parses");
+    let parsed = ParsedFeature::new(
+        "a.feature".into(),
+        feature,
+        "zh-CN".to_string(),
+        Default::default(),
+    );
+    let (object, _) = feature_object(&parsed);
+    let Some(BlockContent::Scenario { steps }) = object.blocks.first().map(|b| &b.content) else {
+        panic!("the scenario");
+    };
+    let step = steps.first().expect("its step");
+    assert_eq!(
+        (step.keyword.as_str(), step.text.as_str()),
+        ("假如", "有一张卡")
+    );
+}
+
 // Rule 249: `note` is set when a block's keyword differs from its kind's word.
 #[rstest]
 #[case::its_own_word("Scenario: S\n", false)]
@@ -157,8 +175,8 @@ fn a_step_holds_what_ghg_works_out_of_it() {
 fn a_scenario_written_with_another_keyword_has_a_note(#[case] scenario: &str, #[case] note: bool) {
     let text = format!("Feature: F\n  {scenario}    Given x\n");
     let (object, _) = feature_object(&parsed_at("f.feature", &text));
-    let block = object.feature.blocks.first().expect("the scenario");
-    assert_eq!(block.note, note);
+    let block = object.blocks.first().expect("the scenario");
+    assert_eq!(block.text.note, note);
 }
 
 // Rule 248: the language and the page's `lang`.

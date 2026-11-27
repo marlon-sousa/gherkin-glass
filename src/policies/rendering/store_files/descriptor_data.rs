@@ -2,11 +2,11 @@
 
 use serde::Serialize;
 
-use super::{GHG_VERSION, STORE_FORMAT, json_bytes};
 use crate::entities::{
     DescriptorFeature, DescriptorSentences, DescriptorTag, OutsideLink, PageOptions, SiteScope,
     SiteStore, TagLink, VersionName,
 };
+use crate::policies::rendering::{GHG_VERSION, STORE_FORMAT, json_bytes};
 use crate::policies::site_title;
 
 #[derive(Serialize)]

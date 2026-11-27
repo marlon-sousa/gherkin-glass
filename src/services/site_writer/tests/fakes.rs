@@ -71,11 +71,11 @@ impl OutputFolders for FakeFolders {
         look.ok_or_else(|| IoError::new(ErrorKind::PermissionDenied, "denied"))
     }
 
-    fn read(&self, _output: &Path, file: &str) -> IoResult<String> {
+    fn read(&self, _output: &Path, file: &str) -> IoResult<Option<String>> {
         self.texts
             .iter()
             .find(|(path, _)| *path == file)
-            .map(|(_, text)| text.clone())
+            .map(|(_, text)| Some(text.clone()))
             .ok_or_else(|| IoError::new(ErrorKind::NotFound, "not found"))
     }
 

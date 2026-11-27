@@ -6,6 +6,7 @@ use std::path::PathBuf;
 use gherkin::{Feature, GherkinEnv};
 
 use super::*;
+use crate::entities::StepKind;
 use crate::entities::{PageOptions, ParsedFeature, TagNames};
 use crate::policies::site::site_with_feature_pages;
 use crate::test_support::revised;

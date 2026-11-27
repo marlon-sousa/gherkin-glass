@@ -67,6 +67,11 @@ impl ExampleRow<'_> {
         filled
     }
 
+    /// Each of `cells` with this row's values in place of its placeholders.
+    pub(crate) fn fill_cells(&self, cells: &[String]) -> Vec<String> {
+        cells.iter().map(|cell| self.fill(cell)).collect()
+    }
+
     fn value(&self, column: &str) -> Option<&str> {
         if column.is_empty() {
             return None;

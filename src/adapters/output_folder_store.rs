@@ -7,16 +7,13 @@ use std::fs::{
     create_dir_all, read_dir, read_to_string, remove_dir, remove_dir_all, remove_file,
     symlink_metadata, write,
 };
-use std::io::{Error as IoError, ErrorKind, Result as IoResult};
+use std::io::{ErrorKind, Result as IoResult};
 use std::path::Path;
 
 use marker_file::{marker_text, site_record, versions_record};
 
 use crate::entities::{EntryKind, FilePath, KeptInOutput, LetterCase, OutputContents, Record};
 use crate::ports::OutputFolders;
-
-/// What a reason reads for a path of the store that is a folder or a link, which is not read.
-const NOT_A_FILE: &str = "not a file";
 
 #[derive(Debug, Default, Clone, Copy)]
 pub(crate) struct OutputFolderStore;
@@ -61,12 +58,12 @@ impl OutputFolders for OutputFolderStore {
         })
     }
 
-    fn read(&self, output: &Path, file: &str) -> IoResult<String> {
+    fn read(&self, output: &Path, file: &str) -> IoResult<Option<String>> {
         let path = output.join(file);
         if symlink_metadata(&path)?.is_file() {
-            read_to_string(path)
+            read_to_string(path).map(Some)
         } else {
-            Err(IoError::new(ErrorKind::InvalidInput, NOT_A_FILE))
+            Ok(None)
         }
     }
 
@@ -154,5 +151,35 @@ fn marker(output: &Path, name: &str) -> IoResult<Option<String>> {
         Ok(_) => Ok(None),
         Err(error) if error.kind() == ErrorKind::NotFound => Ok(None),
         Err(error) => Err(error),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::fs::create_dir_all;
+
+    use super::*;
+    use crate::test_support::scratch;
+
+    #[test]
+    fn only_a_file_is_read_never_a_folder_nor_a_link() {
+        let output = scratch("output-folder-store-read");
+        create_dir_all(output.join("data/versions/v1.json")).expect("a folder");
+        write(output.join("data/site.json"), "{}").expect("written");
+        let store = OutputFolderStore;
+        assert_eq!(
+            store.read(&output, "data/site.json").ok(),
+            Some(Some("{}".to_string()))
+        );
+        assert_eq!(
+            store.read(&output, "data/versions/v1.json").ok(),
+            Some(None)
+        );
+        #[cfg(unix)]
+        {
+            std::os::unix::fs::symlink(output.join("data/site.json"), output.join("link.json"))
+                .expect("a link");
+            assert_eq!(store.read(&output, "link.json").ok(), Some(None));
+        }
     }
 }

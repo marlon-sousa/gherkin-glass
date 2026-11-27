@@ -18,7 +18,7 @@ use crate::entities::{
 };
 use crate::errors::{BuildError, FrontPageError, FrontPageErrorKind, OutputError, OutputErrorKind};
 use crate::policies::{
-    DescriptorSettings, Moment, output_safety, plan_store, render_site, render_store, store_paths,
+    DescriptorSettings, Moment, output_safety, plan_store, render_site, render_store,
 };
 use crate::ports::{FileReader, FileWriter, OutputFolders};
 
@@ -104,7 +104,7 @@ impl SiteWriter {
         }
         let target = target(settings);
         let mut planned = planned(&target, site);
-        planned.extend(store_paths(&store));
+        planned.extend(store.paths());
         let moment = Moment::Writing { site: &planned };
         let folder = self.check_folder(output, &target, moment, &settings.keep_in_output)?;
         let version = match folder.target() {

@@ -4,8 +4,8 @@ use std::collections::BTreeMap;
 
 use serde::Serialize;
 
-use super::{GHG_VERSION, STORE_FORMAT, json_bytes};
 use crate::entities::{PageOptions, PublishedFeature, VersionList, VersionName};
+use crate::policies::rendering::{GHG_VERSION, STORE_FORMAT, json_bytes};
 use crate::policies::{order_versions, precedence_groups, site_title};
 
 #[derive(Serialize)]
@@ -47,7 +47,7 @@ struct ObjectVersions<'a> {
 
 /// The compact JSON of `data/versions.json` of `versions`, the versions page written with the
 /// settings of every page `options` and the front page's template as it was read, if any.
-pub(crate) fn versions_json(
+pub(super) fn versions_json(
     versions: &BTreeMap<VersionName, Vec<PublishedFeature>>,
     options: &PageOptions,
     front_page: Option<&str>,
@@ -73,7 +73,7 @@ pub(crate) fn versions_json(
 /// The compact JSON of `data/pages.json` of `versions`: each page, sorted by its name folder by
 /// folder, with each object a version has for it, sorted by name, and the versions that have
 /// it, in the order of the versions page.
-pub(crate) fn pages_json(versions: &BTreeMap<VersionName, Vec<PublishedFeature>>) -> Vec<u8> {
+pub(super) fn pages_json(versions: &BTreeMap<VersionName, Vec<PublishedFeature>>) -> Vec<u8> {
     let list = order_versions(versions.keys().cloned());
     let pages = listed(&list)
         .flat_map(|name| uses_of(versions, name))
@@ -155,3 +155,6 @@ fn object_versions<'a>((object, versions): (&&'a str, &Vec<&'a str>)) -> ObjectV
 fn names(versions: &[VersionName]) -> Vec<&str> {
     versions.iter().map(VersionName::as_str).collect()
 }
+
+#[cfg(test)]
+mod tests;

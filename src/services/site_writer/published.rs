@@ -3,41 +3,37 @@
 use std::collections::BTreeSet;
 use std::path::Path;
 
-use crate::entities::{FilePath, PublishedFeature, PublishedStore};
+use crate::entities::{FilePath, PublishedStore};
 use crate::errors::OutputErrorKind;
-use crate::policies::{published_features, store_listing};
+use crate::policies::StoreListing;
 use crate::ports::OutputFolders;
 
 /// What the store among `files`, every file of `output`, holds; `files` is empty when the
-/// build replaces every file it wrote there.
+/// build replaces every file it wrote there. A descriptor that is a folder or a link, or not
+/// one of the store's format, makes the folder no site ghg built, since it could name objects
+/// that would otherwise be removed.
 pub(super) fn published_store(
     folders: &dyn OutputFolders,
     output: &Path,
     files: &BTreeSet<FilePath>,
 ) -> Result<PublishedStore, OutputErrorKind> {
-    let listing = store_listing(files);
-    let versions = listing
-        .descriptors
-        .into_iter()
-        .map(|(name, path)| Ok((name, read_descriptor(folders, output, &path)?)))
-        .collect::<Result<_, OutputErrorKind>>()?;
-    Ok(PublishedStore {
-        versions,
-        objects: listing.objects,
-    })
+    let listing = StoreListing::of(files);
+    let texts = listing
+        .descriptors()
+        .map(|path| read_descriptor(folders, output, path))
+        .collect::<Result<Option<Vec<_>>, _>>()?
+        .ok_or(OutputErrorKind::NotASite)?;
+    listing.published(&texts).ok_or(OutputErrorKind::NotASite)
 }
 
-/// The features the descriptor at `path` names.
 fn read_descriptor(
     folders: &dyn OutputFolders,
     output: &Path,
     path: &str,
-) -> Result<Vec<PublishedFeature>, OutputErrorKind> {
-    let text = folders
+) -> Result<Option<String>, OutputErrorKind> {
+    folders
         .read(output, path)
         .map_err(|io| OutputErrorKind::CannotBeRead {
             reason: io.to_string(),
-        })?;
-    // A descriptor that cannot be read could name objects that would otherwise be removed.
-    published_features(&text).ok_or(OutputErrorKind::NotASite)
+        })
 }

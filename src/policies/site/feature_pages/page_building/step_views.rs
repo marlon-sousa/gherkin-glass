@@ -85,17 +85,13 @@ fn filled_doc_string(
 fn filled_table(written: &Table, row: &ExampleRow<'_>) -> TableView {
     let view = table(written);
     TableView {
-        header: filled_row(&view.header, row),
+        header: row.fill_cells(&view.header),
         rows: view
             .rows
             .iter()
-            .map(|cells| filled_row(cells, row))
+            .map(|cells| row.fill_cells(cells))
             .collect(),
     }
-}
-
-fn filled_row(cells: &[String], row: &ExampleRow<'_>) -> Vec<String> {
-    cells.iter().map(|cell| row.fill(cell)).collect()
 }
 
 /// The first row is the header; a table has at least one row.

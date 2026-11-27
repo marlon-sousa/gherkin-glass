@@ -15,11 +15,18 @@ use gherkin::{Feature, GherkinEnv, Scenario, Step};
 use rstest::rstest;
 use serde_json::Value;
 
+#[path = "support/site_files.rs"]
+#[expect(
+    dead_code,
+    reason = "this file compares the example suite's site with its own helper, and its store with this one's"
+)]
+mod site_files;
 #[path = "support/store_json.rs"]
 mod store_json;
 #[path = "support/version_placeholder.rs"]
 mod version_placeholder;
 
+use site_files::assert_same_store;
 use store_json::indented;
 use version_placeholder::with_version_placeholder;
 
@@ -240,6 +247,7 @@ fn the_example_suite_s_site_is_its_committed_copy() {
         .expect("ghg runs");
     assert_eq!(text(&result.stderr), "");
     assert_eq!(result.status.code(), Some(0));
+    assert_same_store(&written, &repository().join("project-site/expected"));
     let expected = files(&repository().join("project-site/expected"));
     let written = files(&written);
     assert_eq!(

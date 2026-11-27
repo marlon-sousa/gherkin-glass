@@ -2,7 +2,7 @@
 
 use std::sync::Arc;
 
-use crate::entities::{BuiltSite, SiteAddress};
+use crate::entities::{BuiltSite, FilePath, SiteAddress};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct SiteFile {
@@ -17,6 +17,11 @@ impl SiteFile {
             address,
             contents: Arc::from(text.into_bytes()),
         }
+    }
+
+    /// Its address, as a path.
+    pub(crate) fn path(&self) -> FilePath {
+        self.address.as_str().to_string()
     }
 }
 

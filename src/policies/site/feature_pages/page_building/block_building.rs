@@ -11,7 +11,7 @@ use crate::entities::{
     RuleBlock, RuleContent, ScenarioBlock, ScenarioContent, TagNames, TagView,
 };
 use crate::policies::CATALOGUE;
-use crate::policies::site::outside_link;
+use crate::policies::site::{description_lines, outside_link};
 
 pub(super) struct Builder<'a> {
     pub(super) parsed: &'a ParsedFeature,
@@ -166,16 +166,6 @@ fn kind_heading(
 /// The description's lines as one paragraph, or none when it has none: the `gherkin` crate
 /// keeps no blank line of a description to tell paragraphs apart.
 pub(super) fn description(text: Option<&str>) -> Option<Paragraph> {
-    let lines: Paragraph = text
-        .unwrap_or_default()
-        .lines()
-        .map(str::trim_end)
-        .filter(has_text)
-        .map(str::to_string)
-        .collect();
+    let lines: Paragraph = description_lines(text);
     (!lines.is_empty()).then_some(lines)
-}
-
-fn has_text(line: &&str) -> bool {
-    !line.trim().is_empty()
 }

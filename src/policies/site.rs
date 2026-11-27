@@ -3,6 +3,7 @@
 mod anchor_rule;
 mod anchor_text;
 mod block_words;
+mod description_lines;
 mod example_rows;
 mod feature_pages;
 mod folder_pages;
@@ -28,6 +29,7 @@ pub(crate) use store::build_store;
 use anchor_rule::anchor_feature;
 use anchor_text::{anchor_of, unique};
 use block_words::writes_another_keyword;
+use description_lines::description_lines;
 use example_rows::{ExampleRow, block_rows, example_rows};
 use feature_pages::build_page;
 use folder_pages::build_folder_pages;
@@ -35,7 +37,7 @@ use folder_tree::build_folder_tree;
 use page_language::page_language;
 use search::search_documents;
 use search_page::build_search_page;
-use sentence_slots::sentence_of;
+use sentence_slots::{SentenceKey, sentence_of};
 use sentences::build_sentences_page;
 #[cfg(test)]
 use site_tree::site_with_feature_pages;

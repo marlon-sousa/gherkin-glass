@@ -1,11 +1,15 @@
-//! Policy: an object of the store as JSON, with the hash of each of its blocks.
+//! Policy: an object of the store as JSON, every block written with every member, with the hash of each.
+
+mod block_hash;
 
 use serde::Serialize;
 
-use super::{json_bytes, sha256_hex};
 use crate::entities::{
-    BlockKind, DocString, FeatureObject, ObjectBlock, ObjectRun, ObjectStep, StepKind, StepPart,
+    BlockContent, BlockKind, BlockText, DocString, FeatureObject, ObjectBlock, ObjectExamples,
+    ObjectRun, ObjectStep, StepKind, StepPart,
 };
+use crate::policies::rendering::{STORE_FORMAT, json_bytes};
+use block_hash::{block_hash, examples_hash, feature_hash};
 
 #[derive(Serialize)]
 struct ObjectData<'a> {
@@ -34,7 +38,7 @@ struct BlockData<'a> {
 }
 
 #[derive(Serialize)]
-struct StepData<'a> {
+pub(super) struct StepData<'a> {
     keyword: &'a str,
     text: &'a str,
     kind: &'static str,
@@ -53,7 +57,7 @@ struct PartData {
 }
 
 #[derive(Serialize)]
-struct DocStringData<'a> {
+pub(super) struct DocStringData<'a> {
     media_type: Option<&'a str>,
     content: &'a str,
 }
@@ -64,57 +68,72 @@ struct RunData<'a> {
     steps: Vec<StepData<'a>>,
 }
 
-/// A step as its block's hash takes it: its keyword, its text, its table and its doc string.
-type HashedStep<'a> = (
-    &'a str,
-    &'a str,
-    Option<&'a [Vec<String>]>,
-    Option<DocStringData<'a>>,
-);
-
-/// An outline's examples block as the outline's hash takes it: its keyword, its name, its
-/// description, its tags and its table.
-type HashedExamples<'a> = (
-    &'a str,
-    &'a str,
-    &'a str,
-    &'a [String],
-    Option<&'a [Vec<String>]>,
-);
-
 /// The compact JSON of `object`.
 pub(super) fn object_json(object: &FeatureObject) -> Vec<u8> {
-    let feature = block_data(&object.feature, Some(&object.language));
+    let feature = BlockData {
+        hash: feature_hash(object),
+        blocks: object.blocks.iter().map(block_data).collect(),
+        ..empty_block(BlockKind::Feature, &object.text, "")
+    };
     json_bytes(&ObjectData {
-        format: super::STORE_FORMAT,
+        format: STORE_FORMAT,
         language: &object.language,
         lang: &object.lang,
         feature,
     })
 }
 
-/// `language` is the feature's, which its hash adds, and `None` for every other block.
-fn block_data<'a>(block: &'a ObjectBlock, language: Option<&'a str>) -> BlockData<'a> {
-    BlockData {
-        kind: block.kind.as_str(),
-        keyword: &block.keyword,
-        note: block.note,
-        name: &block.name,
-        description: &block.description,
-        tags: &block.tags,
-        anchor: &block.anchor,
-        hash: block_hash(block, language),
-        blocks: block.blocks.iter().map(inner_block_data).collect(),
-        steps: block.steps.iter().map(step_data).collect(),
-        examples: block.examples.iter().map(inner_block_data).collect(),
-        place: block.place,
-        table: block.table.as_deref(),
-        runs: block.runs.iter().map(run_data).collect(),
+fn block_data(block: &ObjectBlock) -> BlockData<'_> {
+    let empty = empty_block(block.kind(), &block.text, &block.anchor);
+    let hash = block_hash(block);
+    match &block.content {
+        BlockContent::Background { steps } | BlockContent::Scenario { steps } => BlockData {
+            hash,
+            steps: steps.iter().map(step_data).collect(),
+            ..empty
+        },
+        BlockContent::Rule { blocks } => BlockData {
+            hash,
+            blocks: blocks.iter().map(block_data).collect(),
+            ..empty
+        },
+        BlockContent::Outline { steps, examples } => BlockData {
+            hash,
+            steps: steps.iter().map(step_data).collect(),
+            examples: examples.iter().map(examples_data).collect(),
+            ..empty
+        },
     }
 }
 
-fn inner_block_data(block: &ObjectBlock) -> BlockData<'_> {
-    block_data(block, None)
+fn examples_data(examples: &ObjectExamples) -> BlockData<'_> {
+    BlockData {
+        hash: examples_hash(examples),
+        place: Some(examples.place),
+        table: examples.table.as_deref(),
+        runs: examples.runs.iter().map(run_data).collect(),
+        ..empty_block(BlockKind::Examples, &examples.text, &examples.anchor)
+    }
+}
+
+/// A block of `kind` with `text` and `anchor`, holding nothing, its hash still to be made.
+fn empty_block<'a>(kind: BlockKind, text: &'a BlockText, anchor: &'a str) -> BlockData<'a> {
+    BlockData {
+        kind: kind.as_str(),
+        keyword: &text.keyword,
+        note: text.note,
+        name: &text.name,
+        description: &text.description,
+        tags: &text.tags,
+        anchor,
+        hash: String::new(),
+        blocks: Vec::new(),
+        steps: Vec::new(),
+        examples: Vec::new(),
+        place: None,
+        table: None,
+        runs: Vec::new(),
+    }
 }
 
 fn step_data(step: &ObjectStep) -> StepData<'_> {
@@ -152,7 +171,7 @@ fn part_data(part: &StepPart) -> PartData {
     }
 }
 
-fn doc_string_data(doc_string: &DocString) -> DocStringData<'_> {
+pub(super) fn doc_string_data(doc_string: &DocString) -> DocStringData<'_> {
     DocStringData {
         media_type: doc_string.media_type.as_deref(),
         content: &doc_string.content,
@@ -164,69 +183,4 @@ fn run_data(run: &ObjectRun) -> RunData<'_> {
         anchor: &run.anchor,
         steps: run.steps.iter().map(step_data).collect(),
     }
-}
-
-/// The SHA-256 of the compact JSON of what `block`'s page shows of it, as rule 251 lists it:
-/// its kind, its keyword, its name, its description, its tags and its steps, then what its
-/// kind adds, the feature its `language`.
-fn block_hash(block: &ObjectBlock, language: Option<&str>) -> String {
-    let bytes = match (block.kind, language) {
-        (BlockKind::Feature, Some(language)) => hashed_with(block, language),
-        (BlockKind::Examples, _) => hashed_with(block, block.table.as_deref()),
-        (BlockKind::ScenarioOutline, _) => {
-            let examples: Vec<_> = block.examples.iter().map(hashed_examples).collect();
-            hashed_with(block, examples)
-        }
-        _ => {
-            let (kind, keyword, name, description, tags, steps) = hashed_parts(block);
-            json_bytes(&(kind, keyword, name, description, tags, steps))
-        }
-    };
-    sha256_hex(&bytes)
-}
-
-/// The list of what `block`'s hash is made from, ending with `added`, what its kind adds.
-fn hashed_with(block: &ObjectBlock, added: impl Serialize) -> Vec<u8> {
-    let (kind, keyword, name, description, tags, steps) = hashed_parts(block);
-    json_bytes(&(kind, keyword, name, description, tags, steps, added))
-}
-
-/// What every block's hash is made from.
-fn hashed_parts(
-    block: &ObjectBlock,
-) -> (
-    &'static str,
-    &str,
-    &str,
-    &str,
-    &[String],
-    Vec<HashedStep<'_>>,
-) {
-    (
-        block.kind.as_str(),
-        &block.keyword,
-        &block.name,
-        &block.description,
-        &block.tags,
-        block.steps.iter().map(hashed_step).collect(),
-    )
-}
-
-fn hashed_step(step: &ObjectStep) -> HashedStep<'_> {
-    (
-        &step.keyword,
-        &step.text,
-        step.table.as_deref(),
-        step.doc_string.as_ref().map(doc_string_data),
-    )
-}
-
-fn hashed_examples(examples: &ObjectBlock) -> HashedExamples<'_> {
-    (
-        &examples.keyword,
-        &examples.name,
-        &examples.description,
-        &examples.tags,
-        examples.table.as_deref(),
-    )
 }

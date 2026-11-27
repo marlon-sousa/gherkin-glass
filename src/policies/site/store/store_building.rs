@@ -4,11 +4,11 @@ use std::collections::BTreeSet;
 use std::sync::Arc;
 
 use crate::entities::{
-    DescriptorFeature, DescriptorSentences, DescriptorTag, FeaturePath, ObjectBlock, ObjectStep,
-    PageOptions, ParsedFeature, SiteStore, StepKind, TAGS_FOLDER, TagNames,
+    BlockContent, DescriptorFeature, DescriptorSentences, DescriptorTag, FeaturePath, ObjectBlock,
+    ObjectStep, PageOptions, ParsedFeature, SiteStore, StepKind, TAGS_FOLDER, TagNames,
 };
 use crate::policies::page_name;
-use crate::policies::site::{name_stored_tags, outside_link, source_address};
+use crate::policies::site::{SentenceKey, name_stored_tags, outside_link, source_address};
 
 use super::feature_object;
 
@@ -35,7 +35,7 @@ pub(crate) fn build_store(features: &[&ParsedFeature], options: &PageOptions) ->
     }
 }
 
-/// The names of the folders the file is in, then its own, as rule 15 sorts paths.
+/// The names of the folders the file is in, then its own, by which paths are sorted.
 fn path_names(parsed: &&ParsedFeature) -> Vec<String> {
     FeaturePath::below_input(&parsed.path)
         .names()
@@ -67,16 +67,13 @@ fn descriptor_feature(parsed: &ParsedFeature, options: &PageOptions) -> Descript
     }
 }
 
-/// A sentence's place among the descriptor's: its kind, then its text lower-cased, then the
-/// text itself.
-type SentenceKey = (StepKind, String, String);
-
 /// The sentences of the steps of every background and scenario of `features`, outlines
 /// included, but not of the runs an outline's rows make.
 fn sentences_of(features: &[DescriptorFeature]) -> DescriptorSentences {
     let keys: BTreeSet<SentenceKey> = features
         .iter()
-        .flat_map(|feature| sentence_keys(&feature.object.feature))
+        .flat_map(|feature| &feature.object.blocks)
+        .flat_map(sentence_keys)
         .collect();
     DescriptorSentences {
         given: of_kind(&keys, StepKind::Given),
@@ -88,27 +85,27 @@ fn sentences_of(features: &[DescriptorFeature]) -> DescriptorSentences {
 /// The sentences of `keys` of the kind `kind`, in their order.
 fn of_kind(keys: &BTreeSet<SentenceKey>, kind: StepKind) -> Vec<String> {
     keys.iter()
-        .filter(|(of, _, _)| *of == kind)
-        .map(|(_, _, text)| text.clone())
+        .filter(|key| is_of(key, kind))
+        .map(|key| key.text.clone())
         .collect()
+}
+
+fn is_of(key: &SentenceKey, kind: StepKind) -> bool {
+    key.kind == kind
 }
 
 /// The key of each step's sentence in `block` and every block inside it.
 fn sentence_keys(block: &ObjectBlock) -> Vec<SentenceKey> {
-    block
-        .steps
-        .iter()
-        .map(sentence_key)
-        .chain(block.blocks.iter().flat_map(sentence_keys))
-        .collect()
+    match &block.content {
+        BlockContent::Background { steps }
+        | BlockContent::Scenario { steps }
+        | BlockContent::Outline { steps, .. } => steps.iter().map(sentence_key).collect(),
+        BlockContent::Rule { blocks } => blocks.iter().flat_map(sentence_keys).collect(),
+    }
 }
 
 fn sentence_key(step: &ObjectStep) -> SentenceKey {
-    (
-        step.kind,
-        step.sentence.to_lowercase(),
-        step.sentence.clone(),
-    )
+    SentenceKey::of(step.kind, step.sentence.clone())
 }
 
 #[cfg(test)]

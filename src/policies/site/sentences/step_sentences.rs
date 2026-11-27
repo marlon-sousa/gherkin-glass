@@ -5,9 +5,9 @@ use std::collections::BTreeMap;
 
 use crate::entities::{
     BlockHeading, ExamplesBlock, Sentence, SentenceGroup, SentenceUse, SiteFeaturePage, SiteNode,
-    SiteTreeNode, StepKind, StepSentences, StepView, TableView,
+    SiteTreeNode, StepSentences, StepView, TableView,
 };
-use crate::policies::site::sentence_of;
+use crate::policies::site::{SentenceKey, sentence_of};
 
 /// The sentences of the steps of `pages`, feature pages of the site tree with their blocks.
 pub(crate) fn find_step_sentences(pages: &[SiteFeaturePage<'_>]) -> StepSentences {
@@ -26,11 +26,7 @@ pub(crate) fn find_step_sentences(pages: &[SiteFeaturePage<'_>]) -> StepSentence
             for step in steps {
                 let (text, values) = sentence_of(&step.text(), &columns);
                 found
-                    .entry(SentenceKey {
-                        kind: step.kind,
-                        lower: text.to_lowercase(),
-                        text,
-                    })
+                    .entry(SentenceKey::of(step.kind, text))
                     .or_default()
                     .push(SentenceUse {
                         path: page.path.clone(),
@@ -57,15 +53,6 @@ pub(crate) fn find_step_sentences(pages: &[SiteFeaturePage<'_>]) -> StepSentence
         }
     }
     StepSentences { groups }
-}
-
-/// A sentence's place in the page: its fields, in order, sort the sentences by kind, by their
-/// text lower-cased, then by the text itself.
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
-struct SentenceKey {
-    kind: StepKind,
-    lower: String,
-    text: String,
 }
 
 /// A background or a scenario: its heading, the columns of its outline, if it is one, and its

@@ -3,13 +3,14 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::sync::Arc;
 
-use super::store_files::{
-    PAGES_INDEX, VERSIONS_LIST, descriptor_path, object_path, pages_json, versions_json,
-};
+mod index_data;
+
 use crate::entities::{
     FilePath, PageOptions, PublishedFeature, PublishedStore, SiteAddress, SiteFile, StoreFiles,
     StorePlan, VersionName,
 };
+use crate::policies::rendering::{PAGES_INDEX, VERSIONS_LIST, descriptor_path, object_path};
+use index_data::{pages_json, versions_json};
 
 /// How to write `built`, the store's files of the version `version`, beside `published`, what
 /// the output folder's store holds, or of a site without versions, whose output folder holds
@@ -32,7 +33,7 @@ pub(crate) fn plan_store(
             .chain([built.descriptor])
             .collect();
         return StorePlan {
-            files: writes.iter().map(path_of).collect(),
+            files: writes.iter().map(SiteFile::path).collect(),
             writes,
             removes: BTreeSet::new(),
         };
@@ -52,7 +53,7 @@ pub(crate) fn plan_store(
     let new_objects = built
         .objects
         .into_iter()
-        .filter(|object| !held.contains(object.address.as_str()));
+        .filter(|object| is_new(object, &held));
     let indexes = [
         json_file(VERSIONS_LIST, versions_json(&versions, options, front_page)),
         json_file(PAGES_INDEX, pages_json(&versions)),
@@ -68,23 +69,11 @@ pub(crate) fn plan_store(
     }
 }
 
-/// The path below the output folder of every file of the store that writing `built` may
-/// write, the list of versions and the index of pages included.
-pub(crate) fn store_paths(built: &StoreFiles) -> Vec<FilePath> {
-    built
-        .objects
-        .iter()
-        .chain([&built.descriptor])
-        .map(path_of)
-        .chain([VERSIONS_LIST.to_string(), PAGES_INDEX.to_string()])
-        .collect()
-}
-
 /// The paths of the objects of `objects` that `referenced` does not name.
 fn unreferenced(objects: &BTreeSet<String>, referenced: &BTreeSet<&str>) -> BTreeSet<FilePath> {
     objects
         .iter()
-        .filter(|name| !referenced.contains(name.as_str()))
+        .filter(|name| is_unreferenced(name, referenced))
         .map(|name| object_path(name))
         .collect()
 }
@@ -104,15 +93,20 @@ fn store_files(
         .collect()
 }
 
+/// Whether the store does not hold `object` yet.
+fn is_new(object: &SiteFile, held: &BTreeSet<FilePath>) -> bool {
+    !held.contains(object.address.as_str())
+}
+
+fn is_unreferenced(name: &str, referenced: &BTreeSet<&str>) -> bool {
+    !referenced.contains(name)
+}
+
 fn json_file(path: &str, bytes: Vec<u8>) -> SiteFile {
     SiteFile {
         address: SiteAddress::at_root(path),
         contents: Arc::from(bytes),
     }
-}
-
-fn path_of(file: &SiteFile) -> FilePath {
-    file.address.as_str().to_string()
 }
 
 #[cfg(test)]

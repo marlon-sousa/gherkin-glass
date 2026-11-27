@@ -1,3 +1,5 @@
+mod random_histories;
+
 use super::*;
 use crate::test_support::{name, set};
 
@@ -22,6 +24,7 @@ fn built(objects: &[&str], descriptor: &str) -> StoreFiles {
             .collect(),
         descriptor: file(descriptor),
         features: objects.iter().map(|name| feature("a", name)).collect(),
+        indexes: vec![VERSIONS_LIST.to_string(), PAGES_INDEX.to_string()],
     }
 }
 
@@ -133,10 +136,11 @@ fn the_index_of_pages_holds_the_new_version_in_place_of_the_old() {
     assert_eq!(index.contents.as_ref(), expected.as_slice());
 }
 
+// Rules 228 and 255: a version may write its objects, its descriptor and both indexes.
 #[test]
 fn the_store_s_paths_are_what_a_build_may_write() {
     assert_eq!(
-        store_paths(&built(&["one"], "data/versions/main.json")),
+        built(&["one"], "data/versions/main.json").paths(),
         [
             "data/objects/one.json",
             "data/versions/main.json",

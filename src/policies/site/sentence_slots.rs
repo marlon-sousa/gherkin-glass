@@ -1,6 +1,27 @@
-//! Policy: a step's sentence, with its quoted values and outline placeholders as slots.
+//! Policy: a step's sentence, with its quoted values and outline placeholders as slots, and the sentences' order.
 
 use unicode_normalization::UnicodeNormalization;
+
+use crate::entities::StepKind;
+
+/// A sentence's place among the sentences: its fields, in order, sort them by kind, by their
+/// text lower-cased, then by the text itself.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub(crate) struct SentenceKey {
+    pub(crate) kind: StepKind,
+    lower: String,
+    pub(crate) text: String,
+}
+
+impl SentenceKey {
+    pub(crate) fn of(kind: StepKind, text: String) -> Self {
+        SentenceKey {
+            kind,
+            lower: text.to_lowercase(),
+            text,
+        }
+    }
+}
 
 /// How every slot is shown in a sentence.
 const SLOT: &str = "\"…\"";

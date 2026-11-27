@@ -3,6 +3,7 @@
 mod checks;
 mod comment_ratio;
 mod expected_sites;
+mod expected_stores;
 
 use std::env::consts::EXE_SUFFIX;
 use std::env::{args, var_os};
@@ -12,7 +13,8 @@ use std::process::{Command, ExitCode};
 
 use checks::{CARGO_CHECKS, MINIMUM_RUST_TEST};
 use comment_ratio::Lines;
-use expected_sites::{put_back_placeholder, replace_folder};
+use expected_sites::put_back_placeholder;
+use expected_stores::{fixture_stores, history_store};
 
 const USAGE: &str = "\
 Usage: cargo xtask <command>
@@ -256,85 +258,6 @@ fn npm(arguments: &[&str]) -> Result<(), String> {
 
 fn cargo(arguments: &[&str]) -> Result<(), String> {
     run(&mut cargo_command(arguments))
-}
-
-/// The fixtures whose expected store is committed without their site, each with the arguments
-/// of its `ghg build`, run in its folder.
-const STORE_BUILDS: [(&str, &[&str]); 5] = [
-    ("constructs", &["--input", "."]),
-    ("anchors", &["--input", "."]),
-    ("doc-strings", &["--input", "."]),
-    ("step-sentences", &["--input", "."]),
-    ("configuration/configured", &[]),
-];
-
-/// Builds each fixture of `STORE_BUILDS` into a folder of the target's, and writes its store as
-/// the fixture's expected store, `expected-store/data`.
-fn fixture_stores() -> Result<(), String> {
-    for (fixture, arguments) in STORE_BUILDS {
-        let folder = root().join("tests/fixtures").join(fixture);
-        let output = target().join("tmp/stores").join(fixture);
-        replace_folder(&output, None)?;
-        let given = output.to_string_lossy().into_owned();
-        let mut build = vec![
-            "run",
-            "--quiet",
-            "--locked",
-            "--package",
-            "gherkin-glass",
-            "--",
-            "build",
-            "--output",
-            &given,
-        ];
-        build.extend(arguments);
-        cargo_in(&folder, &build)?;
-        replace_folder(
-            &folder.join("expected-store/data"),
-            Some(&output.join("data")),
-        )?;
-    }
-    Ok(())
-}
-
-/// The fixture of a history of versions, which builds each of its suites in turn.
-const HISTORY: &str = "tests/fixtures/versions/history";
-
-/// The history's builds, in order: each suite, and the version it is built as.
-const HISTORY_BUILDS: [(&str, &str); 5] = [
-    ("first", "v1.0.0"),
-    ("moved", "v1.1.0"),
-    ("changed", "v2.0.0"),
-    ("draft", "main"),
-    ("first", "main"),
-];
-
-/// Builds the history's versions in turn into a folder of the target's, and writes its store
-/// as the history's expected store.
-fn history_store() -> Result<(), String> {
-    let history = root().join(HISTORY);
-    let output = target().join("tmp/history");
-    replace_folder(&output, None)?;
-    let given = output.to_string_lossy().into_owned();
-    for (suite, version) in HISTORY_BUILDS {
-        cargo_in(
-            &history.join(suite),
-            &[
-                "run",
-                "--quiet",
-                "--locked",
-                "--package",
-                "gherkin-glass",
-                "--",
-                "build",
-                "--output",
-                &given,
-                "--version-name",
-                version,
-            ],
-        )?;
-    }
-    replace_folder(&history.join("expected/data"), Some(&output.join("data")))
 }
 
 /// The arguments that give `ghg build` the list `list` with `--only`.

@@ -12,6 +12,21 @@ pub(crate) struct StoreFiles {
     pub(crate) descriptor: SiteFile,
     /// What the descriptor names, in its order.
     pub(crate) features: Vec<PublishedFeature>,
+    /// The paths of the list of versions and the index of pages, which a version writes
+    /// beside its descriptor; none for a site without versions.
+    pub(crate) indexes: Vec<FilePath>,
+}
+
+impl StoreFiles {
+    /// The path of every file writing these may write.
+    pub(crate) fn paths(&self) -> Vec<FilePath> {
+        self.objects
+            .iter()
+            .chain([&self.descriptor])
+            .map(SiteFile::path)
+            .chain(self.indexes.iter().cloned())
+            .collect()
+    }
 }
 
 /// Every path is below the output folder, such as `data/objects/<name>.json`.
