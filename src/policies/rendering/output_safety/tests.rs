@@ -183,9 +183,8 @@ fn a_store_takes_only_builds_beside_what_it_holds(
     assert_eq!(judged, outcome);
 }
 
-// Rule 122.
-#[test]
-fn a_version_whose_folder_is_missing_stops_every_command() {
+/// The folder of the versions, its marker listing `v1.0.0/` but the folder gone.
+fn without_v1_folder() -> OutputContents {
     let files: Vec<&str> = VERSIONS
         .iter()
         .copied()
@@ -193,7 +192,13 @@ fn a_version_whose_folder_is_missing_stops_every_command() {
         .collect();
     let folders: Vec<&str> = vec!["data", "data/versions", "main"];
     let found: Vec<&str> = files.iter().copied().chain(["ghg-site.json"]).collect();
-    let contents = || folder(&found, &folders, Some(marker(&VERSIONS)));
+    folder(&found, &folders, Some(marker(&VERSIONS)))
+}
+
+// Rule 122.
+#[test]
+fn a_version_whose_folder_is_missing_stops_every_command() {
+    let contents = without_v1_folder;
     let missing = Err(OutputErrorKind::MissingVersion {
         name: "v1.0.0".into(),
     });
@@ -206,6 +211,19 @@ fn a_version_whose_folder_is_missing_stops_every_command() {
         &KeptInOutput::default(),
     );
     assert_eq!(removing, missing);
+}
+
+// Rule 257: the version being removed may have lost its folder.
+#[test]
+fn a_version_whose_folder_is_missing_may_be_removed() {
+    let removing = output_safety(
+        without_v1_folder(),
+        &version("v1.0.0"),
+        Change::Remove,
+        REPLACE,
+        &KeptInOutput::default(),
+    );
+    assert!(removing.is_ok(), "{removing:?}");
 }
 
 // Rules 38 and 123: a site or a version already built is replaced only when allowed, and is

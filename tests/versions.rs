@@ -244,6 +244,34 @@ fn a_version_whose_folder_is_gone_stops_the_run() {
     assert_eq!(files(&output), before);
 }
 
+// Rule 257: the version removed may have lost its folder, and is removed as any other.
+#[test]
+fn a_version_whose_folder_is_gone_is_removed() {
+    let output = with_versions("gone-removed");
+    remove_dir_all(output.join("v2.0.0-rc.1")).expect("removed");
+    let removed = ghg(&["version", "remove", "v2.0.0-rc.1"], "suite", &output);
+    assert_eq!(removed, (String::new(), 0));
+    assert_same_site(&output, &fixture().join("expected-removed"));
+}
+
+// Rule 257: another version whose folder is gone still stops a removal.
+#[test]
+fn another_version_whose_folder_is_gone_stops_a_removal() {
+    let output = with_versions("gone-other");
+    remove_dir_all(output.join("main")).expect("removed");
+    let before = files(&output);
+    let (report, status) = ghg(&["version", "remove", "v2.0.0-rc.1"], "suite", &output);
+    assert_eq!(status, 1);
+    assert!(
+        report.starts_with(&format!(
+            "{}/main: the site's data holds this version",
+            output.display()
+        )),
+        "{report}"
+    );
+    assert_eq!(files(&output), before);
+}
+
 // Rules 38 and 124: versions and a site without versions are never in one output folder.
 #[test]
 fn versions_and_a_site_without_versions_never_share_an_output_folder() {

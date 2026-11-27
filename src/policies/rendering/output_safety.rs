@@ -125,9 +125,16 @@ fn marked(
     }
 }
 
+/// Whether the version `name` the store holds has no folder in `folders`, unless it is
+/// `removed`, the version being removed.
+fn lacks_its_folder(name: &str, folders: &BTreeSet<FilePath>, removed: Option<&str>) -> bool {
+    removed != Some(name) && !folders.contains(name)
+}
+
 /// What stops `change` of `target` in a marked folder for what its store holds: versions
-/// beside a site without versions, a version whose folder is missing, a name that differs from
-/// one held only in its capitals, or a site or a version already built that is not replaced.
+/// beside a site without versions, a version whose folder is missing, but for the version being
+/// removed, a name that differs from one held only in its capitals, or a site or a version
+/// already built that is not replaced.
 fn holds(
     safe: &SafeFolder,
     folders: &BTreeSet<FilePath>,
@@ -150,7 +157,14 @@ fn holds(
             _ => Ok(()),
         }?;
     }
-    if let Some(name) = versions.iter().find(|name| !folders.contains(**name)) {
+    let removed = match (change, target) {
+        (Change::Remove, BuildTarget::Version(name)) => Some(name.as_str()),
+        _ => None,
+    };
+    if let Some(name) = versions
+        .iter()
+        .find(|name| lacks_its_folder(name, folders, removed))
+    {
         return Err(OutputErrorKind::MissingVersion {
             name: (*name).to_string(),
         });
