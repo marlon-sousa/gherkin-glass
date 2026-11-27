@@ -109,6 +109,15 @@ test("a shell opened at an element's address draws the home page first", async (
   assert.deepEqual(shell.drawn, [{ kind: "home" }]);
 });
 
+// Rules 236 and 243: after a page that failed, `##` focuses an element of the paragraph's page, drawing nothing.
+test("an element's address after a page that failed focuses it, drawing nothing", async () => {
+  const shell = await open("#billing/refunds", ["ghg_main"], (page) => page.kind === "feature");
+  shell.address.go("##ghg_main");
+  await settled();
+  assert.deepEqual(shell.drawn, []);
+  assert.equal(shell.canvas.done.at(-1), "focus ghg_main");
+});
+
 // Rule 243: a page whose data cannot be fetched says so, and disables what needs the data.
 test("a page whose data cannot be fetched draws the paragraph that says so", async () => {
   const shell = await open("#billing/refunds", [], (page) => page.kind === "feature");
