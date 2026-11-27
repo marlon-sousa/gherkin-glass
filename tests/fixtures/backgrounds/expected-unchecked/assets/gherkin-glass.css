@@ -95,6 +95,19 @@ h1, h2, h3, h4, h5 {
   padding-left: 1rem;
 }
 
+/* An open list in other versions, and each group in it, is indented under
+   its button, as a block's content is under its heading. */
+.ghg-other-versions .ghg-content {
+  border-left: 1px solid var(--ghg-border);
+  padding-left: 1rem;
+  margin: 0.25rem 0;
+}
+
+/* A list's markers stay inside the indent, clear of its rule. */
+.ghg-other-versions .ghg-versions {
+  padding-left: 2rem;
+}
+
 .ghg-tags {
   display: flex;
   flex-wrap: wrap;

@@ -1,5 +1,14 @@
 // Compiled from script/ by cargo xtask build. Do not edit: change script/src and build again.
 
+// src/adapters/followed_link.ts
+function followedLink(event) {
+  if (event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) {
+    return null;
+  }
+  const target = event.target;
+  return typeof target?.closest === "function" ? target.closest("a[href]") : null;
+}
+
 // src/adapters/dom_address.ts
 var DomAddress = class {
   window;
@@ -17,11 +26,10 @@ var DomAddress = class {
   onChange(handler) {
     this.window.addEventListener("hashchange", () => handler(this.window.location.hash));
     this.window.document.addEventListener("click", (event) => {
-      const link2 = followedLink(event);
-      if (link2 === null) {
+      const hash = followedLink(event)?.getAttribute("href") ?? "";
+      if (!hash.startsWith("#")) {
         return;
       }
-      const hash = link2.getAttribute("href") ?? "";
       if (hash.startsWith("##")) {
         event.preventDefault();
         handler(hash);
@@ -31,14 +39,6 @@ var DomAddress = class {
     });
   }
 };
-function followedLink(event) {
-  if (event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) {
-    return null;
-  }
-  const target = event.target;
-  const link2 = typeof target?.closest === "function" ? target.closest("a[href]") : null;
-  return link2 !== null && (link2.getAttribute("href") ?? "").startsWith("#") ? link2 : null;
-}
 
 // src/adapters/dom_canvas.ts
 var DomCanvas = class _DomCanvas {
@@ -49,13 +49,17 @@ var DomCanvas = class _DomCanvas {
   liveRegion;
   /** What the `main` arrived holding, and the title the shell arrived with, when it holds the front page. */
   frontPage;
+  /** The shell's search box, and the place in the shell it is put back in when the `main` holding it is drawn again. */
+  searchBox;
   constructor(make, main) {
     this.make = make;
     this.document = make.document;
     this.main = main;
     this.breadcrumb = this.document.querySelector("nav.ghg-breadcrumb");
     this.liveRegion = this.document.getElementById("ghg_announcement");
-    this.frontPage = main.childElementCount === 0 ? null : { nodes: [...main.childNodes], title: this.document.title };
+    this.frontPage = main.childElementCount === 0 ? null : { nodes: [...main.childNodes].map((node) => node.cloneNode(true)), title: this.document.title };
+    const form = this.document.querySelector("form.ghg-search");
+    this.searchBox = form?.parentNode ? { form, parent: form.parentNode, before: form.nextSibling } : null;
   }
   /** Null for a document that is not a shell, with no `main` to draw in. */
   static of(make) {
@@ -116,14 +120,22 @@ var DomCanvas = class _DomCanvas {
     if (this.frontPage === null) {
       return null;
     }
-    this.main.replaceChildren(...this.frontPage.nodes);
+    this.draw(this.frontPage.nodes.map((node) => node.cloneNode(true)));
     return this.frontPage.title;
   }
   drawFailure(words) {
-    this.main.replaceChildren(this.make.make("p", {}, words));
+    this.draw([this.make.make("p", {}, words)]);
   }
-  /** Puts `nodes` in the `main` in place of what it held. */
+  /** The shell's search box, to draw in the `main` of the page of search results. */
+  searchForm() {
+    return this.searchBox?.form ?? null;
+  }
+  /** Puts `nodes` in the `main` in place of what it held, the search box back in its place in the shell unless `nodes` hold it. */
   draw(nodes) {
+    const box = this.searchBox;
+    if (box !== null && !nodes.includes(box.form)) {
+      box.parent.insertBefore(box.form, box.before);
+    }
     this.main.replaceChildren(...nodes);
   }
 };
@@ -458,14 +470,10 @@ var DomPages = class {
   make;
   canvas;
   words;
-  /** The shell's search box, and the place in the shell it is put back in. */
-  searchBox;
   constructor(make, canvas, words) {
     this.make = make;
     this.canvas = canvas;
     this.words = words;
-    const form = make.document.querySelector("form.ghg-search");
-    this.searchBox = form?.parentNode ? { form, parent: form.parentNode, before: form.nextSibling } : null;
   }
   feature(view, versions) {
     const inVersions2 = (anchor) => {
@@ -488,7 +496,7 @@ var DomPages = class {
     this.draw(sentencesPage(this.make, view));
   }
   search(view) {
-    this.draw(resultsPage(this.make, view, this.searchBox?.form ?? null));
+    this.draw(resultsPage(this.make, view, this.canvas.searchForm()));
   }
   notice(view) {
     this.draw([this.make.make("h1", {}, view.heading), this.make.make("p", {}, view.text)]);
@@ -497,10 +505,6 @@ var DomPages = class {
     this.canvas.main.prepend(this.make.make("p", { class: "ghg-only-note", role: "note" }, words));
   }
   draw(nodes) {
-    const box = this.searchBox;
-    if (box !== null && !nodes.includes(box.form)) {
-      box.parent.insertBefore(box.form, box.before);
-    }
     this.canvas.draw(nodes);
   }
 };
@@ -544,7 +548,7 @@ var ElementBuilder = class {
   }
 };
 
-// src/policies/store_format.ts
+// src/adapters/fetched_store/store_format.ts
 var STORE_FORMAT = 1;
 function mismatch(what) {
   throw new TypeError(`the site's data holds no ${what} where one is read`);
@@ -644,7 +648,7 @@ var FetchedStore = class {
   descriptorPath;
   fetcher;
   kept = /* @__PURE__ */ new Map();
-  /** `root` is the address of `data/`, and `descriptorPath` the descriptor's below it. Chromium, through Playwright, refuses `fetch` called as a method of another object, so it is called on its own. */
+  /** `root` is the address of `data/`, and `descriptorPath` the descriptor's below it. Chromium, through Playwright 1.63.0, refuses `fetch` called as a method of another object, so it is called on its own. */
   constructor(root, descriptorPath2, fetcher = (input, init) => fetch(input, init)) {
     this.root = root;
     this.descriptorPath = descriptorPath2;
@@ -1637,7 +1641,8 @@ var FluentWords = class {
     if (message?.value == null) {
       return id;
     }
-    return this.bundle.formatPattern(message.value, { ...args }, []);
+    const values2 = Object.fromEntries(Object.entries(args).map(([key, value]) => [key, typeof value === "number" ? new FluentNumber(value, { useGrouping: false }) : value]));
+    return this.bundle.formatPattern(message.value, values2, []);
   }
   parts(id, args, texts) {
     const named3 = Object.entries(texts);
@@ -1686,11 +1691,18 @@ var DomBackgrounds = class _DomBackgrounds {
     this.checkbox.addEventListener("change", () => handler(this.checkbox.checked));
   }
   onReturn(handler) {
-    this.document.defaultView?.addEventListener("pageshow", (event) => {
-      if (event.persisted) {
-        handler();
-      }
-    });
+    const listening = new AbortController();
+    this.document.defaultView?.addEventListener(
+      "pageshow",
+      (event) => {
+        if (!this.checkbox.isConnected) {
+          listening.abort();
+        } else if (event.persisted) {
+          handler();
+        }
+      },
+      { signal: listening.signal }
+    );
   }
 };
 
@@ -1813,11 +1825,7 @@ var DomPage = class {
       }
     });
     this.document.addEventListener("click", (event) => {
-      if (event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) {
-        return;
-      }
-      const target = event.target;
-      const link2 = typeof target?.closest === "function" ? target.closest("a[href]") : null;
+      const link2 = followedLink(event);
       const anchor = link2 ? this.anchorOnPage(link2) : null;
       if (anchor !== null) {
         handler(anchor);
@@ -1859,6 +1867,162 @@ function anchorOf(hash) {
     return hash.slice(1);
   }
 }
+
+// src/adapters/dom_search_page.ts
+var DomSearchPage = class _DomSearchPage {
+  document;
+  heading;
+  field;
+  status;
+  groups;
+  searchedWords;
+  /** Null when the page is not the page of search results, or not the whole of one; `searched`, when given, is the words of a shell's address. */
+  static find(document2, searched = null) {
+    const heading2 = document2.querySelector("h1.ghg-search-heading");
+    const field = document2.querySelector("form.ghg-search input.ghg-search-field");
+    const status2 = document2.querySelector(".ghg-results-status");
+    const groups = document2.querySelector(".ghg-search-groups");
+    if (heading2 && field && status2 && groups) {
+      return new _DomSearchPage(document2, heading2, field, status2, groups, searched);
+    }
+    return null;
+  }
+  constructor(document2, heading2, field, status2, groups, searched) {
+    this.searchedWords = searched;
+    this.document = document2;
+    this.heading = heading2;
+    this.field = field;
+    this.status = status2;
+    this.groups = groups;
+  }
+  words() {
+    const data = this.groups.dataset;
+    const text2 = (key) => data[key] ?? "";
+    return {
+      heading: text2("heading"),
+      title: text2("title"),
+      loading: text2("loading"),
+      failed: text2("failed"),
+      none: text2("none"),
+      count: text2("count"),
+      within: text2("within"),
+      separator: text2("separator"),
+      matchingSteps: text2("matchingSteps"),
+      matchingTags: text2("matchingTags"),
+      matchingCells: text2("matchingCells"),
+      headings: {
+        feature: text2("feature"),
+        unnamedFeature: text2("unnamedFeature"),
+        rule: text2("rule"),
+        unnamedRule: text2("unnamedRule"),
+        background: text2("background"),
+        unnamedBackground: text2("unnamedBackground"),
+        scenario: text2("scenario"),
+        unnamedScenario: text2("unnamedScenario"),
+        scenarioOutline: text2("scenarioOutline"),
+        unnamedScenarioOutline: text2("unnamedScenarioOutline"),
+        examples: text2("examples"),
+        numberedExamples: text2("numberedExamples")
+      }
+    };
+  }
+  searched() {
+    if (this.searchedWords !== null) {
+      return this.searchedWords;
+    }
+    const address = this.document.defaultView?.location.href ?? "";
+    return new URL(address, "https://example.invalid/").searchParams.get("q") ?? "";
+  }
+  showSearched(words, heading2, title) {
+    this.field.value = words;
+    this.heading.replaceChildren(...this.parts(heading2));
+    this.document.title = title;
+  }
+  setStatus(text2) {
+    this.status.textContent = text2;
+  }
+  showGroups(groups) {
+    const words = this.words();
+    this.groups.replaceChildren(...groups.flatMap((group) => this.group(words, group)));
+  }
+  group(words, group) {
+    const heading2 = this.element("h2", [this.link(group.address, group.heading)]);
+    const list2 = this.element(
+      "ul",
+      group.results.map((result2) => this.element("li", this.result(words, result2)))
+    );
+    list2.className = "ghg-search-group";
+    return [heading2, list2];
+  }
+  result(words, result2) {
+    const parts = [this.link(result2.address, result2.heading)];
+    if (result2.within !== null) {
+      parts.push(this.element("p", this.parts(result2.within)));
+    }
+    if (result2.steps.length > 0) {
+      parts.push(
+        this.element("p", [words.matchingSteps]),
+        this.element(
+          "ul",
+          result2.steps.map((step2) => this.element("li", [this.name(step2)]))
+        )
+      );
+    }
+    for (const [label2, texts] of [
+      [words.matchingTags, result2.tags],
+      [words.matchingCells, result2.cells]
+    ]) {
+      if (texts.length > 0) {
+        const named3 = texts.flatMap((text2, at) => at === 0 ? [this.name(text2)] : [words.separator, this.name(text2)]);
+        parts.push(this.element("p", [`${label2} `, ...named3]));
+      }
+    }
+    return parts;
+  }
+  link(address, text2) {
+    const link2 = this.element("a", this.parts(text2));
+    link2.setAttribute("href", address);
+    return link2;
+  }
+  /** Each part's runs, a name's isolated in a `bdi` of its own. */
+  parts(parts) {
+    return parts.flatMap((part2) => part2.isName ? [this.name(part2.runs)] : this.runs(part2.runs));
+  }
+  name(runs) {
+    return this.element("bdi", this.runs(runs));
+  }
+  /** Each run as text, a marked one in a `mark` of its own. */
+  runs(runs) {
+    return runs.map((run2) => run2.marked ? this.element("mark", [run2.text]) : run2.text);
+  }
+  element(name2, children) {
+    const element = this.document.createElement(name2);
+    element.append(...children);
+    return element;
+  }
+};
+
+// src/adapters/dom_drawn_page.ts
+var DomDrawnPage = class {
+  document;
+  canvas;
+  constructor(document2, canvas) {
+    this.document = document2;
+    this.canvas = canvas;
+  }
+  blocks() {
+    return new DomPage(this.document, this.canvas.main, false);
+  }
+  backgrounds() {
+    return DomBackgrounds.of(this.document);
+  }
+  noteDialog() {
+    return DomNoteDialog.of(this.document);
+  }
+  searchPage(searched) {
+    return DomSearchPage.find(this.document, searched);
+  }
+};
 
 // src/adapters/dom_search_box.ts
 var REANNOUNCE_MILLISECONDS = 50;
@@ -2024,140 +2188,6 @@ var DomSearchBox = class _DomSearchBox {
         handler();
       }
     });
-  }
-};
-
-// src/adapters/dom_search_page.ts
-var DomSearchPage = class _DomSearchPage {
-  document;
-  heading;
-  field;
-  status;
-  groups;
-  searchedWords;
-  /** Null when the page is not the page of search results, or not the whole of one; `searched`, when given, is the words of a shell's address. */
-  static find(document2, searched = null) {
-    const heading2 = document2.querySelector("h1.ghg-search-heading");
-    const field = document2.querySelector("form.ghg-search input.ghg-search-field");
-    const status2 = document2.querySelector(".ghg-results-status");
-    const groups = document2.querySelector(".ghg-search-groups");
-    if (heading2 && field && status2 && groups) {
-      return new _DomSearchPage(document2, heading2, field, status2, groups, searched);
-    }
-    return null;
-  }
-  constructor(document2, heading2, field, status2, groups, searched) {
-    this.searchedWords = searched;
-    this.document = document2;
-    this.heading = heading2;
-    this.field = field;
-    this.status = status2;
-    this.groups = groups;
-  }
-  words() {
-    const data = this.groups.dataset;
-    const text2 = (key) => data[key] ?? "";
-    return {
-      heading: text2("heading"),
-      title: text2("title"),
-      loading: text2("loading"),
-      failed: text2("failed"),
-      none: text2("none"),
-      count: text2("count"),
-      within: text2("within"),
-      separator: text2("separator"),
-      matchingSteps: text2("matchingSteps"),
-      matchingTags: text2("matchingTags"),
-      matchingCells: text2("matchingCells"),
-      headings: {
-        feature: text2("feature"),
-        unnamedFeature: text2("unnamedFeature"),
-        rule: text2("rule"),
-        unnamedRule: text2("unnamedRule"),
-        background: text2("background"),
-        unnamedBackground: text2("unnamedBackground"),
-        scenario: text2("scenario"),
-        unnamedScenario: text2("unnamedScenario"),
-        scenarioOutline: text2("scenarioOutline"),
-        unnamedScenarioOutline: text2("unnamedScenarioOutline"),
-        examples: text2("examples"),
-        numberedExamples: text2("numberedExamples")
-      }
-    };
-  }
-  searched() {
-    if (this.searchedWords !== null) {
-      return this.searchedWords;
-    }
-    const address = this.document.defaultView?.location.href ?? "";
-    return new URL(address, "https://example.invalid/").searchParams.get("q") ?? "";
-  }
-  showSearched(words, heading2, title) {
-    this.field.value = words;
-    this.heading.replaceChildren(...this.parts(heading2));
-    this.document.title = title;
-  }
-  setStatus(text2) {
-    this.status.textContent = text2;
-  }
-  showGroups(groups) {
-    const words = this.words();
-    this.groups.replaceChildren(...groups.flatMap((group) => this.group(words, group)));
-  }
-  group(words, group) {
-    const heading2 = this.element("h2", [this.link(group.address, group.heading)]);
-    const list2 = this.element(
-      "ul",
-      group.results.map((result2) => this.element("li", this.result(words, result2)))
-    );
-    list2.className = "ghg-search-group";
-    return [heading2, list2];
-  }
-  result(words, result2) {
-    const parts = [this.link(result2.address, result2.heading)];
-    if (result2.within !== null) {
-      parts.push(this.element("p", this.parts(result2.within)));
-    }
-    if (result2.steps.length > 0) {
-      parts.push(
-        this.element("p", [words.matchingSteps]),
-        this.element(
-          "ul",
-          result2.steps.map((step2) => this.element("li", [this.name(step2)]))
-        )
-      );
-    }
-    for (const [label2, texts] of [
-      [words.matchingTags, result2.tags],
-      [words.matchingCells, result2.cells]
-    ]) {
-      if (texts.length > 0) {
-        const named3 = texts.flatMap((text2, at) => at === 0 ? [this.name(text2)] : [words.separator, this.name(text2)]);
-        parts.push(this.element("p", [`${label2} `, ...named3]));
-      }
-    }
-    return parts;
-  }
-  link(address, text2) {
-    const link2 = this.element("a", this.parts(text2));
-    link2.setAttribute("href", address);
-    return link2;
-  }
-  /** Each part's runs, a name's isolated in a `bdi` of its own. */
-  parts(parts) {
-    return parts.flatMap((part2) => part2.isName ? [this.name(part2.runs)] : this.runs(part2.runs));
-  }
-  name(runs) {
-    return this.element("bdi", this.runs(runs));
-  }
-  /** Each run as text, a marked one in a `mark` of its own. */
-  runs(runs) {
-    return runs.map((run2) => run2.marked ? this.element("mark", [run2.text]) : run2.text);
-  }
-  element(name2, children) {
-    const element = this.document.createElement(name2);
-    element.append(...children);
-    return element;
   }
 };
 
@@ -2615,7 +2645,7 @@ var FetchedDocuments = class {
 var FetchedTree = class {
   address;
   fetcher;
-  /** Chromium, through Playwright, refuses `fetch` called as a method of another object, so it is called on its own. */
+  /** Chromium, through Playwright 1.63.0, refuses `fetch` called as a method of another object, so it is called on its own. */
   constructor(address, fetcher = (input, init) => fetch(input, init)) {
     this.address = address;
     this.fetcher = fetcher;
@@ -2678,84 +2708,6 @@ var WindowTimer = class {
     }
   }
 };
-
-// src/policies/address.ts
-var TAGS = "tags/";
-var STEPS = "steps";
-var SEARCH = "search";
-var KEPT = /[A-Za-z0-9\-._~/]/;
-function readTarget(hash) {
-  const rest = hash.startsWith("#") ? hash.slice(1) : hash;
-  if (rest.startsWith("#")) {
-    return { kind: "element", id: decoded2(rest.slice(1)) };
-  }
-  const split = rest.indexOf("#");
-  const name2 = split < 0 ? rest : rest.slice(0, split);
-  const anchor = split < 0 || split === rest.length - 1 ? null : decoded2(rest.slice(split + 1));
-  return { kind: "page", page: pageNamed(name2), anchor };
-}
-function targetAddress(page, anchor = null) {
-  const named3 = `#${encodedName(page)}`;
-  return anchor === null ? named3 : `${named3}#${encoded(anchor)}`;
-}
-function pageNamed(raw) {
-  if (raw === SEARCH || raw.startsWith(`${SEARCH}?`)) {
-    return { kind: "search", words: new URLSearchParams(raw.slice(SEARCH.length + 1)).get("q") ?? "" };
-  }
-  return pageByName(decoded2(raw));
-}
-function pageByName(name2) {
-  if (name2 === "") {
-    return { kind: "home" };
-  }
-  if (name2 === TAGS) {
-    return { kind: "tags" };
-  }
-  if (name2.startsWith(TAGS)) {
-    return { kind: "tag", tag: name2.slice(TAGS.length) };
-  }
-  if (name2 === STEPS) {
-    return { kind: "steps" };
-  }
-  return name2.endsWith("/") ? { kind: "folder", folder: name2 } : { kind: "feature", page: name2 };
-}
-function encodedName(page) {
-  switch (page.kind) {
-    case "home":
-      return "";
-    case "folder":
-      return encoded(page.folder);
-    case "feature":
-      return encoded(page.page);
-    case "tags":
-      return TAGS;
-    case "tag":
-      return encoded(`${TAGS}${page.tag}`);
-    case "steps":
-      return STEPS;
-    case "search":
-      return page.words === "" ? SEARCH : `${SEARCH}?${new URLSearchParams({ q: page.words }).toString()}`;
-  }
-}
-function encoded(text2) {
-  return [...text2].map(encodedCharacter).join("");
-}
-function encodedCharacter(character) {
-  if (KEPT.test(character)) {
-    return character;
-  }
-  return [...new TextEncoder().encode(character)].map(percentByte).join("");
-}
-function percentByte(byte) {
-  return `%${byte.toString(16).toUpperCase().padStart(2, "0")}`;
-}
-function decoded2(text2) {
-  try {
-    return decodeURIComponent(text2);
-  } catch {
-    return text2;
-  }
-}
 
 // src/policies/background_form.ts
 var INLINE = "inline";
@@ -4589,6 +4541,84 @@ var objectToNumericMapAsync = async (object2) => {
 var wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 var SPACE_OR_PUNCTUATION = /[\n\r\p{Z}\p{P}]+/u;
 
+// src/policies/address.ts
+var TAGS = "tags/";
+var STEPS = "steps";
+var SEARCH = "search";
+var KEPT = /[A-Za-z0-9\-._~/]/;
+function readTarget(hash) {
+  const rest = hash.startsWith("#") ? hash.slice(1) : hash;
+  if (rest.startsWith("#")) {
+    return { kind: "element", id: decoded2(rest.slice(1)) };
+  }
+  const split = rest.indexOf("#");
+  const name2 = split < 0 ? rest : rest.slice(0, split);
+  const anchor = split < 0 || split === rest.length - 1 ? null : decoded2(rest.slice(split + 1));
+  return { kind: "page", page: pageNamed(name2), anchor };
+}
+function targetAddress(page, anchor = null) {
+  const named3 = `#${encodedName(page)}`;
+  return anchor === null ? named3 : `${named3}#${encoded(anchor)}`;
+}
+function pageNamed(raw) {
+  if (raw === SEARCH || raw.startsWith(`${SEARCH}?`)) {
+    return { kind: "search", words: new URLSearchParams(raw.slice(SEARCH.length + 1)).get("q") ?? "" };
+  }
+  return pageByName(decoded2(raw));
+}
+function pageByName(name2) {
+  if (name2 === "") {
+    return { kind: "home" };
+  }
+  if (name2 === TAGS) {
+    return { kind: "tags" };
+  }
+  if (name2.startsWith(TAGS)) {
+    return { kind: "tag", tag: name2.slice(TAGS.length) };
+  }
+  if (name2 === STEPS) {
+    return { kind: "steps" };
+  }
+  return name2.endsWith("/") ? { kind: "folder", folder: name2 } : { kind: "feature", page: name2 };
+}
+function encodedName(page) {
+  switch (page.kind) {
+    case "home":
+      return "";
+    case "folder":
+      return encoded(page.folder);
+    case "feature":
+      return encoded(page.page);
+    case "tags":
+      return TAGS;
+    case "tag":
+      return encoded(`${TAGS}${page.tag}`);
+    case "steps":
+      return STEPS;
+    case "search":
+      return page.words === "" ? SEARCH : `${SEARCH}?${new URLSearchParams({ q: page.words }).toString()}`;
+  }
+}
+function encoded(text2) {
+  return [...text2].map(encodedCharacter).join("");
+}
+function encodedCharacter(character) {
+  if (KEPT.test(character)) {
+    return character;
+  }
+  return [...new TextEncoder().encode(character)].map(percentByte).join("");
+}
+function percentByte(byte) {
+  return `%${byte.toString(16).toUpperCase().padStart(2, "0")}`;
+}
+function decoded2(text2) {
+  try {
+    return decodeURIComponent(text2);
+  } catch {
+    return text2;
+  }
+}
+
 // src/policies/search_index.ts
 var INDEX_OPTIONS = {
   fields: ["name", "tags", "steps", "cells"],
@@ -4953,7 +4983,7 @@ function scenarioView(context, scenario, level, backgrounds, examples) {
     tags: tagViews(context, scenario.tags),
     description: descriptionLines(scenario.description),
     backgrounds: inScenario,
-    stepsHeading: context.hasBackgroundsOption && inScenario.length > 0 && steps.length > 0 ? { level: level + 1, text: context.words.text("from-scenario") } : null,
+    stepsHeading: inScenario.length > 0 && steps.length > 0 ? { level: level + 1, text: context.words.text("from-scenario") } : null,
     steps,
     examples: examples(scenario, level + 1)
   };
@@ -5069,8 +5099,7 @@ function featureView(words, descriptor, entry, object2) {
   const context = {
     words,
     start: descriptor.start,
-    tags: new Map(descriptor.tags.map((tag2) => [tag2.tag, tag2])),
-    hasBackgroundsOption: hasBackground
+    tags: new Map(descriptor.tags.map((tag2) => [tag2.tag, tag2]))
   };
   const featureBackground = background && { block: background, heading: words.text("from-background") };
   const startsScenarios = scenarios.length > 0 || rules.some((rule) => rule.blocks.some(isScenario));
@@ -5734,7 +5763,7 @@ async function startNavigation(parts) {
   };
   const show = async (target, reached) => {
     if (target.kind === "element") {
-      if (shown === null) {
+      if (drawing === 0) {
         await draw({ kind: "home" }, null, false);
       }
       focus(target.id, false);
@@ -5969,6 +5998,27 @@ function startSearching(box, documents, timer, addresses = WRITTEN_ADDRESSES) {
   };
 }
 
+// src/services/shell_behaviour.ts
+function shellBehaviour(parts) {
+  return (page) => {
+    parts.tree.show(page);
+    if (page.kind === "search") {
+      parts.fillSearch?.(page.words);
+      const searchPage = parts.drawn.searchPage(page.words);
+      if (searchPage !== null) {
+        void startListing(searchPage, parts.documents, SHELL_ADDRESSES);
+      }
+    }
+    const backgrounds = parts.drawn.backgrounds();
+    const reveal = startCollapsing(parts.drawn.blocks(), parts.memory, `${parts.shellPath}${targetAddress(page)}`, backgrounds && { backgrounds, siteRoot: parts.shellPath });
+    const noteDialog = parts.drawn.noteDialog();
+    if (noteDialog !== null) {
+      startNoteExplaining(noteDialog);
+    }
+    return reveal;
+  };
+}
+
 // src/policies/tree_items.ts
 function treeItems(words, descriptor, features) {
   const folders = siteFolders(features);
@@ -6143,23 +6193,7 @@ function startShell(descriptorPath2) {
     address: new DomAddress(window),
     timer: new WindowTimer(),
     draw: pageDrawing({ store, words, pages: new DomPages(make, canvas, words), canvas }),
-    behave: (page) => {
-      tree.show(page);
-      if (page.kind === "search") {
-        fillSearch?.(page.words);
-        const searchPage = DomSearchPage.find(document, page.words);
-        if (searchPage !== null) {
-          void startListing(searchPage, documents, SHELL_ADDRESSES);
-        }
-      }
-      const backgrounds = DomBackgrounds.of(document);
-      const reveal = startCollapsing(new DomPage(document, canvas.main, false), memory, `${shellPath}${targetAddress(page)}`, backgrounds && { backgrounds, siteRoot: root.pathname });
-      const noteDialog = DomNoteDialog.of(document);
-      if (noteDialog !== null) {
-        startNoteExplaining(noteDialog);
-      }
-      return reveal;
-    },
+    behave: shellBehaviour({ drawn: new DomDrawnPage(document, canvas), tree, fillSearch, documents, memory, shellPath }),
     failure: words.text("page-not-loaded"),
     onFailure: () => tree.disable()
   });
