@@ -3,12 +3,14 @@
 import type { DomCanvas } from "./dom_canvas.ts";
 import { featurePage } from "./dom_feature_page.ts";
 import { folderPage } from "./dom_folder_page.ts";
+import { otherVersionsOf } from "./dom_other_versions.ts";
 import { resultsPage } from "./dom_results_page.ts";
 import { sentencesPage } from "./dom_sentences_page.ts";
 import { tagIndex, tagPage } from "./dom_tag_pages.ts";
 import type { ElementBuilder } from "./element_builder.ts";
 import type { FeatureView } from "../policies/feature_view.ts";
 import type { FolderView } from "../policies/folder_view.ts";
+import type { PageInVersions } from "../policies/other_versions.ts";
 import type { SearchPageView } from "../policies/search_page_view.ts";
 import type { SentencesView } from "../policies/sentences_view.ts";
 import type { TagIndexView, TagPageView } from "../policies/tag_views.ts";
@@ -30,8 +32,13 @@ export class DomPages implements Pages {
     this.searchBox = form?.parentNode ? { form, parent: form.parentNode, before: form.nextSibling } : null;
   }
 
-  feature(view: FeatureView): void {
-    this.draw(featurePage(this.make, view, this.words.text("page-contents"), () => null, null));
+  feature(view: FeatureView, versions: PageInVersions | null): void {
+    const inVersions = (anchor: string | null): Node | null => {
+      const lists = anchor === null ? undefined : versions?.blocks.get(anchor);
+      return lists === undefined ? null : otherVersionsOf(this.make, lists);
+    };
+    const pageLists = versions?.page ?? null;
+    this.draw(featurePage(this.make, view, this.words.text("page-contents"), (block) => inVersions(block.anchor), pageLists && otherVersionsOf(this.make, pageLists)));
   }
 
   folder(view: FolderView): void {
