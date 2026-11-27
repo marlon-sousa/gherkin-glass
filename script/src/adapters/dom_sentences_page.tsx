@@ -1,7 +1,7 @@
 // Adapter: the markup of the page of step sentences, drawn from its view, in the elements the stylesheet styles.
 
 import type { Child, Markup } from "./jsx/jsx_runtime.ts";
-import { Words } from "./jsx/words.tsx";
+import { MessageParts } from "./jsx/message_parts.tsx";
 import type { Piece } from "../policies/heading_words.ts";
 import type { SentenceUseView, SentenceView, SentencesView } from "../policies/sentences_view.ts";
 
@@ -31,7 +31,7 @@ function useOf(use: SentenceUseView): Markup {
       {slotted(use.link, (slot) =>
         slot === "heading" ? (
           <bdi>
-            <Words parts={use.heading} lang={use.lang} />
+            <MessageParts parts={use.heading} lang={use.lang} />
           </bdi>
         ) : (
           <bdi>{use.path}</bdi>

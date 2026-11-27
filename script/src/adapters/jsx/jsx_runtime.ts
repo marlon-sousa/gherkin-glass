@@ -38,7 +38,7 @@ export function jsx(type: string | Component, props: Props): Markup {
   return { tag: type, attributes, children: props.children ?? null };
 }
 
-/** Several children, which esbuild calls for an element written with more than one. */
+/** Several children, which esbuild 0.28.2 calls for an element written with more than one. */
 export const jsxs = jsx;
 
 interface Attributes {

@@ -30,11 +30,12 @@ class DomBlock implements Block {
 export class DomPage implements Page {
   private readonly found: DomBlock[] = [];
   private readonly byElement = new Map<Element, DomBlock>();
-  private readonly document: Document;
 
   /** `root` holds the blocks, the document's or a drawn page's `main`. */
-  constructor(document: Document, root: ParentNode = document) {
-    this.document = document;
+  constructor(
+    private readonly document: Document,
+    root: ParentNode = document,
+  ) {
     for (const element of root.querySelectorAll(".ghg-block")) {
       // An item of an outline's list of examples holds its button itself, with no heading.
       const heading = element.querySelector<HTMLElement>(":scope > :is(h2, h3, h4, h5)") ?? element;

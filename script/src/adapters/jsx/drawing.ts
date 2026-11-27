@@ -31,7 +31,7 @@ export function drawn(document: Document, child: Child): Node[] {
   return [element];
 }
 
-/** `Array.isArray` narrows a readonly list to `any[]`. */
+/** tsc 7.0.2 narrows a readonly list to `any[]` with `Array.isArray`. */
 function isList(child: Child): child is readonly Child[] {
   return Array.isArray(child);
 }

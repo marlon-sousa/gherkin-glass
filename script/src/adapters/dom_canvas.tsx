@@ -2,7 +2,7 @@
 
 import { drawn } from "./jsx/drawing.ts";
 import type { Child } from "./jsx/jsx_runtime.ts";
-import { Words } from "./jsx/words.tsx";
+import { MessageParts } from "./jsx/message_parts.tsx";
 import type { PageFrame } from "../policies/page_frame.ts";
 import type { Canvas } from "../ports/canvas.ts";
 
@@ -55,7 +55,7 @@ export class DomCanvas implements Canvas {
           {frame.crumbs.map((crumb, place) => (
             <li>
               <a href={crumb.address} aria-current={place === last && "page"}>
-                <Words parts={crumb.words} lang={crumb.lang} />
+                <MessageParts parts={crumb.words} lang={crumb.lang} />
               </a>
             </li>
           ))}

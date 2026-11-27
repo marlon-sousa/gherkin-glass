@@ -35,7 +35,7 @@ export function openOtherVersions(root: ParentNode): void {
   }
 }
 
-/** A button, closed, followed by `shown`, which starts hidden. */
+/** A button, closed, followed by `shown`, which must be written hidden and with the class `ghg-content`, by which `openOtherVersions` finds it. */
 function disclosure(className: string, label: string, shown: Markup): Markup {
   return (
     <div class={className}>

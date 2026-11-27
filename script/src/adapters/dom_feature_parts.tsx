@@ -1,7 +1,7 @@
 // Adapter: the markup of a feature's text on a page, its tags, description, steps, tables, doc strings and the note of a keyword, in the elements and classes the stylesheet styles.
 
 import type { Markup } from "./jsx/jsx_runtime.ts";
-import { Words } from "./jsx/words.tsx";
+import { MessageParts } from "./jsx/message_parts.tsx";
 import type { StepView, TableView, TagView } from "../policies/block_views.ts";
 import type { NoteWords } from "../policies/heading_words.ts";
 import type { DocString, Part } from "../ports/store.ts";
@@ -46,7 +46,7 @@ export function noteOf(note: NoteWords | null): Markup | null {
     <p class="ghg-keyword-note" role="note">
       {note.before}
       <button type="button" class="ghg-note-opener" aria-haspopup="dialog" aria-controls="ghg_note_dialog">
-        <Words parts={note.opener} />
+        <MessageParts parts={note.opener} />
       </button>
       {note.after}
     </p>

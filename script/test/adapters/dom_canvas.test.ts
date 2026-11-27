@@ -1,4 +1,4 @@
-// The adapter of src/adapters/dom_canvas.ts, on a shell in a document.
+// The adapter of src/adapters/dom_canvas.tsx, on a shell in a document.
 
 import assert from "node:assert/strict";
 import { test } from "node:test";

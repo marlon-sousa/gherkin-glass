@@ -1,4 +1,4 @@
-// The search box adapter of src/adapters/dom_search_box.ts, on the shell of tests/fixtures/pages with its page billing/refunds,
+// The search box adapter of src/adapters/dom_search_box.tsx, on the shell of tests/fixtures/pages with its page billing/refunds,
 // and with its page of search results, with the service and that site's documents, script/test/expected/pages/search.json,
 // behind it. docs/BEHAVIOUR.md, rules 151 to 156, 214 and 217.
 

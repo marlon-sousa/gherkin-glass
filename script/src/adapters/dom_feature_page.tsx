@@ -2,7 +2,7 @@
 
 import { descriptionOf, noteOf, stepList, tableOf, tagList } from "./dom_feature_parts.tsx";
 import type { Markup } from "./jsx/jsx_runtime.ts";
-import { Words } from "./jsx/words.tsx";
+import { MessageParts } from "./jsx/message_parts.tsx";
 import type { BlockView, ExamplesItemView, ExamplesView } from "../policies/block_views.ts";
 import type { ContentsEntry, FeatureView } from "../policies/feature_view.ts";
 import type { Parts } from "../ports/words.ts";
@@ -16,7 +16,7 @@ export function featurePage(view: FeatureView, contentsName: string, firstInBloc
   return (
     <>
       <h1>
-        <Words parts={view.heading} />
+        <MessageParts parts={view.heading} />
       </h1>
       {afterHeading}
       {noteOf(view.note)}
@@ -25,7 +25,7 @@ export function featurePage(view: FeatureView, contentsName: string, firstInBloc
       {view.source && (
         <p class="ghg-source">
           <a href={view.source.address}>
-            <Words parts={view.source.words} />
+            <MessageParts parts={view.source.words} />
           </a>
         </p>
       )}
@@ -73,7 +73,7 @@ export function contentsList(entries: readonly ContentsEntry[], lang: string | n
       {entries.map((entry) => (
         <li>
           <a href={entry.address}>
-            <Words parts={entry.heading} lang={lang} />
+            <MessageParts parts={entry.heading} lang={lang} />
           </a>
           {entry.entries.length > 0 && contentsList(entry.entries, lang)}
         </li>
@@ -121,7 +121,7 @@ function examplesItem(item: ExamplesItemView, firstInBlock: BlockAddition): Mark
     return (
       <li id={item.id} class="ghg-examples">
         <button type="button" class="ghg-toggle" aria-disabled="true">
-          <Words parts={item.label} />
+          <MessageParts parts={item.label} />
         </button>
       </li>
     );
@@ -148,7 +148,7 @@ function stepsHeadingOf(heading: NonNullable<BlockView["stepsHeading"]>): Markup
 function toggle(expanded: boolean, words: Parts): Markup {
   return (
     <button type="button" class="ghg-toggle" aria-expanded={expanded ? "true" : "false"}>
-      <Words parts={words} />
+      <MessageParts parts={words} />
     </button>
   );
 }

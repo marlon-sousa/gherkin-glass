@@ -1,4 +1,4 @@
-// The adapter of src/adapters/dom_tree.ts, on the shell of tests/fixtures/pages, with ghg 1's tree of that site, script/test/expected/pages/tree.json: docs/BEHAVIOUR.md, rules 89 to 93.
+// The adapter of src/adapters/dom_tree.tsx, on the shell of tests/fixtures/pages, with ghg 1's tree of that site, script/test/expected/pages/tree.json: docs/BEHAVIOUR.md, rules 89 to 93.
 
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";

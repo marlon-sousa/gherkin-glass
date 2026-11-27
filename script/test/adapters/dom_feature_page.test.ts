@@ -1,4 +1,4 @@
-// The drawing of src/adapters/dom_feature_page.ts, from the views of src/policies/feature_view.ts, against the pages ghg 1 wrote.
+// The drawing of src/adapters/dom_feature_page.tsx, from the views of src/policies/feature_view.ts, against the pages ghg 1 wrote.
 
 import assert from "node:assert/strict";
 import { test } from "node:test";

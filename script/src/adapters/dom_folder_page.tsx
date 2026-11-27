@@ -2,7 +2,7 @@
 
 import { contentsList } from "./dom_feature_page.tsx";
 import type { Markup } from "./jsx/jsx_runtime.ts";
-import { Words } from "./jsx/words.tsx";
+import { MessageParts } from "./jsx/message_parts.tsx";
 import type { FolderFeatureView, FolderView, LinkView } from "../policies/folder_view.ts";
 
 /** The content of a folder's `main`. */
@@ -40,7 +40,7 @@ function link(view: LinkView): Markup {
 function featureEntry(feature: FolderFeatureView): Markup {
   const heading = (
     <a href={feature.address}>
-      <Words parts={feature.heading} lang={feature.lang} />
+      <MessageParts parts={feature.heading} lang={feature.lang} />
     </a>
   );
   if (feature.countName === null) {

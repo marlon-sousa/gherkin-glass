@@ -1,4 +1,4 @@
-// The search page adapter of src/adapters/dom_search_page.ts, on the page of search results of tests/fixtures/pages drawn in
+// The search page adapter of src/adapters/dom_search_page.tsx, on the page of search results of tests/fixtures/pages drawn in
 // its shell, with the service and that site's documents, script/test/expected/pages/search.json, behind it.
 // docs/BEHAVIOUR.md, rules 216 to 220 and 237.
 

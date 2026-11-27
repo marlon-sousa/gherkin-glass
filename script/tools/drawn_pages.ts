@@ -15,7 +15,7 @@ const PLACEHOLDER_ASSETS = "assets/%7Bversion%7D/";
 
 const [site, drawn] = process.argv.slice(2);
 if (site === undefined || drawn === undefined) {
-  throw new Error("Usage: node tools/drawn_pages.ts <site folder> <drawn folder>");
+  throw new Error("Usage: node --import tsx tools/drawn_pages.ts <site folder> <drawn folder>");
 }
 
 const browser = new Browser({
