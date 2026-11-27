@@ -160,6 +160,56 @@ fn published(folder: &Folder) -> PublishedStore {
     listing.published(&texts).expect("every descriptor")
 }
 
+/// Whether `path` is one of the files of `target`: its descriptor, or a file in its folder.
+fn is_of(path: &str, target: &BuildTarget) -> bool {
+    path == descriptor_path(target)
+        || target
+            .folder()
+            .is_some_and(|folder| path.starts_with(&format!("{folder}/")))
+}
+
+/// Every hash the object of the page `a` of `target` holds, in its order, or `None` when the
+/// target has no such page.
+fn hashes_of_a(folder: &Folder, target: &BuildTarget) -> Option<Vec<String>> {
+    let store = published(folder);
+    let object = store
+        .descriptors
+        .get(target)?
+        .features
+        .iter()
+        .find(|feature| feature.page == "a")?
+        .object
+        .clone();
+    let bytes = folder.get(&object_path(&object))?;
+    let value: serde_json::Value = serde_json::from_slice(bytes).expect("an object is JSON");
+    let mut hashes = Vec::new();
+    collect_hashes(&value, &mut hashes);
+    Some(hashes)
+}
+
+fn collect_hashes(value: &serde_json::Value, hashes: &mut Vec<String>) {
+    match value {
+        serde_json::Value::Object(members) => {
+            members
+                .iter()
+                .for_each(|(key, member)| match (key.as_str(), member.as_str()) {
+                    ("hash", Some(hash)) => hashes.push(hash.to_string()),
+                    _ => collect_hashes(member, hashes),
+                })
+        }
+        serde_json::Value::Array(items) => {
+            items.iter().for_each(|item| collect_hashes(item, hashes))
+        }
+        _ => {}
+    }
+}
+
+/// Whether two of `A_TEXTS` say the same of their blocks: only the last changes a step.
+fn same_blocks(a: &str, b: &str) -> bool {
+    let changed = A_TEXTS.last().copied();
+    (Some(a) == changed) == (Some(b) == changed)
+}
+
 /// Checks the store of `folder` after any command.
 fn assert_store(folder: &Folder) {
     let store = published(folder);
@@ -194,13 +244,40 @@ fn assert_store(folder: &Folder) {
 }
 
 proptest! {
-    // Rules 38, 247 and 253 to 258, over any history of versions and previews.
+    // Rules 38, 247, 253 to 258 and 261, over any history of versions and previews.
     #[test]
     fn every_history_leaves_the_store_its_descriptors_give(commands in vec(command(), 1..8)) {
         let mut folder = Folder::new();
+        // The text of `a` each target built holds, and `None` for one without `a`.
+        let mut texts_of_a: BTreeMap<BuildTarget, Option<&str>> = BTreeMap::new();
         for command in &commands {
+            let before_command = folder.clone();
             command.run_on(&mut folder);
             assert_store(&folder);
+            // No other target's files change.
+            for (path, bytes) in before_command.iter().filter(|(path, _)| {
+                texts_of_a.keys().any(|target| *target != command.target && is_of(path, target))
+            }) {
+                assert_eq!(folder.get(path), Some(bytes), "{path}");
+            }
+            if command.removes {
+                texts_of_a.remove(&command.target);
+            } else {
+                texts_of_a.insert(command.target.clone(), command.a);
+            }
+            // Rule 261: two targets' blocks are the same exactly when their texts say the same
+            // of them, a block that only moved lines included.
+            for (first, first_text) in &texts_of_a {
+                for (second, second_text) in &texts_of_a {
+                    if let (Some(a), Some(b)) = (first_text, second_text) {
+                        assert_eq!(
+                            hashes_of_a(&folder, first) == hashes_of_a(&folder, second),
+                            same_blocks(a, b),
+                            "{first:?} and {second:?}"
+                        );
+                    }
+                }
+            }
             if !command.removes {
                 // Rule 247: the target's descriptor is what building it alone gives.
                 let alone = command.rendered();
