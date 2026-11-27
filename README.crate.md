@@ -89,8 +89,7 @@ text = "Issue $1 on GitHub"
 | `tag_links` | a list of tables, each written `[[tag_links]]` | none | Links from tags to another site. Each table has a `pattern`, a regular expression matched against the whole tag with its `@`; an `address`; and a `text` for the link. In the address and the text, `$1` or `$name` is replaced by what that group of the pattern matched. |
 | `accent_light` | a colour, `#` and six or three hexadecimal digits, in quotes, such as `"#0b4f9c"` | `"#0b4f9c"` | The light theme's colour for links and the focus outline. It must reach a contrast of 7:1 against the theme's backgrounds. |
 | `accent_dark` | a colour, written as `accent_light`'s, such as `"#8cc4ff"` | `"#8cc4ff"` | The dark theme's colour for links and the focus outline, held to the same contrast. |
-| `version_name` | text | none | Builds the site as a version of that name, as "Versions" below describes, unless `--preview` is given. |
-| `replace_existing_version` | `true` or `false` | `true` | Whether a build replaces the site, or the version, that an earlier build wrote in the output folder. When `false`, it stops instead. |
+| `replace_existing_version` | `true` or `false` | `true` | Whether `ghg build` replaces the site, and `ghg version add` the version, that an earlier run wrote in the output folder. When `false`, it stops instead. |
 | `front_page` | a path | none | A Markdown file that introduces the site on its front page, as "The front page" below describes. |
 | `keep_in_output` | a list of text, such as `[".nojekyll", "CNAME"]` | none | Patterns of what ghg leaves alone in the output folder, in the syntax of a `.gitignore` file, as "The output folder belongs to ghg" below describes. |
 
@@ -107,30 +106,34 @@ When a file cannot be read, such as one with a syntax mistake, ghg reports every
 ```text
 ghg build [options]
 ghg serve [options]
+ghg version add <name> [options]
+ghg version remove <name> [options]
+ghg preview add <name> [options]
+ghg preview remove <name> [options]
 ```
+
+`ghg build` writes a site without versions, and `ghg serve` builds it and serves it on your machine. `ghg version add` and `ghg version remove` add and remove a version of a site that holds several, as "Versions" below describes, and `ghg preview add` and `ghg preview remove` a preview, as "A site of only some feature files" below describes.
 
 | Option | Command | What it does |
 | --- | --- | --- |
-| `--config <file>` | `build` and `serve` | Reads that configuration file instead of `ghg.toml` in the current folder. |
-| `--input <folder>` | `build` and `serve` | Reads that folder, instead of the configuration's `input`. |
-| `--output <folder>` | `build` and `serve` | Writes the site into that folder, instead of the configuration's `output`. |
-| `--title <text>` | `build` and `serve` | The site's title, instead of the configuration's `title`. |
-| `--version-name <name>` | `build` and `serve` | Builds the site as that version, instead of the configuration's `version_name`. |
-| `--front-page <file>` | `build` and `serve` | The Markdown file of the site's front page, instead of the configuration's `front_page`. |
-| `--only <file>` | `build` and `serve` | Builds the site from the feature files listed in that file, one path on each line, alone, as "A site of only some feature files" below describes. `--only -` reads the list from standard input. |
-| `--keep-in-output <pattern>` | `build` and `serve` | Leaves alone what the pattern matches in the output folder, in the syntax of a `.gitignore` file, as "The output folder belongs to ghg" below describes. Give it once for each pattern; the patterns given replace the configuration's `keep_in_output`. |
-| `--source-link <address>` | `build` and `serve` | The address of each feature file's source, with `{path}` and `{line}`, instead of the configuration's `source_link`. |
-| `--allow-unnamed <true or false>` | `build` and `serve` | Whether a feature, rule or scenario may have no name, instead of the configuration's `allow_unnamed`. |
-| `--collapse-rules <true or false>` | `build` and `serve` | Whether rules start collapsed, instead of the configuration's `collapse_rules`. |
-| `--collapse-scenarios <true or false>` | `build` and `serve` | Whether scenarios, scenario outlines and backgrounds start collapsed, instead of the configuration's `collapse_scenarios`. |
-| `--show-tree <true or false>` | `build` and `serve` | Whether the folder tree is shown when a reader first opens the site, instead of the configuration's `show_tree`. |
-| `--inline-backgrounds <true or false>` | `build` and `serve` | Whether pages start with the backgrounds inside each scenario expanded, instead of the configuration's `inline_backgrounds`. |
-| `--replace-existing-version <true or false>` | `build` and `serve` | Whether a build replaces the site, or the version, that an earlier build wrote, instead of the configuration's `replace_existing_version`. |
-| `--accent-light <colour>` | `build` and `serve` | The light theme's accent colour, such as `'#0b4f9c'`, in quotes so that the shell does not take `#` for a comment, instead of the configuration's `accent_light`. |
-| `--accent-dark <colour>` | `build` and `serve` | The dark theme's accent colour, written as `--accent-light`'s, instead of the configuration's `accent_dark`. |
-| `--tag-link <pattern> <address> <text>` | `build` and `serve` | Links the tags the pattern matches to another site, as a table of `tag_links` does, such as `--tag-link '@issue-(\d+)' 'https://github.com/owner/repo/issues/$1' 'Issue $1'`. Give it once for each link; the links given replace the configuration's `tag_links`. |
-| `--preview` | `build` and `serve` | Builds a preview: the site without versions, whatever the configuration's `version_name` says, every page of which asks search engines not to index it, as "A site of only some feature files" below describes. It cannot be given with `--version-name`. |
-| `--message-format <format>` | `build` | `human`, the default, or `json`, which also prints one JSON object to standard output, on one line, saying how the build ended, for a program such as a CI step to read, as "A report for programs" below describes. |
+| `--config <file>` | every command | Reads that configuration file instead of `ghg.toml` in the current folder. |
+| `--input <folder>` | `build`, `serve`, `version add` and `preview add` | Reads that folder, instead of the configuration's `input`. |
+| `--output <folder>` | every command | Writes the site into that folder, instead of the configuration's `output`. |
+| `--title <text>` | `build`, `serve`, `version add` and `preview add` | The site's title, instead of the configuration's `title`. |
+| `--front-page <file>` | `build`, `serve`, `version add` and `preview add` | The Markdown file of the site's front page, instead of the configuration's `front_page`. |
+| `--only <file>` | `build`, `serve`, `version add` and `preview add` | Builds the site from the feature files listed in that file, one path on each line, alone, as "A site of only some feature files" below describes. `--only -` reads the list from standard input. |
+| `--keep-in-output <pattern>` | every command | Leaves alone what the pattern matches in the output folder, in the syntax of a `.gitignore` file, as "The output folder belongs to ghg" below describes. Give it once for each pattern; the patterns given replace the configuration's `keep_in_output`. |
+| `--source-link <address>` | `build`, `serve`, `version add` and `preview add` | The address of each feature file's source, with `{path}` and `{line}`, instead of the configuration's `source_link`. |
+| `--allow-unnamed <true or false>` | `build`, `serve`, `version add` and `preview add` | Whether a feature, rule or scenario may have no name, instead of the configuration's `allow_unnamed`. |
+| `--collapse-rules <true or false>` | `build`, `serve`, `version add` and `preview add` | Whether rules start collapsed, instead of the configuration's `collapse_rules`. |
+| `--collapse-scenarios <true or false>` | `build`, `serve`, `version add` and `preview add` | Whether scenarios, scenario outlines and backgrounds start collapsed, instead of the configuration's `collapse_scenarios`. |
+| `--show-tree <true or false>` | `build`, `serve`, `version add` and `preview add` | Whether the folder tree is shown when a reader first opens the site, instead of the configuration's `show_tree`. |
+| `--inline-backgrounds <true or false>` | `build`, `serve`, `version add` and `preview add` | Whether pages start with the backgrounds inside each scenario expanded, instead of the configuration's `inline_backgrounds`. |
+| `--replace-existing-version <true or false>` | `build`, `serve` and `version add` | Whether `ghg build` replaces the site, and `ghg version add` the version, that an earlier run wrote, instead of the configuration's `replace_existing_version`. |
+| `--accent-light <colour>` | `build`, `serve`, `version add` and `preview add` | The light theme's accent colour, such as `'#0b4f9c'`, in quotes so that the shell does not take `#` for a comment, instead of the configuration's `accent_light`. |
+| `--accent-dark <colour>` | `build`, `serve`, `version add` and `preview add` | The dark theme's accent colour, written as `--accent-light`'s, instead of the configuration's `accent_dark`. |
+| `--tag-link <pattern> <address> <text>` | `build`, `serve`, `version add` and `preview add` | Links the tags the pattern matches to another site, as a table of `tag_links` does, such as `--tag-link '@issue-(\d+)' 'https://github.com/owner/repo/issues/$1' 'Issue $1'`. Give it once for each link; the links given replace the configuration's `tag_links`. |
+| `--message-format <format>` | every command but `serve` | `human`, the default, or `json`, which also prints one JSON object to standard output, on one line, saying how the command ended, for a program such as a CI step to read, as "A report for programs" below describes. |
 | `--host <address>` | `serve` | Listens on that address instead of `127.0.0.1`, such as `0.0.0.0` to be reached from other machines. |
 | `--port <number>` | `serve` | Listens at that port instead of 8000. `0` lets the system choose a free one. |
 | `--no-build` | `serve` | Serves the output folder as it is, without building it. It cannot be given with `--watch` or `--only`. |
@@ -138,32 +141,47 @@ ghg serve [options]
 
 An option on the command line wins over the configuration file's key, and the key wins over the default. `ghg --help` lists the commands and options, and `ghg --version` prints the version.
 
-`ghg build` exits with status 0 when it wrote the site, or when it read no feature file, so that it wrote nothing, as "When there is no feature file" below describes, 1 when the configuration, a feature file or the output folder stopped it, and 2 for a mistake on the command line. `ghg serve` exits the same way, and with 1 when it cannot listen, such as on a port already in use. Control+C, or the signal a terminal or a process manager sends, stops it gracefully: it finishes a build that is running, says "The site is no longer served." and exits with status 0. Asked to stop again while it finishes answering, it ends at once with status 130.
+`ghg build` exits with status 0 when it wrote the site, or when it read no feature file, so that it wrote nothing, as "When there is no feature file" below describes, 1 when the configuration, a feature file or the output folder stopped it, and 2 for a mistake on the command line. `ghg version add` and `ghg preview add` exit the same way. `ghg version remove` and `ghg preview remove` exit with status 0 when they removed it, and also when the output folder holds none of that name, which they say, so that a workflow can remove one that may not be there. `ghg serve` exits the same way, and with 1 when it cannot listen, such as on a port already in use. Control+C, or the signal a terminal or a process manager sends, stops it gracefully: it finishes a build that is running, says "The site is no longer served." and exits with status 0. Asked to stop again while it finishes answering, it ends at once with status 130.
 
 ### Looking at a site and publishing it
 
-A site is meant to be served by a web server, not opened from disk. Opened from disk, a browser does not run the page's script, so the folder tree, search and the reader options do not work. Every page opened from disk therefore first opens a dialog, "Opened from disk", that says the site is meant to be served and how to serve it; close it with its button, "I agree", or with Escape, to read the page.
+A site is meant to be served by a web server, not opened from disk. Its pages are drawn in the browser by the site's script, from the site's data, which a browser neither runs nor fetches from disk, so opened from disk a site shows only its front page. Every page opened from disk therefore first opens a dialog, "Opened from disk", that says the site is meant to be served and how to serve it; close it with its button, "I agree", or with Escape.
 
 To look at a site on your own machine, use `ghg serve`. Without `--watch` or `--no-build`, it builds the site into the output folder, as `ghg build` does, then serves it. With `--watch`, the site is built in memory and served from there, the output folder is left as it is, and the page you are reading reloads at the same heading after each change. With `--no-build`, ghg serves a site already built, such as one downloaded from a CI run.
 
-To publish a site, put the output folder on any static web host, GitHub Pages included. Every link in a site is relative, so it works at any address, below a path such as `/<repository>/` too. GitHub Pages publishing from a branch runs Jekyll, which leaves out files whose names start with `_`, such as the page of `_draft.feature`; publish with GitHub's Pages action instead, or put a `.nojekyll` file at the root of that branch. To build straight into a checkout of the branch, tell ghg to leave that file alone, and git's own `.git` with it, and `CNAME` when the site has a custom domain: `ghg build --output gh-pages --keep-in-output .nojekyll --keep-in-output .git --keep-in-output CNAME`.
+To publish a site, put the output folder on any static web host, GitHub Pages included. Every link in a site is relative, so it works at any address, below a path such as `/<repository>/` too. GitHub Pages publishing from a branch runs Jekyll over it first; publish with GitHub's Pages action instead, or put a `.nojekyll` file at the root of that branch, so that every file is served as it is. To build straight into a checkout of the branch, tell ghg to leave that file alone, and git's own `.git` with it, and `CNAME` when the site has a custom domain: `ghg build --output gh-pages --keep-in-output .nojekyll --keep-in-output .git --keep-in-output CNAME`.
 
 ### The output folder belongs to ghg
 
-`ghg build` marks the output folder as its own with a file at its root, `ghg-site.json`, or `ghg-versions.json` when it builds versions. From then on the output folder, and every folder in it, belongs to ghg: any build may empty it and write it again, so anything you put there by hand can be lost.
+ghg marks the output folder as its own with a file at its root, `ghg-site.json`, which lists every file ghg wrote there, whether the folder holds a site, versions or previews. From then on the output folder, and every folder in it, belongs to ghg: any command may empty it and write it again, so anything you put there by hand can be lost.
 
 To keep that from happening by mistake:
 
 - ghg marks an output folder only when it is missing or empty. It refuses to build into a folder that holds anything and no marker.
-- Before every build, ghg checks that a marked folder holds only what it wrote there. When it holds anything else, ghg names it and stops, before reading the features, and writes and deletes nothing.
+- Before every command that writes it, ghg checks that a marked folder holds only what it wrote there. When it holds anything else, ghg names it and stops, before reading the features, and writes and deletes nothing.
+- An output folder that gherkin-glass 1 wrote is left as it is: gherkin-glass 2 cannot add to it. Build into a new folder instead, as "Versions" below shows for a site of versions.
 
 So keep the output folder for the site alone, and put anything you want served beside it somewhere else, unless you name it with `keep_in_output` or `--keep-in-output`. Each is a pattern in the syntax of a `.gitignore` file, such as `.nojekyll`, `/CNAME` for the one at the root only, or `drafts/` for a folder. ghg never writes, empties or deletes what a pattern matches, nor anything in a folder it matches, and does not count it as something it did not write, so a folder holding only those things counts as empty. A pattern that matches anything ghg writes, such as `assets` or the version being built, stops the build before anything is written.
 
 ### Versions
 
-One site can hold several versions of the same suite, so that readers read the version they use. Give each build a version name, with `--version-name` or `version_name`, such as `v1.2.0` or `main`. A version name is one folder name, of the letters `a` to `z` and `A` to `Z`, digits, `.`, `-`, `_` and `+`, other than `previews`, which is kept for previews, as "A site of only some feature files" below describes. A name such as `1.2.0` or `v1.2.0` is a release, one such as `2.0.0-rc.1` a pre-release, and any other, such as `main`, a development version. Each version is written into a folder of its own in the output folder, such as `site/v1.2.0/`, and the output folder's `index.html` lists every version: development versions, releases newest first, and pre-releases, listed collapsed.
+One site can hold several versions of the same suite, so that readers read the version they use. Add each version with `ghg version add` and its name, such as `ghg version add v1.2.0` or `ghg version add main`, which reads the feature files as `ghg build` does, with the same options and the same `ghg.toml`. A version's name is one folder name: letters `a` to `z` and `A` to `Z`, digits, `.`, `-`, `_` and `+`, starting with a letter or a digit and not ending with `.`. It cannot be `assets`, `data`, `index.html`, `ghg-site.json` or `previews`, which the site uses, nor a name Windows keeps for a device, such as `con` or `nul`. A name such as `1.2.0` or `v1.2.0` is a release, one such as `2.0.0-rc.1` a pre-release, and any other, such as `main`, a development version.
 
-ghg does not read git. To build several versions, check each one out into a folder of its own and run ghg once for each, into the same output folder. Building a version again replaces it, unless `replace_existing_version` is `false`.
+Each version is written into a folder of its own in the output folder, such as `site/v1.2.0/`, and the output folder's `index.html` lists every version: development versions, releases newest first, and pre-releases, listed collapsed. The versions share the site's data, in `site/data/`, so that a feature file the same in several versions is stored once, and each feature's page, and each of its rules, scenarios and backgrounds, lists the other versions in which it changed, is missing or is the same. Adding a version again replaces it, unless `replace_existing_version` is `false`. `ghg version remove v1.2.0` removes a version, and the data only it used. A site without versions, built with `ghg build`, and versions cannot share an output folder.
+
+ghg does not read git. To build several versions, check each one out into a folder of its own and run `ghg version add` once for each, into the same output folder. To rebuild a site of versions that gherkin-glass 1 built, which gherkin-glass 2 does not add to, do that for every tag, into a new output folder. With git, from the root of the repository:
+
+```sh
+site="$PWD/site"
+for tag in $(git tag --list 'v*'); do
+  git worktree add --detach "../version-$tag" "$tag"
+  (cd "../version-$tag" && ghg version add "$tag" --output "$site")
+  git worktree remove "../version-$tag"
+done
+ghg version add main --output "$site"
+```
+
+Each version is built from its own `ghg.toml`, as it was at that tag. gherkin-glass 2 no longer has the key `version_name`, so a `ghg.toml` that sets it stops the run: give that tag's settings on the command line instead, with `--config` naming a file without the key.
 
 ### A site of only some feature files
 
@@ -175,13 +193,13 @@ git diff --name-only origin/main...HEAD | ghg build --only -
 
 Every path in the list that is not a feature file ghg would read is passed over quietly: a removed file, a file that is not a feature file, or a path outside the input folder, so the list needs no filter. A list that names no path at all, such as an empty one, and one whose paths are none of them feature files build nothing, and say so, as "When there is no feature file" below describes. The site's folder pages, folder tree, tags, step sentences and search hold only the listed features, and every page says that the site shows only the feature files given with `--only`. git quotes paths with characters outside ASCII; `git -c core.quotePath=false diff --name-only` prints them as they are. With `ghg serve --watch`, a list given as a file is read again whenever it changes.
 
-To publish such a site for the reviewers of a pull request, build it as a preview, into a folder of its own:
+To publish such a site for the reviewers of a pull request, add it as a preview, with a name of its own:
 
 ```sh
-git diff --name-only origin/main...HEAD | ghg build --only - --preview --output previews/pr-131
+git diff --name-only origin/main...HEAD | ghg preview add pr-131 --only -
 ```
 
-A preview is an ordinary site without versions, even when `ghg.toml` names a version, and every page of it asks search engines not to index it. Nothing links to it: readers reach it through its link, wherever you deploy the folder. A versioned output folder keeps a `previews` folder at its top for them: ghg never looks into it, writes or removes anything there, so `--output site/previews/pr-131` deploys a preview beside the versions built into `site`, and the next version built into `site` still runs.
+A preview is written into `previews/<name>/` of the output folder, such as `site/previews/pr-131/`, beside the site or the versions already there, whose data it shares, and every page of it asks search engines not to index it. It reads as a site without versions does, and on a site of versions each of its pages lists, as a version's do, the versions in which it changed, is missing or is the same. Nothing links to it: readers reach it through its link. Its name follows the rules of a version's, adding it again replaces it, and `ghg preview remove pr-131` removes it, such as when the pull request closes. `--only` works with `ghg version add` too, for a version of only some feature files.
 
 ### When there is no feature file
 
@@ -192,20 +210,21 @@ An input folder that holds no feature file ghg reads, such as a suite whose firs
 A program that runs `ghg build`, such as a step of a CI workflow, can ask for `--message-format json`. Standard error then holds the same sentences as ever, and standard output one JSON object, on one line, such as:
 
 ```json
-{"outcome":"built","output":"site","version":null,"features":12,"scenarios":48,"notes":[],"errors":[]}
+{"outcome":"built","output":"site","version":null,"preview":null,"features":12,"scenarios":48,"notes":[],"errors":[]}
 ```
 
 Every key is always there, `null` when it does not apply:
 
 | Key | What it holds |
 | --- | --- |
-| `outcome` | `built`, when the site was written; `nothing-to-build`, when no feature file was read; `stopped`, when the configuration, a feature file, the output folder or the front page stopped the build. |
-| `output` | The output folder, when the site was written. |
-| `version` | The version built, when the site was written as a version. |
+| `outcome` | `built`, when the site, the version or the preview was written; `nothing-to-build`, when no feature file was read; `removed`, when a version or a preview was removed; `nothing-to-remove`, when there was none of that name to remove; `stopped`, when the configuration, a feature file, the output folder or the front page stopped the command. |
+| `output` | The output folder, when something was written or removed. |
+| `version` | The version's name, when a version was written or removed. |
+| `preview` | The preview's name, when a preview was written or removed. |
 | `features` | How many feature files the site shows, when it was written. |
 | `scenarios` | How many scenarios they hold, when it was written. |
-| `notes` | What ghg says of a build that was not stopped, each with a `kind`, `no-title`, `large-search-documents` or `nothing-to-build`, and the `message` it prints. |
-| `errors` | Every problem that stopped the build, each with its `path`, its `line`, or `null`, and its `message`. |
+| `notes` | What ghg says of a command that was not stopped, each with a `kind`, `no-title`, `large-site-data`, `nothing-to-build` or `nothing-to-remove`, and the `message` it prints. |
+| `errors` | Every problem that stopped the command, each with its `path`, its `line`, or `null`, and its `message`. |
 
 The exit status is the same as without the option, and a mistake on the command line prints no JSON.
 
