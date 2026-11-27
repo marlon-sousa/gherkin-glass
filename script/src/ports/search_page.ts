@@ -1,4 +1,4 @@
-// Port: the page of search results, as src/policies/rendering/search_page.html writes it, which the script fills with what search finds.
+// Port: the page of search results, as src/adapters/dom_results_page.tsx draws it, which the script fills with what search finds.
 
 /** A block's heading for each kind, with `{name}` for its name, and an unnamed examples block's with `{place}`. */
 export interface KindHeadings {

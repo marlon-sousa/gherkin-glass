@@ -1,10 +1,10 @@
 // Adapter: the drawn page port over the `main` of a shell, through the adapters of each part it finds there.
 
-import type { DomCanvas } from "./dom_canvas.ts";
+import type { DomCanvas } from "./dom_canvas.tsx";
 import { DomBackgrounds } from "./dom_backgrounds.ts";
 import { DomNoteDialog } from "./dom_note_dialog.ts";
 import { DomPage } from "./dom_page.ts";
-import { DomSearchPage } from "./dom_search_page.ts";
+import { DomSearchPage } from "./dom_search_page.tsx";
 import type { Backgrounds } from "../ports/backgrounds.ts";
 import type { DrawnPage } from "../ports/drawn_page.ts";
 import type { NoteDialog } from "../ports/note_dialog.ts";
@@ -12,13 +12,10 @@ import type { Page } from "../ports/page.ts";
 import type { SearchPage } from "../ports/search_page.ts";
 
 export class DomDrawnPage implements DrawnPage {
-  private readonly document: Document;
-  private readonly canvas: DomCanvas;
-
-  constructor(document: Document, canvas: DomCanvas) {
-    this.document = document;
-    this.canvas = canvas;
-  }
+  constructor(
+    private readonly document: Document,
+    private readonly canvas: DomCanvas,
+  ) {}
 
   blocks(): Page {
     return new DomPage(this.document, this.canvas.main);

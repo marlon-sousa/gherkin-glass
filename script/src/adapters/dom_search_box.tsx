@@ -1,5 +1,7 @@
 // Adapter: the search box port over the search form src/policies/rendering/search_box.html writes, its field a combobox over the list box of results.
 
+import { drawn } from "./jsx/drawing.ts";
+import type { Child } from "./jsx/jsx_runtime.ts";
 import type { Piece, Result, SearchBox, SearchWords } from "../ports/search_box.ts";
 
 /** Long enough for screen readers to hear the status emptied, so that the same words are read again. */
@@ -9,11 +11,6 @@ const REANNOUNCE_MILLISECONDS = 50;
 const OPTION_ID = "ghg_search_result_";
 
 export class DomSearchBox implements SearchBox {
-  private readonly form: HTMLFormElement;
-  private readonly field: HTMLInputElement;
-  private readonly link: HTMLAnchorElement;
-  private readonly status: HTMLElement;
-  private readonly results: HTMLOListElement;
   private pendingStatus: number | null = null;
 
   /** Null when the page has no search form, or not the whole of one. */
@@ -29,12 +26,13 @@ export class DomSearchBox implements SearchBox {
     return null;
   }
 
-  private constructor(form: HTMLFormElement, field: HTMLInputElement, link: HTMLAnchorElement, status: HTMLElement, results: HTMLOListElement) {
-    this.form = form;
-    this.field = field;
-    this.link = link;
-    this.status = status;
-    this.results = results;
+  private constructor(
+    private readonly form: HTMLFormElement,
+    private readonly field: HTMLInputElement,
+    private readonly link: HTMLAnchorElement,
+    private readonly status: HTMLElement,
+    private readonly results: HTMLOListElement,
+  ) {
     form.addEventListener("submit", (event) => event.preventDefault());
     // Choosing an option with the pointer keeps the focus in the field.
     results.addEventListener("mousedown", (event) => event.preventDefault());
@@ -114,16 +112,12 @@ export class DomSearchBox implements SearchBox {
   }
 
   showResults(results: readonly Result[]): void {
-    const document = this.form.ownerDocument;
-    const options = results.map((result, place) => {
-      const option = document.createElement("li");
-      option.id = `${OPTION_ID}${place}`;
-      option.setAttribute("role", "option");
-      option.setAttribute("aria-selected", "false");
-      option.append(...this.pieces(result.label));
-      return option;
-    });
-    this.results.replaceChildren(...options);
+    const options = results.map((result, place) => (
+      <li id={`${OPTION_ID}${place}`} role="option" aria-selected="false">
+        {piecesOf(result.label)}
+      </li>
+    ));
+    this.results.replaceChildren(...drawn(this.form.ownerDocument, options));
     this.choose(null);
   }
 
@@ -151,7 +145,7 @@ export class DomSearchBox implements SearchBox {
       this.link.replaceChildren();
       return;
     }
-    this.link.replaceChildren(...this.pieces(link.label));
+    this.link.replaceChildren(...drawn(this.form.ownerDocument, piecesOf(link.label)));
     this.link.setAttribute("href", link.address);
   }
 
@@ -167,18 +161,6 @@ export class DomSearchBox implements SearchBox {
     this.form.ownerDocument.defaultView?.location.assign(address);
   }
 
-  /** Each piece as text, a name isolated in a `bdi` of its own. */
-  private pieces(label: readonly Piece[]): (Node | string)[] {
-    return label.map((piece) => {
-      if (!piece.isName) {
-        return piece.text;
-      }
-      const name = this.form.ownerDocument.createElement("bdi");
-      name.textContent = piece.text;
-      return name;
-    });
-  }
-
   private onKey(key: string, handler: () => void): void {
     this.field.addEventListener("keydown", (event) => {
       // Safari gives the Enter that ends a composition isComposing false, but keyCode 229.
@@ -188,4 +170,9 @@ export class DomSearchBox implements SearchBox {
       }
     });
   }
+}
+
+/** Each piece as text, a name isolated in a `bdi` of its own. */
+function piecesOf(label: readonly Piece[]): Child {
+  return label.map((piece) => (piece.isName ? <bdi>{piece.text}</bdi> : piece.text));
 }

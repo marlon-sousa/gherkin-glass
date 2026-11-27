@@ -1,4 +1,4 @@
-// The adapter of src/adapters/dom_tree.ts, on the shell of tests/fixtures/pages, with ghg 1's tree of that site, script/test/expected/pages/tree.json: docs/BEHAVIOUR.md, rules 89 to 93.
+// The adapter of src/adapters/dom_tree.tsx, on the shell of tests/fixtures/pages, with ghg 1's tree of that site, script/test/expected/pages/tree.json: docs/BEHAVIOUR.md, rules 89 to 93.
 
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -6,7 +6,7 @@ import { test } from "node:test";
 
 import { Window } from "happy-dom";
 
-import { DomTree } from "../../src/adapters/dom_tree.ts";
+import { DomTree } from "../../src/adapters/dom_tree.tsx";
 import { DomTreeSwitch } from "../../src/adapters/dom_tree_switch.ts";
 import { buildTree, startTreeControls } from "../../src/services/folder_tree.ts";
 import type { Memory } from "../../src/ports/memory.ts";

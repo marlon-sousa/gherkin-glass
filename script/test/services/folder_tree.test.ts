@@ -64,11 +64,8 @@ class FakeSwitch implements TreeSwitch {
 }
 
 class FakeWidth implements WindowWidth {
-  isNarrow: boolean;
   change: (narrow: boolean) => void = () => {};
-  constructor(narrow: boolean) {
-    this.isNarrow = narrow;
-  }
+  constructor(public isNarrow: boolean) {}
   narrow(): boolean {
     return this.isNarrow;
   }

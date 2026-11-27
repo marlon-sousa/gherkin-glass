@@ -3,9 +3,8 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { DomCanvas } from "../../src/adapters/dom_canvas.ts";
-import { DomPages } from "../../src/adapters/dom_pages.ts";
-import { ElementBuilder } from "../../src/adapters/element_builder.ts";
+import { DomCanvas } from "../../src/adapters/dom_canvas.tsx";
+import { DomPages } from "../../src/adapters/dom_pages.tsx";
 import type { PageName } from "../../src/policies/address.ts";
 import type { PageFrame } from "../../src/policies/page_frame.ts";
 import type { Descriptor } from "../../src/ports/store.ts";
@@ -21,9 +20,8 @@ async function drawn(page: PageName, descriptor: Descriptor = refundsDescriptor,
   const document = emptyDocument();
   document.title = "Banking & <more>";
   document.querySelector("main")!.innerHTML = frontPage;
-  const make = new ElementBuilder(document);
-  const canvas = DomCanvas.of(make)!;
-  const draw = pageDrawing({ store: new MemoryStore(descriptor, { refunds: refundsObject }), words, pages: new DomPages(make, canvas, words), canvas });
+  const canvas = DomCanvas.of(document)!;
+  const draw = pageDrawing({ store: new MemoryStore(descriptor, { refunds: refundsObject }), words, pages: new DomPages(document, canvas, words), canvas });
   const frame = (await draw(page))();
   return { document, frame };
 }
@@ -71,9 +69,8 @@ test("the home page of a shell that holds its front page is the front page, put 
 // Rules 81 and 85: a folder's page, with its title, `en` and a breadcrumb through the folders above it.
 test("a folder's page is drawn with its title, its language and the folders above it", async () => {
   const document = emptyDocument();
-  const make = new ElementBuilder(document);
-  const canvas = DomCanvas.of(make)!;
-  const draw = pageDrawing({ store: new MemoryStore(billingDescriptor, { refunds: refundsObject, "closed-1": closedObject }), words, pages: new DomPages(make, canvas, words), canvas });
+  const canvas = DomCanvas.of(document)!;
+  const draw = pageDrawing({ store: new MemoryStore(billingDescriptor, { refunds: refundsObject, "closed-1": closedObject }), words, pages: new DomPages(document, canvas, words), canvas });
   const frame = (await draw({ kind: "folder", folder: "billing/archive/" }))();
   assert.equal(document.querySelector("main h1")!.textContent, "archive");
   assert.equal(frame.title, "billing/archive, Banking & <more>");
@@ -91,9 +88,8 @@ test("a folder's page is drawn with its title, its language and the folders abov
 // Rule 77: a version's shell holds no front page, so its home page is drawn as a folder's is.
 test("the home page of a shell that holds no front page is drawn as its folder's page", async () => {
   const document = emptyDocument();
-  const make = new ElementBuilder(document);
-  const canvas = DomCanvas.of(make)!;
-  const draw = pageDrawing({ store: new MemoryStore(billingDescriptor, { refunds: refundsObject, "closed-1": closedObject }), words, pages: new DomPages(make, canvas, words), canvas });
+  const canvas = DomCanvas.of(document)!;
+  const draw = pageDrawing({ store: new MemoryStore(billingDescriptor, { refunds: refundsObject, "closed-1": closedObject }), words, pages: new DomPages(document, canvas, words), canvas });
   const frame = (await draw({ kind: "home" }))();
   assert.equal(document.querySelector("main h1")!.textContent, "Banking & <more>");
   assert.ok(document.querySelector("main .ghg-totals"));
@@ -103,10 +99,9 @@ test("the home page of a shell that holds no front page is drawn as its folder's
 
 /** A drawing of the pages of tests/fixtures/tags, in `document`. */
 function taggedDrawing(document: Document): (page: PageName) => Promise<PageFrame> {
-  const make = new ElementBuilder(document);
-  const canvas = DomCanvas.of(make)!;
+  const canvas = DomCanvas.of(document)!;
   const objects = Object.fromEntries(tagsFeatures.map((feature) => [feature.entry.object, feature.object]));
-  const draw = pageDrawing({ store: new MemoryStore(tagsDescriptor, objects), words, pages: new DomPages(make, canvas, words), canvas });
+  const draw = pageDrawing({ store: new MemoryStore(tagsDescriptor, objects), words, pages: new DomPages(document, canvas, words), canvas });
   return async (page) => (await draw(page))();
 }
 

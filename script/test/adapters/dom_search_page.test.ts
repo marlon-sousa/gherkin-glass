@@ -1,4 +1,4 @@
-// The search page adapter of src/adapters/dom_search_page.ts, on the page of search results of tests/fixtures/pages drawn in
+// The search page adapter of src/adapters/dom_search_page.tsx, on the page of search results of tests/fixtures/pages drawn in
 // its shell, with the service and that site's documents, script/test/expected/pages/search.json, behind it.
 // docs/BEHAVIOUR.md, rules 216 to 220 and 237.
 
@@ -6,8 +6,8 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
 
-import { DomSearchBox } from "../../src/adapters/dom_search_box.ts";
-import { DomSearchPage } from "../../src/adapters/dom_search_page.ts";
+import { DomSearchBox } from "../../src/adapters/dom_search_box.tsx";
+import { DomSearchPage } from "../../src/adapters/dom_search_page.tsx";
 import { startSearching } from "../../src/services/searching.ts";
 import { startListing } from "../../src/services/results_listing.ts";
 import type { SearchDocument } from "../../src/ports/documents.ts";

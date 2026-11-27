@@ -10,7 +10,6 @@ import type { Timer } from "../../src/ports/timer.ts";
 import { documents, pageWords } from "../support/search_fixtures.ts";
 
 class FakeBox implements SearchBox {
-  readonly given: SearchWords;
   status = "";
   results: readonly Result[] = [];
   field = "";
@@ -25,9 +24,7 @@ class FakeBox implements SearchBox {
   escape: () => void = () => {};
   pick: (place: number) => void = () => {};
 
-  constructor(words: SearchWords) {
-    this.given = words;
-  }
+  constructor(readonly given: SearchWords) {}
 
   words(): SearchWords {
     return this.given;
@@ -86,13 +83,11 @@ class FakeBox implements SearchBox {
 
 class FakeDocuments implements Documents {
   loads = 0;
-  failing: boolean;
-  readonly found: SearchDocument[];
 
-  constructor(found: SearchDocument[], failing = false) {
-    this.found = found;
-    this.failing = failing;
-  }
+  constructor(
+    readonly found: SearchDocument[],
+    public failing = false,
+  ) {}
 
   load(): Promise<readonly SearchDocument[]> {
     this.loads += 1;

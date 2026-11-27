@@ -8,15 +8,18 @@ import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { join, relative, resolve, sep } from "node:path";
 import { createInterface } from "node:readline";
-
-import { targetAddress } from "../../script/src/policies/address.ts";
-import { shellPages } from "../../script/tools/shell_pages.ts";
+import { pathToFileURL } from "node:url";
 
 // The Node packages are script/'s, installed from its lockfile.
 const require = createRequire(resolve("script/package.json"));
 
 export const { chromium } = require("playwright");
 export const axeSource = require.resolve("axe-core/axe.min.js");
+
+// The script's TypeScript is run by tsx, as the script's tests and tools run it.
+const { tsImport } = await import(pathToFileURL(require.resolve("tsx/esm/api")).href);
+const { targetAddress } = await tsImport("../../script/src/policies/address.ts", import.meta.url);
+const { shellPages } = await tsImport("../../script/tools/shell_pages.ts", import.meta.url);
 
 // The rules the check fails on: WCAG 2.2 A and AA, and the enhanced contrast
 // of AAA, leaving out the rules axe-core tags experimental or deprecated.

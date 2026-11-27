@@ -223,7 +223,9 @@ fn tracked_sources() -> Result<Vec<String>, String> {
 
 /// Whether `path` is Rust or TypeScript of the repository's own, not a Node package's.
 fn is_source(path: &str) -> bool {
-    let rust_or_typescript = path.ends_with(".rs") || path.ends_with(".ts");
+    let rust_or_typescript = [".rs", ".ts", ".tsx"]
+        .iter()
+        .any(|extension| path.ends_with(extension));
     rust_or_typescript && !path.contains("node_modules")
 }
 

@@ -1,10 +1,10 @@
-// The drawing of src/adapters/dom_feature_page.ts, from the views of src/policies/feature_view.ts, against the pages ghg 1 wrote.
+// The drawing of src/adapters/dom_feature_page.tsx, from the views of src/policies/feature_view.ts, against the pages ghg 1 wrote.
 
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { featurePage } from "../../src/adapters/dom_feature_page.ts";
-import { ElementBuilder } from "../../src/adapters/element_builder.ts";
+import { featurePage } from "../../src/adapters/dom_feature_page.tsx";
+import { drawn } from "../../src/adapters/jsx/drawing.ts";
 import { featureView } from "../../src/policies/feature_view.ts";
 import { emptyDocument, markupOf, words, expectedMain } from "../support/drawn_pages.ts";
 import { backgroundsDescriptor, backgroundsEntries, bothObject, noStepsObject, regraObject, uncheckedDescriptor } from "../support/backgrounds_store.ts";
@@ -16,7 +16,7 @@ test("an outline's page is drawn as ghg 1 wrote it, but for its links' addresses
   const document = emptyDocument();
   const main = document.querySelector("main")!;
   const view = featureView(words, outlinesDescriptor, outlinesEntry, outlinesObject);
-  main.append(...featurePage(new ElementBuilder(document), view, words.text("page-contents"), () => null, null));
+  main.append(...drawn(document, featurePage(view, words.text("page-contents"), () => null, null)));
   assert.equal(markupOf(main), markupOf(expectedMain("pages/outlines.html")));
   assert.equal(view.title, "Feature: Withdraw cash at the counter, outlines.feature");
   assert.equal(view.lang, "en");
@@ -27,7 +27,7 @@ test("a page with rules, backgrounds, tags and a note is drawn as ghg 1 wrote it
   const document = emptyDocument();
   const main = document.querySelector("main")!;
   const view = featureView(words, refundsDescriptor, refundsEntry, refundsObject);
-  main.append(...featurePage(new ElementBuilder(document), view, words.text("page-contents"), () => null, null));
+  main.append(...drawn(document, featurePage(view, words.text("page-contents"), () => null, null)));
   assert.equal(markupOf(main), markupOf(expectedMain("pages/billing/refunds.html")));
 });
 
@@ -37,7 +37,7 @@ test("a page is drawn in the starting states its descriptor gives, as ghg 1 wrot
   const main = document.querySelector("main")!;
   const descriptor = { ...refundsDescriptor, title: "Feature files", start: { ...refundsDescriptor.start, collapse_rules: true, collapse_scenarios: true, show_tree: false } };
   const view = featureView(words, descriptor, { ...refundsEntry, source: null }, refundsObject);
-  main.append(...featurePage(new ElementBuilder(document), view, words.text("page-contents"), () => null, null));
+  main.append(...drawn(document, featurePage(view, words.text("page-contents"), () => null, null)));
   assert.equal(markupOf(main), markupOf(expectedMain("pages/collapsed/billing/refunds.html")));
 });
 
@@ -45,7 +45,7 @@ test("a page is drawn in the starting states its descriptor gives, as ghg 1 wrot
 test("a doc string keeps its content exactly, a first empty line included", () => {
   const document = emptyDocument();
   const main = document.querySelector("main")!;
-  main.append(...featurePage(new ElementBuilder(document), featureView(words, refundsDescriptor, refundsEntry, refundsObject), "Contents", () => null, null));
+  main.append(...drawn(document, featurePage(featureView(words, refundsDescriptor, refundsEntry, refundsObject), "Contents", () => null, null)));
   assert.equal(main.querySelector("pre.ghg-doc-string")!.textContent, "\nRefunded in full.\n  Indented.");
 });
 
@@ -61,7 +61,7 @@ test("pages with backgrounds are drawn as ghg 1 wrote them, with the checkbox ch
       const document = emptyDocument();
       const main = document.querySelector("main")!;
       const view = featureView(words, descriptor, entry, objects[key as keyof typeof objects]);
-      main.append(...featurePage(new ElementBuilder(document), view, words.text("page-contents"), () => null, null));
+      main.append(...drawn(document, featurePage(view, words.text("page-contents"), () => null, null)));
       assert.equal(markupOf(main), markupOf(expectedMain(`backgrounds/${folder}${entry.page}.html`)), `${folder}/${entry.page}`);
     }
   }

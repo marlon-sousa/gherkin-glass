@@ -1,20 +1,18 @@
-// Adapter: the page port over the page's markup, as feature_block.html, examples_item.html, feature_page.html and folder_feature.html in src/policies/rendering write it.
+// Adapter: the page port over the page's markup, as dom_feature_page.tsx and dom_folder_page.tsx draw it.
 
 import type { Block, Page } from "../ports/page.ts";
 
 class DomBlock implements Block {
-  readonly anchor: string;
-  readonly parent: Block | null;
   readonly expandedWhenUnchecked: boolean | null;
   readonly inScenario: boolean;
-  readonly button: HTMLButtonElement;
-  private readonly content: HTMLElement;
 
-  constructor(anchor: string, button: HTMLButtonElement, content: HTMLElement, parent: Block | null, element: Element | null) {
-    this.anchor = anchor;
-    this.button = button;
-    this.content = content;
-    this.parent = parent;
+  constructor(
+    readonly anchor: string,
+    readonly button: HTMLButtonElement,
+    private readonly content: HTMLElement,
+    readonly parent: Block | null,
+    element: Element | null,
+  ) {
     this.expandedWhenUnchecked = element === null ? null : expandedWhenUnchecked(element);
     this.inScenario = element?.classList.contains("ghg-background-in-scenario") ?? false;
   }
@@ -32,11 +30,12 @@ class DomBlock implements Block {
 export class DomPage implements Page {
   private readonly found: DomBlock[] = [];
   private readonly byElement = new Map<Element, DomBlock>();
-  private readonly document: Document;
 
   /** `root` holds the blocks, the document's or a drawn page's `main`. */
-  constructor(document: Document, root: ParentNode = document) {
-    this.document = document;
+  constructor(
+    private readonly document: Document,
+    root: ParentNode = document,
+  ) {
     for (const element of root.querySelectorAll(".ghg-block")) {
       // An item of an outline's list of examples holds its button itself, with no heading.
       const heading = element.querySelector<HTMLElement>(":scope > :is(h2, h3, h4, h5)") ?? element;

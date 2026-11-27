@@ -1,15 +1,12 @@
-// Adapter: the backgrounds port over the page's checkbox, as feature_page.html in src/policies/rendering writes it.
+// Adapter: the backgrounds port over the page's checkbox, as dom_feature_page.tsx draws it.
 
 import type { Backgrounds } from "../ports/backgrounds.ts";
 
 export class DomBackgrounds implements Backgrounds {
-  private readonly checkbox: HTMLInputElement;
-  private readonly document: Document;
-
-  private constructor(document: Document, checkbox: HTMLInputElement) {
-    this.document = document;
-    this.checkbox = checkbox;
-  }
+  private constructor(
+    private readonly document: Document,
+    private readonly checkbox: HTMLInputElement,
+  ) {}
 
   /** Null on a page without the checkbox, where no scenario starts with a background's steps. */
   static of(document: Document): DomBackgrounds | null {

@@ -3,18 +3,17 @@
 import type { Descriptor, PageIndex, Store, StoreObject, VersionList } from "../../src/ports/store.ts";
 
 export class MemoryStore implements Store {
-  readonly held: Descriptor;
   readonly objects: ReadonlyMap<string, StoreObject>;
-  readonly list: VersionList | null;
-  readonly index: PageIndex | null;
   /** The objects asked for, in order. */
   readonly asked: string[] = [];
 
-  constructor(held: Descriptor, objects: Readonly<Record<string, StoreObject>>, list: VersionList | null = null, index: PageIndex | null = null) {
-    this.held = held;
+  constructor(
+    readonly held: Descriptor,
+    objects: Readonly<Record<string, StoreObject>>,
+    readonly list: VersionList | null = null,
+    readonly index: PageIndex | null = null,
+  ) {
     this.objects = new Map(Object.entries(objects));
-    this.list = list;
-    this.index = index;
   }
 
   async descriptor(): Promise<Descriptor> {

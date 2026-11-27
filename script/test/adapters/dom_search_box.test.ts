@@ -1,4 +1,4 @@
-// The search box adapter of src/adapters/dom_search_box.ts, on the shell of tests/fixtures/pages with its page billing/refunds,
+// The search box adapter of src/adapters/dom_search_box.tsx, on the shell of tests/fixtures/pages with its page billing/refunds,
 // and with its page of search results, with the service and that site's documents, script/test/expected/pages/search.json,
 // behind it. docs/BEHAVIOUR.md, rules 151 to 156, 214 and 217.
 
@@ -6,7 +6,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
 
-import { DomSearchBox } from "../../src/adapters/dom_search_box.ts";
+import { DomSearchBox } from "../../src/adapters/dom_search_box.tsx";
 import { startSearching } from "../../src/services/searching.ts";
 import type { Documents, SearchDocument } from "../../src/ports/documents.ts";
 import type { Timer } from "../../src/ports/timer.ts";

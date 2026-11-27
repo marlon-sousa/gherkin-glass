@@ -3,9 +3,8 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { DomCanvas } from "../../src/adapters/dom_canvas.ts";
-import { DomPages } from "../../src/adapters/dom_pages.ts";
-import { ElementBuilder } from "../../src/adapters/element_builder.ts";
+import { DomCanvas } from "../../src/adapters/dom_canvas.tsx";
+import { DomPages } from "../../src/adapters/dom_pages.tsx";
 import { pageDrawing } from "../../src/services/page_drawing.ts";
 import { emptyDocument, words } from "../support/drawn_pages.ts";
 import { MemoryStore } from "../support/memory_store.ts";
@@ -14,12 +13,11 @@ import { refundsDescriptor, refundsObject } from "../support/refunds_store.ts";
 // Rules 259 and 260: a version's feature page has its lists in other versions after its `h1`, and first in each block.
 test("a version's feature page has its lists in other versions, which open and close", async () => {
   const document = emptyDocument();
-  const make = new ElementBuilder(document);
-  const canvas = DomCanvas.of(make)!;
+  const canvas = DomCanvas.of(document)!;
   const versioned = { ...refundsDescriptor, version: "v1.0.0", version_kind: "release" as const };
   const list = { format: 1, development: ["main"], releases: ["v1.0.0"], pre_releases: [], precedence: [["v1.0.0"]] };
   const index = { format: 1, pages: [{ page: "billing/refunds", objects: [{ object: "refunds", versions: ["main", "v1.0.0"] }] }] };
-  const draw = pageDrawing({ store: new MemoryStore(versioned, { refunds: refundsObject }, list, index), words, pages: new DomPages(make, canvas, words), canvas });
+  const draw = pageDrawing({ store: new MemoryStore(versioned, { refunds: refundsObject }, list, index), words, pages: new DomPages(document, canvas, words), canvas });
   (await draw({ kind: "feature", page: "billing/refunds" }))();
   const pageLists = document.querySelector("main h1")!.nextElementSibling!;
   assert.equal(pageLists.className, "ghg-other-versions");
@@ -38,9 +36,8 @@ test("a version's feature page has its lists in other versions, which open and c
 // Rule 262: without the list of versions, the page is drawn without its lists.
 test("a version's feature page whose list of versions cannot be had has no lists", async () => {
   const document = emptyDocument();
-  const make = new ElementBuilder(document);
-  const canvas = DomCanvas.of(make)!;
-  const draw = pageDrawing({ store: new MemoryStore({ ...refundsDescriptor, version: "v1.0.0", version_kind: "release" as const }, { refunds: refundsObject }), words, pages: new DomPages(make, canvas, words), canvas });
+  const canvas = DomCanvas.of(document)!;
+  const draw = pageDrawing({ store: new MemoryStore({ ...refundsDescriptor, version: "v1.0.0", version_kind: "release" as const }, { refunds: refundsObject }), words, pages: new DomPages(document, canvas, words), canvas });
   (await draw({ kind: "feature", page: "billing/refunds" }))();
   assert.equal(document.querySelector("main h1")!.textContent, "Feature: Refunds & <returns>");
   assert.equal(document.querySelector(".ghg-other-versions"), null);
@@ -49,9 +46,8 @@ test("a version's feature page whose list of versions cannot be had has no lists
 // Rule 269: the page of search results of a version ends its title with the version once, whatever words are searched for.
 test("a version's page of search results names the version once in its title", async () => {
   const document = emptyDocument();
-  const make = new ElementBuilder(document);
-  const canvas = DomCanvas.of(make)!;
-  const draw = pageDrawing({ store: new MemoryStore({ ...refundsDescriptor, version: "v1.0.0", version_kind: "release" as const }, { refunds: refundsObject }), words, pages: new DomPages(make, canvas, words), canvas });
+  const canvas = DomCanvas.of(document)!;
+  const draw = pageDrawing({ store: new MemoryStore({ ...refundsDescriptor, version: "v1.0.0", version_kind: "release" as const }, { refunds: refundsObject }), words, pages: new DomPages(document, canvas, words), canvas });
   const titled = async (searched: string): Promise<string> => (await draw({ kind: "search", words: searched }))().title;
   assert.equal(await titled(""), `Search results, ${refundsDescriptor.title}, v1.0.0`);
   assert.equal(await titled("cash"), `Results for "cash", ${refundsDescriptor.title}, v1.0.0`);

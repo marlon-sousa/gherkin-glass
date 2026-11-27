@@ -1,10 +1,10 @@
-// The drawing of src/adapters/dom_results_page.ts, from the view of src/policies/search_page_view.ts, against the page ghg 1 wrote.
+// The drawing of src/adapters/dom_results_page.tsx, from the view of src/policies/search_page_view.ts, against the page ghg 1 wrote.
 
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { resultsPage } from "../../src/adapters/dom_results_page.ts";
-import { ElementBuilder } from "../../src/adapters/element_builder.ts";
+import { resultsPage } from "../../src/adapters/dom_results_page.tsx";
+import { drawn } from "../../src/adapters/jsx/drawing.ts";
 import { searchPageView } from "../../src/policies/search_page_view.ts";
 import { emptyDocument, markupOf, words, expectedMain } from "../support/drawn_pages.ts";
 
@@ -14,7 +14,7 @@ test("the page of search results is drawn as ghg 1 wrote it, the search box unde
   const document = emptyDocument();
   const main = document.querySelector("main")!;
   const form = document.importNode(written.querySelector("form.ghg-search")!, true);
-  main.append(...resultsPage(new ElementBuilder(document), searchPageView(words, "Banking & <more>", ""), form));
+  main.append(...drawn(document, resultsPage(searchPageView(words, "Banking & <more>", ""), form)));
   assert.equal(markupOf(main), markupOf(written));
 });
 
