@@ -1,12 +1,15 @@
 // Service: searching the site's documents from the search box, a combobox, the index built the first time a search is typed.
 
 import { PAUSE_MILLISECONDS, allResults, moved, result, status } from "../policies/search_results.ts";
-import { type Index, indexOf } from "../policies/search_index.ts";
+import { type Index, type SearchAddresses, WRITTEN_ADDRESSES, indexOf } from "../policies/search_index.ts";
 import type { Documents } from "../ports/documents.ts";
 import type { Result, SearchBox } from "../ports/search_box.ts";
 import type { Timer } from "../ports/timer.ts";
 
-export function startSearching(box: SearchBox, documents: Documents, timer: Timer): void {
+/** Puts the words of the page of search results in the field, its list closed until the reader types. */
+export type SearchFilling = (text: string) => void;
+
+export function startSearching(box: SearchBox, documents: Documents, timer: Timer, addresses: SearchAddresses = WRITTEN_ADDRESSES): SearchFilling {
   const words = box.words();
   let index: Index | null = null;
   let loading: Promise<Index | null> | null = null;
@@ -72,7 +75,7 @@ export function startSearching(box: SearchBox, documents: Documents, timer: Time
       pending = words.failed;
     } else {
       const matches = found.search(asked);
-      show(matches.slice(0, words.shown).map((match) => result(words, match.document)));
+      show(matches.slice(0, words.shown).map((match) => result(words, match.document, addresses)));
       pending = status(words, matches.length);
     }
     announce();
@@ -87,7 +90,7 @@ export function startSearching(box: SearchBox, documents: Documents, timer: Time
 
   box.onInput((typed) => {
     text = typed;
-    box.showAllResults(allResults(words, typed));
+    box.showAllResults(allResults(words, typed, addresses));
     if (typed.trim() === "") {
       empty();
       return;
@@ -114,12 +117,12 @@ export function startSearching(box: SearchBox, documents: Documents, timer: Time
     chosen = moved(chosen, results.length, step);
     box.choose(chosen);
   };
-  box.showAllResults(allResults(words, text));
+  box.showAllResults(allResults(words, text, addresses));
   box.onDown(() => move(1));
   box.onUp(() => move(-1));
   box.onEnter(() => {
     const picked = open && chosen !== null ? results[chosen] : undefined;
-    const target = picked ?? allResults(words, text);
+    const target = picked ?? allResults(words, text, addresses);
     if (target !== null) {
       box.go(target.address);
     }
@@ -138,8 +141,14 @@ export function startSearching(box: SearchBox, documents: Documents, timer: Time
       return;
     }
     text = "";
-    box.clear();
+    box.fill("");
     box.showAllResults(null);
     empty();
   });
+  return (filled) => {
+    text = filled;
+    box.fill(filled);
+    box.showAllResults(allResults(words, filled, addresses));
+    empty();
+  };
 }

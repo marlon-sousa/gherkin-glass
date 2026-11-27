@@ -200,6 +200,15 @@ collapse-all = Collapse all
 expand-all = Expand all
 source-link = Source: { $path }
 
+## The page an address that names no page of its shell draws, its title
+## its $heading, then the $site's title, and the paragraph drawn in place of
+## a page whose site's data cannot be fetched or read.
+
+page-missing = Nothing is at this address
+page-missing-title = { $heading }, { $site }
+page-missing-text = This site has no page at this address.
+page-not-loaded = This page could not be loaded. Load it again, or check that the site is served.
+
 ## The control every page has to choose its theme, and its three choices.
 
 theme = Theme
@@ -423,6 +432,27 @@ runs-one-per-row = Runs, one per row
 example-scenario-name = { $name } ({ $values })
 example-value = { $column }: { $value }
 example-values-separator = {", "}
+
+## The lists of a feature's page, and of each of its blocks, in the other
+## versions of a versioned site. $version is a version's name; $count is a
+## number of blocks; $link is the link to a version, and $changes the counts
+## of other-version-changed-blocks, other-version-not-there and
+## other-version-only-there, joined by other-version-changes-separator.
+
+other-versions-page = This page in other versions
+other-versions-block = In other versions
+other-versions-changed = Changed in
+other-versions-missing = Not in
+other-versions-unchanged = Unchanged in
+other-version-newer = { $version }, newer
+other-version-changes = { $link }: { $changes }
+other-version-changed-blocks = { $count ->
+    [one] 1 block changed
+   *[other] { $count } blocks changed
+}
+other-version-not-there = { $count } not there
+other-version-only-there = { $count } only there
+other-version-changes-separator = {", "}
 
 ## The page of step sentences. $site is the site's title; $count is how many steps use a sentence;
 ## $heading is the heading of a step's block, and $path its feature file's

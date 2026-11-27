@@ -95,6 +95,19 @@ h1, h2, h3, h4, h5 {
   padding-left: 1rem;
 }
 
+/* An open list in other versions, and each group in it, is indented under
+   its button, as a block's content is under its heading. */
+.ghg-other-versions .ghg-content {
+  border-left: 1px solid var(--ghg-border);
+  padding-left: 1rem;
+  margin: 0.25rem 0;
+}
+
+/* A list's markers stay inside the indent, clear of its rule. */
+.ghg-other-versions .ghg-versions {
+  padding-left: 2rem;
+}
+
 .ghg-tags {
   display: flex;
   flex-wrap: wrap;
@@ -692,4 +705,14 @@ figcaption {
   margin: 0;
   padding-top: 0.75rem;
   border-top: 1px solid var(--ghg-border);
+}
+
+/* The live region a shell says each page's title in is heard, never seen. */
+#ghg_announcement {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }

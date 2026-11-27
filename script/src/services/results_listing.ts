@@ -1,12 +1,12 @@
 // Service: listing on the page of search results everything found for the words of its address, grouped by feature.
 
 import { groupedResults, pageStatus, searchedHeading } from "../policies/result_groups.ts";
-import { indexOf } from "../policies/search_index.ts";
+import { type SearchAddresses, WRITTEN_ADDRESSES, indexOf } from "../policies/search_index.ts";
 import type { Documents } from "../ports/documents.ts";
 import type { SearchPage } from "../ports/search_page.ts";
 
 /** Settles once the results, or the status that they cannot be had, are shown. */
-export async function startListing(page: SearchPage, documents: Documents): Promise<void> {
+export async function startListing(page: SearchPage, documents: Documents, addresses: SearchAddresses = WRITTEN_ADDRESSES): Promise<void> {
   const words = page.words();
   const text = page.searched().trim();
   if (text === "") {
@@ -17,7 +17,7 @@ export async function startListing(page: SearchPage, documents: Documents): Prom
   page.setStatus(words.loading);
   let groups;
   try {
-    groups = groupedResults(words, indexOf(await documents.load()).search(text));
+    groups = groupedResults(words, indexOf(await documents.load()).search(text), addresses);
   } catch {
     page.setStatus(words.failed);
     return;

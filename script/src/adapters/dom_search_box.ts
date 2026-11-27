@@ -159,8 +159,8 @@ export class DomSearchBox implements SearchBox {
     return this.field.value;
   }
 
-  clear(): void {
-    this.field.value = "";
+  fill(text: string): void {
+    this.field.value = text;
   }
 
   go(address: string): void {
