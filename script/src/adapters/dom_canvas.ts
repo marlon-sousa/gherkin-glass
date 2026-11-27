@@ -12,6 +12,8 @@ export class DomCanvas implements Canvas {
   private readonly liveRegion: HTMLElement | null;
   /** What the `main` arrived holding, and the title the shell arrived with, when it holds the front page. */
   private readonly frontPage: { readonly nodes: readonly Node[]; readonly title: string } | null;
+  /** The shell's search box, and the place in the shell it is put back in when the `main` holding it is drawn again. */
+  private readonly searchBox: { readonly form: HTMLElement; readonly parent: Node; readonly before: Node | null } | null;
 
   private constructor(make: ElementBuilder, main: HTMLElement) {
     this.make = make;
@@ -19,7 +21,10 @@ export class DomCanvas implements Canvas {
     this.main = main;
     this.breadcrumb = this.document.querySelector<HTMLElement>("nav.ghg-breadcrumb");
     this.liveRegion = this.document.getElementById("ghg_announcement");
-    this.frontPage = main.childElementCount === 0 ? null : { nodes: [...main.childNodes], title: this.document.title };
+    // Copies, so that what a visit adds to the front page, such as its buttons' listeners, is not there the next time.
+    this.frontPage = main.childElementCount === 0 ? null : { nodes: [...main.childNodes].map((node) => node.cloneNode(true)), title: this.document.title };
+    const form = this.document.querySelector<HTMLElement>("form.ghg-search");
+    this.searchBox = form?.parentNode ? { form, parent: form.parentNode, before: form.nextSibling } : null;
   }
 
   /** Null for a document that is not a shell, with no `main` to draw in. */
@@ -91,16 +96,25 @@ export class DomCanvas implements Canvas {
     if (this.frontPage === null) {
       return null;
     }
-    this.main.replaceChildren(...this.frontPage.nodes);
+    this.draw(this.frontPage.nodes.map((node) => node.cloneNode(true)));
     return this.frontPage.title;
   }
 
   drawFailure(words: string): void {
-    this.main.replaceChildren(this.make.make("p", {}, words));
+    this.draw([this.make.make("p", {}, words)]);
   }
 
-  /** Puts `nodes` in the `main` in place of what it held. */
+  /** The shell's search box, to draw in the `main` of the page of search results. */
+  searchForm(): HTMLElement | null {
+    return this.searchBox?.form ?? null;
+  }
+
+  /** Puts `nodes` in the `main` in place of what it held, the search box back in its place in the shell unless `nodes` hold it. */
   draw(nodes: readonly Node[]): void {
+    const box = this.searchBox;
+    if (box !== null && !nodes.includes(box.form)) {
+      box.parent.insertBefore(box.form, box.before);
+    }
     this.main.replaceChildren(...nodes);
   }
 }

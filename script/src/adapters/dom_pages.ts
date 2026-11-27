@@ -21,15 +21,11 @@ export class DomPages implements Pages {
   private readonly make: ElementBuilder;
   private readonly canvas: DomCanvas;
   private readonly words: Words;
-  /** The shell's search box, and the place in the shell it is put back in. */
-  private readonly searchBox: { readonly form: HTMLElement; readonly parent: Node; readonly before: Node | null } | null;
 
   constructor(make: ElementBuilder, canvas: DomCanvas, words: Words) {
     this.make = make;
     this.canvas = canvas;
     this.words = words;
-    const form = make.document.querySelector<HTMLElement>("form.ghg-search");
-    this.searchBox = form?.parentNode ? { form, parent: form.parentNode, before: form.nextSibling } : null;
   }
 
   feature(view: FeatureView, versions: PageInVersions | null): void {
@@ -58,7 +54,7 @@ export class DomPages implements Pages {
   }
 
   search(view: SearchPageView): void {
-    this.draw(resultsPage(this.make, view, this.searchBox?.form ?? null));
+    this.draw(resultsPage(this.make, view, this.canvas.searchForm()));
   }
 
   notice(view: NoticeView): void {
@@ -70,11 +66,6 @@ export class DomPages implements Pages {
   }
 
   private draw(nodes: readonly Node[]): void {
-    const box = this.searchBox;
-    // Every page but the page of search results has the search box in its place in the shell.
-    if (box !== null && !nodes.includes(box.form)) {
-      box.parent.insertBefore(box.form, box.before);
-    }
     this.canvas.draw(nodes);
   }
 }
