@@ -6,15 +6,19 @@
 # Usage:
 #   project-site/publish.sh open <pages>
 #     Checks out the gh-pages branch into <pages>, a new git worktree,
-#     creating the branch, with only a .nojekyll file, when origin has none,
-#     and emptying it but for a new .nojekyll when it holds a site of
-#     gherkin-glass 1, which ghg 2 refuses to add to.
-#     ghg then builds the version straight into <pages>, keeping .nojekyll and
+#     creating the branch, with only a .nojekyll file, when origin has none.
+#     When it holds a site of gherkin-glass 1, which ghg 2 refuses to add to,
+#     it empties it but for a new .nojekyll, and prints on standard output the
+#     versions that site held, one name a line, for the release to add again.
+#     ghg then builds each version straight into <pages>, keeping .nojekyll and
 #     .git, the worktree's own file, with --keep-in-output.
-#   project-site/publish.sh publish <pages> <version>
+#   project-site/publish.sh commit <pages> <version>
 #     After ghg has built <version> into <pages>, commits <version>/, the
-#     versions page, its assets/, the site's data/ and the marker, and pushes
-#     gh-pages to origin. It fails, committing nothing, when anything else has changed.
+#     versions page, its assets/, the site's data/ and the marker. It fails,
+#     committing nothing, when anything else has changed.
+#   project-site/publish.sh publish <pages> <version>
+#     Commits <version> as commit does, then pushes gh-pages to origin, with
+#     every version committed before it.
 
 set -euo pipefail
 
@@ -27,7 +31,7 @@ store=data
 marker=ghg-site.json
 
 usage() {
-  echo "Usage: project-site/publish.sh open <pages> | project-site/publish.sh publish <pages> <version>" >&2
+  echo "Usage: project-site/publish.sh open <pages> | project-site/publish.sh commit <pages> <version> | project-site/publish.sh publish <pages> <version>" >&2
   exit 2
 }
 
@@ -45,10 +49,13 @@ open() {
   local found=0
   git ls-remote --exit-code origin refs/heads/gh-pages >/dev/null || found=$?
   if [ "$found" -eq 0 ]; then
-    git fetch --depth=1 origin refs/heads/gh-pages
-    git worktree add -B gh-pages "$folder" FETCH_HEAD
+    git fetch --quiet --depth=1 origin refs/heads/gh-pages
+    git worktree add --quiet -B gh-pages "$folder" FETCH_HEAD
     if holds_gherkin_glass_1 "$folder"; then
-      echo "gh-pages holds a site of gherkin-glass 1, which ghg 2 cannot add to, so it starts afresh." >&2
+      echo "gh-pages holds a site of gherkin-glass 1, which ghg 2 cannot add to, so its versions are built again." >&2
+      # A version of gherkin-glass 1 is a folder at the root, beside the
+      # versions page's assets.
+      git -C "$folder" ls-tree -d --name-only HEAD | grep -vxF "$versions_assets" || true
       git -C "$folder" rm -r --quiet -- .
       touch "$folder/.nojekyll"
     fi
@@ -56,14 +63,14 @@ open() {
     echo "origin cannot be asked whether it has a gh-pages branch." >&2
     exit 1
   else
-    git worktree add --orphan -b gh-pages "$folder"
+    git worktree add --quiet --orphan -b gh-pages "$folder"
     # GitHub Pages runs Jekyll on a branch unless this file is there, and
     # Jekyll leaves out every file and folder whose name starts with _.
     touch "$folder/.nojekyll"
   fi
 }
 
-publish() {
+commit() {
   local folder=$1 version=$2
   case "$version" in
     "" | . | .. | .* | */* | *\\*)
@@ -84,8 +91,6 @@ publish() {
     exit 1
   fi
 
-  # The push is made from the checkout, whose credentials a worktree may not see.
-  local checkout=$PWD
   cd "$folder"
   git add --all -- "$version" "$versions_page"
   local path
@@ -112,6 +117,12 @@ publish() {
   git -c user.name="github-actions[bot]" \
     -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
     commit --quiet -m "site: $version"
+}
+
+publish() {
+  # The push is made from the checkout, whose credentials a worktree may not see.
+  local checkout=$PWD
+  commit "$1" "$2"
   git -C "$checkout" push origin gh-pages
 }
 
@@ -119,6 +130,10 @@ case "${1-}" in
   open)
     [ "$#" -eq 2 ] || usage
     open "$2"
+    ;;
+  commit)
+    [ "$#" -eq 3 ] || usage
+    commit "$2" "$3"
     ;;
   publish)
     [ "$#" -eq 3 ] || usage

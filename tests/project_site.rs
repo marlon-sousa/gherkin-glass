@@ -565,43 +565,64 @@ fn each_release_adds_only_its_own_folder_and_the_versions_page() {
 
 #[cfg(unix)]
 #[test]
-fn a_release_onto_a_site_of_gherkin_glass_1_starts_the_branch_afresh() {
+fn a_release_onto_a_site_of_gherkin_glass_1_adds_its_versions_again() {
     // Rule 180: a gh-pages branch that holds an output folder of gherkin-glass 1 is emptied
-    // but for a new .nojekyll, and the release then adds only its own version.
-    let folder = scratch("publish-afresh");
+    // but for a new .nojekyll, its versions are named for the release to add again, one
+    // commit each, and nothing is pushed until the release's own version is added.
+    let folder = scratch("publish-again");
     let remote = folder.join("remote.git");
     git_ok(&folder, &["init", "--quiet", "--bare", "remote.git"]);
     let seed = folder.join("seed");
     checkout(&remote, &seed);
     git_ok(&seed, &["checkout", "--quiet", "--orphan", "gh-pages"]);
-    create_dir_all(seed.join("v1.1.0")).unwrap();
-    write(seed.join("v1.1.0/index.html"), "1.1.0\n").unwrap();
-    write(seed.join("index.html"), "v1.1.0\n").unwrap();
+    for version in ["v1.0.0", "v1.1.0"] {
+        create_dir_all(seed.join(version)).unwrap();
+        write(seed.join(format!("{version}/index.html")), "1.x\n").unwrap();
+    }
+    create_dir_all(seed.join("assets")).unwrap();
+    write(seed.join("assets/gherkin-glass.css"), "a {}\n").unwrap();
+    write(seed.join("index.html"), "v1.1.0\nv1.0.0\n").unwrap();
     write(
         seed.join("ghg-versions.json"),
-        "{\"versions\":[\"v1.1.0\"]}\n",
+        "{\"versions\":{\"v1.0.0\":[],\"v1.1.0\":[]}}\n",
     )
     .unwrap();
     write(seed.join(".nojekyll"), "").unwrap();
     git_ok(&seed, &["add", "--all"]);
     git_ok(&seed, &["commit", "--quiet", "-m", "site: v1.1.0"]);
     git_ok(&seed, &["push", "--quiet", "origin", "gh-pages"]);
+    let published_by_1 = published(&remote);
 
     let release = folder.join("release");
     checkout(&remote, &release);
     let site = folder.join("pages");
-    publish_ok(&release, &["open", path(&site)]);
+    let opened = publish(&release, &["open", path(&site)]);
+    assert!(opened.status.success(), "{}", text(&opened.stderr));
+    assert_eq!(text(&opened.stdout), "v1.0.0\nv1.1.0\n");
     let mut names: Vec<_> = read_dir(&site)
         .unwrap()
         .map(|entry| entry.unwrap().file_name().into_string().unwrap())
         .collect();
     names.sort();
     assert_eq!(names, [".git", ".nojekyll"]);
+
+    // Each version added again is committed, and nothing is pushed yet.
+    for version in ["v1.0.0", "v1.1.0"] {
+        create_dir_all(site.join(version)).unwrap();
+        write(site.join(format!("{version}/index.html")), "2\n").unwrap();
+        write(site.join("index.html"), format!("{version}\n")).unwrap();
+        write(site.join("ghg-site.json"), "{\"format\":1}\n").unwrap();
+        publish_ok(&release, &["commit", path(&site), version]);
+    }
+    assert_eq!(published(&remote), published_by_1);
+    assert_eq!(commits(&remote), 1);
+
+    // The release's own version pushes them all, each a commit of its own.
     create_dir_all(site.join("v2.0.0")).unwrap();
-    write(site.join("v2.0.0/index.html"), "2.0.0\n").unwrap();
+    write(site.join("v2.0.0/index.html"), "2\n").unwrap();
     write(site.join("index.html"), "v2.0.0\n").unwrap();
-    write(site.join("ghg-site.json"), "{\"format\":1}\n").unwrap();
     publish_ok(&release, &["publish", path(&site), "v2.0.0"]);
+    assert_eq!(commits(&remote), 4);
     let files: Vec<_> = published(&remote)
         .iter()
         .map(|line| line.split('\t').nth(1).unwrap().to_string())
@@ -612,18 +633,27 @@ fn a_release_onto_a_site_of_gherkin_glass_1_starts_the_branch_afresh() {
             ".nojekyll",
             "ghg-site.json",
             "index.html",
+            "v1.0.0/index.html",
+            "v1.1.0/index.html",
             "v2.0.0/index.html"
         ]
     );
+    let subjects = git_ok(&remote, &["log", "--format=%s", "gh-pages"]);
+    assert_eq!(
+        subjects,
+        "site: v2.0.0\nsite: v1.1.0\nsite: v1.0.0\nsite: v1.1.0\n"
+    );
 
-    // A site of gherkin-glass 2 is kept as it is.
+    // A site of gherkin-glass 2 is kept as it is, and names no version to add again.
     let next = folder.join("next");
     checkout(&remote, &next);
     let site = folder.join("next-pages");
-    publish_ok(&next, &["open", path(&site)]);
+    let opened = publish(&next, &["open", path(&site)]);
+    assert!(opened.status.success(), "{}", text(&opened.stderr));
+    assert_eq!(text(&opened.stdout), "");
     assert_eq!(
         read_to_string(site.join("v2.0.0/index.html")).unwrap(),
-        "2.0.0\n"
+        "2\n"
     );
 }
 
