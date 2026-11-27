@@ -3,8 +3,8 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { folderPage } from "../../src/adapters/dom_folder_page.ts";
-import { ElementBuilder } from "../../src/adapters/element_builder.ts";
+import { folderPage } from "../../src/adapters/dom_folder_page.tsx";
+import { drawn } from "../../src/adapters/jsx/drawing.ts";
 import { folderView } from "../../src/policies/folder_view.ts";
 import { billingDescriptor, billingFeatures } from "../support/billing_store.ts";
 import { emptyDocument, markupOf, words, expectedMain } from "../support/drawn_pages.ts";
@@ -15,7 +15,7 @@ test("a folder's page is drawn as ghg 1 wrote it, but for its links' addresses",
   const document = emptyDocument();
   const main = document.querySelector("main")!;
   const view = folderView(words, billingDescriptor, billingFeatures, "billing/")!;
-  main.append(...folderPage(new ElementBuilder(document), view));
+  main.append(...drawn(document, folderPage(view)));
   assert.equal(markupOf(main), markupOf(expectedMain("pages/billing/index.html")));
   assert.equal(view.title, "billing, Banking & <more>");
 });
@@ -25,7 +25,7 @@ test("a feature with no rule and no scenario has its count as text", () => {
   const document = emptyDocument();
   const main = document.querySelector("main")!;
   const view = folderView(words, billingDescriptor, billingFeatures, "billing/archive/")!;
-  main.append(...folderPage(new ElementBuilder(document), view));
+  main.append(...drawn(document, folderPage(view)));
   assert.equal(markupOf(main), markupOf(expectedMain("pages/billing/archive/index.html")));
   assert.equal(view.title, "billing/archive, Banking & <more>");
 });
@@ -34,7 +34,7 @@ test("a feature with no rule and no scenario has its count as text", () => {
 test("the home page has the site's totals and its links to the tags and the step sentences", () => {
   const document = emptyDocument();
   const main = document.querySelector("main")!;
-  main.append(...folderPage(new ElementBuilder(document), folderView(words, billingDescriptor, billingFeatures, "")!));
+  main.append(...drawn(document, folderPage(folderView(words, billingDescriptor, billingFeatures, "")!)));
   assert.deepEqual(
     [...main.querySelectorAll(".ghg-totals li")].map((total) => total.textContent),
     ["2 folders", "2 features", "3 rules", "5 scenarios"],

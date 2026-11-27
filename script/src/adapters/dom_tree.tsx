@@ -1,5 +1,7 @@
 // Adapter: the tree view over the shell's markup, as src/policies/rendering/tree_landmark.html writes it, the tree built as the WAI-ARIA Navigation Treeview example builds it.
 
+import { drawn } from "./jsx/drawing.ts";
+import type { Child, Markup } from "./jsx/jsx_runtime.ts";
 import type { TreeItem, TreeView } from "../ports/tree.ts";
 
 /** An item of the tree as the page shows it. */
@@ -29,87 +31,42 @@ export class DomTree implements TreeView {
     // A shell builds its tree again for each page it draws.
     this.nodes.length = 0;
     this.byLink.clear();
-    const tree = this.document.createElement("ul");
-    tree.setAttribute("role", "tree");
-    tree.className = "ghg-treeview";
-    tree.setAttribute("aria-label", this.landmark.getAttribute("aria-label") ?? "");
-    this.add(tree, items, null, current, expanded);
-    this.landmark.replaceChildren(tree);
+    this.landmark.replaceChildren(
+      ...drawn(
+        this.document,
+        <ul role="tree" class="ghg-treeview" aria-label={this.landmark.getAttribute("aria-label") ?? ""}>
+          {treeEntries(items, { current, expanded, drawnItems: 0 })}
+        </ul>,
+      ),
+    );
+    const tree = this.landmark.querySelector<HTMLUListElement>(":scope > ul");
+    for (const link of tree?.querySelectorAll<HTMLAnchorElement>("a[role='treeitem']") ?? []) {
+      this.add(link);
+    }
     const stop = this.nodes.find((node) => node.address === current) ?? this.nodes[0];
     if (stop) {
       stop.link.tabIndex = 0;
     }
-    tree.addEventListener("keydown", (event) => this.onKey(event));
+    tree?.addEventListener("keydown", (event) => this.onKey(event));
   }
 
   onToggle(handler: (address: string, expanded: boolean) => void): void {
     this.handler = handler;
   }
 
-  /** `lang` is the feature's that holds `items`, if one does. */
-  private add(list: HTMLUListElement, items: readonly TreeItem[], parent: TreeNode | null, current: string | null, expanded: (address: string) => boolean, lang?: string): void {
-    for (const item of items) {
-      const itemLang = item.lang ?? lang;
-      const entry = this.document.createElement("li");
-      entry.setAttribute("role", "none");
-      const link = this.document.createElement("a");
-      link.setAttribute("role", "treeitem");
-      link.setAttribute("href", item.address);
-      link.tabIndex = -1;
-      if (item.address === current) {
-        link.setAttribute("aria-current", "page");
-      }
-      const inner = item.items ?? [];
-      let group: HTMLUListElement | null = null;
-      if (inner.length > 0) {
-        const marker = this.document.createElement("span");
-        marker.className = "ghg-marker";
-        marker.setAttribute("aria-hidden", "true");
-        link.append(marker);
-        group = this.document.createElement("ul");
-        group.setAttribute("role", "group");
-        group.id = `ghg_tree_${this.nodes.length}`;
-        group.setAttribute("aria-label", textOf(item));
-        link.setAttribute("aria-owns", group.id);
-      }
-      link.append(...this.words(item, itemLang));
-      entry.append(link);
-      const node: TreeNode = { link, address: item.address, group, parent };
-      this.nodes.push(node);
-      this.byLink.set(link, node);
-      if (group) {
-        entry.append(group);
-        this.setExpanded(node, expanded(item.address));
-        link.querySelector(".ghg-marker")?.addEventListener("click", (event) => {
-          event.preventDefault();
-          event.stopPropagation();
-          this.focus(node);
-          this.toggle(node, !this.isExpanded(node));
-        });
-        this.add(group, inner, node, current, expanded, itemLang);
-      }
-      list.append(entry);
-    }
-  }
-
-  /**
-   * The item's words, each run of feature text isolated in a `bdi` with its
-   * feature's `lang`, so that the tree's own words are read in the page's.
-   */
-  private words(item: TreeItem, lang: string | undefined): (string | HTMLElement)[] {
-    if (typeof item.text === "string") {
-      return [item.text];
-    }
-    return item.text.map((run, place) => {
-      if (place % 2 === 0) {
-        return run;
-      }
-      const isolated = this.document.createElement("bdi");
-      isolated.append(run);
-      if (lang !== undefined) {
-        isolated.lang = lang;
-      }
-      return isolated;
+  /** Keeps the item `link` draws, the items holding it being kept before it. */
+  private add(link: HTMLAnchorElement): void {
+    const entry = link.parentElement;
+    const holder = entry?.parentElement?.closest("li")?.querySelector(":scope > a");
+    const parent = holder ? this.byLink.get(holder) : undefined;
+    const node: TreeNode = { link, address: link.getAttribute("href") ?? "", group: entry?.querySelector<HTMLUListElement>(":scope > ul") ?? null, parent: parent ?? null };
+    this.nodes.push(node);
+    this.byLink.set(link, node);
+    link.querySelector(".ghg-marker")?.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      this.focus(node);
+      this.toggle(node, !this.isExpanded(node));
     });
   }
 
@@ -217,6 +174,45 @@ export class DomTree implements TreeView {
     event.preventDefault();
     event.stopPropagation();
   }
+}
+
+/** What the items of a tree are drawn from, with the count of those drawn so far, which numbers the next one's group. */
+interface Drawing {
+  readonly current: string | null;
+  readonly expanded: (address: string) => boolean;
+  drawnItems: number;
+}
+
+/** `lang` is the feature's that holds `items`, if one does. */
+function treeEntries(items: readonly TreeItem[], drawing: Drawing, lang?: string): Markup[] {
+  return items.map((item) => {
+    const itemLang = item.lang ?? lang;
+    const inner = item.items ?? [];
+    const group = inner.length > 0 ? `ghg_tree_${drawing.drawnItems}` : null;
+    const open = group !== null && drawing.expanded(item.address);
+    drawing.drawnItems += 1;
+    return (
+      <li role="none">
+        <a role="treeitem" href={item.address} tabindex="-1" aria-current={item.address === drawing.current && "page"} aria-owns={group} aria-expanded={group === null ? null : open ? "true" : "false"}>
+          {group !== null && <span class="ghg-marker" aria-hidden="true" />}
+          {wordsOf(item, itemLang)}
+        </a>
+        {group !== null && (
+          <ul role="group" id={group} aria-label={textOf(item)} hidden={!open}>
+            {treeEntries(inner, drawing, itemLang)}
+          </ul>
+        )}
+      </li>
+    );
+  });
+}
+
+/** The item's words, each run of feature text isolated in a `bdi` with its feature's `lang`, so that the tree's own words are read in the page's. */
+function wordsOf(item: TreeItem, lang: string | undefined): Child {
+  if (typeof item.text === "string") {
+    return item.text;
+  }
+  return item.text.map((run, place) => (place % 2 === 0 ? run : <bdi lang={lang ?? null}>{run}</bdi>));
 }
 
 /** The item's words as plain text, for a name that holds no markup. */

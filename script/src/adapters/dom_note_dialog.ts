@@ -1,4 +1,4 @@
-// Adapter: the note dialog port over the page's dialog and the buttons in its notes, as feature_page.html and keyword_note.html in src/policies/rendering write them.
+// Adapter: the note dialog port over the page's dialog and the buttons in its notes, as dom_feature_page.tsx and dom_feature_parts.tsx draw them.
 
 import type { NoteDialog, Opener } from "../ports/note_dialog.ts";
 

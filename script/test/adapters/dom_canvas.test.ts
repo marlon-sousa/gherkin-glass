@@ -5,8 +5,7 @@ import { test } from "node:test";
 
 import { Window } from "happy-dom";
 
-import { DomCanvas } from "../../src/adapters/dom_canvas.ts";
-import { ElementBuilder } from "../../src/adapters/element_builder.ts";
+import { DomCanvas } from "../../src/adapters/dom_canvas.tsx";
 
 const SHELL = `<!doctype html><html lang="en"><head><title>Site</title></head><body>
 <a class="ghg-skip" href="##ghg_main">Skip to content</a>
@@ -18,7 +17,7 @@ const SHELL = `<!doctype html><html lang="en"><head><title>Site</title></head><b
 function shell(markup = SHELL): { readonly window: Window; readonly canvas: DomCanvas } {
   const window = new Window({ url: "https://example.com/site/v1/index.html#billing/" });
   window.document.write(markup);
-  return { window, canvas: DomCanvas.of(new ElementBuilder(window.document as unknown as Document))! };
+  return { window, canvas: DomCanvas.of(window.document as unknown as Document)! };
 }
 
 // Rule 240: the main is busy while drawn, and the title is said in the live region.

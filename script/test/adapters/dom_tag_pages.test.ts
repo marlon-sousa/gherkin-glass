@@ -3,8 +3,8 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { tagIndex, tagPage } from "../../src/adapters/dom_tag_pages.ts";
-import { ElementBuilder } from "../../src/adapters/element_builder.ts";
+import { tagIndex, tagPage } from "../../src/adapters/dom_tag_pages.tsx";
+import { drawn } from "../../src/adapters/jsx/drawing.ts";
 import { tagIndexView, tagPageView } from "../../src/policies/tag_views.ts";
 import { emptyDocument, markupOf, words, expectedMain } from "../support/drawn_pages.ts";
 import { descriptor } from "../support/store_building.ts";
@@ -15,7 +15,7 @@ test("the index of tags is drawn as ghg 1 wrote it, but for its links' addresses
   const document = emptyDocument();
   const main = document.querySelector("main")!;
   const view = tagIndexView(words, tagsDescriptor, tagsFeatures);
-  main.append(...tagIndex(new ElementBuilder(document), view));
+  main.append(...drawn(document, tagIndex(view)));
   assert.equal(markupOf(main), markupOf(expectedMain("tags/tags/index.html")));
   assert.equal(view.title, "Tags");
 });
@@ -24,7 +24,7 @@ test("the index of tags is drawn as ghg 1 wrote it, but for its links' addresses
 test("the index of a site with no tag says so", () => {
   const document = emptyDocument();
   const main = document.querySelector("main")!;
-  main.append(...tagIndex(new ElementBuilder(document), tagIndexView(words, descriptor("Untagged", []), [])));
+  main.append(...drawn(document, tagIndex(tagIndexView(words, descriptor("Untagged", []), []))));
   assert.equal(markupOf(main), "<h1>Tags</h1><p>No feature file has a tag.</p>");
 });
 
@@ -35,7 +35,7 @@ for (const entry of tagsDescriptor.tags) {
     const document = emptyDocument();
     const main = document.querySelector("main")!;
     const view = tagPageView(words, tagsDescriptor, tagsFeatures, name)!;
-    main.append(...tagPage(new ElementBuilder(document), view));
+    main.append(...drawn(document, tagPage(view)));
     assert.equal(markupOf(main), markupOf(expectedMain(`tags/tags/${name}.html`)));
     assert.equal(view.title, `Tag ${entry.tag}`);
   });

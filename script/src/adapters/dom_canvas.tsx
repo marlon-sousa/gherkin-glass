@@ -1,13 +1,12 @@
 // Adapter: the canvas port over a shell's markup, its `main`, its breadcrumb and its live region, with the front page its `main` may arrive holding.
 
-import type { ElementBuilder } from "./element_builder.ts";
+import { drawn } from "./jsx/drawing.ts";
+import type { Child } from "./jsx/jsx_runtime.ts";
+import { Words } from "./jsx/words.tsx";
 import type { PageFrame } from "../policies/page_frame.ts";
 import type { Canvas } from "../ports/canvas.ts";
 
 export class DomCanvas implements Canvas {
-  private readonly make: ElementBuilder;
-  private readonly document: Document;
-  readonly main: HTMLElement;
   private readonly breadcrumb: HTMLElement | null;
   private readonly liveRegion: HTMLElement | null;
   /** What the `main` arrived holding, and the title the shell arrived with, when it holds the front page. */
@@ -15,10 +14,10 @@ export class DomCanvas implements Canvas {
   /** The shell's search box, and the place in the shell it is put back in when the `main` holding it is drawn again. */
   private readonly searchBox: { readonly form: HTMLElement; readonly parent: Node; readonly before: Node | null } | null;
 
-  private constructor(make: ElementBuilder, main: HTMLElement) {
-    this.make = make;
-    this.document = make.document;
-    this.main = main;
+  private constructor(
+    private readonly document: Document,
+    readonly main: HTMLElement,
+  ) {
     this.breadcrumb = this.document.querySelector<HTMLElement>("nav.ghg-breadcrumb");
     this.liveRegion = this.document.getElementById("ghg_announcement");
     // Copies, so that what a visit adds to the front page, such as its buttons' listeners, is not there the next time.
@@ -28,9 +27,9 @@ export class DomCanvas implements Canvas {
   }
 
   /** Null for a document that is not a shell, with no `main` to draw in. */
-  static of(make: ElementBuilder): DomCanvas | null {
-    const main = make.document.getElementById("ghg_main");
-    return main === null ? null : new DomCanvas(make, main);
+  static of(document: Document): DomCanvas | null {
+    const main = document.getElementById("ghg_main");
+    return main === null ? null : new DomCanvas(document, main);
   }
 
   setBusy(busy: boolean): void {
@@ -48,13 +47,19 @@ export class DomCanvas implements Canvas {
 
   setFrame(frame: PageFrame): void {
     this.document.documentElement.lang = frame.lang;
+    const last = frame.crumbs.length - 1;
     this.breadcrumb?.replaceChildren(
-      this.make.make(
-        "ol",
-        {},
-        ...frame.crumbs.map((crumb, place) =>
-          this.make.make("li", {}, this.make.make("a", { href: crumb.address, "aria-current": place === frame.crumbs.length - 1 && "page" }, ...this.make.words(crumb.words, crumb.lang))),
-        ),
+      ...drawn(
+        this.document,
+        <ol>
+          {frame.crumbs.map((crumb, place) => (
+            <li>
+              <a href={crumb.address} aria-current={place === last && "page"}>
+                <Words parts={crumb.words} lang={crumb.lang} />
+              </a>
+            </li>
+          ))}
+        </ol>,
       ),
     );
   }
@@ -102,7 +107,7 @@ export class DomCanvas implements Canvas {
   }
 
   drawFailure(words: string): void {
-    this.draw([this.make.make("p", {}, words)]);
+    this.draw(<p>{words}</p>);
   }
 
   /** The shell's search box, to draw in the `main` of the page of search results. */
@@ -110,8 +115,9 @@ export class DomCanvas implements Canvas {
     return this.searchBox?.form ?? null;
   }
 
-  /** Puts `nodes` in the `main` in place of what it held, the search box back in its place in the shell unless `nodes` hold it. */
-  draw(nodes: readonly Node[]): void {
+  /** Puts what `page` draws in the `main` in place of what it held, the search box back in its place in the shell unless `page` holds it. */
+  draw(page: Child): void {
+    const nodes = drawn(this.document, page);
     const box = this.searchBox;
     if (box !== null && !nodes.includes(box.form)) {
       box.parent.insertBefore(box.form, box.before);

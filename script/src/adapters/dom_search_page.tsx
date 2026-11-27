@@ -1,5 +1,7 @@
-// Adapter: the search page port over the page of search results src/policies/rendering/search_page.html writes, its words on the element that holds the results and its field the search box's.
+// Adapter: the search page port over the page of search results dom_results_page.tsx draws, its words on the element that holds the results and its field the search box's.
 
+import { drawn } from "./jsx/drawing.ts";
+import type { Child, Markup } from "./jsx/jsx_runtime.ts";
 import type { ListedResult, PageWords, Part, ResultGroup, Run, SearchPage } from "../ports/search_page.ts";
 
 export class DomSearchPage implements SearchPage {
@@ -62,7 +64,7 @@ export class DomSearchPage implements SearchPage {
 
   showSearched(words: string, heading: readonly Part[], title: string): void {
     this.field.value = words;
-    this.heading.replaceChildren(...this.parts(heading));
+    this.heading.replaceChildren(...drawn(this.document, partsOf(heading)));
     this.document.title = title;
   }
 
@@ -72,68 +74,64 @@ export class DomSearchPage implements SearchPage {
 
   showGroups(groups: readonly ResultGroup[]): void {
     const words = this.words();
-    this.groups.replaceChildren(...groups.flatMap((group) => this.group(words, group)));
+    this.groups.replaceChildren(...drawn(this.document, groups.map((group) => groupOf(words, group))));
   }
+}
 
-  private group(words: PageWords, group: ResultGroup): HTMLElement[] {
-    const heading = this.element("h2", [this.link(group.address, group.heading)]);
-    const list = this.element(
-      "ul",
-      group.results.map((result) => this.element("li", this.result(words, result))),
-    );
-    list.className = "ghg-search-group";
-    return [heading, list];
-  }
+function groupOf(words: PageWords, group: ResultGroup): Markup {
+  return (
+    <>
+      <h2>{linkOf(group.address, group.heading)}</h2>
+      <ul class="ghg-search-group">
+        {group.results.map((result) => (
+          <li>{resultOf(words, result)}</li>
+        ))}
+      </ul>
+    </>
+  );
+}
 
-  private result(words: PageWords, result: ListedResult): HTMLElement[] {
-    const parts: HTMLElement[] = [this.link(result.address, result.heading)];
-    if (result.within !== null) {
-      parts.push(this.element("p", this.parts(result.within)));
-    }
-    if (result.steps.length > 0) {
-      parts.push(
-        this.element("p", [words.matchingSteps]),
-        this.element(
-          "ul",
-          result.steps.map((step) => this.element("li", [this.name(step)])),
-        ),
-      );
-    }
-    for (const [label, texts] of [
-      [words.matchingTags, result.tags],
-      [words.matchingCells, result.cells],
-    ] as const) {
-      if (texts.length > 0) {
-        const named = texts.flatMap((text, at) => (at === 0 ? [this.name(text)] : [words.separator, this.name(text)]));
-        parts.push(this.element("p", [`${label} `, ...named]));
-      }
-    }
-    return parts;
-  }
+function resultOf(words: PageWords, result: ListedResult): Markup {
+  return (
+    <>
+      {linkOf(result.address, result.heading)}
+      {result.within !== null && <p>{partsOf(result.within)}</p>}
+      {result.steps.length > 0 && [
+        <p>{words.matchingSteps}</p>,
+        <ul>
+          {result.steps.map((step) => (
+            <li>{nameOf(step)}</li>
+          ))}
+        </ul>,
+      ]}
+      {namesOf(words, words.matchingTags, result.tags)}
+      {namesOf(words, words.matchingCells, result.cells)}
+    </>
+  );
+}
 
-  private link(address: string, text: readonly Part[]): HTMLAnchorElement {
-    const link = this.element("a", this.parts(text));
-    link.setAttribute("href", address);
-    return link;
+/** A paragraph of `texts` after `label`, or nothing when there are none. */
+function namesOf(words: PageWords, label: string, texts: readonly (readonly Run[])[]): Markup | null {
+  if (texts.length === 0) {
+    return null;
   }
+  return <p>{[`${label} `, texts.map((text, at) => [at > 0 && words.separator, nameOf(text)])]}</p>;
+}
 
-  /** Each part's runs, a name's isolated in a `bdi` of its own. */
-  private parts(parts: readonly Part[]): (Node | string)[] {
-    return parts.flatMap((part) => (part.isName ? [this.name(part.runs)] : this.runs(part.runs)));
-  }
+function linkOf(address: string, text: readonly Part[]): Markup {
+  return <a href={address}>{partsOf(text)}</a>;
+}
 
-  private name(runs: readonly Run[]): HTMLElement {
-    return this.element("bdi", this.runs(runs));
-  }
+/** Each part's runs, a name's isolated in a `bdi` of its own. */
+function partsOf(parts: readonly Part[]): Child {
+  return parts.map((part) => (part.isName ? nameOf(part.runs) : runsOf(part.runs)));
+}
 
-  /** Each run as text, a marked one in a `mark` of its own. */
-  private runs(runs: readonly Run[]): (Node | string)[] {
-    return runs.map((run) => (run.marked ? this.element("mark", [run.text]) : run.text));
-  }
+function nameOf(runs: readonly Run[]): Markup {
+  return <bdi>{runsOf(runs)}</bdi>;
+}
 
-  private element<K extends keyof HTMLElementTagNameMap>(name: K, children: readonly (Node | string)[]): HTMLElementTagNameMap[K] {
-    const element = this.document.createElement(name);
-    element.append(...children);
-    return element;
-  }
+/** Each run as text, a marked one in a `mark` of its own. */
+function runsOf(runs: readonly Run[]): Child {
+  return runs.map((run) => (run.marked ? <mark>{run.text}</mark> : run.text));
 }

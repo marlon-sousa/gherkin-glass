@@ -1,4 +1,4 @@
-// Adapter: the tree switch over the page's markup, as src/policies/rendering/page_frame.html and page_layout.html write it: the checkbox, the button and the landmark they show or hide.
+// Adapter: the tree switch over the page's markup, as src/policies/rendering/page_frame.html and tree_landmark.html write it: the checkbox, the button and the landmark they show or hide.
 
 import type { FocusPlace, TreeSwitch } from "../ports/tree.ts";
 

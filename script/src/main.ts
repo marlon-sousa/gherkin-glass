@@ -1,16 +1,15 @@
 // Composition root: the behaviour of a shell, whose pages the script draws, or of the versions page, whose content ghg wrote whole, wired to the browser.
 
 import { DomAddress } from "./adapters/dom_address.ts";
-import { DomCanvas } from "./adapters/dom_canvas.ts";
-import { DomPages } from "./adapters/dom_pages.ts";
-import { ElementBuilder } from "./adapters/element_builder.ts";
+import { DomCanvas } from "./adapters/dom_canvas.tsx";
+import { DomPages } from "./adapters/dom_pages.tsx";
 import { FetchedStore } from "./adapters/fetched_store.ts";
 import { FluentWords } from "./adapters/fluent_words.ts";
 import { DomDrawnPage } from "./adapters/dom_drawn_page.ts";
 import { DomPage } from "./adapters/dom_page.ts";
-import { DomSearchBox } from "./adapters/dom_search_box.ts";
+import { DomSearchBox } from "./adapters/dom_search_box.tsx";
 import { DomTheme } from "./adapters/dom_theme.ts";
-import { DomTree } from "./adapters/dom_tree.ts";
+import { DomTree } from "./adapters/dom_tree.tsx";
 import { DomTreeSwitch } from "./adapters/dom_tree_switch.ts";
 import { LocalMemory } from "./adapters/local_memory.ts";
 import { MediaWidth } from "./adapters/media_width.ts";
@@ -41,8 +40,7 @@ function startVersionsPage(): void {
 
 /** A shell, whose pages the script draws from the site's data, found at `descriptorPath` in the store. */
 function startShell(descriptorPath: string): void {
-  const make = new ElementBuilder(document);
-  const canvas = DomCanvas.of(make);
+  const canvas = DomCanvas.of(document);
   if (canvas === null) {
     return;
   }
@@ -69,7 +67,7 @@ function startShell(descriptorPath: string): void {
     canvas,
     address: new DomAddress(window),
     timer: new WindowTimer(),
-    draw: pageDrawing({ store, words, pages: new DomPages(make, canvas, words), canvas }),
+    draw: pageDrawing({ store, words, pages: new DomPages(document, canvas, words), canvas }),
     behave: shellBehaviour({ drawn: new DomDrawnPage(document, canvas), tree, fillSearch, documents, memory, shellPath }),
     failure: words.text("page-not-loaded"),
     onFailure: () => tree.disable(),

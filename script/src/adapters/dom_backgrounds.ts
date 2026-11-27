@@ -1,4 +1,4 @@
-// Adapter: the backgrounds port over the page's checkbox, as feature_page.html in src/policies/rendering writes it.
+// Adapter: the backgrounds port over the page's checkbox, as dom_feature_page.tsx draws it.
 
 import type { Backgrounds } from "../ports/backgrounds.ts";
 

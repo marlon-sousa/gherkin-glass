@@ -3,8 +3,8 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { sentencesPage } from "../../src/adapters/dom_sentences_page.ts";
-import { ElementBuilder } from "../../src/adapters/element_builder.ts";
+import { sentencesPage } from "../../src/adapters/dom_sentences_page.tsx";
+import { drawn } from "../../src/adapters/jsx/drawing.ts";
 import { sentencesView } from "../../src/policies/sentences_view.ts";
 import { emptyDocument, markupOf, words, expectedMain } from "../support/drawn_pages.ts";
 import { sentencesDescriptor, sentencesFeatures } from "../support/sentences_store.ts";
@@ -15,7 +15,7 @@ test("the page of step sentences is drawn as ghg 1 wrote it, but for its links' 
   const document = emptyDocument();
   const main = document.querySelector("main")!;
   const view = sentencesView(words, sentencesDescriptor, sentencesFeatures);
-  main.append(...sentencesPage(new ElementBuilder(document), view));
+  main.append(...drawn(document, sentencesPage(view)));
   assert.equal(markupOf(main), markupOf(expectedMain("step-sentences/steps.html")));
   assert.equal(view.title, "Step sentences, Fixture");
 });
@@ -24,6 +24,6 @@ test("the page of step sentences is drawn as ghg 1 wrote it, but for its links' 
 test("the page of a site with no step says so", () => {
   const document = emptyDocument();
   const main = document.querySelector("main")!;
-  main.append(...sentencesPage(new ElementBuilder(document), sentencesView(words, descriptor("Empty", []), [])));
+  main.append(...drawn(document, sentencesPage(sentencesView(words, descriptor("Empty", []), []))));
   assert.equal(markupOf(main), "<h1>Step sentences</h1><p>No feature has a step.</p>");
 });

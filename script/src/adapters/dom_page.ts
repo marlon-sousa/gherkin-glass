@@ -1,4 +1,4 @@
-// Adapter: the page port over the page's markup, as feature_block.html, examples_item.html, feature_page.html and folder_feature.html in src/policies/rendering write it.
+// Adapter: the page port over the page's markup, as dom_feature_page.tsx and dom_folder_page.tsx draw it.
 
 import type { Block, Page } from "../ports/page.ts";
 

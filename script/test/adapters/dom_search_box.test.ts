@@ -6,7 +6,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
 
-import { DomSearchBox } from "../../src/adapters/dom_search_box.ts";
+import { DomSearchBox } from "../../src/adapters/dom_search_box.tsx";
 import { startSearching } from "../../src/services/searching.ts";
 import type { Documents, SearchDocument } from "../../src/ports/documents.ts";
 import type { Timer } from "../../src/ports/timer.ts";

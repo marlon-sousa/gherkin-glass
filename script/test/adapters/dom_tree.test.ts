@@ -6,7 +6,7 @@ import { test } from "node:test";
 
 import { Window } from "happy-dom";
 
-import { DomTree } from "../../src/adapters/dom_tree.ts";
+import { DomTree } from "../../src/adapters/dom_tree.tsx";
 import { DomTreeSwitch } from "../../src/adapters/dom_tree_switch.ts";
 import { buildTree, startTreeControls } from "../../src/services/folder_tree.ts";
 import type { Memory } from "../../src/ports/memory.ts";
