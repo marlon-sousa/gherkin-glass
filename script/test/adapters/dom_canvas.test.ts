@@ -1,11 +1,10 @@
-// The adapters of src/adapters/dom_canvas.ts and src/adapters/dom_address.ts, on a shell in a document.
+// The adapter of src/adapters/dom_canvas.ts, on a shell in a document.
 
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import { Window } from "happy-dom";
 
-import { DomAddress } from "../../src/adapters/dom_address.ts";
 import { DomCanvas } from "../../src/adapters/dom_canvas.ts";
 import { ElementBuilder } from "../../src/adapters/element_builder.ts";
 
@@ -16,9 +15,9 @@ const SHELL = `<!doctype html><html lang="en"><head><title>Site</title></head><b
 <p id="ghg_announcement" class="ghg-announcement" role="status"></p>
 </body></html>`;
 
-function shell(): { readonly window: Window; readonly canvas: DomCanvas } {
+function shell(markup = SHELL): { readonly window: Window; readonly canvas: DomCanvas } {
   const window = new Window({ url: "https://example.com/site/v1/index.html#billing/" });
-  window.document.write(SHELL);
+  window.document.write(markup);
   return { window, canvas: DomCanvas.of(new ElementBuilder(window.document as unknown as Document))! };
 }
 
@@ -56,12 +55,31 @@ test("the focus moves to the h1, or to the element an id names, which then holds
   assert.equal(canvas.focusElement("nowhere"), false);
 });
 
-// Rule 236: a link to an element of the page shown is caught, leaving the address as it was.
-test("a link written ## is caught, and the address stays as it was", () => {
-  const { window } = shell();
-  const followed: string[] = [];
-  new DomAddress(window as unknown as globalThis.Window).onChange((hash) => followed.push(hash));
-  (window.document.querySelector("a.ghg-skip") as unknown as HTMLElement).click();
-  assert.deepEqual(followed, ["##ghg_main"]);
-  assert.equal(window.location.hash, "#billing/");
+const FRONT_PAGE_SHELL = SHELL.replace('<main id="ghg_main" tabindex="-1" aria-busy="true"></main>', '<form class="ghg-search"></form><main id="ghg_main" tabindex="-1" aria-busy="true"><h1>Banking</h1><button>Open</button></main>');
+
+// Rule 241: the front page is put back as it arrived, whatever a visit added to it.
+test("the front page is put back as it arrived, each time a fresh copy", () => {
+  const { window, canvas } = shell(FRONT_PAGE_SHELL);
+  const main = window.document.querySelector("main")!;
+  main.querySelector("button")!.setAttribute("aria-expanded", "true");
+  canvas.draw([]);
+  assert.equal(canvas.restoreFrontPage(), "Site");
+  assert.equal(main.innerHTML, "<h1>Banking</h1><button>Open</button>");
+  const first = main.querySelector("button");
+  canvas.restoreFrontPage();
+  assert.notEqual(main.querySelector("button"), first);
+});
+
+// Rules 216 and 217: the search box drawn in the page of search results goes back to the shell with any other page.
+test("the search box goes back to its place in the shell when another page or the front page is drawn", () => {
+  const { window, canvas } = shell(FRONT_PAGE_SHELL);
+  const form = canvas.searchForm()!;
+  const main = window.document.querySelector("main")!;
+  canvas.draw([form]);
+  assert.equal(form.parentElement, main);
+  canvas.restoreFrontPage();
+  assert.equal(form.nextElementSibling, main);
+  canvas.draw([form]);
+  canvas.drawFailure("This page could not be loaded.");
+  assert.equal(form.nextElementSibling, main);
 });
