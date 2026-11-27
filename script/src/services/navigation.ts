@@ -89,7 +89,8 @@ export async function startNavigation(parts: NavigationParts): Promise<void> {
 
   const show = async (target: Target, reached: boolean): Promise<void> => {
     if (target.kind === "element") {
-      if (shown === null) {
+      // Only a shell opened at an element's address has drawn nothing yet; one whose page failed keeps the paragraph that says so.
+      if (drawing === 0) {
         await draw({ kind: "home" }, null, false);
       }
       focus(target.id, false);
