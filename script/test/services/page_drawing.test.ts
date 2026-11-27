@@ -10,6 +10,7 @@ import type { PageName } from "../../src/policies/address.ts";
 import type { PageFrame } from "../../src/policies/page_frame.ts";
 import type { Descriptor } from "../../src/ports/store.ts";
 import { pageDrawing } from "../../src/services/page_drawing.ts";
+import { billingDescriptor, closedObject } from "../support/billing_store.ts";
 import { emptyDocument, words } from "../support/drawn_pages.ts";
 import { MemoryStore } from "../support/memory_store.ts";
 import { refundsDescriptor, refundsObject } from "../support/refunds_store.ts";
@@ -64,4 +65,43 @@ test("the home page of a shell that holds its front page is the front page, put 
   const { document, frame } = await drawn({ kind: "home" }, refundsDescriptor, "<h1>Banking</h1><p>Welcome.</p>");
   assert.equal(document.querySelector("main")!.innerHTML, "<h1>Banking</h1><p>Welcome.</p>");
   assert.equal(frame.title, "Banking & <more>");
+});
+
+// Rules 81 and 85: a folder's page, with its title, `en` and a breadcrumb through the folders above it.
+test("a folder's page is drawn with its title, its language and the folders above it", async () => {
+  const document = emptyDocument();
+  const make = new ElementBuilder(document);
+  const canvas = DomCanvas.of(make)!;
+  const draw = pageDrawing({ store: new MemoryStore(billingDescriptor, { refunds: refundsObject, "closed-1": closedObject }), words, pages: new DomPages(make, canvas, words), canvas });
+  const frame = (await draw({ kind: "folder", folder: "billing/archive/" }))();
+  assert.equal(document.querySelector("main h1")!.textContent, "archive");
+  assert.equal(frame.title, "billing/archive, Banking & <more>");
+  assert.equal(frame.lang, "en");
+  assert.deepEqual(
+    frame.crumbs.map((crumb) => [crumb.address, crumb.words.map((part) => part.text).join("")]),
+    [
+      ["#", "Banking & <more>"],
+      ["#billing/", "billing"],
+      ["#billing/archive/", "archive"],
+    ],
+  );
+});
+
+// Rule 77: a version's shell holds no front page, so its home page is drawn as a folder's is.
+test("the home page of a shell that holds no front page is drawn as its folder's page", async () => {
+  const document = emptyDocument();
+  const make = new ElementBuilder(document);
+  const canvas = DomCanvas.of(make)!;
+  const draw = pageDrawing({ store: new MemoryStore(billingDescriptor, { refunds: refundsObject, "closed-1": closedObject }), words, pages: new DomPages(make, canvas, words), canvas });
+  const frame = (await draw({ kind: "home" }))();
+  assert.equal(document.querySelector("main h1")!.textContent, "Banking & <more>");
+  assert.ok(document.querySelector("main .ghg-totals"));
+  assert.equal(frame.title, "Banking & <more>");
+  assert.deepEqual(frame.crumbs.map((crumb) => crumb.address), ["#"]);
+});
+
+// Rule 77: a folder no feature is in has no page.
+test("a folder no feature is in draws the page that says nothing is there", async () => {
+  const { document } = await drawn({ kind: "folder", folder: "nowhere/" });
+  assert.equal(document.querySelector("main h1")!.textContent, "Nothing is at this address");
 });

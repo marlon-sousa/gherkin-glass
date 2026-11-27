@@ -2,8 +2,10 @@
 
 import type { DomCanvas } from "./dom_canvas.ts";
 import { featurePage } from "./dom_feature_page.ts";
+import { folderPage } from "./dom_folder_page.ts";
 import type { ElementBuilder } from "./element_builder.ts";
 import type { FeatureView } from "../policies/feature_view.ts";
+import type { FolderView } from "../policies/folder_view.ts";
 import type { NoticeView, Pages } from "../ports/pages.ts";
 import type { Words } from "../ports/words.ts";
 
@@ -20,6 +22,10 @@ export class DomPages implements Pages {
 
   feature(view: FeatureView): void {
     this.draw(featurePage(this.make, view, this.words.text("page-contents"), () => null, null));
+  }
+
+  folder(view: FolderView): void {
+    this.draw(folderPage(this.make, view));
   }
 
   notice(view: NoticeView): void {

@@ -83,6 +83,10 @@ export class DomCanvas implements Canvas {
     return true;
   }
 
+  holdsFrontPage(): boolean {
+    return this.frontPage !== null;
+  }
+
   restoreFrontPage(): string | null {
     if (this.frontPage === null) {
       return null;

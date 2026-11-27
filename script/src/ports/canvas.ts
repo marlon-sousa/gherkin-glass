@@ -14,6 +14,8 @@ export interface Canvas {
   focusHeading(): void;
   /** Moves the focus to the element whose `id` is `id` and scrolls it into view; false when the page has none. */
   focusElement(id: string): boolean;
+  /** Whether the shell's `main` arrived holding the front page, as a site's and a preview's do. */
+  holdsFrontPage(): boolean;
   /** Puts back the front page the shell's `main` arrived holding, and returns the title the shell arrived with; null for a shell that holds none. */
   restoreFrontPage(): string | null;
   /** Draws in the `main` the paragraph that says the page could not be loaded. */

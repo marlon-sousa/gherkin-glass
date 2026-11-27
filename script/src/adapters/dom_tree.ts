@@ -29,10 +29,18 @@ export class DomTree implements TreeView {
     this.root = page === null ? site : rootFrom(page);
   }
 
+  /** The tree of a shell, whose items' addresses are the shell's own, from its `#`. */
+  static inShell(document: Document): DomTree {
+    return new DomTree(document, new URL(document.location.href), "");
+  }
+
   build(items: readonly TreeItem[], current: string | null, expanded: (address: string) => boolean): void {
     if (!this.landmark) {
       return;
     }
+    // A shell builds its tree again for each page it draws.
+    this.nodes.length = 0;
+    this.byLink.clear();
     const tree = this.document.createElement("ul");
     tree.setAttribute("role", "tree");
     tree.className = "ghg-treeview";

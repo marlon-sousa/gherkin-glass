@@ -2,11 +2,14 @@
 
 import type { PageName } from "../policies/address.ts";
 import { featureView } from "../policies/feature_view.ts";
+import { folderView } from "../policies/folder_view.ts";
+import { plain } from "../policies/heading_words.ts";
 import { folderCrumbs, frameOf, homeCrumb, missingFrame, type PageFrame } from "../policies/page_frame.ts";
 import type { Canvas } from "../ports/canvas.ts";
 import type { Pages } from "../ports/pages.ts";
 import type { Descriptor, Store } from "../ports/store.ts";
 import type { Words } from "../ports/words.ts";
+import { loadedFeatures } from "./loaded_features.ts";
 import type { PageDrawing } from "./navigation.ts";
 
 export interface DrawingParts {
@@ -19,13 +22,13 @@ export interface DrawingParts {
 export function pageDrawing(parts: DrawingParts): PageDrawing {
   return async (page) => {
     const descriptor = await parts.store.descriptor();
-    if (page.kind === "home") {
-      // The front page arrives in its shell with the note of rule 207 already.
-      return home(parts, descriptor);
-    }
     const draw = await drawingOf(parts, descriptor, page);
     return () => {
       const frame = draw();
+      if (frame === null) {
+        // The front page arrives in its shell with the note of rule 207 already.
+        return home(parts, descriptor);
+      }
       if (descriptor.only) {
         parts.pages.onlyNote(parts.words.text("only-note"));
       }
@@ -34,8 +37,15 @@ export function pageDrawing(parts: DrawingParts): PageDrawing {
   };
 }
 
-function drawingOf(parts: DrawingParts, descriptor: Descriptor, page: PageName): Promise<() => PageFrame> | (() => PageFrame) {
+/** Null when the page is the front page of a site or a preview, which its shell holds. */
+type Drawing = () => PageFrame | null;
+
+function drawingOf(parts: DrawingParts, descriptor: Descriptor, page: PageName): Promise<Drawing> | Drawing {
   switch (page.kind) {
+    case "home":
+      return parts.canvas.holdsFrontPage() ? () => null : folder(parts, descriptor, "");
+    case "folder":
+      return folder(parts, descriptor, page.folder);
     case "feature":
       return feature(parts, descriptor, page.page);
     default:
@@ -43,10 +53,20 @@ function drawingOf(parts: DrawingParts, descriptor: Descriptor, page: PageName):
   }
 }
 
-function home(parts: DrawingParts, descriptor: Descriptor): () => PageFrame {
+function home(parts: DrawingParts, descriptor: Descriptor): PageFrame {
+  const title = parts.canvas.restoreFrontPage();
+  return title === null ? missing(parts, descriptor)() : { title, lang: "en", crumbs: [homeCrumb(descriptor.title)] };
+}
+
+async function folder(parts: DrawingParts, descriptor: Descriptor, name: string): Promise<() => PageFrame> {
+  const view = folderView(parts.words, descriptor, await loadedFeatures(parts.store, descriptor), name);
+  if (view === null) {
+    return missing(parts, descriptor);
+  }
   return () => {
-    const title = parts.canvas.restoreFrontPage();
-    return title === null ? missing(parts, descriptor)() : { title, lang: "en", crumbs: [homeCrumb(descriptor.title)] };
+    parts.pages.folder(view);
+    const crumbs = name === "" ? [homeCrumb(descriptor.title)] : frameOf(descriptor.title, view.title, "en", folderCrumbs(name.slice(0, -1)), { kind: "folder", folder: name }, plain(view.heading)).crumbs;
+    return { title: view.title, lang: "en", crumbs };
   };
 }
 

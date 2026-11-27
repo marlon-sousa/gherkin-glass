@@ -2,7 +2,7 @@
 
 import { focusHidden, itemKey, pathTo, rememberedExpanded, rememberedShown, shownKey, startChecked, startExpanded, treeShown } from "../policies/tree_state.ts";
 import type { Memory } from "../ports/memory.ts";
-import type { TreeSource, TreeSwitch, TreeView } from "../ports/tree.ts";
+import type { TreeItem, TreeSource, TreeSwitch, TreeView } from "../ports/tree.ts";
 import type { WindowWidth } from "../ports/width.ts";
 
 export interface TreePlace {
@@ -12,8 +12,30 @@ export interface TreePlace {
   readonly page: string | null;
 }
 
+/** The tree's controls, which `disable` turns off for good once its items cannot be had. */
+export interface TreeControls {
+  disable(): void;
+}
+
 export async function startFolderTree(source: TreeSource, toggle: TreeSwitch, view: TreeView, width: WindowWidth, memory: Memory, place: TreePlace): Promise<void> {
-  let checked = startChecked(toggle.configured(), memory.get(shownKey(place.sitePath)));
+  const controls = startTreeControls(toggle, width, memory, place.sitePath);
+  const items = await source.load();
+  if (items === null) {
+    controls.disable();
+    return;
+  }
+  buildTree(view, memory, place.sitePath, items, place.page === null ? [] : pathTo(items, place.page));
+}
+
+/** Builds the tree of `items`, the current page's item first in `path`, and every item it is inside after it, expanded. */
+export function buildTree(view: TreeView, memory: Memory, sitePath: string, items: readonly TreeItem[], path: readonly string[]): void {
+  view.build(items, path[0] ?? null, (address) => startExpanded(path.includes(address), memory.get(itemKey(sitePath, address))));
+  view.onToggle((address, expanded) => memory.set(itemKey(sitePath, address), rememberedExpanded(expanded)));
+}
+
+/** The checkbox, the button and the width they follow, the site's root at `sitePath`. */
+export function startTreeControls(toggle: TreeSwitch, width: WindowWidth, memory: Memory, sitePath: string): TreeControls {
+  let checked = startChecked(toggle.configured(), memory.get(shownKey(sitePath)));
   // The button's state is never remembered.
   let open = false;
   let narrow = width.narrow();
@@ -26,7 +48,7 @@ export async function startFolderTree(source: TreeSource, toggle: TreeSwitch, vi
   show();
   toggle.onChange((chosen) => {
     checked = chosen;
-    memory.set(shownKey(place.sitePath), rememberedShown(chosen));
+    memory.set(shownKey(sitePath), rememberedShown(chosen));
     show();
   });
   toggle.onPress(() => {
@@ -54,14 +76,11 @@ export async function startFolderTree(source: TreeSource, toggle: TreeSwitch, vi
       }
     }
   });
-  const items = await source.load();
-  if (items === null) {
-    usable = false;
-    toggle.disable();
-    show();
-    return;
-  }
-  const path = place.page === null ? [] : pathTo(items, place.page);
-  view.build(items, path[0] ?? null, (address) => startExpanded(path.includes(address), memory.get(itemKey(place.sitePath, address))));
-  view.onToggle((address, expanded) => memory.set(itemKey(place.sitePath, address), rememberedExpanded(expanded)));
+  return {
+    disable: () => {
+      usable = false;
+      toggle.disable();
+      show();
+    },
+  };
 }
