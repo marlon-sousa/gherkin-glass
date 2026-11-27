@@ -21,13 +21,14 @@ import { join, relative, resolve, sep } from "node:path";
 import assert from "node:assert/strict";
 import { partProblems } from "./part_contrast.mjs";
 import { reflowProblems } from "./reflow.mjs";
-import { axeSource, chromium, ghg, serve, stop, violations } from "./support.mjs";
+import { axeSource, chromium, ghg, openPage, pageAddress, serve, sitePages, stop, violations } from "./support.mjs";
 
 const fixtures = resolve("tests/fixtures");
 
 // Every build that makes a site: the folder it runs in, below its root,
-// tests/fixtures unless it names another, and its arguments after `ghg build`,
-// to which the check adds --output.
+// tests/fixtures unless it names another, its command, `ghg build` unless it
+// names another, and its arguments, to which the check adds --output. The
+// builds that name `into` add to the site of the build before them.
 const builds = [
   { folder: "anchors", args: ["--input", "."] },
   { folder: "constructs", args: ["--input", "."] },
@@ -47,18 +48,21 @@ const builds = [
   { folder: "configuration/unnamed-allowed", args: ["--config", "allowed.toml"] },
   { folder: "serve/built", args: [] },
   { folder: "serve/reload", args: [] },
-  { folder: "versions/suite", args: ["--version-name", "v1.0.0"] },
-  { folder: "versions/history/first", args: ["--version-name", "v1.0.0"] },
-  { folder: "versions/history/moved", args: ["--version-name", "v1.1.0"] },
-  { folder: "versions/history/changed", args: ["--version-name", "v2.0.0"] },
-  { folder: "versions/history/draft", args: ["--version-name", "main"] },
+  { folder: "versions/suite", command: ["version", "add", "v1.0.0"], args: [] },
+  { folder: "versions/next", command: ["version", "add", "v2.0.0-rc.1"], args: [], into: true },
+  { folder: "versions/next", command: ["preview", "add", "pr-1"], args: [], into: true },
+  { folder: "versions/history/first", command: ["version", "add", "v1.0.0"], args: [] },
+  { folder: "versions/history/moved", command: ["version", "add", "v1.1.0"], args: [] },
+  { folder: "versions/history/changed", command: ["version", "add", "v2.0.0"], args: [] },
+  { folder: "versions/history/draft", command: ["version", "add", "main"], args: [] },
   { folder: "step-sentences", args: ["--input", "."] },
   { folder: "no-steps", args: ["--input", "."] },
   { folder: "search/features", args: ["--input", ".", "--title", "Search"] },
   { folder: "front-page", args: ["--config", "ghg.toml"] },
-  { folder: "front-page", args: ["--config", "versioned.toml"] },
+  { folder: "front-page", command: ["version", "add", "v1.0.0"], args: ["--config", "versioned.toml"] },
   { folder: "hostile", args: [] },
   { folder: "only", args: ["--only", "changed.txt"] },
+  { folder: "only", command: ["preview", "add", "pr-131"], args: ["--only", "changed.txt"], into: true },
   { folder: "keep-in-output", args: [] },
   { root: ".", folder: "project-site", args: ["--config", "ghg.toml"] },
   // The example suite as the release's site shows it, opening on the front
@@ -89,7 +93,6 @@ const noSite = [
   "tags/expected",
   "serve/site",
   "accessibility/failing",
-  "versions/bad-name",
   "versions/broken",
   "front-page/expected",
   "front-page/broken",
@@ -113,8 +116,6 @@ function filesOf(folder) {
     .map((entry) => relative(folder, join(entry.parentPath, entry.name)).split(sep).join("/"));
 }
 
-// The pages of the site in `folder`, below it, in order.
-const pagesOf = (folder) => filesOf(folder).filter((path) => path.endsWith(".html")).sort();
 
 const within = (path, folder) => path === folder || path.startsWith(`${folder}/`);
 
@@ -133,7 +134,7 @@ function checkEveryFixtureIsCounted() {
   );
 }
 
-function build({ root, folder, args, readme }, output) {
+function build({ root, folder, command = ["build"], args, readme }, output) {
   const frontPageArgs = [];
   if (readme) {
     // Run through bash, which Windows has where Git Bash is installed.
@@ -142,15 +143,13 @@ function build({ root, folder, args, readme }, output) {
     assert.equal(written.status, 0, `project-site/front-page.sh README.md: ${written.stderr}`);
     frontPageArgs.push("--front-page", frontPage);
   }
-  const run = spawnSync(ghg, ["build", ...args, ...frontPageArgs, "--output", output], {
+  const run = spawnSync(ghg, [...command, ...args, ...frontPageArgs, "--output", output], {
     cwd: root ? resolve(root, folder) : join(fixtures, folder),
     encoding: "utf8",
   });
-  assert.equal(run.status, 0, `ghg build ${args.join(" ")} in ${folder}: ${run.stderr}`);
+  assert.equal(run.status, 0, `ghg ${[...command, ...args].join(" ")} in ${folder}: ${run.stderr}`);
 }
 
-// The address of a page below the site's address, its path's parts percent-encoded.
-const addressOf = (site, page) => new URL(page.split("/").map(encodeURIComponent).join("/"), site).href;
 
 // What has focus, as a short description that tells the page's elements apart.
 const describeFocus = (page) =>
@@ -197,8 +196,8 @@ async function keyboardProblems(page) {
 }
 
 // Enter and Space on the first button that shows or hides content, a block's
-// or a folder page's feature's, each turn it over, and on a page with blocks
-// Enter on "Collapse all" and "Expand all" acts as a click does. Returns null
+// or a folder page's feature's, each turn it over, and on a shell's page with
+// blocks Enter on "Collapse all" and "Expand all" acts as a click does. Returns null
 // for a page without such a button, where there is nothing to press.
 async function buttonProblems(page) {
   const problems = [];
@@ -226,8 +225,10 @@ async function buttonProblems(page) {
       problems.push(`keyboard: Enter on the disabled button "${await disabled.textContent()}" changed the page`);
     }
   }
-  const blocks = page.locator('.ghg-block .ghg-toggle:not([aria-disabled="true"])');
-  if ((await blocks.count()) === 0) return problems;
+  const blocks = page.locator('.ghg-block > :is(h2, h3, h4, h5, h6) > .ghg-toggle:not([aria-disabled="true"])');
+  // The versions page, which no shell draws, has a block and no such buttons.
+  const shell = await page.evaluate(() => document.documentElement.dataset.ghgDescriptor !== undefined);
+  if (!shell || (await blocks.count()) === 0) return problems;
   for (const [name, expanded] of [
     ["Collapse all", "false"],
     ["Expand all", "true"],
@@ -295,11 +296,13 @@ async function searchProblems(page) {
   const field = page.locator("form.ghg-search .ghg-search-field");
   if ((await field.count()) === 0) return null;
   const searchedFrom = page.url();
+  // A word of the name of the descriptor's first feature that has one.
   const word = await page.evaluate(async () => {
-    const root = document.querySelector("form.ghg-search").dataset.root;
-    const documents = await (await fetch(`${root}assets/search.json`)).json();
-    for (const { name } of documents) {
-      const found = name.match(/\p{L}{3,}/u);
+    const data = new URL("../../data/", document.querySelector('script[type="module"]').src);
+    const descriptor = await (await fetch(new URL(document.documentElement.dataset.ghgDescriptor, data))).json();
+    for (const { object } of descriptor.features) {
+      const { feature } = await (await fetch(new URL(`objects/${object}.json`, data))).json();
+      const found = feature.name.match(/\p{L}{3,}/u);
       if (found) return found[0];
     }
     return "";
@@ -334,15 +337,19 @@ async function searchProblems(page) {
   if (left[0] !== "" || left[1] !== 0) problems.push(`search: the second Escape left ${JSON.stringify(left)}`);
   await page.keyboard.type(word);
   await page.keyboard.press("Enter");
+  let step = "Enter in the field";
   try {
-    await page.waitForURL(/\/search\.html\?q=/, { timeout: 5000 });
+    await page.waitForURL(/#search\?q=/, { timeout: 5000 });
     await page.waitForFunction(() => document.querySelector(".ghg-search-groups")?.children.length > 0, null, { timeout: 5000 });
+    // The focus moves to the page's heading a moment after the page is drawn.
+    await page.waitForFunction(() => document.activeElement?.localName === "h1", null, { timeout: 5000 });
     for (const line of await violations(page)) problems.push(`search results for "${word}": ${line}`);
     for (const line of (await partProblems(page)).lines) problems.push(`search results for "${word}": ${line}`);
     // Rule 217: the page's field is the same combobox, holding the words.
     const own = page.locator("main form.ghg-search .ghg-search-field");
     if ((await own.inputValue()) !== word) problems.push(`search results for "${word}": the field holds ${JSON.stringify(await own.inputValue())}`);
     if (!(await page.locator("main .ghg-search-all").isVisible())) problems.push(`search results for "${word}": the link to every result is hidden while the field holds the words`);
+    step = "typing in the page's field";
     await own.focus();
     await page.keyboard.press("End");
     await page.keyboard.type(` ${word}`);
@@ -355,23 +362,28 @@ async function searchProblems(page) {
     });
     if (!ownChosen) problems.push(`search results for "${word}": Down after typing did not choose the first result with the focus in the field`);
     for (const line of await violations(page)) problems.push(`search results for "${word}", with a result chosen: ${line}`);
+    step = "Enter in the page's field";
     await page.keyboard.press("ArrowUp");
     await page.keyboard.press("Enter");
-    await page.waitForURL((url) => url.searchParams.get("q") === `${word} ${word}`, { timeout: 5000 });
+    await page.waitForURL((url) => searched(url) === `${word} ${word}`, { timeout: 5000 });
+    step = "going back";
     await page.goBack();
-    await page.waitForURL((url) => url.searchParams.get("q") === word, { timeout: 5000 });
+    await page.waitForURL((url) => searched(url) === word, { timeout: 5000 });
   } catch (error) {
-    problems.push(`search: the page of search results for "${word}" did not list them, or search again: ${error.message.split("\n")[0]}`);
+    problems.push(`search: the page of search results for "${word}" did not list them, or search again, at ${step}: ${error.message.split("\n")[0]}`);
   }
-  await page.goto(searchedFrom);
+  await openPage(page, searchedFrom);
   await treeBuilt(page);
   return problems;
 }
 
+// The words the page of search results at `url` searched for, in its address after `#search?`.
+const searched = (url) => new URLSearchParams(url.hash.replace(/^#search\?/, "")).get("q");
+
 // Checks every page of the site in `folder`, served with ghg serve
 // --no-build, and returns the problems, one line each, with the page's path.
 export async function checkSite(browser, folder) {
-  const pages = pagesOf(folder);
+  const pages = sitePages(folder);
   const { server, address } = await serve(["--no-build", "--output", folder, "--port", "0"], folder);
   const problems = [];
   let pressed = 0;
@@ -394,9 +406,14 @@ export async function checkSite(browser, folder) {
       await context.addInitScript({ path: axeSource });
       const page = await context.newPage();
       for (const path of pages) {
-        await page.goto(addressOf(address, path));
+        await openPage(page, pageAddress(address, path));
         await page.emulateMedia({ colorScheme: scheme });
-        await treeBuilt(page);
+        try {
+          await treeBuilt(page);
+        } catch {
+          problems.push(`${path}, ${name}: the folder tree was never built`);
+          continue;
+        }
         if (theme !== undefined) {
           const shown = await page.evaluate(() => document.documentElement.dataset.theme);
           if (shown !== theme) problems.push(`${path}, ${name}: the page shows the theme ${shown}`);
@@ -476,7 +493,7 @@ async function checkServedWithNothingGiven(browser) {
 // ended, and so stopped its server, the first error in the order of `sites`
 // is thrown.
 async function checkAll(browser, sites) {
-  const waiting = sites.map((site, index) => ({ site, index, pages: pagesOf(site).length }));
+  const waiting = sites.map((site, index) => ({ site, index, pages: sitePages(site).length }));
   waiting.sort((one, other) => other.pages - one.pages);
   const settled = [];
   const worker = async () => {
@@ -492,6 +509,7 @@ async function checkAll(browser, sites) {
 
 async function main() {
   checkEveryFixtureIsCounted();
+  const named = builds.filter((each) => !each.into);
   const browser = await chromium.launch();
   const output = mkdtempSync(join(tmpdir(), "ghg-accessibility-"));
   const failures = [];
@@ -501,15 +519,16 @@ async function main() {
   let searched = 0;
   let outlined = 0;
   try {
-    const sites = builds.map((each, index) => {
-      const site = join(output, String(index));
+    const sites = [];
+    for (const [index, each] of builds.entries()) {
+      const site = each.into ? sites[sites.length - 1] : join(output, String(index));
       build(each, site);
-      return site;
-    });
+      if (!each.into) sites.push(site);
+    }
     const results = await checkAll(browser, sites);
     for (const [index, result] of results.entries()) {
-      const { folder, args, readme } = builds[index];
-      const name = [folder, ...args, ...(readme ? ["with the README's front page"] : [])].join(" ");
+      const { folder, command = ["build"], args, readme } = named[index];
+      const name = [folder, ...command, ...args, ...(readme ? ["with the README's front page"] : [])].join(" ");
       if (result.pages === 0) failures.push(`${name}: the site has no page`);
       checked += result.pages;
       pressed += result.pressed;
@@ -552,7 +571,7 @@ async function main() {
     console.error(failures.join("\n"));
     process.exit(1);
   }
-  console.log(`Every page passes the accessibility check: ${checked} pages, in ${builds.length} sites.`);
+  console.log(`Every page passes the accessibility check: ${checked} pages, in ${named.length} sites.`);
 }
 
 await main();

@@ -1,6 +1,6 @@
 // docs/BEHAVIOUR.md, "The note of a keyword", rules 196 to 198, checked in
 // Chromium with Playwright: tests/fixtures/pages is built and served, and on
-// kinds.html, whose blocks are written with other keywords, the button of a
+// the page kinds, whose blocks are written with other keywords, the button of a
 // note, reached with the keyboard, must open the page's dialog as a modal
 // dialog with the focus on the dialog itself; Tab then reaches Got it. The
 // open dialog is held to the rules of "Accessibility", in the light and the
@@ -19,7 +19,7 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import assert from "node:assert/strict";
 import { partProblems } from "./part_contrast.mjs";
-import { axeSource, chromium, ghg, serve, stop, violations } from "./support.mjs";
+import { axeSource, chromium, ghg, openPage, pageAddress, serve, stop, violations } from "./support.mjs";
 
 const output = mkdtempSync(join(tmpdir(), "ghg-note-dialog-"));
 const browser = await chromium.launch();
@@ -40,7 +40,7 @@ try {
     const context = await browser.newContext({ colorScheme: scheme });
     await context.addInitScript({ path: axeSource });
     const page = await context.newPage();
-    await page.goto(new URL("kinds.html", served.address).href);
+    await openPage(page, pageAddress(served.address, "index.html#kinds"));
     const dialog = () =>
       page.evaluate(() => {
         const dialog = document.getElementById("ghg_note_dialog");
@@ -65,8 +65,8 @@ try {
       await page.evaluate(() => document.activeElement.textContent === "Got it"),
       `${scheme}: Tab from the dialog does not reach Got it`,
     );
-    for (const line of await violations(page)) problems.push(`kinds.html, ${scheme}: ${line}`);
-    for (const line of (await partProblems(page)).lines) problems.push(`kinds.html, ${scheme}: ${line}`);
+    for (const line of await violations(page)) problems.push(`index.html#kinds, ${scheme}: ${line}`);
+    for (const line of (await partProblems(page)).lines) problems.push(`index.html#kinds, ${scheme}: ${line}`);
     if (close === "Got it") {
       await page.focus("#ghg_note_dialog button");
       await page.keyboard.press("Enter");

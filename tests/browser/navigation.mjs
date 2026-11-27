@@ -1,6 +1,7 @@
 // docs/BEHAVIOUR.md, "How a page is drawn", rule 240, with rules 235 to 239,
-// checked in Chromium with Playwright on the shell of
-// tests/browser/shell_site.mjs: the shell opened at an address draws its page,
+// checked in Chromium with Playwright on the shells of tests/fixtures/pages,
+// tests/fixtures/front-page and the history of versions of
+// tests/fixtures/versions/history, built and served: the shell opened at an address draws its page,
 // sets its title, says nothing and moves the focus only to the anchor's
 // element; a link followed to another page, the browser's Back, a link to an
 // anchor of another page and one of the page shown, and the skip link, each
@@ -10,15 +11,15 @@
 // back, and the search box with it, after other pages; a version's shell
 // opens its lists in other versions, held to the same rules.
 //
-// Run from the repository's root, after npm ci in script/ and cargo xtask
-// build, with Playwright's Chromium installed:
+// Run from the repository's root, after cargo build and npm ci in script/,
+// with Playwright's Chromium installed:
 //   node tests/browser/navigation.mjs
-// cargo xtask check-browser does all of it.
+// cargo xtask check-browser does all of it. GHG names another ghg binary than
+// target/debug/ghg.
 
 import assert from "node:assert/strict";
 
-import { serveShellSite } from "./shell_site.mjs";
-import { axeSource, chromium, violations } from "./support.mjs";
+import { axeSource, chromium, serveBuilt, violations } from "./support.mjs";
 
 // Longer than the 150 milliseconds the script waits before it moves the focus.
 const SETTLED = 400;
@@ -49,9 +50,13 @@ const seen = (page) =>
     };
   });
 
-const site = await serveShellSite();
-const frontPageSite = await serveShellSite({ frontPage: "<h1>Banking</h1><p>The features of the bank.</p>" });
-const versionSite = await serveShellSite({ versioned: true });
+const site = await serveBuilt([{ folder: "pages", args: ["build", "--config", "ghg.toml"] }]);
+const frontPageSite = await serveBuilt([{ folder: "front-page", args: ["build", "--config", "ghg.toml"] }]);
+const versionSite = await serveBuilt([
+  { folder: "versions/history/first", args: ["version", "add", "v1.0.0"] },
+  { folder: "versions/history/moved", args: ["version", "add", "v1.1.0"] },
+  { folder: "versions/history/changed", args: ["version", "add", "v2.0.0"] },
+]);
 const browser = await chromium.launch();
 try {
   for (const scheme of ["light", "dark"]) {
@@ -64,7 +69,7 @@ try {
     };
 
     // Opened at an address: the title is set, nothing is said, and the focus stays where the browser put it.
-    await page.goto(`${site.address}#billing/refunds`);
+    await page.goto(`${site.address}index.html#billing/refunds`);
     await page.waitForTimeout(SETTLED);
     expect(`${scheme}, opened at a page`, await seen(page), {
       title: "Feature: Refunds & <returns>, billing/refunds.feature",
@@ -80,7 +85,7 @@ try {
     if (first !== "Skip to content") problems.push(`${scheme}: the first Tab reaches ${JSON.stringify(first)}, not the skip link`);
 
     // Opened at an anchor inside a collapsed rule: the rule is expanded and the anchor's heading has the focus, in view.
-    await page.goto(`${site.address}#billing/refunds#store-credit`);
+    await page.goto(`${site.address}index.html#billing/refunds#store-credit`);
     await page.reload();
     await page.waitForTimeout(SETTLED);
     expect(`${scheme}, opened at an anchor`, await seen(page), { focus: "#store-credit", inView: true, said: "" });
@@ -156,7 +161,7 @@ try {
     if (back !== "ghg_main") problems.push(`${scheme}: the search box is not put back before the main`);
 
     // A version's feature page: its lists in other versions open, and are held to the rules.
-    await page.goto(`${versionSite.address}#billing/refunds`);
+    await page.goto(`${versionSite.address}v2.0.0/index.html#refunds`);
     await page.waitForTimeout(SETTLED);
     const opener = page.locator("main h1 + .ghg-other-versions > button");
     await opener.click();
@@ -170,15 +175,15 @@ try {
   // A shell holding a front page puts it back after other pages, as it arrived, the search box back in its place.
   const page = await browser.newPage();
   page.on("pageerror", (error) => problems.push(`the front page's shell: the script threw: ${error.message}`));
-  await page.goto(`${frontPageSite.address}#`);
+  await page.goto(`${frontPageSite.address}index.html#`);
   await page.waitForTimeout(SETTLED);
-  expect("the front page, opened", await seen(page), { heading: "Banking", title: "Banking & <more>" });
+  expect("the front page, opened", await seen(page), { heading: "The Banking suite", title: "The Banking suite" });
   for (const hash of ["#search?q=refund", "#billing/", "#search?q=refund"]) {
     await page.evaluate((to) => (location.hash = to), hash);
     await page.waitForTimeout(SETTLED);
     await page.evaluate(() => (location.hash = "#"));
     await page.waitForTimeout(SETTLED);
-    expect(`the front page, after ${hash}`, await seen(page), { heading: "Banking", title: "Banking & <more>", focus: "h1", said: "Banking & <more>" });
+    expect(`the front page, after ${hash}`, await seen(page), { heading: "The Banking suite", title: "The Banking suite", focus: "h1", said: "The Banking suite" });
     const shape = await page.evaluate(() => ({ headings: document.querySelectorAll("main h1").length, box: document.querySelector("form.ghg-search")?.nextElementSibling?.id ?? null }));
     expect(`the front page, after ${hash}`, shape, { headings: 1, box: "ghg_main" });
   }

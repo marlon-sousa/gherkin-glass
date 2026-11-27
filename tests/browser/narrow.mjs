@@ -20,11 +20,11 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import assert from "node:assert/strict";
-import { axeSource, chromium, ghg, serve, stop, violations } from "./support.mjs";
+import { axeSource, chromium, ghg, openPage, pageAddress, serve, stop, violations } from "./support.mjs";
 
 const NARROW = { width: 390, height: 844 };
 const WIDE = { width: 1366, height: 850 };
-const PAGE = "billing/refunds.html";
+const PAGE = "index.html#billing/refunds";
 
 // What the reader meets: which control shows, the button's state, whether the
 // tree shows, and where the focus is.
@@ -61,12 +61,12 @@ try {
   const run = spawnSync(ghg, ["build", "--output", output], { cwd: resolve("tests/fixtures/pages"), encoding: "utf8" });
   assert.equal(run.status, 0, `ghg build in tests/fixtures/pages: ${run.stderr}`);
   running = await serve(["--no-build", "--output", output, "--port", "0"], output);
-  const address = new URL(PAGE, running.address).href;
+  const address = pageAddress(running.address, PAGE);
   for (const scheme of ["light", "dark"]) {
     const context = await browser.newContext({ colorScheme: scheme, viewport: NARROW });
     await context.addInitScript({ path: axeSource });
     const page = await context.newPage();
-    await page.goto(address);
+    await openPage(page, address);
     await treeBuilt(page);
     expect(`${scheme}, loaded narrow`, await seen(page), { checkbox: false, button: true, expanded: "false", tree: false });
     await page.locator("button.ghg-tree-button").focus();
@@ -85,7 +85,7 @@ try {
   }
   const context = await browser.newContext({ viewport: WIDE });
   const page = await context.newPage();
-  await page.goto(address);
+  await openPage(page, address);
   await treeBuilt(page);
   expect("loaded wide", await seen(page), { checkbox: true, button: false, tree: true });
   await page.setViewportSize(NARROW);
