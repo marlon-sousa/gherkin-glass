@@ -26,7 +26,7 @@ import assert from "node:assert/strict";
 import { partProblems } from "./part_contrast.mjs";
 import { axeSource, chromium, ghg, violations } from "./support.mjs";
 
-const CANNOT = "This page cannot be shown when opened from disk. Serve the site, then open the address it gives.";
+const CANNOT = "This page cannot be shown when opened from disk. Serve the site, then open the address the server gives.";
 const NOSCRIPT = "This site needs JavaScript to show its pages. Turn it on, then load this page again.";
 
 // Runs ghg with `args` in tests/fixtures/`folder`, into `output`.

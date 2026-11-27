@@ -333,7 +333,7 @@ opened-from-disk-agree = I agree
 ## What a shell opened from disk writes in its main, in place of a page it
 ## cannot draw, and what it says when JavaScript is turned off.
 
-opened-from-disk-page = This page cannot be shown when opened from disk. Serve the site, then open the address it gives.
+opened-from-disk-page = This page cannot be shown when opened from disk. Serve the site, then open the address the server gives.
 needs-script = This site needs JavaScript to show its pages. Turn it on, then load this page again.
 
 ## Before every page's content: the link past the folder tree, the checkbox

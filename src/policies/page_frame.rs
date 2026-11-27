@@ -100,10 +100,10 @@ mod tests {
             "{}",
             words.text
         );
-        assert!(
-            words
-                .cannot_be_shown
-                .starts_with("This page cannot be shown")
+        assert_eq!(
+            words.cannot_be_shown,
+            "This page cannot be shown when opened from disk. \
+             Serve the site, then open the address the server gives."
         );
         assert_eq!(words.agree, "I agree");
     }
